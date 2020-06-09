@@ -122,7 +122,7 @@ int main()
 	bufferStart = 0;
 	bufferEnd = 15;
 
-	// Set input controller params
+	// Set output controller params
 	dmaEngine.setOutputControllerParams(outputStreamID, DDRBurstLength, recordsPerDDRBurst, bufferStart, bufferEnd);
 	dmaEngine.setOutputControllerStreamAddress(outputStreamID, reinterpret_cast<uintptr_t>(&outputData[0]));
 	dmaEngine.setOutputControllerStreamSize(outputStreamID, recordCount);
@@ -134,17 +134,17 @@ int main()
 
 	// Then burn pointless cycles between AXI and Buffer 4 times.
 
-	dmaEngine.setAXItoBufferChunk(inputStreamID,0,0,0,0,0,0);
-	dmaEngine.setAXItoBufferSourcePosition(inputStreamID, 0, 0, 0, 1, 2, 3);
+	//dmaEngine.setAXItoBufferChunk(inputStreamID,0,0,0,0,0,0);
+	//dmaEngine.setAXItoBufferSourcePosition(inputStreamID, 0, 0, 0, 1, 2, 3);
 
-	dmaEngine.setBufferToInterfaceChunk(inputStreamID);
-	dmaEngine.setBufferToInterfaceSourcePosition(inputStreamID);
+	//dmaEngine.setBufferToInterfaceChunk(inputStreamID);
+	//dmaEngine.setBufferToInterfaceSourcePosition(inputStreamID);
 
-	dmaEngine.setInterfaceToBufferChunk(outputStreamID);
-	dmaEngine.setInterfaceToBufferSourcePosition(outputStreamID);
+	//dmaEngine.setInterfaceToBufferChunk(outputStreamID);
+	//dmaEngine.setInterfaceToBufferSourcePosition(outputStreamID);
 
-	dmaEngine.setBufferToAXIChunk(outputStreamID);
-	dmaEngine.setBufferToAXISourcePosition(outputStreamID);
+	//dmaEngine.setBufferToAXIChunk(outputStreamID);
+	//dmaEngine.setBufferToAXISourcePosition(outputStreamID);
 
 
 	/*
@@ -161,15 +161,16 @@ int main()
 	*/
 
 	/*
+	DDRBurstLength = 72
 	numRecordsPerBurst = 16;
+	maxChunksPerRecord = 2
 	streamID = 0;
-	recordSize = 2;
-	*/
+	recordSize = 18;
 
 	/*
-	int tarbetChunk[DDRburstSize][16];
-	int sourcePosition[DDRburstSize][16];
-	for(int clockCycle=0; clockCycle < DDRburstSize; clockCycle++){
+	int tarbetChunk[DDRBurstLength][16];
+	int sourcePosition[DDRBurstLength][16];
+	for(int clockCycle=0; clockCycle < DDRBurstLength; clockCycle++){
 		for(int dataPos=0; dataPos<16; dataPos++){
 			int targetChunkTemp = targetChunk[clockCycle][dataPos];
 			int sourcePositionTemp = sourcePosition[clockCycle][dataPos];
@@ -178,11 +179,10 @@ int main()
 	}
 	*/
 
-
 	/*
 	int sourceChunkB2I[32][16];
 	int sourcePositionB2I[32][16];
-	for(int cyclePosition = numRecordsPerBurst*recordID; cyclePosition < numRecordsPerBurst*recordID + recordSize; cyclePosition++){
+	for(int cyclePosition = maxChunksPerRecord*recordID; cyclePosition < maxChunksPerRecord*recordID + recordSize; cyclePosition++){
 		int dataRead[16];
 		for(int dataPos=0; dataPos <16; dataPos++){
 			int sourceChunkTemp = sourceChunkB2I[cyclePosition][dataPos];
@@ -194,11 +194,34 @@ int main()
 		}
 		RecordOnInterface[cyclePosition].chunkID = chunkIDTranslate[cyclePosition];
 	}
-	All 16 positions always
-
 	*/
-	
 
+	/*
+	For AXI2B
+	We can have first 32-18=14 cycles be wasted
+	and then 72 * 4 = 288 = 18 * 16 which are the rest of the cycles have it be put into the buffers sequentially.
+	*/
+
+	const int DONTCARE = 0;
+	for (int currentBufferChunk = 0; currentBufferChunk < 18; currentBufferChunk++) {
+		for (int currentOffset = 0; currentOffset < 4; currentOffset++) {
+			dmaEngine.setAXItoBufferChunk(inputStreamID, currentBufferChunk, currentOffset, DONTCARE, DONTCARE, DONTCARE, DONTCARE);
+			dmaEngine.setAXItoBufferSourcePosition(inputStreamID, currentBufferChunk, currentOffset, DONTCARE, DONTCARE, DONTCARE, DONTCARE);
+		}
+	}
+	int targetBufferChunk = 0;
+	for (int currentBufferChunk = 18; currentBufferChunk < 32; currentBufferChunk++) {
+		for (int currentOffset = 0; currentOffset < 4; currentOffset++) {
+			dmaEngine.setAXItoBufferChunk(inputStreamID, currentBufferChunk, currentOffset, targetBufferChunk, targetBufferChunk, targetBufferChunk, targetBufferChunk);
+			dmaEngine.setAXItoBufferSourcePosition(inputStreamID, currentBufferChunk, currentOffset, currentOffset * 4 + 3, currentOffset * 4 + 2, currentOffset * 4 + 1, currentOffset * 4 + 0);
+		}
+		targetBufferChunk++;
+	}
+	
+	/*
+	For B2I
+	TODO
+	*/
 
 
 
