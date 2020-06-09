@@ -1,0 +1,12 @@
+TODO:
+
+1. Start working on the main.cpp
+2. EXPLAIN SELECT * FROM used_car_prices WHERE price < 12000;
+                            QUERY PLAN
+------------------------------------------------------------------
+ Seq Scan on used_car_prices  (cost=0.00..20.50 rows=32 width=26)
+   Filter: (price < 12000)
+3. Print out all data - easy
+4. get dataAddress setup - hard
+5. Setup output - easy
+6. setup crossbars - medium
