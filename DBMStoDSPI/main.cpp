@@ -26,13 +26,13 @@ struct stringAsciiValue
 void ConvToInt(const std::string& pStr, stringAsciiValue& pVal)
 {
 	for (int i = 0; i < pStr.length(); i++) {
-		pVal.values[i / 4] += int(pStr[i]) << (i % 4) * 8;
+		pVal.values[i / 4] += int(pStr[i]) << (3 - (i % 4)) * 8;
 	}
 }
 
 int main()
 {
-	// Figure out some legit way to get this data type information. For all streams
+	// Figure out some legit way to get this data type information. For all streams. Would be nice to have this info in structs or sth like that to capture dataType
 	std::vector<int> dataTypeSizes;
 	dataTypeSizes.push_back(1);
 	dataTypeSizes.push_back(8);
@@ -68,7 +68,7 @@ int main()
 		}
 	}
 
-	// Create the controller memory area
+	// Create the controller memory area //Also hardcode the address to 0xA0000000 we're going to use baremetal
 	int* volatile memoryPointer = new int[1048576];
 	for (int i = 0; i < 1048576; i++) {
 		memoryPointer[i] = -1;
@@ -90,9 +90,10 @@ int main()
 	int recordsPerDDRBurst = pow(2, (int)log2(recordsPerMaxBurstSize));
 	std::cout << "recordsPerDDRBurst:" << recordsPerDDRBurst << std::endl;
 
-	int DDRBurstLength = ((recordSize * recordsPerDDRBurst) + maxDDRSizePerCycle - 1) / maxDDRSizePerCycle;
+	int DDRBurstLength = ((recordSize * recordsPerDDRBurst) + maxDDRSizePerCycle - 1) / maxDDRSizePerCycle; //ceil (recordSize * recordsPerDDRBurst)/maxDDRSizePerCycle
 	std::cout << "DDRBurstLength:" << DDRBurstLength << std::endl;
 
+	// Test different variants later
 	int bufferStart = 0;
 	int bufferEnd = 15;
 
@@ -106,7 +107,7 @@ int main()
 	}
 
 	// Output
-	int outputStreamID = 1;
+	int outputStreamID = 1;//Could be 0
 	recordCount = 0;
 	std::vector<int> outputData(doc.GetRowCount() * recordSize);
 
@@ -131,9 +132,6 @@ int main()
 	for (int i = 0; i < chunksPerRecord; i++) {
 		dmaEngine.setRecordChunkIDs(outputStreamID, i, i);
 	}
-
-
-	// Then burn pointless cycles between AXI and Buffer 4 times.
 
 	//dmaEngine.setAXItoBufferChunk(inputStreamID,0,0,0,0,0,0);
 	//dmaEngine.setAXItoBufferSourcePosition(inputStreamID, 0, 0, 0, 1, 2, 3);
@@ -183,31 +181,30 @@ int main()
 	*/
 
 	/*
-	For AXI2B
-	We can have first 32-18=14 cycles be wasted
-	and then 72 * 4 = 288 = 18 * 16 which are the rest of the cycles have it be put into the buffers sequentially.
-	*/
 
-	const int DONTCARE = 0;
-	for (int currentBufferChunk = 0; currentBufferChunk < 14; currentBufferChunk++) {
-		for (int currentOffset = 0; currentOffset < 4; currentOffset++) {
-			dmaEngine.setAXItoBufferChunk(inputStreamID, currentBufferChunk, currentOffset, DONTCARE, DONTCARE, DONTCARE, DONTCARE);
-			dmaEngine.setAXItoBufferSourcePosition(inputStreamID, currentBufferChunk, currentOffset, DONTCARE, DONTCARE, DONTCARE, DONTCARE);
-		}
-	}
+	One for loop for 72 cycles
+	First 4 data positions we want to keep
+	The rest of the 12 we don't wan't to duplicate anything so we discard
+
+	*/
 	int targetBufferChunk = 0;
-	for (int currentBufferChunk = 14; currentBufferChunk < 32; currentBufferChunk++) {
+	const int DONTCARECHUNK = 31;
+	const int DONTCAREPOSITION = 15;
+	for (int currentClockCycle = 0; currentClockCycle < DDRBurstLength; currentClockCycle++) {
 		for (int currentOffset = 0; currentOffset < 4; currentOffset++) {
-			dmaEngine.setAXItoBufferChunk(inputStreamID, currentBufferChunk, currentOffset, targetBufferChunk, targetBufferChunk, targetBufferChunk, targetBufferChunk);
-			dmaEngine.setAXItoBufferSourcePosition(inputStreamID, currentBufferChunk, currentOffset, currentOffset * 4 + 3, currentOffset * 4 + 2, currentOffset * 4 + 1, currentOffset * 4 + 0);
+			if (currentOffset == 0) {
+				dmaEngine.setAXItoBufferChunk(inputStreamID, currentClockCycle, currentOffset, targetBufferChunk, targetBufferChunk, targetBufferChunk, targetBufferChunk);
+				dmaEngine.setAXItoBufferSourcePosition(inputStreamID, currentClockCycle, currentOffset, (currentClockCycle % 4) * 4 + 3, (currentClockCycle % 4) * 4 + 2, (currentClockCycle % 4) * 4 + 1, (currentClockCycle % 4) * 4 + 0);
+			}
+			else {
+				dmaEngine.setAXItoBufferChunk(inputStreamID, currentClockCycle, currentOffset, DONTCARECHUNK, DONTCARECHUNK, DONTCARECHUNK, DONTCARECHUNK);
+				dmaEngine.setAXItoBufferSourcePosition(inputStreamID, currentClockCycle, currentOffset, DONTCAREPOSITION, DONTCAREPOSITION, DONTCAREPOSITION, DONTCAREPOSITION);
+			}
 		}
-		targetBufferChunk++;
+		if (currentClockCycle % 4 == 3) {
+			targetBufferChunk++;
+		}
 	}
-
-	/*
-	For B2I
-	TODO
-	*/
 
 	/*
 	int sourceChunkB2I[32][16];
@@ -229,7 +226,6 @@ int main()
 	/*
 	One cycle is 8x2 chunks  
 	*/
-	const int DONTCARECHUNK = 32;
 	std::queue <int> sourceChunk;
 	std::queue <int> targetPosition;
 	for (int cycleCounter = 0; cycleCounter < 2; cycleCounter++) {
@@ -268,7 +264,7 @@ int main()
 				//targetPosition.pop();
 			}
 			else {
-				std::cout << i << j;
+				//std::cout << i << j;
 			}
 		}
 		//std::cout << std::endl;
