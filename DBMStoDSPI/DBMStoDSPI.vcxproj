@@ -76,10 +76,12 @@
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
     <ClCompile Include="DMA.cpp" />
+    <ClCompile Include="Filter.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DMA.h" />
+    <ClInclude Include="Filter.h" />
     <ClInclude Include="rapidcsv.h" />
   </ItemGroup>
   <ItemGroup>

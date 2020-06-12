@@ -5,6 +5,7 @@
 #include <math.h>
 #include "rapidcsv.h"
 #include <queue> 
+#include "Filter.h"
 
 /*
 Filter: (price < 12000)
@@ -69,8 +70,8 @@ int main()
 	}
 
 	// Create the controller memory area //Also hardcode the address to 0xA0000000 we're going to use baremetal
-	int* volatile memoryPointer = new int[1048576];
-	for (int i = 0; i < 1048576; i++) {
+	int* volatile memoryPointer = new int[2097152];
+	for (int i = 0; i < 2097152; i++) {
 		memoryPointer[i] = -1;
 	}
 	DMA dmaEngine(memoryPointer);
@@ -448,6 +449,9 @@ int main()
 			targetBufferChunk++;
 		}
 	}
+
+	// Setup the filter module
+	Filter filterModule(memoryPointer, 1);
 
 	// Print out the contents of memory for debugging
 	//std::cout << std::endl << "Memory contents:" << std::endl;
