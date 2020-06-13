@@ -1,5 +1,6 @@
 #include "DMA.h"
 #include <iostream>
+#include <math.h>
 
 /*
 This is the width of the address for the memory mapped register space in every module.
@@ -38,22 +39,22 @@ uint32_t DMA::readFromModule(int* volatile controlAXIbaseAddress, // base addres
 
 //Input Controller
 void DMA::setInputControllerParams(int streamID, int DDRburstSize, int recordsPerDDRBurst, int bufferStart, int bufferEnd) {
-	writeToModule(controlAXIbaseAddress, contollerModulePosition, (streamID * 4), (DDRburstSize << 24) + (recordsPerDDRBurst << 16) + (bufferStart << 8) + (bufferEnd));
+	writeToModule(controlAXIbaseAddress, contollerModulePosition, (streamID * 4), (DDRburstSize << 24) + ((int)log2(recordsPerDDRBurst) << 16) + (bufferStart << 8) + (bufferEnd));
 }
 uint32_t DMA::getInputControllerParams(int streamID) {
 	return readFromModule(controlAXIbaseAddress, contollerModulePosition, (streamID * 4));
 }
 void DMA::setInputControllerStreamAddress(int streamID, uintptr_t address) {
-	writeToModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 7) + (streamID * 4)), address);
+	writeToModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 6) + (streamID * 4)), address >> 4);
 }
 uintptr_t DMA::getInputControllerStreamAddress(int streamID) {
-	return readFromModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 7) + (streamID * 4)));
+	return readFromModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 6) + (streamID * 4)));
 }
 void DMA::setInputControllerStreamSize(int streamID, int size) {// starting size of stream in amount of records
-	writeToModule(controlAXIbaseAddress, contollerModulePosition, ((2 << 7) + (streamID * 4)), size);
+	writeToModule(controlAXIbaseAddress, contollerModulePosition, ((2 << 6) + (streamID * 4)), size);
 }
 uint32_t DMA::getInputControllerStreamSize(int streamID) {
-	return readFromModule(controlAXIbaseAddress, contollerModulePosition, ((2 << 7) + (streamID * 4)));
+	return readFromModule(controlAXIbaseAddress, contollerModulePosition, ((2 << 6) + (streamID * 4)));
 }
 void DMA::startInputController(bool streamActive[16]) {// indicate which streams can be read from DDR and start processing
 	int activeStreams = 0;
@@ -61,17 +62,17 @@ void DMA::startInputController(bool streamActive[16]) {// indicate which streams
 		activeStreams = activeStreams << 1;
 		if (streamActive[i])activeStreams = activeStreams + 1;
 	}
-	writeToModule(controlAXIbaseAddress, contollerModulePosition, (3 << 7), activeStreams);
+	writeToModule(controlAXIbaseAddress, contollerModulePosition, (3 << 6), activeStreams);
 }
 bool DMA::isInputControllerFinished() { // true if all input streams were read from DDR
-	uint32_t activeStreams = readFromModule(controlAXIbaseAddress, contollerModulePosition, (3 << 7));
+	uint32_t activeStreams = readFromModule(controlAXIbaseAddress, contollerModulePosition, (3 << 6));
 	return (activeStreams == 0);
 }
 //Input Controller in Crossbar
 
 // How many chunks is a record on a particular streamID
 void DMA::setRecordSize(int streamID, int recordSize) {
-	writeToModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 17) + (1 << 9) + (streamID * 4)), recordSize);
+	writeToModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 17) + (1 << 9) + (streamID * 4)), recordSize - 1);
 }
 //set ChunkID at clock cycle of interfaceCycle for records on a particular streamID
 void DMA::setRecordChunkIDs(int streamID, int interfaceCycle, int chunkID) {
@@ -80,22 +81,22 @@ void DMA::setRecordChunkIDs(int streamID, int interfaceCycle, int chunkID) {
 
 //Output Controller
 void DMA::setOutputControllerParams(int streamID, int DDRburstSize, int recordsPerDDRBurst, int bufferStart, int bufferEnd) {
-	writeToModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 16) + (streamID * 4)), (DDRburstSize << 24) + (recordsPerDDRBurst << 16) + (bufferStart << 8) + (bufferEnd));
+	writeToModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 16) + (streamID * 4)), (DDRburstSize << 24) + ((int)log2(recordsPerDDRBurst) << 16) + (bufferStart << 8) + (bufferEnd));
 }
 uint32_t DMA::getOutputControllerParams(int streamID) {
 	return readFromModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 16) + (streamID * 4)));
 }
 void DMA::setOutputControllerStreamAddress(int streamID, uintptr_t address) {
-	writeToModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 16) + (1 << 7) + (streamID * 4)), address);
+	writeToModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 16) + (1 << 6) + (streamID * 4)), address >> 4);
 }
 uintptr_t DMA::getOutputControllerStreamAddress(int streamID) {
-	return readFromModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 16) + (1 << 7) + streamID * 4));
+	return readFromModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 16) + (1 << 6) + streamID * 4));
 }
 void DMA::setOutputControllerStreamSize(int streamID, int size) {// starting size of stream in amount of records
-	writeToModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 16) + (2 << 7) + (streamID * 4)), size);
+	writeToModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 16) + (2 << 6) + (streamID * 4)), size);
 }
 uint32_t DMA::getOutputControllerStreamSize(int streamID) {// starting size of stream in amount of records
-	return readFromModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 16) + (2 << 7) + (streamID * 4)));
+	return readFromModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 16) + (2 << 6) + (streamID * 4)));
 }
 void DMA::startOutputController(bool streamActive[16]) {// indicate which streams can be written to DDR and start processing
 	int activeStreams = 0;
@@ -103,10 +104,10 @@ void DMA::startOutputController(bool streamActive[16]) {// indicate which stream
 		activeStreams = activeStreams << 1;
 		if (streamActive[i])activeStreams = activeStreams + 1;
 	}
-	writeToModule(controlAXIbaseAddress, 0, ((1 << 16) + (3 << 7)), activeStreams);
+	writeToModule(controlAXIbaseAddress, 0, ((1 << 16) + (3 << 6)), activeStreams);
 }
 bool DMA::isOutputControllerFinished() { // true if all streams saw EOS from PR modules
-	uint32_t activeStreams = readFromModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 16) + (3 << 7)));
+	uint32_t activeStreams = readFromModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 16) + (3 << 6)));
 	return (activeStreams == 0);
 }
 
