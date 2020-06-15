@@ -204,7 +204,7 @@ int main()
 	for(int dataPos=0; dataPos <16; dataPos++){
 		int sourceChunkTemp = sourceChunkB2I[cyclePosition][dataPos];
 		dataRead[dataPos] = Buffer_block[sourceChunkTemp].data[dataPos];
-	} 
+	}
 	for(int dataPos = 0; dataPos <16; dataPost++){
 		int sourcePositionTemp = sourcePositionB2I[cyclePosition][dataPos];
 		RecordOnInterface[cyclePosition].data[dataPos]=dataRead[SourcePositionTemp];
@@ -214,7 +214,7 @@ int main()
 	*/
 
 	/*
-	One cycle is 8x2 chunks  
+	One cycle is 8x2 chunks
 	*/
 	std::queue <int> sourceChunk;
 	std::queue <int> targetPosition;
@@ -228,9 +228,9 @@ int main()
 				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter));
 				targetPosition.push(currentChunkCounter - cycleStep * 2);
 			}
-			for (int emptyInitialChunkCounter = 0; emptyInitialChunkCounter < cycleStep * 2; emptyInitialChunkCounter++){
+			for (int emptyInitialChunkCounter = 0; emptyInitialChunkCounter < cycleStep * 2; emptyInitialChunkCounter++) {
 				sourceChunk.push(DONTCARECHUNK);
-				targetPosition.push(emptyInitialChunkCounter +2);
+				targetPosition.push(emptyInitialChunkCounter + 2);
 			}
 			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
 			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
@@ -248,7 +248,7 @@ int main()
 	int input2;
 	int input1;
 	for (int currentBufferChunk = 0; currentBufferChunk < 32; currentBufferChunk++) {
-		for (int currentOffset = 0; currentOffset < 4; currentOffset++) { 
+		for (int currentOffset = 0; currentOffset < 4; currentOffset++) {
 			input1 = sourceChunk.front();
 			sourceChunk.pop();
 			input2 = sourceChunk.front();
@@ -270,7 +270,7 @@ int main()
 			dmaEngine.setBufferToInterfaceSourcePosition(inputStreamID, currentBufferChunk, currentOffset, input4, input3, input2, input1);
 			//std::cout << "setBufferToInterfaceSourcePosition:" << currentBufferChunk << " " << currentOffset << " " << input4 << " " << input3 << " " << input2 << " " << input1 << std::endl;
 		}
-		std::cout << std::endl;
+		//std::cout << std::endl;
 	}
 
 	/*
@@ -304,13 +304,13 @@ int main()
 	void hardwareSendDataToInterface(int recordID, int chunkNumber){ //every time a clock cycle has been received for output from Interface
 		int clockCycle = recordID*recordSize+chunkNumber; //calculate the clock cycle number of this group (1 DDR burst) of packets/records
 		//All of this is considering the same StreamID.
-	
+
 		int dataReordered[16];
 		for(int dataPos = 0 ; dataPos < 16 ; dataPos++){ // do crossbar reordering / duplication if needed
 			int sourcePositionTemp = sourcePositionI2B[clockCycle][dataPos];
 			dataReordered[dataPos] = RecordOnInterface[chunkNumber].data[sourcePositionTemp];
 		}
-	
+
 		for(int dataPos = 0 ; dataPos < 16 ; dataPos++){ // get the resulting data into corresponding positions inside buffer
 			int targetChunkTemp = targetChunkI2B[clockCycle][dataPos];
 			Buffer_block[targetChunkTemp].data[dataPos] = dataReordered[dataPos];
@@ -332,8 +332,8 @@ int main()
 			}
 			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
 			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			targetPosition.push(cycleStep*2);
-			targetPosition.push(cycleStep*2+1);
+			targetPosition.push(cycleStep * 2);
+			targetPosition.push(cycleStep * 2 + 1);
 			for (int emptyFinishingChunkCounter = 2; emptyFinishingChunkCounter < 16; emptyFinishingChunkCounter++) {
 				sourceChunk.push(DONTCARECHUNK);
 				targetPosition.push(DONTCAREPOSITION);
@@ -381,7 +381,7 @@ int main()
 			dmaEngine.setInterfaceToBufferSourcePosition(inputStreamID, currentBufferChunk, currentOffset, input4, input3, input2, input1);
 			//std::cout << "setInterfaceToBufferSourcePosition:" << currentBufferChunk << " " << currentOffset << " " << input4 << " " << input3 << " " << input2 << " " << input1 << std::endl;
 		}
-		std::cout << std::endl;
+		//std::cout << std::endl;
 	}
 
 	/*
@@ -498,6 +498,14 @@ int main()
 	//		std::cout << memoryPointer[i] << std::endl;
 	//	}
 	//}
+
+	bool streamActive[16] = { false };
+	streamActive[0] = true;
+
+	dmaEngine.startInputController(streamActive);
+	dmaEngine.startOutputController(streamActive);
+
+	// check isInputControllerFinished and isOutputControllerFinished
 
 	delete[] memoryPointer;
 	return 0;
