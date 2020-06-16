@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
-#include "rapidcsv.h"
+#include <rapidcsv/rapidcsv.h>
 #include <queue> 
 #include "Filter.h"
 
