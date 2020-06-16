@@ -39,7 +39,7 @@ uint32_t DMA::readFromModule(int* volatile controlAXIbaseAddress, // base addres
 
 //Input Controller
 void DMA::setInputControllerParams(int streamID, int DDRburstSize, int recordsPerDDRBurst, int bufferStart, int bufferEnd) {
-	writeToModule(controlAXIbaseAddress, contollerModulePosition, (streamID * 4), (DDRburstSize << 24) + ((int)log2(recordsPerDDRBurst) << 16) + (bufferStart << 8) + (bufferEnd));
+	writeToModule(controlAXIbaseAddress, contollerModulePosition, (streamID * 4), ((DDRburstSize-1) << 24) + ((int)log2(recordsPerDDRBurst) << 16) + (bufferStart << 8) + (bufferEnd));
 }
 uint32_t DMA::getInputControllerParams(int streamID) {
 	return readFromModule(controlAXIbaseAddress, contollerModulePosition, (streamID * 4));
@@ -81,7 +81,7 @@ void DMA::setRecordChunkIDs(int streamID, int interfaceCycle, int chunkID) {
 
 //Output Controller
 void DMA::setOutputControllerParams(int streamID, int DDRburstSize, int recordsPerDDRBurst, int bufferStart, int bufferEnd) {
-	writeToModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 16) + (streamID * 4)), (DDRburstSize << 24) + ((int)log2(recordsPerDDRBurst) << 16) + (bufferStart << 8) + (bufferEnd));
+	writeToModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 16) + (streamID * 4)), ((DDRburstSize-1) << 24) + ((int)log2(recordsPerDDRBurst) << 16) + (bufferStart << 8) + (bufferEnd));
 }
 uint32_t DMA::getOutputControllerParams(int streamID) {
 	return readFromModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 16) + (streamID * 4)));
