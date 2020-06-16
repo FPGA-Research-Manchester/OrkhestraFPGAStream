@@ -175,14 +175,14 @@ int main()
 	*/
 	int targetBufferChunk = 0;
 	const int DONTCARECHUNK = 31;
-	const int DONTCAREPOSITION = 15;
+	const int DONTCAREPOSITION = 3;
 	for (int currentClockCycle = 0; currentClockCycle < DDRBurstLength; currentClockCycle++) {
 		for (int currentOffset = 0; currentOffset < 4; currentOffset++) {
-			if (currentOffset == 0) {
+			if (currentOffset == currentClockCycle % 4) {
 				//std::cout << "setAXItoBufferChunk:" << currentClockCycle << " " << currentOffset << " " << targetBufferChunk << " " << targetBufferChunk << " " << targetBufferChunk << " " << targetBufferChunk << std::endl;
 				dmaEngine.setAXItoBufferChunk(inputStreamID, currentClockCycle, currentOffset, targetBufferChunk, targetBufferChunk, targetBufferChunk, targetBufferChunk);
 				//std::cout << "setAXItoBufferSourcePosition:" << currentClockCycle << " " << currentOffset << " " << (currentClockCycle % 4) * 4 + 3 << " " << (currentClockCycle % 4) * 4 + 2 << " " << (currentClockCycle % 4) * 4 + 1 << " " << (currentClockCycle % 4) * 4 + 0 << std::endl;
-				dmaEngine.setAXItoBufferSourcePosition(inputStreamID, currentClockCycle, currentOffset, (currentClockCycle % 4) * 4 + 3, (currentClockCycle % 4) * 4 + 2, (currentClockCycle % 4) * 4 + 1, (currentClockCycle % 4) * 4 + 0);
+				dmaEngine.setAXItoBufferSourcePosition(inputStreamID, currentClockCycle, currentOffset,  3, 2, 1, 0);
 			}
 			else {
 				dmaEngine.setAXItoBufferChunk(inputStreamID, currentClockCycle, currentOffset, DONTCARECHUNK, DONTCARECHUNK, DONTCARECHUNK, DONTCARECHUNK);
