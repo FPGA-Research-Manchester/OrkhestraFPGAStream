@@ -134,6 +134,9 @@ int main()
 		dmaEngine.setRecordChunkIDs(outputStreamID, i, i);
 	}
 
+	const int DONTCARECHUNK = 31;
+	const int DONTCAREPOSITION = 3;
+
 	/*
 	struct {
 		int data[16];
@@ -173,9 +176,10 @@ int main()
 	First 4 data positions we want to keep
 	The rest of the 12 we don't wan't to duplicate anything so we discard
 	*/
+
+	// Currently not needed
+	/*
 	int targetBufferChunk = 0;
-	const int DONTCARECHUNK = 31;
-	const int DONTCAREPOSITION = 3;
 	for (int currentClockCycle = 0; currentClockCycle < DDRBurstLength; currentClockCycle++) {
 		for (int currentOffset = 0; currentOffset < 4; currentOffset++) {
 			if (currentOffset == currentClockCycle % 4) {
@@ -196,6 +200,7 @@ int main()
 		}
 		std::cout << std::endl;
 	}
+	*/
 
 	/*
 	int sourceChunkB2I[32][16];
@@ -217,6 +222,9 @@ int main()
 	/*
 	One cycle is 8x2 chunks
 	*/
+
+	//Works with the AXI corssbar
+	/*
 	std::queue <int> sourceChunk;
 	std::queue <int> targetPosition;
 	for (int cycleCounter = 0; cycleCounter < 2; cycleCounter++) {
@@ -235,6 +243,38 @@ int main()
 			// Last chunk
 			targetPosition.push(cycleStep*2);
 			targetPosition.push(cycleStep*2+1);
+			for (int emptyInitialChunkCounter = 0; emptyInitialChunkCounter < cycleStep * 2; emptyInitialChunkCounter++) {
+				sourceChunk.push(DONTCARECHUNK);
+				targetPosition.push(DONTCAREPOSITION);
+			}
+			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
+			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
+			for (int emptyFinishingChunkCounter = cycleStep * 2 + 2; emptyFinishingChunkCounter < 16; emptyFinishingChunkCounter++) {
+				sourceChunk.push(DONTCARECHUNK);
+				targetPosition.push(DONTCAREPOSITION);
+			}
+		}
+	}
+	*/
+
+	std::queue <int> sourceChunk;
+	std::queue <int> targetPosition;
+	for (int cycleCounter = 0; cycleCounter < 2; cycleCounter++) {
+		for (int cycleStep = 0; cycleStep < 8; cycleStep++) {
+			// Initial chunk
+			for (int forwardChunkCounter = 0; forwardChunkCounter < cycleStep * 2; forwardChunkCounter++) {
+				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
+			}
+			for (int currentChunkCounter = cycleStep * 2; currentChunkCounter < 16; currentChunkCounter++) {
+				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter));
+				targetPosition.push(15 - currentChunkCounter);
+			}
+			for (int forwardChunkCounter = 0; forwardChunkCounter < cycleStep * 2; forwardChunkCounter++) {
+				targetPosition.push(15 - forwardChunkCounter);
+			}
+			// Last chunk
+			targetPosition.push(15 - cycleStep * 2);
+			targetPosition.push(15 - (cycleStep * 2 + 1));
 			for (int emptyInitialChunkCounter = 0; emptyInitialChunkCounter < cycleStep * 2; emptyInitialChunkCounter++) {
 				sourceChunk.push(DONTCARECHUNK);
 				targetPosition.push(DONTCAREPOSITION);
@@ -325,6 +365,8 @@ int main()
 	*/
 
 	// Assuming sourceChunk and targetPosition are empty before since they get emptied correctly.
+	//Works with the AXI corssbar
+	/*
 	for (int cycleCounter = 0; cycleCounter < 2; cycleCounter++) {
 		for (int cycleStep = 0; cycleStep < 8; cycleStep++) {
 			// Initial chunk
@@ -345,6 +387,34 @@ int main()
 			}
 			targetPosition.push(0);
 			targetPosition.push(1);
+			for (int emptyFinishingChunkCounter = cycleStep * 2 + 2; emptyFinishingChunkCounter < 16; emptyFinishingChunkCounter++) {
+				sourceChunk.push(DONTCARECHUNK);
+				targetPosition.push(DONTCAREPOSITION);
+			}
+		}
+	}
+	*/
+
+	for (int cycleCounter = 0; cycleCounter < 2; cycleCounter++) {
+		for (int cycleStep = 0; cycleStep < 8; cycleStep++) {
+			// Initial chunk
+			for (int forwardChunkCounter = 16 - cycleStep * 2; forwardChunkCounter < 16; forwardChunkCounter++) {
+				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
+				targetPosition.push(15 - forwardChunkCounter);
+			}
+			for (int currentChunkCounter = 0; currentChunkCounter < 16 - cycleStep * 2; currentChunkCounter++) {
+				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter));
+				targetPosition.push(15 - currentChunkCounter);
+			}
+			// Last chunk
+			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
+			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
+			for (int emptyInitialChunkCounter = 0; emptyInitialChunkCounter < cycleStep * 2; emptyInitialChunkCounter++) {
+				sourceChunk.push(DONTCARECHUNK);
+				targetPosition.push(DONTCAREPOSITION);
+			}
+			targetPosition.push(15 - 0);
+			targetPosition.push(15 - 1);
 			for (int emptyFinishingChunkCounter = cycleStep * 2 + 2; emptyFinishingChunkCounter < 16; emptyFinishingChunkCounter++) {
 				sourceChunk.push(DONTCARECHUNK);
 				targetPosition.push(DONTCAREPOSITION);
@@ -442,6 +512,8 @@ int main()
 	}
 	*/
 
+	// Currently not needed
+	/*
 	targetBufferChunk = 0;
 	for (int currentClockCycle = 0; currentClockCycle < DDRBurstLength; currentClockCycle++) {
 		for (int currentOffset = 0; currentOffset < 4; currentOffset++) {
@@ -461,6 +533,7 @@ int main()
 		}
 		std::cout << std::endl;
 	}
+	*/
 
 	// Setup the filter module
 	Filter filterModule(memoryPointer, 1);
