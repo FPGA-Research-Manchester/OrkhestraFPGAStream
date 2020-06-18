@@ -179,21 +179,22 @@ int main()
 	for (int currentClockCycle = 0; currentClockCycle < DDRBurstLength; currentClockCycle++) {
 		for (int currentOffset = 0; currentOffset < 4; currentOffset++) {
 			if (currentOffset == currentClockCycle % 4) {
-				//std::cout << "setAXItoBufferChunk:" << currentClockCycle << " " << currentOffset << " " << targetBufferChunk << " " << targetBufferChunk << " " << targetBufferChunk << " " << targetBufferChunk << std::endl;
+				std::cout << "setAXItoBufferChunk:" << currentClockCycle << " " << currentOffset << " " << targetBufferChunk << " " << targetBufferChunk << " " << targetBufferChunk << " " << targetBufferChunk << std::endl;
 				dmaEngine.setAXItoBufferChunk(inputStreamID, currentClockCycle, currentOffset, targetBufferChunk, targetBufferChunk, targetBufferChunk, targetBufferChunk);
-				//std::cout << "setAXItoBufferSourcePosition:" << currentClockCycle << " " << currentOffset << " " << (currentClockCycle % 4) * 4 + 3 << " " << (currentClockCycle % 4) * 4 + 2 << " " << (currentClockCycle % 4) * 4 + 1 << " " << (currentClockCycle % 4) * 4 + 0 << std::endl;
+				std::cout << "setAXItoBufferSourcePosition:" << currentClockCycle << " " << currentOffset << " " << (currentClockCycle % 4) * 4 + 3 << " " << (currentClockCycle % 4) * 4 + 2 << " " << (currentClockCycle % 4) * 4 + 1 << " " << (currentClockCycle % 4) * 4 + 0 << std::endl;
 				dmaEngine.setAXItoBufferSourcePosition(inputStreamID, currentClockCycle, currentOffset,  3, 2, 1, 0);
 			}
 			else {
 				dmaEngine.setAXItoBufferChunk(inputStreamID, currentClockCycle, currentOffset, DONTCARECHUNK, DONTCARECHUNK, DONTCARECHUNK, DONTCARECHUNK);
-				//std::cout << "setAXItoBufferChunk:" << currentClockCycle << " " << currentOffset << " " << DONTCARECHUNK << " " << DONTCARECHUNK << " " << DONTCARECHUNK << " " << DONTCARECHUNK << std::endl;
+				std::cout << "setAXItoBufferChunk:" << currentClockCycle << " " << currentOffset << " " << DONTCARECHUNK << " " << DONTCARECHUNK << " " << DONTCARECHUNK << " " << DONTCARECHUNK << std::endl;
 				dmaEngine.setAXItoBufferSourcePosition(inputStreamID, currentClockCycle, currentOffset, DONTCAREPOSITION, DONTCAREPOSITION, DONTCAREPOSITION, DONTCAREPOSITION);
-				//std::cout << "setAXItoBufferSourcePosition:" << currentClockCycle << " " << currentOffset << " " << DONTCAREPOSITION << " " << DONTCAREPOSITION << " " << DONTCAREPOSITION << " " << DONTCAREPOSITION << std::endl;
+				std::cout << "setAXItoBufferSourcePosition:" << currentClockCycle << " " << currentOffset << " " << DONTCAREPOSITION << " " << DONTCAREPOSITION << " " << DONTCAREPOSITION << " " << DONTCAREPOSITION << std::endl;
 			}
 		}
 		if (currentClockCycle % 4 == 3) {
 			targetBufferChunk++;
 		}
+		std::cout << std::endl;
 	}
 
 	/*
@@ -220,25 +221,29 @@ int main()
 	std::queue <int> targetPosition;
 	for (int cycleCounter = 0; cycleCounter < 2; cycleCounter++) {
 		for (int cycleStep = 0; cycleStep < 8; cycleStep++) {
+			// Initial chunk
 			for (int forwardChunkCounter = 0; forwardChunkCounter < cycleStep * 2; forwardChunkCounter++) {
 				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-				targetPosition.push(16 - cycleStep * 2 + forwardChunkCounter);
 			}
 			for (int currentChunkCounter = cycleStep * 2; currentChunkCounter < 16; currentChunkCounter++) {
 				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter));
-				targetPosition.push(currentChunkCounter - cycleStep * 2);
+				targetPosition.push(currentChunkCounter);
 			}
+			for (int forwardChunkCounter = 0; forwardChunkCounter < cycleStep * 2; forwardChunkCounter++) {
+				targetPosition.push(forwardChunkCounter);
+			}
+			// Last chunk
+			targetPosition.push(cycleStep*2);
+			targetPosition.push(cycleStep*2+1);
 			for (int emptyInitialChunkCounter = 0; emptyInitialChunkCounter < cycleStep * 2; emptyInitialChunkCounter++) {
 				sourceChunk.push(DONTCARECHUNK);
-				targetPosition.push(emptyInitialChunkCounter + 2);
+				targetPosition.push(DONTCAREPOSITION);
 			}
 			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
 			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			targetPosition.push(0);
-			targetPosition.push(1);
 			for (int emptyFinishingChunkCounter = cycleStep * 2 + 2; emptyFinishingChunkCounter < 16; emptyFinishingChunkCounter++) {
 				sourceChunk.push(DONTCARECHUNK);
-				targetPosition.push(emptyFinishingChunkCounter);
+				targetPosition.push(DONTCAREPOSITION);
 			}
 		}
 	}
@@ -258,7 +263,7 @@ int main()
 			input4 = sourceChunk.front();
 			sourceChunk.pop();
 			dmaEngine.setBufferToInterfaceChunk(inputStreamID, currentBufferChunk, currentOffset, input4, input3, input2, input1);
-			//std::cout << "setBufferToInterfaceChunk:" << currentBufferChunk << " " << currentOffset << " " << input4 << " " << input3 << " " << input2 << " " << input1 << std::endl;
+			std::cout << "setBufferToInterfaceChunk:" << currentBufferChunk << " " << currentOffset << " " << input4 << " " << input3 << " " << input2 << " " << input1 << std::endl;
 			input1 = targetPosition.front();
 			targetPosition.pop();
 			input2 = targetPosition.front();
@@ -268,9 +273,9 @@ int main()
 			input4 = targetPosition.front();
 			targetPosition.pop();
 			dmaEngine.setBufferToInterfaceSourcePosition(inputStreamID, currentBufferChunk, currentOffset, input4, input3, input2, input1);
-			//std::cout << "setBufferToInterfaceSourcePosition:" << currentBufferChunk << " " << currentOffset << " " << input4 << " " << input3 << " " << input2 << " " << input1 << std::endl;
+			std::cout << "setBufferToInterfaceSourcePosition:" << currentBufferChunk << " " << currentOffset << " " << input4 << " " << input3 << " " << input2 << " " << input1 << std::endl;
 		}
-		//std::cout << std::endl;
+		std::cout << std::endl;
 	}
 
 	/*
@@ -322,19 +327,25 @@ int main()
 	// Assuming sourceChunk and targetPosition are empty before since they get emptied correctly.
 	for (int cycleCounter = 0; cycleCounter < 2; cycleCounter++) {
 		for (int cycleStep = 0; cycleStep < 8; cycleStep++) {
-			for (int currentChunkCounter = cycleStep * 2; currentChunkCounter < 16; currentChunkCounter++) {
-				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter));
-				targetPosition.push(currentChunkCounter);
-			}
-			for (int forwardChunkCounter = 0; forwardChunkCounter < cycleStep * 2; forwardChunkCounter++) {
+			// Initial chunk
+			for (int forwardChunkCounter = 16 - cycleStep * 2; forwardChunkCounter < 16; forwardChunkCounter++) {
 				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
 				targetPosition.push(forwardChunkCounter);
 			}
+			for (int currentChunkCounter = 0; currentChunkCounter < 16 - cycleStep * 2; currentChunkCounter++) {
+				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter));
+				targetPosition.push(currentChunkCounter);
+			}
+			// Last chunk
 			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
 			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			targetPosition.push(cycleStep * 2);
-			targetPosition.push(cycleStep * 2 + 1);
-			for (int emptyFinishingChunkCounter = 2; emptyFinishingChunkCounter < 16; emptyFinishingChunkCounter++) {
+			for (int emptyInitialChunkCounter = 0; emptyInitialChunkCounter < cycleStep * 2; emptyInitialChunkCounter++) {
+				sourceChunk.push(DONTCARECHUNK);
+				targetPosition.push(DONTCAREPOSITION);
+			}
+			targetPosition.push(0);
+			targetPosition.push(1);
+			for (int emptyFinishingChunkCounter = cycleStep * 2 + 2; emptyFinishingChunkCounter < 16; emptyFinishingChunkCounter++) {
 				sourceChunk.push(DONTCARECHUNK);
 				targetPosition.push(DONTCAREPOSITION);
 			}
@@ -369,7 +380,7 @@ int main()
 			input4 = sourceChunk.front();
 			sourceChunk.pop();
 			dmaEngine.setInterfaceToBufferChunk(inputStreamID, currentBufferChunk, currentOffset, input4, input3, input2, input1);
-			//std::cout << "setInterfaceToBufferChunk:" << currentBufferChunk << " " << currentOffset << " " << input4 << " " << input3 << " " << input2 << " " << input1 << std::endl;
+			std::cout << "setInterfaceToBufferChunk:" << currentBufferChunk << " " << currentOffset << " " << input4 << " " << input3 << " " << input2 << " " << input1 << std::endl;
 			input1 = targetPosition.front();
 			targetPosition.pop();
 			input2 = targetPosition.front();
@@ -379,9 +390,9 @@ int main()
 			input4 = targetPosition.front();
 			targetPosition.pop();
 			dmaEngine.setInterfaceToBufferSourcePosition(inputStreamID, currentBufferChunk, currentOffset, input4, input3, input2, input1);
-			//std::cout << "setInterfaceToBufferSourcePosition:" << currentBufferChunk << " " << currentOffset << " " << input4 << " " << input3 << " " << input2 << " " << input1 << std::endl;
+			std::cout << "setInterfaceToBufferSourcePosition:" << currentBufferChunk << " " << currentOffset << " " << input4 << " " << input3 << " " << input2 << " " << input1 << std::endl;
 		}
-		//std::cout << std::endl;
+		std::cout << std::endl;
 	}
 
 	/*
@@ -435,19 +446,20 @@ int main()
 	for (int currentClockCycle = 0; currentClockCycle < DDRBurstLength; currentClockCycle++) {
 		for (int currentOffset = 0; currentOffset < 4; currentOffset++) {
 			if (currentOffset == currentClockCycle % 4) {
-				//std::cout << "setBufferToAXIChunk:" << currentClockCycle << " " << currentOffset << " " << targetBufferChunk << " " << targetBufferChunk << " " << targetBufferChunk << " " << targetBufferChunk << std::endl;
+				std::cout << "setBufferToAXIChunk:" << currentClockCycle << " " << currentOffset << " " << targetBufferChunk << " " << targetBufferChunk << " " << targetBufferChunk << " " << targetBufferChunk << std::endl;
 				dmaEngine.setBufferToAXIChunk(inputStreamID, currentClockCycle, currentOffset, targetBufferChunk, targetBufferChunk, targetBufferChunk, targetBufferChunk);
-				//std::cout << "setBufferToAXISourcePosition:" << currentClockCycle << " " << currentOffset << " " << (currentClockCycle % 4) * 4 + 3 << " " << (currentClockCycle % 4) * 4 + 2 << " " << (currentClockCycle % 4) * 4 + 1 << " " << (currentClockCycle % 4) * 4 + 0 << std::endl;
+				std::cout << "setBufferToAXISourcePosition:" << currentClockCycle << " " << currentOffset << " " << (currentClockCycle % 4) * 4 + 3 << " " << (currentClockCycle % 4) * 4 + 2 << " " << (currentClockCycle % 4) * 4 + 1 << " " << (currentClockCycle % 4) * 4 + 0 << std::endl;
 				dmaEngine.setBufferToAXISourcePosition(inputStreamID, currentClockCycle, currentOffset, (currentClockCycle % 4) * 4 + 3, (currentClockCycle % 4) * 4 + 2, (currentClockCycle % 4) * 4 + 1, (currentClockCycle % 4) * 4 + 0);
 			}
 			else {
 				dmaEngine.setBufferToAXIChunk(inputStreamID, currentClockCycle, currentOffset, DONTCARECHUNK, DONTCARECHUNK, DONTCARECHUNK, DONTCARECHUNK);
-				//std::cout << "setBufferToAXIChunk:" << currentClockCycle << " " << currentOffset << " " << DONTCARECHUNK << " " << DONTCARECHUNK << " " << DONTCARECHUNK << " " << DONTCARECHUNK << std::endl;
+				std::cout << "setBufferToAXIChunk:" << currentClockCycle << " " << currentOffset << " " << DONTCARECHUNK << " " << DONTCARECHUNK << " " << DONTCARECHUNK << " " << DONTCARECHUNK << std::endl;
 			}
 		}
 		if (currentClockCycle % 4 == 3) {
 			targetBufferChunk++;
 		}
+		std::cout << std::endl;
 	}
 
 	// Setup the filter module
