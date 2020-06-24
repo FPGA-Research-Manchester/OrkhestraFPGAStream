@@ -1,4 +1,4 @@
-#include "DMA.h"
+#include "DMA.hpp"
 #include <iostream>
 #include <math.h>
 

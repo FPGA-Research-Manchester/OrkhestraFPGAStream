@@ -1,11 +1,11 @@
 #include <cstdio>
-#include "DMA.h"
 #include <iostream>
 #include <vector>
 #include <math.h>
-#include <rapidcsv/rapidcsv.h>
+#include <rapidcsv.h>
 #include <queue> 
-#include "Filter.h"
+#include "DMA.hpp"
+#include "Filter.hpp"
 
 /*
 Filter: (price < 12000)
