@@ -92,6 +92,7 @@ void Filter::filterSetCompareReferenceValue(uint32_t chunkID, // for which chunk
 #define LITERAL_POSITIVE 1
 #define LITERAL_NEGATIVE 2
 struct {
+	bool DNF_is_used = false;
 	struct {
 		struct {
 			struct {
@@ -102,6 +103,7 @@ struct {
 } DNF_Clause[32]; //Up to 32 Clauses (for 16 DNF clause module use 0-15 only)
 
 void Filter::filterSetDNFClauseLiteral(uint32_t DNF_Clause_ID /*0-31*/, uint32_t CompareNumber /*1-4*/, uint32_t ChunkID /*0-31*/, uint32_t DataPosition /*0-15 for 512-bit datapath etc*/, uint8_t LiteralType) {
+	DNF_Clause[DNF_Clause_ID].DNF_is_used = true;
 	DNF_Clause[DNF_Clause_ID].CompareNumber[CompareNumber].ChunkID[ChunkID].DataPosition[DataPosition].literalState = LiteralType;
 }
 
@@ -112,23 +114,28 @@ void Filter::filterWriteDNFClauseLiteralsToModule(uint32_t DatapathWidth, uint32
 			for (ChunkID = 0; ChunkID < 32; ChunkID++) {
 				uint32_t clausesPackedPositiveResult = 0xFFFFFFFF;
 				uint32_t clausesPackedNegativeResult = 0xFFFFFFFF;
-				for (DNFClause = 0; DNFClause < moduleDNFClauses; DNFClause++) {
-					clausesPackedPositiveResult <<= 1;
-					clausesPackedNegativeResult <<= 1;
-					if (DNF_Clause[DNFClause].CompareNumber[CompareLane].ChunkID[ChunkID].DataPosition[DataPosition].literalState == LITERAL_DONT_CARE) {
-						clausesPackedPositiveResult |= 1;
-						clausesPackedNegativeResult |= 1;
-					}
-					else if (DNF_Clause[DNFClause].CompareNumber[CompareLane].ChunkID[ChunkID].DataPosition[DataPosition].literalState == LITERAL_POSITIVE) {
-						clausesPackedPositiveResult |= 1;
-						clausesPackedNegativeResult |= 0;
-					}
-					else if (DNF_Clause[DNFClause].CompareNumber[CompareLane].ChunkID[ChunkID].DataPosition[DataPosition].literalState == LITERAL_NEGATIVE) {
-						clausesPackedPositiveResult |= 0;
-						clausesPackedNegativeResult |= 1;
+				if (DNF_Clause[DNFClause].DNF_is_used) {
+					for (DNFClause = 0; DNFClause < moduleDNFClauses; DNFClause++) {
+						clausesPackedPositiveResult <<= 1;
+						clausesPackedNegativeResult <<= 1;
+						if (DNF_Clause[DNFClause].CompareNumber[CompareLane].ChunkID[ChunkID].DataPosition[DataPosition].literalState == LITERAL_DONT_CARE) {
+							clausesPackedPositiveResult |= 1;
+							clausesPackedNegativeResult |= 1;
+						}
+						else if (DNF_Clause[DNFClause].CompareNumber[CompareLane].ChunkID[ChunkID].DataPosition[DataPosition].literalState == LITERAL_POSITIVE) {
+							clausesPackedPositiveResult |= 1;
+							clausesPackedNegativeResult |= 0;
+						}
+						else if (DNF_Clause[DNFClause].CompareNumber[CompareLane].ChunkID[ChunkID].DataPosition[DataPosition].literalState == LITERAL_NEGATIVE) {
+							clausesPackedPositiveResult |= 0;
+							clausesPackedNegativeResult |= 1;
+						}
 					}
 				}
-
+				else { // else DNF clause is unused
+					clausesPackedPositiveResult = 0; // therefore it cannot satisfy
+					clausesPackedNegativeResult = 0; // boolean expression
+				}
 				writeToModule(controlAXIbaseAddress, filterModulePosition, ((1 << 16) + (DataPosition << 2) + (1 << 7) + (ChunkID << 8) + (CompareLane << 13)), clausesPackedPositiveResult);
 				writeToModule(controlAXIbaseAddress, filterModulePosition, ((1 << 16) + (DataPosition << 2) + (0 << 7) + (ChunkID << 8) + (CompareLane << 13)), clausesPackedNegativeResult);
 			}

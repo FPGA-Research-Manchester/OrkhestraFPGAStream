@@ -72,7 +72,7 @@ bool DMA::isInputControllerFinished() { // true if all input streams were read f
 
 // How many chunks is a record on a particular streamID
 void DMA::setRecordSize(int streamID, int recordSize) {
-	writeToModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 17) + (1 << 9) + (streamID * 4)), recordSize - 1);
+	writeToModule(controlAXIbaseAddress, contollerModulePosition, ((1 << 17) + (1 << 8) + (streamID * 4)), recordSize - 1);
 }
 //set ChunkID at clock cycle of interfaceCycle for records on a particular streamID
 void DMA::setRecordChunkIDs(int streamID, int interfaceCycle, int chunkID) {
