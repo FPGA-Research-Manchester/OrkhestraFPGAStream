@@ -6,13 +6,19 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-add_executable(testlib testing_test.cpp) 
+file(GLOB HEADER_LIST "${DBMStoDSPI_SOURCE_DIR}/tests/*.hpp")
+file(GLOB SOURCE_LIST "${DBMStoDSPI_SOURCE_DIR}/tests/*.cpp")
+
+add_executable(testlib ${HEADER_LIST} ${SOURCE_LIST}) 
 
 target_link_libraries(testlib 
 	                  gtest 
 					  gtest_main
 					  gmock
 					  gmock_main
+					  db_to_hw_library
 )
 
-add_test(NAME testSet COMMAND testlib)
+target_include_directories(testlib INTERFACE "${DBMStoDSPI_SOURCE_DIR}/tests")
+
+add_test(NAME AccelerationModuleTest COMMAND testlib)
