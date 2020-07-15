@@ -18,49 +18,31 @@ Filter: (price < 12000)
  price  | integer               |
 */
 
-struct stringAsciiValue
+struct StringAsciiValue
 {
 	std::vector<int> values;
-	stringAsciiValue() :values(32 / 4, 0) {}
+	StringAsciiValue() :values(32 / 4, 0) {}
 };
 
-void ConvToInt(const std::string& pStr, stringAsciiValue& pVal)
+void ConvToInt(const std::string& pStr, StringAsciiValue& pVal)
 {
 	for (int i = 0; i < pStr.length(); i++) {
 		pVal.values[i / 4] += int(pStr[i]) << (3 - (i % 4)) * 8;
 	}
 }
 
-int main()
-{
-	// Figure out some legit way to get this data type information. For all streams. Would be nice to have this info in structs or sth like that to capture dataType
-	std::vector<int> dataTypeSizes;
-	dataTypeSizes.push_back(1);
-	dataTypeSizes.push_back(8);
-	dataTypeSizes.push_back(8);
-	dataTypeSizes.push_back(1);
-	int recordSize = 0;
-	for (auto i = dataTypeSizes.begin(); i != dataTypeSizes.end(); ++i) {
-		recordSize += *i;
-	}
-
-	// The data probably doesn't come in a csv but it'll do for now
-	rapidcsv::Document doc("MOCK_DATA.csv", rapidcsv::LabelParams(-1, -1));
-	int recordCount = doc.GetRowCount();
-
-	// Create contiguous data array
-	std::vector<int> dbData(doc.GetRowCount() * recordSize);
+void FillDataArray(std::vector<int>& dbData, rapidcsv::Document* dbDataFile){
 	int currentLocalDataAddress = 0;
-	for (int rowNumber = 0; rowNumber < recordCount; rowNumber++) {
+	for (int rowNumber = 0; rowNumber < dbDataFile->GetRowCount(); rowNumber++) {
 		for (int colNumber = 0; colNumber < 4; colNumber++) {
 			switch (colNumber) {
 			case 0:
 			case 3:
-				dbData[currentLocalDataAddress++] = doc.GetCell<int>(colNumber, rowNumber);
+				dbData[currentLocalDataAddress++] = dbDataFile->GetCell<int>(colNumber, rowNumber);
 				break;
 			case 1:
 			case 2:
-				stringAsciiValue asciiValue = doc.GetCell<stringAsciiValue>(colNumber, rowNumber, ConvToInt);
+				StringAsciiValue asciiValue = dbDataFile->GetCell<StringAsciiValue>(colNumber, rowNumber, ConvToInt);
 				for (int i = 0; i < asciiValue.values.size(); i++) {
 					dbData[currentLocalDataAddress++] = asciiValue.values[i];
 				}
@@ -68,478 +50,233 @@ int main()
 			}
 		}
 	}
+}
 
-	// Create the controller memory area //Also hardcode the address to 0xA0000000 we're going to use baremetal
-	int* volatile memoryPointer = new int[2097152];
-	for (int i = 0; i < 2097152; i++) {
-		memoryPointer[i] = -1;
+//TODO: Get rid of magic numbers
+struct DMACrossbarSetupData {
+	DMACrossbarSetupData() : chunkData(16), positionData(16) {}
+	// TODO: Think about these names!
+	std::vector<int> chunkData;
+	std::vector<int> positionData;
+};
+
+struct DMASetupData {
+	DMASetupData() : crossbarSetupData(32) {}
+	int streamID;
+	int DDRBurstLength;
+	int recordsPerDDRBurst;
+	uintptr_t streamAddress;
+	int recordCount;
+	int chunksPerRecord;
+	int bufferStart;
+	int bufferEnd;
+	std::vector<std::tuple<int, int>> recordChunkIDs;
+	std::vector<DMACrossbarSetupData> crossbarSetupData;
+	bool isInputStream;
+};
+
+void CalculateDMAStreamSetupData(DMASetupData& streamSetupData, const int& maxChunkSize, const int& maxDDRBurstSize, const int& maxDDRSizePerCycle, std::vector<int>& dbData, int recordSize)
+{
+	streamSetupData.chunksPerRecord = (recordSize + maxChunkSize - 1) / maxChunkSize; //ceil
+
+	// Temporarily for now.
+	for (int i = 0; i < streamSetupData.chunksPerRecord; i++) {
+		streamSetupData.recordChunkIDs.push_back(std::make_tuple(i,i));
 	}
-	DMA dmaEngine(memoryPointer);
-	// Calculate the controller parameter values based on input data and datatypes
-	// Every size metric is 1 integer = 4 bytes = 32 bits
-	const int maxDDRBurstSize = 512;
-	const int maxChunkSize = 16;
-	const int maxDDRSizePerCycle = 4;
-
-	//Input
-	int inputStreamID = 0;
-
-	int chunksPerRecord = (recordSize + maxChunkSize - 1) / maxChunkSize; //ceil
-	std::cout << "chunksPerRecord:" << chunksPerRecord << std::endl;
 
 	int recordsPerMaxBurstSize = maxDDRBurstSize / recordSize;
-	int recordsPerDDRBurst = pow(2, (int)log2(recordsPerMaxBurstSize));
-	std::cout << "recordsPerDDRBurst:" << recordsPerDDRBurst << std::endl;
+	streamSetupData.recordsPerDDRBurst = pow(2, (int)log2(recordsPerMaxBurstSize));
 
-	int DDRBurstLength = ((recordSize * recordsPerDDRBurst) + maxDDRSizePerCycle - 1) / maxDDRSizePerCycle; //ceil (recordSize * recordsPerDDRBurst)/maxDDRSizePerCycle
-	std::cout << "DDRBurstLength:" << DDRBurstLength << std::endl;
+	streamSetupData.DDRBurstLength = ((recordSize * streamSetupData.recordsPerDDRBurst) + maxDDRSizePerCycle - 1) / maxDDRSizePerCycle; //ceil (recordSize * recordsPerDDRBurst) / maxDDRSizePerCycle
 
-	// Test different variants later
-	int bufferStart = 0;
-	int bufferEnd = 15;
+	// Temporarily for now
+	streamSetupData.bufferStart = 0;
+	streamSetupData.bufferEnd = 15;
 
-	// Set input controller params
-	dmaEngine.setInputControllerParams(inputStreamID, DDRBurstLength, recordsPerDDRBurst, bufferStart, bufferEnd);
-	dmaEngine.setInputControllerStreamAddress(inputStreamID, reinterpret_cast<uintptr_t>(&dbData[0]));
-	dmaEngine.setInputControllerStreamSize(inputStreamID, recordCount);
-	dmaEngine.setRecordSize(inputStreamID, chunksPerRecord);
-	for (int i = 0; i < chunksPerRecord; i++) {
-		dmaEngine.setRecordChunkIDs(inputStreamID, i, i);
+	streamSetupData.streamAddress = reinterpret_cast<uintptr_t>(&dbData[0]);
+}
+
+void SetUpDMAIOStreams(DMASetupData& streamSetupData, DMA& dmaEngine)
+{
+	if (streamSetupData.isInputStream)
+	{
+		dmaEngine.setInputControllerParams(streamSetupData.streamID, streamSetupData.DDRBurstLength, streamSetupData.recordsPerDDRBurst, streamSetupData.bufferStart, streamSetupData.bufferEnd);
+		dmaEngine.setInputControllerStreamAddress(streamSetupData.streamID, streamSetupData.streamAddress);
+		dmaEngine.setInputControllerStreamSize(streamSetupData.streamID, streamSetupData.recordCount);
 	}
+	else
+	{
+		dmaEngine.setOutputControllerParams(streamSetupData.streamID, streamSetupData.DDRBurstLength, streamSetupData.recordsPerDDRBurst, streamSetupData.bufferStart, streamSetupData.bufferEnd);
+		dmaEngine.setOutputControllerStreamAddress(streamSetupData.streamID, streamSetupData.streamAddress);
+		dmaEngine.setOutputControllerStreamSize(streamSetupData.streamID, streamSetupData.recordCount);
+	}
+	dmaEngine.setRecordSize(streamSetupData.streamID, streamSetupData.chunksPerRecord);
+	for (auto& chunkIDPair : streamSetupData.recordChunkIDs)
+	{
+		dmaEngine.setRecordChunkIDs(streamSetupData.streamID, std::get<0>(chunkIDPair), std::get<1>(chunkIDPair));
+	}
+}
+
+// TODO: Change to better names
+void SetCrossbarSetupDataForStream(std::queue<int>& sourceChunks, std::queue<int>& targetPositions, DMASetupData& streamSetupData)
+{
+	for (int currentBufferChunk = 0; currentBufferChunk < 32; currentBufferChunk++) {
+		DMACrossbarSetupData currentChunkData;
+		for (int currentDataInput = 0; currentDataInput < 16; currentDataInput++) {
+			currentChunkData.chunkData[currentDataInput] = sourceChunks.front();
+			sourceChunks.pop();
+			currentChunkData.positionData[currentDataInput] = targetPositions.front();
+			targetPositions.pop();
+		}
+		streamSetupData.crossbarSetupData[currentBufferChunk] = currentChunkData;
+	}
+}
+
+void SetUpDMACrossbars(DMASetupData& streamSetupData, DMA& dmaEngine)
+{
+	for (size_t currentChunkIndex = 0; currentChunkIndex < streamSetupData.crossbarSetupData.size(); ++currentChunkIndex) {
+		if (streamSetupData.isInputStream) {
+			for (int currentOffset = 0; currentOffset < 4; currentOffset++) {
+				dmaEngine.setBufferToInterfaceChunk(streamSetupData.streamID, currentChunkIndex, currentOffset, streamSetupData.crossbarSetupData[currentChunkIndex].chunkData[3 + currentOffset * 4], streamSetupData.crossbarSetupData[currentChunkIndex].chunkData[2 + currentOffset * 4], streamSetupData.crossbarSetupData[currentChunkIndex].chunkData[1 + currentOffset * 4], streamSetupData.crossbarSetupData[currentChunkIndex].chunkData[0 + currentOffset * 4]);
+				dmaEngine.setBufferToInterfaceSourcePosition(streamSetupData.streamID, currentChunkIndex, currentOffset, streamSetupData.crossbarSetupData[currentChunkIndex].positionData[3 + currentOffset * 4], streamSetupData.crossbarSetupData[currentChunkIndex].positionData[2 + currentOffset * 4], streamSetupData.crossbarSetupData[currentChunkIndex].positionData[1 + currentOffset * 4], streamSetupData.crossbarSetupData[currentChunkIndex].positionData[0 + currentOffset * 4]);
+			}
+		}
+		else {
+			for (int currentOffset = 0; currentOffset < 4; currentOffset++) {
+				dmaEngine.setInterfaceToBufferChunk(streamSetupData.streamID, currentChunkIndex, currentOffset, streamSetupData.crossbarSetupData[currentChunkIndex].chunkData[3 + currentOffset * 4], streamSetupData.crossbarSetupData[currentChunkIndex].chunkData[2 + currentOffset * 4], streamSetupData.crossbarSetupData[currentChunkIndex].chunkData[1 + currentOffset * 4], streamSetupData.crossbarSetupData[currentChunkIndex].chunkData[0 + currentOffset * 4]);
+				dmaEngine.setInterfaceToBufferSourcePosition(streamSetupData.streamID, currentChunkIndex, currentOffset, streamSetupData.crossbarSetupData[currentChunkIndex].positionData[3 + currentOffset * 4], streamSetupData.crossbarSetupData[currentChunkIndex].positionData[2 + currentOffset * 4], streamSetupData.crossbarSetupData[currentChunkIndex].positionData[1 + currentOffset * 4], streamSetupData.crossbarSetupData[currentChunkIndex].positionData[0 + currentOffset * 4]);
+			}
+		}
+	}
+}
+
+void WriteSetupDataToDMAModule(std::vector<DMASetupData>& setupDataForDMA, DMA& dmaEngine)
+{
+	for (auto& streamSetupData : setupDataForDMA)
+	{
+		SetUpDMAIOStreams(streamSetupData, dmaEngine);
+		SetUpDMACrossbars(streamSetupData, dmaEngine);
+	}
+}
+
+void CalculateBufferToInterfaceSetupConfig(std::queue<int>& sourceChunks, std::queue<int>& targetPositions, const int& ANY_CHUNK, const int& ANY_POSITION)
+{
+	for (int cycleCounter = 0; cycleCounter < 2; cycleCounter++) {
+		for (int cycleStep = 0; cycleStep < 8; cycleStep++) {
+			// Initial chunk
+			for (int forwardChunkCounter = 0; forwardChunkCounter < cycleStep * 2; forwardChunkCounter++) {
+				sourceChunks.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
+			}
+			for (int currentChunkCounter = cycleStep * 2; currentChunkCounter < 16; currentChunkCounter++) {
+				sourceChunks.push((cycleStep + 8 * cycleCounter + cycleCounter));
+				targetPositions.push(15 - currentChunkCounter);
+			}
+			for (int forwardChunkCounter = 0; forwardChunkCounter < cycleStep * 2; forwardChunkCounter++) {
+				targetPositions.push(15 - forwardChunkCounter);
+			}
+			// Last chunk
+			targetPositions.push(15 - cycleStep * 2);
+			targetPositions.push(15 - (cycleStep * 2 + 1));
+			for (int emptyInitialChunkCounter = 0; emptyInitialChunkCounter < cycleStep * 2; emptyInitialChunkCounter++) {
+				sourceChunks.push(ANY_CHUNK);
+				targetPositions.push(ANY_POSITION);
+			}
+			sourceChunks.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
+			sourceChunks.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
+			for (int emptyFinishingChunkCounter = cycleStep * 2 + 2; emptyFinishingChunkCounter < 16; emptyFinishingChunkCounter++) {
+				sourceChunks.push(ANY_CHUNK);
+				targetPositions.push(ANY_POSITION);
+			}
+		}
+	}
+}
+
+void FindInputCrossbarSetupData(const int& ANY_CHUNK, const int& ANY_POSITION, DMASetupData& inputStreamSetupData)
+{
+	std::queue <int> sourceChunks;
+	std::queue <int> targetPositions;
+	CalculateBufferToInterfaceSetupConfig(sourceChunks, targetPositions, ANY_CHUNK, ANY_POSITION);
+	SetCrossbarSetupDataForStream(sourceChunks, targetPositions, inputStreamSetupData);
+}
+
+void CalculateInterfaceToBufferSetupConfig(std::queue<int>& sourceChunks, std::queue<int>& targetPositions, const int& ANY_CHUNK, const int& ANY_POSITION)
+{
+	for (int cycleCounter = 0; cycleCounter < 2; cycleCounter++) {
+		for (int cycleStep = 0; cycleStep < 8; cycleStep++) {
+			// Initial chunk
+			for (int forwardChunkCounter = 16 - cycleStep * 2; forwardChunkCounter < 16; forwardChunkCounter++) {
+				sourceChunks.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
+				targetPositions.push(15 - forwardChunkCounter);
+			}
+			for (int currentChunkCounter = 0; currentChunkCounter < 16 - cycleStep * 2; currentChunkCounter++) {
+				sourceChunks.push((cycleStep + 8 * cycleCounter + cycleCounter));
+				targetPositions.push(15 - currentChunkCounter);
+			}
+			// Last chunk
+			sourceChunks.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
+			sourceChunks.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
+			for (int emptyInitialChunkCounter = 0; emptyInitialChunkCounter < cycleStep * 2; emptyInitialChunkCounter++) {
+				sourceChunks.push(ANY_CHUNK);
+				targetPositions.push(ANY_POSITION);
+			}
+			targetPositions.push(15 - 0);
+			targetPositions.push(15 - 1);
+			for (int emptyFinishingChunkCounter = cycleStep * 2 + 2; emptyFinishingChunkCounter < 16; emptyFinishingChunkCounter++) {
+				sourceChunks.push(ANY_CHUNK);
+				targetPositions.push(ANY_POSITION);
+			}
+		}
+	}
+}
+
+void FindOutputCrossbarSetupData(const int& ANY_CHUNK, const int& ANY_POSITION, DMASetupData& outputStreamSetupData)
+{
+	std::queue <int> sourceChunks;
+	std::queue <int> targetPositions;
+	CalculateInterfaceToBufferSetupConfig(sourceChunks, targetPositions, ANY_CHUNK, ANY_POSITION);
+	SetCrossbarSetupDataForStream(sourceChunks, targetPositions, outputStreamSetupData);
+
+}
+
+void SetupDMAModule(rapidcsv::Document& doc, std::vector<int>& dbData, int recordSize, DMA& dmaEngine)
+{
+	// Calculate the controller parameter values based on input data and datatypes
+	// Every size metric is 1 integer = 4 bytes = 32 bits
+	const int MAX_DDR_BURST_SIZE = 512;
+	const int MAX_CHUNK_SIZE = 16;
+	const int MAX_DDR_SIZE_PER_CYCLE = 4;
+
+	//Input
+	DMASetupData inputStreamSetupData;
+	int inputStreamID = 0;
+	inputStreamSetupData.streamID = inputStreamID;
+	inputStreamSetupData.isInputStream = true;
+	inputStreamSetupData.recordCount = doc.GetRowCount();
+	CalculateDMAStreamSetupData(inputStreamSetupData, MAX_CHUNK_SIZE, MAX_DDR_BURST_SIZE, MAX_DDR_SIZE_PER_CYCLE, dbData, recordSize);
 
 	// Output
-	int outputStreamID = 1;//Could be 0
-	recordCount = 0;
-	std::vector<int> outputData(doc.GetRowCount() * recordSize);
+	DMASetupData outputStreamSetupData;
+	int outputStreamID = 1;
+	outputStreamSetupData.streamID = outputStreamID;
+	outputStreamSetupData.isInputStream = false;
+	outputStreamSetupData.recordCount = 0;
+	CalculateDMAStreamSetupData(outputStreamSetupData, MAX_CHUNK_SIZE, MAX_DDR_BURST_SIZE, MAX_DDR_SIZE_PER_CYCLE, dbData, recordSize);
 
-	chunksPerRecord = (recordSize + maxChunkSize - 1) / maxChunkSize; //ceil
-	//std::cout << "chunksPerRecord:" << chunksPerRecord << std::endl;
+	const int ANY_CHUNK = 31;
+	const int ANY_POSITION = 3;
+	FindInputCrossbarSetupData(ANY_CHUNK, ANY_POSITION, inputStreamSetupData);
+	FindOutputCrossbarSetupData(ANY_CHUNK, ANY_POSITION, outputStreamSetupData);
+	
+	std::vector<DMASetupData> setupDataForDMA;
+	setupDataForDMA.push_back(inputStreamSetupData);
+	setupDataForDMA.push_back(outputStreamSetupData);
+	WriteSetupDataToDMAModule(setupDataForDMA, dmaEngine);
+}
 
-	recordsPerMaxBurstSize = maxDDRBurstSize / recordSize;
-	recordsPerDDRBurst = pow(2, (int)log2(recordsPerMaxBurstSize));
-	//std::cout << "recordsPerDDRBurst:" << recordsPerDDRBurst << std::endl;
-
-	DDRBurstLength = ((recordSize * recordsPerDDRBurst) + maxDDRSizePerCycle - 1) / maxDDRSizePerCycle;
-	//std::cout << "DDRBurstLength:" << DDRBurstLength << std::endl;
-
-	bufferStart = 0;
-	bufferEnd = 15;
-
-	// Set output controller params
-	dmaEngine.setOutputControllerParams(outputStreamID, DDRBurstLength, recordsPerDDRBurst, bufferStart, bufferEnd);
-	dmaEngine.setOutputControllerStreamAddress(outputStreamID, reinterpret_cast<uintptr_t>(&outputData[0]));
-	dmaEngine.setOutputControllerStreamSize(outputStreamID, recordCount);
-	dmaEngine.setRecordSize(outputStreamID, chunksPerRecord);
-	for (int i = 0; i < chunksPerRecord; i++) {
-		dmaEngine.setRecordChunkIDs(outputStreamID, i, i);
-	}
-
-	const int DONTCARECHUNK = 31;
-	const int DONTCAREPOSITION = 3;
-
-	/*
-	struct {
-		int data[16];
-		int chunkID;
-	} RecordOnInterface[32];
-	*/
-
-	/*
-	struct {
-		int data[16];
-	} Buffer_block[32];
-	*/
-
-	/*
-	DDRBurstLength = 72
-	numRecordsPerBurst = 16;
-	maxChunksPerRecord = 2
-	chunksPerRecord = 2
-	streamID = 0;
-	recordSize = 18;
-	recordsPerDDRBurst = 16
-
-	/*
-	int tarbetChunk[DDRBurstLength][16];
-	int sourcePosition[DDRBurstLength][16];
-	for(int clockCycle=0; clockCycle < DDRBurstLength; clockCycle++){
-		for(int dataPos=0; dataPos<16; dataPos++){
-			int targetChunkTemp = targetChunk[clockCycle][dataPos];
-			int sourcePositionTemp = sourcePosition[clockCycle][dataPos];
-			Buffer_block[targetChunkTemp].data[dataPos]=AXI_Burst[clockCycle].data[sourcePositionTemp];
-		}
-	}
-	*/
-
-	/*
-	One for loop for 72 cycles
-	First 4 data positions we want to keep
-	The rest of the 12 we don't wan't to duplicate anything so we discard
-	*/
-
-	// Currently not needed
-	/*
-	int targetBufferChunk = 0;
-	for (int currentClockCycle = 0; currentClockCycle < DDRBurstLength; currentClockCycle++) {
-		for (int currentOffset = 0; currentOffset < 4; currentOffset++) {
-			if (currentOffset == currentClockCycle % 4) {
-				std::cout << "setAXItoBufferChunk:" << currentClockCycle << " " << currentOffset << " " << targetBufferChunk << " " << targetBufferChunk << " " << targetBufferChunk << " " << targetBufferChunk << std::endl;
-				dmaEngine.setAXItoBufferChunk(inputStreamID, currentClockCycle, currentOffset, targetBufferChunk, targetBufferChunk, targetBufferChunk, targetBufferChunk);
-				std::cout << "setAXItoBufferSourcePosition:" << currentClockCycle << " " << currentOffset << " " << (currentClockCycle % 4) * 4 + 3 << " " << (currentClockCycle % 4) * 4 + 2 << " " << (currentClockCycle % 4) * 4 + 1 << " " << (currentClockCycle % 4) * 4 + 0 << std::endl;
-				dmaEngine.setAXItoBufferSourcePosition(inputStreamID, currentClockCycle, currentOffset,  3, 2, 1, 0);
-			}
-			else {
-				dmaEngine.setAXItoBufferChunk(inputStreamID, currentClockCycle, currentOffset, DONTCARECHUNK, DONTCARECHUNK, DONTCARECHUNK, DONTCARECHUNK);
-				std::cout << "setAXItoBufferChunk:" << currentClockCycle << " " << currentOffset << " " << DONTCARECHUNK << " " << DONTCARECHUNK << " " << DONTCARECHUNK << " " << DONTCARECHUNK << std::endl;
-				dmaEngine.setAXItoBufferSourcePosition(inputStreamID, currentClockCycle, currentOffset, DONTCAREPOSITION, DONTCAREPOSITION, DONTCAREPOSITION, DONTCAREPOSITION);
-				std::cout << "setAXItoBufferSourcePosition:" << currentClockCycle << " " << currentOffset << " " << DONTCAREPOSITION << " " << DONTCAREPOSITION << " " << DONTCAREPOSITION << " " << DONTCAREPOSITION << std::endl;
-			}
-		}
-		if (currentClockCycle % 4 == 3) {
-			targetBufferChunk++;
-		}
-		std::cout << std::endl;
-	}
-	*/
-
-	/*
-	int sourceChunkB2I[32][16];
-	int sourcePositionB2I[32][16];
-	for(int cyclePosition = maxChunksPerRecord*recordID; cyclePosition < maxChunksPerRecord*recordID + chunksPerRecord; cyclePosition++){
-	int dataRead[16];
-	for(int dataPos=0; dataPos <16; dataPos++){
-		int sourceChunkTemp = sourceChunkB2I[cyclePosition][dataPos];
-		dataRead[dataPos] = Buffer_block[sourceChunkTemp].data[dataPos];
-	}
-	for(int dataPos = 0; dataPos <16; dataPost++){
-		int sourcePositionTemp = sourcePositionB2I[cyclePosition][dataPos];
-		RecordOnInterface[cyclePosition].data[dataPos]=dataRead[SourcePositionTemp];
-	}
-	RecordOnInterface[cyclePosition].chunkID = chunkIDTranslate[cyclePosition];
-	}
-	*/
-
-	/*
-	One cycle is 8x2 chunks
-	*/
-
-	//Works with the AXI corssbar
-	/*
-	std::queue <int> sourceChunk;
-	std::queue <int> targetPosition;
-	for (int cycleCounter = 0; cycleCounter < 2; cycleCounter++) {
-		for (int cycleStep = 0; cycleStep < 8; cycleStep++) {
-			// Initial chunk
-			for (int forwardChunkCounter = 0; forwardChunkCounter < cycleStep * 2; forwardChunkCounter++) {
-				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			}
-			for (int currentChunkCounter = cycleStep * 2; currentChunkCounter < 16; currentChunkCounter++) {
-				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter));
-				targetPosition.push(currentChunkCounter);
-			}
-			for (int forwardChunkCounter = 0; forwardChunkCounter < cycleStep * 2; forwardChunkCounter++) {
-				targetPosition.push(forwardChunkCounter);
-			}
-			// Last chunk
-			targetPosition.push(cycleStep*2);
-			targetPosition.push(cycleStep*2+1);
-			for (int emptyInitialChunkCounter = 0; emptyInitialChunkCounter < cycleStep * 2; emptyInitialChunkCounter++) {
-				sourceChunk.push(DONTCARECHUNK);
-				targetPosition.push(DONTCAREPOSITION);
-			}
-			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			for (int emptyFinishingChunkCounter = cycleStep * 2 + 2; emptyFinishingChunkCounter < 16; emptyFinishingChunkCounter++) {
-				sourceChunk.push(DONTCARECHUNK);
-				targetPosition.push(DONTCAREPOSITION);
-			}
-		}
-	}
-	*/
-
-	std::queue <int> sourceChunk;
-	std::queue <int> targetPosition;
-	for (int cycleCounter = 0; cycleCounter < 2; cycleCounter++) {
-		for (int cycleStep = 0; cycleStep < 8; cycleStep++) {
-			// Initial chunk
-			for (int forwardChunkCounter = 0; forwardChunkCounter < cycleStep * 2; forwardChunkCounter++) {
-				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			}
-			for (int currentChunkCounter = cycleStep * 2; currentChunkCounter < 16; currentChunkCounter++) {
-				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter));
-				targetPosition.push(15 - currentChunkCounter);
-			}
-			for (int forwardChunkCounter = 0; forwardChunkCounter < cycleStep * 2; forwardChunkCounter++) {
-				targetPosition.push(15 - forwardChunkCounter);
-			}
-			// Last chunk
-			targetPosition.push(15 - cycleStep * 2);
-			targetPosition.push(15 - (cycleStep * 2 + 1));
-			for (int emptyInitialChunkCounter = 0; emptyInitialChunkCounter < cycleStep * 2; emptyInitialChunkCounter++) {
-				sourceChunk.push(DONTCARECHUNK);
-				targetPosition.push(DONTCAREPOSITION);
-			}
-			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			for (int emptyFinishingChunkCounter = cycleStep * 2 + 2; emptyFinishingChunkCounter < 16; emptyFinishingChunkCounter++) {
-				sourceChunk.push(DONTCARECHUNK);
-				targetPosition.push(DONTCAREPOSITION);
-			}
-		}
-	}
-
-	int input4;
-	int input3;
-	int input2;
-	int input1;
-	for (int currentBufferChunk = 0; currentBufferChunk < 32; currentBufferChunk++) {
-		for (int currentOffset = 0; currentOffset < 4; currentOffset++) {
-			input1 = sourceChunk.front();
-			sourceChunk.pop();
-			input2 = sourceChunk.front();
-			sourceChunk.pop();
-			input3 = sourceChunk.front();
-			sourceChunk.pop();
-			input4 = sourceChunk.front();
-			sourceChunk.pop();
-			dmaEngine.setBufferToInterfaceChunk(inputStreamID, currentBufferChunk, currentOffset, input4, input3, input2, input1);
-			std::cout << "setBufferToInterfaceChunk:" << currentBufferChunk << " " << currentOffset << " " << input4 << " " << input3 << " " << input2 << " " << input1 << std::endl;
-			input1 = targetPosition.front();
-			targetPosition.pop();
-			input2 = targetPosition.front();
-			targetPosition.pop();
-			input3 = targetPosition.front();
-			targetPosition.pop();
-			input4 = targetPosition.front();
-			targetPosition.pop();
-			dmaEngine.setBufferToInterfaceSourcePosition(inputStreamID, currentBufferChunk, currentOffset, input4, input3, input2, input1);
-			std::cout << "setBufferToInterfaceSourcePosition:" << currentBufferChunk << " " << currentOffset << " " << input4 << " " << input3 << " " << input2 << " " << input1 << std::endl;
-		}
-		std::cout << std::endl;
-	}
-
-	/*
-	int sourceChunkI2B[32][16];
-	int sourcePositionI2B[32][16];
-	void setInterfaceToBufferChunk(volatile int* ControlAXIbaseAddress, int streamID, int clockCycle, int offset, int targetChunk4,int targetChunk3,int targetChunk2,int targetChunk1){
-		//Considering the Buffer_blocks for StreamID
-		targetChunkI2B[clockCycle][offset*4+3] = targetChunk4;
-		targetChunkI2B[clockCycle][offset*4+2] = targetChunk3;
-		targetChunkI2B[clockCycle][offset*4+1] = targetChunk2;
-		targetChunkI2B[clockCycle][offset*4+0] = targetChunk1;
-	}
-	void setInterfaceToBufferSourcePosition(volatile int* ControlAXIbaseAddress, int streamID, int clockCycle, int offset, int sourcePosition4,int sourcePosition3,int sourcePosition2,int sourcePosition1){
-		//Considering the Buffer_blocks for StreamID
-		sourcePositionI2B[clockCycle][offset*4+3] = sourcePosition4;
-		sourcePositionI2B[clockCycle][offset*4+2] = sourcePosition3;
-		sourcePositionI2B[clockCycle][offset*4+1] = sourcePosition2;
-		sourcePositionI2B[clockCycle][offset*4+0] = sourcePosition1;
-	}
-
-	struct {
-		int data[16];
-	} Buffer_block[32];
-
-	struct {
-		int data[16];
-		int chunkID;
-	} RecordOnInterface[32];
-
-	recordSize - how many clock cycles is one record on the interface.
-	void hardwareSendDataToInterface(int recordID, int chunkNumber){ //every time a clock cycle has been received for output from Interface
-		int clockCycle = recordID*recordSize+chunkNumber; //calculate the clock cycle number of this group (1 DDR burst) of packets/records
-		//All of this is considering the same StreamID.
-
-		int dataReordered[16];
-		for(int dataPos = 0 ; dataPos < 16 ; dataPos++){ // do crossbar reordering / duplication if needed
-			int sourcePositionTemp = sourcePositionI2B[clockCycle][dataPos];
-			dataReordered[dataPos] = RecordOnInterface[chunkNumber].data[sourcePositionTemp];
-		}
-
-		for(int dataPos = 0 ; dataPos < 16 ; dataPos++){ // get the resulting data into corresponding positions inside buffer
-			int targetChunkTemp = targetChunkI2B[clockCycle][dataPos];
-			Buffer_block[targetChunkTemp].data[dataPos] = dataReordered[dataPos];
-		}
-
-	}
-	*/
-
-	// Assuming sourceChunk and targetPosition are empty before since they get emptied correctly.
-	//Works with the AXI corssbar
-	/*
-	for (int cycleCounter = 0; cycleCounter < 2; cycleCounter++) {
-		for (int cycleStep = 0; cycleStep < 8; cycleStep++) {
-			// Initial chunk
-			for (int forwardChunkCounter = 16 - cycleStep * 2; forwardChunkCounter < 16; forwardChunkCounter++) {
-				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-				targetPosition.push(forwardChunkCounter);
-			}
-			for (int currentChunkCounter = 0; currentChunkCounter < 16 - cycleStep * 2; currentChunkCounter++) {
-				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter));
-				targetPosition.push(currentChunkCounter);
-			}
-			// Last chunk
-			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			for (int emptyInitialChunkCounter = 0; emptyInitialChunkCounter < cycleStep * 2; emptyInitialChunkCounter++) {
-				sourceChunk.push(DONTCARECHUNK);
-				targetPosition.push(DONTCAREPOSITION);
-			}
-			targetPosition.push(0);
-			targetPosition.push(1);
-			for (int emptyFinishingChunkCounter = cycleStep * 2 + 2; emptyFinishingChunkCounter < 16; emptyFinishingChunkCounter++) {
-				sourceChunk.push(DONTCARECHUNK);
-				targetPosition.push(DONTCAREPOSITION);
-			}
-		}
-	}
-	*/
-
-	for (int cycleCounter = 0; cycleCounter < 2; cycleCounter++) {
-		for (int cycleStep = 0; cycleStep < 8; cycleStep++) {
-			// Initial chunk
-			for (int forwardChunkCounter = 16 - cycleStep * 2; forwardChunkCounter < 16; forwardChunkCounter++) {
-				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-				targetPosition.push(15 - forwardChunkCounter);
-			}
-			for (int currentChunkCounter = 0; currentChunkCounter < 16 - cycleStep * 2; currentChunkCounter++) {
-				sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter));
-				targetPosition.push(15 - currentChunkCounter);
-			}
-			// Last chunk
-			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			sourceChunk.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			for (int emptyInitialChunkCounter = 0; emptyInitialChunkCounter < cycleStep * 2; emptyInitialChunkCounter++) {
-				sourceChunk.push(DONTCARECHUNK);
-				targetPosition.push(DONTCAREPOSITION);
-			}
-			targetPosition.push(15 - 0);
-			targetPosition.push(15 - 1);
-			for (int emptyFinishingChunkCounter = cycleStep * 2 + 2; emptyFinishingChunkCounter < 16; emptyFinishingChunkCounter++) {
-				sourceChunk.push(DONTCARECHUNK);
-				targetPosition.push(DONTCAREPOSITION);
-			}
-		}
-	}
-
-	// For debugging
-	//for (int i = 0; i < 32; i++) {
-	//	std::cout << i << ": ";
-	//	for (int j = 0; j < 16; j++) {
-	//		if (!sourceChunk.empty()) {
-	//			//std::cout << sourceChunk.front() << " ";
-	//			//sourceChunk.pop();
-	//			std::cout << targetPosition.front() << " ";
-	//			targetPosition.pop();
-	//		}
-	//		else {
-	//			std::cout << i << j;
-	//		}
-	//	}
-	//	std::cout << std::endl;
-	//}
-
-	for (int currentBufferChunk = 0; currentBufferChunk < 32; currentBufferChunk++) {
-		for (int currentOffset = 0; currentOffset < 4; currentOffset++) {
-			input1 = sourceChunk.front();
-			sourceChunk.pop();
-			input2 = sourceChunk.front();
-			sourceChunk.pop();
-			input3 = sourceChunk.front();
-			sourceChunk.pop();
-			input4 = sourceChunk.front();
-			sourceChunk.pop();
-			dmaEngine.setInterfaceToBufferChunk(inputStreamID, currentBufferChunk, currentOffset, input4, input3, input2, input1);
-			std::cout << "setInterfaceToBufferChunk:" << currentBufferChunk << " " << currentOffset << " " << input4 << " " << input3 << " " << input2 << " " << input1 << std::endl;
-			input1 = targetPosition.front();
-			targetPosition.pop();
-			input2 = targetPosition.front();
-			targetPosition.pop();
-			input3 = targetPosition.front();
-			targetPosition.pop();
-			input4 = targetPosition.front();
-			targetPosition.pop();
-			dmaEngine.setInterfaceToBufferSourcePosition(inputStreamID, currentBufferChunk, currentOffset, input4, input3, input2, input1);
-			std::cout << "setInterfaceToBufferSourcePosition:" << currentBufferChunk << " " << currentOffset << " " << input4 << " " << input3 << " " << input2 << " " << input1 << std::endl;
-		}
-		std::cout << std::endl;
-	}
-
-	/*
-	//DDRburstSizeOutput - same as DDRburstSize as on the input, but is separate for outputs
-
-	int sourceChunkB2A[DDRburstSizeOutput][16];
-	int sourcePositionB2A[DDRburstSizeOutput][4];
-
-	void setBufferToAXIChunk(volatile int* ControlAXIbaseAddress, int streamID, int clockCycle, int offset, int sourceChunk4,int sourceChunk3,int sourceChunk2,int sourceChunk1){
-		//Considering the Buffer_blocks for StreamID
-		sourceChunkB2A[clockCycle][offset*4+3] = sourceChunk4;
-		sourceChunkB2A[clockCycle][offset*4+2] = sourceChunk3;
-		sourceChunkB2A[clockCycle][offset*4+1] = sourceChunk2;
-		sourceChunkB2A[clockCycle][offset*4+0] = sourceChunk1;
-	}
-	void setBufferToAXISourcePosition(volatile int* ControlAXIbaseAddress, int streamID, int clockCycle, int offset, int sourcePosition4,int sourcePosition3,int sourcePosition2,int sourcePosition1){
-		//Considering the Buffer_blocks for StreamID
-		sourcePositionB2A[clockCycle][offset*4+3] = sourcePosition4;
-		sourcePositionB2A[clockCycle][offset*4+2] = sourcePosition3;
-		sourcePositionB2A[clockCycle][offset*4+1] = sourcePosition2;
-		sourcePositionB2A[clockCycle][offset*4+0] = sourcePosition1;
-	}
-
-	struct {
-		int data[16];
-	} Buffer_block[32];
-
-	struct {
-		int data[4];
-	} AXI_Burst[DDRburstSizeOutput];
-
-	void hardwareOperationWriteDataToDDR(){
-		//All of this is considering the same StreamID.
-		for(int clockCycle = 0 ; clockCycle < DDRburstSizeOutput ; clockCycle++){
-			int dataRead[16];
-			for(int dataPos = 0 ; dataPos < 16 ; dataPos++){ // read from programmable positions in the buffers
-				int sourceChunkTemp = sourceChunkB2A[clockCycle][dataPos];
-				dataRead[dataPos] = Buffer_block[sourceChunkTemp].data[dataPos];
-			}
-
-			for(int dataPos = 0 ; dataPos < 4 ; dataPos++){ // Reorder data and pick 4 ints
-				int sourcePositionTemp = sourcePositionB2A[clockCycle][dataPos];
-				AXI_Burst[clockCycle].data[dataPos] = dataRead[sourcePositionTemp];
-			}
-		}
-
-	}
-	*/
-
-	// Currently not needed
-	/*
-	targetBufferChunk = 0;
-	for (int currentClockCycle = 0; currentClockCycle < DDRBurstLength; currentClockCycle++) {
-		for (int currentOffset = 0; currentOffset < 4; currentOffset++) {
-			if (currentOffset == currentClockCycle % 4) {
-				std::cout << "setBufferToAXIChunk:" << currentClockCycle << " " << currentOffset << " " << targetBufferChunk << " " << targetBufferChunk << " " << targetBufferChunk << " " << targetBufferChunk << std::endl;
-				dmaEngine.setBufferToAXIChunk(inputStreamID, currentClockCycle, currentOffset, targetBufferChunk, targetBufferChunk, targetBufferChunk, targetBufferChunk);
-				std::cout << "setBufferToAXISourcePosition:" << currentClockCycle << " " << currentOffset << " " << (currentClockCycle % 4) * 4 + 3 << " " << (currentClockCycle % 4) * 4 + 2 << " " << (currentClockCycle % 4) * 4 + 1 << " " << (currentClockCycle % 4) * 4 + 0 << std::endl;
-				dmaEngine.setBufferToAXISourcePosition(inputStreamID, currentClockCycle, currentOffset, (currentClockCycle % 4) * 4 + 3, (currentClockCycle % 4) * 4 + 2, (currentClockCycle % 4) * 4 + 1, (currentClockCycle % 4) * 4 + 0);
-			}
-			else {
-				dmaEngine.setBufferToAXIChunk(inputStreamID, currentClockCycle, currentOffset, DONTCARECHUNK, DONTCARECHUNK, DONTCARECHUNK, DONTCARECHUNK);
-				std::cout << "setBufferToAXIChunk:" << currentClockCycle << " " << currentOffset << " " << DONTCARECHUNK << " " << DONTCARECHUNK << " " << DONTCARECHUNK << " " << DONTCARECHUNK << std::endl;
-			}
-		}
-		if (currentClockCycle % 4 == 3) {
-			targetBufferChunk++;
-		}
-		std::cout << std::endl;
-	}
-	*/
-
-	// Setup the filter module
-	Filter filterModule(memoryPointer, 1);
-
+void SetupFilterModule(Filter& filterModule)
+{
 	uint32_t streamIDInput = 0;
-	uint32_t streamIDValidOutput = 0;
+	uint32_t streamIDValidOutput = 1;
 	uint32_t streamIDInvalidOutput = 0;
 
 	filterModule.filterSetStreamIDs(streamIDInput, streamIDValidOutput, streamIDInvalidOutput);
@@ -574,6 +311,45 @@ int main()
 	uint32_t datapathWidth = 16;
 
 	filterModule.writeDNFClauseLiteralsToFilter_1CMP_8DNF(datapathWidth);
+}
+
+int main()
+{
+	// Figure out some legit way to get this data type information. For all streams. Would be nice to have this info in structs or sth like that to capture dataType
+	std::vector<int> dataTypeSizes;
+	dataTypeSizes.push_back(1);
+	dataTypeSizes.push_back(8);
+	dataTypeSizes.push_back(8);
+	dataTypeSizes.push_back(1);
+	// TODO: Check lambda functions performance later here
+	int recordSize = 0;
+	for (auto i = dataTypeSizes.begin(); i != dataTypeSizes.end(); ++i) {
+		recordSize += *i;
+	}
+
+	// The data probably doesn't come in a csv but it'll do for now
+	rapidcsv::Document doc("MOCK_DATA.csv", rapidcsv::LabelParams(-1, -1));
+	// Create contiguous data array
+	std::vector<int> dbData(doc.GetRowCount() * recordSize);
+	FillDataArray(dbData, &doc);
+
+	// Create the controller memory area //Also hardcode the address to 0xA0000000 we're going to use baremetal
+	int* volatile memoryPointer = new int[2097152];
+	for (int i = 0; i < 2097152; i++) {
+		memoryPointer[i] = -1;
+	}
+
+	DMA dmaEngine(memoryPointer);
+	SetupDMAModule(doc, dbData, recordSize, dmaEngine);
+
+	// Setup the filter module
+	Filter filterModule(memoryPointer, 1);
+	SetupFilterModule(filterModule);
+
+	bool streamActive[16] = { false };
+	streamActive[0] = true;
+	dmaEngine.startInputController(streamActive);
+	dmaEngine.startOutputController(streamActive);
 
 	// Print out the contents of memory for debugging
 	//std::cout << std::endl << "Memory contents:" << std::endl;
@@ -583,12 +359,6 @@ int main()
 	//		std::cout << memoryPointer[i] << std::endl;
 	//	}
 	//}
-
-	bool streamActive[16] = { false };
-	streamActive[0] = true;
-
-	dmaEngine.startInputController(streamActive);
-	dmaEngine.startOutputController(streamActive);
 
 	// check isInputControllerFinished and isOutputControllerFinished
 

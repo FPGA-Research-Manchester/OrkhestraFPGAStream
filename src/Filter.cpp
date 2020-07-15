@@ -114,8 +114,8 @@ void Filter::filterWriteDNFClauseLiteralsToModule(uint32_t DatapathWidth, uint32
 			for (ChunkID = 0; ChunkID < 32; ChunkID++) {
 				uint32_t clausesPackedPositiveResult = 0xFFFFFFFF;
 				uint32_t clausesPackedNegativeResult = 0xFFFFFFFF;
-				if (DNF_Clause[DNFClause].DNF_is_used) {
-					for (DNFClause = 0; DNFClause < moduleDNFClauses; DNFClause++) {
+				for (DNFClause = 0; DNFClause < moduleDNFClauses; DNFClause++) {
+					if (DNF_Clause[DNFClause].DNF_is_used) {
 						clausesPackedPositiveResult <<= 1;
 						clausesPackedNegativeResult <<= 1;
 						if (DNF_Clause[DNFClause].CompareNumber[CompareLane].ChunkID[ChunkID].DataPosition[DataPosition].literalState == LITERAL_DONT_CARE) {
@@ -131,10 +131,10 @@ void Filter::filterWriteDNFClauseLiteralsToModule(uint32_t DatapathWidth, uint32
 							clausesPackedNegativeResult |= 1;
 						}
 					}
-				}
-				else { // else DNF clause is unused
-					clausesPackedPositiveResult = 0; // therefore it cannot satisfy
-					clausesPackedNegativeResult = 0; // boolean expression
+					else { // else DNF clause is unused
+						clausesPackedPositiveResult = 0; // therefore it cannot satisfy
+						clausesPackedNegativeResult = 0; // boolean expression
+					}
 				}
 				writeToModule(controlAXIbaseAddress, filterModulePosition, ((1 << 16) + (DataPosition << 2) + (1 << 7) + (ChunkID << 8) + (CompareLane << 13)), clausesPackedPositiveResult);
 				writeToModule(controlAXIbaseAddress, filterModulePosition, ((1 << 16) + (DataPosition << 2) + (0 << 7) + (ChunkID << 8) + (CompareLane << 13)), clausesPackedNegativeResult);
