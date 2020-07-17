@@ -1,9 +1,9 @@
 #include "DMASetup.hpp"
-#include "DMACrossbarSetupData.hpp"
 #include <queue>
 #include <math.h>
 #include <cstdio>
 #include <tuple>
+#include "DMACrossbarSetup.hpp"
 
 void DMASetup::SetupDMAModule(int recordCount, std::vector<int>& dbData, int recordSize, DMA& dmaEngine) {
 	// Calculate the controller parameter values based on input data and datatypes
@@ -31,91 +31,14 @@ void DMASetup::SetupDMAModule(int recordCount, std::vector<int>& dbData, int rec
 
 	const int ANY_CHUNK = 31;
 	const int ANY_POSITION = 3;
-	FindInputCrossbarSetupData(ANY_CHUNK, ANY_POSITION, inputStreamSetupData);
-	FindOutputCrossbarSetupData(ANY_CHUNK, ANY_POSITION, outputStreamSetupData);
+	DMACrossbarSetup crossbarConfigurationFinder;
+	crossbarConfigurationFinder.FindInputCrossbarSetupData(ANY_CHUNK, ANY_POSITION, inputStreamSetupData);
+	crossbarConfigurationFinder.FindOutputCrossbarSetupData(ANY_CHUNK, ANY_POSITION, outputStreamSetupData);
 
 	std::vector<DMASetupData> setupDataForDMA;
 	setupDataForDMA.push_back(inputStreamSetupData);
 	setupDataForDMA.push_back(outputStreamSetupData);
 	WriteSetupDataToDMAModule(setupDataForDMA, dmaEngine);
-}
-
-void DMASetup::FindOutputCrossbarSetupData(const int& ANY_CHUNK, const int& ANY_POSITION, DMASetupData& outputStreamSetupData)
-{
-	std::queue <int> sourceChunks;
-	std::queue <int> targetPositions;
-	CalculateInterfaceToBufferSetupConfig(sourceChunks, targetPositions, ANY_CHUNK, ANY_POSITION);
-	SetCrossbarSetupDataForStream(sourceChunks, targetPositions, outputStreamSetupData);
-}
-
-void DMASetup::CalculateInterfaceToBufferSetupConfig(std::queue<int>& sourceChunks, std::queue<int>& targetPositions, const int& ANY_CHUNK, const int& ANY_POSITION)
-{
-	for (int cycleCounter = 0; cycleCounter < 2; cycleCounter++) {
-		for (int cycleStep = 0; cycleStep < 8; cycleStep++) {
-			// Initial chunk
-			for (int forwardChunkCounter = 16 - cycleStep * 2; forwardChunkCounter < 16; forwardChunkCounter++) {
-				sourceChunks.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-				targetPositions.push(15 - forwardChunkCounter);
-			}
-			for (int currentChunkCounter = 0; currentChunkCounter < 16 - cycleStep * 2; currentChunkCounter++) {
-				sourceChunks.push((cycleStep + 8 * cycleCounter + cycleCounter));
-				targetPositions.push(15 - currentChunkCounter);
-			}
-			// Last chunk
-			sourceChunks.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			sourceChunks.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			for (int emptyInitialChunkCounter = 0; emptyInitialChunkCounter < cycleStep * 2; emptyInitialChunkCounter++) {
-				sourceChunks.push(ANY_CHUNK);
-				targetPositions.push(ANY_POSITION);
-			}
-			targetPositions.push(15 - 0);
-			targetPositions.push(15 - 1);
-			for (int emptyFinishingChunkCounter = cycleStep * 2 + 2; emptyFinishingChunkCounter < 16; emptyFinishingChunkCounter++) {
-				sourceChunks.push(ANY_CHUNK);
-				targetPositions.push(ANY_POSITION);
-			}
-		}
-	}
-}
-
-void DMASetup::FindInputCrossbarSetupData(const int& ANY_CHUNK, const int& ANY_POSITION, DMASetupData& inputStreamSetupData)
-{
-	std::queue <int> sourceChunks;
-	std::queue <int> targetPositions;
-	CalculateBufferToInterfaceSetupConfig(sourceChunks, targetPositions, ANY_CHUNK, ANY_POSITION);
-	SetCrossbarSetupDataForStream(sourceChunks, targetPositions, inputStreamSetupData);
-}
-
-void DMASetup::CalculateBufferToInterfaceSetupConfig(std::queue<int>& sourceChunks, std::queue<int>& targetPositions, const int& ANY_CHUNK, const int& ANY_POSITION)
-{
-	for (int cycleCounter = 0; cycleCounter < 2; cycleCounter++) {
-		for (int cycleStep = 0; cycleStep < 8; cycleStep++) {
-			// Initial chunk
-			for (int forwardChunkCounter = 0; forwardChunkCounter < cycleStep * 2; forwardChunkCounter++) {
-				sourceChunks.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			}
-			for (int currentChunkCounter = cycleStep * 2; currentChunkCounter < 16; currentChunkCounter++) {
-				sourceChunks.push((cycleStep + 8 * cycleCounter + cycleCounter));
-				targetPositions.push(15 - currentChunkCounter);
-			}
-			for (int forwardChunkCounter = 0; forwardChunkCounter < cycleStep * 2; forwardChunkCounter++) {
-				targetPositions.push(15 - forwardChunkCounter);
-			}
-			// Last chunk
-			targetPositions.push(15 - cycleStep * 2);
-			targetPositions.push(15 - (cycleStep * 2 + 1));
-			for (int emptyInitialChunkCounter = 0; emptyInitialChunkCounter < cycleStep * 2; emptyInitialChunkCounter++) {
-				sourceChunks.push(ANY_CHUNK);
-				targetPositions.push(ANY_POSITION);
-			}
-			sourceChunks.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			sourceChunks.push((cycleStep + 8 * cycleCounter + cycleCounter) + 1);
-			for (int emptyFinishingChunkCounter = cycleStep * 2 + 2; emptyFinishingChunkCounter < 16; emptyFinishingChunkCounter++) {
-				sourceChunks.push(ANY_CHUNK);
-				targetPositions.push(ANY_POSITION);
-			}
-		}
-	}
 }
 
 void DMASetup::WriteSetupDataToDMAModule(std::vector<DMASetupData>& setupDataForDMA, DMA& dmaEngine)
@@ -142,20 +65,6 @@ void DMASetup::SetUpDMACrossbars(DMASetupData& streamSetupData, DMA& dmaEngine)
 				dmaEngine.setInterfaceToBufferSourcePosition(streamSetupData.streamID, currentChunkIndex, currentOffset, streamSetupData.crossbarSetupData[currentChunkIndex].positionData[3 + currentOffset * 4], streamSetupData.crossbarSetupData[currentChunkIndex].positionData[2 + currentOffset * 4], streamSetupData.crossbarSetupData[currentChunkIndex].positionData[1 + currentOffset * 4], streamSetupData.crossbarSetupData[currentChunkIndex].positionData[0 + currentOffset * 4]);
 			}
 		}
-	}
-}
-
-void DMASetup::SetCrossbarSetupDataForStream(std::queue<int>& sourceChunks, std::queue<int>& targetPositions, DMASetupData& streamSetupData)
-{
-	for (int currentBufferChunk = 0; currentBufferChunk < 32; currentBufferChunk++) {
-		DMACrossbarSetupData currentChunkData;
-		for (int currentDataInput = 0; currentDataInput < 16; currentDataInput++) {
-			currentChunkData.chunkData[currentDataInput] = sourceChunks.front();
-			sourceChunks.pop();
-			currentChunkData.positionData[currentDataInput] = targetPositions.front();
-			targetPositions.pop();
-		}
-		streamSetupData.crossbarSetupData[currentBufferChunk] = currentChunkData;
 	}
 }
 
