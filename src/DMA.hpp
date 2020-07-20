@@ -1,16 +1,10 @@
 #pragma once
 #include <cstdint>
-class DMA
+#include "AccelerationModule.hpp"
+class DMA : public AccelerationModule
 {
-private:
-	int* volatile controlAXIbaseAddress;
-	uint32_t contollerModulePosition;
-
-	int* volatile calculateMemoryMappedAddress(int* volatile controlAXIbaseAddress, uint32_t modulePosition, uint32_t moduleInternalAddress);
-	void writeToModule(int* volatile controlAXIbaseAddress, uint32_t modulePosition, uint32_t moduleInternalAddress, uint32_t writeData);
-	uint32_t readFromModule(int* volatile controlAXIbaseAddress, uint32_t modulePosition, uint32_t moduleInternalAddress);
-
 public:
+	~DMA();
 	DMA(int* volatile ctrlAXIbaseAddress);
 
 	void setInputControllerParams(int streamID, int DDRburstSize, int recordsPerDDRBurst, int bufferStart, int bufferEnd);

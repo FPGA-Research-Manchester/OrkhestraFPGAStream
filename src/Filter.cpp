@@ -3,43 +3,15 @@
 
 #define MODULE_ADDRESS_BITS 20
 
-Filter::Filter(int* volatile ctrlAXIbaseAddress, uint32_t modulePosition)
-{
-	controlAXIbaseAddress = ctrlAXIbaseAddress;
-	filterModulePosition = modulePosition;
-}
+Filter::~Filter(){}
 
-int* volatile Filter::calculateMemoryMappedAddress(int* volatile controlAXIbaseAddress, uint32_t modulePosition, uint32_t moduleInternalAddress) {
-	int* volatile returnAddress = controlAXIbaseAddress;
-	returnAddress += modulePosition * (1 << MODULE_ADDRESS_BITS); // calculate the main address of the target module
-	returnAddress += moduleInternalAddress;
-	return returnAddress;
-}
-
-void Filter::writeToModule(int* volatile controlAXIbaseAddress, // base address of AXI Control port for PR region
-	uint32_t modulePosition, // Position of the module within the PR region (Starting from 1)
-	uint32_t moduleInternalAddress, // Internal address of the memory mapped register of the module
-	uint32_t writeData		// Data to be written to module's register
-) {
-	int* volatile registerAddress = calculateMemoryMappedAddress(controlAXIbaseAddress, modulePosition, moduleInternalAddress);
-	*registerAddress = writeData;
-}
-uint32_t Filter::readFromModule(int* volatile controlAXIbaseAddress, // base address of AXI Control port for PR region
-	uint32_t modulePosition, // Position of the module within the PR region (Starting from 1)
-	uint32_t moduleInternalAddress // Internal address of the memory mapped register of the module
-) {
-	volatile int* registerAddress = calculateMemoryMappedAddress(controlAXIbaseAddress, modulePosition, moduleInternalAddress);
-	uint32_t readData = *registerAddress;
-	return readData;
-}
-
-
+Filter::Filter(int* volatile ctrlAXIbaseAddress, uint32_t modulePosition) : AccelerationModule(ctrlAXIbaseAddress, modulePosition) {}
 
 //Selects streamID and streamID manipulations
 void Filter::filterSetStreamIDs(uint32_t streamIDInput, //The streamID of the stream that gets filterred
 	uint32_t streamIDValidOutput, //The streamID of valid output from filters
 	uint32_t streamIDInvalidOutput) { // The streamID of invalid output from filters
-	writeToModule(controlAXIbaseAddress, filterModulePosition, 0, streamIDInput + (streamIDValidOutput << 8) + (streamIDInvalidOutput << 16));
+	AccelerationModule::writeToModule(0, streamIDInput + (streamIDValidOutput << 8) + (streamIDInvalidOutput << 16));
 }
 
 //Selects mode of operation
@@ -49,7 +21,7 @@ void Filter::filterSetMode(bool requestOnInvalidIfLast, //Should the module rere
 
 	bool firstModuleInResourceElasticChain, //Indicating this is the first filter module (must be true if only 1 module is used)
 	bool lastModuleInResourceElasticChain) { //Indicating this is the last filter module  (must be true if only 1 module is used)
-	writeToModule(controlAXIbaseAddress, filterModulePosition, 0x4, (requestOnInvalidIfLast ? 16 : 0) + (forwardInvalidRecordFirstChunk ? 8 : 0) + (forwardFullInvalidRecords ? 4 : 0) + (firstModuleInResourceElasticChain ? 2 : 0) + (lastModuleInResourceElasticChain ? 1 : 0));
+	AccelerationModule::writeToModule(0x4, (requestOnInvalidIfLast ? 16 : 0) + (forwardInvalidRecordFirstChunk ? 8 : 0) + (forwardFullInvalidRecords ? 4 : 0) + (firstModuleInResourceElasticChain ? 2 : 0) + (lastModuleInResourceElasticChain ? 1 : 0));
 }
 
 // Every 32-bit integer on any position and any chunk ID can have a different compare type and different reference value
@@ -75,7 +47,7 @@ void Filter::filterSetCompareTypes(uint32_t chunkID, // for which chunkID are th
 	uint32_t Compare_2_Type, // compares (depending on module type, e.g. for 1-Compare module, only Compare_1_Type will be used)
 	uint32_t Compare_3_Type, // Compare types are defined above (e.g. FILTER_32BIT_LESS_THAN)
 	uint32_t Compare_4_Type) { // In 64-bit compares, the current 32-bit integer holds the MSBits, while (DataPosition-1) holds the Least significant bits (reference value)
-	writeToModule(controlAXIbaseAddress, filterModulePosition, ((1 << 15) + (DataPosition << 2) + (chunkID << 7)), (Compare_4_Type << 12 + Compare_3_Type << 8 + Compare_2_Type << 4 + Compare_1_Type));
+	AccelerationModule::writeToModule(((1 << 15) + (DataPosition << 2) + (chunkID << 7)), (Compare_4_Type << 12 + Compare_3_Type << 8 + Compare_2_Type << 4 + Compare_1_Type));
 }
 
 void Filter::filterSetCompareReferenceValue(uint32_t chunkID, // for which chunkID is the following compare reference value
@@ -84,7 +56,7 @@ void Filter::filterSetCompareReferenceValue(uint32_t chunkID, // for which chunk
 	uint32_t CompareNumber, // Which CMP is this reference value for (i.e., 1, 2, 3, 4. Module with only 2 Compares per field can take CompareNumber of 1 and 2)
 
 	uint32_t CompareReferenceValue) { // The 32-bit value we compare against. Can be anything (Can be 4 characters of text, can be a float number for equal compare etc.)
-	writeToModule(controlAXIbaseAddress, filterModulePosition, ((1 << 15) + (DataPosition << 2) + (chunkID << 7) + (CompareNumber << 12)), CompareReferenceValue);
+	AccelerationModule::writeToModule(((1 << 15) + (DataPosition << 2) + (chunkID << 7) + (CompareNumber << 12)), CompareReferenceValue);
 }
 
 
@@ -136,8 +108,8 @@ void Filter::filterWriteDNFClauseLiteralsToModule(uint32_t DatapathWidth, uint32
 						clausesPackedNegativeResult = 0; // boolean expression
 					}
 				}
-				writeToModule(controlAXIbaseAddress, filterModulePosition, ((1 << 16) + (DataPosition << 2) + (1 << 7) + (ChunkID << 8) + (CompareLane << 13)), clausesPackedPositiveResult);
-				writeToModule(controlAXIbaseAddress, filterModulePosition, ((1 << 16) + (DataPosition << 2) + (0 << 7) + (ChunkID << 8) + (CompareLane << 13)), clausesPackedNegativeResult);
+				AccelerationModule::writeToModule(((1 << 16) + (DataPosition << 2) + (1 << 7) + (ChunkID << 8) + (CompareLane << 13)), clausesPackedPositiveResult);
+				AccelerationModule::writeToModule(((1 << 16) + (DataPosition << 2) + (0 << 7) + (ChunkID << 8) + (CompareLane << 13)), clausesPackedNegativeResult);
 			}
 		}
 	}
