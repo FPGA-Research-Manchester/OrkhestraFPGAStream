@@ -1,17 +1,12 @@
 #pragma once
 #include <cstdint>
-class Filter
+#include "AccelerationModule.hpp"
+class Filter : public AccelerationModule
 {
 private:
-	int* volatile controlAXIbaseAddress;
-	uint32_t filterModulePosition;
-
-	int* volatile calculateMemoryMappedAddress(int* volatile controlAXIbaseAddress, uint32_t modulePosition, uint32_t moduleInternalAddress);
-	void writeToModule(int* volatile controlAXIbaseAddress, uint32_t modulePosition, uint32_t moduleInternalAddress, uint32_t writeData);
-	uint32_t readFromModule(int* volatile controlAXIbaseAddress, uint32_t modulePosition, uint32_t moduleInternalAddress);
-
 	void filterWriteDNFClauseLiteralsToModule(uint32_t DatapathWidth, uint32_t moduleComparesPerField, uint32_t moduleDNFClauses);
 public:
+	~Filter();
 	Filter(int* volatile ctrlAXIbaseAddress, uint32_t modulePosition);
 
 	void filterSetStreamIDs(uint32_t streamIDInput, uint32_t streamIDValidOutput, uint32_t streamIDInvalidOutput);
