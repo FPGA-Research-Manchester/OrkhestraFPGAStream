@@ -7,6 +7,8 @@ project(DBMStoDSPI
         LANGUAGES CXX C
 )
 
+set(CMAKE_CXX_STANDARD 17)
+
 include(FetchContent)
 include(CTest)
 

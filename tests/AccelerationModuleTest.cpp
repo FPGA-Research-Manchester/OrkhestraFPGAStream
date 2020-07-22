@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include <gtest/gtest.h>
 #include "AccelerationModuleMock.hpp"
 namespace {
