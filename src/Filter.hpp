@@ -1,7 +1,8 @@
 #pragma once
 #include <cstdint>
 #include "AccelerationModule.hpp"
-class Filter : public AccelerationModule
+#include "FilterInterface.hpp"
+class Filter : public AccelerationModule, public FilterInterface
 {
 private:
 	void filterWriteDNFClauseLiteralsToModule(uint32_t DatapathWidth, uint32_t moduleComparesPerField, uint32_t moduleDNFClauses);

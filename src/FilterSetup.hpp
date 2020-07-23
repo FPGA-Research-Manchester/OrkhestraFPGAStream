@@ -3,6 +3,6 @@
 class FilterSetup
 {
 public:
-	void SetupFilterModule(Filter& filterModule);
+	void SetupFilterModule(FilterInterface& filterModule);
 private:
 };

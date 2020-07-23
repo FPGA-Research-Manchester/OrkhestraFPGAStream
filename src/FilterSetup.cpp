@@ -1,7 +1,7 @@
 #include "FilterSetup.hpp"
 #include <cstdio>
 
-void FilterSetup::SetupFilterModule(Filter& filterModule)
+void FilterSetup::SetupFilterModule(FilterInterface& filterModule)
 {
 	uint32_t streamIDInput = 0;
 	uint32_t streamIDValidOutput = 1;
