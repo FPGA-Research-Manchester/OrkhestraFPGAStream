@@ -5,7 +5,7 @@
 #include <tuple>
 #include "DMACrossbarSetup.hpp"
 
-void DMASetup::SetupDMAModule(int recordCount, std::vector<int>& dbData, int recordSize, DMA& dmaEngine) {
+void DMASetup::SetupDMAModule(int recordCount, std::vector<int>& dbData, int recordSize, DMAInterface& dmaEngine) {
 	// Calculate the controller parameter values based on input data and datatypes
 	// Every size metric is 1 integer = 4 bytes = 32 bits
 	const int MAX_DDR_BURST_SIZE = 512;
@@ -41,7 +41,7 @@ void DMASetup::SetupDMAModule(int recordCount, std::vector<int>& dbData, int rec
 	WriteSetupDataToDMAModule(setupDataForDMA, dmaEngine);
 }
 
-void DMASetup::WriteSetupDataToDMAModule(std::vector<DMASetupData>& setupDataForDMA, DMA& dmaEngine)
+void DMASetup::WriteSetupDataToDMAModule(std::vector<DMASetupData>& setupDataForDMA, DMAInterface& dmaEngine)
 {
 	for (auto& streamSetupData : setupDataForDMA)
 	{
@@ -50,7 +50,7 @@ void DMASetup::WriteSetupDataToDMAModule(std::vector<DMASetupData>& setupDataFor
 	}
 }
 
-void DMASetup::SetUpDMACrossbars(DMASetupData& streamSetupData, DMA& dmaEngine)
+void DMASetup::SetUpDMACrossbars(DMASetupData& streamSetupData, DMAInterface& dmaEngine)
 {
 	for (size_t currentChunkIndex = 0; currentChunkIndex < streamSetupData.crossbarSetupData.size(); ++currentChunkIndex) {
 		if (streamSetupData.isInputStream) {
@@ -68,7 +68,7 @@ void DMASetup::SetUpDMACrossbars(DMASetupData& streamSetupData, DMA& dmaEngine)
 	}
 }
 
-void DMASetup::SetUpDMAIOStreams(DMASetupData& streamSetupData, DMA& dmaEngine)
+void DMASetup::SetUpDMAIOStreams(DMASetupData& streamSetupData, DMAInterface& dmaEngine)
 {
 	if (streamSetupData.isInputStream)
 	{

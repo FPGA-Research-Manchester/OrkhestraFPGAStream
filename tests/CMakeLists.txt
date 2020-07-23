@@ -25,3 +25,5 @@ file(COPY ${DBMStoDSPI_SOURCE_DIR}/tests/resources/DMACrossbarSetupTest DESTINAT
 
 add_test(NAME AccelerationModuleTest COMMAND testlib)
 add_test(NAME DMACrossbarSetupTest COMMAND testlib)
+add_test(NAME FilterSetupTest COMMAND testlib)
+add_test(NAME DMASetupTest COMMAND testlib)
