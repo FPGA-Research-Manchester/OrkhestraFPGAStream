@@ -2,10 +2,10 @@
 #include <cstdint>
 #include "AccelerationModule.hpp"
 
-class AccelerationModuleMock : public AccelerationModule {
+class MockAccelerationModule : public AccelerationModule {
 public:
-	AccelerationModuleMock(int* volatile ctrlAXIbaseAddress, uint32_t modulePosition);
-	~AccelerationModuleMock();
+	MockAccelerationModule(int* volatile ctrlAXIbaseAddress, uint32_t modulePosition);
+	~MockAccelerationModule();
 	void writeToModule(uint32_t moduleInternalAddress, uint32_t writeData);
 	uint32_t readFromModule(uint32_t moduleInternalAddress);
 };

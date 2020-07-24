@@ -1,7 +1,8 @@
 #pragma once
 #include <cstdint>
 #include "AccelerationModule.hpp"
-class DMA : public AccelerationModule
+#include "DMAInterface.hpp"
+class DMA : public AccelerationModule, public DMAInterface
 {
 public:
 	~DMA();

@@ -1,7 +1,5 @@
-#include <iostream>
-
 #include <gtest/gtest.h>
-#include "AccelerationModuleMock.hpp"
+#include "MockAccelerationModule.hpp"
 namespace {
 	const int DEFAULT_VALUE = -1;
 
@@ -20,7 +18,7 @@ namespace {
 	};
 
 	TEST_F(AccelerationModuleTest, WriteToModule) {
-		AccelerationModuleMock mockModule(memoryPointer, 0);
+		MockAccelerationModule mockModule(memoryPointer, 0);
 
 		EXPECT_EQ(DEFAULT_VALUE, memoryPointer[0]);
 		mockModule.writeToModule(0, 0);
@@ -30,7 +28,7 @@ namespace {
 		mockModule.writeToModule(1, 10);
 		EXPECT_EQ(10, memoryPointer[1]);
 
-		AccelerationModuleMock secondMockModule(memoryPointer, 1);
+		MockAccelerationModule secondMockModule(memoryPointer, 1);
 
 		EXPECT_EQ(DEFAULT_VALUE, memoryPointer[1048576]);
 		secondMockModule.writeToModule(0, 1);
@@ -40,13 +38,13 @@ namespace {
 	}
 
 	TEST_F(AccelerationModuleTest, ReadFromModule) {
-		AccelerationModuleMock mockModule(memoryPointer, 0);
+		MockAccelerationModule mockModule(memoryPointer, 0);
 
 		EXPECT_EQ(DEFAULT_VALUE, mockModule.readFromModule(2));
 		memoryPointer[2] = 100;
 		EXPECT_EQ(100, mockModule.readFromModule(2));
 
-		AccelerationModuleMock secondMockModule(memoryPointer, 1);
+		MockAccelerationModule secondMockModule(memoryPointer, 1);
 
 		EXPECT_EQ(DEFAULT_VALUE, secondMockModule.readFromModule(2));
 		memoryPointer[1048578] = 101;
