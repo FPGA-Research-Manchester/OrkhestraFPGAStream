@@ -6,13 +6,15 @@
 void Setup::SetupQueryAcceleration(int* volatile& memoryPointer, std::vector<int>& dbData, int recordSize, int recordCount)
 {
 	DMA dmaEngine(memoryPointer);
+	int inputStreamID = 0;
+	int outputStreamID = 1;
 	DMASetup dmaSetup;
-	dmaSetup.SetupDMAModule(recordCount, dbData, recordSize, dmaEngine);
+	dmaSetup.SetupDMAModule(dmaEngine, dbData, recordSize, recordCount, inputStreamID, outputStreamID);
 
 	// Setup the filter module
 	Filter filterModule(memoryPointer, 1);
 	FilterSetup filterSetup;
-	filterSetup.SetupFilterModule(filterModule);
+	filterSetup.SetupFilterModule(filterModule, inputStreamID, outputStreamID);
 
 	bool streamActive[16] = { false };
 	streamActive[0] = true;

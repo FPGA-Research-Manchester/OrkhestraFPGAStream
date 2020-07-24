@@ -5,7 +5,7 @@
 #include <tuple>
 #include "DMACrossbarSetup.hpp"
 
-void DMASetup::SetupDMAModule(int recordCount, std::vector<int>& dbData, int recordSize, DMAInterface& dmaEngine) {
+void DMASetup::SetupDMAModule(DMAInterface& dmaEngine, std::vector<int>& dbData, int recordSize, int recordCount, int inputStreamID, int outputStreamID) {
 	// Calculate the controller parameter values based on input data and datatypes
 	// Every size metric is 1 integer = 4 bytes = 32 bits
 	const int MAX_DDR_BURST_SIZE = 512;
@@ -14,7 +14,6 @@ void DMASetup::SetupDMAModule(int recordCount, std::vector<int>& dbData, int rec
 
 	//Input
 	DMASetupData inputStreamSetupData;
-	int inputStreamID = 0;
 	inputStreamSetupData.streamID = inputStreamID;
 	inputStreamSetupData.isInputStream = true;
 	inputStreamSetupData.recordCount = recordCount;
@@ -23,7 +22,6 @@ void DMASetup::SetupDMAModule(int recordCount, std::vector<int>& dbData, int rec
 
 	// Output
 	DMASetupData outputStreamSetupData;
-	int outputStreamID = 1;
 	outputStreamSetupData.streamID = outputStreamID;
 	outputStreamSetupData.isInputStream = false;
 	outputStreamSetupData.recordCount = 0;

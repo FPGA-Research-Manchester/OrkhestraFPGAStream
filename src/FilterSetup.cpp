@@ -1,13 +1,9 @@
 #include "FilterSetup.hpp"
 #include <cstdio>
 
-void FilterSetup::SetupFilterModule(FilterInterface& filterModule)
+void FilterSetup::SetupFilterModule(FilterInterface& filterModule, int inputStreamID, int outputStreamID)
 {
-	uint32_t streamIDInput = 0;
-	uint32_t streamIDValidOutput = 1;
-	uint32_t streamIDInvalidOutput = 0;
-
-	filterModule.filterSetStreamIDs(streamIDInput, streamIDValidOutput, streamIDInvalidOutput);
+	filterModule.filterSetStreamIDs(inputStreamID, outputStreamID, outputStreamID);
 
 	bool requestOnInvalidIfLast = true;
 	bool forwardInvalidRecordFirstChunk = false;
@@ -29,12 +25,12 @@ void FilterSetup::SetupFilterModule(FilterInterface& filterModule)
 	uint32_t compareNumber = 0;
 	uint32_t compareReferenceValue = 12000;
 
-	filterModule.filterSetCompareReferenceValue(chunkID, dataPosition, compareNumber + 1, compareReferenceValue);
+	filterModule.filterSetCompareReferenceValue(chunkID, dataPosition, compareNumber /*+ 1*/, compareReferenceValue);
 
-	uint32_t DNF_Clause_ID = 0;
+	uint32_t DNFClauseID = 0;
 	uint8_t positiveLiteralType = 1;
 
-	filterModule.filterSetDNFClauseLiteral(DNF_Clause_ID, compareNumber, chunkID, dataPosition, positiveLiteralType);
+	filterModule.filterSetDNFClauseLiteral(DNFClauseID, compareNumber, chunkID, dataPosition, positiveLiteralType);
 
 	uint32_t datapathWidth = 16;
 

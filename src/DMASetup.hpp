@@ -5,7 +5,7 @@
 class DMASetup
 {
 public:
-	void SetupDMAModule(int recordCount, std::vector<int>& dbData, int recordSize, DMAInterface& dmaEngine);
+	void SetupDMAModule(DMAInterface& dmaEngine, std::vector<int>& dbData, int recordSize, int recordCount, int inputStreamID, int outputStreamID);
 private:
 	void WriteSetupDataToDMAModule(std::vector<DMASetupData>& setupDataForDMA, DMAInterface& dmaEngine);
 	void SetUpDMAIOStreams(DMASetupData& streamSetupData, DMAInterface& dmaEngine);
