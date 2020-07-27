@@ -1,8 +1,8 @@
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-#include "MockDMA.hpp"
 #include "DMASetup.hpp"
+#include "MockDMA.hpp"
 #include <cstdio>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 namespace {
 	int inputStreamID = 0;
 	int outputStreamID = 1;

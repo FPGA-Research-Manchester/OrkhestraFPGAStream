@@ -1,6 +1,6 @@
 #include "DMA.hpp"
+#include <cmath>
 #include <iostream>
-#include <math.h>
 
 /*
 This is the width of the address for the memory mapped register space in every module.
@@ -8,7 +8,7 @@ This parameter's value has to match the parameter in the implemented DMA module.
 */
 #define MODULE_ADDRESS_BITS 20
 
-DMA::~DMA(){}
+DMA::~DMA()= default;
 
 DMA::DMA(int* volatile ctrlAXIbaseAddress) : AccelerationModule(ctrlAXIbaseAddress, 0){}
 
@@ -16,19 +16,19 @@ DMA::DMA(int* volatile ctrlAXIbaseAddress) : AccelerationModule(ctrlAXIbaseAddre
 void DMA::setInputControllerParams(int streamID, int DDRburstSize, int recordsPerDDRBurst, int bufferStart, int bufferEnd) {
 	AccelerationModule::writeToModule(streamID * 4, ((DDRburstSize-1) << 24) + ((int)log2(recordsPerDDRBurst) << 16) + (bufferStart << 8) + (bufferEnd));
 }
-uint32_t DMA::getInputControllerParams(int streamID) {
+auto DMA::getInputControllerParams(int streamID) -> uint32_t {
 	return AccelerationModule::readFromModule(streamID * 4);
 }
 void DMA::setInputControllerStreamAddress(int streamID, uintptr_t address) {
 	AccelerationModule::writeToModule(((1 << 6) + (streamID * 4)), address >> 4);
 }
-uintptr_t DMA::getInputControllerStreamAddress(int streamID) {
+auto DMA::getInputControllerStreamAddress(int streamID) -> uintptr_t {
 	return AccelerationModule::readFromModule(((1 << 6) + (streamID * 4)));
 }
 void DMA::setInputControllerStreamSize(int streamID, int size) {// starting size of stream in amount of records
 	AccelerationModule::writeToModule(((2 << 6) + (streamID * 4)), size);
 }
-uint32_t DMA::getInputControllerStreamSize(int streamID) {
+auto DMA::getInputControllerStreamSize(int streamID) -> uint32_t {
 	return AccelerationModule::readFromModule(((2 << 6) + (streamID * 4)));
 }
 void DMA::startInputController(bool streamActive[16]) {// indicate which streams can be read from DDR and start processing
@@ -39,7 +39,7 @@ void DMA::startInputController(bool streamActive[16]) {// indicate which streams
 	}
 	AccelerationModule::writeToModule(3 << 6, activeStreams);
 }
-bool DMA::isInputControllerFinished() { // true if all input streams were read from DDR
+auto DMA::isInputControllerFinished() -> bool { // true if all input streams were read from DDR
 	uint32_t activeStreams = AccelerationModule::readFromModule(3 << 6);
 	return (activeStreams == 0);
 }
@@ -58,19 +58,19 @@ void DMA::setRecordChunkIDs(int streamID, int interfaceCycle, int chunkID) {
 void DMA::setOutputControllerParams(int streamID, int DDRburstSize, int recordsPerDDRBurst, int bufferStart, int bufferEnd) {
 	AccelerationModule::writeToModule(((1 << 16) + (streamID * 4)), ((DDRburstSize-1) << 24) + ((int)log2(recordsPerDDRBurst) << 16) + (bufferStart << 8) + (bufferEnd));
 }
-uint32_t DMA::getOutputControllerParams(int streamID) {
+auto DMA::getOutputControllerParams(int streamID) -> uint32_t {
 	return AccelerationModule::readFromModule(((1 << 16) + (streamID * 4)));
 }
 void DMA::setOutputControllerStreamAddress(int streamID, uintptr_t address) {
 	AccelerationModule::writeToModule(((1 << 16) + (1 << 6) + (streamID * 4)), address >> 4);
 }
-uintptr_t DMA::getOutputControllerStreamAddress(int streamID) {
+auto DMA::getOutputControllerStreamAddress(int streamID) -> uintptr_t {
 	return AccelerationModule::readFromModule(((1 << 16) + (1 << 6) + streamID * 4));
 }
 void DMA::setOutputControllerStreamSize(int streamID, int size) {// starting size of stream in amount of records
 	AccelerationModule::writeToModule(((1 << 16) + (2 << 6) + (streamID * 4)), size);
 }
-uint32_t DMA::getOutputControllerStreamSize(int streamID) {// starting size of stream in amount of records
+auto DMA::getOutputControllerStreamSize(int streamID) -> uint32_t {// starting size of stream in amount of records
 	return AccelerationModule::readFromModule(((1 << 16) + (2 << 6) + (streamID * 4)));
 }
 void DMA::startOutputController(bool streamActive[16]) {// indicate which streams can be written to DDR and start processing
@@ -81,7 +81,7 @@ void DMA::startOutputController(bool streamActive[16]) {// indicate which stream
 	}
 	AccelerationModule::writeToModule(((1 << 16) + (3 << 6)), activeStreams);
 }
-bool DMA::isOutputControllerFinished() { // true if all streams saw EOS from PR modules
+auto DMA::isOutputControllerFinished() -> bool { // true if all streams saw EOS from PR modules
 	uint32_t activeStreams = AccelerationModule::readFromModule(((1 << 16) + (3 << 6)));
 	return (activeStreams == 0);
 }

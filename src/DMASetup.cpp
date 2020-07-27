@@ -1,9 +1,9 @@
 #include "DMASetup.hpp"
-#include <queue>
-#include <math.h>
-#include <cstdio>
-#include <tuple>
 #include "DMACrossbarSetup.hpp"
+#include <cmath>
+#include <cstdio>
+#include <queue>
+#include <tuple>
 
 void DMASetup::SetupDMAModule(DMAInterface& dmaEngine, std::vector<int>& dbData, int recordSize, int recordCount, int inputStreamID, int outputStreamID) {
 	// Calculate the controller parameter values based on input data and datatypes
@@ -93,7 +93,7 @@ void DMASetup::CalculateDMAStreamSetupData(DMASetupData& streamSetupData, const 
 
 	// Temporarily for now.
 	for (int i = 0; i < streamSetupData.chunksPerRecord; i++) {
-		streamSetupData.recordChunkIDs.push_back(std::make_tuple(i, i));
+		streamSetupData.recordChunkIDs.emplace_back(i, i);
 	}
 
 	int recordsPerMaxBurstSize = maxDDRBurstSize / recordSize;

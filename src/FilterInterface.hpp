@@ -2,7 +2,7 @@
 class FilterInterface 
 {
 public:
-	virtual ~FilterInterface() {};
+	virtual ~FilterInterface() = default;;
 
 	virtual void filterSetStreamIDs(uint32_t streamIDInput, uint32_t streamIDValidOutput, uint32_t streamIDInvalidOutput) = 0;
 	virtual void filterSetMode(bool requestOnInvalidIfLast, bool forwardInvalidRecordFirstChunk, bool forwardFullInvalidRecords, bool firstModuleInResourceElasticChain, bool lastModuleInResourceElasticChain) = 0;

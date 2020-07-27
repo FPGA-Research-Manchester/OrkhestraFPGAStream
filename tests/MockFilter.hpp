@@ -1,6 +1,6 @@
 #pragma once
-#include "gmock/gmock.h"
 #include "FilterInterface.hpp"
+#include "gmock/gmock.h"
 
 class MockFilter: public FilterInterface
 {

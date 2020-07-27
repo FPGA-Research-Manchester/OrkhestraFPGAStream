@@ -1,8 +1,8 @@
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
 #include "DMACrossbarSetup.hpp"
 #include "DMASetupData.hpp"
 #include <fstream>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <sstream>
 #include <string>
 namespace {
@@ -18,7 +18,7 @@ namespace {
 		while (std::getline(inputFile, line))
 		{
 			std::istringstream stringStream(line);
-			int configValue;
+			int configValue = 0;
 			std::vector<int> currentCycleGoldenConfig;
 			while (stringStream >> configValue) {
 				currentCycleGoldenConfig.push_back(configValue);

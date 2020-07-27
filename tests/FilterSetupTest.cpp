@@ -1,7 +1,7 @@
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-#include "MockFilter.hpp"
 #include "FilterSetup.hpp"
+#include "MockFilter.hpp"
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 namespace {
 	int expectedChunkID = 1;
 	int expectedPosition = 1;

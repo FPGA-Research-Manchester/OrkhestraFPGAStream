@@ -3,7 +3,7 @@
 
 #define MODULE_ADDRESS_BITS 20
 
-Filter::~Filter(){}
+Filter::~Filter()= default;
 
 Filter::Filter(int* volatile ctrlAXIbaseAddress, uint32_t modulePosition) : AccelerationModule(ctrlAXIbaseAddress, modulePosition) {}
 
@@ -80,7 +80,7 @@ void Filter::filterSetDNFClauseLiteral(uint32_t DNF_Clause_ID /*0-31*/, uint32_t
 }
 
 void Filter::filterWriteDNFClauseLiteralsToModule(uint32_t DatapathWidth, uint32_t moduleComparesPerField, uint32_t moduleDNFClauses) {
-	int CompareLane, DNFClause, DataPosition, ChunkID;
+	int CompareLane = 0, DNFClause = 0, DataPosition = 0, ChunkID = 0;
 	for (CompareLane = 0; CompareLane < moduleComparesPerField; CompareLane++) {
 		for (DataPosition = 0; DataPosition < DatapathWidth; DataPosition++) {
 			for (ChunkID = 0; ChunkID < 32; ChunkID++) {

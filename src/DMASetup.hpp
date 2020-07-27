@@ -1,7 +1,7 @@
 #pragma once
-#include <vector>
 #include "DMA.hpp"
 #include "DMASetupData.hpp"
+#include <vector>
 class DMASetup
 {
 public:

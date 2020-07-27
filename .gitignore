@@ -339,3 +339,5 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 /out
+/run-clang-tidy.py
+/tidy-checks.sh

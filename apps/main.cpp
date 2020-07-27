@@ -1,6 +1,6 @@
-#include <vector>
-#include <rapidcsv.h>
 #include <Setup.hpp>
+#include <rapidcsv.h>
+#include <vector>
 
 /*
 Filter: (price < 12000)
@@ -37,9 +37,9 @@ void FillDataArray(std::vector<int>& dbData, rapidcsv::Document* dbDataFile){
 				break;
 			case 1:
 			case 2:
-				StringAsciiValue asciiValue = dbDataFile->GetCell<StringAsciiValue>(colNumber, rowNumber, ConvToInt);
-				for (int i = 0; i < asciiValue.values.size(); i++) {
-					dbData[currentLocalDataAddress++] = asciiValue.values[i];
+				auto asciiValue = dbDataFile->GetCell<StringAsciiValue>(colNumber, rowNumber, ConvToInt);
+				for (int value : asciiValue.values) {
+					dbData[currentLocalDataAddress++] = value;
 				}
 				break;
 			}
@@ -57,8 +57,8 @@ int main()
 	dataTypeSizes.push_back(1);
 	// TODO: Check lambda functions performance later here
 	int recordSize = 0;
-	for (auto i = dataTypeSizes.begin(); i != dataTypeSizes.end(); ++i) {
-		recordSize += *i;
+	for (int rowSize : dataTypeSizes) {
+		recordSize += rowSize;
 	}
 
 	// The data probably doesn't come in a csv but it'll do for now

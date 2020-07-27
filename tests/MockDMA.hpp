@@ -1,6 +1,6 @@
 #pragma once
-#include "gmock/gmock.h"
 #include "DMAInterface.hpp"
+#include "gmock/gmock.h"
 
 class MockDMA : public DMAInterface
 {

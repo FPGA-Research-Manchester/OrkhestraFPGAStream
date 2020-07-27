@@ -1,5 +1,5 @@
-#include <gtest/gtest.h>
 #include "MockAccelerationModule.hpp"
+#include <gtest/gtest.h>
 namespace {
 	const int DEFAULT_VALUE = -1;
 

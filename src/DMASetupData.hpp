@@ -1,8 +1,8 @@
 #pragma once
-#include <vector>
-#include <tuple>
-#include <cstdio>
 #include "DMACrossbarSetupData.hpp"
+#include <cstdio>
+#include <tuple>
+#include <vector>
 struct DMASetupData {
 	DMASetupData() : crossbarSetupData(32) {}
 	int streamID, DDRBurstLength, recordsPerDDRBurst, recordCount, chunksPerRecord, bufferStart, bufferEnd;
