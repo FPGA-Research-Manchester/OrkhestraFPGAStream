@@ -1,6 +1,6 @@
 ---
 Checks:          'modernize-*,google-*,cppcoreguidelines-*,bugprone-*,readability-*,misc-*,performance-*,portability-*,-*'
-WarningsAsErrors: ''
+WarningsAsErrors: '*'
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false
 FormatStyle:     google

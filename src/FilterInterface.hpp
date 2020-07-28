@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 class FilterInterface {
  public:
   virtual ~FilterInterface() = default;

@@ -48,7 +48,7 @@ void FillDataArray(std::vector<int>& dbData, rapidcsv::Document* dbDataFile) {
   }
 }
 
-int main() {
+auto main() -> int {
   // Figure out some legit way to get this data type information. For all
   // streams. Would be nice to have this info in structs or sth like that to
   // capture dataType
