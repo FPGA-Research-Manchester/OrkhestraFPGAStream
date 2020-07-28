@@ -9,10 +9,10 @@ MockAccelerationModule::~MockAccelerationModule() = default;
 
 void MockAccelerationModule::writeToModule(uint32_t module_internal_address,
                                            uint32_t write_data) {
-  AccelerationModule::writeToModule(module_internal_address, write_data);
+  AccelerationModule::WriteToModule(module_internal_address, write_data);
 }
 
 auto MockAccelerationModule::readFromModule(uint32_t module_internal_address)
     -> uint32_t {
-  return AccelerationModule::readFromModule(module_internal_address);
+  return AccelerationModule::ReadFromModule(module_internal_address);
 }

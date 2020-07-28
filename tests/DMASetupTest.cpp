@@ -17,16 +17,16 @@ TEST(DMASetupTest, InputParamsSettings) {
   int expected_stream_size = 1000;
   std::vector<int> mock_db_data(1, 0);  // NOLINT
   MockDMA mock_dma;
-  EXPECT_CALL(mock_dma, setInputControllerParams(
+  EXPECT_CALL(mock_dma, SetInputControllerParams(
                             input_stream_id, expected_ddr_burst_length,
                             expected_records_per_ddr_burst,
                             expected_buffer_start, expected_buffer_end))
       .Times(1);
-  EXPECT_CALL(mock_dma, setInputControllerStreamAddress(
+  EXPECT_CALL(mock_dma, SetInputControllerStreamAddress(
                             input_stream_id,
                             reinterpret_cast<uintptr_t>(&mock_db_data[0])))
       .Times(1);
-  EXPECT_CALL(mock_dma, setInputControllerStreamSize(input_stream_id,
+  EXPECT_CALL(mock_dma, SetInputControllerStreamSize(input_stream_id,
                                                      expected_stream_size))
       .Times(1);
   DMASetup dma_configurer;
@@ -42,16 +42,16 @@ TEST(DMASetupTest, OutputParamsSettings) {
   int expected_buffer_end = 15;
   std::vector<int> mock_db_data(1, 0);  // NOLINT
   MockDMA mock_dma;
-  EXPECT_CALL(mock_dma, setOutputControllerParams(
+  EXPECT_CALL(mock_dma, SetOutputControllerParams(
                             output_stream_id, expected_ddr_burst_length,
                             expected_records_per_ddr_burst,
                             expected_buffer_start, expected_buffer_end))
       .Times(1);
-  EXPECT_CALL(mock_dma, setOutputControllerStreamAddress(
+  EXPECT_CALL(mock_dma, SetOutputControllerStreamAddress(
                             output_stream_id,
                             reinterpret_cast<uintptr_t>(&mock_db_data[0])))
       .Times(1);
-  EXPECT_CALL(mock_dma, setOutputControllerStreamSize(output_stream_id, 0))
+  EXPECT_CALL(mock_dma, SetOutputControllerStreamSize(output_stream_id, 0))
       .Times(1);
   DMASetup dma_configurer;
   dma_configurer.SetupDMAModule(mock_dma, mock_db_data, 18, 1000,
@@ -60,12 +60,12 @@ TEST(DMASetupTest, OutputParamsSettings) {
 TEST(DMASetupTest, RecordSettings) {
   std::vector<int> mock_db_data(1, 0);  // NOLINT
   MockDMA mock_dma;
-  EXPECT_CALL(mock_dma, setRecordSize(output_stream_id, 2)).Times(1);
-  EXPECT_CALL(mock_dma, setRecordSize(input_stream_id, 2)).Times(1);
-  EXPECT_CALL(mock_dma, setRecordChunkIDs(output_stream_id, 0, 0)).Times(1);
-  EXPECT_CALL(mock_dma, setRecordChunkIDs(output_stream_id, 1, 1)).Times(1);
-  EXPECT_CALL(mock_dma, setRecordChunkIDs(input_stream_id, 0, 0)).Times(1);
-  EXPECT_CALL(mock_dma, setRecordChunkIDs(input_stream_id, 1, 1)).Times(1);
+  EXPECT_CALL(mock_dma, SetRecordSize(output_stream_id, 2)).Times(1);
+  EXPECT_CALL(mock_dma, SetRecordSize(input_stream_id, 2)).Times(1);
+  EXPECT_CALL(mock_dma, SetRecordChunkIDs(output_stream_id, 0, 0)).Times(1);
+  EXPECT_CALL(mock_dma, SetRecordChunkIDs(output_stream_id, 1, 1)).Times(1);
+  EXPECT_CALL(mock_dma, SetRecordChunkIDs(input_stream_id, 0, 0)).Times(1);
+  EXPECT_CALL(mock_dma, SetRecordChunkIDs(input_stream_id, 1, 1)).Times(1);
   DMASetup dma_configurer;
   dma_configurer.SetupDMAModule(mock_dma, mock_db_data, 18, 1000,
                                 input_stream_id, output_stream_id);

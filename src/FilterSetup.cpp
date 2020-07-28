@@ -4,7 +4,7 @@
 
 void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
                                     int input_stream_id, int output_stream_id) {
-  filter_module.filterSetStreamIDs(input_stream_id, output_stream_id,
+  filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
                                    output_stream_id);
 
   bool request_on_invalid_if_last = true;
@@ -14,7 +14,7 @@ void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
   bool first_module_in_resource_elastic_chain = true;
   bool last_module_in_resource_elastic_chain = true;
 
-  filter_module.filterSetMode(
+  filter_module.FilterSetMode(
       request_on_invalid_if_last, forward_invalid_record_first_chunk,
       forward_full_invalid_records, first_module_in_resource_elastic_chain,
       last_module_in_resource_elastic_chain);
@@ -25,24 +25,24 @@ void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
   uint32_t const less_than_compare = 0;
   uint32_t const dont_care_compare = 0;
 
-  filter_module.filterSetCompareTypes(chunk_id, data_position,
+  filter_module.FilterSetCompareTypes(chunk_id, data_position,
                                       less_than_compare, dont_care_compare,
                                       dont_care_compare, dont_care_compare);
 
   uint32_t compare_number = 0;
   uint32_t compare_reference_value = 12000;
 
-  filter_module.filterSetCompareReferenceValue(
+  filter_module.FilterSetCompareReferenceValue(
       chunk_id, data_position, compare_number /*+ 1*/, compare_reference_value);
 
   uint32_t dnf_clause_id = 0;
   uint8_t const positive_literal_type = 1;
 
-  filter_module.filterSetDNFClauseLiteral(dnf_clause_id, compare_number,
+  filter_module.FilterSetDNFClauseLiteral(dnf_clause_id, compare_number,
                                           chunk_id, data_position,
                                           positive_literal_type);
 
   uint32_t datapath_width = 16;
 
-  filter_module.writeDNFClauseLiteralsToFilter_1CMP_8DNF(datapath_width);
+  filter_module.WriteDNFClauseLiteralsToFilter_1CMP_8DNF(datapath_width);
 }

@@ -65,7 +65,7 @@ void DMASetup::SetUpDMACrossbars(DMASetupData& stream_setup_data,
        ++current_chunk_index) {
     if (stream_setup_data.isInputStream) {
       for (int current_offset = 0; current_offset < 4; current_offset++) {
-        dma_engine.setBufferToInterfaceChunk(
+        dma_engine.SetBufferToInterfaceChunk(
             stream_setup_data.streamID, current_chunk_index, current_offset,
             stream_setup_data.crossbarSetupData[current_chunk_index]
                 .chunkData[3 + current_offset * 4],
@@ -75,7 +75,7 @@ void DMASetup::SetUpDMACrossbars(DMASetupData& stream_setup_data,
                 .chunkData[1 + current_offset * 4],
             stream_setup_data.crossbarSetupData[current_chunk_index]
                 .chunkData[0 + current_offset * 4]);
-        dma_engine.setBufferToInterfaceSourcePosition(
+        dma_engine.SetBufferToInterfaceSourcePosition(
             stream_setup_data.streamID, current_chunk_index, current_offset,
             stream_setup_data.crossbarSetupData[current_chunk_index]
                 .positionData[3 + current_offset * 4],
@@ -88,7 +88,7 @@ void DMASetup::SetUpDMACrossbars(DMASetupData& stream_setup_data,
       }
     } else {
       for (int current_offset = 0; current_offset < 4; current_offset++) {
-        dma_engine.setInterfaceToBufferChunk(
+        dma_engine.SetInterfaceToBufferChunk(
             stream_setup_data.streamID, current_chunk_index, current_offset,
             stream_setup_data.crossbarSetupData[current_chunk_index]
                 .chunkData[3 + current_offset * 4],
@@ -98,7 +98,7 @@ void DMASetup::SetUpDMACrossbars(DMASetupData& stream_setup_data,
                 .chunkData[1 + current_offset * 4],
             stream_setup_data.crossbarSetupData[current_chunk_index]
                 .chunkData[0 + current_offset * 4]);
-        dma_engine.setInterfaceToBufferSourcePosition(
+        dma_engine.SetInterfaceToBufferSourcePosition(
             stream_setup_data.streamID, current_chunk_index, current_offset,
             stream_setup_data.crossbarSetupData[current_chunk_index]
                 .positionData[3 + current_offset * 4],
@@ -116,28 +116,28 @@ void DMASetup::SetUpDMACrossbars(DMASetupData& stream_setup_data,
 void DMASetup::SetUpDMAIOStreams(DMASetupData& stream_setup_data,
                                  DMAInterface& dma_engine) {
   if (stream_setup_data.isInputStream) {
-    dma_engine.setInputControllerParams(
+    dma_engine.SetInputControllerParams(
         stream_setup_data.streamID, stream_setup_data.DDRBurstLength,
         stream_setup_data.recordsPerDDRBurst, stream_setup_data.bufferStart,
         stream_setup_data.bufferEnd);
-    dma_engine.setInputControllerStreamAddress(stream_setup_data.streamID,
+    dma_engine.SetInputControllerStreamAddress(stream_setup_data.streamID,
                                                stream_setup_data.streamAddress);
-    dma_engine.setInputControllerStreamSize(stream_setup_data.streamID,
+    dma_engine.SetInputControllerStreamSize(stream_setup_data.streamID,
                                             stream_setup_data.recordCount);
   } else {
-    dma_engine.setOutputControllerParams(
+    dma_engine.SetOutputControllerParams(
         stream_setup_data.streamID, stream_setup_data.DDRBurstLength,
         stream_setup_data.recordsPerDDRBurst, stream_setup_data.bufferStart,
         stream_setup_data.bufferEnd);
-    dma_engine.setOutputControllerStreamAddress(
+    dma_engine.SetOutputControllerStreamAddress(
         stream_setup_data.streamID, stream_setup_data.streamAddress);
-    dma_engine.setOutputControllerStreamSize(stream_setup_data.streamID,
+    dma_engine.SetOutputControllerStreamSize(stream_setup_data.streamID,
                                              stream_setup_data.recordCount);
   }
-  dma_engine.setRecordSize(stream_setup_data.streamID,
+  dma_engine.SetRecordSize(stream_setup_data.streamID,
                            stream_setup_data.chunksPerRecord);
   for (auto& chunk_id_pair : stream_setup_data.recordChunkIDs) {
-    dma_engine.setRecordChunkIDs(stream_setup_data.streamID,
+    dma_engine.SetRecordChunkIDs(stream_setup_data.streamID,
                                  std::get<0>(chunk_id_pair),
                                  std::get<1>(chunk_id_pair));
   }

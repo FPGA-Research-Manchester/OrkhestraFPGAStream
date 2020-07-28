@@ -9,19 +9,19 @@ Filter::Filter(int* volatile ctrl_ax_ibase_address, uint32_t module_position)
     : AccelerationModule(ctrl_ax_ibase_address, module_position) {}
 
 // Selects streamID and streamID manipulations
-void Filter::filterSetStreamIDs(
+void Filter::FilterSetStreamIDs(
     uint32_t stream_id_input,  // The streamID of the stream that gets filterred
     uint32_t
         stream_id_valid_output,  // The streamID of valid output from filters
     uint32_t stream_id_invalid_output) {  // The streamID of invalid output from
                                           // filters
-  AccelerationModule::writeToModule(0, stream_id_input +
+  AccelerationModule::WriteToModule(0, stream_id_input +
                                            (stream_id_valid_output << 8) +
                                            (stream_id_invalid_output << 16));
 }
 
 // Selects mode of operation
-void Filter::filterSetMode(
+void Filter::FilterSetMode(
     bool request_on_invalid_if_last,  // Should the module rerequest packets if
                                       // outcome is invalid? (Only applicable
                                       // for last module in RE chain)
@@ -41,7 +41,7 @@ void Filter::filterSetMode(
         last_module_in_resource_elastic_chain) {  // Indicating this is the last
   // filter module  (must be true if
   // only 1 module is used)
-  AccelerationModule::writeToModule(
+  AccelerationModule::WriteToModule(
       0x4, (request_on_invalid_if_last ? 16 : 0) +
                (forward_invalid_record_first_chunk ? 8 : 0) +
                (forward_full_invalid_records ? 4 : 0) +
@@ -67,7 +67,7 @@ void Filter::filterSetMode(
 #define FILTER_64BIT_GREATER_THAN 12
 #define FILTER_64BIT_NOT_EQUAL 13
 
-void Filter::filterSetCompareTypes(
+void Filter::FilterSetCompareTypes(
     uint32_t chunk_id,  // for which chunkID are the following compare types
     uint32_t data_position,  // which 32-bit integer are the following compare
                              // types for
@@ -83,13 +83,13 @@ void Filter::filterSetCompareTypes(
         compare_4_type) {  // In 64-bit compares, the current 32-bit integer
                            // holds the MSBits, while (DataPosition-1) holds the
                            // Least significant bits (reference value)
-  AccelerationModule::writeToModule(
+  AccelerationModule::WriteToModule(
       ((1 << 15) + (data_position << 2) + (chunk_id << 7)),
       (compare_4_type << 12 + compare_3_type << 8 + compare_2_type
                       << 4 + compare_1_type));
 }
 
-void Filter::filterSetCompareReferenceValue(
+void Filter::FilterSetCompareReferenceValue(
     uint32_t
         chunk_id,  // for which chunkID is the following compare reference value
     uint32_t data_position,  // for which 32-bit integer is the following
@@ -103,7 +103,7 @@ void Filter::filterSetCompareReferenceValue(
                                          // Can be anything (Can be 4 characters
                                          // of text, can be a float number for
                                          // equal compare etc.)
-  AccelerationModule::writeToModule(((1 << 15) + (data_position << 2) +
+  AccelerationModule::WriteToModule(((1 << 15) + (data_position << 2) +
                                      (chunk_id << 7) + (compare_number << 12)),
                                     compare_reference_value);
 }
@@ -129,7 +129,7 @@ struct {
                        // 0-1 only)
 } dnf_clause[32];  // Up to 32 Clauses (for 16 DNF clause module use 0-15 only)
 
-void Filter::filterSetDNFClauseLiteral(
+void Filter::FilterSetDNFClauseLiteral(
     uint32_t dnf_clause_id /*0-31*/, uint32_t compare_number /*1-4*/,
     uint32_t chunk_id /*0-31*/,
     uint32_t data_position /*0-15 for 512-bit datapath etc*/,
@@ -187,11 +187,11 @@ void Filter::filterWriteDNFClauseLiteralsToModule(
             clauses_packed_negative_result = 0;  // boolean expression
           }
         }
-        AccelerationModule::writeToModule(
+        AccelerationModule::WriteToModule(
             ((1 << 16) + (data_position << 2) + (1 << 7) + (chunk_id << 8) +
              (compare_lane << 13)),
             clauses_packed_positive_result);
-        AccelerationModule::writeToModule(
+        AccelerationModule::WriteToModule(
             ((1 << 16) + (data_position << 2) + (0 << 7) + (chunk_id << 8) +
              (compare_lane << 13)),
             clauses_packed_negative_result);
@@ -199,17 +199,17 @@ void Filter::filterWriteDNFClauseLiteralsToModule(
     }
   }
 }
-void Filter::writeDNFClauseLiteralsToFilter_1CMP_8DNF(
+void Filter::WriteDNFClauseLiteralsToFilter_1CMP_8DNF(
     uint32_t
         datapath_width /*1-32: 16->512bit datapath; 32->1024-bit datapath*/) {
   filterWriteDNFClauseLiteralsToModule(datapath_width, 1, 8);
 }
-void Filter::writeDNFClauseLiteralsToFilter_2CMP_16DNF(
+void Filter::WriteDNFClauseLiteralsToFilter_2CMP_16DNF(
     uint32_t
         datapath_width /*1-32: 16->512bit datapath; 32->1024-bit datapath*/) {
   filterWriteDNFClauseLiteralsToModule(datapath_width, 2, 16);
 }
-void Filter::writeDNFClauseLiteralsToFilter_4CMP_32DNF(
+void Filter::WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
     uint32_t
         datapath_width /*1-32: 16->512bit datapath; 32->1024-bit datapath*/) {
   filterWriteDNFClauseLiteralsToModule(datapath_width, 4, 32);

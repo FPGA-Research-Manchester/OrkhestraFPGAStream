@@ -22,8 +22,8 @@ void Setup::SetupQueryAcceleration(int* volatile& memory_pointer,
 
   bool stream_active[16] = {false};
   stream_active[0] = true;
-  dma_engine.startInputController(stream_active);
-  dma_engine.startOutputController(stream_active);
+  dma_engine.StartInputController(stream_active);
+  dma_engine.StartOutputController(stream_active);
 
   // Print out the contents of memory for debugging
   // std::cout << std::endl << "Memory contents:" << std::endl;
