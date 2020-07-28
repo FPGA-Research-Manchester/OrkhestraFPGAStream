@@ -7,22 +7,23 @@
 void Setup::SetupQueryAcceleration(int* volatile& memoryPointer,
                                    std::vector<int>& dbData, int recordSize,
                                    int recordCount) {
-  DMA dmaEngine(memoryPointer);
-  int inputStreamID = 0;
-  int outputStreamID = 1;
-  DMASetup dmaSetup;
-  dmaSetup.SetupDMAModule(dmaEngine, dbData, recordSize, recordCount,
-                          inputStreamID, outputStreamID);
+  DMA dma_engine(memoryPointer);
+  int input_stream_id = 0;
+  int output_stream_id = 1;
+  DMASetup dma_setup;
+  DMASetup::SetupDMAModule(dma_engine, dbData, recordSize, recordCount,
+                           input_stream_id, output_stream_id);
 
   // Setup the filter module
-  Filter filterModule(memoryPointer, 1);
-  FilterSetup filterSetup;
-  filterSetup.SetupFilterModule(filterModule, inputStreamID, outputStreamID);
+  Filter filter_module(memoryPointer, 1);
+  FilterSetup filter_setup;
+  FilterSetup::SetupFilterModule(filter_module, input_stream_id,
+                                 output_stream_id);
 
-  bool streamActive[16] = {false};
-  streamActive[0] = true;
-  dmaEngine.startInputController(streamActive);
-  dmaEngine.startOutputController(streamActive);
+  bool stream_active[16] = {false};
+  stream_active[0] = true;
+  dma_engine.startInputController(stream_active);
+  dma_engine.startOutputController(stream_active);
 
   // Print out the contents of memory for debugging
   // std::cout << std::endl << "Memory contents:" << std::endl;

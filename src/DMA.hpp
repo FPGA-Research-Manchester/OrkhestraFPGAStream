@@ -6,7 +6,7 @@
 class DMA : public AccelerationModule, public DMAInterface {
  public:
   ~DMA() override;
-  DMA(int* volatile ctrlAXIbaseAddress);
+  explicit DMA(int* volatile ctrlAXIbaseAddress);
 
   void setInputControllerParams(int streamID, int DDRburstSize,
                                 int recordsPerDDRBurst, int bufferStart,

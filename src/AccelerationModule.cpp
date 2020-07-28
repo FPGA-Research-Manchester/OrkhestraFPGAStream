@@ -9,12 +9,12 @@ AccelerationModule::AccelerationModule(int* volatile controlAXIbaseAddress,
 
 auto AccelerationModule::calculateMemoryMappedAddress(
     uint32_t moduleInternalAddress) -> int* volatile {
-  int* volatile returnAddress = controlAXIbaseAddress_;
-  returnAddress += modulePosition_ *
-                   (1 << MODULE_ADDRESS_BITS);  // calculate the main address of
-                                                // the target module
-  returnAddress += moduleInternalAddress;
-  return returnAddress;
+  int* volatile return_address = controlAXIbaseAddress_;
+  return_address += modulePosition_ *
+                    (1 << MODULE_ADDRESS_BITS);  // calculate the main address
+                                                 // of the target module
+  return_address += moduleInternalAddress;
+  return return_address;
 }
 
 void AccelerationModule::writeToModule(
@@ -22,19 +22,19 @@ void AccelerationModule::writeToModule(
                                      // register of the module
     uint32_t writeData               // Data to be written to module's register
 ) {
-  int* volatile registerAddress =
+  int* volatile register_address =
       calculateMemoryMappedAddress(moduleInternalAddress);
-  *registerAddress = writeData;
+  *register_address = writeData;
 }
 
 auto AccelerationModule::readFromModule(
     uint32_t moduleInternalAddress  // Internal address of the memory mapped
                                     // register of the module
     ) -> uint32_t {
-  volatile int* registerAddress =
+  volatile int* register_address =
       calculateMemoryMappedAddress(moduleInternalAddress);
-  uint32_t readData = *registerAddress;
-  return readData;
+  uint32_t read_data = *register_address;
+  return read_data;
 }
 
 AccelerationModule::~AccelerationModule() = default;

@@ -19,10 +19,10 @@ DMA::DMA(int* volatile ctrlAXIbaseAddress)
 void DMA::setInputControllerParams(int streamID, int DDRburstSize,
                                    int recordsPerDDRBurst, int bufferStart,
                                    int bufferEnd) {
-  AccelerationModule::writeToModule(streamID * 4,
-                                    ((DDRburstSize - 1) << 24) +
-                                        ((int)log2(recordsPerDDRBurst) << 16) +
-                                        (bufferStart << 8) + (bufferEnd));
+  AccelerationModule::writeToModule(
+      streamID * 4, ((DDRburstSize - 1) << 24) +
+                        (static_cast<int>(log2(recordsPerDDRBurst)) << 16) +
+                        (bufferStart << 8) + (bufferEnd));
 }
 auto DMA::getInputControllerParams(int streamID) -> uint32_t {
   return AccelerationModule::readFromModule(streamID * 4);
@@ -43,17 +43,19 @@ auto DMA::getInputControllerStreamSize(int streamID) -> uint32_t {
 void DMA::startInputController(
     bool streamActive[16]) {  // indicate which streams can be read from DDR and
                               // start processing
-  int activeStreams = 0;
+  int active_streams = 0;
   for (int i = 15; i >= 0; i--) {
-    activeStreams = activeStreams << 1;
-    if (streamActive[i]) activeStreams = activeStreams + 1;
+    active_streams = active_streams << 1;
+    if (streamActive[i]) {
+      active_streams = active_streams + 1;
+    }
   }
-  AccelerationModule::writeToModule(3 << 6, activeStreams);
+  AccelerationModule::writeToModule(3 << 6, active_streams);
 }
 auto DMA::isInputControllerFinished()
     -> bool {  // true if all input streams were read from DDR
-  uint32_t activeStreams = AccelerationModule::readFromModule(3 << 6);
-  return (activeStreams == 0);
+  uint32_t active_streams = AccelerationModule::readFromModule(3 << 6);
+  return (active_streams == 0);
 }
 // Input Controller in Crossbar
 
@@ -74,10 +76,11 @@ void DMA::setRecordChunkIDs(int streamID, int interfaceCycle, int chunkID) {
 void DMA::setOutputControllerParams(int streamID, int DDRburstSize,
                                     int recordsPerDDRBurst, int bufferStart,
                                     int bufferEnd) {
-  AccelerationModule::writeToModule(((1 << 16) + (streamID * 4)),
-                                    ((DDRburstSize - 1) << 24) +
-                                        ((int)log2(recordsPerDDRBurst) << 16) +
-                                        (bufferStart << 8) + (bufferEnd));
+  AccelerationModule::writeToModule(
+      ((1 << 16) + (streamID * 4)),
+      ((DDRburstSize - 1) << 24) +
+          (static_cast<int>(log2(recordsPerDDRBurst)) << 16) +
+          (bufferStart << 8) + (bufferEnd));
 }
 auto DMA::getOutputControllerParams(int streamID) -> uint32_t {
   return AccelerationModule::readFromModule(((1 << 16) + (streamID * 4)));
@@ -103,18 +106,20 @@ auto DMA::getOutputControllerStreamSize(int streamID)
 void DMA::startOutputController(
     bool streamActive[16]) {  // indicate which streams can be written to DDR
                               // and start processing
-  int activeStreams = 0;
+  int active_streams = 0;
   for (int i = 15; i >= 0; i--) {
-    activeStreams = activeStreams << 1;
-    if (streamActive[i]) activeStreams = activeStreams + 1;
+    active_streams = active_streams << 1;
+    if (streamActive[i]) {
+      active_streams = active_streams + 1;
+    }
   }
-  AccelerationModule::writeToModule(((1 << 16) + (3 << 6)), activeStreams);
+  AccelerationModule::writeToModule(((1 << 16) + (3 << 6)), active_streams);
 }
 auto DMA::isOutputControllerFinished()
     -> bool {  // true if all streams saw EOS from PR modules
-  uint32_t activeStreams =
+  uint32_t active_streams =
       AccelerationModule::readFromModule(((1 << 16) + (3 << 6)));
-  return (activeStreams == 0);
+  return (active_streams == 0);
 }
 
 // Input Crossbar from Buffers to Interface
