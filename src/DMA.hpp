@@ -1,44 +1,72 @@
 #pragma once
 #include <cstdint>
+
 #include "AccelerationModule.hpp"
 #include "DMAInterface.hpp"
-class DMA : public AccelerationModule, public DMAInterface
-{
-public:
-	~DMA();
-	DMA(int* volatile ctrlAXIbaseAddress);
+class DMA : public AccelerationModule, public DMAInterface {
+ public:
+  ~DMA() override;
+  explicit DMA(int* volatile ctrl_ax_ibase_address);
 
-	void setInputControllerParams(int streamID, int DDRburstSize, int recordsPerDDRBurst, int bufferStart, int bufferEnd);
-	uint32_t getInputControllerParams(int streamID);
-	void setInputControllerStreamAddress(int streamID, uintptr_t address);
-	uintptr_t getInputControllerStreamAddress(int streamID);
-	void setInputControllerStreamSize(int streamID, int size);
-	uint32_t getInputControllerStreamSize(int streamID);
-	void startInputController(bool streamActive[16]);
-	bool isInputControllerFinished();
+  void SetInputControllerParams(int stream_id, int dd_rburst_size,
+                                int records_per_ddr_burst, int buffer_start,
+                                int buffer_end) override;
+  auto GetInputControllerParams(int stream_id) -> uint32_t override;
+  void SetInputControllerStreamAddress(int stream_id,
+                                       uintptr_t address) override;
+  auto GetInputControllerStreamAddress(int stream_id) -> uintptr_t override;
+  void SetInputControllerStreamSize(int stream_id, int size) override;
+  auto GetInputControllerStreamSize(int stream_id) -> uint32_t override;
+  void StartInputController(bool stream_active[16]) override;
+  auto IsInputControllerFinished() -> bool override;
 
-	void setRecordSize(int streamID, int recordSize);
-	void setRecordChunkIDs(int streamID, int interfaceCycle, int chunkID);
+  void SetRecordSize(int stream_id, int record_size) override;
+  void SetRecordChunkIDs(int stream_id, int interface_cycle,
+                         int chunk_id) override;
 
-	void setOutputControllerParams(int streamID, int DDRburstSize, int recordsPerDDRBurst, int bufferStart, int bufferEnd);
-	uint32_t getOutputControllerParams(int streamID);
-	void setOutputControllerStreamAddress(int streamID, uintptr_t address);
-	uintptr_t getOutputControllerStreamAddress(int streamID);
-	void setOutputControllerStreamSize(int streamID, int size);
-	uint32_t getOutputControllerStreamSize(int streamID);
-	void startOutputController(bool streamActive[16]);
-	bool isOutputControllerFinished();
+  void SetOutputControllerParams(int stream_id, int dd_rburst_size,
+                                 int records_per_ddr_burst, int buffer_start,
+                                 int buffer_end) override;
+  auto GetOutputControllerParams(int stream_id) -> uint32_t override;
+  void SetOutputControllerStreamAddress(int stream_id,
+                                        uintptr_t address) override;
+  auto GetOutputControllerStreamAddress(int stream_id) -> uintptr_t override;
+  void SetOutputControllerStreamSize(int stream_id, int size) override;
+  auto GetOutputControllerStreamSize(int stream_id) -> uint32_t override;
+  void StartOutputController(bool stream_active[16]) override;
+  auto IsOutputControllerFinished() -> bool override;
 
-	void setBufferToInterfaceChunk(int streamID, int clockCycle, int offset, int sourceChunk4, int sourceChunk3, int sourceChunk2, int sourceChunk1);
-	void setBufferToInterfaceSourcePosition(int streamID, int clockCycle, int offset, int sourcePosition4, int sourcePosition3, int sourcePosition2, int sourcePosition1);
+  void SetBufferToInterfaceChunk(int stream_id, int clock_cycle, int offset,
+                                 int source_chunk4, int source_chunk3,
+                                 int source_chunk2, int source_chunk1) override;
+  void SetBufferToInterfaceSourcePosition(int stream_id, int clock_cycle,
+                                          int offset, int source_position4,
+                                          int source_position3,
+                                          int source_position2,
+                                          int source_position1) override;
 
-	void setAXItoBufferChunk(int streamID, int clockCycle, int offset, int targetChunk4, int targetChunk3, int targetChunk2, int targetChunk1);
-	void setAXItoBufferSourcePosition(int streamID, int clockCycle, int offset, int sourcePosition4, int sourcePosition3, int sourcePosition2, int sourcePosition1);
+  void SetAXItoBufferChunk(int stream_id, int clock_cycle, int offset,
+                           int target_chunk4, int target_chunk3,
+                           int target_chunk2, int target_chunk1) override;
+  void SetAXItoBufferSourcePosition(int stream_id, int clock_cycle, int offset,
+                                    int source_position4, int source_position3,
+                                    int source_position2,
+                                    int source_position1) override;
 
-	void setInterfaceToBufferChunk(int streamID, int clockCycle, int offset, int targetChunk4, int targetChunk3, int targetChunk2, int targetChunk1);
-	void setInterfaceToBufferSourcePosition(int streamID, int clockCycle, int offset, int sourcePosition4, int sourcePosition3, int sourcePosition2, int sourcePosition1);
+  void SetInterfaceToBufferChunk(int stream_id, int clock_cycle, int offset,
+                                 int target_chunk4, int target_chunk3,
+                                 int target_chunk2, int target_chunk1) override;
+  void SetInterfaceToBufferSourcePosition(int stream_id, int clock_cycle,
+                                          int offset, int source_position4,
+                                          int source_position3,
+                                          int source_position2,
+                                          int source_position1) override;
 
-	void setBufferToAXIChunk(int streamID, int clockCycle, int offset, int sourceChunk4, int sourceChunk3, int sourceChunk2, int sourceChunk1);
-	void setBufferToAXISourcePosition(int streamID, int clockCycle, int offset, int sourcePosition4, int sourcePosition3, int sourcePosition2, int sourcePosition1);
+  void SetBufferToAXIChunk(int stream_id, int clock_cycle, int offset,
+                           int source_chunk4, int source_chunk3,
+                           int source_chunk2, int source_chunk1) override;
+  void SetBufferToAXISourcePosition(int stream_id, int clock_cycle, int offset,
+                                    int source_position4, int source_position3,
+                                    int source_position2,
+                                    int source_position1) override;
 };
-

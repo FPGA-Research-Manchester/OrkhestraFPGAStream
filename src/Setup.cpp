@@ -1,34 +1,38 @@
 #include "Setup.hpp"
+
 #include "DMA.hpp"
-#include "Filter.hpp"
 #include "DMASetup.hpp"
+#include "Filter.hpp"
 #include "FilterSetup.hpp"
-void Setup::SetupQueryAcceleration(int* volatile& memoryPointer, std::vector<int>& dbData, int recordSize, int recordCount)
-{
-	DMA dmaEngine(memoryPointer);
-	int inputStreamID = 0;
-	int outputStreamID = 1;
-	DMASetup dmaSetup;
-	dmaSetup.SetupDMAModule(dmaEngine, dbData, recordSize, recordCount, inputStreamID, outputStreamID);
+void Setup::SetupQueryAcceleration(int* volatile& memory_pointer,
+                                   std::vector<int>& db_data, int record_size,
+                                   int record_count) {
+  DMA dma_engine(memory_pointer);
+  int input_stream_id = 0;
+  int output_stream_id = 1;
+  DMASetup dma_setup;
+  DMASetup::SetupDMAModule(dma_engine, db_data, record_size, record_count,
+                           input_stream_id, output_stream_id);
 
-	// Setup the filter module
-	Filter filterModule(memoryPointer, 1);
-	FilterSetup filterSetup;
-	filterSetup.SetupFilterModule(filterModule, inputStreamID, outputStreamID);
+  // Setup the filter module
+  Filter filter_module(memory_pointer, 1);
+  FilterSetup filter_setup;
+  FilterSetup::SetupFilterModule(filter_module, input_stream_id,
+                                 output_stream_id);
 
-	bool streamActive[16] = { false };
-	streamActive[0] = true;
-	dmaEngine.startInputController(streamActive);
-	dmaEngine.startOutputController(streamActive);
+  bool stream_active[16] = {false};
+  stream_active[0] = true;
+  dma_engine.StartInputController(stream_active);
+  dma_engine.StartOutputController(stream_active);
 
-	// Print out the contents of memory for debugging
-	//std::cout << std::endl << "Memory contents:" << std::endl;
-	//for (int i = 0; i < 1048576; i++) {
-	//	if (memoryPointer[i] != -1) {
-	//		std::cout << "Address:" << i << std::endl;
-	//		std::cout << memoryPointer[i] << std::endl;
-	//	}
-	//}
+  // Print out the contents of memory for debugging
+  // std::cout << std::endl << "Memory contents:" << std::endl;
+  // for (int i = 0; i < 1048576; i++) {
+  //	if (memoryPointer[i] != -1) {
+  //		std::cout << "Address:" << i << std::endl;
+  //		std::cout << memoryPointer[i] << std::endl;
+  //	}
+  //}
 
-	// check isInputControllerFinished and isOutputControllerFinished
+  // check isInputControllerFinished and isOutputControllerFinished
 }

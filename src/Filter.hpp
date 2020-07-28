@@ -1,23 +1,42 @@
 #pragma once
 #include <cstdint>
+
 #include "AccelerationModule.hpp"
 #include "FilterInterface.hpp"
-class Filter : public AccelerationModule, public FilterInterface
-{
-private:
-	void filterWriteDNFClauseLiteralsToModule(uint32_t DatapathWidth, uint32_t moduleComparesPerField, uint32_t moduleDNFClauses);
-public:
-	~Filter();
-	Filter(int* volatile ctrlAXIbaseAddress, uint32_t modulePosition);
+class Filter : public AccelerationModule, public FilterInterface {
+ private:
+  void filterWriteDNFClauseLiteralsToModule(uint32_t datapath_width,
+                                            uint32_t module_compares_per_field,
+                                            uint32_t module_dnf_clauses);
 
-	void filterSetStreamIDs(uint32_t streamIDInput, uint32_t streamIDValidOutput, uint32_t streamIDInvalidOutput);
-	void filterSetMode(bool requestOnInvalidIfLast, bool forwardInvalidRecordFirstChunk, bool forwardFullInvalidRecords, bool firstModuleInResourceElasticChain, bool lastModuleInResourceElasticChain);
-	void filterSetCompareTypes(uint32_t chunkID, uint32_t DataPosition, uint32_t Compare_1_Type, uint32_t Compare_2_Type, uint32_t Compare_3_Type, uint32_t Compare_4_Type);
-	void filterSetCompareReferenceValue(uint32_t chunkID, uint32_t DataPosition, uint32_t CompareNumber, uint32_t CompareReferenceValue);
-	void filterSetDNFClauseLiteral(uint32_t DNF_Clause_ID, uint32_t CompareNumber, uint32_t ChunkID, uint32_t DataPosition, uint8_t LiteralType);
+ public:
+  ~Filter() override;
+  Filter(int* volatile ctrl_ax_ibase_address, uint32_t module_position);
 
-	void writeDNFClauseLiteralsToFilter_1CMP_8DNF(uint32_t DatapathWidth);
-	void writeDNFClauseLiteralsToFilter_2CMP_16DNF(uint32_t DatapathWidth);
-	void writeDNFClauseLiteralsToFilter_4CMP_32DNF(uint32_t DatapathWidth);
+  void FilterSetStreamIDs(uint32_t stream_id_input,
+                          uint32_t stream_id_valid_output,
+                          uint32_t stream_id_invalid_output) override;
+  void FilterSetMode(bool request_on_invalid_if_last,
+                     bool forward_invalid_record_first_chunk,
+                     bool forward_full_invalid_records,
+                     bool first_module_in_resource_elastic_chain,
+                     bool last_module_in_resource_elastic_chain) override;
+  void FilterSetCompareTypes(uint32_t chunk_id, uint32_t data_position,
+                             uint32_t compare_1_type, uint32_t compare_2_type,
+                             uint32_t compare_3_type,
+                             uint32_t compare_4_type) override;
+  void FilterSetCompareReferenceValue(
+      uint32_t chunk_id, uint32_t data_position, uint32_t compare_number,
+      uint32_t compare_reference_value) override;
+  void FilterSetDNFClauseLiteral(uint32_t dnf_clause_id,
+                                 uint32_t compare_number, uint32_t chunk_id,
+                                 uint32_t data_position,
+                                 uint8_t literal_type) override;
+
+  void WriteDNFClauseLiteralsToFilter_1CMP_8DNF(
+      uint32_t datapath_width) override;
+  void WriteDNFClauseLiteralsToFilter_2CMP_16DNF(
+      uint32_t datapath_width) override;
+  void WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
+      uint32_t datapath_width) override;
 };
-

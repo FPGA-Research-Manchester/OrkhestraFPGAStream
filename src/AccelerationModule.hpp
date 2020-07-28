@@ -1,16 +1,19 @@
 #pragma once
 #include <cstdint>
-class AccelerationModule
-{
-private:
-	int* volatile const controlAXIbaseAddress_;
-	const uint32_t modulePosition_;
+class AccelerationModule {
+ private:
+  int* volatile const controlAXIbaseAddress_;
+  const uint32_t modulePosition_;
 
-	int* volatile calculateMemoryMappedAddress(uint32_t moduleInternalAddress);
-protected:
-	void writeToModule(uint32_t moduleInternalAddress, uint32_t writeData);
-	uint32_t readFromModule(uint32_t moduleInternalAddress);
-	AccelerationModule(int* volatile ctrlAXIbaseAddress, uint32_t modulePosition);
-public:
-	virtual ~AccelerationModule() = 0;
+  auto CalculateMemoryMappedAddress(uint32_t module_internal_address)
+      -> int* volatile;
+
+ protected:
+  void WriteToModule(uint32_t module_internal_address, uint32_t write_data);
+  auto ReadFromModule(uint32_t module_internal_address) -> uint32_t;
+  AccelerationModule(int* volatile control_ax_ibase_address,
+                     uint32_t module_position);
+
+ public:
+  virtual ~AccelerationModule() = 0;
 };
