@@ -5,45 +5,48 @@
 
 Filter::~Filter() = default;
 
-Filter::Filter(int* volatile ctrlAXIbaseAddress, uint32_t modulePosition)
-    : AccelerationModule(ctrlAXIbaseAddress, modulePosition) {}
+Filter::Filter(int* volatile ctrl_ax_ibase_address, uint32_t module_position)
+    : AccelerationModule(ctrl_ax_ibase_address, module_position) {}
 
 // Selects streamID and streamID manipulations
 void Filter::filterSetStreamIDs(
-    uint32_t streamIDInput,  // The streamID of the stream that gets filterred
-    uint32_t streamIDValidOutput,  // The streamID of valid output from filters
+    uint32_t stream_id_input,  // The streamID of the stream that gets filterred
     uint32_t
-        streamIDInvalidOutput) {  // The streamID of invalid output from filters
-  AccelerationModule::writeToModule(0, streamIDInput +
-                                           (streamIDValidOutput << 8) +
-                                           (streamIDInvalidOutput << 16));
+        stream_id_valid_output,  // The streamID of valid output from filters
+    uint32_t stream_id_invalid_output) {  // The streamID of invalid output from
+                                          // filters
+  AccelerationModule::writeToModule(0, stream_id_input +
+                                           (stream_id_valid_output << 8) +
+                                           (stream_id_invalid_output << 16));
 }
 
 // Selects mode of operation
 void Filter::filterSetMode(
-    bool requestOnInvalidIfLast,  // Should the module rerequest packets if
-                                  // outcome is invalid? (Only applicable for
-                                  // last module in RE chain)
-    bool forwardInvalidRecordFirstChunk,  // Should the module forward the first
-                                          // chunk of invalid records? (Only
-                                          // applicable for last module in RE
-                                          // chain)
-    bool forwardFullInvalidRecords,  // Should the module forward all chunks of
-                                     // invalid records? (Only applicable for
-                                     // last module in RE chain)
+    bool request_on_invalid_if_last,  // Should the module rerequest packets if
+                                      // outcome is invalid? (Only applicable
+                                      // for last module in RE chain)
+    bool forward_invalid_record_first_chunk,  // Should the module forward the
+                                              // first chunk of invalid records?
+                                              // (Only applicable for last
+                                              // module in RE chain)
+    bool forward_full_invalid_records,  // Should the module forward all chunks
+                                        // of invalid records? (Only applicable
+                                        // for last module in RE chain)
 
-    bool firstModuleInResourceElasticChain,  // Indicating this is the first
-                                             // filter module (must be true if
-                                             // only 1 module is used)
-    bool lastModuleInResourceElasticChain) {  // Indicating this is the last
-                                              // filter module  (must be true if
-                                              // only 1 module is used)
+    bool
+        first_module_in_resource_elastic_chain,  // Indicating this is the first
+                                                 // filter module (must be true
+                                                 // if only 1 module is used)
+    bool
+        last_module_in_resource_elastic_chain) {  // Indicating this is the last
+  // filter module  (must be true if
+  // only 1 module is used)
   AccelerationModule::writeToModule(
-      0x4, (requestOnInvalidIfLast ? 16 : 0) +
-               (forwardInvalidRecordFirstChunk ? 8 : 0) +
-               (forwardFullInvalidRecords ? 4 : 0) +
-               (firstModuleInResourceElasticChain ? 2 : 0) +
-               (lastModuleInResourceElasticChain ? 1 : 0));
+      0x4, (request_on_invalid_if_last ? 16 : 0) +
+               (forward_invalid_record_first_chunk ? 8 : 0) +
+               (forward_full_invalid_records ? 4 : 0) +
+               (first_module_in_resource_elastic_chain ? 2 : 0) +
+               (last_module_in_resource_elastic_chain ? 1 : 0));
 }
 
 // Every 32-bit integer on any position and any chunk ID can have a different
@@ -65,44 +68,44 @@ void Filter::filterSetMode(
 #define FILTER_64BIT_NOT_EQUAL 13
 
 void Filter::filterSetCompareTypes(
-    uint32_t chunkID,       // for which chunkID are the following compare types
-    uint32_t DataPosition,  // which 32-bit integer are the following compare
-                            // types for
+    uint32_t chunk_id,  // for which chunkID are the following compare types
+    uint32_t data_position,  // which 32-bit integer are the following compare
+                             // types for
 
     uint32_t
-        Compare_1_Type,  // The type of comparison for each of up to 4 different
+        compare_1_type,  // The type of comparison for each of up to 4 different
     uint32_t
-        Compare_2_Type,  // compares (depending on module type, e.g. for
+        compare_2_type,  // compares (depending on module type, e.g. for
                          // 1-Compare module, only Compare_1_Type will be used)
-    uint32_t Compare_3_Type,  // Compare types are defined above (e.g.
+    uint32_t compare_3_type,  // Compare types are defined above (e.g.
                               // FILTER_32BIT_LESS_THAN)
     uint32_t
-        Compare_4_Type) {  // In 64-bit compares, the current 32-bit integer
+        compare_4_type) {  // In 64-bit compares, the current 32-bit integer
                            // holds the MSBits, while (DataPosition-1) holds the
                            // Least significant bits (reference value)
   AccelerationModule::writeToModule(
-      ((1 << 15) + (DataPosition << 2) + (chunkID << 7)),
-      (Compare_4_Type << 12 + Compare_3_Type << 8 + Compare_2_Type
-                      << 4 + Compare_1_Type));
+      ((1 << 15) + (data_position << 2) + (chunk_id << 7)),
+      (compare_4_type << 12 + compare_3_type << 8 + compare_2_type
+                      << 4 + compare_1_type));
 }
 
 void Filter::filterSetCompareReferenceValue(
     uint32_t
-        chunkID,  // for which chunkID is the following compare reference value
-    uint32_t DataPosition,  // for which 32-bit integer is the following compare
-                            // reference value
+        chunk_id,  // for which chunkID is the following compare reference value
+    uint32_t data_position,  // for which 32-bit integer is the following
+                             // compare reference value
 
-    uint32_t CompareNumber,  // Which CMP is this reference value for (i.e., 1,
-                             // 2, 3, 4. Module with only 2 Compares per field
-                             // can take CompareNumber of 1 and 2)
+    uint32_t compare_number,  // Which CMP is this reference value for (i.e., 1,
+                              // 2, 3, 4. Module with only 2 Compares per field
+                              // can take CompareNumber of 1 and 2)
 
-    uint32_t
-        CompareReferenceValue) {  // The 32-bit value we compare against. Can be
-                                  // anything (Can be 4 characters of text, can
-                                  // be a float number for equal compare etc.)
-  AccelerationModule::writeToModule(((1 << 15) + (DataPosition << 2) +
-                                     (chunkID << 7) + (CompareNumber << 12)),
-                                    CompareReferenceValue);
+    uint32_t compare_reference_value) {  // The 32-bit value we compare against.
+                                         // Can be anything (Can be 4 characters
+                                         // of text, can be a float number for
+                                         // equal compare etc.)
+  AccelerationModule::writeToModule(((1 << 15) + (data_position << 2) +
+                                     (chunk_id << 7) + (compare_number << 12)),
+                                    compare_reference_value);
 }
 
 #define LITERAL_DONT_CARE 0
@@ -127,32 +130,33 @@ struct {
 } dnf_clause[32];  // Up to 32 Clauses (for 16 DNF clause module use 0-15 only)
 
 void Filter::filterSetDNFClauseLiteral(
-    uint32_t DNF_Clause_ID /*0-31*/, uint32_t CompareNumber /*1-4*/,
-    uint32_t ChunkID /*0-31*/,
-    uint32_t DataPosition /*0-15 for 512-bit datapath etc*/,
-    uint8_t LiteralType) {
-  dnf_clause[DNF_Clause_ID].DNF_is_used = true;
-  dnf_clause[DNF_Clause_ID]
-      .CompareNumber[CompareNumber]
-      .ChunkID[ChunkID]
-      .DataPosition[DataPosition]
-      .literalState = LiteralType;
+    uint32_t dnf_clause_id /*0-31*/, uint32_t compare_number /*1-4*/,
+    uint32_t chunk_id /*0-31*/,
+    uint32_t data_position /*0-15 for 512-bit datapath etc*/,
+    uint8_t literal_type) {
+  dnf_clause[dnf_clause_id].DNF_is_used = true;
+  dnf_clause[dnf_clause_id]
+      .CompareNumber[compare_number]
+      .ChunkID[chunk_id]
+      .DataPosition[data_position]
+      .literalState = literal_type;
 }
 
 void Filter::filterWriteDNFClauseLiteralsToModule(
-    uint32_t DatapathWidth, uint32_t moduleComparesPerField,
-    uint32_t moduleDNFClauses) {
+    uint32_t datapath_width, uint32_t module_compares_per_field,
+    uint32_t module_dnf_clauses) {
   int compare_lane = 0;
   int dnf_clause_index = 0;
   int data_position = 0;
   int chunk_id = 0;
-  for (compare_lane = 0; compare_lane < moduleComparesPerField;
+  for (compare_lane = 0; compare_lane < module_compares_per_field;
        compare_lane++) {
-    for (data_position = 0; data_position < DatapathWidth; data_position++) {
+    for (data_position = 0; data_position < datapath_width; data_position++) {
       for (chunk_id = 0; chunk_id < 32; chunk_id++) {
         uint32_t clauses_packed_positive_result = 0xFFFFFFFF;
         uint32_t clauses_packed_negative_result = 0xFFFFFFFF;
-        for (dnf_clause_index = 0; dnf_clause_index < moduleDNFClauses; dnf_clause_index++) {
+        for (dnf_clause_index = 0; dnf_clause_index < module_dnf_clauses;
+             dnf_clause_index++) {
           if (dnf_clause[dnf_clause_index].DNF_is_used) {
             clauses_packed_positive_result <<= 1;
             clauses_packed_negative_result <<= 1;
@@ -197,16 +201,16 @@ void Filter::filterWriteDNFClauseLiteralsToModule(
 }
 void Filter::writeDNFClauseLiteralsToFilter_1CMP_8DNF(
     uint32_t
-        DatapathWidth /*1-32: 16->512bit datapath; 32->1024-bit datapath*/) {
-  filterWriteDNFClauseLiteralsToModule(DatapathWidth, 1, 8);
+        datapath_width /*1-32: 16->512bit datapath; 32->1024-bit datapath*/) {
+  filterWriteDNFClauseLiteralsToModule(datapath_width, 1, 8);
 }
 void Filter::writeDNFClauseLiteralsToFilter_2CMP_16DNF(
     uint32_t
-        DatapathWidth /*1-32: 16->512bit datapath; 32->1024-bit datapath*/) {
-  filterWriteDNFClauseLiteralsToModule(DatapathWidth, 2, 16);
+        datapath_width /*1-32: 16->512bit datapath; 32->1024-bit datapath*/) {
+  filterWriteDNFClauseLiteralsToModule(datapath_width, 2, 16);
 }
 void Filter::writeDNFClauseLiteralsToFilter_4CMP_32DNF(
     uint32_t
-        DatapathWidth /*1-32: 16->512bit datapath; 32->1024-bit datapath*/) {
-  filterWriteDNFClauseLiteralsToModule(DatapathWidth, 4, 32);
+        datapath_width /*1-32: 16->512bit datapath; 32->1024-bit datapath*/) {
+  filterWriteDNFClauseLiteralsToModule(datapath_width, 4, 32);
 }

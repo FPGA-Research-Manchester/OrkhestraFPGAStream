@@ -71,7 +71,9 @@ CheckOptions:
   - key:             readability-identifier-naming.StaticConstantCase
     value:           CamelCase
   - key:             readability-identifier-naming.StaticConstantPrefix
-    value:           k         
+    value:           k
+  - key:             readability-identifier-naming.ParameterCase
+    value:           lower_case             
   - key:             readability-implicit-bool-conversion.AllowIntegerConditions
     value:           1
   - key:             readability-implicit-bool-conversion.AllowPointerConditions
