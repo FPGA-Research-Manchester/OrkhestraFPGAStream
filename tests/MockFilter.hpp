@@ -1,4 +1,6 @@
 #pragma once
+#include <cstdint>
+
 #include "FilterInterface.hpp"
 #include "gmock/gmock.h"
 

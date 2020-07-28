@@ -1,4 +1,6 @@
 #pragma once
+#include <cstdint>
+
 #include "DMAInterface.hpp"
 #include "gmock/gmock.h"
 

@@ -1,8 +1,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <cstdio>
-
 #include "DMASetup.hpp"
 #include "MockDMA.hpp"
 namespace {

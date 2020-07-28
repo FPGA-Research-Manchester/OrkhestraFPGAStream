@@ -8,13 +8,14 @@ do
   projectFiles+=($entry)
 done
 
-# Doesn't work well with gtest and gmock. Try doing sepparately.
-for entry in ./tests/*
+for entry in ./src/*
 do
   projectFiles+=($entry)
 done
 
-for entry in ./src/*
+# If it doesn't work well with gtest and gmock try doing these files sepparately.
+# Seems to have problems with gmock. Hopefully should get fixed with the next release.
+for entry in ./tests/*
 do
   projectFiles+=($entry)
 done
