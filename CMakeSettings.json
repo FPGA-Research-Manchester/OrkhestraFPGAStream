@@ -11,7 +11,7 @@
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "variables": [],
-      "clangTidyChecks": "*",
+      "clangTidyChecks": "modernize-*,google-*,cppcoreguidelines-*,bugprone-*,readability-*,misc-*,performance-*,portability-*,-*",
       "enableMicrosoftCodeAnalysis": true,
       "enableClangTidyCodeAnalysis": true
     },
