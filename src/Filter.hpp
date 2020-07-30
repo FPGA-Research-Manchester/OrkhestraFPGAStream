@@ -11,7 +11,7 @@ class Filter : public AccelerationModule, public FilterInterface {
 
  public:
   ~Filter() override;
-  Filter(int* volatile ctrl_ax_ibase_address, uint32_t module_position);
+  Filter(int* volatile ctrl_axi_base_address, uint32_t module_position);
 
   void FilterSetStreamIDs(uint32_t stream_id_input,
                           uint32_t stream_id_valid_output,

@@ -5,8 +5,8 @@
 
 Filter::~Filter() = default;
 
-Filter::Filter(int* volatile ctrl_ax_ibase_address, uint32_t module_position)
-    : AccelerationModule(ctrl_ax_ibase_address, module_position) {}
+Filter::Filter(int* volatile ctrl_axi_base_address, uint32_t module_position)
+    : AccelerationModule(ctrl_axi_base_address, module_position) {}
 
 // Selects streamID and streamID manipulations
 void Filter::FilterSetStreamIDs(

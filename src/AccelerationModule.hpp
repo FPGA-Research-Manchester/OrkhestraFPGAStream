@@ -2,8 +2,8 @@
 #include <cstdint>
 class AccelerationModule {
  private:
-  int* volatile const controlAXIbaseAddress_;
-  const uint32_t modulePosition_;
+  int* volatile const control_axi_base_address_;
+  const uint32_t module_position_;
 
   auto CalculateMemoryMappedAddress(uint32_t module_internal_address)
       -> int* volatile;

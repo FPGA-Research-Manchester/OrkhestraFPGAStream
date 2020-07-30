@@ -12,8 +12,8 @@ module.
 
 DMA::~DMA() = default;
 
-DMA::DMA(int* volatile ctrl_ax_ibase_address)
-    : AccelerationModule(ctrl_ax_ibase_address, 0) {}
+DMA::DMA(int* volatile ctrl_axi_base_address)
+    : AccelerationModule(ctrl_axi_base_address, 0) {}
 
 // Input Controller
 void DMA::SetInputControllerParams(int stream_id, int dd_rburst_size,
