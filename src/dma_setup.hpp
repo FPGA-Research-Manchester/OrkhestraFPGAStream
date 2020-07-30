@@ -1,8 +1,8 @@
 #pragma once
 #include <vector>
 
-#include "DMA.hpp"
-#include "DMASetupData.hpp"
+#include "dma.hpp"
+#include "dma_setup_data.hpp"
 class DMASetup {
  public:
   static void SetupDMAModule(DMAInterface& dma_engine,

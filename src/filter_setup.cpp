@@ -1,10 +1,11 @@
-#include "FilterSetup.hpp"
+#include "filter_setup.hpp"
 
 #include <cstdio>
 
 void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
                                     int input_stream_id, int output_stream_id) {
-  filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id, output_stream_id);
+  filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
+                                   output_stream_id);
 
   bool request_on_invalid_if_last = true;
   bool forward_invalid_record_first_chunk = false;

@@ -1,12 +1,12 @@
 #pragma once
 #include <cstdint>
 
-#include "AccelerationModule.hpp"
-#include "DMAInterface.hpp"
+#include "acceleration_module.hpp"
+#include "dma_interface.hpp"
 class DMA : public AccelerationModule, public DMAInterface {
  public:
   ~DMA() override;
-  explicit DMA(int* volatile ctrl_ax_ibase_address);
+  explicit DMA(int* volatile ctrl_axi_base_address);
 
   void SetInputControllerParams(int stream_id, int dd_rburst_size,
                                 int records_per_ddr_burst, int buffer_start,

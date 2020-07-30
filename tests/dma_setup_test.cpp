@@ -1,8 +1,9 @@
+#include "dma_setup.hpp"
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "DMASetup.hpp"
-#include "MockDMA.hpp"
+#include "mock_dma.hpp"
 namespace {
 int input_stream_id = 0;
 int output_stream_id = 1;

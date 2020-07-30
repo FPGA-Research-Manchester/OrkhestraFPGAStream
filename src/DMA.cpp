@@ -1,4 +1,4 @@
-#include "DMA.hpp"
+#include "dma.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -12,8 +12,8 @@ module.
 
 DMA::~DMA() = default;
 
-DMA::DMA(int* volatile ctrl_ax_ibase_address)
-    : AccelerationModule(ctrl_ax_ibase_address, 0) {}
+DMA::DMA(int* volatile ctrl_axi_base_address)
+    : AccelerationModule(ctrl_axi_base_address, 0) {}
 
 // Input Controller
 void DMA::SetInputControllerParams(int stream_id, int dd_rburst_size,
@@ -59,13 +59,13 @@ auto DMA::IsInputControllerFinished()
 }
 // Input Controller in Crossbar
 
-// How many chunks is a record on a particular streamID
+// How many chunks is a record on a particular stream_id
 void DMA::SetRecordSize(int stream_id, int record_size) {
   AccelerationModule::WriteToModule(((1 << 17) + (1 << 8) + (stream_id * 4)),
                                     record_size - 1);
 }
 // set ChunkID at clock cycle of interfaceCycle for records on a particular
-// streamID
+// stream_id
 void DMA::SetRecordChunkIDs(int stream_id, int interface_cycle, int chunk_id) {
   AccelerationModule::WriteToModule(
       ((1 << 17) + (1 << 13) + (stream_id << 8) + (interface_cycle << 2)),
@@ -127,7 +127,7 @@ void DMA::SetBufferToInterfaceChunk(int stream_id, int clock_cycle, int offset,
                                     int source_chunk4, int source_chunk3,
                                     int source_chunk2, int source_chunk1) {
   /*When 32-bit data packets inside the {clockCycle} clock cycle of a record
-  sent to PR Interface of stream with ID {streamID} is read from the BRAM
+  sent to PR Interface of stream with ID {stream_id} is read from the BRAM
   buffers in positions  {offset*4}-{offset*4+3}, they can read from any source
   chunk to enable data reordering and duplication. sourceChunk1 represents
   position {offset*4} etc.*/
@@ -143,10 +143,10 @@ void DMA::SetBufferToInterfaceSourcePosition(int stream_id, int clock_cycle,
                                              int source_position2,
                                              int source_position1) {
   /*When 32-bit data packets inside the {clockCycle} clock cycle of a record
-  sent to PR Interface of stream with ID {streamID} is sent to PR at 32-bit data
-  positions {offset*4}-{offset*4+3}, they can originate from from any source
-  32-bit BRAM to enable data reordering and duplication. sourceChunk1 represents
-  position {offset*4} etc..*/
+  sent to PR Interface of stream with ID {stream_id} is sent to PR at 32-bit
+  data positions {offset*4}-{offset*4+3}, they can originate from from any
+  source 32-bit BRAM to enable data reordering and duplication. sourceChunk1
+  represents position {offset*4} etc..*/
   AccelerationModule::WriteToModule(
       ((2 << 17) + (stream_id << 12) + (clock_cycle << 5) + (offset << 2)),
       ((source_position4 << 24) + (source_position3 << 16) +
@@ -158,7 +158,7 @@ void DMA::SetAXItoBufferChunk(int stream_id, int clock_cycle, int offset,
                               int target_chunk4, int target_chunk3,
                               int target_chunk2, int target_chunk1) {
   /*When 32-bit data packets inside the {clockCycle} clock cycle of the AXI read
-  data burst of stream with ID {streamID} reach the BRAM buffers in positions
+  data burst of stream with ID {stream_id} reach the BRAM buffers in positions
   {offset*4}-{offset*4+3}, they can be written to any target chunk to aid data
   reordering and duplication. sourceChunk1 represents position {offset*4} etc.*/
   AccelerationModule::WriteToModule(
@@ -174,7 +174,7 @@ void DMA::SetAXItoBufferSourcePosition(int stream_id, int clock_cycle,
                                        int source_position1) {
   /*When an AXI read data enters the DMA, the {offset*4}-{offset*4+3} data
   positions for the buffer in the {clockCycle} clock cycle of the AXI
-  transaction of stream with ID {streamID}, they can select any 32-bit data
+  transaction of stream with ID {stream_id}, they can select any 32-bit data
   source from AXI datapath. sourceChunk1 represents position {offset*4} etc..*/
   AccelerationModule::WriteToModule(
       ((2 << 18) + (stream_id << 13) + (clock_cycle << 5) + (offset << 2)),
@@ -187,7 +187,7 @@ void DMA::SetInterfaceToBufferChunk(int stream_id, int clock_cycle, int offset,
                                     int target_chunk4, int target_chunk3,
                                     int target_chunk2, int target_chunk1) {
   /*When 32-bit data packets inside the {clockCycle} clock cycle of a record
-  coming from the end of the PR Interface of stream with ID {streamID} is
+  coming from the end of the PR Interface of stream with ID {stream_id} is
   written to the BRAM buffers in positions  {offset*4}-{offset*4+3}, they can be
   written to any target chunk to enable data reordering/removal of duplication
   before writing back to DDR. sourceChunk1 represents position {offset*4} etc.*/
@@ -203,7 +203,7 @@ void DMA::SetInterfaceToBufferSourcePosition(int stream_id, int clock_cycle,
                                              int source_position2,
                                              int source_position1) {
   /*When 32-bit data packets inside the {clockCycle} clock cycle of a record
-  coming from PR Interface of stream with ID {streamID} is written to BRAM
+  coming from PR Interface of stream with ID {stream_id} is written to BRAM
   buffers at 32-bit data positions {offset*4}-{offset*4+3}, they can originate
   from from any source 32-bit word from the interface to enable data reordering
   and duplication. sourceChunk1 represents position {offset*4} etc..*/
@@ -219,7 +219,7 @@ void DMA::SetBufferToAXIChunk(int stream_id, int clock_cycle, int offset,
                               int source_chunk2, int source_chunk1) {
   /*32-bit data words are read from the BRAM buffers in positions
   {offset*4}-{offset*4+3} to be used inside the {clockCycle} clock cycle of the
-  AXI read data burst of stream with ID {streamID}. Every BRAM can read on a
+  AXI read data burst of stream with ID {stream_id}. Every BRAM can read on a
   different arbitrary position defined by this register.
    sourceChunk1 represents position {offset*4} etc.*/
   AccelerationModule::WriteToModule(
@@ -235,7 +235,7 @@ void DMA::SetBufferToAXISourcePosition(int stream_id, int clock_cycle,
                                        int source_position1) {
   /*Routing information for 32-bit data packets {offset*4}-{offset*4+3} inside
   the {clockCycle} clock cycle of the AXI write data burst of stream with ID
-  {streamID}. 32-bit data packets {offset*4}-{offset*4+3} are routed to the DDR
+  {stream_id}. 32-bit data packets {offset*4}-{offset*4+3} are routed to the DDR
   AXI from any of the BRAM buffers in the middle between the two crossbars.
   sourceChunk1 represents position {offset*4} etc..*/
   AccelerationModule::WriteToModule(

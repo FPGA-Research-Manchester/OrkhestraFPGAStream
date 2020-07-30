@@ -1,9 +1,9 @@
-#include "Setup.hpp"
+#include "setup.hpp"
 
-#include "DMA.hpp"
-#include "DMASetup.hpp"
-#include "Filter.hpp"
-#include "FilterSetup.hpp"
+#include "dma.hpp"
+#include "dma_setup.hpp"
+#include "filter.hpp"
+#include "filter_setup.hpp"
 void Setup::SetupQueryAcceleration(int* volatile& memory_pointer,
                                    std::vector<int>& db_data, int record_size,
                                    int record_count) {
