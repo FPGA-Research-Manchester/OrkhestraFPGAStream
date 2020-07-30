@@ -95,8 +95,8 @@ void Filter::FilterSetCompareReferenceValue(
     uint32_t data_position,  // for which 32-bit integer is the following
                              // compare reference value
 
-    uint32_t compare_number,  // Which CMP is this reference value for (i.e., 1,
-                              // 2, 3, 4. Module with only 2 Compares per field
+    uint32_t compare_lane_index,  // Which CMP is this reference value for (i.e., 0,
+                              // 1, 2, 3. Module with only 2 Compares per field
                               // can take CompareNumber of 1 and 2)
 
     uint32_t compare_reference_value) {  // The 32-bit value we compare against.
@@ -104,7 +104,7 @@ void Filter::FilterSetCompareReferenceValue(
                                          // of text, can be a float number for
                                          // equal compare etc.)
   AccelerationModule::WriteToModule(((1 << 15) + (data_position << 2) +
-                                     (chunk_id << 7) + (compare_number << 12)),
+                                     (chunk_id << 7) + ((compare_lane_index + 1) << 12)),
                                     compare_reference_value);
 }
 
@@ -130,7 +130,7 @@ struct {
 } dnf_clause[32];  // Up to 32 Clauses (for 16 DNF clause module use 0-15 only)
 
 void Filter::FilterSetDNFClauseLiteral(
-    uint32_t dnf_clause_id /*0-31*/, uint32_t compare_number /*1-4*/,
+    uint32_t dnf_clause_id /*0-31*/, uint32_t compare_number /*0-3*/,
     uint32_t chunk_id /*0-31*/,
     uint32_t data_position /*0-15 for 512-bit datapath etc*/,
     uint8_t literal_type) {

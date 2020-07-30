@@ -78,7 +78,6 @@ auto main() -> int {
     memory_pointer[i] = -1;
   }
 
-  Setup setup_configurer;
   Setup::SetupQueryAcceleration(memory_pointer, db_data, record_size,
                                 doc.GetRowCount());
 

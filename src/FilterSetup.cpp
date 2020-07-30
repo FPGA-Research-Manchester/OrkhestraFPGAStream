@@ -4,8 +4,7 @@
 
 void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
                                     int input_stream_id, int output_stream_id) {
-  filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
-                                   output_stream_id);
+  filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id, output_stream_id);
 
   bool request_on_invalid_if_last = true;
   bool forward_invalid_record_first_chunk = false;
@@ -29,16 +28,16 @@ void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
                                       less_than_compare, dont_care_compare,
                                       dont_care_compare, dont_care_compare);
 
-  uint32_t compare_number = 0;
+  uint32_t compare_lane_index = 0;
   uint32_t compare_reference_value = 12000;
 
   filter_module.FilterSetCompareReferenceValue(
-      chunk_id, data_position, compare_number /*+ 1*/, compare_reference_value);
+      chunk_id, data_position, compare_lane_index, compare_reference_value);
 
   uint32_t dnf_clause_id = 0;
   uint8_t const positive_literal_type = 1;
 
-  filter_module.FilterSetDNFClauseLiteral(dnf_clause_id, compare_number,
+  filter_module.FilterSetDNFClauseLiteral(dnf_clause_id, compare_lane_index,
                                           chunk_id, data_position,
                                           positive_literal_type);
 

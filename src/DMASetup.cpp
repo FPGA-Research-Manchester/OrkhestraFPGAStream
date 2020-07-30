@@ -38,7 +38,6 @@ void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
 
   const int any_chunk = 31;
   const int any_position = 3;
-  DMACrossbarSetup crossbar_configuration_finder;
   DMACrossbarSetup::FindInputCrossbarSetupData(any_chunk, any_position,
                                                input_stream_setup_data);
   DMACrossbarSetup::FindOutputCrossbarSetupData(any_chunk, any_position,
