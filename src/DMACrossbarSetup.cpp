@@ -112,13 +112,13 @@ void DMACrossbarSetup::SetCrossbarSetupDataForStream(
     DMACrossbarSetupData current_chunk_data;
     for (int current_data_input = 0; current_data_input < 16;
          current_data_input++) {
-      current_chunk_data.chunkData[current_data_input] = source_chunks.front();
+      current_chunk_data.chunk_data[current_data_input] = source_chunks.front();
       source_chunks.pop();
-      current_chunk_data.positionData[current_data_input] =
+      current_chunk_data.position_data[current_data_input] =
           target_positions.front();
       target_positions.pop();
     }
-    stream_setup_data.crossbarSetupData[current_buffer_chunk] =
+    stream_setup_data.crossbar_setup_data[current_buffer_chunk] =
         current_chunk_data;
   }
 }

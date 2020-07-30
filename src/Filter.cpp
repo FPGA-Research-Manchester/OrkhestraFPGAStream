@@ -8,12 +8,12 @@ Filter::~Filter() = default;
 Filter::Filter(int* volatile ctrl_axi_base_address, uint32_t module_position)
     : AccelerationModule(ctrl_axi_base_address, module_position) {}
 
-// Selects streamID and streamID manipulations
+// Selects stream_id and stream_id manipulations
 void Filter::FilterSetStreamIDs(
-    uint32_t stream_id_input,  // The streamID of the stream that gets filterred
+    uint32_t stream_id_input,  // The stream_id of the stream that gets filterred
     uint32_t
-        stream_id_valid_output,  // The streamID of valid output from filters
-    uint32_t stream_id_invalid_output) {  // The streamID of invalid output from
+        stream_id_valid_output,  // The stream_id of valid output from filters
+    uint32_t stream_id_invalid_output) {  // The stream_id of invalid output from
                                           // filters
   AccelerationModule::WriteToModule(0, stream_id_input +
                                            (stream_id_valid_output << 8) +
@@ -97,7 +97,7 @@ void Filter::FilterSetCompareReferenceValue(
 
     uint32_t compare_lane_index,  // Which CMP is this reference value for (i.e., 0,
                               // 1, 2, 3. Module with only 2 Compares per field
-                              // can take CompareNumber of 1 and 2)
+                              // can take compare_number of 1 and 2)
 
     uint32_t compare_reference_value) {  // The 32-bit value we compare against.
                                          // Can be anything (Can be 4 characters
@@ -120,11 +120,11 @@ struct {
             LITERAL_DONT_CARE;  // 0 - literal is not present in the DNF clause;
                                 // 1 - positive literal in the DNF clause ; 2 -
                                 // negative literal in the DNF clause
-      } DataPosition[32];  // Up to 32 data positions of integers (32-bit) for a
+      } data_position[32];  // Up to 32 data positions of integers (32-bit) for a
                            // maximum 1024-bit datapath (for 512-bit datapath
                            // use 0-15 only)
-    } ChunkID[32];         // Every chunkID can produce different literals
-  } CompareNumber[4];  // Up to four different compares with different reference
+    } chunk_id[32];         // Every chunkID can produce different literals
+  } compare_number[4];  // Up to four different compares with different reference
                        // values per 32-bit field (for 2 compares per field use
                        // 0-1 only)
 } dnf_clause[32];  // Up to 32 Clauses (for 16 DNF clause module use 0-15 only)
@@ -136,9 +136,9 @@ void Filter::FilterSetDNFClauseLiteral(
     uint8_t literal_type) {
   dnf_clause[dnf_clause_id].DNF_is_used = true;
   dnf_clause[dnf_clause_id]
-      .CompareNumber[compare_number]
-      .ChunkID[chunk_id]
-      .DataPosition[data_position]
+      .compare_number[compare_number]
+      .chunk_id[chunk_id]
+      .data_position[data_position]
       .literalState = literal_type;
 }
 
@@ -161,23 +161,23 @@ void Filter::filterWriteDNFClauseLiteralsToModule(
             clauses_packed_positive_result <<= 1;
             clauses_packed_negative_result <<= 1;
             if (dnf_clause[dnf_clause_index]
-                    .CompareNumber[compare_lane]
-                    .ChunkID[chunk_id]
-                    .DataPosition[data_position]
+                    .compare_number[compare_lane]
+                    .chunk_id[chunk_id]
+                    .data_position[data_position]
                     .literalState == LITERAL_DONT_CARE) {
               clauses_packed_positive_result |= 1;
               clauses_packed_negative_result |= 1;
             } else if (dnf_clause[dnf_clause_index]
-                           .CompareNumber[compare_lane]
-                           .ChunkID[chunk_id]
-                           .DataPosition[data_position]
+                           .compare_number[compare_lane]
+                           .chunk_id[chunk_id]
+                           .data_position[data_position]
                            .literalState == LITERAL_POSITIVE) {
               clauses_packed_positive_result |= 1;
               clauses_packed_negative_result |= 0;
             } else if (dnf_clause[dnf_clause_index]
-                           .CompareNumber[compare_lane]
-                           .ChunkID[chunk_id]
-                           .DataPosition[data_position]
+                           .compare_number[compare_lane]
+                           .chunk_id[chunk_id]
+                           .data_position[data_position]
                            .literalState == LITERAL_NEGATIVE) {
               clauses_packed_positive_result |= 0;
               clauses_packed_negative_result |= 1;

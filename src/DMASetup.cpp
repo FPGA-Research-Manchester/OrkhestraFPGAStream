@@ -19,19 +19,19 @@ void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
 
   // Input
   DMASetupData input_stream_setup_data;
-  input_stream_setup_data.streamID = input_stream_id;
-  input_stream_setup_data.isInputStream = true;
-  input_stream_setup_data.recordCount = record_count;
-  // inputStreamSetupData.recordCount = doc.GetRowCount();
+  input_stream_setup_data.stream_id = input_stream_id;
+  input_stream_setup_data.is_input_stream = true;
+  input_stream_setup_data.record_count = record_count;
+  // inputStreamSetupData.record_count = doc.GetRowCount();
   CalculateDMAStreamSetupData(input_stream_setup_data, max_chunk_size,
                               max_ddr_burst_size, max_ddr_size_per_cycle,
                               db_data, record_size);
 
   // Output
   DMASetupData output_stream_setup_data;
-  output_stream_setup_data.streamID = output_stream_id;
-  output_stream_setup_data.isInputStream = false;
-  output_stream_setup_data.recordCount = 0;
+  output_stream_setup_data.stream_id = output_stream_id;
+  output_stream_setup_data.is_input_stream = false;
+  output_stream_setup_data.record_count = 0;
   CalculateDMAStreamSetupData(output_stream_setup_data, max_chunk_size,
                               max_ddr_burst_size, max_ddr_size_per_cycle,
                               db_data, record_size);
@@ -60,53 +60,53 @@ void DMASetup::WriteSetupDataToDMAModule(
 void DMASetup::SetUpDMACrossbars(DMASetupData& stream_setup_data,
                                  DMAInterface& dma_engine) {
   for (size_t current_chunk_index = 0;
-       current_chunk_index < stream_setup_data.crossbarSetupData.size();
+       current_chunk_index < stream_setup_data.crossbar_setup_data.size();
        ++current_chunk_index) {
-    if (stream_setup_data.isInputStream) {
+    if (stream_setup_data.is_input_stream) {
       for (int current_offset = 0; current_offset < 4; current_offset++) {
         dma_engine.SetBufferToInterfaceChunk(
-            stream_setup_data.streamID, current_chunk_index, current_offset,
-            stream_setup_data.crossbarSetupData[current_chunk_index]
-                .chunkData[3 + current_offset * 4],
-            stream_setup_data.crossbarSetupData[current_chunk_index]
-                .chunkData[2 + current_offset * 4],
-            stream_setup_data.crossbarSetupData[current_chunk_index]
-                .chunkData[1 + current_offset * 4],
-            stream_setup_data.crossbarSetupData[current_chunk_index]
-                .chunkData[0 + current_offset * 4]);
+            stream_setup_data.stream_id, current_chunk_index, current_offset,
+            stream_setup_data.crossbar_setup_data[current_chunk_index]
+                .chunk_data[3 + current_offset * 4],
+            stream_setup_data.crossbar_setup_data[current_chunk_index]
+                .chunk_data[2 + current_offset * 4],
+            stream_setup_data.crossbar_setup_data[current_chunk_index]
+                .chunk_data[1 + current_offset * 4],
+            stream_setup_data.crossbar_setup_data[current_chunk_index]
+                .chunk_data[0 + current_offset * 4]);
         dma_engine.SetBufferToInterfaceSourcePosition(
-            stream_setup_data.streamID, current_chunk_index, current_offset,
-            stream_setup_data.crossbarSetupData[current_chunk_index]
-                .positionData[3 + current_offset * 4],
-            stream_setup_data.crossbarSetupData[current_chunk_index]
-                .positionData[2 + current_offset * 4],
-            stream_setup_data.crossbarSetupData[current_chunk_index]
-                .positionData[1 + current_offset * 4],
-            stream_setup_data.crossbarSetupData[current_chunk_index]
-                .positionData[0 + current_offset * 4]);
+            stream_setup_data.stream_id, current_chunk_index, current_offset,
+            stream_setup_data.crossbar_setup_data[current_chunk_index]
+                .position_data[3 + current_offset * 4],
+            stream_setup_data.crossbar_setup_data[current_chunk_index]
+                .position_data[2 + current_offset * 4],
+            stream_setup_data.crossbar_setup_data[current_chunk_index]
+                .position_data[1 + current_offset * 4],
+            stream_setup_data.crossbar_setup_data[current_chunk_index]
+                .position_data[0 + current_offset * 4]);
       }
     } else {
       for (int current_offset = 0; current_offset < 4; current_offset++) {
         dma_engine.SetInterfaceToBufferChunk(
-            stream_setup_data.streamID, current_chunk_index, current_offset,
-            stream_setup_data.crossbarSetupData[current_chunk_index]
-                .chunkData[3 + current_offset * 4],
-            stream_setup_data.crossbarSetupData[current_chunk_index]
-                .chunkData[2 + current_offset * 4],
-            stream_setup_data.crossbarSetupData[current_chunk_index]
-                .chunkData[1 + current_offset * 4],
-            stream_setup_data.crossbarSetupData[current_chunk_index]
-                .chunkData[0 + current_offset * 4]);
+            stream_setup_data.stream_id, current_chunk_index, current_offset,
+            stream_setup_data.crossbar_setup_data[current_chunk_index]
+                .chunk_data[3 + current_offset * 4],
+            stream_setup_data.crossbar_setup_data[current_chunk_index]
+                .chunk_data[2 + current_offset * 4],
+            stream_setup_data.crossbar_setup_data[current_chunk_index]
+                .chunk_data[1 + current_offset * 4],
+            stream_setup_data.crossbar_setup_data[current_chunk_index]
+                .chunk_data[0 + current_offset * 4]);
         dma_engine.SetInterfaceToBufferSourcePosition(
-            stream_setup_data.streamID, current_chunk_index, current_offset,
-            stream_setup_data.crossbarSetupData[current_chunk_index]
-                .positionData[3 + current_offset * 4],
-            stream_setup_data.crossbarSetupData[current_chunk_index]
-                .positionData[2 + current_offset * 4],
-            stream_setup_data.crossbarSetupData[current_chunk_index]
-                .positionData[1 + current_offset * 4],
-            stream_setup_data.crossbarSetupData[current_chunk_index]
-                .positionData[0 + current_offset * 4]);
+            stream_setup_data.stream_id, current_chunk_index, current_offset,
+            stream_setup_data.crossbar_setup_data[current_chunk_index]
+                .position_data[3 + current_offset * 4],
+            stream_setup_data.crossbar_setup_data[current_chunk_index]
+                .position_data[2 + current_offset * 4],
+            stream_setup_data.crossbar_setup_data[current_chunk_index]
+                .position_data[1 + current_offset * 4],
+            stream_setup_data.crossbar_setup_data[current_chunk_index]
+                .position_data[0 + current_offset * 4]);
       }
     }
   }
@@ -114,29 +114,29 @@ void DMASetup::SetUpDMACrossbars(DMASetupData& stream_setup_data,
 
 void DMASetup::SetUpDMAIOStreams(DMASetupData& stream_setup_data,
                                  DMAInterface& dma_engine) {
-  if (stream_setup_data.isInputStream) {
+  if (stream_setup_data.is_input_stream) {
     dma_engine.SetInputControllerParams(
-        stream_setup_data.streamID, stream_setup_data.DDRBurstLength,
-        stream_setup_data.recordsPerDDRBurst, stream_setup_data.bufferStart,
-        stream_setup_data.bufferEnd);
-    dma_engine.SetInputControllerStreamAddress(stream_setup_data.streamID,
-                                               stream_setup_data.streamAddress);
-    dma_engine.SetInputControllerStreamSize(stream_setup_data.streamID,
-                                            stream_setup_data.recordCount);
+        stream_setup_data.stream_id, stream_setup_data.ddr_burst_length,
+        stream_setup_data.records_per_ddr_burst, stream_setup_data.buffer_start,
+        stream_setup_data.buffer_end);
+    dma_engine.SetInputControllerStreamAddress(stream_setup_data.stream_id,
+                                               stream_setup_data.stream_address);
+    dma_engine.SetInputControllerStreamSize(stream_setup_data.stream_id,
+                                            stream_setup_data.record_count);
   } else {
     dma_engine.SetOutputControllerParams(
-        stream_setup_data.streamID, stream_setup_data.DDRBurstLength,
-        stream_setup_data.recordsPerDDRBurst, stream_setup_data.bufferStart,
-        stream_setup_data.bufferEnd);
+        stream_setup_data.stream_id, stream_setup_data.ddr_burst_length,
+        stream_setup_data.records_per_ddr_burst, stream_setup_data.buffer_start,
+        stream_setup_data.buffer_end);
     dma_engine.SetOutputControllerStreamAddress(
-        stream_setup_data.streamID, stream_setup_data.streamAddress);
-    dma_engine.SetOutputControllerStreamSize(stream_setup_data.streamID,
-                                             stream_setup_data.recordCount);
+        stream_setup_data.stream_id, stream_setup_data.stream_address);
+    dma_engine.SetOutputControllerStreamSize(stream_setup_data.stream_id,
+                                             stream_setup_data.record_count);
   }
-  dma_engine.SetRecordSize(stream_setup_data.streamID,
-                           stream_setup_data.chunksPerRecord);
-  for (auto& chunk_id_pair : stream_setup_data.recordChunkIDs) {
-    dma_engine.SetRecordChunkIDs(stream_setup_data.streamID,
+  dma_engine.SetRecordSize(stream_setup_data.stream_id,
+                           stream_setup_data.chunks_per_record);
+  for (auto& chunk_id_pair : stream_setup_data.record_chunk_ids) {
+    dma_engine.SetRecordChunkIDs(stream_setup_data.stream_id,
                                  std::get<0>(chunk_id_pair),
                                  std::get<1>(chunk_id_pair));
   }
@@ -148,27 +148,27 @@ void DMASetup::CalculateDMAStreamSetupData(DMASetupData& stream_setup_data,
                                            const int& max_ddr_size_per_cycle,
                                            std::vector<int>& db_data,
                                            int record_size) {
-  stream_setup_data.chunksPerRecord =
+  stream_setup_data.chunks_per_record =
       (record_size + max_chunk_size - 1) / max_chunk_size;  // ceil
 
   // Temporarily for now.
-  for (int i = 0; i < stream_setup_data.chunksPerRecord; i++) {
-    stream_setup_data.recordChunkIDs.emplace_back(i, i);
+  for (int i = 0; i < stream_setup_data.chunks_per_record; i++) {
+    stream_setup_data.record_chunk_ids.emplace_back(i, i);
   }
 
   int records_per_max_burst_size = max_ddr_burst_size / record_size;
-  stream_setup_data.recordsPerDDRBurst =
+  stream_setup_data.records_per_ddr_burst =
       pow(2, static_cast<int>(log2(records_per_max_burst_size)));
 
-  stream_setup_data.DDRBurstLength =
-      ((record_size * stream_setup_data.recordsPerDDRBurst) +
+  stream_setup_data.ddr_burst_length =
+      ((record_size * stream_setup_data.records_per_ddr_burst) +
        max_ddr_size_per_cycle - 1) /
-      max_ddr_size_per_cycle;  // ceil (recordSize * recordsPerDDRBurst) /
+      max_ddr_size_per_cycle;  // ceil (recordSize * records_per_ddr_burst) /
                                // maxDDRSizePerCycle
 
   // Temporarily for now
-  stream_setup_data.bufferStart = 0;
-  stream_setup_data.bufferEnd = 15;
+  stream_setup_data.buffer_start = 0;
+  stream_setup_data.buffer_end = 15;
 
-  stream_setup_data.streamAddress = reinterpret_cast<uintptr_t>(&db_data[0]);
+  stream_setup_data.stream_address = reinterpret_cast<uintptr_t>(&db_data[0]);
 }
