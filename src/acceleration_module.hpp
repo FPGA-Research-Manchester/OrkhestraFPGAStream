@@ -11,7 +11,7 @@ class AccelerationModule {
  protected:
   void WriteToModule(uint32_t module_internal_address, uint32_t write_data);
   auto ReadFromModule(uint32_t module_internal_address) -> uint32_t;
-  AccelerationModule(int* volatile control_ax_ibase_address,
+  AccelerationModule(int* volatile control_axi_base_address,
                      uint32_t module_position);
 
  public:

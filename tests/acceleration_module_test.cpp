@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "MockAccelerationModule.hpp"
+#include "mock_acceleration_module.hpp"
 namespace {
 const int kDefaultValue = -1;
 

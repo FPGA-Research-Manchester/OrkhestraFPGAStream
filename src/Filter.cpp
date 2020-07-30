@@ -1,4 +1,4 @@
-#include "Filter.hpp"
+#include "filter.hpp"
 // Filter module low driver
 
 #define MODULE_ADDRESS_BITS 20
@@ -10,11 +10,12 @@ Filter::Filter(int* volatile ctrl_axi_base_address, uint32_t module_position)
 
 // Selects stream_id and stream_id manipulations
 void Filter::FilterSetStreamIDs(
-    uint32_t stream_id_input,  // The stream_id of the stream that gets filterred
+    uint32_t
+        stream_id_input,  // The stream_id of the stream that gets filterred
     uint32_t
         stream_id_valid_output,  // The stream_id of valid output from filters
-    uint32_t stream_id_invalid_output) {  // The stream_id of invalid output from
-                                          // filters
+    uint32_t stream_id_invalid_output) {  // The stream_id of invalid output
+                                          // from filters
   AccelerationModule::WriteToModule(0, stream_id_input +
                                            (stream_id_valid_output << 8) +
                                            (stream_id_invalid_output << 16));
@@ -95,17 +96,19 @@ void Filter::FilterSetCompareReferenceValue(
     uint32_t data_position,  // for which 32-bit integer is the following
                              // compare reference value
 
-    uint32_t compare_lane_index,  // Which CMP is this reference value for (i.e., 0,
-                              // 1, 2, 3. Module with only 2 Compares per field
-                              // can take compare_number of 1 and 2)
+    uint32_t
+        compare_lane_index,  // Which CMP is this reference value for (i.e., 0,
+                             // 1, 2, 3. Module with only 2 Compares per field
+                             // can take compare_number of 1 and 2)
 
     uint32_t compare_reference_value) {  // The 32-bit value we compare against.
                                          // Can be anything (Can be 4 characters
                                          // of text, can be a float number for
                                          // equal compare etc.)
-  AccelerationModule::WriteToModule(((1 << 15) + (data_position << 2) +
-                                     (chunk_id << 7) + ((compare_lane_index + 1) << 12)),
-                                    compare_reference_value);
+  AccelerationModule::WriteToModule(
+      ((1 << 15) + (data_position << 2) + (chunk_id << 7) +
+       ((compare_lane_index + 1) << 12)),
+      compare_reference_value);
 }
 
 #define LITERAL_DONT_CARE 0
@@ -120,13 +123,13 @@ struct {
             LITERAL_DONT_CARE;  // 0 - literal is not present in the DNF clause;
                                 // 1 - positive literal in the DNF clause ; 2 -
                                 // negative literal in the DNF clause
-      } data_position[32];  // Up to 32 data positions of integers (32-bit) for a
-                           // maximum 1024-bit datapath (for 512-bit datapath
-                           // use 0-15 only)
+      } data_position[32];  // Up to 32 data positions of integers (32-bit) for
+                            // a maximum 1024-bit datapath (for 512-bit datapath
+                            // use 0-15 only)
     } chunk_id[32];         // Every chunkID can produce different literals
-  } compare_number[4];  // Up to four different compares with different reference
-                       // values per 32-bit field (for 2 compares per field use
-                       // 0-1 only)
+  } compare_number[4];      // Up to four different compares with different
+                        // reference values per 32-bit field (for 2 compares per
+                        // field use 0-1 only)
 } dnf_clause[32];  // Up to 32 Clauses (for 16 DNF clause module use 0-15 only)
 
 void Filter::FilterSetDNFClauseLiteral(

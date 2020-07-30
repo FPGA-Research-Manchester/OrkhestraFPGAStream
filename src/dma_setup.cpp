@@ -1,11 +1,11 @@
-#include "DMASetup.hpp"
+#include "dma_setup.hpp"
 
 #include <cmath>
 #include <cstdio>
 #include <queue>
 #include <tuple>
 
-#include "DMACrossbarSetup.hpp"
+#include "dma_crossbar_setup.hpp"
 
 void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
                               std::vector<int>& db_data, int record_size,
@@ -119,8 +119,8 @@ void DMASetup::SetUpDMAIOStreams(DMASetupData& stream_setup_data,
         stream_setup_data.stream_id, stream_setup_data.ddr_burst_length,
         stream_setup_data.records_per_ddr_burst, stream_setup_data.buffer_start,
         stream_setup_data.buffer_end);
-    dma_engine.SetInputControllerStreamAddress(stream_setup_data.stream_id,
-                                               stream_setup_data.stream_address);
+    dma_engine.SetInputControllerStreamAddress(
+        stream_setup_data.stream_id, stream_setup_data.stream_address);
     dma_engine.SetInputControllerStreamSize(stream_setup_data.stream_id,
                                             stream_setup_data.record_count);
   } else {

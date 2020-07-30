@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-#include "AccelerationModule.hpp"
+#include "acceleration_module.hpp"
 
 class MockAccelerationModule : public AccelerationModule {
  public:

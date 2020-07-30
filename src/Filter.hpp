@@ -1,8 +1,8 @@
 #pragma once
 #include <cstdint>
 
-#include "AccelerationModule.hpp"
-#include "FilterInterface.hpp"
+#include "acceleration_module.hpp"
+#include "filter_interface.hpp"
 class Filter : public AccelerationModule, public FilterInterface {
  private:
   void filterWriteDNFClauseLiteralsToModule(uint32_t datapath_width,
@@ -26,7 +26,7 @@ class Filter : public AccelerationModule, public FilterInterface {
                              uint32_t compare_3_type,
                              uint32_t compare_4_type) override;
   void FilterSetCompareReferenceValue(
-      uint32_t chunk_id, uint32_t data_position, uint32_t compare_number,
+      uint32_t chunk_id, uint32_t data_position, uint32_t compare_lane_index,
       uint32_t compare_reference_value) override;
   void FilterSetDNFClauseLiteral(uint32_t dnf_clause_id,
                                  uint32_t compare_number, uint32_t chunk_id,

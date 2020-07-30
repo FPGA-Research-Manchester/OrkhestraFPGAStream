@@ -1,6 +1,6 @@
-#include "DMACrossbarSetup.hpp"
+#include "dma_crossbar_setup.hpp"
 
-#include "DMACrossbarSetupData.hpp"
+#include "dma_crossbar_setup_data.hpp"
 
 void DMACrossbarSetup::FindOutputCrossbarSetupData(
     const int& any_chunk, const int& any_position,

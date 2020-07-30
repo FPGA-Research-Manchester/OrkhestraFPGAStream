@@ -1,8 +1,8 @@
 #pragma once
 #include <cstdint>
 
-#include "AccelerationModule.hpp"
-#include "DMAInterface.hpp"
+#include "acceleration_module.hpp"
+#include "dma_interface.hpp"
 class DMA : public AccelerationModule, public DMAInterface {
  public:
   ~DMA() override;

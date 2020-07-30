@@ -1,4 +1,4 @@
-#include "AccelerationModule.hpp"
+#include "acceleration_module.hpp"
 
 #define MODULE_ADDRESS_BITS 20
 

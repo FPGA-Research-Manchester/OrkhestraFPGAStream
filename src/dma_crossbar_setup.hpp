@@ -1,7 +1,7 @@
 #pragma once
 #include <queue>
 
-#include "DMASetupData.hpp"
+#include "dma_setup_data.hpp"
 class DMACrossbarSetup {
  public:
   static void FindInputCrossbarSetupData(const int& any_chunk,

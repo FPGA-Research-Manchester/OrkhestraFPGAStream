@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-#include "DMAInterface.hpp"
+#include "dma_interface.hpp"
 #include "gmock/gmock.h"
 
 class MockDMA : public DMAInterface {
@@ -39,7 +39,8 @@ class MockDMA : public DMAInterface {
               (override));
   MOCK_METHOD(uint32_t, GetOutputControllerStreamSize, (int stream_id),
               (override));
-  MOCK_METHOD(void, StartOutputController, (bool stream_active[16]), (override));
+  MOCK_METHOD(void, StartOutputController, (bool stream_active[16]),
+              (override));
   MOCK_METHOD(bool, IsOutputControllerFinished, (), (override));
 
   MOCK_METHOD(void, SetBufferToInterfaceChunk,
@@ -48,7 +49,8 @@ class MockDMA : public DMAInterface {
               (override));
   MOCK_METHOD(void, SetBufferToInterfaceSourcePosition,
               (int stream_id, int clockCycle, int offset, int source_position4,
-               int source_position3, int source_position2, int source_position1),
+               int source_position3, int source_position2,
+               int source_position1),
               (override));
 
   MOCK_METHOD(void, SetAXItoBufferChunk,
@@ -57,7 +59,8 @@ class MockDMA : public DMAInterface {
               (override));
   MOCK_METHOD(void, SetAXItoBufferSourcePosition,
               (int stream_id, int clockCycle, int offset, int source_position4,
-               int source_position3, int source_position2, int source_position1),
+               int source_position3, int source_position2,
+               int source_position1),
               (override));
 
   MOCK_METHOD(void, SetInterfaceToBufferChunk,
@@ -66,7 +69,8 @@ class MockDMA : public DMAInterface {
               (override));
   MOCK_METHOD(void, SetInterfaceToBufferSourcePosition,
               (int stream_id, int clockCycle, int offset, int source_position4,
-               int source_position3, int source_position2, int source_position1),
+               int source_position3, int source_position2,
+               int source_position1),
               (override));
 
   MOCK_METHOD(void, SetBufferToAXIChunk,
@@ -75,6 +79,7 @@ class MockDMA : public DMAInterface {
               (override));
   MOCK_METHOD(void, SetBufferToAXISourcePosition,
               (int stream_id, int clockCycle, int offset, int source_position4,
-               int source_position3, int source_position2, int source_position1),
+               int source_position3, int source_position2,
+               int source_position1),
               (override));
 };

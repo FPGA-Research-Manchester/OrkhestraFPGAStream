@@ -1,4 +1,4 @@
-#include "DMA.hpp"
+#include "dma.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -143,10 +143,10 @@ void DMA::SetBufferToInterfaceSourcePosition(int stream_id, int clock_cycle,
                                              int source_position2,
                                              int source_position1) {
   /*When 32-bit data packets inside the {clockCycle} clock cycle of a record
-  sent to PR Interface of stream with ID {stream_id} is sent to PR at 32-bit data
-  positions {offset*4}-{offset*4+3}, they can originate from from any source
-  32-bit BRAM to enable data reordering and duplication. sourceChunk1 represents
-  position {offset*4} etc..*/
+  sent to PR Interface of stream with ID {stream_id} is sent to PR at 32-bit
+  data positions {offset*4}-{offset*4+3}, they can originate from from any
+  source 32-bit BRAM to enable data reordering and duplication. sourceChunk1
+  represents position {offset*4} etc..*/
   AccelerationModule::WriteToModule(
       ((2 << 17) + (stream_id << 12) + (clock_cycle << 5) + (offset << 2)),
       ((source_position4 << 24) + (source_position3 << 16) +

@@ -3,7 +3,7 @@
 #include <tuple>
 #include <vector>
 
-#include "DMACrossbarSetupData.hpp"
+#include "dma_crossbar_setup_data.hpp"
 struct DMASetupData {
   DMASetupData() : crossbar_setup_data(32) {}
   int stream_id{}, ddr_burst_length{}, records_per_ddr_burst{}, record_count{},

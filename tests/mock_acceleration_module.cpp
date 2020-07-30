@@ -1,4 +1,4 @@
-#include "MockAccelerationModule.hpp"
+#include "mock_acceleration_module.hpp"
 
 #include <cstdint>
 
