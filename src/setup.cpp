@@ -1,27 +1,35 @@
 #include "setup.hpp"
 
+#include <chrono>
+#include <thread>
+
 #include "dma.hpp"
 #include "dma_setup.hpp"
 #include "filter.hpp"
 #include "filter_setup.hpp"
-void Setup::SetupQueryAcceleration(int* volatile& memory_pointer,
-                                   std::vector<int>& db_data, int record_size,
-                                   int record_count) {
+void Setup::SetupQueryAcceleration(int* volatile memory_pointer,
+
+                                   std::vector<int>& db_data,
+                                   int* volatile output_memory_address,
+                                   int record_size, int record_count) {
   DMA dma_engine(memory_pointer);
   int input_stream_id = 0;
   int output_stream_id = 1;
-  DMASetup::SetupDMAModule(dma_engine, db_data, record_size, record_count,
-                           input_stream_id, output_stream_id);
+  DMASetup::SetupDMAModule(dma_engine, db_data, output_memory_address,
+                           record_size, record_count, input_stream_id,
+                           output_stream_id);
 
   // Setup the filter module
   Filter filter_module(memory_pointer, 1);
   FilterSetup::SetupFilterModule(filter_module, input_stream_id,
                                  output_stream_id);
 
-  bool stream_active[16] = {false};
-  stream_active[0] = true;
-  dma_engine.StartInputController(stream_active);
-  dma_engine.StartOutputController(stream_active);
+  bool input_stream_active[16] = {false};
+  input_stream_active[0] = true;
+  dma_engine.StartInputController(input_stream_active);
+  bool output_stream_active[16] = {false};
+  output_stream_active[1] = true;
+  dma_engine.StartOutputController(output_stream_active);
 
   // Print out the contents of memory for debugging
   // std::cout << std::endl << "Memory contents:" << std::endl;
@@ -33,4 +41,8 @@ void Setup::SetupQueryAcceleration(int* volatile& memory_pointer,
   //}
 
   // check isInputControllerFinished and isOutputControllerFinished
+  /*while (!dma_engine.IsInputControllerFinished() &&
+         !dma_engine.IsOutputControllerFinished()) {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }*/
 }
