@@ -14,5 +14,6 @@ if(NOT rapidcsv_POPULATED)
 endif()
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/MOCK_DATA.csv MOCK_DATA.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/RESULT_DATA.csv RESULT_DATA.csv COPYONLY)
 
 target_link_libraries(app PRIVATE db_to_hw_library)

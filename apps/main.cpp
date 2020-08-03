@@ -1,6 +1,6 @@
 #include <rapidcsv.h>
 
-#include <Setup.hpp>
+#include "setup.hpp"
 #include <vector>
 
 /*
@@ -71,16 +71,22 @@ auto main() -> int {
   std::vector<int> db_data(doc.GetRowCount() * record_size);
   FillDataArray(db_data, &doc);
 
-  // Create the controller memory area //Also hardcode the address to 0xA0000000
-  // we're going to use baremetal
+  int* volatile output_memory_address =
+      static_cast<int*>(malloc(doc.GetRowCount() * record_size));
+
+  // Create the controller memory area 
   int* volatile memory_pointer = new int[2097152];
   for (int i = 0; i < 2097152; i++) {
     memory_pointer[i] = -1;
   }
 
-  Setup::SetupQueryAcceleration(memory_pointer, db_data, record_size,
+  //int* volatile memory_pointer = reinterpret_cast<int*>(0xA0000000);
+
+  Setup::SetupQueryAcceleration(memory_pointer, db_data,
+                                output_memory_address, record_size,
                                 doc.GetRowCount());
 
-  delete[] memory_pointer;
+  free(output_memory_address);
+
   return 0;
 }
