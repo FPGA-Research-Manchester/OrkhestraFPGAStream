@@ -1,8 +1,5 @@
 #include "setup.hpp"
 
-#include <chrono>
-#include <thread>
-
 #include "dma.hpp"
 #include "dma_setup.hpp"
 #include "filter.hpp"
@@ -41,8 +38,8 @@ void Setup::SetupQueryAcceleration(int* volatile memory_pointer,
   //}
 
   // check isInputControllerFinished and isOutputControllerFinished
-  /*while (!dma_engine.IsInputControllerFinished() &&
+  while (!dma_engine.IsInputControllerFinished() &&
          !dma_engine.IsOutputControllerFinished()) {
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-  }*/
+    //ADD SLEEP FUNC CALL HERE
+  }
 }
