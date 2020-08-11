@@ -1,8 +1,7 @@
-#include <rapidcsv.h>
-
 #include "setup.hpp"
 #include <vector>
-
+#include <cstdlib>
+#include <iostream>
 /*
 Filter: (price < 12000)
 1000 rows
@@ -15,6 +14,7 @@ Filter: (price < 12000)
 */
 
 auto main() -> int {
+  std::cout<<"Starting main"<<std::endl;
   // Figure out some legit way to get this data type information. For all
   // streams. Would be nice to have this info in structs or sth like that to
   // capture dataType
@@ -28,9 +28,6 @@ auto main() -> int {
   for (int row_size : data_type_sizes) {
     record_size += row_size;
   }
-
-
-
 
   // Create contiguous data array
   std::vector<int> db_data{
@@ -3036,15 +3033,49 @@ auto main() -> int {
       0,          0,          0,          0,          0,          61816};
 
   int* volatile output_memory_address =
-      static_cast<int*>(malloc(18000));
+      new int[18000];
+  std::cout<<"Input i=0"<<std::endl;
+  for (int i = 0; i<18; i++){
+      std::cout<<db_data[i]<<std::endl;
+  }
+  std::cout<<"Input i=19"<<std::endl;
+  for (int i = 342; i<360; i++){
+      std::cout<<db_data[i]<<std::endl;
+  }
+  std::cout<<"Output i=0"<<std::endl;
+  for (int i = 0; i<18; i++){
+      output_memory_address[i] = 1;
+      std::cout<<output_memory_address[i]<<std::endl;
+  }
+  std::cout<<"Output i=19"<<std::endl;
+  for (int i = 342; i<360; i++){
+      output_memory_address[i] = 1;
+      std::cout<<output_memory_address[i]<<std::endl;
+  }
 
   int* volatile memory_pointer = reinterpret_cast<int*>(0xA0000000);
-
+  std::cout<<"Main initialisation done!"<<std::endl;
   Setup::SetupQueryAcceleration(memory_pointer, db_data,
                                 output_memory_address, record_size,
                                 1000);
-
-  free(output_memory_address);
+  std::cout<<"Query done!"<<std::endl;
+  std::cout<<"Input i=0"<<std::endl;
+  for (int i = 0; i<18; i++){
+      std::cout<<db_data[i]<<std::endl;
+  }
+  std::cout<<"Input i=19"<<std::endl;
+  for (int i = 342; i<360; i++){
+      std::cout<<db_data[i]<<std::endl;
+  }
+  std::cout<<"Output i=0"<<std::endl;
+  for (int i = 0; i<18; i++){
+	  std::cout<<output_memory_address[i]<<std::endl;
+  }
+  std::cout<<"Output i=19"<<std::endl;
+  for (int i = 342; i<360; i++){
+	  std::cout<<output_memory_address[i]<<std::endl;
+  }
+  delete[] output_memory_address;
 
   return 0;
 }

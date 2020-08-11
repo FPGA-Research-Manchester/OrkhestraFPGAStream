@@ -19,28 +19,17 @@ void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
       forward_full_invalid_records, first_module_in_resource_elastic_chain,
       last_module_in_resource_elastic_chain);
 
-  uint32_t chunk_id = 1;
+  uint32_t chunk_id = 14;
   uint32_t data_position = 1;
 
-  uint32_t const less_than_compare = 0;
-  uint32_t const dont_care_compare = 0;
-
-  filter_module.FilterSetCompareTypes(chunk_id, data_position,
-                                      less_than_compare, dont_care_compare,
-                                      dont_care_compare, dont_care_compare);
-
   uint32_t compare_lane_index = 0;
-  uint32_t compare_reference_value = 12000;
-
-  filter_module.FilterSetCompareReferenceValue(
-      chunk_id, data_position, compare_lane_index, compare_reference_value);
 
   uint32_t dnf_clause_id = 0;
-  uint8_t const positive_literal_type = 1;
+  uint8_t const dont_care_literal_type = 0;
 
   filter_module.FilterSetDNFClauseLiteral(dnf_clause_id, compare_lane_index,
                                           chunk_id, data_position,
-                                          positive_literal_type);
+										  dont_care_literal_type);
 
   uint32_t datapath_width = 16;
 

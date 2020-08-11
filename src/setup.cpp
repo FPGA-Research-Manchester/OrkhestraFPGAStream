@@ -4,6 +4,9 @@
 #include "dma_setup.hpp"
 #include "filter.hpp"
 #include "filter_setup.hpp"
+
+#include <unistd.h>
+
 void Setup::SetupQueryAcceleration(int* volatile memory_pointer,
 
                                    std::vector<int>& db_data,
@@ -26,6 +29,7 @@ void Setup::SetupQueryAcceleration(int* volatile memory_pointer,
   dma_engine.StartInputController(input_stream_active);
   bool output_stream_active[16] = {false};
   output_stream_active[1] = true;
+
   dma_engine.StartOutputController(output_stream_active);
 
   // Print out the contents of memory for debugging
@@ -37,9 +41,9 @@ void Setup::SetupQueryAcceleration(int* volatile memory_pointer,
   //	}
   //}
 
+
   // check isInputControllerFinished and isOutputControllerFinished
-  while (!dma_engine.IsInputControllerFinished() &&
-         !dma_engine.IsOutputControllerFinished()) {
-    //ADD SLEEP FUNC CALL HERE
+  while (!(dma_engine.IsInputControllerFinished() &&
+         dma_engine.IsOutputControllerFinished())) {
   }
 }
