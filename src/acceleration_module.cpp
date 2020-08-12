@@ -2,19 +2,19 @@
 
 #define MODULE_ADDRESS_BITS 20
 
-AccelerationModule::AccelerationModule(int* volatile control_axi_base_address,
+AccelerationModule::AccelerationModule(unsigned int volatile control_axi_base_address,
                                        uint32_t module_position)
     : control_axi_base_address_{control_axi_base_address},
       module_position_{module_position} {}
 
 auto AccelerationModule::CalculateMemoryMappedAddress(
     uint32_t module_internal_address) -> int* volatile {
-  int* volatile return_address = control_axi_base_address_;
+  unsigned int volatile return_address = control_axi_base_address_;
   return_address += module_position_ *
                     (1 << MODULE_ADDRESS_BITS);  // calculate the main address
                                                  // of the target module
   return_address += module_internal_address;
-  return return_address;
+  return reinterpret_cast<int*>(return_address);
 }
 
 void AccelerationModule::WriteToModule(

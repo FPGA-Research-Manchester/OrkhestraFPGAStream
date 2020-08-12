@@ -2,6 +2,8 @@
 #include <vector>
 #include <cstdlib>
 #include <iostream>
+#include <stdio.h>
+
 /*
 Filter: (price < 12000)
 1000 rows
@@ -3042,6 +3044,8 @@ auto main() -> int {
   for (int i = 342; i<360; i++){
       std::cout<<db_data[i]<<std::endl;
   }
+  //std::memset(&output_memory_address[0], 1, 18);
+  //std::memset(&output_memory_address[342], 1, 18);
   std::cout<<"Output i=0"<<std::endl;
   for (int i = 0; i<18; i++){
       output_memory_address[i] = 1;
@@ -3053,7 +3057,7 @@ auto main() -> int {
       std::cout<<output_memory_address[i]<<std::endl;
   }
 
-  int* volatile memory_pointer = reinterpret_cast<int*>(0xA0000000);
+  unsigned int volatile memory_pointer = 0xA0000000;
   std::cout<<"Main initialisation done!"<<std::endl;
   Setup::SetupQueryAcceleration(memory_pointer, db_data,
                                 output_memory_address, record_size,

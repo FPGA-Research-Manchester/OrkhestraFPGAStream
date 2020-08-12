@@ -5,7 +5,7 @@
 
 Filter::~Filter() = default;
 
-Filter::Filter(int* volatile ctrl_axi_base_address, uint32_t module_position)
+Filter::Filter(unsigned int volatile ctrl_axi_base_address, uint32_t module_position)
     : AccelerationModule(ctrl_axi_base_address, module_position) {}
 
 // Selects stream_id and stream_id manipulations

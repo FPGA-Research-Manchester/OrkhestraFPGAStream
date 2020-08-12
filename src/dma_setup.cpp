@@ -161,7 +161,7 @@ void DMASetup::CalculateDMAStreamSetupData(DMASetupData& stream_setup_data,
 
   int records_per_max_burst_size = max_ddr_burst_size / record_size;
   stream_setup_data.records_per_ddr_burst =
-      pow(2, static_cast<int>(log2(records_per_max_burst_size)));
+		  pow(2,static_cast<int>(log2(records_per_max_burst_size)));
 
   // ceil (recordSize * records_per_ddr_burst) / maxDDRSizePerCycle
   stream_setup_data.ddr_burst_length =

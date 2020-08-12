@@ -5,9 +5,11 @@
 #include "filter.hpp"
 #include "filter_setup.hpp"
 
+#include <iostream>
+
 #include <unistd.h>
 
-void Setup::SetupQueryAcceleration(int* volatile memory_pointer,
+void Setup::SetupQueryAcceleration(unsigned int volatile memory_pointer,
 
                                    std::vector<int>& db_data,
                                    int* volatile output_memory_address,
@@ -45,5 +47,7 @@ void Setup::SetupQueryAcceleration(int* volatile memory_pointer,
   // check isInputControllerFinished and isOutputControllerFinished
   while (!(dma_engine.IsInputControllerFinished() &&
          dma_engine.IsOutputControllerFinished())) {
+	  std::cout<<"input:"<<dma_engine.IsInputControllerFinished()<<std::endl;
+	  std::cout<<"output:"<<dma_engine.IsOutputControllerFinished()<<std::endl;
   }
 }
