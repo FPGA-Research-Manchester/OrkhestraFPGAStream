@@ -126,6 +126,13 @@ void DMASetup::SetUpDMAIOStreams(DMASetupData& stream_setup_data,
         stream_setup_data.stream_id, stream_setup_data.stream_address);
     dma_engine.SetInputControllerStreamSize(stream_setup_data.stream_id,
                                             stream_setup_data.record_count);
+    dma_engine.SetRecordSize(stream_setup_data.stream_id,
+                             stream_setup_data.chunks_per_record);
+    for (auto& chunk_id_pair : stream_setup_data.record_chunk_ids) {
+      dma_engine.SetRecordChunkIDs(stream_setup_data.stream_id,
+                                   std::get<0>(chunk_id_pair),
+                                   std::get<1>(chunk_id_pair));
+    }
   } else {
     dma_engine.SetOutputControllerParams(
         stream_setup_data.stream_id, stream_setup_data.ddr_burst_length,
@@ -135,13 +142,6 @@ void DMASetup::SetUpDMAIOStreams(DMASetupData& stream_setup_data,
         stream_setup_data.stream_id, stream_setup_data.stream_address);
     dma_engine.SetOutputControllerStreamSize(stream_setup_data.stream_id,
                                              stream_setup_data.record_count);
-  }
-  dma_engine.SetRecordSize(stream_setup_data.stream_id,
-                           stream_setup_data.chunks_per_record);
-  for (auto& chunk_id_pair : stream_setup_data.record_chunk_ids) {
-    dma_engine.SetRecordChunkIDs(stream_setup_data.stream_id,
-                                 std::get<0>(chunk_id_pair),
-                                 std::get<1>(chunk_id_pair));
   }
 }
 
@@ -155,8 +155,8 @@ void DMASetup::CalculateDMAStreamSetupData(DMASetupData& stream_setup_data,
       (record_size + max_chunk_size - 1) / max_chunk_size;  // ceil
 
   // Temporarily for now.
-  for (int i = 0; i < stream_setup_data.chunks_per_record; i++) {
-    stream_setup_data.record_chunk_ids.emplace_back(i, i);
+  for (int i = 0; i < 32; i++) {
+    stream_setup_data.record_chunk_ids.emplace_back(i, i % stream_setup_data.chunks_per_record);
   }
 
   int records_per_max_burst_size = max_ddr_burst_size / record_size;
@@ -173,5 +173,5 @@ void DMASetup::CalculateDMAStreamSetupData(DMASetupData& stream_setup_data,
   stream_setup_data.buffer_start = 0;
   stream_setup_data.buffer_end = 15;
 
-  stream_setup_data.stream_address = data_address;
+  stream_setup_data.stream_address = data_address + 15 / 16;
 }

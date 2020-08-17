@@ -19,7 +19,7 @@ void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
       forward_full_invalid_records, first_module_in_resource_elastic_chain,
       last_module_in_resource_elastic_chain);
 
-  uint32_t chunk_id = 14;
+  uint32_t chunk_id = 1;
   uint32_t data_position = 1;
 
   uint32_t compare_lane_index = 0;

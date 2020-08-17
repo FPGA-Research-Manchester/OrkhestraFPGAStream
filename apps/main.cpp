@@ -3046,15 +3046,11 @@ auto main() -> int {
   }
   //std::memset(&output_memory_address[0], 1, 18);
   //std::memset(&output_memory_address[342], 1, 18);
-  std::cout<<"Output i=0"<<std::endl;
   for (int i = 0; i<18; i++){
       output_memory_address[i] = 1;
-      std::cout<<output_memory_address[i]<<std::endl;
   }
-  std::cout<<"Output i=19"<<std::endl;
   for (int i = 342; i<360; i++){
       output_memory_address[i] = 1;
-      std::cout<<output_memory_address[i]<<std::endl;
   }
 
   unsigned int volatile memory_pointer = 0xA0000000;
@@ -3063,14 +3059,6 @@ auto main() -> int {
                                 output_memory_address, record_size,
                                 1000);
   std::cout<<"Query done!"<<std::endl;
-  std::cout<<"Input i=0"<<std::endl;
-  for (int i = 0; i<18; i++){
-      std::cout<<db_data[i]<<std::endl;
-  }
-  std::cout<<"Input i=19"<<std::endl;
-  for (int i = 342; i<360; i++){
-      std::cout<<db_data[i]<<std::endl;
-  }
   std::cout<<"Output i=0"<<std::endl;
   for (int i = 0; i<18; i++){
 	  std::cout<<output_memory_address[i]<<std::endl;

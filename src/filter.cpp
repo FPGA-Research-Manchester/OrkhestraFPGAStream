@@ -156,13 +156,13 @@ void Filter::filterWriteDNFClauseLiteralsToModule(
        compare_lane++) {
     for (data_position = 0; data_position < datapath_width; data_position++) {
       for (chunk_id = 0; chunk_id < 32; chunk_id++) {
-        uint32_t clauses_packed_positive_result = 0xFFFFFFFF;
-        uint32_t clauses_packed_negative_result = 0xFFFFFFFF;
-        for (dnf_clause_index = 0; dnf_clause_index < module_dnf_clauses;
-             dnf_clause_index++) {
+        uint32_t clauses_packed_positive_result = 0;
+        uint32_t clauses_packed_negative_result = 0;
+        for (dnf_clause_index = module_dnf_clauses-1; dnf_clause_index >= 0 ;
+             dnf_clause_index--) {
+          clauses_packed_positive_result <<= 1;
+          clauses_packed_negative_result <<= 1;
           if (dnf_clause[dnf_clause_index].DNF_is_used) {
-            clauses_packed_positive_result <<= 1;
-            clauses_packed_negative_result <<= 1;
             if (dnf_clause[dnf_clause_index]
                     .compare_number[compare_lane]
                     .chunk_id[chunk_id]
@@ -186,8 +186,8 @@ void Filter::filterWriteDNFClauseLiteralsToModule(
               clauses_packed_negative_result |= 1;
             }
           } else {                               // else DNF clause is unused
-            clauses_packed_positive_result = 0;  // therefore it cannot satisfy
-            clauses_packed_negative_result = 0;  // boolean expression
+            clauses_packed_positive_result |= 0;  // therefore it cannot satisfy
+            clauses_packed_negative_result |= 0;  // boolean expression
           }
         }
         AccelerationModule::WriteToModule(
