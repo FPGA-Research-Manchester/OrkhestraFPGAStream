@@ -33,5 +33,5 @@ void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
 
   uint32_t datapath_width = 16;
 
-  filter_module.WriteDNFClauseLiteralsToFilter_1CMP_8DNF(datapath_width);
+  filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(datapath_width);
 }

@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <iostream>
 #include <stdio.h>
+#include "xil_io.h"
+#include "xil_cache.h"
 
 /*
 Filter: (price < 12000)
@@ -3055,9 +3057,11 @@ auto main() -> int {
 
   unsigned int volatile memory_pointer = 0xA0000000;
   std::cout<<"Main initialisation done!"<<std::endl;
+  Xil_DCacheFlush();
   Setup::SetupQueryAcceleration(memory_pointer, db_data,
                                 output_memory_address, record_size,
                                 1000);
+  Xil_DCacheFlush();
   std::cout<<"Query done!"<<std::endl;
   std::cout<<"Output i=0"<<std::endl;
   for (int i = 0; i<18; i++){
