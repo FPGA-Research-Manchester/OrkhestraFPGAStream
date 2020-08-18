@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-#include <unistd.h>
+//#include <unistd.h>
 
 void Setup::SetupQueryAcceleration(unsigned int volatile memory_pointer,
 
@@ -31,23 +31,13 @@ void Setup::SetupQueryAcceleration(unsigned int volatile memory_pointer,
   dma_engine.StartInputController(input_stream_active);
   bool output_stream_active[16] = {false};
   output_stream_active[1] = true;
-
   dma_engine.StartOutputController(output_stream_active);
 
-  // Print out the contents of memory for debugging
-  // std::cout << std::endl << "Memory contents:" << std::endl;
-  // for (int i = 0; i < 1048576; i++) {
-  //	if (memoryPointer[i] != -1) {
-  //		std::cout << "Address:" << i << std::endl;
-  //		std::cout << memoryPointer[i] << std::endl;
-  //	}
-  //}
-
-
   // check isInputControllerFinished and isOutputControllerFinished
-  while (!(dma_engine.IsInputControllerFinished() &&
-         dma_engine.IsOutputControllerFinished())) {
-	  std::cout<<"input:"<<dma_engine.IsInputControllerFinished()<<std::endl;
-	  std::cout<<"output:"<<dma_engine.IsOutputControllerFinished()<<std::endl;
-  }
+  //while (!(dma_engine.IsInputControllerFinished() &&
+         //dma_engine.IsOutputControllerFinished())) {
+    //sleep(1);
+	  //std::cout<<"input:"<<dma_engine.IsInputControllerFinished()<<std::endl;
+	  //std::cout<<"output:"<<dma_engine.IsOutputControllerFinished()<<std::endl;
+  //}
 }

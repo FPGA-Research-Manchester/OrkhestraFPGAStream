@@ -1,7 +1,7 @@
 #include "acceleration_module.hpp"
 #include <iostream>
 
-#include <unistd.h>
+//#include <unistd.h>
 
 #define MODULE_ADDRESS_BITS 20
 
@@ -28,7 +28,7 @@ void AccelerationModule::WriteToModule(
   int* volatile register_address =
       CalculateMemoryMappedAddress(module_internal_address);
   std::cout<<"Address:"<<register_address<<" Data:"<<write_data<<std::endl;
-  usleep(1000);
+  //usleep(1000);
   *register_address = write_data;
 }
 
