@@ -6,9 +6,8 @@
 class DMASetup {
  public:
   static void SetupDMAModule(DMAInterface& dma_engine,
-
-                             std::vector<int>& db_data,
-                             int* volatile output_memory_address,
+                             volatile int* input_memory_area,
+                             volatile int* output_memory_area,
                              int record_size, int record_count,
                              int input_stream_id, int output_stream_id);
 
@@ -20,12 +19,9 @@ class DMASetup {
   static void SetUpDMACrossbars(DMASetupData& stream_setup_data,
                                 DMAInterface& dma_engine);
   static void CalculateDMAStreamSetupData(DMASetupData& stream_setup_data,
-
                                           const int& max_chunk_size,
-
                                           const int& max_ddr_burst_size,
-
                                           const int& max_ddr_size_per_cycle,
-                                          uintptr_t data_address,
+                                          volatile int* data_address,
                                           int record_size);
 };

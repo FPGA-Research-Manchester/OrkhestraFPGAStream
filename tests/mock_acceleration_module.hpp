@@ -5,9 +5,9 @@
 
 class MockAccelerationModule : public AccelerationModule {
  public:
-  MockAccelerationModule(int* volatile ctrl_axi_base_address,
-                         uint32_t module_position);
+  MockAccelerationModule(volatile int* ctrl_axi_base_address,
+                         int module_position);
   ~MockAccelerationModule() override;
-  void writeToModule(uint32_t module_internal_address, uint32_t write_data);
-  auto readFromModule(uint32_t module_internal_address) -> uint32_t;
+  void WriteToModule(int module_internal_address, int write_data);
+  auto ReadFromModule(int module_internal_address) ->  int;
 };

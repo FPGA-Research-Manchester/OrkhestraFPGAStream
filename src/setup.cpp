@@ -9,15 +9,14 @@
 
 //#include <unistd.h>
 
-void Setup::SetupQueryAcceleration(unsigned int volatile memory_pointer,
-
+void Setup::SetupQueryAcceleration(volatile int* memory_pointer,
                                    std::vector<int>& db_data,
-                                   int* volatile output_memory_address,
+                                   volatile int* output_memory_address,
                                    int record_size, int record_count) {
   DMA dma_engine(memory_pointer);
   int input_stream_id = 0;
   int output_stream_id = 1;
-  DMASetup::SetupDMAModule(dma_engine, db_data, output_memory_address,
+  DMASetup::SetupDMAModule(dma_engine, db_data.data(), output_memory_address,
                            record_size, record_count, input_stream_id,
                            output_stream_id);
 

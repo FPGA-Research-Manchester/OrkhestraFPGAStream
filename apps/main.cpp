@@ -64,14 +64,15 @@ auto main() -> int {
 
   int data_size = doc.GetRowCount() * record_size;
   // Create contiguous data array
-  std::vector<int> db_data(data_size);
-  FillDataArray(db_data, &doc);
+  std::vector<int> input_memory_area(data_size);
+  FillDataArray(input_memory_area, &doc);
 
-  std::vector<int> output_memory_address(data_size);
-  std::vector<int> memory_pointer(2097152, -1);
+  std::vector<int> output_memory_area(data_size);
+  std::vector<int> module_configuration_memory_area(262144, -1);
 
-  Setup::SetupQueryAcceleration(reinterpret_cast<unsigned int>(&memory_pointer[0]), db_data,
-                                output_memory_address.data(),
+  Setup::SetupQueryAcceleration(module_configuration_memory_area.data(),
+                                input_memory_area,
+                                output_memory_area.data(),
                                 record_size, doc.GetRowCount());
 
   return 0;

@@ -3,9 +3,8 @@
 
 class Setup {
  public:
-  static void SetupQueryAcceleration(unsigned int volatile memory_pointer,
-
+  static void SetupQueryAcceleration(volatile int* memory_pointer,
                                      std::vector<int>& db_data,
-                                     int* volatile output_memory_address,
+                                     volatile int* output_memory_address,
                                      int record_size, int record_count);
 };

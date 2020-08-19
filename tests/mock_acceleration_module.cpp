@@ -3,16 +3,16 @@
 #include <cstdint>
 
 MockAccelerationModule::MockAccelerationModule(
-    int* volatile ctrl_axi_base_address, uint32_t module_position)
+    volatile int* ctrl_axi_base_address, int module_position)
     : AccelerationModule(ctrl_axi_base_address, module_position) {}
 MockAccelerationModule::~MockAccelerationModule() = default;
 
-void MockAccelerationModule::writeToModule(uint32_t module_internal_address,
-                                           uint32_t write_data) {
+void MockAccelerationModule::WriteToModule(int module_internal_address,
+                                           int write_data) {
   AccelerationModule::WriteToModule(module_internal_address, write_data);
 }
 
-auto MockAccelerationModule::readFromModule(uint32_t module_internal_address)
-    -> uint32_t {
+auto MockAccelerationModule::ReadFromModule(int module_internal_address)
+    ->  int {
   return AccelerationModule::ReadFromModule(module_internal_address);
 }

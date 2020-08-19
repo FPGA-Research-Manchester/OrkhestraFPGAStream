@@ -3038,7 +3038,7 @@ auto main() -> int {
       0,          0,          0,          1395732480, 0,          0,
       0,          0,          0,          0,          0,          61816};
 
-  int* volatile output_memory_address = new int[18000];
+  int*  output_memory_address = new int[18000];
   std::cout << "Input i=0" << std::endl;
   for (int i = 0; i < 18; i++) {
     std::cout << db_data[i] << std::endl;
@@ -3056,7 +3056,7 @@ auto main() -> int {
     output_memory_address[i] = 1;
   }
 
-  unsigned int volatile memory_pointer = 0xA0000000;
+  unsigned int  memory_pointer = 0xA0000000;
   std::cout << "Main initialisation done!" << std::endl;
   Xil_DCacheFlush();
   Setup::SetupQueryAcceleration(memory_pointer, db_data, output_memory_address,

@@ -8,8 +8,8 @@
 #include "dma_crossbar_setup.hpp"
 
 void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
-                              std::vector<int>& db_data,
-                              int* volatile output_memory_address,
+                              volatile int* input_memory_area,
+                              volatile int* output_memory_address,
                               int record_size, int record_count,
                               int input_stream_id, int output_stream_id) {
   // Calculate the controller parameter values based on input data and datatypes
@@ -26,8 +26,7 @@ void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
   // inputStreamSetupData.record_count = doc.GetRowCount();
   CalculateDMAStreamSetupData(input_stream_setup_data, max_chunk_size,
                               max_ddr_burst_size, max_ddr_size_per_cycle,
-                              reinterpret_cast<uintptr_t>(&db_data[0]),
-                              record_size);
+                              input_memory_area, record_size);
 
   // Output
   DMASetupData output_stream_setup_data;
@@ -37,7 +36,7 @@ void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
   CalculateDMAStreamSetupData(
       output_stream_setup_data, max_chunk_size, max_ddr_burst_size,
       max_ddr_size_per_cycle,
-      reinterpret_cast<uintptr_t>(output_memory_address), record_size);
+      output_memory_address, record_size);
 
   const int any_chunk = 31;
   const int any_position = 3;
@@ -149,7 +148,7 @@ void DMASetup::CalculateDMAStreamSetupData(DMASetupData& stream_setup_data,
                                            const int& max_chunk_size,
                                            const int& max_ddr_burst_size,
                                            const int& max_ddr_size_per_cycle,
-                                           uintptr_t data_address,
+                                           volatile int* data_address,
                                            int record_size) {
   stream_setup_data.chunks_per_record =
       (record_size + max_chunk_size - 1) / max_chunk_size;  // ceil
@@ -173,5 +172,5 @@ void DMASetup::CalculateDMAStreamSetupData(DMASetupData& stream_setup_data,
   stream_setup_data.buffer_start = 0;
   stream_setup_data.buffer_end = 15;
 
-  stream_setup_data.stream_address = data_address + 15 / 16;
+  stream_setup_data.stream_address = reinterpret_cast<uintptr_t>(data_address);
 }

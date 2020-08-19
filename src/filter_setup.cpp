@@ -19,19 +19,19 @@ void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
       forward_full_invalid_records, first_module_in_resource_elastic_chain,
       last_module_in_resource_elastic_chain);
 
-  uint32_t chunk_id = 1;
-  uint32_t data_position = 1;
+  int chunk_id = 1;
+  int data_position = 1;
 
-  uint32_t compare_lane_index = 0;
+  int compare_lane_index = 0;
 
-  uint32_t dnf_clause_id = 0;
-  uint8_t const dont_care_literal_type = 0;
+  int dnf_clause_id = 0;
+  int const dont_care_literal_type = 0;
 
   filter_module.FilterSetDNFClauseLiteral(dnf_clause_id, compare_lane_index,
                                           chunk_id, data_position,
 										  dont_care_literal_type);
 
-  uint32_t datapath_width = 16;
+  int datapath_width = 16;
 
   filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(datapath_width);
 }

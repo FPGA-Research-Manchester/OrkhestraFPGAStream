@@ -7,12 +7,13 @@ class DMAInterface {
   virtual void SetInputControllerParams(int stream_id, int dd_rburst_size,
                                         int records_per_ddr_burst,
                                         int buffer_start, int buffer_end) = 0;
-  virtual auto GetInputControllerParams(int stream_id) -> uint32_t = 0;
+  virtual auto GetInputControllerParams(int stream_id) -> volatile int = 0;
   virtual void SetInputControllerStreamAddress(int stream_id,
                                                uintptr_t address) = 0;
-  virtual auto GetInputControllerStreamAddress(int stream_id) -> uintptr_t = 0;
+  virtual auto GetInputControllerStreamAddress(int stream_id)
+      -> volatile uintptr_t = 0;
   virtual void SetInputControllerStreamSize(int stream_id, int size) = 0;
-  virtual auto GetInputControllerStreamSize(int stream_id) -> uint32_t = 0;
+  virtual auto GetInputControllerStreamSize(int stream_id) -> volatile int = 0;
   virtual void StartInputController(bool stream_active[16]) = 0;
   virtual auto IsInputControllerFinished() -> bool = 0;
 
@@ -23,12 +24,13 @@ class DMAInterface {
   virtual void SetOutputControllerParams(int stream_id, int dd_rburst_size,
                                          int records_per_ddr_burst,
                                          int buffer_start, int buffer_end) = 0;
-  virtual auto GetOutputControllerParams(int stream_id) -> uint32_t = 0;
+  virtual auto GetOutputControllerParams(int stream_id) -> volatile int = 0;
   virtual void SetOutputControllerStreamAddress(int stream_id,
                                                 uintptr_t address) = 0;
-  virtual auto GetOutputControllerStreamAddress(int stream_id) -> uintptr_t = 0;
+  virtual auto GetOutputControllerStreamAddress(int stream_id)
+      -> volatile uintptr_t = 0;
   virtual void SetOutputControllerStreamSize(int stream_id, int size) = 0;
-  virtual auto GetOutputControllerStreamSize(int stream_id) -> uint32_t = 0;
+  virtual auto GetOutputControllerStreamSize(int stream_id) -> volatile int = 0;
   virtual void StartOutputController(bool stream_active[16]) = 0;
   virtual auto IsOutputControllerFinished() -> bool = 0;
 

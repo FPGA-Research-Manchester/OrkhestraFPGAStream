@@ -32,7 +32,7 @@ TEST(DMASetupTest, InputParamsSettings) {
   DMASetup dma_configurer;
 
   dma_configurer.SetupDMAModule(
-      mock_dma, mock_db_data, mock_output_memory_address, 18,
+      mock_dma, mock_db_data.data(), mock_output_memory_address, 18,
       expected_stream_size, input_stream_id, output_stream_id);
   free(mock_output_memory_address);
 }
@@ -56,7 +56,7 @@ TEST(DMASetupTest, OutputParamsSettings) {
   EXPECT_CALL(mock_dma, SetOutputControllerStreamSize(output_stream_id, 0))
       .Times(1);
   DMASetup dma_configurer;
-  dma_configurer.SetupDMAModule(mock_dma, mock_db_data,
+  dma_configurer.SetupDMAModule(mock_dma, mock_db_data.data(),
                                 mock_output_memory_address, 18, 1000,
                                 input_stream_id, output_stream_id);
   free(mock_output_memory_address);
@@ -72,8 +72,9 @@ TEST(DMASetupTest, RecordSettings) {
   EXPECT_CALL(mock_dma, SetRecordChunkIDs(input_stream_id, 0, 0)).Times(1);
   EXPECT_CALL(mock_dma, SetRecordChunkIDs(input_stream_id, 1, 1)).Times(1);
   DMASetup dma_configurer;
-  dma_configurer.SetupDMAModule(mock_dma, mock_db_data,
+  dma_configurer.SetupDMAModule(mock_dma, mock_db_data.data(),
                                 mock_output_memory_address, 18, 1000,
                                 input_stream_id, output_stream_id);
+  free(mock_output_memory_address);
 }
 }  // namespace
