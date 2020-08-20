@@ -14,8 +14,8 @@ TEST(DMASetupTest, InputParamsSettings) {
   int expected_buffer_start = 0;
   int expected_buffer_end = 15;
   int expected_stream_size = 1000;
-  std::vector<int> mock_db_data(1, 0);  // NOLINT
-  int* mock_output_memory_address = static_cast<int*>(malloc(1));
+  std::vector<uint32_t> mock_db_data(1, 0);  // NOLINT
+  auto* mock_output_memory_address = static_cast<uint32_t*>(malloc(1));
   MockDMA mock_dma;
   EXPECT_CALL(mock_dma, SetInputControllerParams(
                             input_stream_id, expected_ddr_burst_length,
@@ -41,8 +41,8 @@ TEST(DMASetupTest, OutputParamsSettings) {
   int expected_records_per_ddr_burst = 16;
   int expected_buffer_start = 0;
   int expected_buffer_end = 15;
-  std::vector<int> mock_db_data(1, 0);  // NOLINT
-  int* mock_output_memory_address = static_cast<int*>(malloc(1));
+  std::vector<uint32_t> mock_db_data(1, 0);  // NOLINT
+  auto* mock_output_memory_address = static_cast<uint32_t*>(malloc(1));
   MockDMA mock_dma;
   EXPECT_CALL(mock_dma, SetOutputControllerParams(
                             output_stream_id, expected_ddr_burst_length,
@@ -62,8 +62,8 @@ TEST(DMASetupTest, OutputParamsSettings) {
   free(mock_output_memory_address);
 }
 TEST(DMASetupTest, RecordSettings) {
-  std::vector<int> mock_db_data(1, 0);  // NOLINT
-  int* mock_output_memory_address = static_cast<int*>(malloc(1));
+  std::vector<uint32_t> mock_db_data(1, 0);  // NOLINT
+  auto* mock_output_memory_address = static_cast<uint32_t*>(malloc(1));
   MockDMA mock_dma;
   EXPECT_CALL(mock_dma, SetRecordSize(output_stream_id, 2)).Times(1);
   EXPECT_CALL(mock_dma, SetRecordSize(input_stream_id, 2)).Times(1);

@@ -29,7 +29,7 @@ void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
 
   filter_module.FilterSetDNFClauseLiteral(dnf_clause_id, compare_lane_index,
                                           chunk_id, data_position,
-										  dont_care_literal_type);
+                                          dont_care_literal_type);
 
   int datapath_width = 16;
 

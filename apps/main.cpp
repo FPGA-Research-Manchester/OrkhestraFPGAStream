@@ -1,7 +1,7 @@
 #include <rapidcsv.h>
 
+#include <numeric>
 #include <vector>
-#include<numeric>
 
 #include "setup.hpp"
 
@@ -27,7 +27,7 @@ void ConvToInt(const std::string& p_str, StringAsciiValue& p_val) {
   }
 }
 
-void FillDataArray(std::vector<int>& db_data,
+void FillDataArray(std::vector<uint32_t>& db_data,
                    rapidcsv::Document* db_data_file) {
   int current_local_data_address = 0;
   for (int row_number = 0; row_number < db_data_file->GetRowCount();
@@ -56,24 +56,24 @@ auto main() -> int {
   // Figure out some legit way to get this data type information. For all
   // streams. Would be nice to have this info in structs or sth like that to
   // capture dataType
-  std::vector<int> data_type_sizes{1,8,8,1};
-  int record_size = std::accumulate(data_type_sizes.begin(), data_type_sizes.end(), 0);
+  std::vector<int> data_type_sizes{1, 8, 8, 1};
+  int record_size =
+      std::accumulate(data_type_sizes.begin(), data_type_sizes.end(), 0);
 
   // The data probably doesn't come in a csv but it'll do for now
   rapidcsv::Document doc("MOCK_DATA.csv", rapidcsv::LabelParams(-1, -1));
 
   int data_size = doc.GetRowCount() * record_size;
   // Create contiguous data array
-  std::vector<int> input_memory_area(data_size);
+  std::vector<uint32_t> input_memory_area(data_size);
   FillDataArray(input_memory_area, &doc);
 
-  std::vector<int> output_memory_area(data_size);
-  std::vector<int> module_configuration_memory_area(262144, -1);
+  std::vector<uint32_t> output_memory_area(data_size);
+  std::vector<uint32_t> module_configuration_memory_area(262144, -1);
 
-  Setup::SetupQueryAcceleration(module_configuration_memory_area.data(),
-                                input_memory_area,
-                                output_memory_area.data(),
-                                record_size, doc.GetRowCount());
+  Setup::SetupQueryAcceleration(
+      module_configuration_memory_area.data(), input_memory_area.data(),
+      output_memory_area.data(), record_size, doc.GetRowCount());
 
   return 0;
 }

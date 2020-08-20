@@ -17,8 +17,8 @@ class FilterInterface {
                                      int compare_1_type, int compare_2_type,
                                      int compare_3_type,
                                      int compare_4_type) = 0;
-  virtual void FilterSetCompareReferenceValue(
-      int chunk_id, int data_position, int compare_number,
+  virtual void FilterSetCompareReferenceValue(int chunk_id, int data_position,
+                                              int compare_number,
                                               int compare_reference_value) = 0;
   virtual void FilterSetDNFClauseLiteral(int dnf_clause_id, int compare_number,
                                          int chunk_id, int data_position,

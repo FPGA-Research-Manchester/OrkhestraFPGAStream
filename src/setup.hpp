@@ -1,10 +1,11 @@
 #pragma once
-#include <vector>
+#include <cstdint>
 
 class Setup {
  public:
-  static void SetupQueryAcceleration(volatile int* memory_pointer,
-                                     std::vector<int>& db_data,
-                                     volatile int* output_memory_address,
-                                     int record_size, int record_count);
+  static void SetupQueryAcceleration(
+      volatile uint32_t* configuration_memory_address,
+      volatile uint32_t* input_memory_address,
+      volatile uint32_t* output_memory_address, int record_size,
+      int record_count);
 };

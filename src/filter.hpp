@@ -11,7 +11,7 @@ class Filter : public AccelerationModule, public FilterInterface {
 
  public:
   ~Filter() override;
-  Filter(volatile int* ctrl_axi_base_address, int module_position);
+  Filter(volatile uint32_t* ctrl_axi_base_address, int module_position);
 
   void FilterSetStreamIDs(int stream_id_input, int stream_id_valid_output,
                           int stream_id_invalid_output) override;
@@ -23,17 +23,14 @@ class Filter : public AccelerationModule, public FilterInterface {
   void FilterSetCompareTypes(int chunk_id, int data_position,
                              int compare_1_type, int compare_2_type,
                              int compare_3_type, int compare_4_type) override;
-  void FilterSetCompareReferenceValue(
-      int chunk_id, int data_position, int compare_lane_index,
+  void FilterSetCompareReferenceValue(int chunk_id, int data_position,
+                                      int compare_lane_index,
                                       int compare_reference_value) override;
   void FilterSetDNFClauseLiteral(int dnf_clause_id, int compare_number,
                                  int chunk_id, int data_position,
                                  int literal_type) override;
 
-  void WriteDNFClauseLiteralsToFilter_1CMP_8DNF(
-      int datapath_width) override;
-  void WriteDNFClauseLiteralsToFilter_2CMP_16DNF(
-      int datapath_width) override;
-  void WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
-      int datapath_width) override;
+  void WriteDNFClauseLiteralsToFilter_1CMP_8DNF(int datapath_width) override;
+  void WriteDNFClauseLiteralsToFilter_2CMP_16DNF(int datapath_width) override;
+  void WriteDNFClauseLiteralsToFilter_4CMP_32DNF(int datapath_width) override;
 };

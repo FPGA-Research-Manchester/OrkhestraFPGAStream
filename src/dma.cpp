@@ -12,22 +12,19 @@ module.
 
 DMA::~DMA() = default;
 
-DMA::DMA(volatile int* ctrl_axi_base_address)
+DMA::DMA(volatile uint32_t* ctrl_axi_base_address)
     : AccelerationModule(ctrl_axi_base_address, 0) {}
 
 // Input Controller
 void DMA::SetInputControllerParams(int stream_id, int dd_rburst_size,
                                    int records_per_ddr_burst, int buffer_start,
                                    int buffer_end) {
-	int temp = ((dd_rburst_size - 1) << 24) +
-            (static_cast<int>(log2(records_per_ddr_burst)) << 16) +
-            (buffer_start << 8) + (buffer_end);
   AccelerationModule::WriteToModule(
       stream_id * 4, ((dd_rburst_size - 1) << 24) +
                          (static_cast<int>(log2(records_per_ddr_burst)) << 16) +
                          (buffer_start << 8) + (buffer_end));
 }
-auto DMA::GetInputControllerParams(int stream_id) -> volatile int {
+auto DMA::GetInputControllerParams(int stream_id) -> volatile uint32_t {
   return AccelerationModule::ReadFromModule(stream_id * 4);
 }
 void DMA::SetInputControllerStreamAddress(int stream_id, uintptr_t address) {
@@ -85,7 +82,7 @@ void DMA::SetOutputControllerParams(int stream_id, int dd_rburst_size,
           (static_cast<int>(log2(records_per_ddr_burst)) << 16) +
           (buffer_start << 8) + (buffer_end));
 }
-auto DMA::GetOutputControllerParams(int stream_id) -> volatile int {
+auto DMA::GetOutputControllerParams(int stream_id) -> volatile uint32_t {
   return AccelerationModule::ReadFromModule(((1 << 16) + (stream_id * 4)));
 }
 void DMA::SetOutputControllerStreamAddress(int stream_id, uintptr_t address) {

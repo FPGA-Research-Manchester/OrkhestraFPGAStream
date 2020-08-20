@@ -5,7 +5,7 @@
 
 Filter::~Filter() = default;
 
-Filter::Filter(volatile int* ctrl_axi_base_address, int module_position)
+Filter::Filter(volatile uint32_t* ctrl_axi_base_address, int module_position)
     : AccelerationModule(ctrl_axi_base_address, module_position) {}
 
 // Selects stream_id and stream_id manipulations
@@ -13,7 +13,7 @@ void Filter::FilterSetStreamIDs(
     int stream_id_input,  // The stream_id of the stream that gets filterred
     int stream_id_valid_output,  // The stream_id of valid output from filters
     int stream_id_invalid_output) {  // The stream_id of invalid output
-                                          // from filters
+                                     // from filters
   AccelerationModule::WriteToModule(0, stream_id_input +
                                            (stream_id_valid_output << 8) +
                                            (stream_id_invalid_output << 16));
@@ -66,14 +66,14 @@ void Filter::FilterSetMode(
 #define FILTER_64BIT_NOT_EQUAL 13
 
 void Filter::FilterSetCompareTypes(
-    int chunk_id,  // for which chunkID are the following compare types
-    int data_position,  // which 32-bit integer are the following compare
-                             // types for
+    int chunk_id,        // for which chunkID are the following compare types
+    int data_position,   // which 32-bit integer are the following compare
+                         // types for
     int compare_1_type,  // The type of comparison for each of up to 4 different
     int compare_2_type,  // compares (depending on module type, e.g. for
                          // 1-Compare module, only Compare_1_Type will be used)
     int compare_3_type,  // Compare types are defined above (e.g.
-                              // FILTER_32BIT_LESS_THAN)
+                         // FILTER_32BIT_LESS_THAN)
     int compare_4_type) {  // In 64-bit compares, the current 32-bit integer
                            // holds the MSBits, while (DataPosition-1) holds the
                            // Least significant bits (reference value)
@@ -85,15 +85,15 @@ void Filter::FilterSetCompareTypes(
 
 void Filter::FilterSetCompareReferenceValue(
     int chunk_id,  // for which chunkID is the following compare reference value
-    int data_position,  // for which 32-bit integer is the following
+    int data_position,       // for which 32-bit integer is the following
                              // compare reference value
     int compare_lane_index,  // Which CMP is this reference value for (i.e., 0,
                              // 1, 2, 3. Module with only 2 Compares per field
                              // can take compare_number of 1 and 2)
     int compare_reference_value) {  // The 32-bit value we compare against.
-                                         // Can be anything (Can be 4 characters
-                                         // of text, can be a float number for
-                                         // equal compare etc.)
+                                    // Can be anything (Can be 4 characters
+                                    // of text, can be a float number for
+                                    // equal compare etc.)
   AccelerationModule::WriteToModule(
       ((1 << 15) + (data_position << 2) + (chunk_id << 7) +
        ((compare_lane_index + 1) << 12)),
@@ -146,7 +146,7 @@ void Filter::FilterWriteDNFClauseLiteralsToModule(int datapath_width,
       for (chunk_id = 0; chunk_id < 32; chunk_id++) {
         int clauses_packed_positive_result = 0;
         int clauses_packed_negative_result = 0;
-        for (dnf_clause_index = module_dnf_clauses-1; dnf_clause_index >= 0 ;
+        for (dnf_clause_index = module_dnf_clauses - 1; dnf_clause_index >= 0;
              dnf_clause_index--) {
           clauses_packed_positive_result <<= 1;
           clauses_packed_negative_result <<= 1;
@@ -173,7 +173,7 @@ void Filter::FilterWriteDNFClauseLiteralsToModule(int datapath_width,
               clauses_packed_positive_result |= 0;
               clauses_packed_negative_result |= 1;
             }
-          } else {                               // else DNF clause is unused
+          } else {                                // else DNF clause is unused
             clauses_packed_positive_result |= 0;  // therefore it cannot satisfy
             clauses_packed_negative_result |= 0;  // boolean expression
           }

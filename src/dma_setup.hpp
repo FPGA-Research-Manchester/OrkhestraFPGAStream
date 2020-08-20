@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <vector>
 
 #include "dma.hpp"
@@ -6,8 +7,8 @@
 class DMASetup {
  public:
   static void SetupDMAModule(DMAInterface& dma_engine,
-                             volatile int* input_memory_area,
-                             volatile int* output_memory_area,
+                             volatile uint32_t* input_memory_address,
+                             volatile uint32_t* output_memory_address,
                              int record_size, int record_count,
                              int input_stream_id, int output_stream_id);
 
@@ -22,6 +23,6 @@ class DMASetup {
                                           const int& max_chunk_size,
                                           const int& max_ddr_burst_size,
                                           const int& max_ddr_size_per_cycle,
-                                          volatile int* data_address,
+                                          const volatile uint32_t* data_address,
                                           int record_size);
 };

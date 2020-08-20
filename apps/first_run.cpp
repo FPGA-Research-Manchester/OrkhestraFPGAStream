@@ -1,5 +1,4 @@
-#include <stdio.h>
-
+#include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <vector>
@@ -24,7 +23,7 @@ auto main() -> int {
   // Figure out some legit way to get this data type information. For all
   // streams. Would be nice to have this info in structs or sth like that to
   // capture dataType
-  std::vector<int> data_type_sizes;
+  std::vector<int> data_type_sizes = 0;
   data_type_sizes.push_back(1);
   data_type_sizes.push_back(8);
   data_type_sizes.push_back(8);
@@ -37,6 +36,7 @@ auto main() -> int {
 
   // Create contiguous data array
   std::vector<int> db_data{
+      // NOLINT
       1,          1298756723, 1969383795, 1751711744, 0,          0,
       0,          0,          0,          1197567073, 1853095936, 0,
       0,          0,          0,          0,          0,          54708,
@@ -3038,7 +3038,7 @@ auto main() -> int {
       0,          0,          0,          1395732480, 0,          0,
       0,          0,          0,          0,          0,          61816};
 
-  int*  output_memory_address = new int[18000];
+  int* output_memory_address = new int[18000];
   std::cout << "Input i=0" << std::endl;
   for (int i = 0; i < 18; i++) {
     std::cout << db_data[i] << std::endl;
@@ -3056,7 +3056,7 @@ auto main() -> int {
     output_memory_address[i] = 1;
   }
 
-  unsigned int  memory_pointer = 0xA0000000;
+  unsigned int memory_pointer = 0xA0000000;
   std::cout << "Main initialisation done!" << std::endl;
   Xil_DCacheFlush();
   Setup::SetupQueryAcceleration(memory_pointer, db_data, output_memory_address,
