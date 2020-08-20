@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 
+#include "filter_configuration_values.hpp"
 #include "filter_interface.hpp"
 #include "gmock/gmock.h"
 
@@ -18,8 +19,11 @@ class MockFilter : public FilterInterface {
                bool last_module_in_resource_elastic_chain),
               (override));
   MOCK_METHOD(void, FilterSetCompareTypes,
-              (int chunk_id, int data_position, int compare_1_type,
-               int compare_2_type, int compare_3_type, int compare_4_type),
+              (int chunk_id, int data_position,
+               filter_config_values::CompareFunctions compare_1_type,
+               filter_config_values::CompareFunctions compare_2_type,
+               filter_config_values::CompareFunctions compare_3_type,
+               filter_config_values::CompareFunctions compare_4_type),
               (override));
   MOCK_METHOD(void, FilterSetCompareReferenceValue,
               (int chunk_id, int data_position, int compare_index,
@@ -27,7 +31,8 @@ class MockFilter : public FilterInterface {
               (override));
   MOCK_METHOD(void, FilterSetDNFClauseLiteral,
               (int dnf_clause_id, int compare_index, int chunk_id,
-               int data_position, int literal_type),
+               int data_position,
+               filter_config_values::LiteralTypes literal_type),
               (override));
 
   MOCK_METHOD(void, WriteDNFClauseLiteralsToFilter_1CMP_8DNF,

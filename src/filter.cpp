@@ -51,36 +51,28 @@ void Filter::FilterSetMode(
 // compare type and different reference value Moreover, they can have more than
 // one compare type and reference value (we enumerate them as CMP0, CMP1, CMP2
 // ...)
-#define FILTER_32BIT_LESS_THAN 0
-#define FILTER_32BIT_LESS_THAN_OR_EQUAL 1
-#define FILTER_32BIT_EQUAL 2
-#define FILTER_32BIT_GREATER_THAN_OR_EQUAL 3
-#define FILTER_32BIT_GREATER_THAN 4
-#define FILTER_32BIT_NOT_EQUAL 5
-
-#define FILTER_64BIT_LESS_THAN 8
-#define FILTER_64BIT_LESS_THAN_OR_EQUAL 9
-#define FILTER_64BIT_EQUAL 10
-#define FILTER_64BIT_GREATER_THAN_OR_EQUAL 11
-#define FILTER_64BIT_GREATER_THAN 12
-#define FILTER_64BIT_NOT_EQUAL 13
-
 void Filter::FilterSetCompareTypes(
-    int chunk_id,        // for which chunkID are the following compare types
-    int data_position,   // which 32-bit integer are the following compare
-                         // types for
-    int compare_1_type,  // The type of comparison for each of up to 4 different
-    int compare_2_type,  // compares (depending on module type, e.g. for
+    int chunk_id,       // for which chunkID are the following compare types
+    int data_position,  // which 32-bit integer are the following compare
+                        // types for
+    filter_config_values::CompareFunctions
+        compare_1_type,  // The type of comparison for each of up to 4 different
+    filter_config_values::CompareFunctions
+        compare_2_type,  // compares (depending on module type, e.g. for
                          // 1-Compare module, only Compare_1_Type will be used)
-    int compare_3_type,  // Compare types are defined above (e.g.
+    filter_config_values::CompareFunctions
+        compare_3_type,  // Compare types are defined above (e.g.
                          // FILTER_32BIT_LESS_THAN)
-    int compare_4_type) {  // In 64-bit compares, the current 32-bit integer
+    filter_config_values::CompareFunctions
+        compare_4_type) {  // In 64-bit compares, the current 32-bit integer
                            // holds the MSBits, while (DataPosition-1) holds the
                            // Least significant bits (reference value)
   AccelerationModule::WriteToModule(
       ((1 << 15) + (data_position << 2) + (chunk_id << 7)),
-      (compare_4_type << 12 + compare_3_type << 8 + compare_2_type
-                      << 4 + compare_1_type));
+      (static_cast<int>(compare_4_type)
+       << 12 + static_cast<int>(compare_3_type)
+       << 8 + static_cast<int>(compare_2_type)
+       << 4 + static_cast<int>(compare_1_type)));
 }
 
 void Filter::FilterSetCompareReferenceValue(
@@ -100,18 +92,17 @@ void Filter::FilterSetCompareReferenceValue(
       compare_reference_value);
 }
 
-#define LITERAL_DONT_CARE 0
-#define LITERAL_POSITIVE 1
-#define LITERAL_NEGATIVE 2
 struct {
   bool DNF_is_used = false;
   struct {
     struct {
       struct {
-        int literalState =
-            LITERAL_DONT_CARE;  // 0 - literal is not present in the DNF clause;
-                                // 1 - positive literal in the DNF clause ; 2 -
-                                // negative literal in the DNF clause
+        filter_config_values::LiteralTypes literalState =
+            filter_config_values::LiteralTypes::
+                kLiteralDontCare;  // 0 - literal is not present in the DNF
+                                   // clause; 1 - positive literal in the DNF
+                                   // clause ; 2 - negative literal in the DNF
+                                   // clause
       } data_position[32];  // Up to 32 data positions of integers (32-bit) for
                             // a maximum 1024-bit datapath (for 512-bit datapath
                             // use 0-15 only)
@@ -124,7 +115,7 @@ struct {
 void Filter::FilterSetDNFClauseLiteral(
     int dnf_clause_id /*0-31*/, int compare_number /*0-3*/,
     int chunk_id /*0-31*/, int data_position /*0-15 for 512-bit datapath etc*/,
-    int literal_type) {
+    filter_config_values::LiteralTypes literal_type) {
   dnf_clause[dnf_clause_id].DNF_is_used = true;
   dnf_clause[dnf_clause_id]
       .compare_number[compare_number]
@@ -155,21 +146,24 @@ void Filter::FilterWriteDNFClauseLiteralsToModule(int datapath_width,
                     .compare_number[compare_lane]
                     .chunk_id[chunk_id]
                     .data_position[data_position]
-                    .literalState == LITERAL_DONT_CARE) {
+                    .literalState ==
+                filter_config_values::LiteralTypes::kLiteralDontCare) {
               clauses_packed_positive_result |= 1;
               clauses_packed_negative_result |= 1;
             } else if (dnf_clause[dnf_clause_index]
                            .compare_number[compare_lane]
                            .chunk_id[chunk_id]
                            .data_position[data_position]
-                           .literalState == LITERAL_POSITIVE) {
+                           .literalState ==
+                       filter_config_values::LiteralTypes::kLiteralPositive) {
               clauses_packed_positive_result |= 1;
               clauses_packed_negative_result |= 0;
             } else if (dnf_clause[dnf_clause_index]
                            .compare_number[compare_lane]
                            .chunk_id[chunk_id]
                            .data_position[data_position]
-                           .literalState == LITERAL_NEGATIVE) {
+                           .literalState ==
+                       filter_config_values::LiteralTypes::kLiteralNegative) {
               clauses_packed_positive_result |= 0;
               clauses_packed_negative_result |= 1;
             }

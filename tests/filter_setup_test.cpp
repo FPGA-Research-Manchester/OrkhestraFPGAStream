@@ -40,12 +40,12 @@ TEST(FilterSetupTest, FilterModesSetting) {
                                       output_stream_id);
 }
 TEST(FilterSetupTest, CompareTypesSetting) {
-  int expected_less_than_compare = 0;
   MockFilter mock_filter;
   EXPECT_CALL(mock_filter,
-              FilterSetCompareTypes(expected_chunk_id, expected_position,
-                                    expected_less_than_compare, testing::_,
-                                    testing::_, testing::_))
+              FilterSetCompareTypes(
+                  expected_chunk_id, expected_position,
+                  filter_config_values::CompareFunctions::kFilter32BitLessThan,
+                  testing::_, testing::_, testing::_))
       .Times(1);
   FilterSetup filter_configurer;
   filter_configurer.SetupFilterModule(mock_filter, input_stream_id,
@@ -67,13 +67,12 @@ TEST(FilterSetupTest, ReferenceValuesSetting) {
 TEST(FilterSetupTest, DNFClauseSetting) {
   int expected_compare_unit_index = 0;
   int expected_dnf_clause_id = 0;
-  int expected_positive_literal_type = 1;
   MockFilter mock_filter;
   EXPECT_CALL(mock_filter,
-              FilterSetDNFClauseLiteral(expected_dnf_clause_id,
-                                        expected_compare_unit_index,
-                                        expected_chunk_id, expected_position,
-                                        expected_positive_literal_type))
+              FilterSetDNFClauseLiteral(
+                  expected_dnf_clause_id, expected_compare_unit_index,
+                  expected_chunk_id, expected_position,
+                  filter_config_values::LiteralTypes::kLiteralPositive))
       .Times(1);
   FilterSetup filter_configurer;
   filter_configurer.SetupFilterModule(mock_filter, input_stream_id,

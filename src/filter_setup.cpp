@@ -2,6 +2,8 @@
 
 #include <cstdio>
 
+#include "filter_configuration_values.hpp"
+
 void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
                                     int input_stream_id, int output_stream_id) {
   filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
@@ -25,11 +27,10 @@ void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
   int compare_lane_index = 0;
 
   int dnf_clause_id = 0;
-  int const dont_care_literal_type = 0;
 
-  filter_module.FilterSetDNFClauseLiteral(dnf_clause_id, compare_lane_index,
-                                          chunk_id, data_position,
-                                          dont_care_literal_type);
+  filter_module.FilterSetDNFClauseLiteral(
+      dnf_clause_id, compare_lane_index, chunk_id, data_position,
+      filter_config_values::LiteralTypes::kLiteralDontCare);
 
   int datapath_width = 16;
 
