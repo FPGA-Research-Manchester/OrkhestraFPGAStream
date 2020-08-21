@@ -29,7 +29,7 @@ void AccelerationModule::WriteToModule(
   std::cout << "Address:" << reinterpret_cast<uintptr_t>(register_address)
             << " Data:" << write_data << std::endl;
   // usleep(1000);
-  *register_address = write_data;
+  //*register_address = write_data;
 }
 
 auto AccelerationModule::ReadFromModule(

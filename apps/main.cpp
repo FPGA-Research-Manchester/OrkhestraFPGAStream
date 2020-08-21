@@ -82,13 +82,6 @@ void FillDataArray(std::vector<uint32_t>& db_data,
 //  return 0;
 //}
 
-// struct RowData {
-//  int id;
-//  std::string make;
-//  std::string model;
-//  int price;
-//};
-
 std::vector<int> Convert32CharStringToAscii(const std::string input_string) {
   std::vector<int> integer_values(32 / 4, 0);
   for (int i = 0; i < input_string.length(); i++) {
@@ -134,23 +127,44 @@ void ConvertIntegerValuesToString(const std::vector<uint32_t> input_value,
 }
 
 auto main() -> int {
-  // Get read from rapidcsv
-  // rapidcsv writes into vector of dataRowStructs
-  // that vector get's translated into a vector of uint32_ts
+  std::vector<int> data_type_sizes{1, 8, 8, 1};
+  int record_size =
+      std::accumulate(data_type_sizes.begin(), data_type_sizes.end(), 0);
+
   rapidcsv::Document doc("MOCK_DATA.csv", rapidcsv::LabelParams(-1, -1));
   int record_count = doc.GetRowCount();
-  //int record_count = 2;
+  // int record_count = 2;
   std::vector<std::vector<std::string>> db_data;
   for (int row_number = 0; row_number < record_count; row_number++) {
     db_data.push_back(doc.GetRow<std::string>(row_number));
   }
 
+  std::vector<uint32_t> input_memory_area;
+  std::vector<void (*)(const std::string, std::vector<uint32_t>&)>
+      conversion_functions = {AddIntegerValuesToData, AddStringValuesToData,
+                              AddStringValuesToData, AddIntegerValuesToData};
+
   for (auto row : db_data) {
+    for (int column = 0; column < row.size(); column++) {
+      conversion_functions[column](row[column], input_memory_area);
+    }
+  }
+  int data_size = doc.GetRowCount() * record_size;
+  std::vector<uint32_t> output_memory_area(data_size);
+  std::vector<uint32_t> module_configuration_memory_area(262144, -1);
+
+  Setup::SetupQueryAcceleration(
+      module_configuration_memory_area.data(), input_memory_area.data(),
+      output_memory_area.data(), record_size, doc.GetRowCount());
+
+  return 0;
+
+  /*for (auto row : db_data) {
     for (auto element : row) {
       std::cout << element << " ";
     }
     std::cout << std::endl;
-  }
+  }*/
 
   /*std::vector<std::vector<std::string>> input_data = {
       {"1", "Mitsubishi", "Galant", "54708"}, {"2", "Porsche", "911", "54289"}};
@@ -162,21 +176,7 @@ auto main() -> int {
     std::cout << std::endl;
   }*/
 
-  std::vector<int> data_type_sizes{1, 8, 8, 1};
-  int record_size =
-      std::accumulate(data_type_sizes.begin(), data_type_sizes.end(), 0);
-  std::vector<uint32_t> int_data;
-  std::vector<void (*)(const std::string, std::vector<uint32_t>&)>
-      conversion_functions = {AddIntegerValuesToData, AddStringValuesToData,
-                              AddStringValuesToData, AddIntegerValuesToData};
-
-  for (auto row : db_data) {
-    for (int column = 0; column < row.size(); column++) {
-      conversion_functions[column](row[column], int_data);
-    }
-  }
-
-  std::vector<std::vector<std::string>> output_data;
+  /*std::vector<std::vector<std::string>> output_data;
   std::vector<void (*)(const std::vector<uint32_t>, std::vector<std::string>&)>
       back_conversion_functions = {
           ConvertIntegerValuesToString, ConvertStringValuesToString,
@@ -204,7 +204,7 @@ auto main() -> int {
       std::cout << element << " ";
     }
     std::cout << std::endl;
-  }
+  }*/
 
   /*std::vector<RowData> input_data = {{1, "Mitsubishi", "Galant", 54708},
                                      {2, "Porsche", "911", 54289}};

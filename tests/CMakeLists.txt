@@ -16,7 +16,7 @@ target_link_libraries(testlib
 					  gtest_main
 					  gmock
 					  gmock_main
-					  db_to_hw_library
+					  fpga_managing
 )
 
 target_include_directories(testlib INTERFACE "${DBMStoDSPI_SOURCE_DIR}/tests")

@@ -14,7 +14,7 @@ set(CMAKE_CXX_STANDARD 17)
 include(FetchContent)
 include(CTest)
 
-add_subdirectory(src)
+add_subdirectory(src/fpga_managing)
 add_subdirectory(apps)
 
 if(BUILD_TESTING)
