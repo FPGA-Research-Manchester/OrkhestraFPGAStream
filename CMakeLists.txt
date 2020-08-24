@@ -15,6 +15,7 @@ include(FetchContent)
 include(CTest)
 
 add_subdirectory(src/fpga_managing)
+add_subdirectory(src/data_managing)
 add_subdirectory(apps)
 
 if(BUILD_TESTING)
