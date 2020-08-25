@@ -1,10 +1,10 @@
 #include <iostream>
+#include <numeric>
 #include <string>
 #include <vector>
-#include <numeric>
 
-#include "setup.hpp"
 #include "data_manager.hpp"
+#include "setup.hpp"
 
 /*
 Filter: (price < 12000)
@@ -18,7 +18,7 @@ Filter: (price < 12000)
 */
 
 auto main() -> int {
-  //Data type sizes are currently hard coded
+  // Data type sizes are currently hard coded
   std::vector<int> data_type_sizes{1, 8, 8, 1};
   int record_size =
       std::accumulate(data_type_sizes.begin(), data_type_sizes.end(), 0);
@@ -35,7 +35,7 @@ auto main() -> int {
       module_configuration_memory_area.data(), input_memory_area.data(),
       output_memory_area.data(), record_size, db_data.size());
 
-  //For testing
+  // For testing
   DataManager::AddStringDataFromIntegerData(input_memory_area, db_data,
                                             data_type_sizes);
   DataManager::PrintStringData(db_data);

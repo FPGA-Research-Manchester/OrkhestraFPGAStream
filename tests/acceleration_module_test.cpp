@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <limits>
 
 #include "mock_acceleration_module.hpp"
