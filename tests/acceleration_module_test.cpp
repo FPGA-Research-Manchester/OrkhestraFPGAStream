@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <limits>
 
 #include "mock_acceleration_module.hpp"
 namespace {
@@ -9,17 +10,17 @@ TEST(AccelerationModuleTest, WriteToModule) {
 
   MockAccelerationModule mock_module(memory_pointer.data(), 0);
 
-  EXPECT_EQ(kDefaultValue, memory_pointer[0]);
+  EXPECT_EQ(UINT_MAX, memory_pointer[0]);
   mock_module.WriteToModule(0, 0);
   EXPECT_EQ(0, memory_pointer[0]);
 
-  EXPECT_EQ(kDefaultValue, memory_pointer[1]);
+  EXPECT_EQ(UINT_MAX, memory_pointer[1]);
   mock_module.WriteToModule(1 * sizeof(uint32_t), 10);
   EXPECT_EQ(10, memory_pointer[1]);
 
   MockAccelerationModule second_mock_module(memory_pointer.data(), 1);
 
-  EXPECT_EQ(kDefaultValue, memory_pointer[262144]);
+  EXPECT_EQ(UINT_MAX, memory_pointer[262144]);
   second_mock_module.WriteToModule(0, 1);
   EXPECT_EQ(1, memory_pointer[262144]);
   second_mock_module.WriteToModule(0, 11);
