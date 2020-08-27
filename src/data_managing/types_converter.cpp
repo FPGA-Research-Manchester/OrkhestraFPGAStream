@@ -67,7 +67,9 @@ void DataArraysConverter::ConvertStringValuesToString(
     std::vector<std::string>& string_vector) {
   std::stringstream ss;
   for (auto value : input_value) {
-    ss << std::hex << value;
+    if (value != 0) {
+      ss << std::hex << value;
+    }
   }
   string_vector.push_back(ConvertHexStringToString(ss.str()));
 }
@@ -82,8 +84,10 @@ std::string DataArraysConverter::ConvertHexStringToString(std::string hex) {
   std::string resulting_string;
   for (int i = 0; i < hex.length(); i += 2) {
     std::string byte = hex.substr(i, 2);
-    char chr = (char)(int)strtol(byte.c_str(), nullptr, 16);
-    resulting_string.push_back(chr);
+    if (byte != "00") {
+      char character = std::stoul(byte, nullptr, 16);
+      resulting_string.push_back(character);
+    }
   }
   return resulting_string;
 }
