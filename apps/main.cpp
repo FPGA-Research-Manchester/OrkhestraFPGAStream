@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "data_manager.hpp"
-#include "setup.hpp"
+#include "fpga_manager.hpp"
 
 /*
 Filter: (price < 12000)
@@ -31,9 +31,11 @@ auto main() -> int {
 
   std::vector<uint32_t> output_memory_area(input_memory_area.size());
   std::vector<uint32_t> module_configuration_memory_area((2 * 1024 * 1024), -1);
-  Setup::SetupQueryAcceleration(
-      module_configuration_memory_area.data(), input_memory_area.data(),
-      output_memory_area.data(), record_size, db_data.size());
+
+  FPGAManager fpga_manager(module_configuration_memory_area.data());
+  fpga_manager.SetupQueryAcceleration(input_memory_area.data(),
+                                      output_memory_area.data(), record_size,
+                                      input_memory_area.size() / record_size);
 
   // For testing
   DataManager::AddStringDataFromIntegerData(input_memory_area, db_data,

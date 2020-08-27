@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "data_manager.hpp"
-#include "setup.hpp"
+#include "fpga_manager.hpp"
 #include "xil_cache.h"
 #include "xil_io.h"
 
@@ -1042,15 +1042,17 @@ auto main() -> int {
   std::vector<uint32_t> output_memory_area(input_memory_area.size(), 0);
   std::cout << "Main initialisation done!" << std::endl;
   Xil_DCacheFlush();
-  Setup::SetupQueryAcceleration(
-      reinterpret_cast<volatile uint32_t*>(0xA0000000),
-      input_memory_area.data(), output_memory_area.data(), record_size,
-      db_data.size());
+  FPGAManager fpga_manager(reinterpret_cast<volatile uint32_t*>(0xA0000000));
+  fpga_manager.SetupQueryAcceleration(input_memory_area.data(),
+                                      output_memory_area.data(), record_size,
+                                      input_memory_area.size() / record_size);
+  std::vector<int> result_sizes = fpga_manager.RunQueryAcceleration();
   Xil_DCacheFlush();
   std::cout << "Query done!" << std::endl;
   DataManager::AddStringDataFromIntegerData(
-      std::vector<uint32_t>(output_memory_area.begin(),
-                            output_memory_area.begin() + 360),
+      std::vector<uint32_t>(
+          output_memory_area.begin(),
+          output_memory_area.begin() + (result_sizes[0] * record_size)),
       db_data, data_type_sizes);
   DataManager::PrintStringData(db_data);
 
