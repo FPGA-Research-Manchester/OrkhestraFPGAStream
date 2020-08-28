@@ -6,6 +6,6 @@
 
 class CSVReader {
  public:
-  static void AddCSVRows(std::string file_name,
-                        std::vector<std::vector<std::string>>& output_vector);
+  static void AddCSVRows(const std::string& file_name,
+                         std::vector<std::vector<std::string>>& read_rows);
 };

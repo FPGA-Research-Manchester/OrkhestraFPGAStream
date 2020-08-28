@@ -5,10 +5,9 @@
 
 class FPGAManager {
  public:
-  void SetupQueryAcceleration(
-      volatile uint32_t* input_memory_address,
+  void SetupQueryAcceleration(volatile uint32_t* input_memory_address,
                               volatile uint32_t* output_memory_address,
-                              const int record_size, const int record_count);
+                              int record_size, int record_count);
   auto RunQueryAcceleration() -> std::vector<int>;
 
   explicit FPGAManager(volatile uint32_t* configuration_memory_address)
