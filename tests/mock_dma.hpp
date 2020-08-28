@@ -10,14 +10,15 @@ class MockDMA : public DMAInterface {
               (int stream_id, int ddr_burst_size, int records_per_ddr_burst,
                int buffer_start, int buffer_end),
               (override));
-  MOCK_METHOD(uint32_t, GetInputControllerParams, (int stream_id), (override));
+  MOCK_METHOD(volatile uint32_t, GetInputControllerParams, (int stream_id),
+              (override));
   MOCK_METHOD(void, SetInputControllerStreamAddress,
               (int stream_id, uintptr_t address), (override));
-  MOCK_METHOD(uintptr_t, GetInputControllerStreamAddress, (int stream_id),
-              (override));
+  MOCK_METHOD(volatile uintptr_t, GetInputControllerStreamAddress,
+              (int stream_id), (override));
   MOCK_METHOD(void, SetInputControllerStreamSize, (int stream_id, int size),
               (override));
-  MOCK_METHOD(uint32_t, GetInputControllerStreamSize, (int stream_id),
+  MOCK_METHOD(volatile int, GetInputControllerStreamSize, (int stream_id),
               (override));
   MOCK_METHOD(void, StartInputController, (bool stream_active[16]), (override));
   MOCK_METHOD(bool, IsInputControllerFinished, (), (override));
@@ -30,14 +31,15 @@ class MockDMA : public DMAInterface {
               (int stream_id, int ddr_burst_size, int records_per_ddr_burst,
                int buffer_start, int buffer_end),
               (override));
-  MOCK_METHOD(uint32_t, GetOutputControllerParams, (int stream_id), (override));
+  MOCK_METHOD(volatile uint32_t, GetOutputControllerParams, (int stream_id),
+              (override));
   MOCK_METHOD(void, SetOutputControllerStreamAddress,
               (int stream_id, uintptr_t address), (override));
-  MOCK_METHOD(uintptr_t, GetOutputControllerStreamAddress, (int stream_id),
-              (override));
+  MOCK_METHOD(volatile uintptr_t, GetOutputControllerStreamAddress,
+              (int stream_id), (override));
   MOCK_METHOD(void, SetOutputControllerStreamSize, (int stream_id, int size),
               (override));
-  MOCK_METHOD(uint32_t, GetOutputControllerStreamSize, (int stream_id),
+  MOCK_METHOD(volatile int, GetOutputControllerStreamSize, (int stream_id),
               (override));
   MOCK_METHOD(void, StartOutputController, (bool stream_active[16]),
               (override));

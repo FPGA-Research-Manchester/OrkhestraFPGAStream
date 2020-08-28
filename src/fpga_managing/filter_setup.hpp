@@ -1,5 +1,5 @@
 #pragma once
-#include "filter.hpp"
+#include "filter_interface.hpp"
 class FilterSetup {
  public:
   static void SetupFilterModule(FilterInterface& filter_module,

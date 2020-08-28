@@ -12,7 +12,7 @@ module.
 
 DMA::~DMA() = default;
 
-DMA::DMA(int* volatile ctrl_axi_base_address)
+DMA::DMA(volatile uint32_t* ctrl_axi_base_address)
     : AccelerationModule(ctrl_axi_base_address, 0) {}
 
 // Input Controller
@@ -24,20 +24,20 @@ void DMA::SetInputControllerParams(int stream_id, int dd_rburst_size,
                          (static_cast<int>(log2(records_per_ddr_burst)) << 16) +
                          (buffer_start << 8) + (buffer_end));
 }
-auto DMA::GetInputControllerParams(int stream_id) -> uint32_t {
+auto DMA::GetInputControllerParams(int stream_id) -> volatile uint32_t {
   return AccelerationModule::ReadFromModule(stream_id * 4);
 }
 void DMA::SetInputControllerStreamAddress(int stream_id, uintptr_t address) {
   AccelerationModule::WriteToModule(((1 << 6) + (stream_id * 4)), address >> 4);
 }
-auto DMA::GetInputControllerStreamAddress(int stream_id) -> uintptr_t {
-  return AccelerationModule::ReadFromModule(((1 << 6) + (stream_id * 4)));
+auto DMA::GetInputControllerStreamAddress(int stream_id) -> volatile uintptr_t {
+  return AccelerationModule::ReadFromModule((1 << 6) + (stream_id * 4)) << 4;
 }
 void DMA::SetInputControllerStreamSize(
     int stream_id, int size) {  // starting size of stream in amount of records
   AccelerationModule::WriteToModule(((2 << 6) + (stream_id * 4)), size);
 }
-auto DMA::GetInputControllerStreamSize(int stream_id) -> uint32_t {
+auto DMA::GetInputControllerStreamSize(int stream_id) -> volatile int {
   return AccelerationModule::ReadFromModule(((2 << 6) + (stream_id * 4)));
 }
 void DMA::StartInputController(
@@ -54,7 +54,7 @@ void DMA::StartInputController(
 }
 auto DMA::IsInputControllerFinished()
     -> bool {  // true if all input streams were read from DDR
-  uint32_t active_streams = AccelerationModule::ReadFromModule(3 << 6);
+  int active_streams = AccelerationModule::ReadFromModule(3 << 6);
   return (active_streams == 0);
 }
 // Input Controller in Crossbar
@@ -82,14 +82,15 @@ void DMA::SetOutputControllerParams(int stream_id, int dd_rburst_size,
           (static_cast<int>(log2(records_per_ddr_burst)) << 16) +
           (buffer_start << 8) + (buffer_end));
 }
-auto DMA::GetOutputControllerParams(int stream_id) -> uint32_t {
+auto DMA::GetOutputControllerParams(int stream_id) -> volatile uint32_t {
   return AccelerationModule::ReadFromModule(((1 << 16) + (stream_id * 4)));
 }
 void DMA::SetOutputControllerStreamAddress(int stream_id, uintptr_t address) {
   AccelerationModule::WriteToModule(((1 << 16) + (1 << 6) + (stream_id * 4)),
                                     address >> 4);
 }
-auto DMA::GetOutputControllerStreamAddress(int stream_id) -> uintptr_t {
+auto DMA::GetOutputControllerStreamAddress(int stream_id)
+    -> volatile uintptr_t {
   return AccelerationModule::ReadFromModule(
       ((1 << 16) + (1 << 6) + stream_id * 4));
 }
@@ -99,7 +100,7 @@ void DMA::SetOutputControllerStreamSize(
                                     size);
 }
 auto DMA::GetOutputControllerStreamSize(int stream_id)
-    -> uint32_t {  // starting size of stream in amount of records
+    -> volatile int {  // starting size of stream in amount of records
   return AccelerationModule::ReadFromModule(
       ((1 << 16) + (2 << 6) + (stream_id * 4)));
 }
@@ -117,7 +118,7 @@ void DMA::StartOutputController(
 }
 auto DMA::IsOutputControllerFinished()
     -> bool {  // true if all streams saw EOS from PR modules
-  uint32_t active_streams =
+  int active_streams =
       AccelerationModule::ReadFromModule(((1 << 16) + (3 << 6)));
   return (active_streams == 0);
 }

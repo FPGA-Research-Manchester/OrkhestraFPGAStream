@@ -2,8 +2,11 @@
 
 #include <cstdio>
 
+#include "filter_configuration_values.hpp"
+
 void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
-                                    int input_stream_id, int output_stream_id) {
+                                    const int input_stream_id,
+                                    const int output_stream_id) {
   filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
                                    output_stream_id);
 
@@ -19,30 +22,30 @@ void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
       forward_full_invalid_records, first_module_in_resource_elastic_chain,
       last_module_in_resource_elastic_chain);
 
-  uint32_t chunk_id = 1;
-  uint32_t data_position = 1;
-
-  uint32_t const less_than_compare = 0;
-  uint32_t const dont_care_compare = 0;
+  int chunk_id = 1;
+  int data_position = 14;
+  
+  filter_config_values::CompareFunctions any_compare =
+      filter_config_values::CompareFunctions::kFilter32BitEqual;
 
   filter_module.FilterSetCompareTypes(chunk_id, data_position,
-                                      less_than_compare, dont_care_compare,
-                                      dont_care_compare, dont_care_compare);
+      filter_config_values::CompareFunctions::kFilter32BitLessThan, any_compare,
+      any_compare, any_compare);
 
-  uint32_t compare_lane_index = 0;
-  uint32_t compare_reference_value = 12000;
+  int compare_lane_index = 0;
+  int compare_reference_value = 12000;
 
   filter_module.FilterSetCompareReferenceValue(
       chunk_id, data_position, compare_lane_index, compare_reference_value);
 
-  uint32_t dnf_clause_id = 0;
-  uint8_t const positive_literal_type = 1;
+  int dnf_clause_id = 0;
 
-  filter_module.FilterSetDNFClauseLiteral(dnf_clause_id, compare_lane_index,
-                                          chunk_id, data_position,
-                                          positive_literal_type);
+  filter_module.FilterSetDNFClauseLiteral(
+      dnf_clause_id, compare_lane_index, chunk_id, data_position,
+      filter_config_values::LiteralTypes::kLiteralPositive);
 
-  uint32_t datapath_width = 16;
+  int datapath_width = 16;
 
-  filter_module.WriteDNFClauseLiteralsToFilter_1CMP_8DNF(datapath_width);
+  // Currently 4CMP_32DNF module is hardcoded in
+  filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(datapath_width);
 }

@@ -6,17 +6,18 @@
 class DMA : public AccelerationModule, public DMAInterface {
  public:
   ~DMA() override;
-  explicit DMA(int* volatile ctrl_axi_base_address);
+  explicit DMA(volatile uint32_t* ctrl_axi_base_address);
 
   void SetInputControllerParams(int stream_id, int dd_rburst_size,
                                 int records_per_ddr_burst, int buffer_start,
                                 int buffer_end) override;
-  auto GetInputControllerParams(int stream_id) -> uint32_t override;
+  auto GetInputControllerParams(int stream_id) -> volatile uint32_t override;
   void SetInputControllerStreamAddress(int stream_id,
                                        uintptr_t address) override;
-  auto GetInputControllerStreamAddress(int stream_id) -> uintptr_t override;
+  auto GetInputControllerStreamAddress(int stream_id)
+      -> volatile uintptr_t override;
   void SetInputControllerStreamSize(int stream_id, int size) override;
-  auto GetInputControllerStreamSize(int stream_id) -> uint32_t override;
+  auto GetInputControllerStreamSize(int stream_id) -> volatile int override;
   void StartInputController(bool stream_active[16]) override;
   auto IsInputControllerFinished() -> bool override;
 
@@ -27,12 +28,13 @@ class DMA : public AccelerationModule, public DMAInterface {
   void SetOutputControllerParams(int stream_id, int dd_rburst_size,
                                  int records_per_ddr_burst, int buffer_start,
                                  int buffer_end) override;
-  auto GetOutputControllerParams(int stream_id) -> uint32_t override;
+  auto GetOutputControllerParams(int stream_id) -> volatile uint32_t override;
   void SetOutputControllerStreamAddress(int stream_id,
                                         uintptr_t address) override;
-  auto GetOutputControllerStreamAddress(int stream_id) -> uintptr_t override;
+  auto GetOutputControllerStreamAddress(int stream_id)
+      -> volatile uintptr_t override;
   void SetOutputControllerStreamSize(int stream_id, int size) override;
-  auto GetOutputControllerStreamSize(int stream_id) -> uint32_t override;
+  auto GetOutputControllerStreamSize(int stream_id) -> volatile int override;
   void StartOutputController(bool stream_active[16]) override;
   auto IsOutputControllerFinished() -> bool override;
 

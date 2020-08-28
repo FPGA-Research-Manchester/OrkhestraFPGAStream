@@ -5,19 +5,19 @@
 
 #include "mock_filter.hpp"
 namespace {
-int expected_chunk_id = 1;
-int expected_position = 1;
-int input_stream_id = 0;
-int output_stream_id = 1;
+const int kExpectedChunkId = 1;
+const int kExpectedPosition = 14;
+const int kInputStreamId = 0;
+const int kOutputStreamId = 1;
 
 TEST(FilterSetupTest, FilterStreamsSetting) {
   MockFilter mock_filter;
-  EXPECT_CALL(mock_filter, FilterSetStreamIDs(input_stream_id, output_stream_id,
-                                              output_stream_id))
+  EXPECT_CALL(mock_filter, FilterSetStreamIDs(kInputStreamId, kOutputStreamId,
+                                              kOutputStreamId))
       .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModule(mock_filter, input_stream_id,
-                                      output_stream_id);
+  filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
+                                      kOutputStreamId);
 }
 TEST(FilterSetupTest, FilterModesSetting) {
   bool expected_request_on_invalid_if_last = true;
@@ -36,63 +36,61 @@ TEST(FilterSetupTest, FilterModesSetting) {
                             expected_last_module_in_resource_elastic_chain))
       .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModule(mock_filter, input_stream_id,
-                                      output_stream_id);
+  filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
+                                      kOutputStreamId);
 }
 TEST(FilterSetupTest, CompareTypesSetting) {
-  int expected_less_than_compare = 0;
   MockFilter mock_filter;
   EXPECT_CALL(mock_filter,
-              FilterSetCompareTypes(expected_chunk_id, expected_position,
-                                    expected_less_than_compare, testing::_,
-                                    testing::_, testing::_))
+              FilterSetCompareTypes(
+                  kExpectedChunkId, kExpectedPosition,
+                  filter_config_values::CompareFunctions::kFilter32BitLessThan,
+                  testing::_, testing::_, testing::_))
       .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModule(mock_filter, input_stream_id,
-                                      output_stream_id);
+  filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
+                                      kOutputStreamId);
 }
 TEST(FilterSetupTest, ReferenceValuesSetting) {
   int expected_compare_reference_value = 12000;
   int expected_compare_unit_index = 0;
   MockFilter mock_filter;
   EXPECT_CALL(mock_filter, FilterSetCompareReferenceValue(
-                               expected_chunk_id, expected_position,
+                               kExpectedChunkId, kExpectedPosition,
                                expected_compare_unit_index,
                                expected_compare_reference_value))
       .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModule(mock_filter, input_stream_id,
-                                      output_stream_id);
+  filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
+                                      kOutputStreamId);
 }
 TEST(FilterSetupTest, DNFClauseSetting) {
   int expected_compare_unit_index = 0;
   int expected_dnf_clause_id = 0;
-  int expected_positive_literal_type = 1;
   MockFilter mock_filter;
   EXPECT_CALL(mock_filter,
-              FilterSetDNFClauseLiteral(expected_dnf_clause_id,
-                                        expected_compare_unit_index,
-                                        expected_chunk_id, expected_position,
-                                        expected_positive_literal_type))
+              FilterSetDNFClauseLiteral(
+                  expected_dnf_clause_id, expected_compare_unit_index,
+                  kExpectedChunkId, kExpectedPosition,
+                  filter_config_values::LiteralTypes::kLiteralPositive))
       .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModule(mock_filter, input_stream_id,
-                                      output_stream_id);
+  filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
+                                      kOutputStreamId);
 }
 TEST(FilterSetupTest, CorrectFilterCalled) {
   int expected_datapath_width = 16;
   MockFilter mock_filter;
-  EXPECT_CALL(mock_filter,
-              WriteDNFClauseLiteralsToFilter_1CMP_8DNF(expected_datapath_width))
-      .Times(1);
+  EXPECT_CALL(mock_filter, WriteDNFClauseLiteralsToFilter_1CMP_8DNF(testing::_))
+      .Times(0);
   EXPECT_CALL(mock_filter,
               WriteDNFClauseLiteralsToFilter_2CMP_16DNF(testing::_))
       .Times(0);
-  EXPECT_CALL(mock_filter,
-              WriteDNFClauseLiteralsToFilter_4CMP_32DNF(testing::_))
-      .Times(0);
+  EXPECT_CALL(mock_filter, WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
+                               expected_datapath_width))
+      .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModule(mock_filter, input_stream_id,
-                                      output_stream_id);
+  filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
+                                      kOutputStreamId);
 }
 }  // namespace
