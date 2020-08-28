@@ -1,4 +1,5 @@
 #include "filter_setup.hpp"
+#include "query_acceleration_constants.hpp"
 
 #include <cstdio>
 
@@ -44,8 +45,7 @@ void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
       dnf_clause_id, compare_lane_index, chunk_id, data_position,
       filter_config_values::LiteralTypes::kLiteralPositive);
 
-  int datapath_width = 16;
-
   // Currently 4CMP_32DNF module is hardcoded in
-  filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(datapath_width);
+  filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
+      query_acceleration_constants::kDatapathWidth);
 }
