@@ -10,10 +10,10 @@
 
 void FPGAManager::SetupQueryAcceleration(
     volatile uint32_t* input_memory_address,
-    volatile uint32_t* output_memory_address, int record_size,
-    int record_count) {
-  int input_stream_id = 0;
-  int output_stream_id = 1;
+    volatile uint32_t* output_memory_address, const int record_size,
+    const int record_count) {
+  const int input_stream_id = 0;
+  const int output_stream_id = 1;
   DMASetup::SetupDMAModule(FPGAManager::dma_engine_, input_memory_address,
                            output_memory_address, record_size, record_count,
                            input_stream_id, output_stream_id);

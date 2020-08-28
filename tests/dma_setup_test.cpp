@@ -5,8 +5,8 @@
 
 #include "mock_dma.hpp"
 namespace {
-int input_stream_id = 0;
-int output_stream_id = 1;
+const int kInputStreamId = 0;
+const int kOutputStreamId = 1;
 
 TEST(DMASetupTest, InputParamsSettings) {
   int expected_ddr_burst_length = 72;
@@ -18,22 +18,22 @@ TEST(DMASetupTest, InputParamsSettings) {
   auto* mock_output_memory_address = static_cast<uint32_t*>(malloc(1));
   MockDMA mock_dma;
   EXPECT_CALL(mock_dma, SetInputControllerParams(
-                            input_stream_id, expected_ddr_burst_length,
+                            kInputStreamId, expected_ddr_burst_length,
                             expected_records_per_ddr_burst,
                             expected_buffer_start, expected_buffer_end))
       .Times(1);
   EXPECT_CALL(mock_dma, SetInputControllerStreamAddress(
-                            input_stream_id,
+                            kInputStreamId,
                             reinterpret_cast<uintptr_t>(&mock_db_data[0])))
       .Times(1);
-  EXPECT_CALL(mock_dma, SetInputControllerStreamSize(input_stream_id,
+  EXPECT_CALL(mock_dma, SetInputControllerStreamSize(kInputStreamId,
                                                      expected_stream_size))
       .Times(1);
   DMASetup dma_configurer;
 
   dma_configurer.SetupDMAModule(
       mock_dma, mock_db_data.data(), mock_output_memory_address, 18,
-      expected_stream_size, input_stream_id, output_stream_id);
+      expected_stream_size, kInputStreamId, kOutputStreamId);
   free(mock_output_memory_address);
 }
 TEST(DMASetupTest, OutputParamsSettings) {
@@ -45,20 +45,20 @@ TEST(DMASetupTest, OutputParamsSettings) {
   auto* mock_output_memory_address = static_cast<uint32_t*>(malloc(1));
   MockDMA mock_dma;
   EXPECT_CALL(mock_dma, SetOutputControllerParams(
-                            output_stream_id, expected_ddr_burst_length,
+                            kOutputStreamId, expected_ddr_burst_length,
                             expected_records_per_ddr_burst,
                             expected_buffer_start, expected_buffer_end))
       .Times(1);
   EXPECT_CALL(mock_dma, SetOutputControllerStreamAddress(
-                            output_stream_id, reinterpret_cast<uintptr_t>(
-                                                  mock_output_memory_address)))
+                            kOutputStreamId, reinterpret_cast<uintptr_t>(
+                                                 mock_output_memory_address)))
       .Times(1);
-  EXPECT_CALL(mock_dma, SetOutputControllerStreamSize(output_stream_id, 0))
+  EXPECT_CALL(mock_dma, SetOutputControllerStreamSize(kOutputStreamId, 0))
       .Times(1);
   DMASetup dma_configurer;
   dma_configurer.SetupDMAModule(mock_dma, mock_db_data.data(),
                                 mock_output_memory_address, 18, 1000,
-                                input_stream_id, output_stream_id);
+                                kInputStreamId, kOutputStreamId);
   free(mock_output_memory_address);
 }
 TEST(DMASetupTest, RecordSettings) {
@@ -66,16 +66,16 @@ TEST(DMASetupTest, RecordSettings) {
   auto* mock_output_memory_address = static_cast<uint32_t*>(malloc(1));
   MockDMA mock_dma;
   // Output stream configuration checks are possibly not needed.
-  /*EXPECT_CALL(mock_dma, SetRecordSize(output_stream_id, 2)).Times(1);
-  EXPECT_CALL(mock_dma, SetRecordChunkIDs(output_stream_id, 0, 0)).Times(1);
-  EXPECT_CALL(mock_dma, SetRecordChunkIDs(output_stream_id, 1, 1)).Times(1);*/
-  EXPECT_CALL(mock_dma, SetRecordSize(input_stream_id, 2)).Times(1);
-  EXPECT_CALL(mock_dma, SetRecordChunkIDs(input_stream_id, 0, 0)).Times(1);
-  EXPECT_CALL(mock_dma, SetRecordChunkIDs(input_stream_id, 1, 1)).Times(1);
+  /*EXPECT_CALL(mock_dma, SetRecordSize(kOutputStreamId, 2)).Times(1);
+  EXPECT_CALL(mock_dma, SetRecordChunkIDs(kOutputStreamId, 0, 0)).Times(1);
+  EXPECT_CALL(mock_dma, SetRecordChunkIDs(kOutputStreamId, 1, 1)).Times(1);*/
+  EXPECT_CALL(mock_dma, SetRecordSize(kInputStreamId, 2)).Times(1);
+  EXPECT_CALL(mock_dma, SetRecordChunkIDs(kInputStreamId, 0, 0)).Times(1);
+  EXPECT_CALL(mock_dma, SetRecordChunkIDs(kInputStreamId, 1, 1)).Times(1);
   DMASetup dma_configurer;
   dma_configurer.SetupDMAModule(mock_dma, mock_db_data.data(),
                                 mock_output_memory_address, 18, 1000,
-                                input_stream_id, output_stream_id);
+                                kInputStreamId, kOutputStreamId);
   free(mock_output_memory_address);
 }
 }  // namespace

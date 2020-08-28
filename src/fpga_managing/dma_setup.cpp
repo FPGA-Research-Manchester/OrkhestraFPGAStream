@@ -10,8 +10,9 @@
 void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
                               volatile uint32_t* input_memory_address,
                               volatile uint32_t* output_memory_address,
-                              int record_size, int record_count,
-                              int input_stream_id, int output_stream_id) {
+                              const int record_size, const int record_count,
+                              const int input_stream_id,
+                              const int output_stream_id) {
   // Calculate the controller parameter values based on input data and datatypes
   // Every size metric is 1 integer = 4 bytes = 32 bits
   const int max_ddr_burst_size = 512;
@@ -146,7 +147,7 @@ void DMASetup::SetUpDMAIOStreams(DMASetupData& stream_setup_data,
 void DMASetup::CalculateDMAStreamSetupData(
     DMASetupData& stream_setup_data, const int& max_chunk_size,
     const int& max_ddr_burst_size, const int& max_ddr_size_per_cycle,
-    const volatile uint32_t* data_address, int record_size) {
+    const volatile uint32_t* data_address, const int record_size) {
   stream_setup_data.chunks_per_record =
       (record_size + max_chunk_size - 1) / max_chunk_size;  // ceil
 
