@@ -43,9 +43,9 @@ void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
   const int any_chunk = 31;
   const int any_position = 3;
   DMACrossbarSetup::FindInputCrossbarSetupData(any_chunk, any_position,
-                                               input_stream_setup_data);
+                                               input_stream_setup_data, record_size);
   DMACrossbarSetup::FindOutputCrossbarSetupData(any_chunk, any_position,
-                                                output_stream_setup_data);
+                                                output_stream_setup_data, record_size);
 
   std::vector<DMASetupData> setup_data_for_dma;
   setup_data_for_dma.push_back(input_stream_setup_data);
