@@ -8,7 +8,7 @@ do
   projectFiles+=($entry)
 done
 
-for entry in ./src/*
+for entry in ./src/fpga_managing/*
 do
   projectFiles+=($entry)
 done

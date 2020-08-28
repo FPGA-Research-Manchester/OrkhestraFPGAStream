@@ -43,7 +43,7 @@ auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
 void FPGAManager::FindActiveStreams(
     std::vector<int>& active_input_stream_ids,
     std::vector<int>& active_output_stream_ids) {
-  for (int stream_id = 0; stream_id << FPGAManager::kMaxStreamAmount;
+  for (int stream_id = 0; stream_id < FPGAManager::kMaxStreamAmount;
        stream_id++) {
     if (input_stream_active_[stream_id]) {
       active_input_stream_ids.push_back(stream_id);
