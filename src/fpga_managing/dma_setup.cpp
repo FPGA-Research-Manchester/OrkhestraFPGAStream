@@ -1,4 +1,5 @@
 #include "dma_setup.hpp"
+#include "query_acceleration_constants.hpp"
 
 #include <cmath>
 #include <cstdio>
@@ -15,9 +16,10 @@ void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
                               const int output_stream_id) {
   // Calculate the controller parameter values based on input data and datatypes
   // Every size metric is 1 integer = 4 bytes = 32 bits
-  const int max_ddr_burst_size = 512;
-  const int max_chunk_size = 16;
-  const int max_ddr_size_per_cycle = 4;
+  const int max_ddr_burst_size = query_acceleration_constants::kDdrBurstSize;
+  const int max_chunk_size = query_acceleration_constants::kDatapathWidth;
+  const int max_ddr_size_per_cycle =
+      query_acceleration_constants::kDdrSizePerCycle;
 
   // Input
   DMASetupData input_stream_setup_data;
@@ -41,9 +43,9 @@ void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
   const int any_chunk = 31;
   const int any_position = 3;
   DMACrossbarSetup::FindInputCrossbarSetupData(any_chunk, any_position,
-                                               input_stream_setup_data);
+                                               input_stream_setup_data, record_size);
   DMACrossbarSetup::FindOutputCrossbarSetupData(any_chunk, any_position,
-                                                output_stream_setup_data);
+                                                output_stream_setup_data, record_size);
 
   std::vector<DMASetupData> setup_data_for_dma;
   setup_data_for_dma.push_back(input_stream_setup_data);
