@@ -42,10 +42,8 @@ void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
 
   const int any_chunk = 31;
   const int any_position = 3;
-  DMACrossbarSetup::FindInputCrossbarSetupData(any_chunk, any_position,
-                                               input_stream_setup_data, record_size);
-  DMACrossbarSetup::FindOutputCrossbarSetupData(any_chunk, any_position,
-                                                output_stream_setup_data, record_size);
+  DMACrossbarSetup::CalculateCrossbarSetupData(any_chunk, any_position, input_stream_setup_data, record_size);
+  DMACrossbarSetup::CalculateCrossbarSetupData(any_chunk, any_position, output_stream_setup_data, record_size);
 
   std::vector<DMASetupData> setup_data_for_dma;
   setup_data_for_dma.push_back(input_stream_setup_data);
@@ -154,9 +152,9 @@ void DMASetup::CalculateDMAStreamSetupData(
       (record_size + max_chunk_size - 1) / max_chunk_size;  // ceil
 
   // Temporarily for now.
-  for (int i = 0; i < stream_setup_data.chunks_per_record; i++) {
+  for (int i = 0; i < query_acceleration_constants::kDatapathLength; i++) {
     stream_setup_data.record_chunk_ids.emplace_back(
-        i, i);
+        i, i % stream_setup_data.chunks_per_record);
   }
 
   int records_per_max_burst_size = max_ddr_burst_size / record_size;

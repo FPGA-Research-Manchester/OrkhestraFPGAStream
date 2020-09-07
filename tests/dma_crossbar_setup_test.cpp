@@ -34,13 +34,14 @@ TEST(DMACrossbarSetupTest, BufferToInterfaceHasCorrectChunkSetup) {
   const int record_size = 18;
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.chunks_per_record = 2;
+  test_stream_setup_data.is_input_stream = true;
   DMACrossbarSetup crossbar_configurer_under_test;
   for (int clock_cycle_index = 0; clock_cycle_index < 32; clock_cycle_index++) {
     EXPECT_THAT(test_stream_setup_data.crossbar_setup_data[clock_cycle_index]
                     .chunk_data,
                 testing::ElementsAreArray(kUntouchedVector));
   }
-  DMACrossbarSetup::FindInputCrossbarSetupData(
+  DMACrossbarSetup::CalculateCrossbarSetupData(
       kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
   std::vector<std::vector<int>> golden_config;
   GetGoldenConfigFromFile(
@@ -56,13 +57,14 @@ TEST(DMACrossbarSetupTest, BufferToInterfaceHasCorrectPositionSetup) {
   const int record_size = 18;
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.chunks_per_record = 2;
+  test_stream_setup_data.is_input_stream = true;
   DMACrossbarSetup crossbar_configurer_under_test;
   for (int clock_cycle_index = 0; clock_cycle_index < 32; clock_cycle_index++) {
     EXPECT_THAT(test_stream_setup_data.crossbar_setup_data[clock_cycle_index]
                     .position_data,
                 testing::ElementsAreArray(kUntouchedVector));
   }
-  DMACrossbarSetup::FindInputCrossbarSetupData(
+  DMACrossbarSetup::CalculateCrossbarSetupData(
       kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
   std::vector<std::vector<int>> golden_config;
   GetGoldenConfigFromFile(
@@ -78,13 +80,14 @@ TEST(DMACrossbarSetupTest, InterfaceToBufferHasCorrectChunkSetup) {
   const int record_size = 18;
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.chunks_per_record = 2;
+  test_stream_setup_data.is_input_stream = false;
   DMACrossbarSetup crossbar_configurer_under_test;
   for (int clock_cycle_index = 0; clock_cycle_index < 32; clock_cycle_index++) {
     EXPECT_THAT(test_stream_setup_data.crossbar_setup_data[clock_cycle_index]
                     .chunk_data,
                 testing::ElementsAreArray(kUntouchedVector));
   }
-  DMACrossbarSetup::FindOutputCrossbarSetupData(
+  DMACrossbarSetup::CalculateCrossbarSetupData(
       kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
   std::vector<std::vector<int>> golden_config;
   GetGoldenConfigFromFile(
@@ -100,13 +103,14 @@ TEST(DMACrossbarSetupTest, InterfaceToBufferHasCorrectPositionSetup) {
   const int record_size = 18;
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.chunks_per_record = 2;
+  test_stream_setup_data.is_input_stream = false;
   DMACrossbarSetup crossbar_configurer_under_test;
   for (int clock_cycle_index = 0; clock_cycle_index < 32; clock_cycle_index++) {
     EXPECT_THAT(test_stream_setup_data.crossbar_setup_data[clock_cycle_index]
                     .position_data,
                 testing::ElementsAreArray(kUntouchedVector));
   }
-  DMACrossbarSetup::FindOutputCrossbarSetupData(
+  DMACrossbarSetup::CalculateCrossbarSetupData(
       kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
   std::vector<std::vector<int>> golden_config;
   GetGoldenConfigFromFile(
