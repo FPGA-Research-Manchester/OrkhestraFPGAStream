@@ -70,8 +70,10 @@ TEST(DMASetupTest, RecordSettings) {
   EXPECT_CALL(mock_dma, SetRecordChunkIDs(kOutputStreamId, 0, 0)).Times(1);
   EXPECT_CALL(mock_dma, SetRecordChunkIDs(kOutputStreamId, 1, 1)).Times(1);*/
   EXPECT_CALL(mock_dma, SetRecordSize(kInputStreamId, 2)).Times(1);
-  EXPECT_CALL(mock_dma, SetRecordChunkIDs(kInputStreamId, 0, 0)).Times(1);
-  EXPECT_CALL(mock_dma, SetRecordChunkIDs(kInputStreamId, 1, 1)).Times(1);
+  EXPECT_CALL(mock_dma, SetRecordChunkIDs(kInputStreamId, testing::_, 0))
+      .Times(16);
+  EXPECT_CALL(mock_dma, SetRecordChunkIDs(kInputStreamId, testing::_, 1))
+      .Times(16);
   DMASetup dma_configurer;
   dma_configurer.SetupDMAModule(mock_dma, mock_db_data.data(),
                                 mock_output_memory_address, 18, 1000,

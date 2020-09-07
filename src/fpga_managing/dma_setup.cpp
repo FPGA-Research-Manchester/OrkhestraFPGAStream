@@ -152,9 +152,9 @@ void DMASetup::CalculateDMAStreamSetupData(
       (record_size + max_chunk_size - 1) / max_chunk_size;  // ceil
 
   // Temporarily for now.
-  for (int i = 0; i < stream_setup_data.chunks_per_record; i++) {
+  for (int i = 0; i < query_acceleration_constants::kDatapathLength; i++) {
     stream_setup_data.record_chunk_ids.emplace_back(
-        i, i);
+        i, i % stream_setup_data.chunks_per_record);
   }
 
   int records_per_max_burst_size = max_ddr_burst_size / record_size;
