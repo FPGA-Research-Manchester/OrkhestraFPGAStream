@@ -2,7 +2,7 @@
 #include <cstdint>
 
 #include "acceleration_module.hpp"
-#include "filter_configuration_values.hpp"
+#include "filter_config_values.hpp"
 #include "filter_interface.hpp"
 class Filter : public AccelerationModule, public FilterInterface {
  private:
