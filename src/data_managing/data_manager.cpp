@@ -13,14 +13,14 @@ void DataManager::AddStringDataFromCSV(
 void DataManager::AddIntegerDataFromStringData(
     const std::vector<std::vector<std::string>>& string_data,
     std::vector<uint32_t>& integer_data) {
-  DataArraysConverter::AddIntegerDataFromStringData(string_data, integer_data);
+  TypesConverter::AddIntegerDataFromStringData(string_data, integer_data);
 }
 
 void DataManager::AddStringDataFromIntegerData(
     const std::vector<uint32_t>& integer_data,
     std::vector<std::vector<std::string>>& string_data,
     const std::vector<int>& data_type_sizes) {
-  DataArraysConverter::AddStringDataFromIntegerData(integer_data, string_data, data_type_sizes);
+  TypesConverter::AddStringDataFromIntegerData(integer_data, string_data, data_type_sizes);
 }
 
 void DataManager::PrintStringData(
