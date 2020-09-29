@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-class DataArraysConverter {
+class TypesConverter {
  public:
   static void AddIntegerDataFromStringData(
       const std::vector<std::vector<std::string>>& string_data,

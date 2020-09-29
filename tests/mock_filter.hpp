@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-#include "filter_configuration_values.hpp"
+#include "filter_config_values.hpp"
 #include "filter_interface.hpp"
 #include "gmock/gmock.h"
 

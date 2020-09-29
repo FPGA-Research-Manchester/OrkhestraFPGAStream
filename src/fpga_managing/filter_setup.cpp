@@ -3,7 +3,7 @@
 
 #include <cstdio>
 
-#include "filter_configuration_values.hpp"
+#include "filter_config_values.hpp"
 
 void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
                                     const int input_stream_id,

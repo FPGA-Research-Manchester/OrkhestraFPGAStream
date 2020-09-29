@@ -5,6 +5,8 @@
 
 #include "data_manager.hpp"
 #include "fpga_manager.hpp"
+#include "query_acceleration_constants.hpp"
+#include "stream_parameter_calculator.hpp"
 
 /*
 Filter: (price < 12000)
@@ -29,7 +31,15 @@ auto main() -> int {
   std::vector<uint32_t> input_memory_area;
   DataManager::AddIntegerDataFromStringData(db_data, input_memory_area);
 
-  std::vector<uint32_t> output_memory_area(input_memory_area.size());
+  int record_count = input_memory_area.size() / record_size;
+  int output_memory_size =
+      (record_count +
+       record_count %
+           StreamParameterCalculator::FindMinViableRecordsPerDDRBurst(
+               query_acceleration_constants::kDdrBurstSize, record_size)) *
+      record_size;
+
+  std::vector<uint32_t> output_memory_area(output_memory_size);
   std::vector<uint32_t> module_configuration_memory_area((2 * 1024 * 1024), -1);
 
   FPGAManager fpga_manager(module_configuration_memory_area.data());
