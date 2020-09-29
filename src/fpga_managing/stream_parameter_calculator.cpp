@@ -1,6 +1,8 @@
 #include "stream_parameter_calculator.hpp"
 #include "query_acceleration_constants.hpp"
 
+#include <cmath>
+
 void StreamParameterCalculator::CalculateDMAStreamSetupData(
     DMASetupData& stream_setup_data, const int& max_chunk_size,
     const int& max_ddr_burst_size, const int& max_ddr_size_per_cycle,
