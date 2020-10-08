@@ -1,12 +1,14 @@
 #include "filter.hpp"
+
+#include "cynq/cynq.h"
 // Filter module low driver
 
 #define MODULE_ADDRESS_BITS 20
 
 Filter::~Filter() = default;
 
-Filter::Filter(volatile uint32_t* ctrl_axi_base_address, int module_position)
-    : AccelerationModule(ctrl_axi_base_address, module_position) {}
+Filter::Filter(StaticAccelInst acceleration_instance, int module_position)
+    : AccelerationModule(acceleration_instance, module_position) {}
 
 // Selects stream_id and stream_id manipulations
 void Filter::FilterSetStreamIDs(

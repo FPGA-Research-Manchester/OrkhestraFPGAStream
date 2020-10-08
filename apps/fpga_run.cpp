@@ -7,8 +7,9 @@
 #include "fpga_manager.hpp"
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
-#include "xil_cache.h"
-#include "xil_io.h"
+
+#include "cynq/cynq.h"
+#include "udmalib/udma.h"
 
 /*
 Filter: (price < 12000)
@@ -1067,29 +1068,36 @@ auto main() -> int {
                query_acceleration_constants::kDdrBurstSize, record_size)) *
       record_size;
 
-  auto* input = static_cast<uint32_t*>(
-      manual_aligned_alloc(16, record_count * sizeof(uint32_t)));
-  auto* output = static_cast<uint32_t*>(
-      manual_aligned_alloc(16, output_memory_size * sizeof(uint32_t)));
+  UdmaRepo repo;
+  UdmaDevice* input_device = repo.device(0);
+  UdmaDevice* output_device = repo.device(1);
+
+  volatile uint32_t* input = (uint32_t*)input_device->map();
+  volatile uint32_t* output = (uint32_t*)output_device->map();
 
   for (int i = 0; i < input_memory_area.size(); i++) {
     input[i] = input_memory_area[i];
   }
 
+  volatile uint32_t* input_data_phy =
+      reinterpret_cast<volatile uint32_t*>(input_device->phys_addr);
+  volatile uint32_t* output_data_phy =
+      reinterpret_cast<volatile uint32_t*>(output_device->phys_addr);
+
+  PRManager prmanager;
+  StaticAccelInst db_accel = prmanager.fpgaLoadStatic("DSPI_filtering");
+
   std::cout << "Main initialisation done!" << std::endl;
-  Xil_DCacheFlush();
-  FPGAManager fpga_manager(reinterpret_cast<volatile uint32_t*>(0xA0000000));
-  fpga_manager.SetupQueryAcceleration(input, output, record_size, record_count);
+  FPGAManager fpga_manager(&db_accel);
+  fpga_manager.SetupQueryAcceleration(input_data_phy, output_data_phy,
+                                      record_size,
+                                      record_count);
   std::vector<int> result_sizes = fpga_manager.RunQueryAcceleration();
-  Xil_DCacheFlush();
   std::cout << "Query done!" << std::endl;
   DataManager::AddStringDataFromIntegerData(
       std::vector<uint32_t>(output, output + (result_sizes[0] * record_size)),
       db_data, data_type_sizes);
   DataManager::PrintStringData(db_data);
-
-  manual_aligned_free(input);
-  manual_aligned_free(output);
 
   return 0;
 }

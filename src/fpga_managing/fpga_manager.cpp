@@ -18,7 +18,7 @@ void FPGAManager::SetupQueryAcceleration(
                            output_memory_address, record_size, record_count,
                            input_stream_id, output_stream_id);
 
-  Filter filter_module(FPGAManager::configuration_memory_address_, 1);
+  Filter filter_module(FPGAManager::acceleration_instance_, 1);
   FilterSetup::SetupFilterModule(filter_module, input_stream_id,
                                  output_stream_id);
   FPGAManager::input_stream_active_[input_stream_id] = true;

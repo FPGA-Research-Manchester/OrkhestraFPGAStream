@@ -4,6 +4,9 @@
 #include "acceleration_module.hpp"
 #include "filter_config_values.hpp"
 #include "filter_interface.hpp"
+
+#include "cynq/cynq.h"
+
 class Filter : public AccelerationModule, public FilterInterface {
  private:
   void FilterWriteDNFClauseLiteralsToModule(int datapath_width,
@@ -12,7 +15,7 @@ class Filter : public AccelerationModule, public FilterInterface {
 
  public:
   ~Filter() override;
-  Filter(volatile uint32_t* ctrl_axi_base_address, int module_position);
+  Filter(StaticAccelInst acceleration_instance, int module_position);
 
   void FilterSetStreamIDs(int stream_id_input, int stream_id_valid_output,
                           int stream_id_invalid_output) override;
