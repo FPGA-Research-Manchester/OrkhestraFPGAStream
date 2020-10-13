@@ -14,7 +14,7 @@ module.
 
 DMA::~DMA() = default;
 
-DMA::DMA(StaticAccelInst acceleration_instance)
+DMA::DMA(StaticAccelInst* acceleration_instance)
     : AccelerationModule(acceleration_instance, 0) {}
 
 // Input Controller

@@ -6,7 +6,7 @@
 
 //#include <unistd.h>
 
-AccelerationModule::AccelerationModule(StaticAccelInst acceleration_instance,
+AccelerationModule::AccelerationModule(StaticAccelInst* acceleration_instance,
                                        int module_position)
     : acceleration_instance_{acceleration_instance},
       module_position_{module_position} {}

@@ -9,7 +9,7 @@
 class DMA : public AccelerationModule, public DMAInterface {
  public:
   ~DMA() override;
-  explicit DMA(StaticAccelInst acceleration_instance);
+  explicit DMA(StaticAccelInst* acceleration_instance);
 
   void SetInputControllerParams(int stream_id, int dd_rburst_size,
                                 int records_per_ddr_burst, int buffer_start,

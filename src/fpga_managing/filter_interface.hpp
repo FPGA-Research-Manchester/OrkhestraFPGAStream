@@ -5,7 +5,6 @@
 class FilterInterface {
  public:
   virtual ~FilterInterface() = default;
-  ;
 
   virtual void FilterSetStreamIDs(int stream_id_input,
                                   int stream_id_valid_output,

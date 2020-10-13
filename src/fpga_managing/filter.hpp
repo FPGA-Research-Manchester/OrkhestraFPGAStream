@@ -15,7 +15,7 @@ class Filter : public AccelerationModule, public FilterInterface {
 
  public:
   ~Filter() override;
-  Filter(StaticAccelInst acceleration_instance, int module_position);
+  Filter(StaticAccelInst* acceleration_instance, int module_position);
 
   void FilterSetStreamIDs(int stream_id_input, int stream_id_valid_output,
                           int stream_id_invalid_output) override;

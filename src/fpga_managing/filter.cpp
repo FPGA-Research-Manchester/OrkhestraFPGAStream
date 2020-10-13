@@ -7,7 +7,7 @@
 
 Filter::~Filter() = default;
 
-Filter::Filter(StaticAccelInst acceleration_instance, int module_position)
+Filter::Filter(StaticAccelInst* acceleration_instance, int module_position)
     : AccelerationModule(acceleration_instance, module_position) {}
 
 // Selects stream_id and stream_id manipulations
