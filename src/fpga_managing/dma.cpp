@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "cynq/cynq.h"
+
 /*
 This is the width of the address for the memory mapped register space in every
 module. This parameter's value has to match the parameter in the implemented DMA
@@ -12,8 +14,8 @@ module.
 
 DMA::~DMA() = default;
 
-DMA::DMA(volatile uint32_t* ctrl_axi_base_address)
-    : AccelerationModule(ctrl_axi_base_address, 0) {}
+DMA::DMA(StaticAccelInst* acceleration_instance)
+    : AccelerationModule(acceleration_instance, 0) {}
 
 // Input Controller
 void DMA::SetInputControllerParams(int stream_id, int dd_rburst_size,

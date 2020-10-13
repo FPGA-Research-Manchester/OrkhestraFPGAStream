@@ -3,6 +3,8 @@
 #include <vector>
 #include "dma.hpp"
 
+#include "cynq/cynq.h"
+
 class FPGAManager {
  public:
   void SetupQueryAcceleration(volatile uint32_t* input_memory_address,
@@ -10,16 +12,16 @@ class FPGAManager {
                               int record_size, int record_count);
   auto RunQueryAcceleration() -> std::vector<int>;
 
-  explicit FPGAManager(volatile uint32_t* configuration_memory_address)
-      : dma_engine_(configuration_memory_address),
-        configuration_memory_address_(configuration_memory_address){};
+  explicit FPGAManager(StaticAccelInst* acceleration_instance)
+      : dma_engine_(acceleration_instance),
+        acceleration_instance_(acceleration_instance){};
 
  private:
   const static int kMaxStreamAmount = 16;
   bool input_stream_active_[kMaxStreamAmount] = {false};
   bool output_stream_active_[kMaxStreamAmount] = {false};
 
-  volatile uint32_t* configuration_memory_address_;
+  StaticAccelInst* acceleration_instance_;
   DMA dma_engine_;
 
   void FindActiveStreams(std::vector<int>& active_input_stream_ids,

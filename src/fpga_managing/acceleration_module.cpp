@@ -1,22 +1,23 @@
 #include "acceleration_module.hpp"
 
+#include "cynq/cynq.h"
+
 #include <iostream>
 
 //#include <unistd.h>
 
-AccelerationModule::AccelerationModule(
-    volatile uint32_t* control_axi_base_address, int module_position)
-    : control_axi_base_address_{control_axi_base_address},
+AccelerationModule::AccelerationModule(StaticAccelInst* acceleration_instance,
+                                       int module_position)
+    : acceleration_instance_{acceleration_instance},
       module_position_{module_position} {}
 
 auto AccelerationModule::CalculateMemoryMappedAddress(
     int module_internal_address) -> volatile uint32_t* {
-  auto return_address = reinterpret_cast<uintptr_t>(control_axi_base_address_);
-  return_address +=
+  uintptr_t return_address =
       (1024 * 1024) * module_position_;  // calculate the main address
                                          // of the target module
   return_address += module_internal_address;
-  return reinterpret_cast<volatile uint32_t*>(return_address);
+  return &(acceleration_instance_->prmanager->accelRegs[return_address / 4]);
 }
 
 void AccelerationModule::WriteToModule(
@@ -26,8 +27,6 @@ void AccelerationModule::WriteToModule(
 ) {
   volatile uint32_t* register_address =
       CalculateMemoryMappedAddress(module_internal_address);
-  //std::cout << "Address:" << reinterpret_cast<uintptr_t>(register_address)
-  //          << " Data:" << write_data << std::endl;
   // usleep(1000);
   *register_address = write_data;
 }

@@ -3,10 +3,13 @@
 
 #include "acceleration_module.hpp"
 #include "dma_interface.hpp"
+
+#include "cynq/cynq.h"
+
 class DMA : public AccelerationModule, public DMAInterface {
  public:
   ~DMA() override;
-  explicit DMA(volatile uint32_t* ctrl_axi_base_address);
+  explicit DMA(StaticAccelInst* acceleration_instance);
 
   void SetInputControllerParams(int stream_id, int dd_rburst_size,
                                 int records_per_ddr_burst, int buffer_start,
