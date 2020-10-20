@@ -3,7 +3,7 @@
 #include <cmath>
 #include <iostream>
 
-#include "cynq/cynq.h"
+#include "fos/cynq.h"
 
 /*
 This is the width of the address for the memory mapped register space in every

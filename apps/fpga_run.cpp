@@ -8,8 +8,8 @@
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
 
-#include "cynq/cynq.h"
-#include "udmalib/udma.h"
+#include "fos/cynq.h"
+#include "fos/udma.h"
 
 /*
 Filter: (price < 12000)

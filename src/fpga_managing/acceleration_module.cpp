@@ -1,6 +1,6 @@
 #include "acceleration_module.hpp"
 
-#include "cynq/cynq.h"
+#include "fos/cynq.h"
 
 #include <iostream>
 
@@ -27,6 +27,8 @@ void AccelerationModule::WriteToModule(
 ) {
   volatile uint32_t* register_address =
       CalculateMemoryMappedAddress(module_internal_address);
+  std::cout << (uintptr_t)register_address << std::endl;
+  std::cout << *register_address << std::endl;
   // usleep(1000);
   *register_address = write_data;
 }

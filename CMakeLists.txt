@@ -12,7 +12,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 17)
 
 include(FetchContent)
-include(CTest)
+#include(CTest)
 
 add_subdirectory(src/fpga_managing)
 add_subdirectory(src/data_managing)
