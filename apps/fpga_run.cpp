@@ -11,6 +11,8 @@
 #include "fos/cynq.h"
 #include "fos/udma.h"
 
+#include "unistd.h"
+
 /*
 Filter: (price < 12000)
 1000 rows
@@ -1098,6 +1100,8 @@ auto main() -> int {
       std::vector<uint32_t>(output, output + (result_sizes[0] * record_size)),
       db_data, data_type_sizes);
   DataManager::PrintStringData(db_data);
+
+  sleep(2);
 
   return 0;
 }
