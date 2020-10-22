@@ -1,6 +1,6 @@
 # Source
-file(GLOB HEADER_LIST "${DBMStoDSPI_SOURCE_DIR}/src/data_managing/*.hpp")
-file(GLOB SOURCE_LIST "${DBMStoDSPI_SOURCE_DIR}/src/data_managing/*.cpp")
+file(GLOB HEADER_LIST "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp")
+file(GLOB SOURCE_LIST "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
 add_library(data_managing ${HEADER_LIST} ${SOURCE_LIST})
 
@@ -16,4 +16,4 @@ if(NOT rapidcsv_POPULATED)
   target_include_directories(data_managing PRIVATE ${rapidcsv_SOURCE_DIR}/src)
 endif()
 
-target_include_directories(data_managing INTERFACE "${DBMStoDSPI_SOURCE_DIR}/src/data_managing")
+target_include_directories(data_managing PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

@@ -1,7 +1,5 @@
 #include "acceleration_module.hpp"
 
-#include "fos/cynq.h"
-
 AccelerationModule::AccelerationModule(StaticAccelInst* acceleration_instance,
                                        int module_position)
     : acceleration_instance_{acceleration_instance},

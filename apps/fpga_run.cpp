@@ -8,8 +8,8 @@
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
 
-#include "fos/cynq.h"
-#include "fos/udma.h"
+#include "cynq.h"
+#include "udma.h"
 
 #include "unistd.h"
 

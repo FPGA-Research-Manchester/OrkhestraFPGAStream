@@ -1,10 +1,9 @@
 # Source
-file(GLOB HEADER_LIST "${DBMStoDSPI_SOURCE_DIR}/src/fpga_managing/*.hpp")
-file(GLOB SOURCE_LIST "${DBMStoDSPI_SOURCE_DIR}/src/fpga_managing/*.cpp")
+file(GLOB HEADER_LIST "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp")
+file(GLOB SOURCE_LIST "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
-file(GLOB FOS_LIST "${DBMStoDSPI_SOURCE_DIR}/src/fpga_managing/fos/*")
+add_library(fpga_managing ${HEADER_LIST} ${SOURCE_LIST})
 
-link_libraries(stdc++fs)
-add_library(fpga_managing ${HEADER_LIST} ${SOURCE_LIST} ${FOS_LIST})
+target_include_directories(fpga_managing PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
-target_include_directories(fpga_managing INTERFACE "${DBMStoDSPI_SOURCE_DIR}/src/fpga_managing")
+target_link_libraries(fpga_managing PRIVATE fos)
