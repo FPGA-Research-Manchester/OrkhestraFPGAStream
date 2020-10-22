@@ -3,8 +3,8 @@
 #include <cstdint>
 
 MockAccelerationModule::MockAccelerationModule(
-    volatile uint32_t* ctrl_axi_base_address, int module_position)
-    : AccelerationModule(ctrl_axi_base_address, module_position) {}
+    StaticAccelInst* acceleration_instance, int module_position)
+    : AccelerationModule(acceleration_instance, module_position) {}
 MockAccelerationModule::~MockAccelerationModule() = default;
 
 void MockAccelerationModule::WriteToModule(int module_internal_address,
