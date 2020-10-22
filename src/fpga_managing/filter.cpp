@@ -1,6 +1,4 @@
 #include "filter.hpp"
-
-#include "cynq/cynq.h"
 // Filter module low driver
 
 #define MODULE_ADDRESS_BITS 20

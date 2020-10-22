@@ -8,8 +8,10 @@
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
 
-#include "cynq/cynq.h"
-#include "udmalib/udma.h"
+#include "cynq.h"
+#include "udma.h"
+
+#include "unistd.h"
 
 /*
 Filter: (price < 12000)
@@ -1098,6 +1100,8 @@ auto main() -> int {
       std::vector<uint32_t>(output, output + (result_sizes[0] * record_size)),
       db_data, data_type_sizes);
   DataManager::PrintStringData(db_data);
+
+  sleep(2);
 
   return 0;
 }

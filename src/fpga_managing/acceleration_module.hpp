@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-#include "cynq/cynq.h"
+#include "cynq.h"
 
 class AccelerationModule {
  private:

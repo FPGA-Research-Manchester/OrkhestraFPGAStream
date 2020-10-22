@@ -4,7 +4,7 @@
 #include "acceleration_module.hpp"
 #include "dma_interface.hpp"
 
-#include "cynq/cynq.h"
+#include "cynq.h"
 
 class DMA : public AccelerationModule, public DMAInterface {
  public:

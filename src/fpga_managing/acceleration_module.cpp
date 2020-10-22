@@ -1,11 +1,5 @@
 #include "acceleration_module.hpp"
 
-#include "cynq/cynq.h"
-
-#include <iostream>
-
-//#include <unistd.h>
-
 AccelerationModule::AccelerationModule(StaticAccelInst* acceleration_instance,
                                        int module_position)
     : acceleration_instance_{acceleration_instance},
@@ -27,7 +21,6 @@ void AccelerationModule::WriteToModule(
 ) {
   volatile uint32_t* register_address =
       CalculateMemoryMappedAddress(module_internal_address);
-  // usleep(1000);
   *register_address = write_data;
 }
 

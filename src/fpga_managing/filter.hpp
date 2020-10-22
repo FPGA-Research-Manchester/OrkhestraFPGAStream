@@ -5,7 +5,7 @@
 #include "filter_config_values.hpp"
 #include "filter_interface.hpp"
 
-#include "cynq/cynq.h"
+#include "cynq.h"
 
 class Filter : public AccelerationModule, public FilterInterface {
  private:

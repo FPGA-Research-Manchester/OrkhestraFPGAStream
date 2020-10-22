@@ -3,7 +3,7 @@
 #include <vector>
 #include "dma.hpp"
 
-#include "cynq/cynq.h"
+#include "cynq.h"
 
 class FPGAManager {
  public:
