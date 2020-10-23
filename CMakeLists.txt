@@ -8,11 +8,12 @@ project(DBMStoDSPI
 )
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 set(CMAKE_CXX_STANDARD 17)
 
 include(FetchContent)
-include(CTest)
+if (ENABLE_TESTS)
+    include(CTest)
+endif()
 
 add_subdirectory(src/fos)
 add_subdirectory(src/fpga_managing)
