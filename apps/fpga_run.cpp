@@ -99,7 +99,18 @@ auto main() -> int {
   DataManager::AddStringDataFromIntegerData(
       std::vector<uint32_t>(output, output + (result_sizes[0] * record_size)),
       db_data, data_type_sizes);
-  DataManager::PrintStringData(db_data);
+
+  std::vector<std::vector<std::string>> golden_data;
+  DataManager::AddStringDataFromCSV("RESULT_DATA.csv", golden_data);
+
+  if (golden_data == db_data) {
+    std::cout << "Query results are correct!" << std::endl;
+  } else {
+    std::cout << "Incorrect query results:" << std::endl;
+    DataManager::PrintStringData(db_data);
+    std::cout << "vs:" << std::endl;
+    DataManager::PrintStringData(golden_data);
+  }
 
   sleep(2);
 
