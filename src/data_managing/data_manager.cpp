@@ -1,5 +1,5 @@
 #include "data_manager.hpp"
-//#include "csv_reader.hpp"
+#include "csv_reader.hpp"
 #include "types_converter.hpp"
 
 #include <iostream>
@@ -7,7 +7,7 @@
 void DataManager::AddStringDataFromCSV(
     const std::string& file_name,
     std::vector<std::vector<std::string>>& resulting_strings) {
-  //CSVReader::AddCSVRows(file_name, resulting_strings);
+  CSVReader::AddCSVRows(file_name, resulting_strings);
 }
 
 void DataManager::AddIntegerDataFromStringData(
