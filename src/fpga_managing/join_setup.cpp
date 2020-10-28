@@ -1,5 +1,7 @@
 #include "join_setup.hpp"
 
+#include "query_acceleration_constants.hpp"
+
 // Hardcoded setup for joining customer table to the car table
 void JoinSetup::SetupJoinModule(JoinInterface& join_module,
                                 int first_input_stream_id,
@@ -16,9 +18,10 @@ void JoinSetup::SetupJoinModule(JoinInterface& join_module,
 }
 
 void JoinSetup::SetupTimeMultiplexer(JoinInterface& join_module) {
-  // Stream A
-  // Chunk 0
-  for (int i = 0; i < 16; i++) {
+  // TODO: Simple initial algo should be to get the chunk count for both streams
+  // and then just configure first stream to go first and then second. Therefore
+  // stream configuration data is needed. Stream A Chunk 0
+  for (int i = 0; i < query_acceleration_constants::kDatapathWidth; i++) {
     join_module.SelectOutputDataElement(0, 0, i, true);
   }
   // Chunk 1
