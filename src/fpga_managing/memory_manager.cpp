@@ -6,9 +6,9 @@
 #include "virtual_memory_block.hpp"
 #endif
 
-MemoryManager::MemoryManager(std::string bitstream_name) {
+MemoryManager::MemoryManager(const std::string& bitstream_name) {
 #ifdef _FPGA_AVAILABLE
-  acceleration_instance_ = pr_manager_.fpgaLoadStatic("DSPI_filtering");
+  acceleration_instance_ = pr_manager_.fpgaLoadStatic(bitstream_name);
   register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
 #else
   register_space_ = std::vector<uint32_t>((2 * 1024 * 1024), -1);

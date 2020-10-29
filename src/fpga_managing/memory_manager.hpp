@@ -24,7 +24,7 @@ class MemoryManager {
   std::vector<uint32_t> register_space_;
 #endif
  public:
-  explicit MemoryManager(std::string bitstream_name);
+  explicit MemoryManager(const std::string& bitstream_name);
   auto AllocateMemoryBlock() -> std::unique_ptr<MemoryBlockInterface>;
   auto GetVirtualRegisterAddress(int offset) -> volatile uint32_t*;
 };

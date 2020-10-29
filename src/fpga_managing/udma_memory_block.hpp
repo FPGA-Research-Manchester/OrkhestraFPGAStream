@@ -4,7 +4,8 @@
 #include <cstdint>
 class UDMAMemoryBlock : public MemoryBlockInterface {
  private:
-  UdmaDevice* udma_device_;
+  UdmaDevice* udma_device_{};
+
  public:
   ~UDMAMemoryBlock() override;
   explicit UDMAMemoryBlock(UdmaDevice* udma_device) : udma_device_(udma_device){};

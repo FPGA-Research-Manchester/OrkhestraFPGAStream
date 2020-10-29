@@ -15,8 +15,8 @@ class Join : public AccelerationModule, public JoinInterface {
   void SetSecondInputStreamChunkCount(int chunk_count) override;
 
   void SelectOutputDataElement(int output_chunk_id, int input_chunk_id,
-                                   int data_position,
-                                   bool is_element_from_first_stream) override;
+                               int data_position,
+                               bool is_element_from_second_stream) override;
 
   void StartPrefetchingData() override;
 };
