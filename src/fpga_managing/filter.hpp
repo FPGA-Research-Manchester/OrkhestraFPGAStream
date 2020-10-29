@@ -5,7 +5,7 @@
 #include "filter_config_values.hpp"
 #include "filter_interface.hpp"
 
-#include "cynq.h"
+#include "memory_manager.hpp"
 
 class Filter : public AccelerationModule, public FilterInterface {
  private:
@@ -15,7 +15,8 @@ class Filter : public AccelerationModule, public FilterInterface {
 
  public:
   ~Filter() override;
-  explicit Filter(StaticAccelInst* acceleration_instance, int module_position);
+  explicit Filter(MemoryManager* memory_manager, int module_position)
+      : AccelerationModule(memory_manager, module_position){};
 
   void FilterSetStreamIDs(int stream_id_input, int stream_id_valid_output,
                           int stream_id_invalid_output) override;

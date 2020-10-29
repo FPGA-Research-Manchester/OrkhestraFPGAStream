@@ -6,7 +6,8 @@ class Join : public AccelerationModule, public JoinInterface {
  private:
  public:
   ~Join() override;
-  explicit Join(StaticAccelInst* acceleration_instance, int module_position);
+  explicit Join(MemoryManager* memory_manager, int module_position)
+      : AccelerationModule(memory_manager, module_position){};
 
   void DefineOutputStream(int output_stream_chunk_count, int first_input_stream_id, int second_input_stream_id,
                           int output_stream_id) override;

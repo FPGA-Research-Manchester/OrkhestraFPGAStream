@@ -7,7 +7,7 @@
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir}\\out\\install\\${name}",
-      "cmakeCommandArgs": "-DENABLE_TESTS=False",
+      "cmakeCommandArgs": "-DENABLE_TESTS=True",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "variables": [],

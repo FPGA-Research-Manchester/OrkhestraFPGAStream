@@ -7,9 +7,7 @@
 #include "fpga_manager.hpp"
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
-
-#include "cynq.h"
-#include "udma.h"
+#include "memory_manager.hpp"
 
 #include "unistd.h"
 
@@ -70,27 +68,23 @@ auto main() -> int {
                query_acceleration_constants::kDdrBurstSize, record_size)) *
       record_size;
 
-  UdmaRepo repo;
-  UdmaDevice* input_device = repo.device(0);
-  UdmaDevice* output_device = repo.device(1);
+  MemoryManager memory_manager = MemoryManager("DSPI_filtering");
 
-  volatile uint32_t* input = (uint32_t*)input_device->map();
-  volatile uint32_t* output = (uint32_t*)output_device->map();
+  MemoryBlock input_device = memory_manager.AllocateMemoryBlock();
+  MemoryBlock output_device = memory_manager.AllocateMemoryBlock();
+
+  volatile uint32_t* input = input_device.GetVirtualAddress();
+  volatile uint32_t* output = output_device.GetVirtualAddress();
 
   for (int i = 0; i < input_memory_area.size(); i++) {
     input[i] = input_memory_area[i];
   }
 
-  volatile uint32_t* input_data_phy =
-      reinterpret_cast<volatile uint32_t*>(input_device->phys_addr);
-  volatile uint32_t* output_data_phy =
-      reinterpret_cast<volatile uint32_t*>(output_device->phys_addr);
-
-  PRManager prmanager;
-  StaticAccelInst db_accel = prmanager.fpgaLoadStatic("DSPI_filtering");
-
+  volatile uint32_t* input_data_phy = input_device.GetPhysicalAddress();
+  volatile uint32_t* output_data_phy = output_device.GetPhysicalAddress();
+  FPGAManager fpga_manager(&memory_manager);
   std::cout << "Main initialisation done!" << std::endl;
-  FPGAManager fpga_manager(&db_accel);
+  
   fpga_manager.SetupQueryAcceleration(input_data_phy, output_data_phy,
                                       record_size,
                                       record_count);

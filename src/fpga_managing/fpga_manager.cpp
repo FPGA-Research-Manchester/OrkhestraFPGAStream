@@ -6,19 +6,17 @@
 #include "filter.hpp"
 #include "filter_setup.hpp"
 
-//#include <unistd.h>
-
 void FPGAManager::SetupQueryAcceleration(
     volatile uint32_t* input_memory_address,
     volatile uint32_t* output_memory_address, const int record_size,
     const int record_count) {
   const int input_stream_id = 0;
   const int output_stream_id = 1;
-  DMASetup::SetupDMAModule(FPGAManager::dma_engine_, input_memory_address,
+  DMASetup::SetupDMAModule(dma_engine_, input_memory_address,
                            output_memory_address, record_size, record_count,
                            input_stream_id, output_stream_id);
 
-  Filter filter_module(FPGAManager::acceleration_instance_, 1);
+  Filter filter_module(memory_manager_, 1);
   FilterSetup::SetupFilterModule(filter_module, input_stream_id,
                                  output_stream_id);
   FPGAManager::input_stream_active_[input_stream_id] = true;
@@ -63,12 +61,12 @@ void FPGAManager::WaitForStreamsToFinish() {
   while (!(FPGAManager::dma_engine_.IsInputControllerFinished() &&
            FPGAManager::dma_engine_.IsOutputControllerFinished())) {
     std::cout << "Processing..." << std::endl;
-    std::cout << "Input:" << FPGAManager::dma_engine_.IsInputControllerFinished()
+    std::cout << "Input:"
+              << FPGAManager::dma_engine_.IsInputControllerFinished()
               << std::endl;
     std::cout << "Output:"
               << FPGAManager::dma_engine_.IsOutputControllerFinished()
               << std::endl;
-    // sleep(1);
   }
 }
 
@@ -81,7 +79,8 @@ auto FPGAManager::GetResultingStreamSizes(
   std::vector<int> result_sizes;
   for (auto stream_id : active_output_stream_ids) {
     FPGAManager::output_stream_active_[stream_id] = false;
-    result_sizes.push_back(dma_engine_.GetOutputControllerStreamSize(stream_id));
+    result_sizes.push_back(
+        dma_engine_.GetOutputControllerStreamSize(stream_id));
   }
   return result_sizes;
 }

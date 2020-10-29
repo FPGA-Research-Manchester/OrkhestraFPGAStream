@@ -2,8 +2,10 @@
 #include <cstdint>
 #include <vector>
 #include "dma.hpp"
-
-#include "cynq.h"
+#include "memory_manager.hpp"
+#include <string>
+#include "memory_block.hpp"
+#include "filter.hpp"
 
 class FPGAManager {
  public:
@@ -12,16 +14,16 @@ class FPGAManager {
                               int record_size, int record_count);
   auto RunQueryAcceleration() -> std::vector<int>;
 
-  explicit FPGAManager(StaticAccelInst* acceleration_instance)
-      : dma_engine_(acceleration_instance),
-        acceleration_instance_(acceleration_instance){};
+  explicit FPGAManager(MemoryManager* memory_manager)
+      : memory_manager_{memory_manager},
+        dma_engine_{memory_manager} {};
 
  private:
   const static int kMaxStreamAmount = 16;
   bool input_stream_active_[kMaxStreamAmount] = {false};
   bool output_stream_active_[kMaxStreamAmount] = {false};
 
-  StaticAccelInst* acceleration_instance_;
+  MemoryManager* memory_manager_;
   DMA dma_engine_;
 
   void FindActiveStreams(std::vector<int>& active_input_stream_ids,

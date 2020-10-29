@@ -10,4 +10,3 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/repo.json repo.json COPYONLY)
 
 target_link_libraries(app PRIVATE fpga_managing)
 target_link_libraries(app PRIVATE data_managing)
-target_link_libraries(app PRIVATE fos)
