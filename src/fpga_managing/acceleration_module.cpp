@@ -1,17 +1,12 @@
 #include "acceleration_module.hpp"
 
-AccelerationModule::AccelerationModule(StaticAccelInst* acceleration_instance,
-                                       int module_position)
-    : acceleration_instance_{acceleration_instance},
-      module_position_{module_position} {}
-
 auto AccelerationModule::CalculateMemoryMappedAddress(
     int module_internal_address) -> volatile uint32_t* {
-  uintptr_t return_address =
+  uintptr_t address_offset =
       (1024 * 1024) * module_position_;  // calculate the main address
                                          // of the target module
-  return_address += module_internal_address;
-  return &(acceleration_instance_->prmanager->accelRegs[return_address / 4]);
+  address_offset += module_internal_address;
+  return memory_manager_->GetVirtualRegisterAddress(address_offset);
 }
 
 void AccelerationModule::WriteToModule(

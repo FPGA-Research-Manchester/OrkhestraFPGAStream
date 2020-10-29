@@ -1,17 +1,15 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <memory>
 #include <vector>
 
 #include "data_manager.hpp"
 #include "fpga_manager.hpp"
+#include "memory_block_interface.hpp"
+#include "memory_manager.hpp"
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
-
-#include "cynq.h"
-#include "udma.h"
-
-#include "unistd.h"
 
 /*
 Filter: (price < 12000)
@@ -70,30 +68,27 @@ auto main() -> int {
                query_acceleration_constants::kDdrBurstSize, record_size)) *
       record_size;
 
-  UdmaRepo repo;
-  UdmaDevice* input_device = repo.device(0);
-  UdmaDevice* output_device = repo.device(1);
+  MemoryManager memory_manager = MemoryManager("DSPI_filtering");
 
-  volatile uint32_t* input = (uint32_t*)input_device->map();
-  volatile uint32_t* output = (uint32_t*)output_device->map();
+  std::unique_ptr<MemoryBlockInterface> input_device =
+      memory_manager.AllocateMemoryBlock();
+  std::unique_ptr<MemoryBlockInterface> output_device =
+      memory_manager.AllocateMemoryBlock();
+
+  volatile uint32_t* input = input_device->GetVirtualAddress();
+  volatile uint32_t* output = output_device->GetVirtualAddress();
 
   for (int i = 0; i < input_memory_area.size(); i++) {
     input[i] = input_memory_area[i];
   }
 
-  volatile uint32_t* input_data_phy =
-      reinterpret_cast<volatile uint32_t*>(input_device->phys_addr);
-  volatile uint32_t* output_data_phy =
-      reinterpret_cast<volatile uint32_t*>(output_device->phys_addr);
-
-  PRManager prmanager;
-  StaticAccelInst db_accel = prmanager.fpgaLoadStatic("DSPI_filtering");
-
+  volatile uint32_t* input_data_phy = input_device->GetPhysicalAddress();
+  volatile uint32_t* output_data_phy = output_device->GetPhysicalAddress();
+  FPGAManager fpga_manager(&memory_manager);
   std::cout << "Main initialisation done!" << std::endl;
-  FPGAManager fpga_manager(&db_accel);
+
   fpga_manager.SetupQueryAcceleration(input_data_phy, output_data_phy,
-                                      record_size,
-                                      record_count);
+                                      record_size, record_count);
   std::vector<int> result_sizes = fpga_manager.RunQueryAcceleration();
   std::cout << "Query done!" << std::endl;
   DataManager::AddStringDataFromIntegerData(
@@ -111,8 +106,6 @@ auto main() -> int {
     std::cout << "vs:" << std::endl;
     DataManager::PrintStringData(golden_data);
   }
-
-  sleep(2);
 
   return 0;
 }

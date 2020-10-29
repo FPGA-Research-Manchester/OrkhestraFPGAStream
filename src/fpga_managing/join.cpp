@@ -2,10 +2,7 @@
 
 #include <cmath>
 
-Join::~Join() {}
-
-Join::Join(StaticAccelInst* acceleration_instance, int module_position)
-    : AccelerationModule(acceleration_instance, module_position) {}
+Join::~Join() = default;
 
 void Join::DefineOutputStream(int output_stream_chunk_count,
                               int first_input_stream_id,

@@ -1,8 +1,11 @@
 # Source
-file(GLOB HEADER_LIST "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp")
-file(GLOB SOURCE_LIST "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
-
-add_library(data_managing ${HEADER_LIST} ${SOURCE_LIST})
+add_library(data_managing 
+			"csv_reader.hpp"
+			"csv_reader.cpp"
+			"data_manager.cpp"
+			"data_manager.hpp"  
+			"types_converter.hpp"
+			"types_converter.cpp")
 
 FetchContent_Declare(
   rapidcsv

@@ -2,9 +2,9 @@
 
 #include <cstdint>
 
-MockAccelerationModule::MockAccelerationModule(
-    StaticAccelInst* acceleration_instance, int module_position)
-    : AccelerationModule(acceleration_instance, module_position) {}
+MockAccelerationModule::MockAccelerationModule(MemoryManager* memory_manager,
+                                               int module_position)
+    : AccelerationModule(memory_manager, module_position) {}
 MockAccelerationModule::~MockAccelerationModule() = default;
 
 void MockAccelerationModule::WriteToModule(int module_internal_address,

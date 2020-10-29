@@ -20,10 +20,10 @@ done
 
 # If it doesn't work well with gtest and gmock try doing these files sepparately.
 # Seems to have problems with gmock. Hopefully should get fixed with the next release.
-for entry in ./tests/*
-do
-  projectFiles+=($entry)
-done
+#for entry in ./tests/*
+#do
+#  projectFiles+=($entry)
+#done
 
 tempArray=()
 for file in ${projectFiles[@]}

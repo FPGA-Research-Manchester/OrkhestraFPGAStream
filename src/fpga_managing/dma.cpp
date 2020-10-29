@@ -12,9 +12,6 @@ module.
 
 DMA::~DMA() = default;
 
-DMA::DMA(StaticAccelInst* acceleration_instance)
-    : AccelerationModule(acceleration_instance, 0) {}
-
 // Input Controller
 void DMA::SetInputControllerParams(int stream_id, int dd_rburst_size,
                                    int records_per_ddr_burst, int buffer_start,

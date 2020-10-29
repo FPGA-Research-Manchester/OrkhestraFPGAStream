@@ -18,8 +18,11 @@ target_link_libraries(testlib
 					  gmock_main
 					  fpga_managing
 					  data_managing # I guess the data_managing and fos would be tested in a different lib
-					  fos
 )
+
+if (NOT WIN32)
+	target_link_libraries(testlib fos)
+endif()
 
 target_include_directories(testlib INTERFACE "${DBMStoDSPI_SOURCE_DIR}/tests")
 

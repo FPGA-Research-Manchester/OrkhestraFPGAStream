@@ -1,11 +1,11 @@
 #pragma once
 #include <cstdint>
 
-#include "cynq.h"
+#include "memory_manager.hpp"
 
 class AccelerationModule {
  private:
-  StaticAccelInst* acceleration_instance_;
+  MemoryManager* memory_manager_;
   const int module_position_;
 
   auto CalculateMemoryMappedAddress(int module_internal_address)
@@ -14,8 +14,10 @@ class AccelerationModule {
  protected:
   void WriteToModule(int module_internal_address, uint32_t write_data);
   auto ReadFromModule(int module_internal_address) -> volatile uint32_t;
-  AccelerationModule(StaticAccelInst* acceleration_instance,
-                     int module_position);
+  AccelerationModule(MemoryManager* memory_manager,
+                     int module_position)
+      : memory_manager_(memory_manager),
+        module_position_(module_position){};
 
  public:
   virtual ~AccelerationModule() = 0;

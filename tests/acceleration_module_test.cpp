@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
-
 #include <limits.h>
 
 #include "mock_acceleration_module.hpp"
 namespace {
 const int kDefaultValue = -1;
 
-// Disabled for now due to missing mock acceleration instances needed for acceleration modules.
+// Disabled for now due to missing mock acceleration instances needed for
+// acceleration modules.
 /*
 TEST(AccelerationModuleTest, WriteToModule) {
   std::vector<uint32_t> memory_pointer(524288, kDefaultValue);
