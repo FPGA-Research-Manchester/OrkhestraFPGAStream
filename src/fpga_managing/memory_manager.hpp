@@ -1,15 +1,15 @@
 #pragma once
-#include <string>
-#include "memory_block.hpp"
 #include <cstdint>
-#include "cynq.h"
+#include <string>
+
+#include "memory_block.hpp"
 #include "udma.h"
-class MemoryManager
-{
+class MemoryManager {
  private:
   int memory_block_count_ = 0;
   UdmaRepo udma_repo_;
-  StaticAccelInst acceleration_instance_;
+  uint32_t* register_memory_block_;
+
  public:
   explicit MemoryManager(std::string bitstream_name);
   auto AllocateMemoryBlock() -> MemoryBlock;

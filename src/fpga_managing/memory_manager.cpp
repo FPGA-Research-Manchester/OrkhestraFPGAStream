@@ -1,9 +1,10 @@
 #include "memory_manager.hpp"
-
+#include "cynq.h"
 
 MemoryManager::MemoryManager(std::string bitstream_name) {
   PRManager prmanager;
-  acceleration_instance_ = prmanager.fpgaLoadStatic("DSPI_filtering");
+  register_memory_block_ =
+      prmanager.fpgaLoadStatic("DSPI_filtering").prmanager->accelRegs;
 }
 
 MemoryBlock MemoryManager::AllocateMemoryBlock() {
@@ -11,5 +12,5 @@ MemoryBlock MemoryManager::AllocateMemoryBlock() {
 }
 
 volatile uint32_t* MemoryManager::GetVirtualRegisterAddress(int offset) {
-  return &(acceleration_instance_.prmanager->accelRegs[offset / 4]);
+  return &(register_memory_block_[offset / 4]);
 }
