@@ -1,4 +1,11 @@
 # Source
+if (NOT WIN32)
+	file(GLOB OS_DEPENDENT_MEMORY_BLOCK "udma_memory_block.cpp" "udma_memory_block.hpp")
+else()
+	file(GLOB OS_DEPENDENT_MEMORY_BLOCK "virtual_memory_block.hpp" "virtual_memory_block.cpp")
+endif()
+
+
 add_library(fpga_managing 
             "query_acceleration_constants.hpp"
 			"acceleration_module.cpp"  
@@ -30,9 +37,11 @@ add_library(fpga_managing
 			"memory_block_interface.hpp"
 			"memory_manager.cpp"
 			"memory_manager.hpp"
-			"udma_memory_block.cpp"
-			"udma_memory_block.hpp")
+			${OS_DEPENDENT_MEMORY_BLOCK}
+			)
 
 target_include_directories(fpga_managing PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
-target_link_libraries(fpga_managing PUBLIC fos)
+if (NOT WIN32)
+	target_link_libraries(fpga_managing PUBLIC fos)
+endif()

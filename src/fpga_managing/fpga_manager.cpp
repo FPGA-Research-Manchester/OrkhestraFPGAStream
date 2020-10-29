@@ -58,6 +58,7 @@ void FPGAManager::WaitForStreamsToFinish() {
   FPGAManager::dma_engine_.StartOutputController(
       FPGAManager::output_stream_active_);
 
+#ifdef _FPGA_AVAILABLE
   while (!(FPGAManager::dma_engine_.IsInputControllerFinished() &&
            FPGAManager::dma_engine_.IsOutputControllerFinished())) {
     std::cout << "Processing..." << std::endl;
@@ -68,6 +69,7 @@ void FPGAManager::WaitForStreamsToFinish() {
               << FPGAManager::dma_engine_.IsOutputControllerFinished()
               << std::endl;
   }
+#endif
 }
 
 auto FPGAManager::GetResultingStreamSizes(
