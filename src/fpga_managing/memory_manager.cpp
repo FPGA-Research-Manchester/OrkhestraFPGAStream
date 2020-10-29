@@ -1,10 +1,8 @@
 #include "memory_manager.hpp"
-#include "cynq.h"
 
 MemoryManager::MemoryManager(std::string bitstream_name) {
-  PRManager prmanager;
-  register_memory_block_ =
-      prmanager.fpgaLoadStatic("DSPI_filtering").prmanager->accelRegs;
+  acceleration_instance_ = pr_manager_.fpgaLoadStatic("DSPI_filtering");
+  register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
 }
 
 MemoryBlock MemoryManager::AllocateMemoryBlock() {
