@@ -4,7 +4,6 @@
 #include "dma.hpp"
 #include "memory_manager.hpp"
 #include <string>
-#include "memory_block.hpp"
 #include "filter.hpp"
 
 class FPGAManager {
