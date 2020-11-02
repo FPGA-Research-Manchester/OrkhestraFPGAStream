@@ -6,6 +6,8 @@
 #include "virtual_memory_block.hpp"
 #endif
 
+MemoryManager::~MemoryManager() = default;
+
 MemoryManager::MemoryManager(const std::string& bitstream_name) {
 #ifdef _FPGA_AVAILABLE
   acceleration_instance_ = pr_manager_.fpgaLoadStatic(bitstream_name);

@@ -2,9 +2,6 @@
 
 #include <cstdint>
 
-MockAccelerationModule::MockAccelerationModule(MemoryManager* memory_manager,
-                                               int module_position)
-    : AccelerationModule(memory_manager, module_position) {}
 MockAccelerationModule::~MockAccelerationModule() = default;
 
 void MockAccelerationModule::WriteToModule(int module_internal_address,

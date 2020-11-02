@@ -4,12 +4,12 @@
 #include "acceleration_module.hpp"
 #include "dma_interface.hpp"
 
-#include "memory_manager.hpp"
+#include "memory_manager_interface.hpp"
 
 class DMA : public AccelerationModule, public DMAInterface {
  public:
   ~DMA() override;
-  explicit DMA(MemoryManager* memory_manager)
+  explicit DMA(MemoryManagerInterface* memory_manager)
       : AccelerationModule(memory_manager, 0){};
 
   void SetInputControllerParams(int stream_id, int dd_rburst_size,
