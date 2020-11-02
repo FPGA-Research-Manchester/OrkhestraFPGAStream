@@ -37,6 +37,7 @@ add_library(fpga_managing
 			"memory_block_interface.hpp"
 			"memory_manager.cpp"
 			"memory_manager.hpp"
+			"memory_manager_interface.hpp"
 			${OS_DEPENDENT_MEMORY_BLOCK}
 			)
 

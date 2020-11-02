@@ -5,7 +5,7 @@
 #include "filter_config_values.hpp"
 #include "filter_interface.hpp"
 
-#include "memory_manager.hpp"
+#include "memory_manager_interface.hpp"
 
 class Filter : public AccelerationModule, public FilterInterface {
  private:
@@ -15,7 +15,7 @@ class Filter : public AccelerationModule, public FilterInterface {
 
  public:
   ~Filter() override;
-  explicit Filter(MemoryManager* memory_manager, int module_position)
+  explicit Filter(MemoryManagerInterface* memory_manager, int module_position)
       : AccelerationModule(memory_manager, module_position){};
 
   void FilterSetStreamIDs(int stream_id_input, int stream_id_valid_output,

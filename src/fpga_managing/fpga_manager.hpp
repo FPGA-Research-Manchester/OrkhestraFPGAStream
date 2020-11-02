@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <vector>
 #include "dma.hpp"
-#include "memory_manager.hpp"
+#include "memory_manager_interface.hpp"
 #include <string>
 #include "filter.hpp"
 
@@ -13,7 +13,7 @@ class FPGAManager {
                               int record_size, int record_count);
   auto RunQueryAcceleration() -> std::vector<int>;
 
-  explicit FPGAManager(MemoryManager* memory_manager)
+  explicit FPGAManager(MemoryManagerInterface* memory_manager)
       : memory_manager_{memory_manager},
         dma_engine_{memory_manager} {};
 
@@ -22,7 +22,7 @@ class FPGAManager {
   bool input_stream_active_[kMaxStreamAmount] = {false};
   bool output_stream_active_[kMaxStreamAmount] = {false};
 
-  MemoryManager* memory_manager_;
+  MemoryManagerInterface* memory_manager_;
   DMA dma_engine_;
 
   void FindActiveStreams(std::vector<int>& active_input_stream_ids,

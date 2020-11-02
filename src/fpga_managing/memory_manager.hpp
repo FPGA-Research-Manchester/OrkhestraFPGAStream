@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 
+#include "memory_manager_interface.hpp"
 #include "memory_block_interface.hpp"
 #ifdef _FPGA_AVAILABLE
 #include "cynq.h"
@@ -11,7 +12,7 @@
 #include <vector>
 #endif
 
-class MemoryManager {
+class MemoryManager : public MemoryManagerInterface {
  private:
 #ifdef _FPGA_AVAILABLE
   int memory_block_count_ = 0;
@@ -24,7 +25,8 @@ class MemoryManager {
   std::vector<uint32_t> register_space_;
 #endif
  public:
+  ~MemoryManager() override;
   explicit MemoryManager(const std::string& bitstream_name);
-  auto AllocateMemoryBlock() -> std::unique_ptr<MemoryBlockInterface>;
-  auto GetVirtualRegisterAddress(int offset) -> volatile uint32_t*;
+  auto AllocateMemoryBlock() -> std::unique_ptr<MemoryBlockInterface> override;
+  auto GetVirtualRegisterAddress(int offset) -> volatile uint32_t* override;
 };
