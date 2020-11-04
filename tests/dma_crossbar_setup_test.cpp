@@ -73,7 +73,7 @@ void ExpectConfigurationDataIsConfigured(
   }
 }
 
-TEST(DMACrossbarSetupTest, BufferToInterfaceSetupCheck) {
+TEST(DMACrossbarSetupTest, RecordSize18BufferToInterfaceSetupCheck) {
   const int record_size = 18;
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.chunks_per_record =
@@ -89,7 +89,8 @@ TEST(DMACrossbarSetupTest, BufferToInterfaceSetupCheck) {
       "DMACrossbarSetupTest/RecordSize18BufferToInterfaceChunkSetup.txt",
       "DMACrossbarSetupTest/RecordSize18BufferToInterfacePositionSetup.txt");
 }
-TEST(DMACrossbarSetupTest, InterfaceToBufferSetupCheck) {
+
+TEST(DMACrossbarSetupTest, RecordSize18InterfaceToBufferSetupCheck) {
   const int record_size = 18;
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.chunks_per_record =
@@ -105,4 +106,56 @@ TEST(DMACrossbarSetupTest, InterfaceToBufferSetupCheck) {
       "DMACrossbarSetupTest/RecordSize18InterfaceToBufferChunkSetup.txt",
       "DMACrossbarSetupTest/RecordSize18InterfaceToBufferPositionSetup.txt");
 }
+
+TEST(DMACrossbarSetupTest, RecordSize4BufferToInterfaceSetupCheck) {
+  const int record_size = 4;
+  DMASetupData test_stream_setup_data;
+  test_stream_setup_data.chunks_per_record =
+      CalculateChunksPerRecord(record_size);
+  test_stream_setup_data.is_input_stream = true;
+  ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
+
+  DMACrossbarSetup::CalculateCrossbarSetupData(
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+
+  ExpectConfigurationDataIsConfigured(
+      test_stream_setup_data,
+      "DMACrossbarSetupTest/RecordSize4BufferToInterfaceChunkSetup.txt",
+      "DMACrossbarSetupTest/RecordSize4BufferToInterfacePositionSetup.txt");
+}
+
+TEST(DMACrossbarSetupTest, RecordSize62BufferToInterfaceSetupCheck) {
+  const int record_size = 62;
+  DMASetupData test_stream_setup_data;
+  test_stream_setup_data.chunks_per_record =
+      CalculateChunksPerRecord(record_size);
+  test_stream_setup_data.is_input_stream = true;
+  ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
+
+  DMACrossbarSetup::CalculateCrossbarSetupData(
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+
+  ExpectConfigurationDataIsConfigured(
+      test_stream_setup_data,
+      "DMACrossbarSetupTest/RecordSize62BufferToInterfaceChunkSetup.txt",
+      "DMACrossbarSetupTest/RecordSize62BufferToInterfacePositionSetup.txt");
+}
+
+TEST(DMACrossbarSetupTest, RecordSize510BufferToInterfaceSetupCheck) {
+  const int record_size = 510;
+  DMASetupData test_stream_setup_data;
+  test_stream_setup_data.chunks_per_record =
+      CalculateChunksPerRecord(record_size);
+  test_stream_setup_data.is_input_stream = true;
+  ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
+
+  DMACrossbarSetup::CalculateCrossbarSetupData(
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+
+  ExpectConfigurationDataIsConfigured(
+      test_stream_setup_data,
+      "DMACrossbarSetupTest/RecordSize510BufferToInterfaceChunkSetup.txt",
+      "DMACrossbarSetupTest/RecordSize510BufferToInterfacePositionSetup.txt");
+}
+
 }  // namespace
