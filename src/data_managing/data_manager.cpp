@@ -1,8 +1,14 @@
 #include "data_manager.hpp"
 #include "csv_reader.hpp"
 #include "types_converter.hpp"
+#include "config_reader.hpp"
 
 #include <iostream>
+
+auto DataManager::GetDataConfiguration(std::string config_filename)
+    -> std::map<std::string, double> {
+  return ConfigReader::ParseDataTypeSizesConfig(config_filename);
+}
 
 void DataManager::AddStringDataFromCSV(
     const std::string& file_name,

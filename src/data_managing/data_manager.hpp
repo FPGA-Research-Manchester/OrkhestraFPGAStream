@@ -3,9 +3,12 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <map>
 
 class DataManager {
  public:
+  static auto GetDataConfiguration(std::string config_filename)
+      -> std::map<std::string, double>;
   static void AddStringDataFromCSV(
       const std::string& file_name,
       std::vector<std::vector<std::string>>& resulting_strings);
