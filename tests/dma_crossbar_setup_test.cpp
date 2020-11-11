@@ -65,11 +65,13 @@ void ExpectConfigurationDataIsConfigured(
     EXPECT_THAT(
         configuration_data.crossbar_setup_data[clock_cycle_index]
             .chunk_data,
-        testing::ElementsAreArray(golden_chunk_config[clock_cycle_index]));
+        testing::ElementsAreArray(golden_chunk_config[clock_cycle_index]))
+        << "Vectors differ at clock cycle: " << clock_cycle_index;
     EXPECT_THAT(
         configuration_data.crossbar_setup_data[clock_cycle_index]
             .position_data,
-        testing::ElementsAreArray(golden_position_config[clock_cycle_index]));
+        testing::ElementsAreArray(golden_position_config[clock_cycle_index]))
+        << "Vectors differ at clock cycle: " << clock_cycle_index;
   }
 }
 
@@ -124,8 +126,8 @@ TEST(DMACrossbarSetupTest, RecordSize4BufferToInterfaceSetupCheck) {
       "DMACrossbarSetupTest/RecordSize4BufferToInterfacePositionSetup.txt");
 }
 
-TEST(DMACrossbarSetupTest, RecordSize62BufferToInterfaceSetupCheck) {
-  const int record_size = 62;
+TEST(DMACrossbarSetupTest, RecordSize46BufferToInterfaceSetupCheck) {
+  int record_size = 46;
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.chunks_per_record =
       CalculateChunksPerRecord(record_size);
@@ -137,8 +139,25 @@ TEST(DMACrossbarSetupTest, RecordSize62BufferToInterfaceSetupCheck) {
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
-      "DMACrossbarSetupTest/RecordSize62BufferToInterfaceChunkSetup.txt",
-      "DMACrossbarSetupTest/RecordSize62BufferToInterfacePositionSetup.txt");
+      "DMACrossbarSetupTest/RecordSize46BufferToInterfaceChunkSetup.txt",
+      "DMACrossbarSetupTest/RecordSize46BufferToInterfacePositionSetup.txt");
+}
+
+TEST(DMACrossbarSetupTest, RecordSize57BufferToInterfaceSetupCheck) {
+  int record_size = 57;
+  DMASetupData test_stream_setup_data;
+  test_stream_setup_data.chunks_per_record =
+      CalculateChunksPerRecord(record_size);
+  test_stream_setup_data.is_input_stream = true;
+  ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
+
+  DMACrossbarSetup::CalculateCrossbarSetupData(
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+
+  ExpectConfigurationDataIsConfigured(
+      test_stream_setup_data,
+      "DMACrossbarSetupTest/RecordSize57BufferToInterfaceChunkSetup.txt",
+      "DMACrossbarSetupTest/RecordSize57BufferToInterfacePositionSetup.txt");
 }
 
 TEST(DMACrossbarSetupTest, RecordSize510BufferToInterfaceSetupCheck) {
