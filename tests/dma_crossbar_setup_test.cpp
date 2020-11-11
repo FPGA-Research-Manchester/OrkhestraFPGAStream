@@ -126,6 +126,23 @@ TEST(DMACrossbarSetupTest, RecordSize4BufferToInterfaceSetupCheck) {
       "DMACrossbarSetupTest/RecordSize4BufferToInterfacePositionSetup.txt");
 }
 
+TEST(DMACrossbarSetupTest, RecordSize4InterfaceToBufferSetupCheck) {
+  const int record_size = 4;
+  DMASetupData test_stream_setup_data;
+  test_stream_setup_data.chunks_per_record =
+      CalculateChunksPerRecord(record_size);
+  test_stream_setup_data.is_input_stream = false;
+  ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
+
+  DMACrossbarSetup::CalculateCrossbarSetupData(
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+
+  ExpectConfigurationDataIsConfigured(
+      test_stream_setup_data,
+      "DMACrossbarSetupTest/RecordSize4InterfaceToBufferChunkSetup.txt",
+      "DMACrossbarSetupTest/RecordSize4InterfaceToBufferPositionSetup.txt");
+}
+
 TEST(DMACrossbarSetupTest, RecordSize46BufferToInterfaceSetupCheck) {
   int record_size = 46;
   DMASetupData test_stream_setup_data;
@@ -141,6 +158,23 @@ TEST(DMACrossbarSetupTest, RecordSize46BufferToInterfaceSetupCheck) {
       test_stream_setup_data,
       "DMACrossbarSetupTest/RecordSize46BufferToInterfaceChunkSetup.txt",
       "DMACrossbarSetupTest/RecordSize46BufferToInterfacePositionSetup.txt");
+}
+
+TEST(DMACrossbarSetupTest, RecordSize46InterfaceToBufferSetupCheck) {
+  int record_size = 46;
+  DMASetupData test_stream_setup_data;
+  test_stream_setup_data.chunks_per_record =
+      CalculateChunksPerRecord(record_size);
+  test_stream_setup_data.is_input_stream = false;
+  ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
+
+  DMACrossbarSetup::CalculateCrossbarSetupData(
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+
+  ExpectConfigurationDataIsConfigured(
+      test_stream_setup_data,
+      "DMACrossbarSetupTest/RecordSize46InterfaceToBufferChunkSetup.txt",
+      "DMACrossbarSetupTest/RecordSize46InterfaceToBufferPositionSetup.txt");
 }
 
 TEST(DMACrossbarSetupTest, RecordSize57BufferToInterfaceSetupCheck) {
@@ -160,6 +194,23 @@ TEST(DMACrossbarSetupTest, RecordSize57BufferToInterfaceSetupCheck) {
       "DMACrossbarSetupTest/RecordSize57BufferToInterfacePositionSetup.txt");
 }
 
+TEST(DMACrossbarSetupTest, RecordSize57InterfaceToBufferSetupCheck) {
+  int record_size = 57;
+  DMASetupData test_stream_setup_data;
+  test_stream_setup_data.chunks_per_record =
+      CalculateChunksPerRecord(record_size);
+  test_stream_setup_data.is_input_stream = false;
+  ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
+
+  DMACrossbarSetup::CalculateCrossbarSetupData(
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+
+  ExpectConfigurationDataIsConfigured(
+      test_stream_setup_data,
+      "DMACrossbarSetupTest/RecordSize57InterfaceToBufferChunkSetup.txt",
+      "DMACrossbarSetupTest/RecordSize57InterfaceToBufferPositionSetup.txt");
+}
+
 TEST(DMACrossbarSetupTest, RecordSize510BufferToInterfaceSetupCheck) {
   const int record_size = 510;
   DMASetupData test_stream_setup_data;
@@ -175,6 +226,23 @@ TEST(DMACrossbarSetupTest, RecordSize510BufferToInterfaceSetupCheck) {
       test_stream_setup_data,
       "DMACrossbarSetupTest/RecordSize510BufferToInterfaceChunkSetup.txt",
       "DMACrossbarSetupTest/RecordSize510BufferToInterfacePositionSetup.txt");
+}
+
+TEST(DMACrossbarSetupTest, RecordSize510InterfaceToBufferSetupCheck) {
+  const int record_size = 510;
+  DMASetupData test_stream_setup_data;
+  test_stream_setup_data.chunks_per_record =
+      CalculateChunksPerRecord(record_size);
+  test_stream_setup_data.is_input_stream = false;
+  ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
+
+  DMACrossbarSetup::CalculateCrossbarSetupData(
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+
+  ExpectConfigurationDataIsConfigured(
+      test_stream_setup_data,
+      "DMACrossbarSetupTest/RecordSize510InterfaceToBufferChunkSetup.txt",
+      "DMACrossbarSetupTest/RecordSize510InterfaceToBufferPositionSetup.txt");
 }
 
 }  // namespace
