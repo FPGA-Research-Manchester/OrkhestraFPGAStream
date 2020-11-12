@@ -3,16 +3,18 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <utility>
 
 class TypesConverter {
  public:
   static void AddIntegerDataFromStringData(
       const std::vector<std::vector<std::string>>& string_data,
-      std::vector<uint32_t>& integer_data);
+      std::vector<uint32_t>& integer_data,
+      std::vector<std::pair<std::string, int>> data_types_vector);
   static void AddStringDataFromIntegerData(
       const std::vector<uint32_t>& integer_data,
-      std::vector<std::vector<std::string>>& string_data,
-      const std::vector<int>& data_type_sizes);
+      std::vector<std::vector<std::string>>& resulting_string_data,
+      const std::vector<std::pair<std::string, int>> data_types_vector);
 
   static void ConvertStringValuesToIntegerData(
       const std::string& input, std::vector<uint32_t>& data_vector);

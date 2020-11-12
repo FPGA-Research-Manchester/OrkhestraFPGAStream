@@ -7,7 +7,8 @@ add_library(data_managing
 			"types_converter.hpp"
 			"types_converter.cpp" 
 			"config_reader.cpp"
-			"config_reader.hpp")
+			"config_reader.hpp" 
+			"table_data.hpp")
 
 FetchContent_Declare(
   rapidcsv

@@ -12,6 +12,7 @@
 #include "memory_manager.hpp"
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
+#include "table_data.hpp"
 
 /*
 Filter: (price < 12000)
@@ -42,51 +43,20 @@ void manual_aligned_free(void* ptr) {
   }
 }
 
-
-// Create config - In the config you have data type sizes written down - int = 1 char = 1/4
-// Then read first line of CSV Int-1,Char-32,Char-32,Int-1
-// Then you get column_sizes and data_types + existing data = Create object with that which can return sizes for FPGA_Manager and types for DataManager itself.
-
-
-
-// DataManager - Read config - creates data config map
-// DataManager - ParseCSV - Creates data table struct
-// Struct can be used to put data to DDR and into the FPGA setup methods
-// Output struct can be created as well.
-// Two structs can be compared :)
-
-
 auto main() -> int {
   std::cout << "Starting main" << std::endl;
   auto data_type_sizes = DataManager::GetDataConfiguration("data_config.ini");
-  std::map<std::string, int> table_column_types;
-  table_column_types.insert(std::pair<std::string, int>("integer", 1));
-  table_column_types.insert(std::pair<std::string, int>("varchar", 32));
-  table_column_types.insert(std::pair<std::string, int>("varchar", 32));
-  table_column_types.insert(std::pair<std::string, int>("integer", 1));
+  TableData input_table =  DataManager::ParseDataFromCSV("MOCK_DATA.csv",
+                                                     data_type_sizes);
 
-  std::vector<std::string> table_column_vector = {"integer", "varchar",
-                                                  "varchar", "integer"};
- 
   std::vector<int> column_sizes;
-  for (auto column_type : table_column_vector) {
-    column_sizes.push_back(data_type_sizes[column_type] *
-                           table_column_types[column_type]);
-  }
-
   int record_size = 0;
-  for (int row_size : column_sizes) {
-    record_size += row_size;
+  for (auto column_type : input_table.table_column_label_vector) {
+    column_sizes.push_back(column_type.second);
+    record_size += column_type.second;
   }
 
-  std::vector<std::vector<std::string>> db_data;
-  DataManager::AddStringDataFromCSV("MOCK_DATA.csv", db_data);
-
-  std::vector<uint32_t> input_memory_area;
-  DataManager::AddIntegerDataFromStringData(db_data, input_memory_area);
-  db_data.clear();
-
-  int record_count = input_memory_area.size() / record_size;
+  int record_count = input_table.table_data_vector.size() / record_size;
   int output_memory_size =
       (record_count +
        record_count %
@@ -104,8 +74,8 @@ auto main() -> int {
   volatile uint32_t* input = input_device->GetVirtualAddress();
   volatile uint32_t* output = output_device->GetVirtualAddress();
 
-  for (int i = 0; i < input_memory_area.size(); i++) {
-    input[i] = input_memory_area[i];
+  for (int i = 0; i < input_table.table_data_vector.size(); i++) {
+    input[i] = input_table.table_data_vector[i];
   }
 
   volatile uint32_t* input_data_phy = input_device->GetPhysicalAddress();
@@ -117,20 +87,23 @@ auto main() -> int {
                                       record_size, record_count);
   std::vector<int> result_sizes = fpga_manager.RunQueryAcceleration();
   std::cout << "Query done!" << std::endl;
-  DataManager::AddStringDataFromIntegerData(
-      std::vector<uint32_t>(output, output + (result_sizes[0] * record_size)),
-      db_data, column_sizes);
 
-  std::vector<std::vector<std::string>> golden_data;
-  DataManager::AddStringDataFromCSV("RESULT_DATA.csv", golden_data);
+  TableData resulting_table;
+  resulting_table.table_data_vector =
+      std::vector<uint32_t>(output, output + (result_sizes[0] * record_size));
+  resulting_table.table_column_label_vector =
+      input_table.table_column_label_vector;
 
-  if (golden_data == db_data) {
+  TableData expected_table =
+      DataManager::ParseDataFromCSV("RESULT_DATA.csv", data_type_sizes);
+
+  if (expected_table == resulting_table) {
     std::cout << "Query results are correct!" << std::endl;
   } else {
     std::cout << "Incorrect query results:" << std::endl;
-    DataManager::PrintStringData(db_data);
+    DataManager::PrintTableData(expected_table);
     std::cout << "vs:" << std::endl;
-    DataManager::PrintStringData(golden_data);
+    DataManager::PrintTableData(resulting_table);
   }
 
   return 0;

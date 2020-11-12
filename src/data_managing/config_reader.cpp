@@ -2,6 +2,9 @@
 #include <fstream>
 #include <algorithm>
 
+#include <stdexcept>
+
+
 auto ConfigReader::ParseDataTypeSizesConfig(std::string filename)
     -> std::map<std::string, double> {
   // std::ifstream is RAII, i.e. no need to call close
@@ -20,6 +23,6 @@ auto ConfigReader::ParseDataTypeSizesConfig(std::string filename)
     }
     return config_data;
   } else {
-    // Throw error here
+    throw std::runtime_error((filename + " not found!").c_str());
   }
 }
