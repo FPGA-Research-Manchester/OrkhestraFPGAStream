@@ -17,9 +17,11 @@ class TypesConverter {
       const std::vector<std::pair<std::string, int>> data_types_vector);
 
   static void ConvertStringValuesToIntegerData(
-      const std::string& input, std::vector<uint32_t>& data_vector);
+      const std::string& input, std::vector<uint32_t>& data_vector,
+      int output_size);
   static void ConvertIntegerValuesToIntegerData(
-      const std::string& input, std::vector<uint32_t>& data_vector);
+      const std::string& input, std::vector<uint32_t>& data_vector,
+      int output_size);
   static void ConvertStringValuesToString(
       const std::vector<uint32_t>& input_value,
       std::vector<std::string>& string_vector);
@@ -29,6 +31,7 @@ class TypesConverter {
 
  private:
   static auto ConvertHexStringToString(const std::string& hex) -> std::string;
-  static auto Convert32CharStringToAscii(const std::string& input_string)
+  static auto ConvertCharStringToAscii(const std::string& input_string,
+                                         int output_size)
       -> std::vector<int>;
 };

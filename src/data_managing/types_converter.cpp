@@ -8,7 +8,8 @@ void TypesConverter::AddIntegerDataFromStringData(
     const std::vector<std::vector<std::string>>& string_data,
     std::vector<uint32_t>& integer_data,
     std::vector<std::pair<std::string, int>> data_types_vector) {
-  std::map<std::string, void (*)(const std::string&, std::vector<uint32_t>&)>
+  std::map<std::string,
+           void (*)(const std::string&, std::vector<uint32_t>&, int)>
       conversion_functions;
   conversion_functions.insert(std::make_pair(
       "integer", TypesConverter::ConvertIntegerValuesToIntegerData));
@@ -17,8 +18,8 @@ void TypesConverter::AddIntegerDataFromStringData(
 
   for (auto row : string_data) {
     for (int column = 0; column < row.size(); column++) {
-      conversion_functions[data_types_vector[column].first](row[column],
-                                                            integer_data);
+      conversion_functions[data_types_vector[column].first](
+          row[column], integer_data, data_types_vector[column].second);
     }
   }
 }
@@ -56,14 +57,17 @@ void TypesConverter::AddStringDataFromIntegerData(
 }
 
 void TypesConverter::ConvertStringValuesToIntegerData(
-    const std::string& input, std::vector<uint32_t>& data_vector) {
-  for (auto value : Convert32CharStringToAscii(input)) {
+    const std::string& input, std::vector<uint32_t>& data_vector,
+    int output_size) {
+  // Should throw error when output_size is anything other than 1
+  for (auto value : ConvertCharStringToAscii(input, output_size)) {
     data_vector.push_back(value);
   }
 }
 
 void TypesConverter::ConvertIntegerValuesToIntegerData(
-    const std::string& input, std::vector<uint32_t>& data_vector) {
+    const std::string& input, std::vector<uint32_t>& data_vector,
+    int output_size) {
   data_vector.push_back(std::stoi(input));
 }
 
@@ -98,9 +102,10 @@ auto TypesConverter::ConvertHexStringToString(const std::string& hex)
   return resulting_string;
 }
 
-auto TypesConverter::Convert32CharStringToAscii(const std::string& input_string)
+auto TypesConverter::ConvertCharStringToAscii(const std::string& input_string,
+                                              int output_size)
     -> std::vector<int> {
-  std::vector<int> integer_values(32 / 4, 0);
+  std::vector<int> integer_values(output_size, 0);
   for (int i = 0; i < input_string.length(); i++) {
     integer_values[i / 4] += int(input_string[i]) << (3 - (i % 4)) * 8;
   }
