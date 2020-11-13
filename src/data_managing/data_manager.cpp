@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-auto DataManager::ParseDataFromCSV(std::string filename, std::map<std::string, double> data_type_sizes)
+auto DataManager::ParseDataFromCSV(std::string filename)
     -> TableData {
   std::vector<std::vector<std::string>> data_rows;
   std::vector<std::string> header_row;
@@ -18,7 +18,7 @@ auto DataManager::ParseDataFromCSV(std::string filename, std::map<std::string, d
     auto value = column_data.substr(delimiter_position + 1);
 
     table_column_label_vector.push_back(
-        std::make_pair(name, data_type_sizes[name] * std::stoi(value)));
+        std::make_pair(name, data_type_sizes_[name] * std::stoi(value)));
   }
 
   TableData table_data;

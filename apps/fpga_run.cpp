@@ -1,10 +1,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
-#include <memory>
-#include <vector>
 #include <map>
+#include <memory>
 #include <string>
+#include <vector>
 
 #include "data_manager.hpp"
 #include "fpga_manager.hpp"
@@ -43,61 +43,15 @@ void manual_aligned_free(void* ptr) {
   }
 }
 
-auto main() -> int {
-  std::cout << "Starting main" << std::endl;
-  auto data_type_sizes = DataManager::GetDataConfiguration("data_config.ini");
-  TableData input_table =  DataManager::ParseDataFromCSV("CUSTOMER_DATA.csv",
-                                                     data_type_sizes);
-
-  std::vector<int> column_sizes;
+auto GetRecordSize(TableData& input_table) -> int {
   int record_size = 0;
   for (auto column_type : input_table.table_column_label_vector) {
-    column_sizes.push_back(column_type.second);
     record_size += column_type.second;
   }
+  return record_size;
+}
 
-  int record_count = input_table.table_data_vector.size() / record_size;
-  int output_memory_size =
-      (record_count +
-       record_count %
-           StreamParameterCalculator::FindMinViableRecordsPerDDRBurst(
-               query_acceleration_constants::kDdrBurstSize, record_size)) *
-      record_size;
-
-  MemoryManager memory_manager = MemoryManager("DSPI_filtering");
-
-  std::unique_ptr<MemoryBlockInterface> input_device =
-      memory_manager.AllocateMemoryBlock();
-  std::unique_ptr<MemoryBlockInterface> output_device =
-      memory_manager.AllocateMemoryBlock();
-
-  volatile uint32_t* input = input_device->GetVirtualAddress();
-  volatile uint32_t* output = output_device->GetVirtualAddress();
-
-  for (int i = 0; i < input_table.table_data_vector.size(); i++) {
-    input[i] = input_table.table_data_vector[i];
-  }
-
-  volatile uint32_t* input_data_phy = input_device->GetPhysicalAddress();
-  volatile uint32_t* output_data_phy = output_device->GetPhysicalAddress();
-  FPGAManager fpga_manager(&memory_manager);
-  std::cout << "Main initialisation done!" << std::endl;
-
-  fpga_manager.SetupQueryAcceleration(input_data_phy, output_data_phy,
-                                      record_size, record_count);
-  std::vector<int> result_sizes = fpga_manager.RunQueryAcceleration();
-  std::cout << "Query done!" << std::endl;
-
-  TableData resulting_table;
-  resulting_table.table_data_vector =
-      std::vector<uint32_t>(output, output + (result_sizes[0] * record_size));
-  resulting_table.table_column_label_vector =
-      input_table.table_column_label_vector;
-
-  /*TableData expected_table =
-      DataManager::ParseDataFromCSV("CAR_FILTER_DATA.csv", data_type_sizes);*/
-  TableData expected_table =
-      DataManager::ParseDataFromCSV("CUSTOMER_DATA.csv", data_type_sizes);
+void CheckTableData(TableData& expected_table, TableData& resulting_table) {
   if (expected_table == resulting_table) {
     std::cout << "Query results are correct!" << std::endl;
   } else {
@@ -106,6 +60,69 @@ auto main() -> int {
     std::cout << "vs:" << std::endl;
     DataManager::PrintTableData(resulting_table);
   }
+}
+
+void ReadOutputData(std::unique_ptr<MemoryBlockInterface>& output_device,
+                    TableData& resulting_table, int& result_size) {
+  volatile uint32_t* output = output_device->GetVirtualAddress();
+  resulting_table.table_data_vector = std::vector<uint32_t>(
+      output, output + (result_size * GetRecordSize(resulting_table)));
+}
+
+void WriteInputData(std::unique_ptr<MemoryBlockInterface>& input_device,
+                    TableData& input_table) {
+  volatile uint32_t* input = input_device->GetVirtualAddress();
+  for (int i = 0; i < input_table.table_data_vector.size(); i++) {
+    input[i] = input_table.table_data_vector[i];
+  }
+}
+
+void RunQueryWithData(DataManager& data_manager, FPGAManager& fpga_manager,
+                      std::unique_ptr<MemoryBlockInterface>& input_device,
+                      std::unique_ptr<MemoryBlockInterface>& output_device,
+                      std::string& input_data_filename,
+                      std::string& expected_data_filename) {
+  auto input_table = data_manager.ParseDataFromCSV(input_data_filename);
+  WriteInputData(input_device, input_table);
+
+  fpga_manager.SetupQueryAcceleration(
+      input_device->GetPhysicalAddress(), output_device->GetPhysicalAddress(),
+      GetRecordSize(input_table),
+      input_table.table_data_vector.size() / GetRecordSize(input_table));
+
+  std::cout << "Running query!" << std::endl;
+  auto result_sizes = fpga_manager.RunQueryAcceleration();
+  std::cout << "Query done!" << std::endl;
+
+  TableData resulting_table;
+  resulting_table.table_column_label_vector =
+      input_table.table_column_label_vector;
+  ReadOutputData(output_device, resulting_table, result_sizes[0]);
+
+  auto expected_table = data_manager.ParseDataFromCSV(expected_data_filename);
+  CheckTableData(expected_table, resulting_table);
+}
+
+auto main() -> int {
+  std::cout << "Starting up!" << std::endl;
+  DataManager data_manager("data_config.ini");
+  MemoryManager memory_manager("DSPI_filtering");
+  FPGAManager fpga_manager(&memory_manager);
+  auto input_device = memory_manager.AllocateMemoryBlock();
+  auto output_device = memory_manager.AllocateMemoryBlock();
+
+  std::string input_data_filename = "CUSTOMER_DATA.csv";
+  std::string expected_data_filename = "CUSTOMER_DATA.csv";
+
+  RunQueryWithData(data_manager, fpga_manager, input_device, output_device,
+                   input_data_filename, expected_data_filename);
+
+  input_data_filename = "CAR_DATA.csv";
+  expected_data_filename = "CAR_DATA.csv";
+  //expected_data_filename = "CAR_FILTER_DATA.csv";
+
+  RunQueryWithData(data_manager, fpga_manager, input_device, output_device,
+                   input_data_filename, expected_data_filename);
 
   return 0;
 }
