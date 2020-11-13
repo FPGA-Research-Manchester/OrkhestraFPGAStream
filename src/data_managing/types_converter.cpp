@@ -1,64 +1,73 @@
 #include "types_converter.hpp"
 
 #include <cstdlib>
+#include <map>
 #include <sstream>
 
 void TypesConverter::AddIntegerDataFromStringData(
     const std::vector<std::vector<std::string>>& string_data,
-    std::vector<uint32_t>& integer_data) {
-  std::vector<void (*)(const std::string&, std::vector<uint32_t>&)>
-      conversion_functions = {
-          TypesConverter::ConvertIntegerValuesToIntegerData,
-          TypesConverter::ConvertStringValuesToIntegerData,
-          TypesConverter::ConvertStringValuesToIntegerData,
-          TypesConverter::ConvertIntegerValuesToIntegerData};
+    std::vector<uint32_t>& integer_data,
+    std::vector<std::pair<std::string, int>> data_types_vector) {
+  std::map<std::string,
+           void (*)(const std::string&, std::vector<uint32_t>&, int)>
+      conversion_functions;
+  conversion_functions.insert(std::make_pair(
+      "integer", TypesConverter::ConvertIntegerValuesToIntegerData));
+  conversion_functions.insert(std::make_pair(
+      "varchar", TypesConverter::ConvertStringValuesToIntegerData));
 
   for (auto row : string_data) {
     for (int column = 0; column < row.size(); column++) {
-      conversion_functions[column](row[column], integer_data);
+      conversion_functions[data_types_vector[column].first](
+          row[column], integer_data, data_types_vector[column].second);
     }
   }
 }
 
 void TypesConverter::AddStringDataFromIntegerData(
     const std::vector<uint32_t>& integer_data,
-    std::vector<std::vector<std::string>>& string_data,
-    const std::vector<int>& data_type_sizes) {
-  std::vector<void (*)(const std::vector<uint32_t>&, std::vector<std::string>&)>
-      conversion_functions = {
-          TypesConverter::ConvertIntegerValuesToString,
-          TypesConverter::ConvertStringValuesToString,
-          TypesConverter::ConvertStringValuesToString,
-          TypesConverter::ConvertIntegerValuesToString};
+    std::vector<std::vector<std::string>>& resulting_string_data,
+    const std::vector<std::pair<std::string, int>> data_types_vector) {
+  std::map<std::string,
+           void (*)(const std::vector<uint32_t>&, std::vector<std::string>&)>
+      conversion_functions;
+  conversion_functions.insert(
+      std::make_pair("integer", TypesConverter::ConvertIntegerValuesToString));
+  conversion_functions.insert(
+      std::make_pair("varchar", TypesConverter::ConvertStringValuesToString));
 
   std::vector<uint32_t> current_element;
   std::vector<std::string> current_output_row;
   int current_column_index = 0;
   for (unsigned int element_id : integer_data) {
     current_element.push_back(element_id);
-    if (current_element.size() == data_type_sizes[current_column_index]) {
-      conversion_functions[current_column_index](current_element,
-                                                      current_output_row);
+    if (current_element.size() ==
+        data_types_vector[current_column_index].second) {
+      conversion_functions[data_types_vector[current_column_index].first](
+          current_element, current_output_row);
       current_element.clear();
-      if ((current_column_index + 1) == data_type_sizes.size()) {
-        string_data.push_back(current_output_row);
+      if ((current_column_index + 1) == data_types_vector.size()) {
+        resulting_string_data.push_back(current_output_row);
         current_output_row.clear();
       }
       current_column_index =
-          (current_column_index + 1) % data_type_sizes.size();
+          (current_column_index + 1) % data_types_vector.size();
     }
   }
 }
 
 void TypesConverter::ConvertStringValuesToIntegerData(
-    const std::string& input, std::vector<uint32_t>& data_vector) {
-  for (auto value : Convert32CharStringToAscii(input)) {
+    const std::string& input, std::vector<uint32_t>& data_vector,
+    int output_size) {
+  // Should throw error when output_size is anything other than 1
+  for (auto value : ConvertCharStringToAscii(input, output_size)) {
     data_vector.push_back(value);
   }
 }
 
 void TypesConverter::ConvertIntegerValuesToIntegerData(
-    const std::string& input, std::vector<uint32_t>& data_vector) {
+    const std::string& input, std::vector<uint32_t>& data_vector,
+    int output_size) {
   data_vector.push_back(std::stoi(input));
 }
 
@@ -93,9 +102,10 @@ auto TypesConverter::ConvertHexStringToString(const std::string& hex)
   return resulting_string;
 }
 
-auto TypesConverter::Convert32CharStringToAscii(
-    const std::string& input_string) -> std::vector<int> {
-  std::vector<int> integer_values(32 / 4, 0);
+auto TypesConverter::ConvertCharStringToAscii(const std::string& input_string,
+                                              int output_size)
+    -> std::vector<int> {
+  std::vector<int> integer_values(output_size, 0);
   for (int i = 0; i < input_string.length(); i++) {
     integer_values[i / 4] += int(input_string[i]) << (3 - (i % 4)) * 8;
   }
