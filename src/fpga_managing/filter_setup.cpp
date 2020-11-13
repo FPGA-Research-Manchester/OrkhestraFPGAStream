@@ -41,9 +41,12 @@ void FilterSetup::SetupFilterModule(FilterInterface& filter_module,
 
   int dnf_clause_id = 0;
 
+  /*filter_module.FilterSetDNFClauseLiteral(
+      dnf_clause_id, compare_lane_index, chunk_id, data_position,
+      filter_config_values::LiteralTypes::kLiteralPositive);*/
   filter_module.FilterSetDNFClauseLiteral(
       dnf_clause_id, compare_lane_index, chunk_id, data_position,
-      filter_config_values::LiteralTypes::kLiteralPositive);
+      filter_config_values::LiteralTypes::kLiteralDontCare);
 
   // Currently 4CMP_32DNF module is hardcoded in
   filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(

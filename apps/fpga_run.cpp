@@ -46,7 +46,7 @@ void manual_aligned_free(void* ptr) {
 auto main() -> int {
   std::cout << "Starting main" << std::endl;
   auto data_type_sizes = DataManager::GetDataConfiguration("data_config.ini");
-  TableData input_table =  DataManager::ParseDataFromCSV("MOCK_DATA.csv",
+  TableData input_table =  DataManager::ParseDataFromCSV("CUSTOMER_DATA.csv",
                                                      data_type_sizes);
 
   std::vector<int> column_sizes;
@@ -94,9 +94,10 @@ auto main() -> int {
   resulting_table.table_column_label_vector =
       input_table.table_column_label_vector;
 
+  /*TableData expected_table =
+      DataManager::ParseDataFromCSV("CAR_FILTER_DATA.csv", data_type_sizes);*/
   TableData expected_table =
-      DataManager::ParseDataFromCSV("RESULT_DATA.csv", data_type_sizes);
-
+      DataManager::ParseDataFromCSV("CUSTOMER_DATA.csv", data_type_sizes);
   if (expected_table == resulting_table) {
     std::cout << "Query results are correct!" << std::endl;
   } else {

@@ -7,4 +7,5 @@ const int kDatapathLength = 32; // How many cycles of data the datapath fits
 const int kDdrBurstSize = 512;
 const int kDdrSizePerCycle = 4; // So 1 DDR burst is 128 clock cycles.
 
+const int kMaxRecordsPerDDRBurst = 32;
 }

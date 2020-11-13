@@ -2,6 +2,7 @@
 #include "query_acceleration_constants.hpp"
 
 #include <cmath>
+#include <algorithm>
 
 void StreamParameterCalculator::CalculateDMAStreamSetupData(
     DMASetupData& stream_setup_data, const int& max_chunk_size,
@@ -35,5 +36,6 @@ void StreamParameterCalculator::CalculateDMAStreamSetupData(
 auto StreamParameterCalculator::FindMinViableRecordsPerDDRBurst(
     const int& max_ddr_burst_size, const int& record_size) -> int {
   int records_per_max_burst_size = max_ddr_burst_size / record_size;
-  return pow(2, static_cast<int>(log2(records_per_max_burst_size)));
+  return std::min(query_acceleration_constants::kMaxRecordsPerDDRBurst,
+                  static_cast<int>(pow(2, static_cast<int>(log2(records_per_max_burst_size)))));
 }
