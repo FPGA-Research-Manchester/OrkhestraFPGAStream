@@ -32,20 +32,6 @@ auto DataManager::GetDataConfiguration(std::string config_filename)
   return ConfigReader::ParseDataTypeSizesConfig(config_filename);
 }
 
-//void DataManager::AddStringDataFromCSV(
-//    const std::string& file_name,
-//    std::vector<std::vector<std::string>>& resulting_strings) {
-//  CSVReader::AddCSVRows(file_name, resulting_strings);
-//}
-
-//void DataManager::AddIntegerDataFromStringData(
-//    const std::vector<std::vector<std::string>>& string_data,
-//    std::vector<uint32_t>& integer_data,
-//    std::vector<std::pair<std::string, int>> data_types_vector) {
-//  TypesConverter::AddIntegerDataFromStringData(string_data, integer_data,
-//                                               data_types_vector);
-//}
-
 void DataManager::AddStringDataFromIntegerData(
     const std::vector<uint32_t>& integer_data,
     std::vector<std::vector<std::string>>& string_data,

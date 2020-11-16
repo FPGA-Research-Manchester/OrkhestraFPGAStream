@@ -12,6 +12,12 @@ void FPGAManager::SetupQueryAcceleration(
     const int record_count) {
   const int input_stream_id = 0;
   const int output_stream_id = 1;
+  // Send array of record sizes for input
+  // Send array of record sizes for output
+  // Send array of record_counts for input
+  // Send array of record_counts for output
+  // Can I get away with same input and output blocks?
+
   DMASetup::SetupDMAModule(dma_engine_, input_memory_address,
                            output_memory_address, record_size, record_count,
                            input_stream_id, output_stream_id);

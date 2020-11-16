@@ -13,13 +13,6 @@ class DataManager {
       : data_type_sizes_(DataManager::GetDataConfiguration(config_filename)){};
   auto ParseDataFromCSV(std::string filename)
       -> TableData;
-  /*static void AddStringDataFromCSV(
-      const std::string& file_name,
-      std::vector<std::vector<std::string>>& resulting_strings);*/
-  //static void AddIntegerDataFromStringData(
-  //    const std::vector<std::vector<std::string>>& string_data,
-  //    std::vector<uint32_t>& integer_data,
-  //    std::vector<std::pair<std::string, int>> data_types_vector);
   static void PrintTableData(const TableData table_data);
  private:
   std::map<std::string, double> data_type_sizes_;
