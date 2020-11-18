@@ -129,7 +129,7 @@ void RunQueryWithData(
     const std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>,
                                 std::string>>& input_data_locations,
     const std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>,
-                                std::string>>& output_data_locations) {
+                                std::string>>& output_data_locations, bool is_filtering) {
   std::vector<StreamInitialisationData> input_streams;
   ReadInputTables(input_data_locations, data_manager, input_streams);
 
@@ -139,7 +139,8 @@ void RunQueryWithData(
   ReadExpectedTables(output_data_locations, data_manager,
                      expected_output_tables, output_streams, output_tables);
 
-  fpga_manager.SetupQueryAcceleration(input_streams, output_streams);
+  fpga_manager.SetupQueryAcceleration(input_streams, output_streams,
+                                      is_filtering);
 
   std::cout << "Running query!" << std::endl;
   auto result_sizes = fpga_manager.RunQueryAcceleration();
@@ -161,7 +162,8 @@ void RunQueryWithData(
 auto main() -> int {
   std::cout << "Starting up!" << std::endl;
   DataManager data_manager("data_config.ini");
-  MemoryManager memory_manager("DSPI_filtering");
+  //MemoryManager memory_manager("DSPI_filtering");
+  MemoryManager memory_manager("DSPI_joining");
   FPGAManager fpga_manager(&memory_manager);
 
   // With current settings 8 allocations is the max - after then have to start
@@ -169,36 +171,46 @@ auto main() -> int {
 
   std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>, std::string>>
       input_data_locations;
-  input_data_locations.push_back(std::move(std::make_pair(
-      memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
-  input_data_locations.push_back(std::move(std::make_pair(
-      memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
-  input_data_locations.push_back(std::move(std::make_pair(
-      memory_manager.AllocateMemoryBlock(), std::string("CUSTOMER_DATA.csv"))));
+  //input_data_locations.push_back(std::move(std::make_pair(
+  //    memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
+  //input_data_locations.push_back(std::move(std::make_pair(
+  //    memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
+  //input_data_locations.push_back(std::move(std::make_pair(
+  //    memory_manager.AllocateMemoryBlock(), std::string("CUSTOMER_DATA.csv"))));
+
+     input_data_locations.push_back(
+      std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
+                               std::string("CAR_DATA.csv"))));
+   input_data_locations.push_back(std::move(std::make_pair(
+      memory_manager.AllocateMemoryBlock(),
+      std::string("CUSTOMER_DATA.csv"))));
 
   std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>, std::string>>
       output_data_locations;
-  output_data_locations.push_back(
-      std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
-                               std::string("CAR_FILTER_DATA.csv"))));
+  //output_data_locations.push_back(
+  //    std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
+  //                             std::string("CAR_FILTER_DATA.csv"))));
+  //output_data_locations.push_back(std::move(std::make_pair(
+  //    memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
+  //output_data_locations.push_back(std::move(std::make_pair(
+  //    memory_manager.AllocateMemoryBlock(), std::string("CUSTOMER_DATA.csv"))));
+
   output_data_locations.push_back(std::move(std::make_pair(
-      memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
-  output_data_locations.push_back(std::move(std::make_pair(
-      memory_manager.AllocateMemoryBlock(), std::string("CUSTOMER_DATA.csv"))));
+      memory_manager.AllocateMemoryBlock(), std::string("JOIN_DATA.csv"))));
 
   RunQueryWithData(data_manager, fpga_manager, input_data_locations,
-                   output_data_locations);
+                   output_data_locations, false);
 
-  input_data_locations.clear();
-  output_data_locations.clear();
+  //input_data_locations.clear();
+  //output_data_locations.clear();
 
-  input_data_locations.push_back(std::move(std::make_pair(
-      memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
-  output_data_locations.push_back(
-      std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
-                               std::string("CAR_FILTER_DATA.csv"))));
+  //input_data_locations.push_back(std::move(std::make_pair(
+  //    memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
+  //output_data_locations.push_back(
+  //    std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
+  //                             std::string("CAR_FILTER_DATA.csv"))));
 
-  RunQueryWithData(data_manager, fpga_manager, input_data_locations,
-                   output_data_locations);
+  //RunQueryWithData(data_manager, fpga_manager, input_data_locations,
+  //                 output_data_locations, true);
   return 0;
 }

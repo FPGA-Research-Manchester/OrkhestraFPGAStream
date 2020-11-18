@@ -11,7 +11,7 @@ class FPGAManager {
  public:
   void SetupQueryAcceleration(
       std::vector<StreamInitialisationData> input_streams,
-      std::vector<StreamInitialisationData> output_streams);
+      std::vector<StreamInitialisationData> output_streams, bool is_filtering);
   auto RunQueryAcceleration() -> std::vector<int>;
 
   explicit FPGAManager(MemoryManagerInterface* memory_manager)

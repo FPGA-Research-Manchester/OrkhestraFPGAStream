@@ -5,16 +5,26 @@
 #include "dma_setup.hpp"
 #include "filter.hpp"
 #include "filter_setup.hpp"
+#include "join.hpp"
+#include "join_setup.hpp"
 
 void FPGAManager::SetupQueryAcceleration(
     std::vector<StreamInitialisationData> input_streams,
-    std::vector<StreamInitialisationData> output_streams) {
+    std::vector<StreamInitialisationData> output_streams, bool is_filtering) {
 
   DMASetup::SetupDMAModule(dma_engine_, input_streams, output_streams);
 
+  if (is_filtering){
   Filter filter_module(memory_manager_, 1);
   FilterSetup::SetupFilterModule(filter_module, input_streams[0].stream_id,
                                  output_streams[0].stream_id);
+  } else {
+    Join join_module(memory_manager_, 1);
+    JoinSetup::SetupJoinModule(join_module, input_streams[0].stream_id,
+                               input_streams[1].stream_id,
+                               output_streams[0].stream_id);
+  }
+
   for (auto stream : input_streams) {
     FPGAManager::input_stream_active_[stream.stream_id] = true;
   }
