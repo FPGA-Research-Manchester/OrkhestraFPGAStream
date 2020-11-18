@@ -6,7 +6,7 @@ auto main() -> int {
   int expected_stream_id = 0;
   dma_engine.SetInputControllerStreamAddress(expected_stream_id,
                                              expected_address);
-  int resulting_address =
+  int resulting_address =  // NOLINT
       dma_engine.GetInputControllerStreamAddress(expected_stream_id);
   return 0;
 }
