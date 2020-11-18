@@ -26,9 +26,6 @@ void StreamParameterCalculator::CalculateDMAStreamSetupData(
        max_ddr_size_per_cycle - 1) /
       max_ddr_size_per_cycle;
 
-  // Temporarily for now
-  stream_setup_data.buffer_start = 0;
-  stream_setup_data.buffer_end = 15;
 
   stream_setup_data.stream_address = reinterpret_cast<uintptr_t>(data_address);
 }

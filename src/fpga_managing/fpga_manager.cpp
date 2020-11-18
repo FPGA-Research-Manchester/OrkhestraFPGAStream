@@ -7,26 +7,20 @@
 #include "filter_setup.hpp"
 
 void FPGAManager::SetupQueryAcceleration(
-    volatile uint32_t* input_memory_address,
-    volatile uint32_t* output_memory_address, const int record_size,
-    const int record_count) {
-  const int input_stream_id = 0;
-  const int output_stream_id = 1;
-  // Send array of record sizes for input
-  // Send array of record sizes for output
-  // Send array of record_counts for input
-  // Send array of record_counts for output
-  // Can I get away with same input and output blocks?
+    std::vector<StreamInitialisationData> input_streams,
+    std::vector<StreamInitialisationData> output_streams) {
 
-  DMASetup::SetupDMAModule(dma_engine_, input_memory_address,
-                           output_memory_address, record_size, record_count,
-                           input_stream_id, output_stream_id);
+  DMASetup::SetupDMAModule(dma_engine_, input_streams, output_streams);
 
   Filter filter_module(memory_manager_, 1);
-  FilterSetup::SetupFilterModule(filter_module, input_stream_id,
-                                 output_stream_id);
-  FPGAManager::input_stream_active_[input_stream_id] = true;
-  FPGAManager::output_stream_active_[output_stream_id] = true;
+  FilterSetup::SetupFilterModule(filter_module, input_streams[0].stream_id,
+                                 output_streams[0].stream_id);
+  for (auto stream : input_streams) {
+    FPGAManager::input_stream_active_[stream.stream_id] = true;
+  }
+  for (auto stream : output_streams) {
+    FPGAManager::output_stream_active_[stream.stream_id] = true;
+  }
 }
 
 auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
@@ -84,11 +78,10 @@ auto FPGAManager::GetResultingStreamSizes(
   for (auto stream_id : active_input_stream_ids) {
     FPGAManager::input_stream_active_[stream_id] = false;
   }
-  std::vector<int> result_sizes;
+  std::vector<int> result_sizes (16,0);
   for (auto stream_id : active_output_stream_ids) {
     FPGAManager::output_stream_active_[stream_id] = false;
-    result_sizes.push_back(
-        dma_engine_.GetOutputControllerStreamSize(stream_id));
+    result_sizes[stream_id] = dma_engine_.GetOutputControllerStreamSize(stream_id);
   }
   return result_sizes;
 }

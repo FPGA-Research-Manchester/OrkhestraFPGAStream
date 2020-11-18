@@ -3,12 +3,10 @@
 #include "dma_crossbar_setup.hpp"
 #include "stream_parameter_calculator.hpp"
 
-void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
-                              volatile uint32_t* input_memory_address,
-                              volatile uint32_t* output_memory_address,
-                              const int record_size, const int record_count,
-                              const int input_stream_id,
-                              const int output_stream_id) {
+void DMASetup::SetupDMAModule(
+    DMAInterface& dma_engine,
+    std::vector<StreamInitialisationData> input_streams,
+    std::vector<StreamInitialisationData> output_streams) {
   // Calculate the controller parameter values based on input data and datatypes
   // Every size metric is 1 integer = 4 bytes = 32 bits
   const int max_ddr_burst_size = query_acceleration_constants::kDdrBurstSize;
@@ -16,35 +14,61 @@ void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
   const int max_ddr_size_per_cycle =
       query_acceleration_constants::kDdrSizePerCycle;
 
-  // Input
-  DMASetupData input_stream_setup_data;
-  input_stream_setup_data.stream_id = input_stream_id;
-  input_stream_setup_data.is_input_stream = true;
-  input_stream_setup_data.record_count = record_count;
-  // inputStreamSetupData.record_count = doc.GetRowCount();
-  StreamParameterCalculator::CalculateDMAStreamSetupData(input_stream_setup_data, max_chunk_size,
-                              max_ddr_burst_size, max_ddr_size_per_cycle,
-                              input_memory_address, record_size);
-
-  // Output
-  DMASetupData output_stream_setup_data;
-  output_stream_setup_data.stream_id = output_stream_id;
-  output_stream_setup_data.is_input_stream = false;
-  output_stream_setup_data.record_count = 0;
-  StreamParameterCalculator::CalculateDMAStreamSetupData(
-      output_stream_setup_data, max_chunk_size,
-                              max_ddr_burst_size, max_ddr_size_per_cycle,
-                              output_memory_address, record_size);
-
-  const int any_chunk = 31;
-  const int any_position = 3;
-  DMACrossbarSetup::CalculateCrossbarSetupData(any_chunk, any_position, input_stream_setup_data, record_size);
-  DMACrossbarSetup::CalculateCrossbarSetupData(any_chunk, any_position, output_stream_setup_data, record_size);
+  const int any_chunk = query_acceleration_constants::kDatapathLength -1;
+  const int any_position = 0;
 
   std::vector<DMASetupData> setup_data_for_dma;
-  setup_data_for_dma.push_back(input_stream_setup_data);
-  setup_data_for_dma.push_back(output_stream_setup_data);
+
+  int buffer_size = 16 / input_streams.size();
+  for (auto stream_init_data : input_streams) {
+    DMASetupData input_stream_setup_data;
+    input_stream_setup_data.is_input_stream = true;
+    input_stream_setup_data.record_count = stream_init_data.stream_record_count;
+
+    AddNewStreamDMASetupData(input_stream_setup_data, stream_init_data,
+                             max_chunk_size, max_ddr_burst_size,
+                             max_ddr_size_per_cycle, any_chunk, any_position,
+                             buffer_size, setup_data_for_dma);
+  }
+
+  buffer_size = 16 / output_streams.size();
+  for (auto stream_init_data : output_streams) {
+    DMASetupData output_stream_setup_data;
+    output_stream_setup_data.is_input_stream = false;
+    output_stream_setup_data.record_count = 0;
+
+    AddNewStreamDMASetupData(output_stream_setup_data, stream_init_data,
+                             max_chunk_size, max_ddr_burst_size,
+                             max_ddr_size_per_cycle, any_chunk, any_position,
+                             buffer_size, setup_data_for_dma);
+  }
+
   WriteSetupDataToDMAModule(setup_data_for_dma, dma_engine);
+}
+
+void DMASetup::AddNewStreamDMASetupData(
+    DMASetupData& stream_setup_data,
+    StreamInitialisationData& stream_init_data, const int& max_chunk_size,
+    const int& max_ddr_burst_size, const int& max_ddr_size_per_cycle,
+    const int& any_chunk, const int& any_position, int buffer_size,
+    std::vector<DMASetupData>& setup_data_for_dma) {
+  stream_setup_data.stream_id = stream_init_data.stream_id;
+
+  StreamParameterCalculator::CalculateDMAStreamSetupData(
+      stream_setup_data, max_chunk_size, max_ddr_burst_size,
+      max_ddr_size_per_cycle, stream_init_data.physical_address,
+      stream_init_data.stream_record_size);
+
+  DMACrossbarSetup::CalculateCrossbarSetupData(
+      any_chunk, any_position, stream_setup_data,
+      stream_init_data.stream_record_size);
+
+  stream_setup_data.buffer_start =
+      buffer_size * stream_init_data.stream_id;
+  stream_setup_data.buffer_end =
+      stream_setup_data.buffer_start + buffer_size - 1;
+
+  setup_data_for_dma.push_back(stream_setup_data);
 }
 
 void DMASetup::WriteSetupDataToDMAModule(

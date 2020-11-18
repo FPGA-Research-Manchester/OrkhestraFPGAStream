@@ -5,12 +5,13 @@
 #include "memory_manager_interface.hpp"
 #include <string>
 #include "filter.hpp"
+#include "stream_initialisation_data.hpp"
 
 class FPGAManager {
  public:
-  void SetupQueryAcceleration(volatile uint32_t* input_memory_address,
-                              volatile uint32_t* output_memory_address,
-                              int record_size, int record_count);
+  void SetupQueryAcceleration(
+      std::vector<StreamInitialisationData> input_streams,
+      std::vector<StreamInitialisationData> output_streams);
   auto RunQueryAcceleration() -> std::vector<int>;
 
   explicit FPGAManager(MemoryManagerInterface* memory_manager)
