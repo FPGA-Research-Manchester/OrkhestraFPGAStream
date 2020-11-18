@@ -84,14 +84,11 @@ void WriteInputData(const std::unique_ptr<MemoryBlockInterface>& input_device,
   }
 }
 
-void RunQueryWithData(
-    DataManager& data_manager, FPGAManager& fpga_manager,
+void ReadInputTables(
     const std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>,
                                 std::string>>& input_data_locations,
-    const std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>,
-                                std::string>>& output_data_locations) {
-  std::vector<StreamInitialisationData> input_streams;
-  std::vector<TableData> input_tables;
+    DataManager& data_manager,
+    std::vector<StreamInitialisationData>& input_streams) {
   for (int input_stream_id = 0; input_stream_id < input_data_locations.size();
        input_stream_id++) {
     auto current_input_table = data_manager.ParseDataFromCSV(
@@ -103,21 +100,44 @@ void RunQueryWithData(
          static_cast<int>(current_input_table.table_data_vector.size() /
                           GetRecordSize(current_input_table)),
          input_data_locations[input_stream_id].first->GetPhysicalAddress()});
-    input_tables.push_back(current_input_table);
   }
+}
 
-  std::vector<StreamInitialisationData> output_streams;
-  std::vector<TableData> output_tables;
+void ReadExpectedTables(
+    const std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>,
+                                std::string>>& output_data_locations,
+    DataManager& data_manager, std::vector<TableData>& expected_output_tables,
+    std::vector<StreamInitialisationData>& output_streams,
+    std::vector<TableData>& output_tables) {
   for (int output_stream_id = 0;
        output_stream_id < output_data_locations.size(); output_stream_id++) {
+    auto expected_table = data_manager.ParseDataFromCSV(
+        output_data_locations[output_stream_id].second);
+    expected_output_tables.push_back(expected_table);
     TableData current_resulting_table;
     current_resulting_table.table_column_label_vector =
-        input_tables[output_stream_id].table_column_label_vector;
+        expected_table.table_column_label_vector;
     output_streams.push_back(
         {output_stream_id, GetRecordSize(current_resulting_table), 0,
          output_data_locations[output_stream_id].first->GetPhysicalAddress()});
     output_tables.push_back(current_resulting_table);
   }
+}
+
+void RunQueryWithData(
+    DataManager& data_manager, FPGAManager& fpga_manager,
+    const std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>,
+                                std::string>>& input_data_locations,
+    const std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>,
+                                std::string>>& output_data_locations) {
+  std::vector<StreamInitialisationData> input_streams;
+  ReadInputTables(input_data_locations, data_manager, input_streams);
+
+  std::vector<StreamInitialisationData> output_streams;
+  std::vector<TableData> output_tables;
+  std::vector<TableData> expected_output_tables;
+  ReadExpectedTables(output_data_locations, data_manager,
+                     expected_output_tables, output_streams, output_tables);
 
   fpga_manager.SetupQueryAcceleration(input_streams, output_streams);
 
@@ -133,9 +153,8 @@ void RunQueryWithData(
     std::cout << "Result has " << result_sizes[output_stream_id] << " rows!"
               << std::endl;
 
-    auto expected_table = data_manager.ParseDataFromCSV(
-        output_data_locations[output_stream_id].second);
-    CheckTableData(expected_table, output_tables[output_stream_id]);
+    CheckTableData(expected_output_tables[output_stream_id],
+                   output_tables[output_stream_id]);
   }
 }
 
