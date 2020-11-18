@@ -1,9 +1,9 @@
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <limits.h>
 
-#include "mock_memory_manager.hpp"
 #include "mock_acceleration_module.hpp"
+#include "mock_memory_manager.hpp"
 namespace {
 const int kDefaultValue = -1;
 
@@ -61,8 +61,7 @@ TEST(AccelerationModuleTest, ReadFromModule) {
       .Times(2)
       .WillRepeatedly(::testing::Return(&memory_pointer[1]));
 
-  EXPECT_EQ(kDefaultValue,
-            second_mock_module.ReadFromModule(2));
+  EXPECT_EQ(kDefaultValue, second_mock_module.ReadFromModule(2));
   memory_pointer[1] = 101;
   EXPECT_EQ(101, second_mock_module.ReadFromModule(2));
 }

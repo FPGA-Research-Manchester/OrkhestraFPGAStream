@@ -27,7 +27,7 @@ void TypesConverter::AddIntegerDataFromStringData(
 void TypesConverter::AddStringDataFromIntegerData(
     const std::vector<uint32_t>& integer_data,
     std::vector<std::vector<std::string>>& resulting_string_data,
-    const std::vector<std::pair<std::string, int>> data_types_vector) {
+    const std::vector<std::pair<std::string, int>>& data_types_vector) {
   std::map<std::string,
            void (*)(const std::vector<uint32_t>&, std::vector<std::string>&)>
       conversion_functions;
@@ -67,7 +67,7 @@ void TypesConverter::ConvertStringValuesToIntegerData(
 
 void TypesConverter::ConvertIntegerValuesToIntegerData(
     const std::string& input, std::vector<uint32_t>& data_vector,
-    int output_size) {
+    int /*output_size*/) {
   data_vector.push_back(std::stoi(input));
 }
 
@@ -105,6 +105,11 @@ auto TypesConverter::ConvertHexStringToString(const std::string& hex)
 auto TypesConverter::ConvertCharStringToAscii(const std::string& input_string,
                                               int output_size)
     -> std::vector<int> {
+  if (input_string.length() > output_size * 4) {
+    throw std::runtime_error(
+        (input_string + " is longer than " + std::to_string(output_size * 4))
+            .c_str());
+  }
   std::vector<int> integer_values(output_size, 0);
   for (int i = 0; i < input_string.length(); i++) {
     integer_values[i / 4] += int(input_string[i]) << (3 - (i % 4)) * 8;

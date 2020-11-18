@@ -6,7 +6,7 @@
 #include "mock_dma.hpp"
 namespace {
 const int kInputStreamId = 0;
-const int kOutputStreamId = 1;
+const int kOutputStreamId = 0;
 
 TEST(DMASetupTest, InputParamsSettings) {
   int expected_ddr_burst_length = 72;
@@ -29,11 +29,14 @@ TEST(DMASetupTest, InputParamsSettings) {
   EXPECT_CALL(mock_dma, SetInputControllerStreamSize(kInputStreamId,
                                                      expected_stream_size))
       .Times(1);
-  DMASetup dma_configurer;
 
-  dma_configurer.SetupDMAModule(
-      mock_dma, mock_db_data.data(), mock_output_memory_address, 18,
-      expected_stream_size, kInputStreamId, kOutputStreamId);
+  std::vector<StreamInitialisationData> input_streams = {
+      {kInputStreamId, 18, expected_stream_size, mock_db_data.data()}};
+  std::vector<StreamInitialisationData> output_streams = {
+      {kOutputStreamId, 18, 0, mock_output_memory_address}};
+
+  DMASetup dma_configurer;
+  dma_configurer.SetupDMAModule(mock_dma, input_streams, output_streams);
   free(mock_output_memory_address);
 }
 TEST(DMASetupTest, OutputParamsSettings) {
@@ -55,10 +58,14 @@ TEST(DMASetupTest, OutputParamsSettings) {
       .Times(1);
   EXPECT_CALL(mock_dma, SetOutputControllerStreamSize(kOutputStreamId, 0))
       .Times(1);
+
+  std::vector<StreamInitialisationData> input_streams = {
+      {kInputStreamId, 18, 1000, mock_db_data.data()}};
+  std::vector<StreamInitialisationData> output_streams = {
+      {kOutputStreamId, 18, 0, mock_output_memory_address}};
+
   DMASetup dma_configurer;
-  dma_configurer.SetupDMAModule(mock_dma, mock_db_data.data(),
-                                mock_output_memory_address, 18, 1000,
-                                kInputStreamId, kOutputStreamId);
+  dma_configurer.SetupDMAModule(mock_dma, input_streams, output_streams);
   free(mock_output_memory_address);
 }
 TEST(DMASetupTest, RecordSettings) {
@@ -74,10 +81,14 @@ TEST(DMASetupTest, RecordSettings) {
       .Times(16);
   EXPECT_CALL(mock_dma, SetRecordChunkIDs(kInputStreamId, testing::_, 1))
       .Times(16);
+
+  std::vector<StreamInitialisationData> input_streams = {
+      {kInputStreamId, 18, 1000, mock_db_data.data()}};
+  std::vector<StreamInitialisationData> output_streams = {
+      {kOutputStreamId, 18, 0, mock_output_memory_address}};
+
   DMASetup dma_configurer;
-  dma_configurer.SetupDMAModule(mock_dma, mock_db_data.data(),
-                                mock_output_memory_address, 18, 1000,
-                                kInputStreamId, kOutputStreamId);
+  dma_configurer.SetupDMAModule(mock_dma, input_streams, output_streams);
   free(mock_output_memory_address);
 }
 }  // namespace

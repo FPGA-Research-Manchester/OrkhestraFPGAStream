@@ -179,9 +179,9 @@ void DMACrossbarSetup::FinalDataSetupFromInterfaceToBuffer(
        query_acceleration_constants::kDatapathWidth) -
       last_chunk_leftover_size;
 
-  int initial_valid_chunk_sequence_size;
-  int last_any_chunk_sequence_size;
-  int last_valid_chunk_sequence_size;
+  int initial_valid_chunk_sequence_size = 0;
+  int last_any_chunk_sequence_size = 0;
+  int last_valid_chunk_sequence_size = 0;
 
   if (initial_any_chunk_sequence_size < 0) {
     initial_valid_chunk_sequence_size =
@@ -267,9 +267,9 @@ void DMACrossbarSetup::FinalChunkSetupFromBufferToInterface(
           query_acceleration_constants::kDatapathWidth) -
       last_chunk_leftover_size;
 
-  int initial_valid_chunk_sequence_size;
-  int last_any_chunk_sequence_size;
-  int last_valid_chunk_sequence_size;
+  int initial_valid_chunk_sequence_size = 0;
+  int last_any_chunk_sequence_size = 0;
+  int last_valid_chunk_sequence_size = 0;
 
   if (initial_any_chunk_sequence_size < 0) {
     initial_valid_chunk_sequence_size =

@@ -8,7 +8,7 @@
 
 MemoryManager::~MemoryManager() = default;
 
-MemoryManager::MemoryManager(const std::string& bitstream_name) {
+MemoryManager::MemoryManager(const std::string& bitstream_name) { //NOLINT
 #ifdef _FPGA_AVAILABLE
   acceleration_instance_ = pr_manager_.fpgaLoadStatic(bitstream_name);
   register_memory_block_ = acceleration_instance_.prmanager->accelRegs;

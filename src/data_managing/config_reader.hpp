@@ -4,6 +4,6 @@
 class ConfigReader
 {
  public:
-  static auto ParseDataTypeSizesConfig(std::string filename)
+  static auto ParseDataTypeSizesConfig(const std::string& filename)
       -> std::map<std::string, double>;
 };
