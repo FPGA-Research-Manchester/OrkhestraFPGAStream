@@ -14,7 +14,7 @@ class TypesConverter {
   static void AddStringDataFromIntegerData(
       const std::vector<uint32_t>& integer_data,
       std::vector<std::vector<std::string>>& resulting_string_data,
-      const std::vector<std::pair<std::string, int>> data_types_vector);
+      const std::vector<std::pair<std::string, int>>& data_types_vector);
 
   static void ConvertStringValuesToIntegerData(
       const std::string& input, std::vector<uint32_t>& data_vector,

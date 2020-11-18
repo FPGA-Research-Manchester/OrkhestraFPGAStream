@@ -9,8 +9,8 @@ class DMASetup {
  public:
   static void SetupDMAModule(
       DMAInterface &dma_engine,
-      std::vector<StreamInitialisationData> input_streams,
-      std::vector<StreamInitialisationData> output_streams);
+      const std::vector<StreamInitialisationData> &input_streams,
+      const std::vector<StreamInitialisationData> &output_streams);
 
  private:
   static void AddNewStreamDMASetupData(

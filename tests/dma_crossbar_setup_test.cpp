@@ -41,13 +41,11 @@ void ExpectConfigurationDataIsUnconfigured(DMASetupData configuration_data) {
   for (int clock_cycle_index = 0; clock_cycle_index < kDatapathLength;
        clock_cycle_index++) {
     EXPECT_THAT(
-        configuration_data.crossbar_setup_data[clock_cycle_index]
-                    .chunk_data,
-                testing::ElementsAreArray(kUntouchedVector));
+        configuration_data.crossbar_setup_data[clock_cycle_index].chunk_data,
+        testing::ElementsAreArray(kUntouchedVector));
     EXPECT_THAT(
-        configuration_data.crossbar_setup_data[clock_cycle_index]
-                    .position_data,
-                testing::ElementsAreArray(kUntouchedVector));
+        configuration_data.crossbar_setup_data[clock_cycle_index].position_data,
+        testing::ElementsAreArray(kUntouchedVector));
   }
 }
 
@@ -55,21 +53,17 @@ void ExpectConfigurationDataIsConfigured(
     DMASetupData configuration_data, std::string golden_chunk_data_file,
     std::string golden_position_data_file) {
   std::vector<std::vector<int>> golden_chunk_config;
-  GetGoldenConfigFromFile(
-      golden_chunk_config, golden_chunk_data_file);
+  GetGoldenConfigFromFile(golden_chunk_config, golden_chunk_data_file);
   std::vector<std::vector<int>> golden_position_config;
-  GetGoldenConfigFromFile(
-      golden_position_config, golden_position_data_file);
+  GetGoldenConfigFromFile(golden_position_config, golden_position_data_file);
   for (int clock_cycle_index = 0; clock_cycle_index < kDatapathLength;
        clock_cycle_index++) {
     EXPECT_THAT(
-        configuration_data.crossbar_setup_data[clock_cycle_index]
-            .chunk_data,
+        configuration_data.crossbar_setup_data[clock_cycle_index].chunk_data,
         testing::ElementsAreArray(golden_chunk_config[clock_cycle_index]))
         << "Vectors differ at clock cycle: " << clock_cycle_index;
     EXPECT_THAT(
-        configuration_data.crossbar_setup_data[clock_cycle_index]
-            .position_data,
+        configuration_data.crossbar_setup_data[clock_cycle_index].position_data,
         testing::ElementsAreArray(golden_position_config[clock_cycle_index]))
         << "Vectors differ at clock cycle: " << clock_cycle_index;
   }

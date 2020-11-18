@@ -82,7 +82,7 @@ TEST(DMASetupTest, RecordSettings) {
   EXPECT_CALL(mock_dma, SetRecordChunkIDs(kInputStreamId, testing::_, 1))
       .Times(16);
 
-    std::vector<StreamInitialisationData> input_streams = {
+  std::vector<StreamInitialisationData> input_streams = {
       {kInputStreamId, 18, 1000, mock_db_data.data()}};
   std::vector<StreamInitialisationData> output_streams = {
       {kOutputStreamId, 18, 0, mock_output_memory_address}};

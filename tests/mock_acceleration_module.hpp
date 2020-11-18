@@ -7,7 +7,7 @@
 class MockAccelerationModule : public AccelerationModule {
  public:
   MockAccelerationModule(MemoryManagerInterface* memory_manager,
-                                                 int module_position)
+                         int module_position)
       : AccelerationModule(memory_manager, module_position) {}
   ~MockAccelerationModule() override;
   void WriteToModule(int module_internal_address, uint32_t write_data);
