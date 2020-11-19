@@ -13,6 +13,11 @@ void FPGAManager::SetupQueryAcceleration(
     std::vector<StreamInitialisationData> output_streams, bool is_filtering) {
 
   DMASetup::SetupDMAModule(dma_engine_, input_streams, output_streams);
+  for (auto stream : input_streams) {
+    FPGAManager::input_stream_active_[stream.stream_id] = true;
+  }
+  FPGAManager::dma_engine_.StartInputController(
+      FPGAManager::input_stream_active_);
 
   if (is_filtering){
   Filter filter_module(memory_manager_, 1);
@@ -25,10 +30,7 @@ void FPGAManager::SetupQueryAcceleration(
                                output_streams[0].stream_id);
   }
 
-  for (auto stream : input_streams) {
-    FPGAManager::input_stream_active_[stream.stream_id] = true;
-  }
-  for (auto stream : output_streams) {
+    for (auto stream : output_streams) {
     FPGAManager::output_stream_active_[stream.stream_id] = true;
   }
 }
@@ -63,8 +65,6 @@ void FPGAManager::FindActiveStreams(
 }
 
 void FPGAManager::WaitForStreamsToFinish() {
-  FPGAManager::dma_engine_.StartInputController(
-      FPGAManager::input_stream_active_);
   FPGAManager::dma_engine_.StartOutputController(
       FPGAManager::output_stream_active_);
 
