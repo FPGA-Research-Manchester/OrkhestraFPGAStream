@@ -176,7 +176,7 @@ auto main() -> int {
   std::cout << "Starting up!" << std::endl;
   DataManager data_manager("data_config.ini");
 
-  bool is_filtering = true;
+  bool is_filtering = false;
 
   std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>, std::string>>
       input_data_locations;
@@ -208,8 +208,20 @@ auto main() -> int {
     RunQueryWithData(data_manager, fpga_manager, input_data_locations,
                      output_data_locations, is_filtering);
   } else {
+    // Commented out code doesn't let the query even finish
     MemoryManager memory_manager("DSPI_joining");
     FPGAManager fpga_manager(&memory_manager);
+
+    fill_data_locations_vector(input_data_locations, &memory_manager,
+        {"CAR_DATA.csv", "CUSTOMER_DATA.csv"/*, "CAR_FILTER_DATA.csv"*/});
+    fill_data_locations_vector(output_data_locations, &memory_manager,
+                               {"JOIN_DATA.csv"/*, "CAR_FILTER_DATA.csv"*/});
+
+    RunQueryWithData(data_manager, fpga_manager, input_data_locations,
+                     output_data_locations, is_filtering);
+
+    /*input_data_locations.clear();
+    output_data_locations.clear();
 
     fill_data_locations_vector(input_data_locations, &memory_manager,
                                {"CAR_DATA.csv", "CUSTOMER_DATA.csv"});
@@ -217,7 +229,7 @@ auto main() -> int {
                                {"JOIN_DATA.csv"});
 
     RunQueryWithData(data_manager, fpga_manager, input_data_locations,
-                     output_data_locations, is_filtering);
+                     output_data_locations, is_filtering);*/
   }
   return 0;
 }
