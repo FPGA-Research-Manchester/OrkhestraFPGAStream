@@ -4,7 +4,7 @@ class DMAInterface {
  public:
   virtual ~DMAInterface() = default;
 
-  virtual void SetInputControllerParams(int stream_id, int dd_rburst_size,
+  virtual void SetInputControllerParams(int stream_id, int ddr_burst_size,
                                         int records_per_ddr_burst,
                                         int buffer_start, int buffer_end) = 0;
   virtual auto GetInputControllerParams(int stream_id) -> volatile uint32_t = 0;
@@ -21,7 +21,7 @@ class DMAInterface {
   virtual void SetRecordChunkIDs(int stream_id, int interface_cycle,
                                  int chunk_id) = 0;
 
-  virtual void SetOutputControllerParams(int stream_id, int dd_rburst_size,
+  virtual void SetOutputControllerParams(int stream_id, int ddr_burst_size,
                                          int records_per_ddr_burst,
                                          int buffer_start, int buffer_end) = 0;
   virtual auto GetOutputControllerParams(int stream_id)
@@ -43,15 +43,6 @@ class DMAInterface {
       int stream_id, int clock_cycle, int offset, int source_position4,
       int source_position3, int source_position2, int source_position1) = 0;
 
-  virtual void SetAXItoBufferChunk(int stream_id, int clock_cycle, int offset,
-                                   int target_chunk4, int target_chunk3,
-                                   int target_chunk2, int target_chunk1) = 0;
-  virtual void SetAXItoBufferSourcePosition(int stream_id, int clock_cycle,
-                                            int offset, int source_position4,
-                                            int source_position3,
-                                            int source_position2,
-                                            int source_position1) = 0;
-
   virtual void SetInterfaceToBufferChunk(int stream_id, int clock_cycle,
                                          int offset, int target_chunk4,
                                          int target_chunk3, int target_chunk2,
@@ -60,12 +51,15 @@ class DMAInterface {
       int stream_id, int clock_cycle, int offset, int source_position4,
       int source_position3, int source_position2, int source_position1) = 0;
 
-  virtual void SetBufferToAXIChunk(int stream_id, int clock_cycle, int offset,
-                                   int source_chunk4, int source_chunk3,
-                                   int source_chunk2, int source_chunk1) = 0;
-  virtual void SetBufferToAXISourcePosition(int stream_id, int clock_cycle,
-                                            int offset, int source_position4,
-                                            int source_position3,
-                                            int source_position2,
-                                            int source_position1) = 0;
+  virtual void SetNumberOfInputStreamsWithMultipleChannels(int number) = 0;
+  virtual void SetRecordsPerBurstForMultiChannelStreams(
+      int stream_id, int records_per_burst) = 0;
+  virtual void SetDDRBurstSizeForMultiChannelStreams(int stream_id,
+                                                     int ddr_burst_size) = 0;
+  virtual void SetNumberOfActiveChannelsForMultiChannelStreams(
+      int stream_id, int active_channels) = 0;
+  virtual void SetAddressForMultiChannelStreams(int stream_id, int channel_id,
+                                                uintptr_t address) = 0;
+  virtual void SetSizeForMultiChannelStreams(int stream_id, int channel_id,
+                                             int number_of_records) = 0;
 };

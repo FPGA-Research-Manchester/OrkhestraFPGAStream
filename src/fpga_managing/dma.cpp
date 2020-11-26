@@ -13,29 +13,30 @@ module.
 DMA::~DMA() = default;
 
 // Input Controller
-void DMA::SetInputControllerParams(int stream_id, int dd_rburst_size,
+void DMA::SetInputControllerParams(int stream_id, int ddr_burst_size,
                                    int records_per_ddr_burst, int buffer_start,
                                    int buffer_end) {
   AccelerationModule::WriteToModule(
-      stream_id * 4, ((dd_rburst_size - 1) << 24) +
-                         (static_cast<int>(log2(records_per_ddr_burst)) << 16) +
-                         (buffer_start << 8) + (buffer_end));
+      (1 << 6) + stream_id * 4,
+      ((ddr_burst_size - 1) << 24) +
+          (static_cast<int>(log2(records_per_ddr_burst)) << 16) +
+          (buffer_start << 8) + (buffer_end));
 }
 auto DMA::GetInputControllerParams(int stream_id) -> volatile uint32_t {
-  return AccelerationModule::ReadFromModule(stream_id * 4);
+  return AccelerationModule::ReadFromModule((1 << 6) + stream_id * 4);
 }
 void DMA::SetInputControllerStreamAddress(int stream_id, uintptr_t address) {
-  AccelerationModule::WriteToModule(((1 << 6) + (stream_id * 4)), address >> 4);
+  AccelerationModule::WriteToModule(((2 << 6) + (stream_id * 4)), address >> 4);
 }
 auto DMA::GetInputControllerStreamAddress(int stream_id) -> volatile uintptr_t {
-  return AccelerationModule::ReadFromModule((1 << 6) + (stream_id * 4)) << 4;
+  return AccelerationModule::ReadFromModule((2 << 6) + (stream_id * 4)) << 4;
 }
 void DMA::SetInputControllerStreamSize(
     int stream_id, int size) {  // starting size of stream in amount of records
-  AccelerationModule::WriteToModule(((2 << 6) + (stream_id * 4)), size);
+  AccelerationModule::WriteToModule(((3 << 6) + (stream_id * 4)), size);
 }
 auto DMA::GetInputControllerStreamSize(int stream_id) -> volatile int {
-  return AccelerationModule::ReadFromModule(((2 << 6) + (stream_id * 4)));
+  return AccelerationModule::ReadFromModule(((3 << 6) + (stream_id * 4)));
 }
 void DMA::StartInputController(
     bool stream_active[16]) {  // indicate which streams can be read from DDR
@@ -47,7 +48,7 @@ void DMA::StartInputController(
       active_streams = active_streams + 1;
     }
   }
-  AccelerationModule::WriteToModule(3 << 6, active_streams);
+  AccelerationModule::WriteToModule(0, active_streams);
 }
 auto DMA::IsInputControllerFinished()
     -> bool {  // true if all input streams were read from DDR
@@ -70,12 +71,12 @@ void DMA::SetRecordChunkIDs(int stream_id, int interface_cycle, int chunk_id) {
 }
 
 // Output Controller
-void DMA::SetOutputControllerParams(int stream_id, int dd_rburst_size,
+void DMA::SetOutputControllerParams(int stream_id, int ddr_burst_size,
                                     int records_per_ddr_burst, int buffer_start,
                                     int buffer_end) {
   AccelerationModule::WriteToModule(
       ((1 << 16) + (stream_id * 4)),
-      ((dd_rburst_size - 1) << 24) +
+      ((ddr_burst_size - 1) << 24) +
           (static_cast<int>(log2(records_per_ddr_burst)) << 16) +
           (buffer_start << 8) + (buffer_end));
 }
@@ -151,35 +152,6 @@ void DMA::SetBufferToInterfaceSourcePosition(int stream_id, int clock_cycle,
        (source_position2 << 8) + source_position1));
 }
 
-// Input Crossbar from AXI/DDR Input to Buffers
-void DMA::SetAXItoBufferChunk(int stream_id, int clock_cycle, int offset,
-                              int target_chunk4, int target_chunk3,
-                              int target_chunk2, int target_chunk1) {
-  /*When 32-bit data packets inside the {clockCycle} clock cycle of the AXI read
-  data burst of stream with ID {stream_id} reach the BRAM buffers in positions
-  {offset*4}-{offset*4+3}, they can be written to any target chunk to aid data
-  reordering and duplication. sourceChunk1 represents position {offset*4} etc.*/
-  AccelerationModule::WriteToModule(
-      ((2 << 18) + (1 << 17) + (stream_id << 13) + (clock_cycle << 5) +
-       (offset << 2)),
-      ((target_chunk4 << 24) + (target_chunk3 << 16) + (target_chunk2 << 8) +
-       target_chunk1));
-}
-void DMA::SetAXItoBufferSourcePosition(int stream_id, int clock_cycle,
-                                       int offset, int source_position4,
-                                       int source_position3,
-                                       int source_position2,
-                                       int source_position1) {
-  /*When an AXI read data enters the DMA, the {offset*4}-{offset*4+3} data
-  positions for the buffer in the {clockCycle} clock cycle of the AXI
-  transaction of stream with ID {stream_id}, they can select any 32-bit data
-  source from AXI datapath. sourceChunk1 represents position {offset*4} etc..*/
-  AccelerationModule::WriteToModule(
-      ((2 << 18) + (stream_id << 13) + (clock_cycle << 5) + (offset << 2)),
-      ((source_position4 << 24) + (source_position3 << 16) +
-       (source_position2 << 8) + source_position1));
-}
-
 // Output Crossbar from Interface to Buffers
 void DMA::SetInterfaceToBufferChunk(int stream_id, int clock_cycle, int offset,
                                     int target_chunk4, int target_chunk3,
@@ -211,33 +183,42 @@ void DMA::SetInterfaceToBufferSourcePosition(int stream_id, int clock_cycle,
        (source_position2 << 8) + source_position1));
 }
 
-// Output Crossbar from Buffers to AXI/DDR
-void DMA::SetBufferToAXIChunk(int stream_id, int clock_cycle, int offset,
-                              int source_chunk4, int source_chunk3,
-                              int source_chunk2, int source_chunk1) {
-  /*32-bit data words are read from the BRAM buffers in positions
-  {offset*4}-{offset*4+3} to be used inside the {clockCycle} clock cycle of the
-  AXI read data burst of stream with ID {stream_id}. Every BRAM can read on a
-  different arbitrary position defined by this register.
-   sourceChunk1 represents position {offset*4} etc.*/
-  AccelerationModule::WriteToModule(
-      ((3 << 18) + (1 << 17) + (stream_id << 13) + (clock_cycle << 5) +
-       (offset << 2)),
-      ((source_chunk4 << 24) + (source_chunk3 << 16) + (source_chunk2 << 8) +
-       source_chunk1));
+// MultiChannel
+void DMA::SetNumberOfInputStreamsWithMultipleChannels(
+    int number) {  // Number of special channeled streams (for example for merge
+                   // sorting) These streams would be located at StreamIDs
+                   // 0..(number-1)
+  AccelerationModule::WriteToModule(4, number);
 }
-void DMA::SetBufferToAXISourcePosition(int stream_id, int clock_cycle,
-                                       int offset, int source_position4,
-                                       int source_position3,
-                                       int source_position2,
-                                       int source_position1) {
-  /*Routing information for 32-bit data packets {offset*4}-{offset*4+3} inside
-  the {clockCycle} clock cycle of the AXI write data burst of stream with ID
-  {stream_id}. 32-bit data packets {offset*4}-{offset*4+3} are routed to the DDR
-  AXI from any of the BRAM buffers in the middle between the two crossbars.
-  sourceChunk1 represents position {offset*4} etc..*/
+
+void DMA::SetRecordsPerBurstForMultiChannelStreams(
+    int stream_id, int records_per_burst) {  // possible values 1-32
+  AccelerationModule::WriteToModule(0x80000 + (stream_id * 4),
+                                    records_per_burst);
+}
+
+void DMA::SetDDRBurstSizeForMultiChannelStreams(
+    int stream_id, int ddr_burst_size) {  // burst size -1
+  AccelerationModule::WriteToModule(0x80000 + (1 << 6) + (stream_id * 4),
+                                    ddr_burst_size);
+}
+
+void DMA::SetNumberOfActiveChannelsForMultiChannelStreams(
+    int stream_id,
+    int active_channels) {  // possible values 1 to the synthesized channel
+                            // capacity (1024 currently)
+  AccelerationModule::WriteToModule(0x80000 + (2 << 6) + (stream_id * 4),
+                                    active_channels);
+}
+
+void DMA::SetAddressForMultiChannelStreams(int stream_id, int channel_id,
+                                           uintptr_t address) {
   AccelerationModule::WriteToModule(
-      ((3 << 18) + (stream_id << 13) + (clock_cycle << 5) + (offset << 2)),
-      ((source_position4 << 24) + (source_position3 << 16) +
-       (source_position2 << 8) + source_position1));
+      0x8000 + (1 << 16) + (stream_id << 14) + (channel_id << 2), address);
+}
+void DMA::SetSizeForMultiChannelStreams(int stream_id, int channel_id,
+                                   int number_of_records) {
+  AccelerationModule::WriteToModule(
+      0x8000 + (2 << 16) + (stream_id << 14) + (channel_id << 2),
+      number_of_records);
 }

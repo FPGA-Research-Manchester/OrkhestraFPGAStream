@@ -12,7 +12,7 @@ class DMA : public AccelerationModule, public DMAInterface {
   explicit DMA(MemoryManagerInterface* memory_manager)
       : AccelerationModule(memory_manager, 0){};
 
-  void SetInputControllerParams(int stream_id, int dd_rburst_size,
+  void SetInputControllerParams(int stream_id, int ddr_burst_size,
                                 int records_per_ddr_burst, int buffer_start,
                                 int buffer_end) override;
   auto GetInputControllerParams(int stream_id) -> volatile uint32_t override;
@@ -29,7 +29,7 @@ class DMA : public AccelerationModule, public DMAInterface {
   void SetRecordChunkIDs(int stream_id, int interface_cycle,
                          int chunk_id) override;
 
-  void SetOutputControllerParams(int stream_id, int dd_rburst_size,
+  void SetOutputControllerParams(int stream_id, int ddr_burst_size,
                                  int records_per_ddr_burst, int buffer_start,
                                  int buffer_end) override;
   auto GetOutputControllerParams(int stream_id) -> volatile uint32_t override;
@@ -51,14 +51,6 @@ class DMA : public AccelerationModule, public DMAInterface {
                                           int source_position2,
                                           int source_position1) override;
 
-  void SetAXItoBufferChunk(int stream_id, int clock_cycle, int offset,
-                           int target_chunk4, int target_chunk3,
-                           int target_chunk2, int target_chunk1) override;
-  void SetAXItoBufferSourcePosition(int stream_id, int clock_cycle, int offset,
-                                    int source_position4, int source_position3,
-                                    int source_position2,
-                                    int source_position1) override;
-
   void SetInterfaceToBufferChunk(int stream_id, int clock_cycle, int offset,
                                  int target_chunk4, int target_chunk3,
                                  int target_chunk2, int target_chunk1) override;
@@ -68,11 +60,15 @@ class DMA : public AccelerationModule, public DMAInterface {
                                           int source_position2,
                                           int source_position1) override;
 
-  void SetBufferToAXIChunk(int stream_id, int clock_cycle, int offset,
-                           int source_chunk4, int source_chunk3,
-                           int source_chunk2, int source_chunk1) override;
-  void SetBufferToAXISourcePosition(int stream_id, int clock_cycle, int offset,
-                                    int source_position4, int source_position3,
-                                    int source_position2,
-                                    int source_position1) override;
+  void SetNumberOfInputStreamsWithMultipleChannels(int number) override;
+  void SetRecordsPerBurstForMultiChannelStreams(int stream_id,
+                                                int records_per_burst) override;
+  void SetDDRBurstSizeForMultiChannelStreams(int stream_id,
+                                             int ddr_burst_size) override;
+  void SetNumberOfActiveChannelsForMultiChannelStreams(
+      int stream_id, int active_channels) override;
+  void SetAddressForMultiChannelStreams(int stream_id, int channel_id,
+                                        uintptr_t address) override;
+  void SetSizeForMultiChannelStreams(int stream_id, int channel_id,
+                                     int number_of_records) override;
 };

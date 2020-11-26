@@ -1,6 +1,7 @@
 #include "join.hpp"
 
 #include <cmath>
+#include <iostream>
 
 Join::~Join() = default;
 
@@ -30,4 +31,6 @@ void Join::SelectOutputDataElement(int output_chunk_id, int input_chunk_id,
       (static_cast<int>(is_element_from_second_stream) << 16) + input_chunk_id);
 }
 
-void Join::StartPrefetchingData() { AccelerationModule::WriteToModule(0, 1); }
+void Join::StartPrefetchingData() { 
+    /*std::cout << "starting join" << std::endl;*/
+    AccelerationModule::WriteToModule(0, 1); }
