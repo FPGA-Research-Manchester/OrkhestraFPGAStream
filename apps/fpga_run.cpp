@@ -57,15 +57,15 @@ void CheckTableData(TableData& expected_table, TableData& resulting_table) {
     std::cout << "Query results are correct!" << std::endl;
   } else {
     std::cout << "Incorrect query results:" << std::endl;
-    /*std::cout << expected_table.table_data_vector.size() /
+    std::cout << expected_table.table_data_vector.size() /
                      GetRecordSize(expected_table)
-              << std::endl;*/
-    DataManager::PrintTableData(expected_table);
+              << std::endl;
+    //DataManager::PrintTableData(expected_table);
     std::cout << "vs:" << std::endl;
-    /*std::cout << resulting_table.table_data_vector.size() /
+    std::cout << resulting_table.table_data_vector.size() /
                      GetRecordSize(resulting_table)
-              << std::endl;*/
-    DataManager::PrintTableData(resulting_table);
+              << std::endl;
+    /*DataManager::PrintTableData(resulting_table);*/
   }
 }
 
@@ -159,58 +159,66 @@ void RunQueryWithData(
   }
 }
 
+// With current settings 8 allocations is the max - after then have to start
+// reusing or sharing
 auto main() -> int {
   std::cout << "Starting up!" << std::endl;
   DataManager data_manager("data_config.ini");
-  //MemoryManager memory_manager("DSPI_filtering");
-  MemoryManager memory_manager("DSPI_joining");
-  FPGAManager fpga_manager(&memory_manager);
 
-  // With current settings 8 allocations is the max - after then have to start
-  // reusing or sharing
+  bool is_filtering = true;
 
   std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>, std::string>>
       input_data_locations;
-  //input_data_locations.push_back(std::move(std::make_pair(
-  //    memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
-  //input_data_locations.push_back(std::move(std::make_pair(
-  //    memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
-  //input_data_locations.push_back(std::move(std::make_pair(
-  //    memory_manager.AllocateMemoryBlock(), std::string("CUSTOMER_DATA.csv"))));
-
-     input_data_locations.push_back(
-      std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
-                               std::string("CAR_DATA.csv"))));
-   input_data_locations.push_back(std::move(std::make_pair(
-      memory_manager.AllocateMemoryBlock(),
-      std::string("CUSTOMER_DATA.csv"))));
-
   std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>, std::string>>
       output_data_locations;
-  //output_data_locations.push_back(
-  //    std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
-  //                             std::string("CAR_FILTER_DATA.csv"))));
-  //output_data_locations.push_back(std::move(std::make_pair(
-  //    memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
-  //output_data_locations.push_back(std::move(std::make_pair(
-  //    memory_manager.AllocateMemoryBlock(), std::string("CUSTOMER_DATA.csv"))));
 
-  output_data_locations.push_back(std::move(std::make_pair(
-      memory_manager.AllocateMemoryBlock(), std::string("JOIN_DATA.csv"))));
+  if (is_filtering) {
+    MemoryManager memory_manager("DSPI_filtering");
+    FPGAManager fpga_manager(&memory_manager);
 
-  RunQueryWithData(data_manager, fpga_manager, input_data_locations,
-                   output_data_locations, false);
+    input_data_locations.push_back(std::move(std::make_pair(
+        memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
+    input_data_locations.push_back(std::move(std::make_pair(
+        memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
+    input_data_locations.push_back(
+        std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
+                                 std::string("CUSTOMER_DATA.csv"))));
 
-  //input_data_locations.clear();
-  //output_data_locations.clear();
+    output_data_locations.push_back(
+        std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
+                                 std::string("CAR_FILTER_DATA.csv"))));
+    output_data_locations.push_back(std::move(std::make_pair(
+        memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
+    output_data_locations.push_back(
+        std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
+                                 std::string("CUSTOMER_DATA.csv"))));
 
-  //input_data_locations.push_back(std::move(std::make_pair(
-  //    memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
-  //output_data_locations.push_back(
-  //    std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
-  //                             std::string("CAR_FILTER_DATA.csv"))));
+    RunQueryWithData(data_manager, fpga_manager, input_data_locations,
+                     output_data_locations, is_filtering);
 
-  //RunQueryWithData(data_manager, fpga_manager, input_data_locations,
-  //                 output_data_locations, true);
+     input_data_locations.push_back(std::move(std::make_pair(
+        memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
+     output_data_locations.push_back(
+        std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
+                                 std::string("CAR_FILTER_DATA.csv"))));
+
+     RunQueryWithData(data_manager, fpga_manager, input_data_locations,
+                      output_data_locations, is_filtering);
+  } else {
+    MemoryManager memory_manager("DSPI_joining");
+    FPGAManager fpga_manager(&memory_manager);
+
+    input_data_locations.push_back(std::move(std::make_pair(
+        memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
+    input_data_locations.push_back(
+        std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
+                                 std::string("CUSTOMER_DATA.csv"))));
+
+    output_data_locations.push_back(std::move(std::make_pair(
+        memory_manager.AllocateMemoryBlock(), std::string("JOIN_DATA.csv"))));
+
+    RunQueryWithData(data_manager, fpga_manager, input_data_locations,
+                     output_data_locations, is_filtering);
+  }
   return 0;
 }
