@@ -60,7 +60,7 @@ void CheckTableData(TableData& expected_table, TableData& resulting_table) {
     std::cout << expected_table.table_data_vector.size() /
                      GetRecordSize(expected_table)
               << std::endl;
-    //DataManager::PrintTableData(expected_table);
+    // DataManager::PrintTableData(expected_table);
     std::cout << "vs:" << std::endl;
     std::cout << resulting_table.table_data_vector.size() /
                      GetRecordSize(resulting_table)
@@ -129,7 +129,8 @@ void RunQueryWithData(
     const std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>,
                                 std::string>>& input_data_locations,
     const std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>,
-                                std::string>>& output_data_locations, bool is_filtering) {
+                                std::string>>& output_data_locations,
+    bool is_filtering) {
   std::vector<StreamInitialisationData> input_streams;
   ReadInputTables(input_data_locations, data_manager, input_streams);
 
@@ -159,6 +160,16 @@ void RunQueryWithData(
   }
 }
 
+void fill_data_locations_vector(
+    std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>, std::string>>&
+        data_locations,
+    MemoryManager* memory_manager, const std::vector<std::string>& filename_vector) {
+  for (auto& filename : filename_vector) {
+    data_locations.push_back(std::move(std::make_pair(
+        memory_manager->AllocateMemoryBlock(), filename)));
+  }
+}
+
 // With current settings 8 allocations is the max - after then have to start
 // reusing or sharing
 auto main() -> int {
@@ -176,46 +187,34 @@ auto main() -> int {
     MemoryManager memory_manager("DSPI_filtering");
     FPGAManager fpga_manager(&memory_manager);
 
-    input_data_locations.push_back(std::move(std::make_pair(
-        memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
-    input_data_locations.push_back(std::move(std::make_pair(
-        memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
-    input_data_locations.push_back(
-        std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
-                                 std::string("CUSTOMER_DATA.csv"))));
-
-    output_data_locations.push_back(
-        std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
-                                 std::string("CAR_FILTER_DATA.csv"))));
-    output_data_locations.push_back(std::move(std::make_pair(
-        memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
-    output_data_locations.push_back(
-        std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
-                                 std::string("CUSTOMER_DATA.csv"))));
+    fill_data_locations_vector(
+        input_data_locations, &memory_manager,
+        {"CAR_DATA.csv", "CAR_DATA.csv", "CUSTOMER_DATA.csv"});
+    fill_data_locations_vector(
+        output_data_locations, &memory_manager,
+        {"CAR_FILTER_DATA.csv", "CAR_DATA.csv", "CUSTOMER_DATA.csv"});
 
     RunQueryWithData(data_manager, fpga_manager, input_data_locations,
                      output_data_locations, is_filtering);
 
-     input_data_locations.push_back(std::move(std::make_pair(
-        memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
-     output_data_locations.push_back(
-        std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
-                                 std::string("CAR_FILTER_DATA.csv"))));
+    input_data_locations.clear();
+    output_data_locations.clear();
 
-     RunQueryWithData(data_manager, fpga_manager, input_data_locations,
-                      output_data_locations, is_filtering);
+    fill_data_locations_vector(input_data_locations, &memory_manager,
+                               {"CAR_DATA.csv"});
+    fill_data_locations_vector(output_data_locations, &memory_manager,
+                               {"CAR_FILTER_DATA.csv"});
+
+    RunQueryWithData(data_manager, fpga_manager, input_data_locations,
+                     output_data_locations, is_filtering);
   } else {
     MemoryManager memory_manager("DSPI_joining");
     FPGAManager fpga_manager(&memory_manager);
 
-    input_data_locations.push_back(std::move(std::make_pair(
-        memory_manager.AllocateMemoryBlock(), std::string("CAR_DATA.csv"))));
-    input_data_locations.push_back(
-        std::move(std::make_pair(memory_manager.AllocateMemoryBlock(),
-                                 std::string("CUSTOMER_DATA.csv"))));
-
-    output_data_locations.push_back(std::move(std::make_pair(
-        memory_manager.AllocateMemoryBlock(), std::string("JOIN_DATA.csv"))));
+    fill_data_locations_vector(input_data_locations, &memory_manager,
+                               {"CAR_DATA.csv", "CUSTOMER_DATA.csv"});
+    fill_data_locations_vector(output_data_locations, &memory_manager,
+                               {"JOIN_DATA.csv"});
 
     RunQueryWithData(data_manager, fpga_manager, input_data_locations,
                      output_data_locations, is_filtering);
