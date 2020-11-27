@@ -68,18 +68,18 @@ class MockDMA : public DMAInterface {
   MOCK_METHOD(void, SetNumberOfInputStreamsWithMultipleChannels, (int number),
               (override));
   MOCK_METHOD(void, SetRecordsPerBurstForMultiChannelStreams,
-              (int stream_id, int records_per_burst),
-              (override));
+              (int stream_id, int records_per_burst), (override));
   MOCK_METHOD(void, SetDDRBurstSizeForMultiChannelStreams,
-              (int stream_id, int ddr_burst_size),
-              (override));
+              (int stream_id, int ddr_burst_size), (override));
   MOCK_METHOD(void, SetNumberOfActiveChannelsForMultiChannelStreams,
-              (int stream_id, int active_channels),
-              (override));
+              (int stream_id, int active_channels), (override));
   MOCK_METHOD(void, SetAddressForMultiChannelStreams,
-              (int stream_id, int channel_id, uintptr_t address),
-              (override));
+              (int stream_id, int channel_id, uintptr_t address), (override));
   MOCK_METHOD(void, SetSizeForMultiChannelStreams,
               (int stream_id, int channel_id, int number_of_records),
               (override));
+
+  MOCK_METHOD(volatile uint64_t, GetRuntime, (), (override));
+  MOCK_METHOD(volatile uint64_t, GetValidReadCyclesCount, (), (override));
+  MOCK_METHOD(volatile uint64_t, GetValidWriteCyclesCount, (), (override));
 };

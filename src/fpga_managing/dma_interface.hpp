@@ -62,4 +62,8 @@ class DMAInterface {
                                                 uintptr_t address) = 0;
   virtual void SetSizeForMultiChannelStreams(int stream_id, int channel_id,
                                              int number_of_records) = 0;
+  
+  virtual auto GetRuntime() -> volatile uint64_t = 0;
+  virtual auto GetValidReadCyclesCount() -> volatile uint64_t = 0;
+  virtual auto GetValidWriteCyclesCount() -> volatile uint64_t = 0;
 };

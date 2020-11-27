@@ -163,10 +163,11 @@ void RunQueryWithData(
 void fill_data_locations_vector(
     std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>, std::string>>&
         data_locations,
-    MemoryManager* memory_manager, const std::vector<std::string>& filename_vector) {
-  for (auto& filename : filename_vector) {
-    data_locations.push_back(std::move(std::make_pair(
-        memory_manager->AllocateMemoryBlock(), filename)));
+    MemoryManager* memory_manager,
+    const std::vector<std::string>& filename_vector) {
+  for (const auto& filename : filename_vector) {
+    data_locations.push_back(std::move(
+        std::make_pair(memory_manager->AllocateMemoryBlock(), filename)));
   }
 }
 
@@ -176,7 +177,7 @@ auto main() -> int {
   std::cout << "Starting up!" << std::endl;
   DataManager data_manager("data_config.ini");
 
-  bool is_filtering = false;
+  bool is_filtering = true;
 
   std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>, std::string>>
       input_data_locations;
@@ -212,10 +213,11 @@ auto main() -> int {
     MemoryManager memory_manager("DSPI_joining");
     FPGAManager fpga_manager(&memory_manager);
 
-    fill_data_locations_vector(input_data_locations, &memory_manager,
-        {"CAR_DATA.csv", "CUSTOMER_DATA.csv"/*, "CAR_FILTER_DATA.csv"*/});
+    fill_data_locations_vector(
+        input_data_locations, &memory_manager,
+        {"CAR_DATA.csv", "CUSTOMER_DATA.csv" /*, "CAR_FILTER_DATA.csv"*/});
     fill_data_locations_vector(output_data_locations, &memory_manager,
-                               {"JOIN_DATA.csv"/*, "CAR_FILTER_DATA.csv"*/});
+                               {"JOIN_DATA.csv" /*, "CAR_FILTER_DATA.csv"*/});
 
     RunQueryWithData(data_manager, fpga_manager, input_data_locations,
                      output_data_locations, is_filtering);

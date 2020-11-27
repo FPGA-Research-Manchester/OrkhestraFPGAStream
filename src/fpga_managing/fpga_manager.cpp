@@ -46,6 +46,13 @@ auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
   }
 
   WaitForStreamsToFinish();
+#ifdef _FPGA_AVAILABLE
+  std::cout << "Runtime: " << FPGAManager::dma_engine_.GetRuntime() << std::endl;
+  std::cout << "ValidReadCount:" << FPGAManager::dma_engine_.GetRuntime()
+            << std::endl;
+  std::cout << "ValidWriteCount:" << FPGAManager::dma_engine_.GetRuntime()
+            << std::endl;
+#endif
   return GetResultingStreamSizes(active_input_stream_ids,
                                  active_output_stream_ids);
 }

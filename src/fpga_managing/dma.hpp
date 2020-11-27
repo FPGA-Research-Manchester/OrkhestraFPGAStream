@@ -71,4 +71,8 @@ class DMA : public AccelerationModule, public DMAInterface {
                                         uintptr_t address) override;
   void SetSizeForMultiChannelStreams(int stream_id, int channel_id,
                                      int number_of_records) override;
+
+  auto GetRuntime() -> volatile uint64_t override;
+  auto GetValidReadCyclesCount() -> volatile uint64_t override;
+  auto GetValidWriteCyclesCount() -> volatile uint64_t override;
 };

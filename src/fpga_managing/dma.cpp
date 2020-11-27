@@ -217,8 +217,24 @@ void DMA::SetAddressForMultiChannelStreams(int stream_id, int channel_id,
       0x8000 + (1 << 16) + (stream_id << 14) + (channel_id << 2), address);
 }
 void DMA::SetSizeForMultiChannelStreams(int stream_id, int channel_id,
-                                   int number_of_records) {
+                                        int number_of_records) {
   AccelerationModule::WriteToModule(
       0x8000 + (2 << 16) + (stream_id << 14) + (channel_id << 2),
       number_of_records);
+}
+
+auto DMA::GetRuntime() -> volatile uint64_t {
+  auto high = AccelerationModule::ReadFromModule(0x8000);
+  auto low = AccelerationModule::ReadFromModule(0x8004);
+  return ((static_cast<uint64_t>(high)) << 32) | (static_cast<uint64_t>(low));
+}
+auto DMA::GetValidReadCyclesCount() -> volatile uint64_t {
+  auto high = AccelerationModule::ReadFromModule(0x8008);
+  auto low = AccelerationModule::ReadFromModule(0x800c);
+  return ((static_cast<uint64_t>(high)) << 32) | (static_cast<uint64_t>(low));
+}
+auto DMA::GetValidWriteCyclesCount() -> volatile uint64_t {
+  auto high = AccelerationModule::ReadFromModule(0x8010);
+  auto low = AccelerationModule::ReadFromModule(0x8014);
+  return ((static_cast<uint64_t>(high)) << 32) | (static_cast<uint64_t>(low));
 }
