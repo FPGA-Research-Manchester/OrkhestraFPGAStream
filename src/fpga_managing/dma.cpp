@@ -214,12 +214,12 @@ void DMA::SetNumberOfActiveChannelsForMultiChannelStreams(
 void DMA::SetAddressForMultiChannelStreams(int stream_id, int channel_id,
                                            uintptr_t address) {
   AccelerationModule::WriteToModule(
-      0x8000 + (1 << 16) + (stream_id << 14) + (channel_id << 2), address);
+      0x80000 + (1 << 16) + (stream_id << 14) + (channel_id << 2), address);
 }
 void DMA::SetSizeForMultiChannelStreams(int stream_id, int channel_id,
                                         int number_of_records) {
   AccelerationModule::WriteToModule(
-      0x8000 + (2 << 16) + (stream_id << 14) + (channel_id << 2),
+      0x80000 + (2 << 16) + (stream_id << 14) + (channel_id << 2),
       number_of_records);
 }
 

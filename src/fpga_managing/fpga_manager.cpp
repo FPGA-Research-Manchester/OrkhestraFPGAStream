@@ -11,7 +11,6 @@
 void FPGAManager::SetupQueryAcceleration(
     std::vector<StreamInitialisationData> input_streams,
     std::vector<StreamInitialisationData> output_streams, bool is_filtering) {
-
   DMASetup::SetupDMAModule(dma_engine_, input_streams, output_streams);
   for (auto stream : input_streams) {
     FPGAManager::input_stream_active_[stream.stream_id] = true;
@@ -19,10 +18,10 @@ void FPGAManager::SetupQueryAcceleration(
   FPGAManager::dma_engine_.StartInputController(
       FPGAManager::input_stream_active_);
 
-  if (is_filtering){
-  Filter filter_module(memory_manager_, 1);
-  FilterSetup::SetupFilterModule(filter_module, input_streams[0].stream_id,
-                                 output_streams[0].stream_id);
+  if (is_filtering) {
+    Filter filter_module(memory_manager_, 1);
+    FilterSetup::SetupFilterModule(filter_module, input_streams[0].stream_id,
+                                   output_streams[0].stream_id);
   } else {
     Join join_module(memory_manager_, 1);
     JoinSetup::SetupJoinModule(join_module, input_streams[0].stream_id,
@@ -30,7 +29,7 @@ void FPGAManager::SetupQueryAcceleration(
                                output_streams[0].stream_id);
   }
 
-    for (auto stream : output_streams) {
+  for (auto stream : output_streams) {
     FPGAManager::output_stream_active_[stream.stream_id] = true;
   }
 }
@@ -47,7 +46,8 @@ auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
 
   WaitForStreamsToFinish();
 #ifdef _FPGA_AVAILABLE
-  std::cout << "Runtime: " << FPGAManager::dma_engine_.GetRuntime() << std::endl;
+  std::cout << "Runtime: " << FPGAManager::dma_engine_.GetRuntime()
+            << std::endl;
   std::cout << "ValidReadCount:" << FPGAManager::dma_engine_.GetRuntime()
             << std::endl;
   std::cout << "ValidWriteCount:" << FPGAManager::dma_engine_.GetRuntime()
@@ -95,10 +95,11 @@ auto FPGAManager::GetResultingStreamSizes(
   for (auto stream_id : active_input_stream_ids) {
     FPGAManager::input_stream_active_[stream_id] = false;
   }
-  std::vector<int> result_sizes (16,0);
+  std::vector<int> result_sizes(16, 0);
   for (auto stream_id : active_output_stream_ids) {
     FPGAManager::output_stream_active_[stream_id] = false;
-    result_sizes[stream_id] = dma_engine_.GetOutputControllerStreamSize(stream_id);
+    result_sizes[stream_id] =
+        dma_engine_.GetOutputControllerStreamSize(stream_id);
   }
   return result_sizes;
 }

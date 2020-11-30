@@ -44,6 +44,29 @@ Filter: (price < 12000)
 //  }
 //}
 
+// Debug method
+void PrintInputDataOut(
+    DataManager& data_manager,
+    const std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>,
+                                std::string>>& input_data_locations) {
+  for (int input_stream_id = 0; input_stream_id < input_data_locations.size();
+       input_stream_id++) {
+    auto current_input_table = data_manager.ParseDataFromCSV(
+        input_data_locations[input_stream_id].second);
+    auto table_from_file = current_input_table.table_data_vector;
+    volatile uint32_t* input =
+        input_data_locations[input_stream_id].first->GetVirtualAddress();
+    auto input_table =
+        std::vector<uint32_t>(input, input + (table_from_file.size() / 2));
+    current_input_table.table_data_vector = input_table;
+    DataManager::PrintTableData(current_input_table);
+    input_table = std::vector<uint32_t>(input + (table_from_file.size() / 2),
+                                        input + (table_from_file.size()));
+    current_input_table.table_data_vector = input_table;
+    DataManager::PrintTableData(current_input_table);
+  }
+}
+
 auto GetRecordSize(TableData& input_table) -> int {
   int record_size = 0;
   for (const auto& column_type : input_table.table_column_label_vector) {
