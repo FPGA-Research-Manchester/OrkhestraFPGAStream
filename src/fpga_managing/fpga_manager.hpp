@@ -33,4 +33,5 @@ class FPGAManager {
                                const std::vector<int>& active_output_stream_ids)
       -> std::vector<int>;
   void PrintILAData(int ila_id, int max_clock);
+  void PrintAxiILAData(int max_clock);
 };

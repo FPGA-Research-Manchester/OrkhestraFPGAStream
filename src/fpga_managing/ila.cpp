@@ -7,6 +7,8 @@ void ILA::startILAs() {
     ILA::WriteToModule(0x12000004, 3);
 }
 
+void ILA::startAxiILA() { ILA::WriteToModule(0x14000000, 1); }
+
 auto ILA::getValues(int clock_cycle, int location, ILADataTypes data_type)
     -> uint32_t {
   return ILA::ReadFromModule(
@@ -19,6 +21,9 @@ auto ILA::calcAddress(int clock, int location, int offset) -> int {
   }
   if (location == 1) {
     return (0x12000000 + (clock << 11) + (offset << 2));
+  }
+  if (location == 2) {
+    return (0x14000000 + (clock << 11) + (offset << 2));
   }
 }
 

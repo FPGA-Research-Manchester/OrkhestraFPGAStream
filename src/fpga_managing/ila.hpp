@@ -8,6 +8,7 @@ class ILA {
   explicit ILA(MemoryManagerInterface* memory_manager)
       : memory_manager_(memory_manager){};
   void startILAs();
+  void startAxiILA();
   auto getValues(int clock_cycle, int location, ILADataTypes data_type)
       -> uint32_t;
 

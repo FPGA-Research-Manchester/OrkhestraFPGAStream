@@ -553,7 +553,7 @@ StaticAccelInst PRManager::fpgaLoadStatic(std::string name) {
     inst.prmanager = this;
     fpga0.loadFull(bs->bitstream);
     
-    accelMap = mmioGetMmap("/dev/mem", acc.address, 0x12400000);
+    accelMap = mmioGetMmap("/dev/mem", acc.address, 0x14600000);
     if (accelMap.fd == -1)
       throw std::runtime_error("could not mmap accel");
     accelRegs = (uint32_t*)accelMap.mmap;

@@ -12,6 +12,10 @@
 void FPGAManager::SetupQueryAcceleration(
     std::vector<StreamInitialisationData> input_streams,
     std::vector<StreamInitialisationData> output_streams, bool is_filtering) {
+  if (!is_filtering) {
+    ILA ila_module(memory_manager_);
+    ila_module.startAxiILA();
+  }
   DMASetup::SetupDMAModule(dma_engine_, input_streams, output_streams);
   for (const auto& stream : input_streams) {
     FPGAManager::input_stream_active_[stream.stream_id] = true;
@@ -65,6 +69,10 @@ auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
                  "DATA ======================================================="
               << std::endl;
     PrintILAData(1, 2048);
+    std::cout << "======================================================ILA 2 "
+                 "DATA ======================================================="
+              << std::endl;
+    PrintAxiILAData(2048);
   }
 
 #endif
@@ -119,9 +127,9 @@ auto FPGAManager::GetResultingStreamSizes(
   return result_sizes;
 }
 
-void FPGAManager::PrintILAData(int ila_id, int /*max_clock*/) {
+void FPGAManager::PrintILAData(int ila_id, int max_clock) {
   ILA ila_module(memory_manager_);
-  for (int clock = 0; clock < 2048; clock++) {
+  for (int clock = 0; clock < max_clock; clock++) {
     std::cout
         << "ILA " << ila_id << " CLOCK " << clock << ":"
         << "CLOCK_CYCLE "
@@ -130,16 +138,14 @@ void FPGAManager::PrintILAData(int ila_id, int /*max_clock*/) {
         << "TYPE " << ila_module.getValues(clock, ila_id, ILADataTypes::kType)
         << "; "
         << "STREAMID "
-        << ila_module.getValues(clock, ila_id, ILADataTypes::kStreamID)
-        << "; "
+        << ila_module.getValues(clock, ila_id, ILADataTypes::kStreamID) << "; "
         << "CHUNKID "
         << ila_module.getValues(clock, ila_id, ILADataTypes::kChunkID) << "; "
-        << "STATE " << ila_module.getValues(clock, 1, ILADataTypes::kState)
+        << "STATE " << ila_module.getValues(clock, ila_id, ILADataTypes::kState)
         << "; "
         << "CHANNELID "
-        << ila_module.getValues(clock, ila_id, ILADataTypes::kChannelID)
-        << "; "
-        << "LAST " << ila_module.getValues(clock, 1, ILADataTypes::kLast)
+        << ila_module.getValues(clock, ila_id, ILADataTypes::kChannelID) << "; "
+        << "LAST " << ila_module.getValues(clock, ila_id, ILADataTypes::kLast)
         << "; "
         << "DATA_15 "
         << ila_module.getValues(clock, ila_id, ILADataTypes::kDataAtPos15)
@@ -154,7 +160,54 @@ void FPGAManager::PrintILAData(int ila_id, int /*max_clock*/) {
         << ila_module.getValues(clock, ila_id, ILADataTypes::kInstrStreamID)
         << "; "
         << "INSTR_TYPE "
-        << ila_module.getValues(clock, ila_id, ILADataTypes::kInstrType)
-        << "; " << std::endl;
+        << ila_module.getValues(clock, ila_id, ILADataTypes::kInstrType) << "; "
+        << "JOIN_STATE "
+        << ila_module.getValues(clock, ila_id, ILADataTypes::kJoinState) << "; "
+        << std::endl;
+  }
+}
+
+void FPGAManager::PrintAxiILAData(int max_clock) {
+  ILA ila_module(memory_manager_);
+  for (int clock = 0; clock < max_clock; clock++) {
+    std::cout << "ILA " << 2 << " CLOCK " << clock << ":"
+              << "kAxiClockCycle "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiClockCycle)
+              << std::endl
+              << "kAxiAWV "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiAWV) << "; "
+              << "kAxiAWR "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiAWR) << "; "
+              << "kAxiAWA "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiAWA) << "; "
+              << "kAxiWV "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiWV) << "; "
+              << "kAxiWR "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiWR) << "; "
+              << "kAxiWD "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiWD) << "; "
+              << "kAxiWS "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiWS) << "; "
+              << "kAxiBV "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiBV) << "; "
+              << "kAxiBR "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiBR) << "; "
+              << "kAxiBRESP "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiBRESP) << "; "
+              << "kAxiARV "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiARV) << "; "
+              << "kAxiARR "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiARR) << "; "
+              << "kAxiARA "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiARA) << "; "
+              << "kAxiRV "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiRV) << "; "
+              << "kAxiRR "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiRR) << "; "
+              << "kAxiRD "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiRD) << "; "
+              << "kAxiRRESP "
+              << ila_module.getValues(clock, 2, ILADataTypes::kAxiRRESP) << "; "
+              << std::endl;
   }
 }
