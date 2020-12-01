@@ -49,13 +49,11 @@ void PrintInputDataOut(
     DataManager& data_manager,
     const std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>,
                                 std::string>>& input_data_locations) {
-  for (int input_stream_id = 0; input_stream_id < input_data_locations.size();
-       input_stream_id++) {
-    auto current_input_table = data_manager.ParseDataFromCSV(
-        input_data_locations[input_stream_id].second);
+  for (const auto& input_data_location : input_data_locations) {
+    auto current_input_table =
+        data_manager.ParseDataFromCSV(input_data_location.second);
     auto table_from_file = current_input_table.table_data_vector;
-    volatile uint32_t* input =
-        input_data_locations[input_stream_id].first->GetVirtualAddress();
+    volatile uint32_t* input = input_data_location.first->GetVirtualAddress();
     auto input_table =
         std::vector<uint32_t>(input, input + (table_from_file.size() / 2));
     current_input_table.table_data_vector = input_table;
@@ -88,7 +86,7 @@ void CheckTableData(TableData& expected_table, TableData& resulting_table) {
     std::cout << resulting_table.table_data_vector.size() /
                      GetRecordSize(resulting_table)
               << std::endl;
-    /*DataManager::PrintTableData(resulting_table);*/
+    DataManager::PrintTableData(resulting_table);
   }
 }
 
@@ -200,7 +198,7 @@ auto main() -> int {
   std::cout << "Starting up!" << std::endl;
   DataManager data_manager("data_config.ini");
 
-  bool is_filtering = true;
+  bool is_filtering = false;
 
   std::vector<std::pair<std::unique_ptr<MemoryBlockInterface>, std::string>>
       input_data_locations;

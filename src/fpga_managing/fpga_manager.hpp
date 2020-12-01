@@ -15,8 +15,7 @@ class FPGAManager {
   auto RunQueryAcceleration() -> std::vector<int>;
 
   explicit FPGAManager(MemoryManagerInterface* memory_manager)
-      : memory_manager_{memory_manager},
-        dma_engine_{memory_manager} {};
+      : memory_manager_{memory_manager}, dma_engine_{memory_manager} {};
 
  private:
   const static int kMaxStreamAmount = 16;
@@ -25,6 +24,7 @@ class FPGAManager {
 
   MemoryManagerInterface* memory_manager_;
   DMA dma_engine_;
+  bool has_ila_ = false;
 
   void FindActiveStreams(std::vector<int>& active_input_stream_ids,
                          std::vector<int>& active_output_stream_ids);
@@ -32,4 +32,5 @@ class FPGAManager {
   auto GetResultingStreamSizes(const std::vector<int>& active_input_stream_ids,
                                const std::vector<int>& active_output_stream_ids)
       -> std::vector<int>;
+  void PrintILAData(int ila_id, int max_clock);
 };

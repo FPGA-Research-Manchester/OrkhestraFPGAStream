@@ -5,6 +5,7 @@
 #include "dma_setup.hpp"
 #include "filter.hpp"
 #include "filter_setup.hpp"
+#include "ila.hpp"
 #include "join.hpp"
 #include "join_setup.hpp"
 
@@ -12,7 +13,7 @@ void FPGAManager::SetupQueryAcceleration(
     std::vector<StreamInitialisationData> input_streams,
     std::vector<StreamInitialisationData> output_streams, bool is_filtering) {
   DMASetup::SetupDMAModule(dma_engine_, input_streams, output_streams);
-  for (auto stream : input_streams) {
+  for (const auto& stream : input_streams) {
     FPGAManager::input_stream_active_[stream.stream_id] = true;
   }
   FPGAManager::dma_engine_.StartInputController(
@@ -23,13 +24,16 @@ void FPGAManager::SetupQueryAcceleration(
     FilterSetup::SetupFilterModule(filter_module, input_streams[0].stream_id,
                                    output_streams[0].stream_id);
   } else {
+    has_ila_ = true;
+    ILA ila_module(memory_manager_);
+    ila_module.startILAs();
     Join join_module(memory_manager_, 1);
     JoinSetup::SetupJoinModule(join_module, input_streams[0].stream_id,
                                input_streams[1].stream_id,
                                output_streams[0].stream_id);
   }
 
-  for (auto stream : output_streams) {
+  for (const auto& stream : output_streams) {
     FPGAManager::output_stream_active_[stream.stream_id] = true;
   }
 }
@@ -46,12 +50,23 @@ auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
 
   WaitForStreamsToFinish();
 #ifdef _FPGA_AVAILABLE
-  std::cout << "Runtime: " << FPGAManager::dma_engine_.GetRuntime()
+  std::cout << "Runtime: " << std::dec << FPGAManager::dma_engine_.GetRuntime()
             << std::endl;
   std::cout << "ValidReadCount:" << FPGAManager::dma_engine_.GetRuntime()
             << std::endl;
   std::cout << "ValidWriteCount:" << FPGAManager::dma_engine_.GetRuntime()
             << std::endl;
+  if (has_ila_) {
+    std::cout << "======================================================ILA 0 "
+                 "DATA ======================================================="
+              << std::endl;
+    PrintILAData(0, 2048);
+    std::cout << "======================================================ILA 1 "
+                 "DATA ======================================================="
+              << std::endl;
+    PrintILAData(1, 2048);
+  }
+
 #endif
   return GetResultingStreamSizes(active_input_stream_ids,
                                  active_output_stream_ids);
@@ -102,4 +117,44 @@ auto FPGAManager::GetResultingStreamSizes(
         dma_engine_.GetOutputControllerStreamSize(stream_id);
   }
   return result_sizes;
+}
+
+void FPGAManager::PrintILAData(int ila_id, int /*max_clock*/) {
+  ILA ila_module(memory_manager_);
+  for (int clock = 0; clock < 2048; clock++) {
+    std::cout
+        << "ILA " << ila_id << " CLOCK " << clock << ":"
+        << "CLOCK_CYCLE "
+        << ila_module.getValues(clock, ila_id, ILADataTypes::kClockCycle)
+        << std::endl
+        << "TYPE " << ila_module.getValues(clock, ila_id, ILADataTypes::kType)
+        << "; "
+        << "STREAMID "
+        << ila_module.getValues(clock, ila_id, ILADataTypes::kStreamID)
+        << "; "
+        << "CHUNKID "
+        << ila_module.getValues(clock, ila_id, ILADataTypes::kChunkID) << "; "
+        << "STATE " << ila_module.getValues(clock, 1, ILADataTypes::kState)
+        << "; "
+        << "CHANNELID "
+        << ila_module.getValues(clock, ila_id, ILADataTypes::kChannelID)
+        << "; "
+        << "LAST " << ila_module.getValues(clock, 1, ILADataTypes::kLast)
+        << "; "
+        << "DATA_15 "
+        << ila_module.getValues(clock, ila_id, ILADataTypes::kDataAtPos15)
+        << "; "
+        << "INSTR_CHANNELID "
+        << ila_module.getValues(clock, ila_id, ILADataTypes::kInstrChannelID)
+        << "; "
+        << "INSTR_PARAM "
+        << ila_module.getValues(clock, ila_id, ILADataTypes::kInstrParam)
+        << "; "
+        << "INSTR_STREAMID "
+        << ila_module.getValues(clock, ila_id, ILADataTypes::kInstrStreamID)
+        << "; "
+        << "INSTR_TYPE "
+        << ila_module.getValues(clock, ila_id, ILADataTypes::kInstrType)
+        << "; " << std::endl;
+  }
 }
