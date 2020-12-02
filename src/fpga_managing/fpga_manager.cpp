@@ -52,7 +52,7 @@ auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
   }
 
   WaitForStreamsToFinish();
-  PrintDebuggingData();
+  //PrintDebuggingData();
   return GetResultingStreamSizes(active_input_stream_ids,
                                  active_output_stream_ids);
 }

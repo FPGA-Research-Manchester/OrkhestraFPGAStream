@@ -52,7 +52,7 @@ void PrintInputDataOut(
   for (const auto& input_data_location : input_data_locations) {
     auto current_input_table =
         data_manager.ParseDataFromCSV(input_data_location.second);
-    auto table_from_file = current_input_table.table_data_vector;
+    const auto &table_from_file = current_input_table.table_data_vector;
     volatile uint32_t* input = input_data_location.first->GetVirtualAddress();
     auto input_table =
         std::vector<uint32_t>(input, input + (table_from_file.size() / 2));
@@ -195,6 +195,8 @@ void fill_data_locations_vector(
 // With current settings 8 allocations is the max - after then have to start
 // reusing or sharing
 auto main() -> int {
+  int module_size = 1024 * 1024;
+
   std::cout << "Starting up!" << std::endl;
   DataManager data_manager("data_config.ini");
 
@@ -206,7 +208,7 @@ auto main() -> int {
       output_data_locations;
 
   if (is_filtering) {
-    MemoryManager memory_manager("DSPI_filtering", 2 * 1024 * 1024);
+    MemoryManager memory_manager("DSPI_filtering", 2 * module_size);
     FPGAManager fpga_manager(&memory_manager);
 
     fill_data_locations_vector(
@@ -231,12 +233,12 @@ auto main() -> int {
                      output_data_locations, is_filtering);
   } else {
     // Commented out code doesn't let the query even finish
-    MemoryManager memory_manager("DSPI_joining", 2 * 1024 * 1024);
+    MemoryManager memory_manager("DSPI_joining", 2 * module_size);
     FPGAManager fpga_manager(&memory_manager);
 
     fill_data_locations_vector(
         input_data_locations, &memory_manager,
-        {"CAR_DATA.csv", "CUSTOMER_DATA.csv" /*, "CAR_FILTER_DATA.csv"*/});
+        {"CAR_DATA.csv", "CUSTOMER_DATA_FOR_JOIN.csv" /*, "CAR_FILTER_DATA.csv"*/});
     fill_data_locations_vector(output_data_locations, &memory_manager,
                                {"JOIN_DATA.csv" /*, "CAR_FILTER_DATA.csv"*/});
 

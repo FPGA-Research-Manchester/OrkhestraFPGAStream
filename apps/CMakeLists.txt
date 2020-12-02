@@ -4,6 +4,7 @@ add_executable(app fpga_run.cpp)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA.csv CAR_DATA.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_FILTER_DATA.csv CAR_FILTER_DATA.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CUSTOMER_DATA.csv CUSTOMER_DATA.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CUSTOMER_DATA_FOR_JOIN.csv CUSTOMER_DATA_FOR_JOIN.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/JOIN_DATA.csv JOIN_DATA.csv COPYONLY)
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_joining.bin DSPI_joining.bin COPYONLY)
