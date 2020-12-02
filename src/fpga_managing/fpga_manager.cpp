@@ -10,8 +10,8 @@
 #include "join_setup.hpp"
 
 void FPGAManager::SetupQueryAcceleration(
-    std::vector<StreamInitialisationData> input_streams,
-    std::vector<StreamInitialisationData> output_streams, bool is_filtering) {
+    std::vector<StreamDataParameters> input_streams,
+    std::vector<StreamDataParameters> output_streams, bool is_filtering) {
   if (ila_module_) {
     ila_module_.value().startAxiILA();
   }

@@ -5,15 +5,15 @@
 #include "memory_manager_interface.hpp"
 #include <string>
 #include "filter.hpp"
-#include "stream_initialisation_data.hpp"
+#include "stream_data_parameters.hpp"
 #include "ila.hpp"
 #include <optional>
 
 class FPGAManager {
  public:
   void SetupQueryAcceleration(
-      std::vector<StreamInitialisationData> input_streams,
-      std::vector<StreamInitialisationData> output_streams, bool is_filtering);
+      std::vector<StreamDataParameters> input_streams,
+      std::vector<StreamDataParameters> output_streams, bool is_filtering);
   auto RunQueryAcceleration() -> std::vector<int>;
 
   explicit FPGAManager(MemoryManagerInterface* memory_manager)

@@ -4,18 +4,18 @@
 
 #include "dma.hpp"
 #include "dma_setup_data.hpp"
-#include "stream_initialisation_data.hpp"
+#include "stream_data_parameters.hpp"
 class DMASetup {
  public:
   static void SetupDMAModule(
       DMAInterface &dma_engine,
-      const std::vector<StreamInitialisationData> &input_streams,
-      const std::vector<StreamInitialisationData> &output_streams);
+      const std::vector<StreamDataParameters> &input_streams,
+      const std::vector<StreamDataParameters> &output_streams);
 
  private:
   static void AddNewStreamDMASetupData(
       DMASetupData &input_stream_setup_data,
-      StreamInitialisationData &stream_init_data, const int &max_chunk_size,
+      StreamDataParameters &stream_init_data, const int &max_chunk_size,
       const int &max_ddr_burst_size, const int &max_ddr_size_per_cycle,
       const int &any_chunk, const int &any_position, int buffer_size,
       std::vector<DMASetupData> &setup_data_for_dma);

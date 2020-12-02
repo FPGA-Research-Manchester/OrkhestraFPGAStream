@@ -1,9 +1,9 @@
 #pragma once
-#include <vector>
-#include <cstdint>
+#include <string>
+#include <memory>
+#include "memory_block_interface.hpp"
 struct StreamInitialisationData {
   int stream_id;
-  int stream_record_size;
-  int stream_record_count;
-  volatile uint32_t* physical_address;
+  std::string stream_data_file_name;
+  std::unique_ptr<MemoryBlockInterface> memory_block;
 };

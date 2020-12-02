@@ -5,8 +5,8 @@
 
 void DMASetup::SetupDMAModule(
     DMAInterface& dma_engine,
-    const std::vector<StreamInitialisationData>& input_streams,
-    const std::vector<StreamInitialisationData>& output_streams) {
+    const std::vector<StreamDataParameters>& input_streams,
+    const std::vector<StreamDataParameters>& output_streams) {
   // Calculate the controller parameter values based on input data and datatypes
   // Every size metric is 1 integer = 4 bytes = 32 bits
   const int max_ddr_burst_size = query_acceleration_constants::kDdrBurstSize;
@@ -48,7 +48,7 @@ void DMASetup::SetupDMAModule(
 
 void DMASetup::AddNewStreamDMASetupData(
     DMASetupData& stream_setup_data,
-    StreamInitialisationData& stream_init_data, const int& max_chunk_size,
+    StreamDataParameters& stream_init_data, const int& max_chunk_size,
     const int& max_ddr_burst_size, const int& max_ddr_size_per_cycle,
     const int& any_chunk, const int& any_position, int buffer_size,
     std::vector<DMASetupData>& setup_data_for_dma) {

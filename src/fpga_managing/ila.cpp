@@ -17,15 +17,17 @@ auto ILA::getValues(int clock_cycle, int location, ILADataTypes data_type)
       ILA::calcAddress(clock_cycle, location, static_cast<int>(data_type)));
 }
 
-auto ILA::calcAddress(int clock, int location, int offset) -> int {
-  if (location == 0) {
+auto ILA::calcAddress(int clock, int ila_id, int offset) -> int {
+  if (ila_id == 0) {
     return (0x10000000 + (clock << 11) + (offset << 2));
   }
-  if (location == 1) {
+  else if (ila_id == 1) {
     return (0x12000000 + (clock << 11) + (offset << 2));
   }
-  if (location == 2) {
+  else if (ila_id == 2) {
     return (0x14000000 + (clock << 11) + (offset << 2));
+  } else {
+    throw std::runtime_error("Wrong ILA core ID given!");
   }
 }
 

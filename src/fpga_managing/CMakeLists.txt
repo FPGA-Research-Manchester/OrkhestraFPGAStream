@@ -39,10 +39,11 @@ add_library(fpga_managing
 			"memory_manager.hpp"
 			"memory_manager_interface.hpp"
 			${OS_DEPENDENT_MEMORY_BLOCK}
-			"stream_initialisation_data.hpp" 
+			"stream_data_parameters.hpp" 
 			"ila.cpp"
 			"ila.hpp"
-			"ila_types.hpp")
+			"ila_types.hpp"
+			"stream_initialisation_data.hpp")
 
 target_include_directories(fpga_managing PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 

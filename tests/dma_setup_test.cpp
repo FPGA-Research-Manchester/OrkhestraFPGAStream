@@ -30,9 +30,9 @@ TEST(DMASetupTest, InputParamsSettings) {
                                                      expected_stream_size))
       .Times(1);
 
-  std::vector<StreamInitialisationData> input_streams = {
+  std::vector<StreamDataParameters> input_streams = {
       {kInputStreamId, 18, expected_stream_size, mock_db_data.data()}};
-  std::vector<StreamInitialisationData> output_streams = {
+  std::vector<StreamDataParameters> output_streams = {
       {kOutputStreamId, 18, 0, mock_output_memory_address}};
 
   DMASetup dma_configurer;
@@ -59,9 +59,9 @@ TEST(DMASetupTest, OutputParamsSettings) {
   EXPECT_CALL(mock_dma, SetOutputControllerStreamSize(kOutputStreamId, 0))
       .Times(1);
 
-  std::vector<StreamInitialisationData> input_streams = {
+  std::vector<StreamDataParameters> input_streams = {
       {kInputStreamId, 18, 1000, mock_db_data.data()}};
-  std::vector<StreamInitialisationData> output_streams = {
+  std::vector<StreamDataParameters> output_streams = {
       {kOutputStreamId, 18, 0, mock_output_memory_address}};
 
   DMASetup dma_configurer;
@@ -82,9 +82,9 @@ TEST(DMASetupTest, RecordSettings) {
   EXPECT_CALL(mock_dma, SetRecordChunkIDs(kInputStreamId, testing::_, 1))
       .Times(16);
 
-  std::vector<StreamInitialisationData> input_streams = {
+  std::vector<StreamDataParameters> input_streams = {
       {kInputStreamId, 18, 1000, mock_db_data.data()}};
-  std::vector<StreamInitialisationData> output_streams = {
+  std::vector<StreamDataParameters> output_streams = {
       {kOutputStreamId, 18, 0, mock_output_memory_address}};
 
   DMASetup dma_configurer;
