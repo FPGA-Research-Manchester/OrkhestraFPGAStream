@@ -171,7 +171,7 @@ public:
   bool canLoadBitstream(Bitstream &bs);
 
   void fpgaLoadShell(std::string name);
-  StaticAccelInst fpgaLoadStatic(std::string name);
+  StaticAccelInst fpgaLoadStatic(std::string name, int register_space_size);
   
   // sets up initial datastructures with bitstream info
   void importAccel(std::string name);

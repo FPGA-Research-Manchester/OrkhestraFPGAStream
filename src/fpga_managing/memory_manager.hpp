@@ -26,7 +26,8 @@ class MemoryManager : public MemoryManagerInterface {
 #endif
  public:
   ~MemoryManager() override;
-  explicit MemoryManager(const std::string& bitstream_name);
+  explicit MemoryManager(const std::string& bitstream_name,
+                         int register_space_size);
   auto AllocateMemoryBlock() -> std::unique_ptr<MemoryBlockInterface> override;
   auto GetVirtualRegisterAddress(int offset) -> volatile uint32_t* override;
 };

@@ -206,7 +206,7 @@ auto main() -> int {
       output_data_locations;
 
   if (is_filtering) {
-    MemoryManager memory_manager("DSPI_filtering");
+    MemoryManager memory_manager("DSPI_filtering", 2 * 1024 * 1024);
     FPGAManager fpga_manager(&memory_manager);
 
     fill_data_locations_vector(
@@ -231,7 +231,7 @@ auto main() -> int {
                      output_data_locations, is_filtering);
   } else {
     // Commented out code doesn't let the query even finish
-    MemoryManager memory_manager("DSPI_joining");
+    MemoryManager memory_manager("DSPI_joining", 2 * 1024 * 1024);
     FPGAManager fpga_manager(&memory_manager);
 
     fill_data_locations_vector(

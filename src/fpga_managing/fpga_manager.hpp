@@ -6,6 +6,8 @@
 #include <string>
 #include "filter.hpp"
 #include "stream_initialisation_data.hpp"
+#include "ila.hpp"
+#include <optional>
 
 class FPGAManager {
  public:
@@ -24,7 +26,7 @@ class FPGAManager {
 
   MemoryManagerInterface* memory_manager_;
   DMA dma_engine_;
-  bool has_ila_ = false;
+  std::optional <ILA> ila_module_;
 
   void FindActiveStreams(std::vector<int>& active_input_stream_ids,
                          std::vector<int>& active_output_stream_ids);
@@ -32,6 +34,5 @@ class FPGAManager {
   auto GetResultingStreamSizes(const std::vector<int>& active_input_stream_ids,
                                const std::vector<int>& active_output_stream_ids)
       -> std::vector<int>;
-  void PrintILAData(int ila_id, int max_clock);
-  void PrintAxiILAData(int max_clock);
+  void PrintDebuggingData();
 };
