@@ -5,20 +5,38 @@
 #include "dma_setup.hpp"
 #include "filter.hpp"
 #include "filter_setup.hpp"
+#include "ila.hpp"
+#include "join.hpp"
+#include "join_setup.hpp"
 
 void FPGAManager::SetupQueryAcceleration(
-    std::vector<StreamInitialisationData> input_streams,
-    std::vector<StreamInitialisationData> output_streams) {
-
+    std::vector<StreamDataParameters> input_streams,
+    std::vector<StreamDataParameters> output_streams, bool is_filtering) {
+  if (ila_module_) {
+    ila_module_.value().startAxiILA();
+  }
   DMASetup::SetupDMAModule(dma_engine_, input_streams, output_streams);
-
-  Filter filter_module(memory_manager_, 1);
-  FilterSetup::SetupFilterModule(filter_module, input_streams[0].stream_id,
-                                 output_streams[0].stream_id);
-  for (auto stream : input_streams) {
+  for (const auto& stream : input_streams) {
     FPGAManager::input_stream_active_[stream.stream_id] = true;
   }
-  for (auto stream : output_streams) {
+  FPGAManager::dma_engine_.StartInputController(
+      FPGAManager::input_stream_active_);
+
+  if (ila_module_) {
+    ila_module_.value().startILAs();
+  }
+  if (is_filtering) {
+    Filter filter_module(memory_manager_, 1);
+    FilterSetup::SetupFilterModule(filter_module, input_streams[0].stream_id,
+                                   output_streams[0].stream_id);
+  } else {
+    Join join_module(memory_manager_, 1);
+    JoinSetup::SetupJoinModule(join_module, input_streams[0].stream_id,
+                               input_streams[1].stream_id,
+                               output_streams[0].stream_id);
+  }
+
+  for (const auto& stream : output_streams) {
     FPGAManager::output_stream_active_[stream.stream_id] = true;
   }
 }
@@ -34,6 +52,7 @@ auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
   }
 
   WaitForStreamsToFinish();
+  //PrintDebuggingData();
   return GetResultingStreamSizes(active_input_stream_ids,
                                  active_output_stream_ids);
 }
@@ -53,8 +72,6 @@ void FPGAManager::FindActiveStreams(
 }
 
 void FPGAManager::WaitForStreamsToFinish() {
-  FPGAManager::dma_engine_.StartInputController(
-      FPGAManager::input_stream_active_);
   FPGAManager::dma_engine_.StartOutputController(
       FPGAManager::output_stream_active_);
 
@@ -78,10 +95,36 @@ auto FPGAManager::GetResultingStreamSizes(
   for (auto stream_id : active_input_stream_ids) {
     FPGAManager::input_stream_active_[stream_id] = false;
   }
-  std::vector<int> result_sizes (16,0);
+  std::vector<int> result_sizes(16, 0);
   for (auto stream_id : active_output_stream_ids) {
     FPGAManager::output_stream_active_[stream_id] = false;
-    result_sizes[stream_id] = dma_engine_.GetOutputControllerStreamSize(stream_id);
+    result_sizes[stream_id] =
+        dma_engine_.GetOutputControllerStreamSize(stream_id);
   }
   return result_sizes;
+}
+
+void FPGAManager::PrintDebuggingData() {
+#ifdef _FPGA_AVAILABLE
+  std::cout << "Runtime: " << std::dec << FPGAManager::dma_engine_.GetRuntime()
+            << std::endl;
+  std::cout << "ValidReadCount:" << FPGAManager::dma_engine_.GetRuntime()
+            << std::endl;
+  std::cout << "ValidWriteCount:" << FPGAManager::dma_engine_.GetRuntime()
+            << std::endl;
+  if (FPGAManager::ila_module_) {
+    std::cout << "======================================================ILA 0 "
+                 "DATA ======================================================="
+              << std::endl;
+    FPGAManager::ila_module_.value().PrintILAData(0, 2048);
+    std::cout << "======================================================ILA 1 "
+                 "DATA ======================================================="
+              << std::endl;
+    FPGAManager::ila_module_.value().PrintILAData(1, 2048);
+    std::cout << "======================================================ILA 2 "
+                 "DATA ======================================================="
+              << std::endl;
+    FPGAManager::ila_module_.value().PrintAxiILAData(4096);
+  }
+#endif
 }

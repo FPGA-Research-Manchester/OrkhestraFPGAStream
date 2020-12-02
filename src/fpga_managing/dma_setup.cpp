@@ -5,8 +5,8 @@
 
 void DMASetup::SetupDMAModule(
     DMAInterface& dma_engine,
-    const std::vector<StreamInitialisationData>& input_streams,
-    const std::vector<StreamInitialisationData>& output_streams) {
+    const std::vector<StreamDataParameters>& input_streams,
+    const std::vector<StreamDataParameters>& output_streams) {
   // Calculate the controller parameter values based on input data and datatypes
   // Every size metric is 1 integer = 4 bytes = 32 bits
   const int max_ddr_burst_size = query_acceleration_constants::kDdrBurstSize;
@@ -20,27 +20,27 @@ void DMASetup::SetupDMAModule(
   std::vector<DMASetupData> setup_data_for_dma;
 
   int buffer_size = 16 / input_streams.size();
-  for (auto stream_init_data : input_streams) {
+  for (int i = 0; i < input_streams.size(); i++) {
     DMASetupData input_stream_setup_data;
     input_stream_setup_data.is_input_stream = true;
-    input_stream_setup_data.record_count = stream_init_data.stream_record_count;
+    input_stream_setup_data.record_count = input_streams[i].stream_record_count;
 
-    AddNewStreamDMASetupData(input_stream_setup_data, stream_init_data,
+    AddNewStreamDMASetupData(input_stream_setup_data, input_streams.at(i),
                              max_chunk_size, max_ddr_burst_size,
                              max_ddr_size_per_cycle, any_chunk, any_position,
-                             buffer_size, setup_data_for_dma);
+                             buffer_size, setup_data_for_dma, i);
   }
 
   buffer_size = 16 / output_streams.size();
-  for (auto stream_init_data : output_streams) {
+  for (int i = 0; i < output_streams.size(); i++) {
     DMASetupData output_stream_setup_data;
     output_stream_setup_data.is_input_stream = false;
     output_stream_setup_data.record_count = 0;
 
-    AddNewStreamDMASetupData(output_stream_setup_data, stream_init_data,
+    AddNewStreamDMASetupData(output_stream_setup_data, output_streams.at(i),
                              max_chunk_size, max_ddr_burst_size,
                              max_ddr_size_per_cycle, any_chunk, any_position,
-                             buffer_size, setup_data_for_dma);
+                             buffer_size, setup_data_for_dma, i);
   }
 
   WriteSetupDataToDMAModule(setup_data_for_dma, dma_engine);
@@ -48,10 +48,10 @@ void DMASetup::SetupDMAModule(
 
 void DMASetup::AddNewStreamDMASetupData(
     DMASetupData& stream_setup_data,
-    StreamInitialisationData& stream_init_data, const int& max_chunk_size,
+    const StreamDataParameters& stream_init_data, const int& max_chunk_size,
     const int& max_ddr_burst_size, const int& max_ddr_size_per_cycle,
     const int& any_chunk, const int& any_position, int buffer_size,
-    std::vector<DMASetupData>& setup_data_for_dma) {
+    std::vector<DMASetupData>& setup_data_for_dma, int current_stream_count) {
   stream_setup_data.stream_id = stream_init_data.stream_id;
 
   StreamParameterCalculator::CalculateDMAStreamSetupData(
@@ -63,8 +63,7 @@ void DMASetup::AddNewStreamDMASetupData(
       any_chunk, any_position, stream_setup_data,
       stream_init_data.stream_record_size);
 
-  stream_setup_data.buffer_start =
-      buffer_size * stream_init_data.stream_id;
+  stream_setup_data.buffer_start = buffer_size * current_stream_count;
   stream_setup_data.buffer_end =
       stream_setup_data.buffer_start + buffer_size - 1;
 

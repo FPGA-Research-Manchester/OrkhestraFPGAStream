@@ -5,18 +5,19 @@
 #include "memory_manager_interface.hpp"
 #include <string>
 #include "filter.hpp"
-#include "stream_initialisation_data.hpp"
+#include "stream_data_parameters.hpp"
+#include "ila.hpp"
+#include <optional>
 
 class FPGAManager {
  public:
   void SetupQueryAcceleration(
-      std::vector<StreamInitialisationData> input_streams,
-      std::vector<StreamInitialisationData> output_streams);
+      std::vector<StreamDataParameters> input_streams,
+      std::vector<StreamDataParameters> output_streams, bool is_filtering);
   auto RunQueryAcceleration() -> std::vector<int>;
 
   explicit FPGAManager(MemoryManagerInterface* memory_manager)
-      : memory_manager_{memory_manager},
-        dma_engine_{memory_manager} {};
+      : memory_manager_{memory_manager}, dma_engine_{memory_manager} {};
 
  private:
   const static int kMaxStreamAmount = 16;
@@ -25,6 +26,7 @@ class FPGAManager {
 
   MemoryManagerInterface* memory_manager_;
   DMA dma_engine_;
+  std::optional <ILA> ila_module_;
 
   void FindActiveStreams(std::vector<int>& active_input_stream_ids,
                          std::vector<int>& active_output_stream_ids);
@@ -32,4 +34,5 @@ class FPGAManager {
   auto GetResultingStreamSizes(const std::vector<int>& active_input_stream_ids,
                                const std::vector<int>& active_output_stream_ids)
       -> std::vector<int>;
+  void PrintDebuggingData();
 };

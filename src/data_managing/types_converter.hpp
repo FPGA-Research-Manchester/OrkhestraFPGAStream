@@ -22,10 +22,16 @@ class TypesConverter {
   static void ConvertIntegerValuesToIntegerData(
       const std::string& input, std::vector<uint32_t>& data_vector,
       int output_size);
+  static void ConvertNullValuesToIntegerData(
+      const std::string& input, std::vector<uint32_t>& data_vector,
+      int output_size);
   static void ConvertStringValuesToString(
       const std::vector<uint32_t>& input_value,
       std::vector<std::string>& string_vector);
   static void ConvertIntegerValuesToString(
+      const std::vector<uint32_t>& input_value,
+      std::vector<std::string>& string_vector);
+  static void ConvertNullValuesToString(
       const std::vector<uint32_t>& input_value,
       std::vector<std::string>& string_vector);
 

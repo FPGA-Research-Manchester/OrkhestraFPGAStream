@@ -8,12 +8,13 @@
 
 MemoryManager::~MemoryManager() = default;
 
-MemoryManager::MemoryManager(const std::string& bitstream_name) { //NOLINT
+MemoryManager::MemoryManager(const std::string& bitstream_name, const int register_space_size) { //NOLINT
 #ifdef _FPGA_AVAILABLE
-  acceleration_instance_ = pr_manager_.fpgaLoadStatic(bitstream_name);
+  acceleration_instance_ =
+      pr_manager_.fpgaLoadStatic(bitstream_name, register_space_size);
   register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
 #else
-  register_space_ = std::vector<uint32_t>((2 * 1024 * 1024), -1);
+  register_space_ = std::vector<uint32_t>(register_space_size, -1);
 #endif
 }
 

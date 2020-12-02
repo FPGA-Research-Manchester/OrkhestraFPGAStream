@@ -536,7 +536,7 @@ void PRManager::fpgaLoadShell(std::string name) {
   shell = &toLoad;
 }
 
-StaticAccelInst PRManager::fpgaLoadStatic(std::string name) {
+StaticAccelInst PRManager::fpgaLoadStatic(std::string name, int register_space_size) {
   if (accel || shell) {
     throw std::runtime_error("FPGA already loaded");
   } else {
@@ -553,7 +553,7 @@ StaticAccelInst PRManager::fpgaLoadStatic(std::string name) {
     inst.prmanager = this;
     fpga0.loadFull(bs->bitstream);
     
-    accelMap = mmioGetMmap("/dev/mem", acc.address, 0x200000);
+    accelMap = mmioGetMmap("/dev/mem", acc.address, register_space_size);
     if (accelMap.fd == -1)
       throw std::runtime_error("could not mmap accel");
     accelRegs = (uint32_t*)accelMap.mmap;

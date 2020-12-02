@@ -1,5 +1,6 @@
 {
   "accelerators": [
+    "DSPI_joining",
     "DSPI_filtering"
   ]
 }
