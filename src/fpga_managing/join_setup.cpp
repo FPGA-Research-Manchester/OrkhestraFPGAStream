@@ -7,6 +7,7 @@ void JoinSetup::SetupJoinModule(JoinInterface& join_module,
                                 int first_input_stream_id,
                                 int second_input_stream_id,
                                 int output_stream_id) {
+  join_module.Reset();
   join_module.DefineOutputStream(2, first_input_stream_id,
                                  second_input_stream_id, output_stream_id);
   join_module.SetFirstInputStreamChunkCount(2);

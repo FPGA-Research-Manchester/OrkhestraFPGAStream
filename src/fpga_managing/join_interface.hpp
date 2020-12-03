@@ -11,4 +11,5 @@ class JoinInterface{
                                       int data_position,
                                       bool is_element_from_second_stream) = 0;
   virtual void StartPrefetchingData() = 0;
+  virtual void Reset() = 0;
 };

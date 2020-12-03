@@ -5,6 +5,8 @@
 
 Join::~Join() = default;
 
+void Join::StartPrefetchingData() { AccelerationModule::WriteToModule(0, 1); }
+
 void Join::DefineOutputStream(int output_stream_chunk_count,
                               int first_input_stream_id,
                               int second_input_stream_id,
@@ -31,6 +33,4 @@ void Join::SelectOutputDataElement(int output_chunk_id, int input_chunk_id,
       (static_cast<int>(is_element_from_second_stream) << 16) + input_chunk_id);
 }
 
-void Join::StartPrefetchingData() { 
-    /*std::cout << "starting join" << std::endl;*/
-    AccelerationModule::WriteToModule(0, 1); }
+void Join::Reset() { AccelerationModule::WriteToModule(16, 1); }
