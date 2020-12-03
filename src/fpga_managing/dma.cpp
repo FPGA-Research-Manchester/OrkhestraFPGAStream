@@ -3,15 +3,6 @@
 #include <cmath>
 #include <iostream>
 
-/*
-This is the width of the address for the memory mapped register space in every
-module. This parameter's value has to match the parameter in the implemented DMA
-module.
-*/
-#define MODULE_ADDRESS_BITS 20
-
-DMA::~DMA() = default;
-
 // Input Controller
 void DMA::SetInputControllerParams(int stream_id, int ddr_burst_size,
                                    int records_per_ddr_burst, int buffer_start,

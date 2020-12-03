@@ -14,7 +14,7 @@ class Filter : public AccelerationModule, public FilterInterface {
                                             int module_dnf_clauses);
 
  public:
-  ~Filter() override;
+  ~Filter() = default;
   explicit Filter(MemoryManagerInterface* memory_manager, int module_position)
       : AccelerationModule(memory_manager, module_position){};
 
