@@ -20,4 +20,5 @@ class Join : public AccelerationModule, public JoinInterface {
                                bool is_element_from_second_stream) override;
 
   void StartPrefetchingData() override;
+  void Reset() override;
 };

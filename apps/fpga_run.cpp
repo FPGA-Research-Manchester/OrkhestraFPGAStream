@@ -240,6 +240,19 @@ auto main() -> int {
 
     RunQueryWithData(data_manager, fpga_manager, input_data_locations,
                      output_data_locations, is_filtering);
+
+    input_data_locations.clear();
+    output_data_locations.clear();
+
+    FillDataLocationsVector(
+        input_data_locations, &memory_manager,
+        {"CAR_DATA.csv", "CUSTOMER_DATA_FOR_JOIN.csv"},
+        {0, 1});
+    FillDataLocationsVector(output_data_locations, &memory_manager,
+                            {"JOIN_DATA.csv"}, {0});
+
+    RunQueryWithData(data_manager, fpga_manager, input_data_locations,
+                     output_data_locations, is_filtering);
   }
   return 0;
 }
