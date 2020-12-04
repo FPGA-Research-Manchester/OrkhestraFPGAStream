@@ -1,19 +1,21 @@
 #pragma once
 #include <cstdint>
-#include <vector>
-#include "dma.hpp"
-#include "memory_manager_interface.hpp"
-#include <string>
-#include "filter.hpp"
-#include "stream_data_parameters.hpp"
-#include "ila.hpp"
 #include <optional>
+#include <string>
+#include <vector>
+
+#include "dma.hpp"
+#include "filter.hpp"
+#include "ila.hpp"
+#include "memory_manager_interface.hpp"
+#include "operation_types.hpp"
+#include "stream_data_parameters.hpp"
 
 class FPGAManager {
  public:
-  void SetupQueryAcceleration(
-      std::vector<StreamDataParameters> input_streams,
-      std::vector<StreamDataParameters> output_streams, bool is_filtering);
+  void SetupQueryAcceleration(std::vector<StreamDataParameters> input_streams,
+                              std::vector<StreamDataParameters> output_streams,
+                              operation_types::QueryOperation operation_type);
   auto RunQueryAcceleration() -> std::vector<int>;
 
   explicit FPGAManager(MemoryManagerInterface* memory_manager)
@@ -21,12 +23,12 @@ class FPGAManager {
 
  private:
   const static int kMaxStreamAmount = 16;
-  bool input_stream_active_[kMaxStreamAmount] = {false};
-  bool output_stream_active_[kMaxStreamAmount] = {false};
+  bool input_streams_active_status_[kMaxStreamAmount] = {false};
+  bool output_streams_active_status_[kMaxStreamAmount] = {false};
 
   MemoryManagerInterface* memory_manager_;
   DMA dma_engine_;
-  std::optional <ILA> ila_module_;
+  std::optional<ILA> ila_module_;
 
   void FindActiveStreams(std::vector<int>& active_input_stream_ids,
                          std::vector<int>& active_output_stream_ids);

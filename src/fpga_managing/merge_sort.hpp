@@ -1,8 +1,10 @@
 #pragma once
 #include "acceleration_module.hpp"
 #include "merge_sort_interface.hpp"
+#include "memory_manager_interface.hpp"
 class MergeSort: public AccelerationModule, public MergeSortInterface
 {
+ public:
   ~MergeSort() = default;
   explicit MergeSort(MemoryManagerInterface* memory_manager,
                      int module_position)

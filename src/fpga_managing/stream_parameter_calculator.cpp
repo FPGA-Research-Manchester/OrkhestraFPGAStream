@@ -7,7 +7,7 @@
 void StreamParameterCalculator::CalculateDMAStreamSetupData(
     DMASetupData& stream_setup_data, const int& max_chunk_size,
     const int& max_ddr_burst_size, const int& max_ddr_size_per_cycle,
-    const volatile uint32_t* data_address, const int record_size) {
+    const int record_size) {
   stream_setup_data.chunks_per_record =
       (record_size + max_chunk_size - 1) / max_chunk_size;  // ceil
 
@@ -25,9 +25,6 @@ void StreamParameterCalculator::CalculateDMAStreamSetupData(
       ((record_size * stream_setup_data.records_per_ddr_burst) +
        max_ddr_size_per_cycle - 1) /
       max_ddr_size_per_cycle;
-
-
-  stream_setup_data.stream_address = reinterpret_cast<uintptr_t>(data_address);
 }
 
 auto StreamParameterCalculator::FindMinViableRecordsPerDDRBurst(

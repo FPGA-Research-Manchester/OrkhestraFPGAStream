@@ -386,7 +386,7 @@ void DMACrossbarSetup::SetCrossbarSetupDataForStream(
           target_positions.front();
       target_positions.pop();
     }
-    stream_setup_data.crossbar_setup_data[current_buffer_chunk] =
-        current_chunk_data;
+    stream_setup_data.crossbar_setup_data.push_back(
+        current_chunk_data);
   }
 }

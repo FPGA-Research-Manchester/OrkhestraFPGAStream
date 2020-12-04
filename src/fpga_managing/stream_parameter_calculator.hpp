@@ -10,7 +10,6 @@ class StreamParameterCalculator
                                           const int& max_chunk_size,
                                           const int& max_ddr_burst_size,
                                           const int& max_ddr_size_per_cycle,
-                                          const volatile uint32_t* data_address,
                                           int record_size);
   static auto FindMinViableRecordsPerDDRBurst(const int& max_ddr_burst_size,
                                               const int& record_size) -> int;

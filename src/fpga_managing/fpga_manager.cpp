@@ -8,36 +8,65 @@
 #include "ila.hpp"
 #include "join.hpp"
 #include "join_setup.hpp"
+#include "merge_sort.hpp"
+#include "merge_sort_setup.hpp"
+#include "query_acceleration_constants.hpp"
 
+// Eventually the idea would be to add operation type to StreamDataParameters.
+// Then the modules and streams can be set up accordingly.
 void FPGAManager::SetupQueryAcceleration(
     std::vector<StreamDataParameters> input_streams,
-    std::vector<StreamDataParameters> output_streams, bool is_filtering) {
+    std::vector<StreamDataParameters> output_streams,
+    operation_types::QueryOperation operation_type) {
   if (ila_module_) {
     ila_module_.value().startAxiILA();
   }
-  DMASetup::SetupDMAModule(dma_engine_, input_streams, output_streams);
+
+  if (operation_type != operation_types::QueryOperation::MergeSort) {
+    DMASetup::SetupDMAModule(dma_engine_, input_streams, output_streams);
+  } else {
+    DMASetup::SetupDMAModuleWithMultiStream(dma_engine_, input_streams,
+                                            output_streams);
+  }
+
   for (const auto& stream : input_streams) {
-    FPGAManager::input_stream_active_[stream.stream_id] = true;
+    FPGAManager::input_streams_active_status_[stream.stream_id] = true;
   }
   FPGAManager::dma_engine_.StartInputController(
-      FPGAManager::input_stream_active_);
+      FPGAManager::input_streams_active_status_);
 
   if (ila_module_) {
     ila_module_.value().startILAs();
   }
-  if (is_filtering) {
-    Filter filter_module(memory_manager_, 1);
-    FilterSetup::SetupFilterModule(filter_module, input_streams[0].stream_id,
-                                   output_streams[0].stream_id);
-  } else {
-    Join join_module(memory_manager_, 1);
-    JoinSetup::SetupJoinModule(join_module, input_streams[0].stream_id,
-                               input_streams[1].stream_id,
-                               output_streams[0].stream_id);
+
+  switch (operation_type) {
+    case operation_types::QueryOperation::Filter: {
+      Filter filter_module(memory_manager_, 1);
+      FilterSetup::SetupFilterModule(filter_module, input_streams[0].stream_id,
+                                     output_streams[0].stream_id);
+      break;
+    }
+    case operation_types::QueryOperation::Join: {
+      Join join_module(memory_manager_, 1);
+      JoinSetup::SetupJoinModule(join_module, input_streams[0].stream_id,
+                                 input_streams[1].stream_id,
+                                 output_streams[0].stream_id);
+      break;
+    }
+    case operation_types::QueryOperation::MergeSort: {
+      MergeSort merge_sort_module(memory_manager_, 1);
+      int chunks_per_record = (input_streams[0].stream_record_size +
+                               query_acceleration_constants::kDatapathWidth) -
+                              1 / query_acceleration_constants::kDatapathWidth;
+      MergeSortSetup::SetupMergeSortModule(merge_sort_module,
+                                           input_streams[0].stream_id,
+                                           chunks_per_record, 0, true);
+      break;
+    }
   }
 
   for (const auto& stream : output_streams) {
-    FPGAManager::output_stream_active_[stream.stream_id] = true;
+    FPGAManager::output_streams_active_status_[stream.stream_id] = true;
   }
 }
 
@@ -52,7 +81,7 @@ auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
   }
 
   WaitForStreamsToFinish();
-  //PrintDebuggingData();
+  // PrintDebuggingData();
   return GetResultingStreamSizes(active_input_stream_ids,
                                  active_output_stream_ids);
 }
@@ -62,10 +91,10 @@ void FPGAManager::FindActiveStreams(
     std::vector<int>& active_output_stream_ids) {
   for (int stream_id = 0; stream_id < FPGAManager::kMaxStreamAmount;
        stream_id++) {
-    if (input_stream_active_[stream_id]) {
+    if (input_streams_active_status_[stream_id]) {
       active_input_stream_ids.push_back(stream_id);
     }
-    if (output_stream_active_[stream_id]) {
+    if (output_streams_active_status_[stream_id]) {
       active_output_stream_ids.push_back(stream_id);
     }
   }
@@ -73,7 +102,7 @@ void FPGAManager::FindActiveStreams(
 
 void FPGAManager::WaitForStreamsToFinish() {
   FPGAManager::dma_engine_.StartOutputController(
-      FPGAManager::output_stream_active_);
+      FPGAManager::output_streams_active_status_);
 
 #ifdef _FPGA_AVAILABLE
   while (!(FPGAManager::dma_engine_.IsInputControllerFinished() &&
@@ -93,11 +122,11 @@ auto FPGAManager::GetResultingStreamSizes(
     const std::vector<int>& active_input_stream_ids,
     const std::vector<int>& active_output_stream_ids) -> std::vector<int> {
   for (auto stream_id : active_input_stream_ids) {
-    FPGAManager::input_stream_active_[stream_id] = false;
+    FPGAManager::input_streams_active_status_[stream_id] = false;
   }
   std::vector<int> result_sizes(16, 0);
   for (auto stream_id : active_output_stream_ids) {
-    FPGAManager::output_stream_active_[stream_id] = false;
+    FPGAManager::output_streams_active_status_[stream_id] = false;
     result_sizes[stream_id] =
         dma_engine_.GetOutputControllerStreamSize(stream_id);
   }

@@ -7,7 +7,7 @@ void MergeSort::StartPrefetchingData(int base_channel_id,
 }
 
 void MergeSort::SetStreamParams(int stream_id, int chunks_per_record) {
-  AccelerationModule::WriteToModule(4, (chunks_per_record << 8) + stream_id);
+  AccelerationModule::WriteToModule(4, ((chunks_per_record - 1) << 8) + stream_id);
 }
 
 void MergeSort::SetBufferSize(int record_count) {
