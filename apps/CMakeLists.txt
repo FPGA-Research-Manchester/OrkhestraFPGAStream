@@ -2,6 +2,8 @@
 add_executable(app fpga_run.cpp)
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA.csv CAR_DATA.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_HALF_SORTED.csv CAR_DATA_HALF_SORTED.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_SORTED.csv CAR_DATA_SORTED.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_FILTER_DATA.csv CAR_FILTER_DATA.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CUSTOMER_DATA.csv CUSTOMER_DATA.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CUSTOMER_DATA_FOR_JOIN.csv CUSTOMER_DATA_FOR_JOIN.csv COPYONLY)
@@ -11,6 +13,8 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_joining.bin DSPI_joining.
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_joining.json DSPI_joining.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_filtering.bin DSPI_filtering.bin COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_filtering.json DSPI_filtering.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_merge_sorting.bin DSPI_merge_sorting.bin COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_merge_sorting.json DSPI_merge_sorting.json COPYONLY)
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/repo.json repo.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data_config.ini data_config.ini COPYONLY)

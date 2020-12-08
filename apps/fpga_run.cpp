@@ -52,19 +52,19 @@ void PrintInputDataOut(
     DataManager& data_manager,
     const std::vector<StreamInitialisationData>& input_data_locations) {
   for (const auto& input_data_location : input_data_locations) {
+    std::cout << "======================="
+              << input_data_location.stream_data_file_name
+              << "=======================" << std::endl;
     auto current_input_table = data_manager.ParseDataFromCSV(
         input_data_location.stream_data_file_name);
     const auto& table_from_file = current_input_table.table_data_vector;
     volatile uint32_t* input =
         input_data_location.memory_block->GetVirtualAddress();
     auto input_table =
-        std::vector<uint32_t>(input, input + (table_from_file.size() / 2));
+        std::vector<uint32_t>(input, input + (table_from_file.size()));
     current_input_table.table_data_vector = input_table;
     DataManager::PrintTableData(current_input_table);
-    input_table = std::vector<uint32_t>(input + (table_from_file.size() / 2),
-                                        input + (table_from_file.size()));
-    current_input_table.table_data_vector = input_table;
-    DataManager::PrintTableData(current_input_table);
+    std::cout << std::endl;
   }
 }
 
@@ -163,6 +163,8 @@ void RunQueryWithData(
 
   fpga_manager.SetupQueryAcceleration(input_streams, output_streams, operation);
 
+  PrintInputDataOut(data_manager, input_data_locations);
+
   std::cout << "Running query!" << std::endl;
   auto result_sizes = fpga_manager.RunQueryAcceleration();
   std::cout << "Query done!" << std::endl;
@@ -198,7 +200,7 @@ auto main() -> int {
   DataManager data_manager("data_config.ini");
 
   operation_types::QueryOperation operation =
-      operation_types::QueryOperation::Filter;
+      operation_types::QueryOperation::MergeSort;
 
   std::vector<StreamInitialisationData> input_data_locations;
   std::vector<StreamInitialisationData> output_data_locations;

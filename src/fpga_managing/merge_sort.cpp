@@ -1,9 +1,9 @@
 #include "merge_sort.hpp"
 
 void MergeSort::StartPrefetchingData(int base_channel_id,
-                                     bool is_first_module) {
+                                     bool is_not_first_module) {
   AccelerationModule::WriteToModule(0,
-                                    (base_channel_id << 8) + static_cast<int>(is_first_module));
+                                    (base_channel_id << 8) + static_cast<int>(is_not_first_module));
 }
 
 void MergeSort::SetStreamParams(int stream_id, int chunks_per_record) {

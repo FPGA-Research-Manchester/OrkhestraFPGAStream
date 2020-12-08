@@ -26,7 +26,7 @@ void DMASetup::SetupDMAModuleWithMultiStream(
 
   for (int i = 0; i < input_streams.size(); i++) {
     DMAMultiChannelSetupData input_stream_setup_data;
-    input_stream_setup_data.is_input_stream = false;
+    input_stream_setup_data.is_input_stream = true;
 
     input_stream_setup_data.stream_id = input_streams.at(i).stream_id;
     input_stream_setup_data.buffer_start = buffer_size * i;
@@ -46,10 +46,15 @@ void DMASetup::SetupDMAModuleWithMultiStream(
         setup_data_placeholder.chunks_per_record;
     input_stream_setup_data.record_chunk_ids =
         setup_data_placeholder.record_chunk_ids;
-    input_stream_setup_data.records_per_ddr_burst =
+    /*input_stream_setup_data.records_per_ddr_burst =
         setup_data_placeholder.records_per_ddr_burst;
     input_stream_setup_data.ddr_burst_length =
-        setup_data_placeholder.ddr_burst_length;
+        setup_data_placeholder.ddr_burst_length;*/
+    input_stream_setup_data.records_per_ddr_burst = 2;
+    setup_data_placeholder.records_per_ddr_burst = 2;
+
+    input_stream_setup_data.ddr_burst_length = 9;
+    setup_data_placeholder.ddr_burst_length = 9;
 
     const int throwaway_chunk =
         query_acceleration_constants::kDatapathLength - 1;
@@ -65,51 +70,36 @@ void DMASetup::SetupDMAModuleWithMultiStream(
     input_stream_setup_data.crossbar_setup_data =
         setup_data_placeholder.crossbar_setup_data;
 
-    input_stream_setup_data.active_channel_count = 64;
+    const int max_channel_count = 64;
+    int channel_record_count =
+        (input_streams.at(i).stream_record_count + max_channel_count - 1) /
+        max_channel_count;
+
+    // Need to figure out a way to make sure different channel start addresses
+    // are 16 bit aligned. For example the channel_record_count is 16 which
+    // makes alignment easy but need to think of other cases as well!
+
+    input_stream_setup_data.active_channel_count =
+        (input_streams.at(i).stream_record_count + channel_record_count - 1) /
+        channel_record_count;
 
     for (int j = 0; j < input_stream_setup_data.active_channel_count; j++) {
-      if (j <= 60) {
-        int channel_record_count =
-            (input_streams.at(i).stream_record_count +
-             input_stream_setup_data.active_channel_count) -
-            1 / input_stream_setup_data.active_channel_count;
-        DMAChannelSetupData current_channel_setup_data{
-            reinterpret_cast<uintptr_t>(
-                input_streams.at(i).physical_address +
-                (input_streams.at(i).stream_record_size *
-                 (channel_record_count * j))),
-            channel_record_count, j};
-        input_stream_setup_data.channel_setup_data.push_back(
-            current_channel_setup_data);
-        // Remove this junk after!
-      } else if (j == 61) {
-        int channel_record_count = 7;
-        DMAChannelSetupData current_channel_setup_data{
-            reinterpret_cast<uintptr_t>(
-                input_streams.at(i).physical_address +
-                (input_streams.at(i).stream_record_size * 975)),
-            channel_record_count, j};
-        input_stream_setup_data.channel_setup_data.push_back(
-            current_channel_setup_data);
-      } else if (j == 62) {
-        int channel_record_count = 10;
-        DMAChannelSetupData current_channel_setup_data{
-            reinterpret_cast<uintptr_t>(
-                input_streams.at(i).physical_address +
-                (input_streams.at(i).stream_record_size * 982)),
-            channel_record_count, j};
-        input_stream_setup_data.channel_setup_data.push_back(
-            current_channel_setup_data);
-      } else if (j == 63) {
-        int channel_record_count = 7;
-        DMAChannelSetupData current_channel_setup_data{
-            reinterpret_cast<uintptr_t>(
-                input_streams.at(i).physical_address +
-                (input_streams.at(i).stream_record_size * 992)),
-            channel_record_count, j};
-        input_stream_setup_data.channel_setup_data.push_back(
-            current_channel_setup_data);
+      DMAChannelSetupData current_channel_setup_data;
+      if (j == input_stream_setup_data.active_channel_count - 1) {
+        current_channel_setup_data.record_count =
+            input_streams.at(i).stream_record_count % channel_record_count;
+      } else {
+        current_channel_setup_data.record_count = channel_record_count;
       }
+
+      current_channel_setup_data.channel_id = j;
+      current_channel_setup_data.stream_address =
+          reinterpret_cast<uintptr_t>(input_streams.at(i).physical_address +
+                                      (input_streams.at(i).stream_record_size *
+                                       (channel_record_count * j)));
+
+      input_stream_setup_data.channel_setup_data.push_back(
+          current_channel_setup_data);
     }
 
     SetUpDMACrossbars(setup_data_placeholder, dma_engine);
@@ -132,7 +122,8 @@ void DMASetup::SetupDMAModuleWithMultiStream(
         input_streams.at(i).stream_id,
         input_stream_setup_data.active_channel_count);
 
-    for (const auto &channel_setup_data : input_stream_setup_data.channel_setup_data) {
+    for (const auto& channel_setup_data :
+         input_stream_setup_data.channel_setup_data) {
       dma_engine.SetSizeForMultiChannelStreams(input_streams.at(i).stream_id,
                                                channel_setup_data.channel_id,
                                                channel_setup_data.record_count);

@@ -55,12 +55,9 @@ void FPGAManager::SetupQueryAcceleration(
     }
     case operation_types::QueryOperation::MergeSort: {
       MergeSort merge_sort_module(memory_manager_, 1);
-      int chunks_per_record = (input_streams[0].stream_record_size +
-                               query_acceleration_constants::kDatapathWidth) -
-                              1 / query_acceleration_constants::kDatapathWidth;
       MergeSortSetup::SetupMergeSortModule(merge_sort_module,
                                            input_streams[0].stream_id,
-                                           chunks_per_record, 0, true);
+          input_streams[0].stream_record_size, 0, true);
       break;
     }
   }
@@ -104,18 +101,18 @@ void FPGAManager::WaitForStreamsToFinish() {
   FPGAManager::dma_engine_.StartOutputController(
       FPGAManager::output_streams_active_status_);
 
-#ifdef _FPGA_AVAILABLE
-  while (!(FPGAManager::dma_engine_.IsInputControllerFinished() &&
-           FPGAManager::dma_engine_.IsOutputControllerFinished())) {
-    std::cout << "Processing..." << std::endl;
-    std::cout << "Input:"
-              << FPGAManager::dma_engine_.IsInputControllerFinished()
-              << std::endl;
-    std::cout << "Output:"
-              << FPGAManager::dma_engine_.IsOutputControllerFinished()
-              << std::endl;
-  }
-#endif
+//#ifdef _FPGA_AVAILABLE
+//  while (!(FPGAManager::dma_engine_.IsInputControllerFinished() &&
+//           FPGAManager::dma_engine_.IsOutputControllerFinished())) {
+//    std::cout << "Processing..." << std::endl;
+//    std::cout << "Input:"
+//              << FPGAManager::dma_engine_.IsInputControllerFinished()
+//              << std::endl;
+//    std::cout << "Output:"
+//              << FPGAManager::dma_engine_.IsOutputControllerFinished()
+//              << std::endl;
+//  }
+//#endif
 }
 
 auto FPGAManager::GetResultingStreamSizes(

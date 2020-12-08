@@ -10,7 +10,7 @@ class MergeSort: public AccelerationModule, public MergeSortInterface
                      int module_position)
       : AccelerationModule(memory_manager, module_position){};
 
-  void StartPrefetchingData(int base_channel_id, bool is_first_module) override;
+  void StartPrefetchingData(int base_channel_id, bool is_not_first_module) override;
   void SetStreamParams(int stream_id, int chunks_per_record) override;
   void SetBufferSize(int record_count) override;
   void SetRecordCountPerFetch(int record_count) override;

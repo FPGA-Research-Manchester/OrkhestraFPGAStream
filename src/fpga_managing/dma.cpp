@@ -189,9 +189,9 @@ void DMA::SetRecordsPerBurstForMultiChannelStreams(
 }
 
 void DMA::SetDDRBurstSizeForMultiChannelStreams(
-    int stream_id, int ddr_burst_size) {  // burst size -1
+    int stream_id, int ddr_burst_size) {
   AccelerationModule::WriteToModule(0x80000 + (1 << 6) + (stream_id * 4),
-                                    ddr_burst_size);
+                                    ddr_burst_size - 1);
 }
 
 void DMA::SetNumberOfActiveChannelsForMultiChannelStreams(
@@ -205,7 +205,8 @@ void DMA::SetNumberOfActiveChannelsForMultiChannelStreams(
 void DMA::SetAddressForMultiChannelStreams(int stream_id, int channel_id,
                                            uintptr_t address) {
   AccelerationModule::WriteToModule(
-      0x80000 + (1 << 16) + (stream_id << 14) + (channel_id << 2), address);
+      0x80000 + (1 << 16) + (stream_id << 14) + (channel_id << 2),
+      address >> 4);
 }
 void DMA::SetSizeForMultiChannelStreams(int stream_id, int channel_id,
                                         int number_of_records) {

@@ -4,7 +4,7 @@ class MergeSortInterface {
   virtual ~MergeSortInterface() = default;
 
   virtual void StartPrefetchingData(int base_channel_id,
-                                    bool is_first_module) = 0;
+                                    bool is_not_first_module) = 0;
   virtual void SetStreamParams(int stream_id, int chunks_per_record) = 0;
   virtual void SetBufferSize(int record_count) = 0;
   virtual void SetRecordCountPerFetch(int record_count) = 0;
