@@ -5,11 +5,9 @@
 #include <algorithm>
 
 void StreamParameterCalculator::CalculateDMAStreamSetupData(
-    DMASetupData& stream_setup_data, const int& max_chunk_size,
-    const int& max_ddr_burst_size, const int& max_ddr_size_per_cycle,
+    DMASetupData& stream_setup_data, 
     const int record_size) {
-  stream_setup_data.chunks_per_record =
-      (record_size + max_chunk_size - 1) / max_chunk_size;  // ceil
+  stream_setup_data.chunks_per_record = CalculateChunksPerRecord(record_size);
 
   // Temporarily for now.
   for (int i = 0; i < query_acceleration_constants::kDatapathLength; i++) {
@@ -17,19 +15,27 @@ void StreamParameterCalculator::CalculateDMAStreamSetupData(
         i, i % stream_setup_data.chunks_per_record);
   }
 
-  stream_setup_data.records_per_ddr_burst = FindMinViableRecordsPerDDRBurst(
-      max_ddr_burst_size, record_size);
+  stream_setup_data.records_per_ddr_burst = FindMinViableRecordsPerDDRBurst(record_size);
 
   // ceil (recordSize * records_per_ddr_burst) / maxDDRSizePerCycle
-  stream_setup_data.ddr_burst_length =
-      ((record_size * stream_setup_data.records_per_ddr_burst) +
-       max_ddr_size_per_cycle - 1) /
-      max_ddr_size_per_cycle;
+  stream_setup_data.ddr_burst_length = CalculateDDRBurstLength(
+      record_size, stream_setup_data.records_per_ddr_burst);
 }
 
-auto StreamParameterCalculator::FindMinViableRecordsPerDDRBurst(
-    const int& max_ddr_burst_size, const int& record_size) -> int {
-  int records_per_max_burst_size = max_ddr_burst_size / record_size;
+auto StreamParameterCalculator::FindMinViableRecordsPerDDRBurst(const int record_size) -> int {
+  int records_per_max_burst_size =
+      query_acceleration_constants::kDdrBurstSize / record_size;
   return std::min(query_acceleration_constants::kMaxRecordsPerDDRBurst,
                   static_cast<int>(pow(2, static_cast<int>(log2(records_per_max_burst_size)))));
+}
+
+auto StreamParameterCalculator::CalculateChunksPerRecord(
+    const int record_size) -> int{
+  return (record_size + query_acceleration_constants::kDatapathWidth - 1) /
+         query_acceleration_constants::kDatapathWidth;
+}
+
+auto StreamParameterCalculator::CalculateDDRBurstLength(
+    const int record_size, const int records_per_ddr_burst) -> int {
+  return ((record_size * records_per_ddr_burst) + query_acceleration_constants::kDdrSizePerCycle -1) / query_acceleration_constants::kDdrSizePerCycle;
 }

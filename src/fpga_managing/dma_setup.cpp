@@ -2,6 +2,7 @@
 
 #include "dma_crossbar_setup.hpp"
 #include "dma_multi_channel_setup_data.hpp"
+#include "merge_sort_setup.hpp"
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
 
@@ -25,6 +26,7 @@ void DMASetup::SetupDMAModuleWithMultiStream(
   dma_engine.SetNumberOfInputStreamsWithMultipleChannels(input_streams.size());
 
   for (int i = 0; i < input_streams.size(); i++) {
+    // Regular DMA settings calculations
     DMAMultiChannelSetupData input_stream_setup_data;
     input_stream_setup_data.is_input_stream = true;
 
@@ -33,32 +35,43 @@ void DMASetup::SetupDMAModuleWithMultiStream(
     input_stream_setup_data.buffer_end =
         input_stream_setup_data.buffer_start + buffer_size - 1;
 
-    // Placeholder used for now. Some inheritance needed ASAP here
-    DMASetupData setup_data_placeholder;
-
-    StreamParameterCalculator::CalculateDMAStreamSetupData(
-        setup_data_placeholder, query_acceleration_constants::kDatapathWidth,
-        query_acceleration_constants::kDdrBurstSize,
-        query_acceleration_constants::kDdrSizePerCycle,
-        input_streams.at(i).stream_record_size);
-
     input_stream_setup_data.chunks_per_record =
-        setup_data_placeholder.chunks_per_record;
-    input_stream_setup_data.record_chunk_ids =
-        setup_data_placeholder.record_chunk_ids;
-    /*input_stream_setup_data.records_per_ddr_burst =
-        setup_data_placeholder.records_per_ddr_burst;
-    input_stream_setup_data.ddr_burst_length =
-        setup_data_placeholder.ddr_burst_length;*/
-    input_stream_setup_data.records_per_ddr_burst = 2;
-    setup_data_placeholder.records_per_ddr_burst = 2;
+        StreamParameterCalculator::CalculateChunksPerRecord(
+            input_streams.at(i).stream_record_size);
 
-    input_stream_setup_data.ddr_burst_length = 9;
-    setup_data_placeholder.ddr_burst_length = 9;
+    // Temporarily for now.
+    for (int i = 0; i < query_acceleration_constants::kDatapathLength; i++) {
+      input_stream_setup_data.record_chunk_ids.emplace_back(
+          i, i % input_stream_setup_data.chunks_per_record);
+    }
+
+    int sort_buffer_size = MergeSortSetup::CalculateSortBufferSize(
+        2048, 64, input_stream_setup_data.chunks_per_record);
+    input_stream_setup_data.records_per_ddr_burst =
+        MergeSortSetup::CalculateRecordCountPerFetch(
+            sort_buffer_size, input_streams.at(i).stream_record_size);
+
+    input_stream_setup_data.ddr_burst_length =
+        StreamParameterCalculator::CalculateDDRBurstLength(
+            input_streams.at(i).stream_record_size,
+            input_stream_setup_data.records_per_ddr_burst);
 
     const int throwaway_chunk =
         query_acceleration_constants::kDatapathLength - 1;
     const int throwaway_position = 0;
+
+    // Placeholder used for now. Some inheritance needed ASAP here
+    DMASetupData setup_data_placeholder;
+
+    // What I mean by inheritance is that possibly multi channel data is just an
+    // extension of some other class which can be given to calculate setup data.
+    StreamParameterCalculator::CalculateDMAStreamSetupData(
+        setup_data_placeholder, input_streams.at(i).stream_record_size);
+
+    setup_data_placeholder.records_per_ddr_burst =
+        input_stream_setup_data.records_per_ddr_burst;
+    setup_data_placeholder.ddr_burst_length =
+        input_stream_setup_data.ddr_burst_length;
 
     setup_data_placeholder.is_input_stream = true;
 
@@ -66,18 +79,12 @@ void DMASetup::SetupDMAModuleWithMultiStream(
         throwaway_chunk, throwaway_position, setup_data_placeholder,
         input_streams.at(i).stream_record_size);
 
-    // Useless
-    input_stream_setup_data.crossbar_setup_data =
-        setup_data_placeholder.crossbar_setup_data;
 
+    // Dealing with channels
     const int max_channel_count = 64;
-    int channel_record_count =
-        (input_streams.at(i).stream_record_count + max_channel_count - 1) /
-        max_channel_count;
-
-    // Need to figure out a way to make sure different channel start addresses
-    // are 16 bit aligned. For example the channel_record_count is 16 which
-    // makes alignment easy but need to think of other cases as well!
+    int channel_record_count = CalculateMultiChannelStreamRecordCountPerChannel(
+        input_streams.at(i).stream_record_count, max_channel_count,
+        input_streams.at(i).stream_record_size);
 
     input_stream_setup_data.active_channel_count =
         (input_streams.at(i).stream_record_count + channel_record_count - 1) /
@@ -102,6 +109,15 @@ void DMASetup::SetupDMAModuleWithMultiStream(
           current_channel_setup_data);
     }
 
+    // Just in case setting the unused channels to 0
+    for (int j = input_stream_setup_data.active_channel_count;
+         j < max_channel_count; j++) {
+      DMAChannelSetupData current_channel_setup_data = {0, 0, j};
+      input_stream_setup_data.channel_setup_data.push_back(
+          current_channel_setup_data);
+    }
+
+    // Writing values in
     SetUpDMACrossbars(setup_data_placeholder, dma_engine);
 
     dma_engine.SetInputControllerParams(
@@ -139,6 +155,17 @@ void DMASetup::SetupDMAModuleWithMultiStream(
         input_streams.at(i).stream_id,
         input_stream_setup_data.records_per_ddr_burst);
   }
+}
+
+auto DMASetup::CalculateMultiChannelStreamRecordCountPerChannel(
+    int stream_record_count, int max_channel_count, int record_size) -> int {
+  int channel_record_count =
+      (stream_record_count + max_channel_count - 1) /
+      max_channel_count;
+  while (!((channel_record_count * record_size) % 16 == 0)) {
+    channel_record_count++;
+  }
+  return channel_record_count;
 }
 
 void DMASetup::SetupDMAModule(
@@ -180,10 +207,7 @@ void DMASetup::AddNewStreamDMASetupData(
       stream_setup_data.buffer_start + buffer_size - 1;
 
   StreamParameterCalculator::CalculateDMAStreamSetupData(
-      stream_setup_data, query_acceleration_constants::kDatapathWidth,
-      query_acceleration_constants::kDdrBurstSize,
-      query_acceleration_constants::kDdrSizePerCycle,
-      stream_init_data.stream_record_size);
+      stream_setup_data, stream_init_data.stream_record_size);
 
   const int throwaway_chunk = query_acceleration_constants::kDatapathLength - 1;
   const int throwaway_position = 0;

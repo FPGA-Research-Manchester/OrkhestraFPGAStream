@@ -1,6 +1,9 @@
 #include "merge_sort_setup.hpp"
 
 #include "query_acceleration_constants.hpp"
+#include "stream_parameter_calculator.hpp"
+
+#include <stdexcept>
 
 void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
                                           int stream_id, int record_size,
@@ -8,13 +11,15 @@ void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
   //merge_sort_module.Reset();
 
   int chunks_per_record =
-      (record_size + query_acceleration_constants::kDatapathWidth - 1) /
-      query_acceleration_constants::kDatapathWidth;
+      StreamParameterCalculator::CalculateChunksPerRecord(record_size);
 
   merge_sort_module.SetStreamParams(stream_id, chunks_per_record);
 
   int sort_buffer_size = CalculateSortBufferSize(2048, 64, chunks_per_record);
-  int record_count_per_fetch = 2;
+  int record_count_per_fetch =
+      CalculateRecordCountPerFetch(sort_buffer_size, record_size);
+
+  //record_count_per_fetch should be twice as small as sort_buffer_size
 
   merge_sort_module.SetBufferSize(sort_buffer_size);
   merge_sort_module.SetRecordCountPerFetch(record_count_per_fetch);
@@ -36,4 +41,27 @@ auto MergeSortSetup::CalculateSortBufferSize(int buffer_space,
 
   return (max_buffered_record_count - internal_logic_buffer_reserve) /
          channel_count;
+}
+
+auto MergeSortSetup::CalculateRecordCountPerFetch(int sort_buffer_size, int record_size) -> int {
+  int potential_record_count = sort_buffer_size / 2;
+  while (!PotentialRecordCountIsValid(potential_record_count, record_size)){
+    potential_record_count --;
+  }
+  if (potential_record_count == 0) {
+    throw std::runtime_error("Records are too big for sorting!");
+  }
+  return potential_record_count;
+}
+
+auto MergeSortSetup::PotentialRecordCountIsValid(int potential_record_count,
+    int record_size) -> bool {
+    switch (potential_record_count % 4) { 
+    case 1: case 3:
+      return record_size % 4 == 0;
+    case 2:
+      return record_size % 2 == 0;
+    case 0:
+      return true;
+  }
 }

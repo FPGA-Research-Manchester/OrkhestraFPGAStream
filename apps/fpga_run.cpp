@@ -85,7 +85,7 @@ void CheckTableData(const TableData& expected_table,
     std::cout << expected_table.table_data_vector.size() /
                      GetRecordSize(expected_table)
               << std::endl;
-    // DataManager::PrintTableData(expected_table);
+    DataManager::PrintTableData(expected_table);
     std::cout << "vs:" << std::endl;
     std::cout << resulting_table.table_data_vector.size() /
                      GetRecordSize(resulting_table)
@@ -162,8 +162,6 @@ void RunQueryWithData(
                      expected_output_tables, output_streams, output_tables);
 
   fpga_manager.SetupQueryAcceleration(input_streams, output_streams, operation);
-
-  PrintInputDataOut(data_manager, input_data_locations);
 
   std::cout << "Running query!" << std::endl;
   auto result_sizes = fpga_manager.RunQueryAcceleration();

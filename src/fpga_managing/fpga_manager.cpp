@@ -18,9 +18,10 @@ void FPGAManager::SetupQueryAcceleration(
     std::vector<StreamDataParameters> input_streams,
     std::vector<StreamDataParameters> output_streams,
     operation_types::QueryOperation operation_type) {
-  if (ila_module_) {
+  /*ila_module_ = std::make_optional (ILA(memory_manager_));*/
+  /*if (ila_module_) {
     ila_module_.value().startAxiILA();
-  }
+  }*/
 
   if (operation_type != operation_types::QueryOperation::MergeSort) {
     DMASetup::SetupDMAModule(dma_engine_, input_streams, output_streams);
@@ -55,8 +56,8 @@ void FPGAManager::SetupQueryAcceleration(
     }
     case operation_types::QueryOperation::MergeSort: {
       MergeSort merge_sort_module(memory_manager_, 1);
-      MergeSortSetup::SetupMergeSortModule(merge_sort_module,
-                                           input_streams[0].stream_id,
+      MergeSortSetup::SetupMergeSortModule(
+          merge_sort_module, input_streams[0].stream_id,
           input_streams[0].stream_record_size, 0, true);
       break;
     }
@@ -78,7 +79,7 @@ auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
   }
 
   WaitForStreamsToFinish();
-  // PrintDebuggingData();
+  /*PrintDebuggingData();*/
   return GetResultingStreamSizes(active_input_stream_ids,
                                  active_output_stream_ids);
 }
@@ -101,18 +102,18 @@ void FPGAManager::WaitForStreamsToFinish() {
   FPGAManager::dma_engine_.StartOutputController(
       FPGAManager::output_streams_active_status_);
 
-//#ifdef _FPGA_AVAILABLE
-//  while (!(FPGAManager::dma_engine_.IsInputControllerFinished() &&
-//           FPGAManager::dma_engine_.IsOutputControllerFinished())) {
-//    std::cout << "Processing..." << std::endl;
-//    std::cout << "Input:"
-//              << FPGAManager::dma_engine_.IsInputControllerFinished()
-//              << std::endl;
-//    std::cout << "Output:"
-//              << FPGAManager::dma_engine_.IsOutputControllerFinished()
-//              << std::endl;
-//  }
-//#endif
+#ifdef _FPGA_AVAILABLE
+  /*while (!(FPGAManager::dma_engine_.IsInputControllerFinished() &&
+           FPGAManager::dma_engine_.IsOutputControllerFinished())) {
+    std::cout << "Processing..." << std::endl;
+    std::cout << "Input:"
+              << FPGAManager::dma_engine_.IsInputControllerFinished()
+              << std::endl;
+    std::cout << "Output:"
+              << FPGAManager::dma_engine_.IsOutputControllerFinished()
+              << std::endl;
+  }*/
+#endif
 }
 
 auto FPGAManager::GetResultingStreamSizes(
@@ -150,7 +151,7 @@ void FPGAManager::PrintDebuggingData() {
     std::cout << "======================================================ILA 2 "
                  "DATA ======================================================="
               << std::endl;
-    FPGAManager::ila_module_.value().PrintAxiILAData(4096);
+    FPGAManager::ila_module_.value().PrintDMAILAData(2048);
   }
 #endif
 }

@@ -740,8 +740,8 @@ integer-1,varchar-32,varchar-32,integer-1
 75831,Saturn,Outlook,635
 75837,Ford,Ranger,738
 75901,Hyundai,Accent,134
-76015,Mazda,929,434
 76015,Pontiac,Firebird,144
+76015,Mazda,929,434
 76026,Pontiac,Safari,672
 76052,Chrysler,Sebring,340
 76071,Volkswagen,Type 2,899
@@ -948,8 +948,8 @@ integer-1,varchar-32,varchar-32,integer-1
 94294,Geo,Tracker,234
 94570,Oldsmobile,Ciera,45
 94624,Kia,Rio,615
-94651,Chrysler,Sebring,942
 94651,Volvo,S60,749
+94651,Chrysler,Sebring,942
 94821,Oldsmobile,Regency,68
 94871,Lincoln,Continental Mark VII,912
 95039,Chevrolet,S10,522
@@ -972,8 +972,8 @@ integer-1,varchar-32,varchar-32,integer-1
 96885,GMC,Suburban 1500,162
 96915,Mercedes-Benz,SL-Class,486
 96928,Dodge,Ram Van 2500,318
-97216,Plymouth,Neon,643
 97216,Toyota,Celica,43
+97216,Plymouth,Neon,643
 97315,Chevrolet,Corvette,24
 97396,Ford,Aspire,589
 97611,Audi,TT,165
