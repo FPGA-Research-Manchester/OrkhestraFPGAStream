@@ -11,6 +11,7 @@
 #include "fpga_manager.hpp"
 #include "memory_block_interface.hpp"
 #include "memory_manager.hpp"
+#include "operation_types.hpp"
 #include "query_acceleration_constants.hpp"
 #include "stream_data_parameters.hpp"
 #include "stream_initialisation_data.hpp"
@@ -51,19 +52,19 @@ void PrintInputDataOut(
     DataManager& data_manager,
     const std::vector<StreamInitialisationData>& input_data_locations) {
   for (const auto& input_data_location : input_data_locations) {
+    std::cout << "======================="
+              << input_data_location.stream_data_file_name
+              << "=======================" << std::endl;
     auto current_input_table = data_manager.ParseDataFromCSV(
         input_data_location.stream_data_file_name);
     const auto& table_from_file = current_input_table.table_data_vector;
     volatile uint32_t* input =
         input_data_location.memory_block->GetVirtualAddress();
     auto input_table =
-        std::vector<uint32_t>(input, input + (table_from_file.size() / 2));
+        std::vector<uint32_t>(input, input + (table_from_file.size()));
     current_input_table.table_data_vector = input_table;
     DataManager::PrintTableData(current_input_table);
-    input_table = std::vector<uint32_t>(input + (table_from_file.size() / 2),
-                                        input + (table_from_file.size()));
-    current_input_table.table_data_vector = input_table;
-    DataManager::PrintTableData(current_input_table);
+    std::cout << std::endl;
   }
 }
 
@@ -84,7 +85,7 @@ void CheckTableData(const TableData& expected_table,
     std::cout << expected_table.table_data_vector.size() /
                      GetRecordSize(expected_table)
               << std::endl;
-    // DataManager::PrintTableData(expected_table);
+    DataManager::PrintTableData(expected_table);
     std::cout << "vs:" << std::endl;
     std::cout << resulting_table.table_data_vector.size() /
                      GetRecordSize(resulting_table)
@@ -150,7 +151,7 @@ void RunQueryWithData(
     DataManager& data_manager, FPGAManager& fpga_manager,
     const std::vector<StreamInitialisationData>& input_data_locations,
     const std::vector<StreamInitialisationData>& output_data_locations,
-    bool is_filtering) {
+    operation_types::QueryOperation operation) {
   std::vector<StreamDataParameters> input_streams;
   ReadInputTables(input_data_locations, data_manager, input_streams);
 
@@ -160,8 +161,7 @@ void RunQueryWithData(
   ReadExpectedTables(output_data_locations, data_manager,
                      expected_output_tables, output_streams, output_tables);
 
-  fpga_manager.SetupQueryAcceleration(input_streams, output_streams,
-                                      is_filtering);
+  fpga_manager.SetupQueryAcceleration(input_streams, output_streams, operation);
 
   std::cout << "Running query!" << std::endl;
   auto result_sizes = fpga_manager.RunQueryAcceleration();
@@ -197,62 +197,85 @@ auto main() -> int {
   std::cout << "Starting up!" << std::endl;
   DataManager data_manager("data_config.ini");
 
-  bool is_filtering = false;
+  operation_types::QueryOperation operation =
+      operation_types::QueryOperation::MergeSort;
 
   std::vector<StreamInitialisationData> input_data_locations;
   std::vector<StreamInitialisationData> output_data_locations;
 
-  if (is_filtering) {
-    MemoryManager memory_manager("DSPI_filtering", 2 * module_size);
-    FPGAManager fpga_manager(&memory_manager);
+  switch (operation) {
+    case operation_types::QueryOperation::Filter: {
+      const int module_count = 2;
+      MemoryManager memory_manager("DSPI_filtering",
+                                   module_count * module_size);
+      FPGAManager fpga_manager(&memory_manager);
 
-    FillDataLocationsVector(
-        input_data_locations, &memory_manager,
-        {"CAR_DATA.csv", "CAR_DATA.csv", "CUSTOMER_DATA.csv"}, {0, 1, 2});
-    FillDataLocationsVector(
-        output_data_locations, &memory_manager,
-        {"CAR_FILTER_DATA.csv", "CAR_DATA.csv", "CUSTOMER_DATA.csv"},
-        {0, 1, 2});
+      FillDataLocationsVector(
+          input_data_locations, &memory_manager,
+          {"CAR_DATA.csv", "CAR_DATA.csv", "CUSTOMER_DATA.csv"}, {0, 1, 2});
+      FillDataLocationsVector(
+          output_data_locations, &memory_manager,
+          {"CAR_FILTER_DATA.csv", "CAR_DATA.csv", "CUSTOMER_DATA.csv"},
+          {0, 1, 2});
 
-    RunQueryWithData(data_manager, fpga_manager, input_data_locations,
-                     output_data_locations, is_filtering);
+      RunQueryWithData(data_manager, fpga_manager, input_data_locations,
+                       output_data_locations, operation);
 
-    input_data_locations.clear();
-    output_data_locations.clear();
+      input_data_locations.clear();
+      output_data_locations.clear();
 
-    FillDataLocationsVector(input_data_locations, &memory_manager,
-                            {"CAR_DATA.csv"}, {0});
-    FillDataLocationsVector(output_data_locations, &memory_manager,
-                            {"CAR_FILTER_DATA.csv"}, {0});
+      FillDataLocationsVector(input_data_locations, &memory_manager,
+                              {"CAR_DATA.csv"}, {0});
+      FillDataLocationsVector(output_data_locations, &memory_manager,
+                              {"CAR_FILTER_DATA.csv"}, {0});
 
-    RunQueryWithData(data_manager, fpga_manager, input_data_locations,
-                     output_data_locations, is_filtering);
-  } else {
-    MemoryManager memory_manager("DSPI_joining", 2 * module_size);
-    FPGAManager fpga_manager(&memory_manager);
+      RunQueryWithData(data_manager, fpga_manager, input_data_locations,
+                       output_data_locations, operation);
+      break;
+    }
+    case operation_types::QueryOperation::Join: {
+      const int module_count = 2;
+      MemoryManager memory_manager("DSPI_joining", module_count * module_size);
+      FPGAManager fpga_manager(&memory_manager);
 
-    FillDataLocationsVector(
-        input_data_locations, &memory_manager,
-        {"CAR_DATA.csv", "CUSTOMER_DATA_FOR_JOIN.csv", "CAR_FILTER_DATA.csv"},
-        {0, 1, 2});
-    FillDataLocationsVector(output_data_locations, &memory_manager,
-                            {"JOIN_DATA.csv", "CAR_FILTER_DATA.csv"}, {0, 2});
+      FillDataLocationsVector(
+          input_data_locations, &memory_manager,
+          {"CAR_DATA.csv", "CUSTOMER_DATA_FOR_JOIN.csv", "CAR_FILTER_DATA.csv"},
+          {0, 1, 2});
+      FillDataLocationsVector(output_data_locations, &memory_manager,
+                              {"JOIN_DATA.csv", "CAR_FILTER_DATA.csv"}, {0, 2});
 
-    RunQueryWithData(data_manager, fpga_manager, input_data_locations,
-                     output_data_locations, is_filtering);
+      RunQueryWithData(data_manager, fpga_manager, input_data_locations,
+                       output_data_locations, operation);
 
-    input_data_locations.clear();
-    output_data_locations.clear();
+      input_data_locations.clear();
+      output_data_locations.clear();
 
-    FillDataLocationsVector(
-        input_data_locations, &memory_manager,
-        {"CAR_DATA.csv", "CUSTOMER_DATA_FOR_JOIN.csv"},
-        {0, 1});
-    FillDataLocationsVector(output_data_locations, &memory_manager,
-                            {"JOIN_DATA.csv"}, {0});
+      FillDataLocationsVector(input_data_locations, &memory_manager,
+                              {"CAR_DATA.csv", "CUSTOMER_DATA_FOR_JOIN.csv"},
+                              {0, 1});
+      FillDataLocationsVector(output_data_locations, &memory_manager,
+                              {"JOIN_DATA.csv"}, {0});
 
-    RunQueryWithData(data_manager, fpga_manager, input_data_locations,
-                     output_data_locations, is_filtering);
+      RunQueryWithData(data_manager, fpga_manager, input_data_locations,
+                       output_data_locations, operation);
+      break;
+    }
+    case operation_types::QueryOperation::MergeSort: {
+      const int module_count = 2;
+      MemoryManager memory_manager("DSPI_merge_sorting",
+                                   module_count * module_size);
+      FPGAManager fpga_manager(&memory_manager);
+
+      FillDataLocationsVector(input_data_locations, &memory_manager,
+                              {"CAR_DATA_HALF_SORTED.csv"}, {0});
+      FillDataLocationsVector(output_data_locations, &memory_manager,
+                              {"CAR_DATA_SORTED.csv"}, {0});
+
+      RunQueryWithData(data_manager, fpga_manager, input_data_locations,
+                       output_data_locations, operation);
+      break;
+    }
   }
   return 0;
 }

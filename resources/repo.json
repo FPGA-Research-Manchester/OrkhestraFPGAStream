@@ -1,6 +1,7 @@
 {
   "accelerators": [
     "DSPI_joining",
-    "DSPI_filtering"
+    "DSPI_filtering",
+    "DSPI_merge_sorting"
   ]
 }

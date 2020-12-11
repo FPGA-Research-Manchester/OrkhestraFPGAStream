@@ -18,8 +18,9 @@ void AccelerationModule::WriteToModule(
 ) {
   volatile uint32_t* register_address =
       CalculateMemoryMappedAddress(module_internal_address);
-  std::cout << std::hex << "Address: " << module_internal_address << " Data: " << write_data
-            << std::endl;
+  /*std::cout << std::hex << "Module: " << module_position_ << " Address: "
+            << module_internal_address << " Data: " << write_data
+            << std::endl;*/
   *register_address = write_data;
 }
 

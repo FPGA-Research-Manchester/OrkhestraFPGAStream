@@ -43,7 +43,14 @@ add_library(fpga_managing
 			"ila.cpp"
 			"ila.hpp"
 			"ila_types.hpp"
-			"stream_initialisation_data.hpp")
+			"stream_initialisation_data.hpp" 
+            "merge_sort.hpp"
+            "merge_sort.cpp"
+			"merge_sort_interface.hpp"
+			"merge_sort_setup.cpp"
+			"merge_sort_setup.hpp"
+			"operation_types.hpp"
+			"dma_multi_channel_setup_data.hpp")
 
 target_include_directories(fpga_managing PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 

@@ -13,6 +13,7 @@ class ILA {
       -> uint32_t;
   void PrintILAData(int ila_id, int max_clock);
   void PrintAxiILAData(int max_clock);
+  void PrintDMAILAData(int max_clock);
  private:
   MemoryManagerInterface* memory_manager_;
   static auto calcAddress(int clock, int location, int offset) -> int;

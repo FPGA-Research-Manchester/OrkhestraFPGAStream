@@ -3,8 +3,6 @@
 #include <cmath>
 #include <iostream>
 
-Join::~Join() = default;
-
 void Join::StartPrefetchingData() { AccelerationModule::WriteToModule(0, 1); }
 
 void Join::DefineOutputStream(int output_stream_chunk_count,

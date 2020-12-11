@@ -3,15 +3,6 @@
 #include <cmath>
 #include <iostream>
 
-/*
-This is the width of the address for the memory mapped register space in every
-module. This parameter's value has to match the parameter in the implemented DMA
-module.
-*/
-#define MODULE_ADDRESS_BITS 20
-
-DMA::~DMA() = default;
-
 // Input Controller
 void DMA::SetInputControllerParams(int stream_id, int ddr_burst_size,
                                    int records_per_ddr_burst, int buffer_start,
@@ -198,9 +189,9 @@ void DMA::SetRecordsPerBurstForMultiChannelStreams(
 }
 
 void DMA::SetDDRBurstSizeForMultiChannelStreams(
-    int stream_id, int ddr_burst_size) {  // burst size -1
+    int stream_id, int ddr_burst_size) {
   AccelerationModule::WriteToModule(0x80000 + (1 << 6) + (stream_id * 4),
-                                    ddr_burst_size);
+                                    ddr_burst_size - 1);
 }
 
 void DMA::SetNumberOfActiveChannelsForMultiChannelStreams(
@@ -214,7 +205,8 @@ void DMA::SetNumberOfActiveChannelsForMultiChannelStreams(
 void DMA::SetAddressForMultiChannelStreams(int stream_id, int channel_id,
                                            uintptr_t address) {
   AccelerationModule::WriteToModule(
-      0x80000 + (1 << 16) + (stream_id << 14) + (channel_id << 2), address);
+      0x80000 + (1 << 16) + (stream_id << 14) + (channel_id << 2),
+      address >> 4);
 }
 void DMA::SetSizeForMultiChannelStreams(int stream_id, int channel_id,
                                         int number_of_records) {

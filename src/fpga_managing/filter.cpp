@@ -1,10 +1,6 @@
 #include "filter.hpp"
 // Filter module low driver
 
-#define MODULE_ADDRESS_BITS 20
-
-Filter::~Filter() = default;
-
 // Selects stream_id and stream_id manipulations
 void Filter::FilterSetStreamIDs(
     int stream_id_input,  // The stream_id of the stream that gets filterred

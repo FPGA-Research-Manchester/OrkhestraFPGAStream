@@ -6,7 +6,7 @@
 class Join : public AccelerationModule, public JoinInterface {
  private:
  public:
-  ~Join() override;
+  ~Join() = default;
   explicit Join(MemoryManagerInterface* memory_manager, int module_position)
       : AccelerationModule(memory_manager, module_position){};
 
