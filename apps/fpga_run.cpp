@@ -185,7 +185,7 @@ void FillDataLocationsVector(
     const std::vector<int>& stream_id_vector) {
   for (int i = 0; i < file_name_vector.size(); i++) {
     data_locations.push_back({stream_id_vector[i], file_name_vector[i],
-                              memory_manager->AllocateMemoryBlock()});
+                              memory_manager->GetAvailableMemoryBlock()});
   }
 }
 
