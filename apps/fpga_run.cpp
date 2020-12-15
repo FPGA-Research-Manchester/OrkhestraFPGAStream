@@ -276,7 +276,8 @@ auto main() -> int {
       RunQueryWithData(data_manager, fpga_manager, input_data_locations,
                        output_data_locations, operation);
 
-      input_data_locations.clear();
+      //Works with a global reset at address 0xA000_0008 
+      /*input_data_locations.clear();
       output_data_locations.clear();
 
       FillDataLocationsVector(input_data_locations, &memory_manager,
@@ -285,7 +286,7 @@ auto main() -> int {
                               {"CAR_DATA_SORTED.csv"}, {0});
 
       RunQueryWithData(data_manager, fpga_manager, input_data_locations,
-                       output_data_locations, operation);
+                       output_data_locations, operation);*/
       break;
     }
   }
