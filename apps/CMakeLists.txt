@@ -4,6 +4,11 @@ add_executable(app fpga_run.cpp)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA.csv CAR_DATA.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_HALF_SORTED.csv CAR_DATA_HALF_SORTED.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_SORTED.csv CAR_DATA_SORTED.csv COPYONLY)
+
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_8K.csv CAR_DATA_8K.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_HALF_SORTED_8K_128WAY.csv CAR_DATA_HALF_SORTED_8K_128WAY.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_SORTED_8K.csv CAR_DATA_SORTED_8K.csv COPYONLY)
+
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_FILTER_DATA.csv CAR_FILTER_DATA.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CUSTOMER_DATA.csv CUSTOMER_DATA.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CUSTOMER_DATA_FOR_JOIN.csv CUSTOMER_DATA_FOR_JOIN.csv COPYONLY)

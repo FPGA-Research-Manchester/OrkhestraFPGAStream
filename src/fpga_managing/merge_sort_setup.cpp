@@ -8,7 +8,7 @@
 void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
                                           int stream_id, int record_size,
                                           int base_channel_id, bool is_first) {
-  //merge_sort_module.Reset();
+  merge_sort_module.Reset();
 
   int chunks_per_record =
       StreamParameterCalculator::CalculateChunksPerRecord(record_size);
@@ -18,8 +18,6 @@ void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
   int sort_buffer_size = CalculateSortBufferSize(2048, 64, chunks_per_record);
   int record_count_per_fetch =
       CalculateRecordCountPerFetch(sort_buffer_size, record_size);
-
-  //record_count_per_fetch should be twice as small as sort_buffer_size
 
   merge_sort_module.SetBufferSize(sort_buffer_size);
   merge_sort_module.SetRecordCountPerFetch(record_count_per_fetch);
@@ -44,6 +42,7 @@ auto MergeSortSetup::CalculateSortBufferSize(int buffer_space,
 }
 
 auto MergeSortSetup::CalculateRecordCountPerFetch(int sort_buffer_size, int record_size) -> int {
+  // record_count_per_fetch should be twice as small as sort_buffer_size
   int potential_record_count = sort_buffer_size / 2;
   while (!PotentialRecordCountIsValid(potential_record_count, record_size)){
     potential_record_count --;

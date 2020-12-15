@@ -85,7 +85,7 @@ void CheckTableData(const TableData& expected_table,
     std::cout << expected_table.table_data_vector.size() /
                      GetRecordSize(expected_table)
               << std::endl;
-    DataManager::PrintTableData(expected_table);
+    // DataManager::PrintTableData(expected_table);
     std::cout << "vs:" << std::endl;
     std::cout << resulting_table.table_data_vector.size() /
                      GetRecordSize(resulting_table)
@@ -265,7 +265,19 @@ auto main() -> int {
       const int module_count = 2;
       MemoryManager memory_manager("DSPI_merge_sorting",
                                    module_count * module_size);
+      /*MemoryManager memory_manager("DSPI_merge_sorting", 0x14600000);*/
       FPGAManager fpga_manager(&memory_manager);
+
+      FillDataLocationsVector(input_data_locations, &memory_manager,
+                              {"CAR_DATA_HALF_SORTED_8K_128WAY.csv"}, {0});
+      FillDataLocationsVector(output_data_locations, &memory_manager,
+                              {"CAR_DATA_SORTED_8K.csv"}, {0});
+
+      RunQueryWithData(data_manager, fpga_manager, input_data_locations,
+                       output_data_locations, operation);
+
+      input_data_locations.clear();
+      output_data_locations.clear();
 
       FillDataLocationsVector(input_data_locations, &memory_manager,
                               {"CAR_DATA_HALF_SORTED.csv"}, {0});

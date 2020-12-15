@@ -212,7 +212,7 @@ void DMA::SetSizeForMultiChannelStreams(int stream_id, int channel_id,
                                         int number_of_records) {
   AccelerationModule::WriteToModule(
       0x80000 + (2 << 16) + (stream_id << 14) + (channel_id << 2),
-      number_of_records);
+      number_of_records + 1);
 }
 
 auto DMA::GetRuntime() -> volatile uint64_t {

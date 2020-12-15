@@ -18,7 +18,7 @@ void FPGAManager::SetupQueryAcceleration(
     std::vector<StreamDataParameters> input_streams,
     std::vector<StreamDataParameters> output_streams,
     operation_types::QueryOperation operation_type) {
-  /*ila_module_ = std::make_optional (ILA(memory_manager_));*/
+  //ila_module_ = std::make_optional (ILA(memory_manager_));
   /*if (ila_module_) {
     ila_module_.value().startAxiILA();
   }*/
@@ -79,7 +79,7 @@ auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
   }
 
   WaitForStreamsToFinish();
-  /*PrintDebuggingData();*/
+  //PrintDebuggingData();
   return GetResultingStreamSizes(active_input_stream_ids,
                                  active_output_stream_ids);
 }
@@ -103,7 +103,7 @@ void FPGAManager::WaitForStreamsToFinish() {
       FPGAManager::output_streams_active_status_);
 
 #ifdef _FPGA_AVAILABLE
-  /*while (!(FPGAManager::dma_engine_.IsInputControllerFinished() &&
+  while (!(FPGAManager::dma_engine_.IsInputControllerFinished() &&
            FPGAManager::dma_engine_.IsOutputControllerFinished())) {
     std::cout << "Processing..." << std::endl;
     std::cout << "Input:"
@@ -112,7 +112,7 @@ void FPGAManager::WaitForStreamsToFinish() {
     std::cout << "Output:"
               << FPGAManager::dma_engine_.IsOutputControllerFinished()
               << std::endl;
-  }*/
+  }
 #endif
 }
 
