@@ -24,8 +24,4 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_merge_sorting.json DSPI_m
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/repo.json repo.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data_config.ini data_config.ini COPYONLY)
 
-target_link_libraries(app PRIVATE fpga_managing)
-target_link_libraries(app PRIVATE data_managing)
-if (NOT WIN32)
-	target_link_libraries(app PRIVATE fos)
-endif()
+target_link_libraries(app PRIVATE query_managing)
