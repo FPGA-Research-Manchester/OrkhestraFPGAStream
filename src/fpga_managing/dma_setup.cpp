@@ -80,8 +80,8 @@ void DMASetup::SetupDMAModuleWithMultiStream(
         input_streams.at(i).stream_record_size);
 
 
-    // Dealing with channels
-    const int max_channel_count = 64;
+    // Dealing with channels - based on what module is loaded.
+    const int max_channel_count = 64 * 2;
     int channel_record_count = CalculateMultiChannelStreamRecordCountPerChannel(
         input_streams.at(i).stream_record_count, max_channel_count,
         input_streams.at(i).stream_record_size);
@@ -92,7 +92,8 @@ void DMASetup::SetupDMAModuleWithMultiStream(
 
     for (int j = 0; j < input_stream_setup_data.active_channel_count; j++) {
       DMAChannelSetupData current_channel_setup_data;
-      if (j == input_stream_setup_data.active_channel_count - 1) {
+      if (j == input_stream_setup_data.active_channel_count - 1 &&
+          input_streams.at(i).stream_record_count % channel_record_count != 0) {
         current_channel_setup_data.record_count =
             input_streams.at(i).stream_record_count % channel_record_count;
       } else {

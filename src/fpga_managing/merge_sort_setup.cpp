@@ -8,8 +8,6 @@
 void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
                                           int stream_id, int record_size,
                                           int base_channel_id, bool is_first) {
-  merge_sort_module.Reset();
-
   int chunks_per_record =
       StreamParameterCalculator::CalculateChunksPerRecord(record_size);
 

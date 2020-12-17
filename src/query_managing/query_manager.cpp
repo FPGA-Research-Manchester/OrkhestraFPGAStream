@@ -215,4 +215,20 @@ void QueryManager::RunQueries(std::vector<QueryNode> starting_query_nodes) {
 
     // Free available memory blocks
   }
+
+  // Hardcoded queries here which should be supported by the flow above ASAP!
+  MemoryManager memory_manager("DSPI_double_merge_sorting",
+                               3 * query_acceleration_constants::kModuleSize);
+  FPGAManager fpga_manager(&memory_manager);
+
+  std::vector<StreamInitialisationData> input_data_locations;
+  FillDataLocationsVector(input_data_locations, &memory_manager,
+                          {"CAR_DATA_HALF_SORTED_8K_63WAY.csv"}, {0});
+  std::vector<StreamInitialisationData> output_data_locations;
+  FillDataLocationsVector(output_data_locations, &memory_manager,
+                          {"CAR_DATA_SORTED_8K.csv"}, {0});
+
+  RunQueryWithData(data_manager, fpga_manager, input_data_locations,
+                   output_data_locations,
+                   operation_types::QueryOperation::MergeSort);
 }

@@ -33,6 +33,7 @@ auto main() -> int {
                                {"JOIN_DATA.csv"},
                                operation_types::QueryOperation::Join};
 
+  // Temp not supported
   QueryNode merge_sort_query_8k_once = {
       {"CAR_DATA_HALF_SORTED_8K_128WAY.csv"},
       {"CAR_DATA_SORTED_8K.csv"},
@@ -42,8 +43,8 @@ auto main() -> int {
       {"CAR_DATA_HALF_SORTED.csv"},
       {"CAR_DATA_SORTED.csv"},
       operation_types::QueryOperation::MergeSort};
-
-  QueryManager::RunQueries({filtering_query_once, merge_sort_query_8k_once,
-                            join_query_once, merge_sort_query_1k_once});
+  QueryManager::RunQueries({});
+  //QueryManager::RunQueries({filtering_query_once, merge_sort_query_8k_once,
+  //                          join_query_once, merge_sort_query_1k_once});
   return 0;
 }

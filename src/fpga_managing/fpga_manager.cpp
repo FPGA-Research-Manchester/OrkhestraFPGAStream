@@ -59,6 +59,10 @@ void FPGAManager::SetupQueryAcceleration(
       MergeSortSetup::SetupMergeSortModule(
           merge_sort_module, input_streams[0].stream_id,
           input_streams[0].stream_record_size, 0, true);
+      MergeSort merge_sort_module_last(memory_manager_, 2);
+      MergeSortSetup::SetupMergeSortModule(
+          merge_sort_module_last, input_streams[0].stream_id,
+          input_streams[0].stream_record_size, 64, false);
       break;
     }
   }

@@ -10,5 +10,4 @@ class MergeSortInterface {
   virtual void SetRecordCountPerFetch(int record_count) = 0;
   virtual void SetFetchCount(int fetch_count) = 0;
   virtual void SetFetchOffset(int padded_fetch_count) = 0;
-  virtual void Reset() = 0;
 };
