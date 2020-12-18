@@ -111,12 +111,12 @@ void DMASetup::SetupDMAModuleWithMultiStream(
     }
 
     // Just in case setting the unused channels to 0
-    //for (int j = input_stream_setup_data.active_channel_count;
-    //     j < max_channel_count; j++) {
-    //  DMAChannelSetupData current_channel_setup_data = {0, 0, j};
-    //  input_stream_setup_data.channel_setup_data.push_back(
-    //      current_channel_setup_data);
-    //}
+    for (int j = input_stream_setup_data.active_channel_count;
+         j < max_channel_count; j++) {
+      DMAChannelSetupData current_channel_setup_data = {0, 0, j};
+      input_stream_setup_data.channel_setup_data.push_back(
+          current_channel_setup_data);
+    }
 
     // Writing values in
     SetUpDMACrossbars(setup_data_placeholder, dma_engine);
@@ -135,9 +135,11 @@ void DMASetup::SetupDMAModuleWithMultiStream(
                                    std::get<1>(chunk_id_pair));
     }
 
-    dma_engine.SetNumberOfActiveChannelsForMultiChannelStreams(
+    /*dma_engine.SetNumberOfActiveChannelsForMultiChannelStreams(
         input_streams.at(i).stream_id,
-        input_stream_setup_data.active_channel_count);
+        input_stream_setup_data.active_channel_count);*/
+    dma_engine.SetNumberOfActiveChannelsForMultiChannelStreams(
+        input_streams.at(i).stream_id, max_channel_count);
 
     for (const auto& channel_setup_data :
          input_stream_setup_data.channel_setup_data) {

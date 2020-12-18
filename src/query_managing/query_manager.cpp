@@ -10,6 +10,7 @@
 #include "memory_block_interface.hpp"
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
+#include "accelerated_query_node.hpp"
 
 // Debug method
 void QueryManager::PrintInputDataOut(
@@ -127,8 +128,11 @@ void QueryManager::RunQueryWithData(
   ReadExpectedTables(output_data_locations, data_manager,
                      expected_output_tables, output_streams, output_tables);
 
-  fpga_manager.SetupQueryAcceleration(input_streams, output_streams, operation);
+  std::vector<AcceleratedQueryNode> query_nodes = {
+      {input_streams, output_streams, operation}};
 
+  fpga_manager.SetupQueryAcceleration(query_nodes);
+  PrintInputDataOut(data_manager, input_data_locations);
   std::cout << "Running query!" << std::endl;
   auto result_sizes = fpga_manager.RunQueryAcceleration();
   std::cout << "Query done!" << std::endl;
@@ -223,7 +227,7 @@ void QueryManager::RunQueries(std::vector<QueryNode> starting_query_nodes) {
 
   std::vector<StreamInitialisationData> input_data_locations;
   FillDataLocationsVector(input_data_locations, &memory_manager,
-                          {"CAR_DATA_HALF_SORTED_8K_63WAY.csv"}, {0});
+                          {"CAR_DATA_HALF_SORTED_8K_64WAY.csv"}, {0});
   std::vector<StreamInitialisationData> output_data_locations;
   FillDataLocationsVector(output_data_locations, &memory_manager,
                           {"CAR_DATA_SORTED_8K.csv"}, {0});
