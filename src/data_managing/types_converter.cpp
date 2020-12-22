@@ -76,7 +76,7 @@ void TypesConverter::ConvertIntegerValuesToIntegerData(
 }
 
 void TypesConverter::ConvertNullValuesToIntegerData(
-    const std::string& input, std::vector<uint32_t>& data_vector,
+    const std::string& /*input*/, std::vector<uint32_t>& data_vector,
     int output_size) {
   for (int i = 0; i < output_size; i++) {
     data_vector.push_back(0);

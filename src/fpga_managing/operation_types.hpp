@@ -1,4 +1,4 @@
 #pragma once
 namespace operation_types {
-enum class QueryOperation { Filter, Join, MergeSort, PassThrough };
+enum class QueryOperation { kFilter, kJoin, kMergeSort, kPassThrough };
 }

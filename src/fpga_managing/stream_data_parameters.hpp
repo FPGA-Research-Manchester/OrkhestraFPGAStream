@@ -1,9 +1,13 @@
 #pragma once
-#include <vector>
 #include <cstdint>
+#include <vector>
 struct StreamDataParameters {
-  int stream_id;
-  int stream_record_size;
-  int stream_record_count;
-  volatile uint32_t* physical_address;
+  const int stream_id;
+  const int stream_record_size;
+  const int stream_record_count;
+  const volatile uint32_t* physical_address;
+
+  auto operator<(const StreamDataParameters& comparable) const -> bool {
+    return stream_id < comparable.stream_id;
+  }
 };

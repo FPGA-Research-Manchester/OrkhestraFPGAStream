@@ -39,9 +39,7 @@ auto CalculateChunksPerRecord(int record_size) -> int {
 void ExpectConfigurationDataIsUnconfigured(DMASetupData configuration_data) {
   for (int clock_cycle_index = 0; clock_cycle_index < kDatapathLength;
        clock_cycle_index++) {
-    EXPECT_THAT(
-        configuration_data.crossbar_setup_data.size(),
-        testing::Eq(0));
+    EXPECT_THAT(configuration_data.crossbar_setup_data.size(), testing::Eq(0));
   }
 }
 

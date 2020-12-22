@@ -2,7 +2,9 @@
 add_library(query_managing 
             "query_manager.hpp"
             "query_manager.cpp"
-            "query_node.hpp")
+            "query_node.hpp"
+            "table_manager.cpp"
+            "table_manager.hpp")
 
 target_include_directories(query_managing PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 

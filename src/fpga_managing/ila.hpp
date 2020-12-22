@@ -16,7 +16,7 @@ class ILA {
   void PrintDMAILAData(int max_clock);
  private:
   MemoryManagerInterface* memory_manager_;
-  static auto calcAddress(int clock, int location, int offset) -> int;
+  static auto calcAddress(int clock, int ila_id, int offset) -> int;
   void WriteToModule(int module_internal_address, uint32_t write_data);
   auto ReadFromModule(int module_internal_address) -> uint32_t;
 };

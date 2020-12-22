@@ -1,11 +1,11 @@
 #pragma once
 #include <cstdint>
 #include <memory>
-#include <string>
 #include <stack>
+#include <string>
 
-#include "memory_manager_interface.hpp"
 #include "memory_block_interface.hpp"
+#include "memory_manager_interface.hpp"
 #ifdef _FPGA_AVAILABLE
 #include "cynq.h"
 #include "udma.h"
@@ -31,9 +31,12 @@ class MemoryManager : public MemoryManagerInterface {
   ~MemoryManager() override;
   explicit MemoryManager(const std::string& bitstream_name,
                          int register_space_size);
-  auto GetAvailableMemoryBlock() -> std::unique_ptr<MemoryBlockInterface> override;
-  auto AllocateMemoryBlock() -> std::unique_ptr<MemoryBlockInterface> override;
+  auto GetVirtualRegisterAddress(int offset) -> volatile uint32_t* override;
+  auto GetAvailableMemoryBlock()
+      -> std::unique_ptr<MemoryBlockInterface> override;
   void FreeMemoryBlock(
       std::unique_ptr<MemoryBlockInterface> memory_block_pointer) override;
-  auto GetVirtualRegisterAddress(int offset) -> volatile uint32_t* override;
+
+ private:
+  auto AllocateMemoryBlock() -> std::unique_ptr<MemoryBlockInterface> override;
 };

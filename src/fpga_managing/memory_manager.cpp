@@ -25,11 +25,11 @@ auto MemoryManager::GetAvailableMemoryBlock()
     -> std::unique_ptr<MemoryBlockInterface> {
   if (available_memory_blocks_.empty()) {
     return AllocateMemoryBlock();
-  } else {
-    auto available_memory_block = std::move(available_memory_blocks_.top());
-    available_memory_blocks_.pop();
-    return available_memory_block;
   }
+  std::unique_ptr<MemoryBlockInterface> available_memory_block =
+      std::move(available_memory_blocks_.top());
+  available_memory_blocks_.pop();
+  return available_memory_block;
 }
 
 auto MemoryManager::GetVirtualRegisterAddress(int offset)

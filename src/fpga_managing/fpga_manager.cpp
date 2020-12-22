@@ -16,8 +16,8 @@
 // Eventually the idea would be to add operation type to StreamDataParameters.
 // Then the modules and streams can be set up accordingly.
 void FPGAManager::SetupQueryAcceleration(
-    std::vector<AcceleratedQueryNode> query_nodes) {
-  //ila_module_ = std::make_optional (ILA(memory_manager_));
+    const std::vector<AcceleratedQueryNode>& query_nodes) {
+  // ila_module_ = std::make_optional (ILA(memory_manager_));
   /*if (ila_module_) {
     ila_module_.value().startAxiILA();
   }*/
@@ -28,7 +28,7 @@ void FPGAManager::SetupQueryAcceleration(
     if (!query_node.is_input_intermediate &&
         !query_node.is_output_intermediate) {
       if (query_node.operation_type !=
-          operation_types::QueryOperation::MergeSort) {
+          operation_types::QueryOperation::kMergeSort) {
         DMASetup::SetupDMAModule(dma_engine_, query_node.input_streams,
                                  query_node.output_streams);
       } else {
@@ -55,14 +55,14 @@ void FPGAManager::SetupQueryAcceleration(
 
   for (const auto& query_node : query_nodes) {
     switch (query_node.operation_type) {
-      case operation_types::QueryOperation::Filter: {
+      case operation_types::QueryOperation::kFilter: {
         Filter filter_module(memory_manager_, 1);
         FilterSetup::SetupFilterModule(filter_module,
                                        query_node.input_streams[0].stream_id,
                                        query_node.output_streams[0].stream_id);
         break;
       }
-      case operation_types::QueryOperation::Join: {
+      case operation_types::QueryOperation::kJoin: {
         Join join_module(memory_manager_, 1);
         JoinSetup::SetupJoinModule(join_module,
                                    query_node.input_streams[0].stream_id,
@@ -70,7 +70,7 @@ void FPGAManager::SetupQueryAcceleration(
                                    query_node.output_streams[0].stream_id);
         break;
       }
-      case operation_types::QueryOperation::MergeSort: {
+      case operation_types::QueryOperation::kMergeSort: {
         MergeSort merge_sort_module(memory_manager_, 1);
         MergeSortSetup::SetupMergeSortModule(
             merge_sort_module, query_node.input_streams[0].stream_id,
@@ -105,7 +105,7 @@ auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
   }
 
   WaitForStreamsToFinish();
-  //PrintDebuggingData();
+  // PrintDebuggingData();
   return GetResultingStreamSizes(active_input_stream_ids,
                                  active_output_stream_ids);
 }

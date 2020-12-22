@@ -1,9 +1,10 @@
 #include "data_manager.hpp"
-#include "csv_reader.hpp"
-#include "types_converter.hpp"
-#include "config_reader.hpp"
 
 #include <iostream>
+
+#include "config_reader.hpp"
+#include "csv_reader.hpp"
+#include "types_converter.hpp"
 
 auto DataManager::ParseDataFromCSV(const std::string& filename) -> TableData {
   std::vector<std::vector<std::string>> data_rows;
@@ -22,7 +23,8 @@ auto DataManager::ParseDataFromCSV(const std::string& filename) -> TableData {
 
   TableData table_data;
   table_data.table_column_label_vector = table_column_label_vector;
-  TypesConverter::AddIntegerDataFromStringData(data_rows, table_data.table_data_vector, table_column_label_vector);
+  TypesConverter::AddIntegerDataFromStringData(
+      data_rows, table_data.table_data_vector, table_column_label_vector);
   return table_data;
 }
 
@@ -51,8 +53,8 @@ void DataManager::PrintStringData(
 
 void DataManager::PrintTableData(const TableData& table_data) {
   std::vector<std::vector<std::string>> string_data_vector;
-  DataManager::AddStringDataFromIntegerData(table_data.table_data_vector,
-                                            string_data_vector,
-                                            table_data.table_column_label_vector);
+  DataManager::AddStringDataFromIntegerData(
+      table_data.table_data_vector, string_data_vector,
+      table_data.table_column_label_vector);
   DataManager::PrintStringData(string_data_vector);
 }

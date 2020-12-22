@@ -1,12 +1,13 @@
 #pragma once
 #include <vector>
-#include "stream_data_parameters.hpp"
+
 #include "accelerated_query_node.hpp"
 #include "operation_types.hpp"
+#include "stream_data_parameters.hpp"
 struct AcceleratedQueryNode {
-  std::vector<StreamDataParameters> input_streams;
-  std::vector<StreamDataParameters> output_streams;
-  operation_types::QueryOperation operation_type;
-  bool is_input_intermediate = false;
-  bool is_output_intermediate = false;
+  const std::vector<StreamDataParameters>& input_streams;
+  const std::vector<StreamDataParameters>& output_streams;
+  const operation_types::QueryOperation operation_type;
+  const bool is_input_intermediate = false;
+  const bool is_output_intermediate = false;
 };
