@@ -16,5 +16,4 @@ class MergeSort: public AccelerationModule, public MergeSortInterface
   void SetRecordCountPerFetch(int record_count) override;
   void SetFetchCount(int fetch_count) override;
   void SetFetchOffset(int padded_fetch_count) override;
-  void Reset() override;
 };

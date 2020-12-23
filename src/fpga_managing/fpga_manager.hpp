@@ -4,18 +4,16 @@
 #include <string>
 #include <vector>
 
+#include "accelerated_query_node.hpp"
 #include "dma.hpp"
 #include "filter.hpp"
 #include "ila.hpp"
 #include "memory_manager_interface.hpp"
-#include "operation_types.hpp"
-#include "stream_data_parameters.hpp"
 
 class FPGAManager {
  public:
-  void SetupQueryAcceleration(std::vector<StreamDataParameters> input_streams,
-                              std::vector<StreamDataParameters> output_streams,
-                              operation_types::QueryOperation operation_type);
+  void SetupQueryAcceleration(
+      const std::vector<AcceleratedQueryNode>& query_nodes);
   auto RunQueryAcceleration() -> std::vector<int>;
 
   explicit FPGAManager(MemoryManagerInterface* memory_manager)

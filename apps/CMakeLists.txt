@@ -4,6 +4,12 @@ add_executable(app fpga_run.cpp)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA.csv CAR_DATA.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_HALF_SORTED.csv CAR_DATA_HALF_SORTED.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_SORTED.csv CAR_DATA_SORTED.csv COPYONLY)
+
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_8K.csv CAR_DATA_8K.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_HALF_SORTED_8K_128WAY.csv CAR_DATA_HALF_SORTED_8K_128WAY.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_HALF_SORTED_8K_64WAY.csv CAR_DATA_HALF_SORTED_8K_64WAY.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_SORTED_8K.csv CAR_DATA_SORTED_8K.csv COPYONLY)
+
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_FILTER_DATA.csv CAR_FILTER_DATA.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CUSTOMER_DATA.csv CUSTOMER_DATA.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CUSTOMER_DATA_FOR_JOIN.csv CUSTOMER_DATA_FOR_JOIN.csv COPYONLY)
@@ -15,12 +21,10 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_filtering.bin DSPI_filter
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_filtering.json DSPI_filtering.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_merge_sorting.bin DSPI_merge_sorting.bin COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_merge_sorting.json DSPI_merge_sorting.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_double_merge_sorting.bin DSPI_double_merge_sorting.bin COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_double_merge_sorting.json DSPI_double_merge_sorting.json COPYONLY)
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/repo.json repo.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data_config.ini data_config.ini COPYONLY)
 
-target_link_libraries(app PRIVATE fpga_managing)
-target_link_libraries(app PRIVATE data_managing)
-if (NOT WIN32)
-	target_link_libraries(app PRIVATE fos)
-endif()
+target_link_libraries(app PRIVATE query_managing)

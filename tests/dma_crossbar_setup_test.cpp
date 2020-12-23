@@ -14,7 +14,6 @@ const int kTestAnyChunk = 0;
 const int kTestAnyPosition = 1;
 const int kDatapathLength = query_acceleration_constants::kDatapathLength;
 const int kDatapathWidth = query_acceleration_constants::kDatapathWidth;
-const std::vector<int> kUntouchedVector(16, 0);
 
 void GetGoldenConfigFromFile(std::vector<std::vector<int>>& golden_config,
                              const std::string& file_name) {
@@ -40,12 +39,7 @@ auto CalculateChunksPerRecord(int record_size) -> int {
 void ExpectConfigurationDataIsUnconfigured(DMASetupData configuration_data) {
   for (int clock_cycle_index = 0; clock_cycle_index < kDatapathLength;
        clock_cycle_index++) {
-    EXPECT_THAT(
-        configuration_data.crossbar_setup_data[clock_cycle_index].chunk_data,
-        testing::ElementsAreArray(kUntouchedVector));
-    EXPECT_THAT(
-        configuration_data.crossbar_setup_data[clock_cycle_index].position_data,
-        testing::ElementsAreArray(kUntouchedVector));
+    EXPECT_THAT(configuration_data.crossbar_setup_data.size(), testing::Eq(0));
   }
 }
 

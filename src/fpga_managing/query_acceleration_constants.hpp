@@ -8,4 +8,6 @@ const int kDdrBurstSize = 512;
 const int kDdrSizePerCycle = 4; // So 1 DDR burst is 128 clock cycles.
 
 const int kMaxRecordsPerDDRBurst = 32;
-}
+
+const int kModuleSize = 1024 * 1024;
+}  // namespace query_acceleration_constants

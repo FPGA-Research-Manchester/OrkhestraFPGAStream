@@ -3,7 +3,7 @@
 class MergeSortSetup {
  public:
   static void SetupMergeSortModule(MergeSortInterface& merge_sort_module,
-                                   int stream_id, int chunks_per_record,
+                                   int stream_id, int record_size,
                                    int base_channel_id, bool is_first);
   static auto CalculateRecordCountPerFetch(int sort_buffer_size,
                                            int record_size) -> int;

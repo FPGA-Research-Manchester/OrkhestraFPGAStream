@@ -1,10 +1,11 @@
 #pragma once
 #include <cstdint>
 #include <memory>
+#include <stack>
 #include <string>
 
-#include "memory_manager_interface.hpp"
 #include "memory_block_interface.hpp"
+#include "memory_manager_interface.hpp"
 #ifdef _FPGA_AVAILABLE
 #include "cynq.h"
 #include "udma.h"
@@ -14,8 +15,10 @@
 
 class MemoryManager : public MemoryManagerInterface {
  private:
+  std::stack<std::unique_ptr<MemoryBlockInterface>> available_memory_blocks_;
+  int memory_block_count_ = -1;
+  static const int kMaxPossibleAllocations = 8;
 #ifdef _FPGA_AVAILABLE
-  int memory_block_count_ = 0;
   uint32_t* register_memory_block_;
   UdmaRepo udma_repo_;
   // Store to not delete the instances
@@ -28,6 +31,12 @@ class MemoryManager : public MemoryManagerInterface {
   ~MemoryManager() override;
   explicit MemoryManager(const std::string& bitstream_name,
                          int register_space_size);
-  auto AllocateMemoryBlock() -> std::unique_ptr<MemoryBlockInterface> override;
   auto GetVirtualRegisterAddress(int offset) -> volatile uint32_t* override;
+  auto GetAvailableMemoryBlock()
+      -> std::unique_ptr<MemoryBlockInterface> override;
+  void FreeMemoryBlock(
+      std::unique_ptr<MemoryBlockInterface> memory_block_pointer) override;
+
+ private:
+  auto AllocateMemoryBlock() -> std::unique_ptr<MemoryBlockInterface> override;
 };

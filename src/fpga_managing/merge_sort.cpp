@@ -25,7 +25,3 @@ void MergeSort::SetFetchCount(int fetch_count) {
 void MergeSort::SetFetchOffset(int padded_fetch_count) {
   AccelerationModule::WriteToModule(20, padded_fetch_count);
 }
-
-void MergeSort::Reset() {
-  AccelerationModule::WriteToModule(24, 1);
-}

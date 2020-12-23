@@ -10,28 +10,41 @@
 #include "join_setup.hpp"
 #include "merge_sort.hpp"
 #include "merge_sort_setup.hpp"
+#include "operation_types.hpp"
 #include "query_acceleration_constants.hpp"
 
 // Eventually the idea would be to add operation type to StreamDataParameters.
 // Then the modules and streams can be set up accordingly.
 void FPGAManager::SetupQueryAcceleration(
-    std::vector<StreamDataParameters> input_streams,
-    std::vector<StreamDataParameters> output_streams,
-    operation_types::QueryOperation operation_type) {
-  /*ila_module_ = std::make_optional (ILA(memory_manager_));*/
+    const std::vector<AcceleratedQueryNode>& query_nodes) {
+  // ila_module_ = std::make_optional (ILA(memory_manager_));
   /*if (ila_module_) {
     ila_module_.value().startAxiILA();
   }*/
 
-  if (operation_type != operation_types::QueryOperation::MergeSort) {
-    DMASetup::SetupDMAModule(dma_engine_, input_streams, output_streams);
-  } else {
-    DMASetup::SetupDMAModuleWithMultiStream(dma_engine_, input_streams,
-                                            output_streams);
+  for (const auto& query_node : query_nodes) {
+    // Input and output should be setup separately such that these two booleans
+    // don't have to be ANDed.
+    if (!query_node.is_input_intermediate &&
+        !query_node.is_output_intermediate) {
+      if (query_node.operation_type !=
+          operation_types::QueryOperation::kMergeSort) {
+        DMASetup::SetupDMAModule(dma_engine_, query_node.input_streams,
+                                 query_node.output_streams);
+      } else {
+        DMASetup::SetupDMAModuleWithMultiStream(
+            dma_engine_, query_node.input_streams, query_node.output_streams);
+      }
+    }
   }
 
-  for (const auto& stream : input_streams) {
-    FPGAManager::input_streams_active_status_[stream.stream_id] = true;
+  for (const auto& query_node : query_nodes) {
+    if (!query_node.is_input_intermediate &&
+        !query_node.is_output_intermediate) {
+      for (const auto& stream : query_node.input_streams) {
+        FPGAManager::input_streams_active_status_[stream.stream_id] = true;
+      }
+    }
   }
   FPGAManager::dma_engine_.StartInputController(
       FPGAManager::input_streams_active_status_);
@@ -40,31 +53,44 @@ void FPGAManager::SetupQueryAcceleration(
     ila_module_.value().startILAs();
   }
 
-  switch (operation_type) {
-    case operation_types::QueryOperation::Filter: {
-      Filter filter_module(memory_manager_, 1);
-      FilterSetup::SetupFilterModule(filter_module, input_streams[0].stream_id,
-                                     output_streams[0].stream_id);
-      break;
-    }
-    case operation_types::QueryOperation::Join: {
-      Join join_module(memory_manager_, 1);
-      JoinSetup::SetupJoinModule(join_module, input_streams[0].stream_id,
-                                 input_streams[1].stream_id,
-                                 output_streams[0].stream_id);
-      break;
-    }
-    case operation_types::QueryOperation::MergeSort: {
-      MergeSort merge_sort_module(memory_manager_, 1);
-      MergeSortSetup::SetupMergeSortModule(
-          merge_sort_module, input_streams[0].stream_id,
-          input_streams[0].stream_record_size, 0, true);
-      break;
+  for (const auto& query_node : query_nodes) {
+    switch (query_node.operation_type) {
+      case operation_types::QueryOperation::kFilter: {
+        Filter filter_module(memory_manager_, 1);
+        FilterSetup::SetupFilterModule(filter_module,
+                                       query_node.input_streams[0].stream_id,
+                                       query_node.output_streams[0].stream_id);
+        break;
+      }
+      case operation_types::QueryOperation::kJoin: {
+        Join join_module(memory_manager_, 1);
+        JoinSetup::SetupJoinModule(join_module,
+                                   query_node.input_streams[0].stream_id,
+                                   query_node.input_streams[1].stream_id,
+                                   query_node.output_streams[0].stream_id);
+        break;
+      }
+      case operation_types::QueryOperation::kMergeSort: {
+        MergeSort merge_sort_module(memory_manager_, 1);
+        MergeSortSetup::SetupMergeSortModule(
+            merge_sort_module, query_node.input_streams[0].stream_id,
+            query_node.input_streams[0].stream_record_size, 0, true);
+        MergeSort merge_sort_module_last(memory_manager_, 2);
+        MergeSortSetup::SetupMergeSortModule(
+            merge_sort_module_last, query_node.input_streams[0].stream_id,
+            query_node.input_streams[0].stream_record_size, 64, false);
+        break;
+      }
     }
   }
 
-  for (const auto& stream : output_streams) {
-    FPGAManager::output_streams_active_status_[stream.stream_id] = true;
+  for (const auto& query_node : query_nodes) {
+    if (!query_node.is_input_intermediate &&
+        !query_node.is_output_intermediate) {
+      for (const auto& stream : query_node.output_streams) {
+        FPGAManager::output_streams_active_status_[stream.stream_id] = true;
+      }
+    }
   }
 }
 
@@ -79,7 +105,7 @@ auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
   }
 
   WaitForStreamsToFinish();
-  /*PrintDebuggingData();*/
+  // PrintDebuggingData();
   return GetResultingStreamSizes(active_input_stream_ids,
                                  active_output_stream_ids);
 }
@@ -103,7 +129,7 @@ void FPGAManager::WaitForStreamsToFinish() {
       FPGAManager::output_streams_active_status_);
 
 #ifdef _FPGA_AVAILABLE
-  /*while (!(FPGAManager::dma_engine_.IsInputControllerFinished() &&
+  while (!(FPGAManager::dma_engine_.IsInputControllerFinished() &&
            FPGAManager::dma_engine_.IsOutputControllerFinished())) {
     std::cout << "Processing..." << std::endl;
     std::cout << "Input:"
@@ -112,7 +138,7 @@ void FPGAManager::WaitForStreamsToFinish() {
     std::cout << "Output:"
               << FPGAManager::dma_engine_.IsOutputControllerFinished()
               << std::endl;
-  }*/
+  }
 #endif
 }
 
