@@ -5,7 +5,7 @@
 #include "memory_manager.hpp"
 #include "stream_data_parameters.hpp"
 #include "table_data.hpp"
-#include "query_node.hpp"
+#include "query_scheduling_data.hpp"
 
 class QueryManager {
  private:
@@ -13,5 +13,5 @@ class QueryManager {
                              const TableData& resulting_table);
 
  public:
-  static void RunQueries(std::vector<QueryNode>);
+  static void RunQueries(std::vector<query_scheduling_data::QueryNode>);
 };
