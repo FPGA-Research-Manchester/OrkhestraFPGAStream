@@ -33,17 +33,22 @@ auto main() -> int {
                                {"JOIN_DATA.csv"},
                                operation_types::QueryOperation::kJoin};
 
+  QueryNode merge_sort_query_8k_once_double = {
+      {"CAR_DATA_HALF_SORTED_8K_64WAY.csv"},
+      {"CAR_DATA_SORTED_8K.csv"},
+      operation_types::QueryOperation::kMergeSort};
+
   // Temp not supported
   QueryNode merge_sort_query_8k_once = {
       {"CAR_DATA_HALF_SORTED_8K_128WAY.csv"},
       {"CAR_DATA_SORTED_8K.csv"},
       operation_types::QueryOperation::kMergeSort};
-
   QueryNode merge_sort_query_1k_once = {
       {"CAR_DATA_HALF_SORTED.csv"},
       {"CAR_DATA_SORTED.csv"},
       operation_types::QueryOperation::kMergeSort};
-  QueryManager::RunQueries({filtering_query_once, /*merge_sort_query_8k_once,*/
-                            join_query_once /*, merge_sort_query_1k_once*/});
+
+  QueryManager::RunQueries(
+      {filtering_query_once, merge_sort_query_8k_once_double, join_query_once});
   return 0;
 }
