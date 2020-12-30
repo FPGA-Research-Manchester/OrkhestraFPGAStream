@@ -537,9 +537,9 @@ void PRManager::fpgaLoadShell(std::string name) {
 }
 
 StaticAccelInst PRManager::fpgaLoadStatic(std::string name, int register_space_size) {
-  if (accel || shell) {
+  /*if (accel || shell) {
     throw std::runtime_error("FPGA already loaded");
-  } else {
+  } else {*/
     Accel& acc = accels.at(name);
     Bitstream *bs = nullptr;
     for (auto& bitstream : acc.bitstreams)
@@ -560,7 +560,7 @@ StaticAccelInst PRManager::fpgaLoadStatic(std::string name, int register_space_s
     
     accel = &acc;
     return inst;
-  }
+  //}
 }
 
 void PRManager::importAccel(std::string name) {

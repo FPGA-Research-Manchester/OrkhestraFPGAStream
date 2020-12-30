@@ -7,18 +7,17 @@
 #include <queue>
 #include <set>
 #include <stdexcept>
-#include <utility>
 
 #include "accelerated_query_node.hpp"
 #include "data_manager.hpp"
 #include "fpga_manager.hpp"
 #include "memory_block_interface.hpp"
+#include "node_scheduler.hpp"
 #include "operation_types.hpp"
 #include "query_acceleration_constants.hpp"
 #include "query_scheduling_data.hpp"
 #include "stream_parameter_calculator.hpp"
 #include "table_manager.hpp"
-#include "node_scheduler.hpp"
 
 void QueryManager::CheckTableData(const TableData& expected_table,
                                   const TableData& resulting_table) {
@@ -38,37 +37,54 @@ void QueryManager::CheckTableData(const TableData& expected_table,
   }
 }
 
+auto QueryManager::GetBitstreamFileFromQueryNode(
+    const std::pair<query_scheduling_data::ConfigurableModuleSet,
+                    std::vector<query_scheduling_data::QueryNode>>& query_node)
+    -> std::string {
+  auto bitstreams_iterator =
+      query_scheduling_data::corresponding_accelerator_bitstreams.find(
+          query_node.first);
+  if (bitstreams_iterator !=
+      query_scheduling_data::corresponding_accelerator_bitstreams.end()) {
+    return bitstreams_iterator->second;
+  } else {
+    throw std::runtime_error("Unsopported set of modules!");
+  }
+}
+
+auto QueryManager::GetModuleCountFromQueryNode(
+    const std::pair<query_scheduling_data::ConfigurableModuleSet,
+                    std::vector<query_scheduling_data::QueryNode>>& query_node)
+    -> int {
+  int module_count = 1;  // +1 for DMA module
+  for (const auto& operation_module : query_node.first) {
+    module_count += operation_module.second;
+  }
+  return module_count;
+}
+
 void QueryManager::RunQueries(
     std::vector<query_scheduling_data::QueryNode> starting_query_nodes) {
   std::cout << "Starting up!" << std::endl;
   DataManager data_manager("data_config.ini");
+  MemoryManager memory_manager;
+  FPGAManager fpga_manager(&memory_manager);
 
   std::queue<std::pair<query_scheduling_data::ConfigurableModuleSet,
                        std::vector<query_scheduling_data::QueryNode>>>
       accelerated_query_node_sets;
 
   NodeScheduler::FindAcceleratedQueryNodeSets(&accelerated_query_node_sets,
-                                              starting_query_nodes);
+                                              std::move(starting_query_nodes));
 
   while (!accelerated_query_node_sets.empty()) {
     const auto executable_query_node = accelerated_query_node_sets.front();
-    auto bitstreams_iterator =
-        query_scheduling_data::corresponding_accelerator_bitstreams.find(
-            executable_query_node.first);
-    std::string accelerator_to_load;
-    if (bitstreams_iterator !=
-        query_scheduling_data::corresponding_accelerator_bitstreams.end()) {
-      accelerator_to_load = bitstreams_iterator->second;
-    } else {
-      throw std::runtime_error("Unsopported set of modules!");
-    }
 
-    // Will have to be found from the set!
-    int module_count = 3;
-    MemoryManager memory_manager(
-        accelerator_to_load,
-        module_count * query_acceleration_constants::kModuleSize);
-    FPGAManager fpga_manager(&memory_manager);
+    // Load the bitstream
+    memory_manager.LoadBitstream(
+        GetBitstreamFileFromQueryNode(executable_query_node),
+        GetModuleCountFromQueryNode(executable_query_node) *
+            query_acceleration_constants::kModuleSize);
 
     for (const auto& current_node : executable_query_node.second) {
       // These ID allocations need to be improved
@@ -98,17 +114,16 @@ void QueryManager::RunQueries(
       std::map<StreamDataParameters, std::unique_ptr<MemoryBlockInterface>>
           output_stream_parameters_map;
 
-      TableManager::ReadInputTables(
-          &input_stream_parameters_map, data_manager,
+      TableManager::ReadInputTables(&input_stream_parameters_map, data_manager,
                                     current_node.input_data_definition_files,
-          input_stream_id_vector, allocated_input_memory_blocks);
+                                    input_stream_id_vector,
+                                    allocated_input_memory_blocks);
 
       std::vector<TableData> expected_output_tables(16);
       TableManager::ReadExpectedTables(
           &output_stream_parameters_map, data_manager,
-          current_node.output_data_definition_files,
-          output_stream_id_vector, allocated_output_memory_blocks,
-          expected_output_tables);
+          current_node.output_data_definition_files, output_stream_id_vector,
+          allocated_output_memory_blocks, expected_output_tables);
 
       std::vector<StreamDataParameters> input_stream_parameters_list;
       for (auto const& [parameters, memory_block] :
