@@ -1,7 +1,6 @@
 #pragma once
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <stack>
 #include <string>
 
@@ -19,19 +18,22 @@ class MemoryManager : public MemoryManagerInterface {
   std::stack<std::unique_ptr<MemoryBlockInterface>> available_memory_blocks_;
   int memory_block_count_ = -1;
   static const int kMaxPossibleAllocations = 8;
+
+  std::string loaded_bitstream_;
+  int loaded_register_space_size_ = 0;
 #ifdef _FPGA_AVAILABLE
-  std::optional<uint32_t*> register_memory_block_;
+  uint32_t* register_memory_block_;
   UdmaRepo udma_repo_;
   // Store to not delete the instances
   PRManager pr_manager_;
   StaticAccelInst acceleration_instance_;
 #else
-  std::optional<std::vector<uint32_t>> register_space_;
+  std::vector<uint32_t> register_space_;
 #endif
  public:
   ~MemoryManager() override;
 
-  void LoadBitstream(const std::string& bitstream_name,
+  void LoadBitstreamIfNew(const std::string& bitstream_name,
                      int register_space_size);
 
   auto GetVirtualRegisterAddress(int offset) -> volatile uint32_t* override;

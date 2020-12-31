@@ -14,7 +14,7 @@ class MockMemoryManager : public MemoryManagerInterface {
               (override));
   MOCK_METHOD(volatile uint32_t*, GetVirtualRegisterAddress, (int offset),
               (override));
-  MOCK_METHOD(void, LoadBitstream,
+  MOCK_METHOD(void, LoadBitstreamIfNew,
               (const std::string& bitstream_name,
                const int register_space_size),
               (override));

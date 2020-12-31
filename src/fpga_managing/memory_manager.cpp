@@ -10,17 +10,20 @@
 
 MemoryManager::~MemoryManager() = default;
 
-void MemoryManager::LoadBitstream(const std::string& bitstream_name,
-                                  const int register_space_size) {  // NOLINT
+void MemoryManager::LoadBitstreamIfNew(const std::string& bitstream_name,
+                                       const int register_space_size) {
+  if (bitstream_name != loaded_bitstream_ &&
+      register_space_size != loaded_register_space_size_) {
 #ifdef _FPGA_AVAILABLE
-  acceleration_instance_ =
-      pr_manager_.fpgaLoadStatic(bitstream_name, register_space_size);
-  register_memory_block_ =
-      std::make_optional(acceleration_instance_.prmanager->accelRegs);
+    acceleration_instance_ =
+        pr_manager_.fpgaLoadStatic(bitstream_name, register_space_size);
+    register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
 #else
-  register_space_ =
-      std::make_optional(std::vector<uint32_t>(register_space_size, -1));
+    register_space_ = std::vector<uint32_t>(register_space_size, -1);
 #endif
+    loaded_register_space_size_ = register_space_size;
+    loaded_bitstream_ = bitstream_name;
+  }
 }
 
 auto MemoryManager::GetAvailableMemoryBlock()
@@ -36,18 +39,13 @@ auto MemoryManager::GetAvailableMemoryBlock()
 
 auto MemoryManager::GetVirtualRegisterAddress(int offset)
     -> volatile uint32_t* {
+  if (!loaded_register_space_size_) {
+    throw std::runtime_error("No bitstream loaded!");
+  }
 #ifdef _FPGA_AVAILABLE
-  if (register_memory_block_) {
-    return &(register_memory_block_.value()[offset / 4]);
-  } else {
-    throw std::runtime_error("No bitstream loaded yet!");
-  }
+  return &(register_memory_block_[offset / 4]);
 #else
-  if (register_space_) {
-    return &register_space_.value()[offset];
-  } else {
-    throw std::runtime_error("No bitstream loaded yet!");
-  }
+  return &(register_space_[offset]);
 #endif
 }
 

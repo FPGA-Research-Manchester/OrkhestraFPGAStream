@@ -8,7 +8,7 @@ class MemoryManagerInterface {
  public:
   virtual ~MemoryManagerInterface() = default;
 
-  virtual void LoadBitstream(const std::string& bitstream_name,
+  virtual void LoadBitstreamIfNew(const std::string& bitstream_name,
                              int register_space_size) = 0;
 
   virtual auto GetVirtualRegisterAddress(int offset) -> volatile uint32_t* = 0;
