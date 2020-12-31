@@ -29,8 +29,7 @@ void TableManager::WriteInputDataToMemoryBlock(
 }
 
 void TableManager::ReadInputTables(
-    std::map<StreamDataParameters, std::unique_ptr<MemoryBlockInterface>>*
-        input_stream_parameters,
+    std::vector<StreamDataParameters>& input_stream_parameters,
     DataManager& data_manager,
     const std::vector<std::string>& stream_data_file_names,
     const std::vector<int>& stream_id_vector,
@@ -53,14 +52,12 @@ void TableManager::ReadInputTables(
                          GetRecordSizeFromTable(current_table)),
         allocated_memory_blocks[stream_index]->GetPhysicalAddress()};
 
-    (*input_stream_parameters)[current_stream_parameters] =
-        std::move(allocated_memory_blocks[stream_index]);
+    input_stream_parameters.push_back(current_stream_parameters);
   }
 }
 
 void TableManager::ReadExpectedTables(
-    std::map<StreamDataParameters, std::unique_ptr<MemoryBlockInterface>>*
-        output_stream_parameters,
+    std::vector<StreamDataParameters>& output_stream_parameters,
     DataManager& data_manager,
     const std::vector<std::string>& stream_data_file_names,
     const std::vector<int>& stream_id_vector,
@@ -78,21 +75,23 @@ void TableManager::ReadExpectedTables(
         stream_id_vector[stream_index], GetRecordSizeFromTable(current_table),
         0, allocated_memory_blocks[stream_index]->GetPhysicalAddress()};
 
-    (*output_stream_parameters)[current_stream_parameters] =
-        std::move(allocated_memory_blocks[stream_index]);
+    output_stream_parameters.push_back(current_stream_parameters);
 
-    output_tables[stream_id_vector[stream_index]] = current_table;
+    output_tables[stream_index] = current_table;
   }
 }
 
 void TableManager::ReadResultTables(
-    std::map<StreamDataParameters, std::unique_ptr<MemoryBlockInterface>>*
-        output_stream_parameters_map,
+    const std::vector<StreamDataParameters>& output_stream_parameters,
     std::vector<TableData>& output_tables,
-    const std::vector<int>& result_record_counts) {
-  for (auto const& [parameters, memory_block] : *output_stream_parameters_map) {
+    const std::vector<int>& result_record_counts,
+    std::vector<std::unique_ptr<MemoryBlockInterface>>&
+        allocated_memory_blocks) {
+  for (int stream_index = 0; stream_index < allocated_memory_blocks.size();
+       stream_index++) {
     TableManager::ReadOutputDataFromMemoryBlock(
-        memory_block, output_tables[parameters.stream_id],
-        result_record_counts[parameters.stream_id]);
+        allocated_memory_blocks[stream_index],
+        output_tables[output_stream_parameters.at(stream_index).stream_id],
+        result_record_counts[output_stream_parameters.at(stream_index).stream_id]);
   }
 }

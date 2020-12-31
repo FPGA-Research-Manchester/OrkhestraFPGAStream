@@ -18,6 +18,9 @@ class MemoryManager : public MemoryManagerInterface {
   std::stack<std::unique_ptr<MemoryBlockInterface>> available_memory_blocks_;
   int memory_block_count_ = -1;
   static const int kMaxPossibleAllocations = 8;
+
+  std::string loaded_bitstream_;
+  int loaded_register_space_size_ = 0;
 #ifdef _FPGA_AVAILABLE
   uint32_t* register_memory_block_;
   UdmaRepo udma_repo_;
@@ -29,8 +32,10 @@ class MemoryManager : public MemoryManagerInterface {
 #endif
  public:
   ~MemoryManager() override;
-  explicit MemoryManager(const std::string& bitstream_name,
-                         int register_space_size);
+
+  void LoadBitstreamIfNew(const std::string& bitstream_name,
+                     int register_space_size);
+
   auto GetVirtualRegisterAddress(int offset) -> volatile uint32_t* override;
   auto GetAvailableMemoryBlock()
       -> std::unique_ptr<MemoryBlockInterface> override;

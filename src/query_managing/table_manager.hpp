@@ -14,16 +14,14 @@ class TableManager {
  public:
   static auto GetRecordSizeFromTable(const TableData& input_table) -> int;
   static void ReadInputTables(
-      std::map<StreamDataParameters, std::unique_ptr<MemoryBlockInterface>>*
-          input_stream_parameters,
+      std::vector<StreamDataParameters>& input_stream_parameters,
       DataManager& data_manager,
       const std::vector<std::string>& stream_data_file_names,
       const std::vector<int>& stream_id_vector,
       std::vector<std::unique_ptr<MemoryBlockInterface>>&
           allocated_memory_blocks);
   static void ReadExpectedTables(
-      std::map<StreamDataParameters, std::unique_ptr<MemoryBlockInterface>>*
-          input_stream_parameters,
+      std::vector<StreamDataParameters>& output_stream_parameters,
       DataManager& data_manager,
       const std::vector<std::string>& stream_data_file_names,
       const std::vector<int>& stream_id_vector,
@@ -31,9 +29,11 @@ class TableManager {
           allocated_memory_blocks,
       std::vector<TableData>& output_tables);
   static void ReadResultTables(
-      std::map<StreamDataParameters, std::unique_ptr<MemoryBlockInterface>>*,
+      const std::vector<StreamDataParameters>& output_stream_parameters,
       std::vector<TableData>& output_tables,
-      const std::vector<int>& result_record_counts);
+      const std::vector<int>& result_record_counts,
+      std::vector<std::unique_ptr<MemoryBlockInterface>>&
+          allocated_memory_blocks);
 
  private:
   static void ReadOutputDataFromMemoryBlock(

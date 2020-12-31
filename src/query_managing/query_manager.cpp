@@ -4,15 +4,19 @@
 #include <cstdlib>
 #include <iostream>
 #include <map>
+#include <queue>
+#include <set>
 #include <stdexcept>
-#include <utility>
 
 #include "accelerated_query_node.hpp"
 #include "data_manager.hpp"
 #include "fpga_manager.hpp"
+#include "id_manager.hpp"
 #include "memory_block_interface.hpp"
+#include "node_scheduler.hpp"
 #include "operation_types.hpp"
 #include "query_acceleration_constants.hpp"
+#include "query_scheduling_data.hpp"
 #include "stream_parameter_calculator.hpp"
 #include "table_manager.hpp"
 
@@ -34,115 +38,137 @@ void QueryManager::CheckTableData(const TableData& expected_table,
   }
 }
 
-void QueryManager::RunQueries(std::vector<QueryNode> starting_query_nodes) {
+auto QueryManager::GetBitstreamFileFromQueryNode(
+    const std::pair<query_scheduling_data::ConfigurableModuleSet,
+                    std::vector<query_scheduling_data::QueryNode>>& query_node)
+    -> std::string {
+  auto bitstreams_iterator =
+      query_scheduling_data::corresponding_accelerator_bitstreams.find(
+          query_node.first);
+  if (bitstreams_iterator !=
+      query_scheduling_data::corresponding_accelerator_bitstreams.end()) {
+    return bitstreams_iterator->second;
+  } else {
+    throw std::runtime_error("Unsopported set of modules!");
+  }
+}
+
+auto QueryManager::GetModuleCountFromQueryNode(
+    const std::pair<query_scheduling_data::ConfigurableModuleSet,
+                    std::vector<query_scheduling_data::QueryNode>>& query_node)
+    -> int {
+  int module_count = 1;  // +1 for DMA module
+  for (const auto& operation_module : query_node.first) {
+    module_count += operation_module.second;
+  }
+  return module_count;
+}
+
+void QueryManager::RunQueries(
+    std::vector<query_scheduling_data::QueryNode> starting_query_nodes) {
   std::cout << "Starting up!" << std::endl;
   DataManager data_manager("data_config.ini");
+  MemoryManager memory_manager;
+  FPGAManager fpga_manager(&memory_manager);
 
-  // Should be put somewhere else!
-  std::map<operation_types::QueryOperation, std::string>
-      corresponding_accelerator_bitstreams = {
-          {operation_types::QueryOperation::kFilter, "DSPI_filtering"},
-          {operation_types::QueryOperation::kJoin, "DSPI_joining"},
-          {operation_types::QueryOperation::kMergeSort, "DSPI_double_merge_sorting"}};
+  std::queue<std::pair<query_scheduling_data::ConfigurableModuleSet,
+                       std::vector<query_scheduling_data::QueryNode>>>
+      accelerated_query_node_sets;
 
-  // Make it possible to run multiple nodes at once - Like the passthrough ones
-  for (const auto& starting_query_node : starting_query_nodes) {
-    // Shouldn't be hard coded! Doesn't hurt to have higher module count.
-    const int module_count = 3;
-    auto bitstreams_iterator = corresponding_accelerator_bitstreams.find(
-        starting_query_node.operation_type);
-    std::string accelerator_to_load;
-    if (bitstreams_iterator != corresponding_accelerator_bitstreams.end()) {
-      accelerator_to_load = bitstreams_iterator->second;
-    } else {
-      throw std::runtime_error("Unsopported operation!");
-    }
-    MemoryManager memory_manager(
-        accelerator_to_load,
-        module_count * query_acceleration_constants::kModuleSize);
-    FPGAManager fpga_manager(&memory_manager);
+  NodeScheduler::FindAcceleratedQueryNodeSets(&accelerated_query_node_sets,
+                                              std::move(starting_query_nodes));
 
-    // These ID allocations need to be improved
-    std::vector<int> input_stream_id_vector;
-    std::vector<std::unique_ptr<MemoryBlockInterface>>
-        allocated_input_memory_blocks;
-    for (int stream_id = 0;
-         stream_id < starting_query_node.input_data_definition_files.size();
-         stream_id++) {
-      input_stream_id_vector.push_back(stream_id);
-      allocated_input_memory_blocks.push_back(
-          memory_manager.GetAvailableMemoryBlock());
-    }
-    std::vector<int> output_stream_id_vector;
-    std::vector<std::unique_ptr<MemoryBlockInterface>>
-        allocated_output_memory_blocks;
-    for (int stream_id = 0;
-         stream_id < starting_query_node.output_data_definition_files.size();
-         stream_id++) {
-      output_stream_id_vector.push_back(stream_id);
-      allocated_output_memory_blocks.push_back(
-          memory_manager.GetAvailableMemoryBlock());
-    }
+  while (!accelerated_query_node_sets.empty()) {
+    const auto executable_query_node = accelerated_query_node_sets.front();
 
-    std::map<StreamDataParameters, std::unique_ptr<MemoryBlockInterface>>
-        input_stream_parameters_map;
-    std::map<StreamDataParameters, std::unique_ptr<MemoryBlockInterface>>
-        output_stream_parameters_map;
+    memory_manager.LoadBitstreamIfNew(
+        GetBitstreamFileFromQueryNode(executable_query_node),
+        GetModuleCountFromQueryNode(executable_query_node) *
+            query_acceleration_constants::kModuleSize);
 
-    TableManager::ReadInputTables(
-        &input_stream_parameters_map, data_manager,
-        starting_query_node.input_data_definition_files, input_stream_id_vector,
-        allocated_input_memory_blocks);
-
+    IDManager id_manager;
+    std::vector<std::vector<int>> output_ids;
+    std::vector<std::vector<std::unique_ptr<MemoryBlockInterface>>>
+        input_memory_blocks;
+    std::vector<std::vector<std::unique_ptr<MemoryBlockInterface>>>
+        output_memory_blocks;
     std::vector<TableData> expected_output_tables(16);
-    TableManager::ReadExpectedTables(
-        &output_stream_parameters_map, data_manager,
-        starting_query_node.output_data_definition_files,
-        output_stream_id_vector, allocated_output_memory_blocks,
-        expected_output_tables);
+    std::vector<AcceleratedQueryNode> query_nodes;
 
-    std::vector<StreamDataParameters> input_stream_parameters_list;
-    for (auto const& [parameters, memory_block] : input_stream_parameters_map) {
-      input_stream_parameters_list.push_back(parameters);
+    for (const auto& current_node : executable_query_node.second) {
+      // Find IDs
+      std::vector<int> input_stream_id_vector;
+      std::vector<int> output_stream_id_vector;
+      id_manager.FindAvailableIDs(current_node, input_stream_id_vector,
+                                  output_stream_id_vector);
+      output_ids.push_back(output_stream_id_vector);
+
+      // Allocate memory blocks
+      std::vector<std::unique_ptr<MemoryBlockInterface>>
+          allocated_input_memory_blocks;
+      for (const auto& id : input_stream_id_vector) {
+        allocated_input_memory_blocks.push_back(
+            memory_manager.GetAvailableMemoryBlock());
+      }
+
+      std::vector<std::unique_ptr<MemoryBlockInterface>>
+          allocated_output_memory_blocks;
+      for (const auto& id : output_stream_id_vector) {
+        allocated_output_memory_blocks.push_back(
+            memory_manager.GetAvailableMemoryBlock());
+      }
+
+      // Get parameters and write input to allocated blocks
+      std::vector<StreamDataParameters> input_stream_parameters;
+      TableManager::ReadInputTables(input_stream_parameters, data_manager,
+                                    current_node.input_data_definition_files,
+                                    input_stream_id_vector,
+                                    allocated_input_memory_blocks);
+
+      std::vector<StreamDataParameters> output_stream_parameters;
+      TableManager::ReadExpectedTables(
+          output_stream_parameters, data_manager,
+          current_node.output_data_definition_files, output_stream_id_vector,
+          allocated_output_memory_blocks, expected_output_tables);
+
+      query_nodes.push_back({std::move(input_stream_parameters),
+                             std::move(output_stream_parameters),
+                             current_node.operation_type});
+
+      // Keep memory blocks during the query execution
+      input_memory_blocks.push_back(std::move(allocated_input_memory_blocks));
+      output_memory_blocks.push_back(std::move(allocated_output_memory_blocks));
     }
-    std::vector<StreamDataParameters> output_stream_parameters_list;
-    for (auto const& [parameters, memory_block] :
-         output_stream_parameters_map) {
-      output_stream_parameters_list.push_back(parameters);
-    }
 
-    fpga_manager.SetupQueryAcceleration(
-        {{input_stream_parameters_list, output_stream_parameters_list,
-          starting_query_node.operation_type}});
-
+    // Run query
+    fpga_manager.SetupQueryAcceleration(query_nodes);
     std::cout << "Running query!" << std::endl;
     auto result_sizes = fpga_manager.RunQueryAcceleration();
     std::cout << "Query done!" << std::endl;
 
-    for (auto it = input_stream_parameters_map.begin();
-         it != input_stream_parameters_map.end(); it++) {
-      memory_manager.FreeMemoryBlock(std::move(it->second));
-    }
-    // Delete all for now.
-    input_stream_parameters_map.clear();
-
+    // Check results & free memory
     std::vector<TableData> output_tables = expected_output_tables;
-    TableManager::ReadResultTables(&output_stream_parameters_map, output_tables,
-                                   result_sizes);
+    for (int node_index = 0; node_index < query_nodes.size(); node_index++) {
+      TableManager::ReadResultTables(query_nodes[node_index].output_streams,
+                                     output_tables, result_sizes,
+                                     output_memory_blocks[node_index]);
+      for (auto const& output_stream_id : output_ids[node_index]) {
+        std::cout << "Result has " << result_sizes[output_stream_id] << " rows!"
+                  << std::endl;
 
-    for (auto it = output_stream_parameters_map.begin();
-         it != output_stream_parameters_map.end(); it++) {
-      memory_manager.FreeMemoryBlock(std::move(it->second));
+        CheckTableData(expected_output_tables[output_stream_id],
+                       output_tables[output_stream_id]);
+      }
+
+      // Free all memory for now.
+      for (auto& memory_pointer : input_memory_blocks[node_index]) {
+        memory_manager.FreeMemoryBlock(std::move(memory_pointer));
+      }
+      for (auto& memory_pointer : output_memory_blocks[node_index]) {
+        memory_manager.FreeMemoryBlock(std::move(memory_pointer));
+      }
     }
-    // Delete all for now.
-    output_stream_parameters_map.clear();
 
-    for (auto const& output_stream_id : output_stream_id_vector) {
-      std::cout << "Result has " << result_sizes[output_stream_id] << " rows!"
-                << std::endl;
-
-      CheckTableData(expected_output_tables[output_stream_id],
-                     output_tables[output_stream_id]);
-    }
+    accelerated_query_node_sets.pop();
   }
 }
