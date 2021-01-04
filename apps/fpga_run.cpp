@@ -50,9 +50,10 @@ auto main() -> int {
       {"CAR_DATA_SORTED.csv"},
       operation_types::QueryOperation::kMergeSort};
 
-  QueryManager::RunQueries({filtering_query_once, filtering_query_once,
-                            merge_sort_query_8k_once_double,
-                            merge_sort_query_8k_once_double, join_query_once,
-                            join_query_once});
+  QueryManager::RunQueries(
+      {filtering_query_once, /*pass_through_small_data,*/ filtering_query_once,
+       merge_sort_query_8k_once_double, /*pass_through_small_data,*/
+       merge_sort_query_8k_once_double, join_query_once,
+       /*pass_through_small_data,*/ join_query_once});
   return 0;
 }

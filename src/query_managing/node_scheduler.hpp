@@ -20,4 +20,12 @@ class NodeScheduler {
       operation_types::QueryOperation query_operation) -> bool;
   static auto IsModuleSetSupported(
       query_scheduling_data::ConfigurableModuleSet module_set) -> bool;
+  static auto IsNodeIncluded(
+      std::vector<query_scheduling_data::QueryNode>
+          node_vector, query_scheduling_data::QueryNode searched_node)
+      -> bool;
+  static auto FindModuleSize(
+      operation_types::QueryOperation query_operation,
+      query_scheduling_data::ConfigurableModuleSet current_set)
+      -> int;
 };
