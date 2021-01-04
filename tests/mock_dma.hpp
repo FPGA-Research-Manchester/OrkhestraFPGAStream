@@ -82,4 +82,6 @@ class MockDMA : public DMAInterface {
   MOCK_METHOD(volatile uint64_t, GetRuntime, (), (override));
   MOCK_METHOD(volatile uint64_t, GetValidReadCyclesCount, (), (override));
   MOCK_METHOD(volatile uint64_t, GetValidWriteCyclesCount, (), (override));
+
+  MOCK_METHOD(void, GlobalReset, (), (override));
 };

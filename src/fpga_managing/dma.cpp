@@ -230,3 +230,9 @@ auto DMA::GetValidWriteCyclesCount() -> volatile uint64_t {
   auto low = AccelerationModule::ReadFromModule(0x8014);
   return ((static_cast<uint64_t>(high)) << 32) | (static_cast<uint64_t>(low));
 }
+
+const int kResetDuration = 8;
+
+void DMA::GlobalReset() {
+  AccelerationModule::WriteToModule(8, kResetDuration);
+}

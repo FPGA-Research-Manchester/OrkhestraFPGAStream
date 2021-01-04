@@ -17,6 +17,8 @@
 // Then the modules and streams can be set up accordingly.
 void FPGAManager::SetupQueryAcceleration(
     const std::vector<AcceleratedQueryNode>& query_nodes) {
+  dma_engine_.GlobalReset();
+
   // ila_module_ = std::make_optional (ILA(memory_manager_));
   /*if (ila_module_) {
     ila_module_.value().startAxiILA();
