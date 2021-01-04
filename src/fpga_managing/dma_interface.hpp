@@ -66,4 +66,6 @@ class DMAInterface {
   virtual auto GetRuntime() -> volatile uint64_t = 0;
   virtual auto GetValidReadCyclesCount() -> volatile uint64_t = 0;
   virtual auto GetValidWriteCyclesCount() -> volatile uint64_t = 0;
+
+  virtual void GlobalReset() = 0;
 };

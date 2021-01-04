@@ -75,4 +75,6 @@ class DMA : public AccelerationModule, public DMAInterface {
   auto GetRuntime() -> volatile uint64_t override;
   auto GetValidReadCyclesCount() -> volatile uint64_t override;
   auto GetValidWriteCyclesCount() -> volatile uint64_t override;
+
+  void GlobalReset() override;
 };
