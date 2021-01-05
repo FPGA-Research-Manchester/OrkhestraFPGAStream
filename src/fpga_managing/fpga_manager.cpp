@@ -1,6 +1,7 @@
 #include "fpga_manager.hpp"
 
 #include <iostream>
+#include <stdexcept>
 
 #include "dma_setup.hpp"
 #include "filter.hpp"
@@ -24,6 +25,10 @@ void FPGAManager::SetupQueryAcceleration(
     ila_module_.value().startAxiILA();
   }*/
 
+  // Temporary
+  std::vector<StreamDataParameters> all_input_streams;
+  std::vector<StreamDataParameters> all_output_streams;
+
   for (const auto& query_node : query_nodes) {
     // Input and output should be setup separately such that these two booleans
     // don't have to be ANDed.
@@ -31,13 +36,27 @@ void FPGAManager::SetupQueryAcceleration(
         !query_node.is_output_intermediate) {
       if (query_node.operation_type !=
           operation_types::QueryOperation::kMergeSort) {
-        DMASetup::SetupDMAModule(dma_engine_, query_node.input_streams,
-                                 query_node.output_streams);
+        // Temporary- This assumes there will never be multi stream operation
+        // used in any of the nodes!
+        for (const auto& input_stream : query_node.input_streams) {
+          all_input_streams.push_back(input_stream);
+        }
+        for (const auto& output_stream : query_node.output_streams) {
+          all_output_streams.push_back(output_stream);
+        }
       } else {
         DMASetup::SetupDMAModuleWithMultiStream(
             dma_engine_, query_node.input_streams, query_node.output_streams);
+        if (query_nodes.size() > 1) {
+          throw std::runtime_error("Many operation multi-stream runs are not supported!");
+        }
       }
     }
+  }
+
+  if (!all_input_streams.empty() && !all_output_streams.empty()) {
+    DMASetup::SetupDMAModule(dma_engine_, all_input_streams,
+                             all_output_streams);
   }
 
   for (const auto& query_node : query_nodes) {
