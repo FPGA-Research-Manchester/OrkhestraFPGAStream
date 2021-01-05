@@ -10,58 +10,68 @@ void NodeScheduler::FindAcceleratedQueryNodeSets(
     std::vector<query_scheduling_data::QueryNode> starting_nodes) {
   std::vector<query_scheduling_data::QueryNode> scheduled_queries;
 
+  // Not checking for cycles nor for unsupported opperations
   while (starting_nodes.size() != 0) {
-    auto current_node = starting_nodes[0];
-    // Commented out for now to use duplicate query nodes.
-    /*if (IsNodeIncluded(scheduled_queries, current_node)) {
-      throw std::runtime_error("Cycle in the query tree found!");
-    }*/
-    if (!IsOperatorSupported(current_node.operation_type)) {
-      throw std::runtime_error("Unsopported operation!");
+    // Should find the first element really
+    auto available_nodes_iterator =
+        FindNextAvailableNode(scheduled_queries, starting_nodes);
+    if (available_nodes_iterator == starting_nodes.end()) {
+      throw std::runtime_error("Failed to schedule!");
     }
-    starting_nodes.erase(starting_nodes.begin());
 
     query_scheduling_data::ConfigurableModuleSet current_set;
     std::vector<query_scheduling_data::QueryNode> current_query_nodes;
 
-    int chosen_module_size =
-        FindModuleSize(current_node.operation_type, current_set);
-    if (chosen_module_size != -1) {
-      current_query_nodes.push_back(current_node);
-      current_set.insert({current_node.operation_type, chosen_module_size});
-      scheduled_queries.push_back(current_node);
-    }
+    CheckNodeForModuleSet(available_nodes_iterator, current_set,
+                          current_query_nodes, scheduled_queries,
+                          starting_nodes);
 
     if (current_query_nodes.empty()) {
       throw std::runtime_error("Failed to schedule!");
     }
     accelerated_query_node_sets->push({current_set, current_query_nodes});
   }
-
-  for (const auto& query_node : starting_nodes) {
-    if (!IsOperatorSupported(query_node.operation_type)) {
-      throw std::runtime_error("Unsopported operation!");
-    }
-
-    query_scheduling_data::ConfigurableModuleSet current_set;
-    std::vector<query_scheduling_data::QueryNode> current_query_nodes;
-    for (const auto& size : query_scheduling_data::available_modules
-                                .find(query_node.operation_type)
-                                ->second) {
-      current_set.insert({query_node.operation_type, size});
-      if (!IsModuleSetSupported({current_set})) {
-        throw std::runtime_error("Wrong module set found!");
-      } else {
-        current_query_nodes.push_back(query_node);
-      }
-    }
-  }
 }
 
-auto NodeScheduler::IsOperatorSupported(
-    operation_types::QueryOperation query_operation) -> bool {
-  return query_scheduling_data::available_modules.find(query_operation) !=
-         query_scheduling_data::available_modules.end();
+// The algorithm still doesn't check for multiple sizes and doesn't prioritise
+// pipelining operations
+void NodeScheduler::CheckNodeForModuleSet(
+    std::vector<query_scheduling_data::QueryNode>::iterator& iterator,
+    query_scheduling_data::ConfigurableModuleSet& current_set,
+    std::vector<query_scheduling_data::QueryNode>& current_query_nodes,
+    std::vector<query_scheduling_data::QueryNode>& scheduled_queries,
+    std::vector<query_scheduling_data::QueryNode>& starting_nodes) {
+  auto current_node = *iterator;
+  int chosen_module_size =
+      FindModuleSize(current_node.operation_type, current_set);
+  if (chosen_module_size != -1) {
+    current_query_nodes.push_back(current_node);
+    current_set.insert({current_node.operation_type, chosen_module_size});
+    scheduled_queries.push_back(current_node);
+
+    if (!current_node.next_nodes.empty()) {
+      for (const auto& next_node : current_node.next_nodes) {
+        if (!IsNodeIncluded(starting_nodes, *next_node) &&
+            IsNodeAvailable(scheduled_queries, *next_node)) {
+          starting_nodes.push_back(*next_node);
+        }
+      }
+    }
+
+    starting_nodes.erase(iterator);
+    auto new_iterator =
+        FindNextAvailableNode(scheduled_queries, starting_nodes);
+    if (new_iterator != starting_nodes.end()) {
+      CheckNodeForModuleSet(new_iterator, current_set, current_query_nodes,
+                            scheduled_queries, starting_nodes);
+    }
+  } else {
+    std::advance(iterator, 1);
+    if (iterator != starting_nodes.end()) {
+      CheckNodeForModuleSet(iterator, current_set, current_query_nodes,
+                            scheduled_queries, starting_nodes);
+    }
+  }
 }
 
 auto NodeScheduler::IsModuleSetSupported(
@@ -81,6 +91,17 @@ auto NodeScheduler::IsNodeIncluded(
       });
 }
 
+auto NodeScheduler::IsNodeAvailable(
+    std::vector<query_scheduling_data::QueryNode> scheduled_nodes,
+    query_scheduling_data::QueryNode current_node) -> bool {
+  for (const auto& required_node : current_node.previous_nodes) {
+    if (!IsNodeIncluded(scheduled_nodes, *required_node)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 auto NodeScheduler::FindModuleSize(
     operation_types::QueryOperation query_operation,
     query_scheduling_data::ConfigurableModuleSet current_set) -> int {
@@ -96,4 +117,21 @@ auto NodeScheduler::FindModuleSize(
   }
 
   return chosen_size;
+}
+
+auto NodeScheduler::FindNextAvailableNode(
+    std::vector<query_scheduling_data::QueryNode>& already_scheduled_nodes,
+    std::vector<query_scheduling_data::QueryNode>& starting_nodes)
+    -> std::vector<query_scheduling_data::QueryNode>::iterator {
+  return std::find_if(starting_nodes.begin(), starting_nodes.end(),
+                      [&](const query_scheduling_data::QueryNode& leaf_node) {
+                        return IsNodeAvailable(already_scheduled_nodes,
+                                               leaf_node);
+                      });
+}
+
+auto NodeScheduler::IsOperatorSupported(
+    operation_types::QueryOperation query_operation) -> bool {
+  return query_scheduling_data::available_modules.find(query_operation) !=
+         query_scheduling_data::available_modules.end();
 }

@@ -7,6 +7,7 @@
 #include <queue>
 #include <set>
 #include <stdexcept>
+#include <string>
 
 #include "accelerated_query_node.hpp"
 #include "data_manager.hpp"
@@ -29,12 +30,15 @@ void QueryManager::CheckTableData(const TableData& expected_table,
     std::cout << expected_table.table_data_vector.size() /
                      TableManager::GetRecordSizeFromTable(expected_table)
               << std::endl;
-    // DataManager::PrintTableData(expected_table);
+    //DataManager::PrintTableData(expected_table);
     std::cout << "vs:" << std::endl;
     std::cout << resulting_table.table_data_vector.size() /
                      TableManager::GetRecordSizeFromTable(resulting_table)
               << std::endl;
+    std::cout << "===============RESULTS=====================================" << std::endl;
     DataManager::PrintTableData(resulting_table);
+    std::cout << "===============RESULTS====================================="
+              << std::endl;
   }
 }
 
@@ -79,11 +83,11 @@ void QueryManager::RunQueries(
                                               std::move(starting_query_nodes));
 
   while (!accelerated_query_node_sets.empty()) {
-    const auto executable_query_node = accelerated_query_node_sets.front();
+    const auto executable_query_nodes = accelerated_query_node_sets.front();
 
     memory_manager.LoadBitstreamIfNew(
-        GetBitstreamFileFromQueryNode(executable_query_node),
-        GetModuleCountFromQueryNode(executable_query_node) *
+        GetBitstreamFileFromQueryNode(executable_query_nodes),
+        GetModuleCountFromQueryNode(executable_query_nodes) *
             query_acceleration_constants::kModuleSize);
 
     IDManager id_manager;
@@ -94,8 +98,11 @@ void QueryManager::RunQueries(
         output_memory_blocks;
     std::vector<TableData> expected_output_tables(16);
     std::vector<AcceleratedQueryNode> query_nodes;
+    // For debugging
+    std::vector<std::vector<std::string>> input_files;
 
-    for (const auto& current_node : executable_query_node.second) {
+    for (const auto& current_node : executable_query_nodes.second) {
+      input_files.push_back(current_node.input_data_definition_files);
       // Find IDs
       std::vector<int> input_stream_id_vector;
       std::vector<int> output_stream_id_vector;
@@ -141,10 +148,32 @@ void QueryManager::RunQueries(
     }
 
     // Run query
-    fpga_manager.SetupQueryAcceleration(query_nodes);
+    fpga_manager.SetupQueryAcceleration(query_nodes); 
     std::cout << "Running query!" << std::endl;
     auto result_sizes = fpga_manager.RunQueryAcceleration();
     std::cout << "Query done!" << std::endl;
+
+    // Print out input data from allocated memory for debugging
+    for (int node_index = 0; node_index < query_nodes.size(); node_index++) {
+      for (int input_id = 0; input_id < input_files[node_index].size();
+           input_id++) {
+        auto current_input_table =
+            data_manager.ParseDataFromCSV(input_files[node_index][input_id]);
+        const auto& table_from_file = current_input_table.table_data_vector;
+        volatile uint32_t* input =
+            input_memory_blocks[node_index][input_id]->GetVirtualAddress();
+        auto input_table =
+            std::vector<uint32_t>(input, input + table_from_file.size());
+        current_input_table.table_data_vector = input_table;
+        std::cout
+            << "===============INPUT=================================================="
+            << std::endl;
+        DataManager::PrintTableData(current_input_table);
+        std::cout
+            << "===============INPUT=================================================="
+            << std::endl;
+      }
+    }
 
     // Check results & free memory
     std::vector<TableData> output_tables = expected_output_tables;
