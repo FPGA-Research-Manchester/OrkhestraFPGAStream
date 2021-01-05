@@ -77,7 +77,7 @@ void TableManager::ReadExpectedTables(
 
     output_stream_parameters.push_back(current_stream_parameters);
 
-    output_tables[stream_index] = current_table;
+    output_tables[stream_id_vector[stream_index]] = current_table;
   }
 }
 
