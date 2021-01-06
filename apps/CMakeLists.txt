@@ -6,6 +6,7 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_HALF_SORTED.csv CAR_D
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_SORTED.csv CAR_DATA_SORTED.csv COPYONLY)
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_8K.csv CAR_DATA_8K.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_HALF_SORTED_8K_512WAY.csv CAR_DATA_HALF_SORTED_8K_512WAY.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_HALF_SORTED_8K_128WAY.csv CAR_DATA_HALF_SORTED_8K_128WAY.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_HALF_SORTED_8K_64WAY.csv CAR_DATA_HALF_SORTED_8K_64WAY.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_SORTED_8K.csv CAR_DATA_SORTED_8K.csv COPYONLY)
@@ -21,6 +22,8 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_filtering.bin DSPI_filter
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_filtering.json DSPI_filtering.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_merge_sorting.bin DSPI_merge_sorting.bin COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_merge_sorting.json DSPI_merge_sorting.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_linear_sorting.bin DSPI_linear_sorting.bin COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_linear_sorting.json DSPI_linear_sorting.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_double_merge_sorting.bin DSPI_double_merge_sorting.bin COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_double_merge_sorting.json DSPI_double_merge_sorting.json COPYONLY)
 

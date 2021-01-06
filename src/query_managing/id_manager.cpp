@@ -44,7 +44,8 @@ void IDManager::FindAvailableIDs(
       break;
     }
     case operation_types::QueryOperation::kMergeSort:
-    case operation_types::QueryOperation::kPassThrough: {
+    case operation_types::QueryOperation::kPassThrough:
+    case operation_types::QueryOperation::kLinearSort: {
       if (available_ids_.empty()) {
         throw std::runtime_error("Out of IDs!");
       }

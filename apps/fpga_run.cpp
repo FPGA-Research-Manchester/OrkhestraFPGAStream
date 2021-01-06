@@ -36,6 +36,11 @@ auto main() -> int {
       {"CAR_DATA_SORTED_8K.csv"},
       operation_types::QueryOperation::kMergeSort};
 
+  query_scheduling_data::QueryNode linear_sort_query_8k_once = {
+      {"CAR_DATA_8K.csv"},
+      {"CAR_DATA_HALF_SORTED_8K_512WAY.csv"},
+      operation_types::QueryOperation::kLinearSort};
+
   // Temp not supported
   query_scheduling_data::QueryNode merge_sort_query_8k_once = {
       {"CAR_DATA_HALF_SORTED_8K_128WAY.csv"},
@@ -64,10 +69,11 @@ auto main() -> int {
   filter_after_pass_through_query.previous_nodes = {
       &pass_through_and_filter_query};
 
-  QueryManager::RunQueries(
+  /*QueryManager::RunQueries(
       {filtering_query_once, pass_through_1k_data, pass_through_1k_data,
        pass_through_1k_data, filtering_query_once,
        merge_sort_query_8k_once_double, merge_sort_query_8k_once_double,
-       join_query_once, join_query_once});
+       join_query_once, join_query_once});*/
+  QueryManager::RunQueries({linear_sort_query_8k_once});
   return 0;
 }
