@@ -49,13 +49,17 @@ const std::map<ConfigurableModuleSet, std::string>
          "DSPI_double_merge_sorting"}, not supported at the moment*/
 
         {{{operation_types::QueryOperation::kMergeSort, 1}},
-         "DSPI_merge_sorting"}};
+         "DSPI_merge_sorting"},
+
+        {{{operation_types::QueryOperation::kLinearSort, 1}},
+         "DSPI_linear_sorting"}};
 
 // Should be built up from the corresponding_accelerator_bitstreams map
 const std::map<operation_types::QueryOperation, std::vector<int>>
     available_modules = {{operation_types::QueryOperation::kFilter, {1}},
                          {operation_types::QueryOperation::kJoin, {1}},
                          {operation_types::QueryOperation::kMergeSort, {1, 2}},
-                         {operation_types::QueryOperation::kPassThrough, {0}}};
+                         {operation_types::QueryOperation::kPassThrough, {0}},
+                         {operation_types::QueryOperation::kLinearSort, {1}}};
 
 }  // namespace query_scheduling_data

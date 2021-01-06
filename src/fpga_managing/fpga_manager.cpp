@@ -11,6 +11,8 @@
 #include "join_setup.hpp"
 #include "merge_sort.hpp"
 #include "merge_sort_setup.hpp"
+#include "linear_sort.hpp"
+#include "linear_sort_setup.hpp"
 #include "operation_types.hpp"
 #include "query_acceleration_constants.hpp"
 
@@ -100,6 +102,13 @@ void FPGAManager::SetupQueryAcceleration(
         MergeSortSetup::SetupMergeSortModule(
             merge_sort_module_last, query_node.input_streams[0].stream_id,
             query_node.input_streams[0].stream_record_size, 64, false);
+        break;
+      }
+      case operation_types::QueryOperation::kLinearSort: {
+        LinearSort linear_sort_module(memory_manager_, 1);
+        LinearSortSetup::SetupLinearSortModule(
+            linear_sort_module, query_node.input_streams[0].stream_id,
+            query_node.input_streams[0].stream_record_size);
         break;
       }
     }
