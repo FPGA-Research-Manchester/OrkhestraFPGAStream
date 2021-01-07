@@ -17,8 +17,8 @@ void DMASetup::SetupDMAModuleWithMultiStream(
     output_stream_setup_data.is_input_stream = false;
     output_stream_setup_data.record_count = 0;
 
-    AddNewStreamDMASetupData(output_stream_setup_data, output_streams.at(i),
-                             buffer_size, setup_output_data_for_dma, i);
+    CreateDMASetupDataForStream(output_stream_setup_data, output_streams.at(i),
+                                buffer_size, setup_output_data_for_dma, i);
   }
 
   WriteSetupDataToDMAModule(setup_output_data_for_dma, dma_engine);
@@ -78,7 +78,6 @@ void DMASetup::SetupDMAModuleWithMultiStream(
     DMACrossbarSetup::CalculateCrossbarSetupData(
         throwaway_chunk, throwaway_position, setup_data_placeholder,
         input_streams.at(i).stream_record_size);
-
 
     // Dealing with channels - based on what module is loaded.
     const int max_channel_count = 64 * 2;
@@ -163,8 +162,7 @@ void DMASetup::SetupDMAModuleWithMultiStream(
 auto DMASetup::CalculateMultiChannelStreamRecordCountPerChannel(
     int stream_record_count, int max_channel_count, int record_size) -> int {
   int channel_record_count =
-      (stream_record_count + max_channel_count - 1) /
-      max_channel_count;
+      (stream_record_count + max_channel_count - 1) / max_channel_count;
   while (!((channel_record_count * record_size) % 16 == 0)) {
     channel_record_count++;
   }
@@ -183,8 +181,8 @@ void DMASetup::SetupDMAModule(
     input_stream_setup_data.is_input_stream = true;
     input_stream_setup_data.record_count = input_streams[i].stream_record_count;
 
-    AddNewStreamDMASetupData(input_stream_setup_data, input_streams.at(i),
-                             buffer_size, setup_data_for_dma, i);
+    CreateDMASetupDataForStream(input_stream_setup_data, input_streams.at(i),
+                                buffer_size, setup_data_for_dma, i);
   }
 
   buffer_size = 16 / output_streams.size();
@@ -193,14 +191,14 @@ void DMASetup::SetupDMAModule(
     output_stream_setup_data.is_input_stream = false;
     output_stream_setup_data.record_count = 0;
 
-    AddNewStreamDMASetupData(output_stream_setup_data, output_streams.at(i),
-                             buffer_size, setup_data_for_dma, i);
+    CreateDMASetupDataForStream(output_stream_setup_data, output_streams.at(i),
+                                buffer_size, setup_data_for_dma, i);
   }
 
   WriteSetupDataToDMAModule(setup_data_for_dma, dma_engine);
 }
 
-void DMASetup::AddNewStreamDMASetupData(
+void DMASetup::CreateDMASetupDataForStream(
     DMASetupData& stream_setup_data,
     const StreamDataParameters& stream_init_data, int buffer_size,
     std::vector<DMASetupData>& setup_data_for_dma, int current_stream_count) {

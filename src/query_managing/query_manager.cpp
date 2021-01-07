@@ -43,10 +43,10 @@ auto QueryManager::GetBitstreamFileFromQueryNode(
                     std::vector<query_scheduling_data::QueryNode>>& query_node)
     -> std::string {
   auto bitstreams_iterator =
-      query_scheduling_data::corresponding_accelerator_bitstreams.find(
+      query_scheduling_data::supported_accelerator_bitstreams.find(
           query_node.first);
   if (bitstreams_iterator !=
-      query_scheduling_data::corresponding_accelerator_bitstreams.end()) {
+      query_scheduling_data::supported_accelerator_bitstreams.end()) {
     return bitstreams_iterator->second;
   } else {
     throw std::runtime_error("Unsopported set of modules!");

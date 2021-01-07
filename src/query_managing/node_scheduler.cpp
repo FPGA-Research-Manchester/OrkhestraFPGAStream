@@ -76,9 +76,9 @@ void NodeScheduler::CheckNodeForModuleSet(
 
 auto NodeScheduler::IsModuleSetSupported(
     query_scheduling_data::ConfigurableModuleSet module_set) -> bool {
-  return query_scheduling_data::corresponding_accelerator_bitstreams.find(
+  return query_scheduling_data::supported_accelerator_bitstreams.find(
              module_set) !=
-         query_scheduling_data::corresponding_accelerator_bitstreams.end();
+         query_scheduling_data::supported_accelerator_bitstreams.end();
 }
 
 auto NodeScheduler::IsNodeIncluded(

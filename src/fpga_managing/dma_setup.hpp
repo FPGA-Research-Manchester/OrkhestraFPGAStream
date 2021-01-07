@@ -20,7 +20,7 @@ class DMASetup {
  private:
   static auto CalculateMultiChannelStreamRecordCountPerChannel(
       int stream_record_count, int max_channel_count, int record_size) -> int;
-  static void AddNewStreamDMASetupData(
+  static void CreateDMASetupDataForStream(
       DMASetupData &input_stream_setup_data,
       const StreamDataParameters &stream_init_data, int buffer_size,
       std::vector<DMASetupData> &setup_data_for_dma, int current_stream_count);

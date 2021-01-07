@@ -74,6 +74,6 @@ auto main() -> int {
        pass_through_1k_data, filtering_query_once,
        merge_sort_query_8k_once_double, merge_sort_query_8k_once_double,
        join_query_once, join_query_once});*/
-  QueryManager::RunQueries({linear_sort_query_8k_once});
+  QueryManager::RunQueries({linear_sort_query_8k_once, pass_through_1k_data});
   return 0;
 }
