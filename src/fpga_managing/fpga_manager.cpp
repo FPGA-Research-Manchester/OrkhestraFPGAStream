@@ -9,10 +9,10 @@
 #include "ila.hpp"
 #include "join.hpp"
 #include "join_setup.hpp"
-#include "merge_sort.hpp"
-#include "merge_sort_setup.hpp"
 #include "linear_sort.hpp"
 #include "linear_sort_setup.hpp"
+#include "merge_sort.hpp"
+#include "merge_sort_setup.hpp"
 #include "operation_types.hpp"
 #include "query_acceleration_constants.hpp"
 
@@ -27,48 +27,35 @@ void FPGAManager::SetupQueryAcceleration(
     ila_module_.value().startAxiILA();
   }*/
 
-  // Temporary
-  std::vector<StreamDataParameters> all_input_streams;
-  std::vector<StreamDataParameters> all_output_streams;
-
+  std::vector<std::pair<StreamDataParameters, bool>> input_streams;
+  std::vector<std::pair<StreamDataParameters, bool>> output_streams;
   for (const auto& query_node : query_nodes) {
-    // Input and output should be setup separately such that these two booleans
-    // don't have to be ANDed.
-    if (!query_node.is_input_intermediate &&
-        !query_node.is_output_intermediate) {
-      if (query_node.operation_type !=
-          operation_types::QueryOperation::kMergeSort) {
-        // Temporary- This assumes there will never be multi stream operation
-        // used in any of the nodes!
-        for (const auto& input_stream : query_node.input_streams) {
-          all_input_streams.push_back(input_stream);
-        }
-        for (const auto& output_stream : query_node.output_streams) {
-          all_output_streams.push_back(output_stream);
-        }
-      } else {
-        DMASetup::SetupDMAModuleWithMultiStream(
-            dma_engine_, query_node.input_streams, query_node.output_streams);
-        if (query_nodes.size() > 1) {
-          throw std::runtime_error("Many operation multi-stream runs are not supported!");
-        }
+    // For now assuming all streams aren't intermediate.
+    if (!query_node.is_input_intermediate) {
+      bool is_multichannel_stream = query_node.operation_type ==
+                                    operation_types::QueryOperation::kMergeSort;
+      for (const auto& input_stream : query_node.input_streams) {
+        input_streams.emplace_back(input_stream, is_multichannel_stream);
+        FPGAManager::input_streams_active_status_[input_stream.stream_id] =
+            true;
+      }
+    }
+    if (!query_node.is_output_intermediate) {
+      for (const auto& output_stream : query_node.output_streams) {
+        output_streams.emplace_back(output_stream, false);
+        FPGAManager::output_streams_active_status_[output_stream.stream_id] =
+            true;
       }
     }
   }
 
-  if (!all_input_streams.empty() && !all_output_streams.empty()) {
-    DMASetup::SetupDMAModule(dma_engine_, all_input_streams,
-                             all_output_streams);
+  if (input_streams.empty() || output_streams.empty()) {
+    throw std::runtime_error("Input or output streams missing!");
+  } else {
+    DMASetup::SetupDMAModule(dma_engine_, input_streams, true);
+    DMASetup::SetupDMAModule(dma_engine_, output_streams, false);
   }
 
-  for (const auto& query_node : query_nodes) {
-    if (!query_node.is_input_intermediate &&
-        !query_node.is_output_intermediate) {
-      for (const auto& stream : query_node.input_streams) {
-        FPGAManager::input_streams_active_status_[stream.stream_id] = true;
-      }
-    }
-  }
   FPGAManager::dma_engine_.StartInputController(
       FPGAManager::input_streams_active_status_);
 
@@ -113,15 +100,6 @@ void FPGAManager::SetupQueryAcceleration(
       }
     }
   }
-
-  for (const auto& query_node : query_nodes) {
-    if (!query_node.is_input_intermediate &&
-        !query_node.is_output_intermediate) {
-      for (const auto& stream : query_node.output_streams) {
-        FPGAManager::output_streams_active_status_[stream.stream_id] = true;
-      }
-    }
-  }
 }
 
 auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
@@ -131,7 +109,7 @@ auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
   FindActiveStreams(active_input_stream_ids, active_output_stream_ids);
 
   if (active_input_stream_ids.empty() || active_output_stream_ids.empty()) {
-    throw "FPGA does not have active streams!";
+    throw std::runtime_error("FPGA does not have active streams!");
   }
 
   WaitForStreamsToFinish();
