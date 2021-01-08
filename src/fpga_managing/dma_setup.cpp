@@ -27,47 +27,43 @@ void DMASetup::SetupDMAModule(
         streams.at(current_stream_count).first;
     const bool is_multichannel_stream = streams.at(current_stream_count).second;
 
+    DMASetupData stream_setup_data;
+    if (!is_multichannel_stream) {
+      if (is_input_stream) {
+        stream_setup_data.record_count = stream_init_data.stream_record_count;
+      } else {
+        stream_setup_data.record_count = 0;
+      }
+      stream_setup_data.stream_address =
+          reinterpret_cast<uintptr_t>(stream_init_data.physical_address);
+    }
+
+    stream_setup_data.is_input_stream = is_input_stream;
+
+    stream_setup_data.stream_id = stream_init_data.stream_id;
+
+    stream_setup_data.buffer_start = buffer_size * current_stream_count;
+    stream_setup_data.buffer_end =
+        stream_setup_data.buffer_start + buffer_size - 1;
+
+    StreamParameterCalculator::CalculateDMAStreamSetupData(
+        stream_setup_data, stream_init_data.stream_record_size,
+        is_multichannel_stream);
+
+    SetUpDMAIOStream(stream_setup_data, dma_engine, is_multichannel_stream);
+
+    const int throwaway_chunk =
+        query_acceleration_constants::kDatapathLength - 1;
+    const int throwaway_position = 0;
+    DMACrossbarSetup::CalculateCrossbarSetupData(
+        throwaway_chunk, throwaway_position, stream_setup_data,
+        stream_init_data.stream_record_size);
+
+    SetUpDMACrossbarsForStream(stream_setup_data, dma_engine);
+
     if (is_multichannel_stream) {
       multichannel_stream_count++;
-
       DMAMultiChannelSetupData input_stream_setup_data;
-      input_stream_setup_data.is_input_stream = true;
-
-      input_stream_setup_data.stream_id = stream_init_data.stream_id;
-      input_stream_setup_data.buffer_start = buffer_size * current_stream_count;
-      input_stream_setup_data.buffer_end =
-          input_stream_setup_data.buffer_start + buffer_size - 1;
-
-      input_stream_setup_data.chunks_per_record =
-          StreamParameterCalculator::CalculateChunksPerRecord(
-              stream_init_data.stream_record_size);
-
-      // Temporarily for now.
-      for (int i = 0; i < query_acceleration_constants::kDatapathLength; i++) {
-        input_stream_setup_data.record_chunk_ids.emplace_back(
-            i, i % input_stream_setup_data.chunks_per_record);
-      }
-
-      int sort_buffer_size = MergeSortSetup::CalculateSortBufferSize(
-          2048, 64, input_stream_setup_data.chunks_per_record);
-      input_stream_setup_data.records_per_ddr_burst =
-          MergeSortSetup::CalculateRecordCountPerFetch(
-              sort_buffer_size, stream_init_data.stream_record_size);
-
-      input_stream_setup_data.ddr_burst_length =
-          StreamParameterCalculator::CalculateDDRBurstLength(
-              stream_init_data.stream_record_size,
-              input_stream_setup_data.records_per_ddr_burst);
-
-      const int throwaway_chunk =
-          query_acceleration_constants::kDatapathLength - 1;
-      const int throwaway_position = 0;
-
-      DMACrossbarSetup::CalculateCrossbarSetupData(
-          throwaway_chunk, throwaway_position, input_stream_setup_data,
-          stream_init_data.stream_record_size);
-
-      // Dealing with channels - based on what module is loaded.
       const int max_channel_count = 64 * 2;
       int channel_record_count =
           CalculateMultiChannelStreamRecordCountPerChannel(
@@ -77,6 +73,8 @@ void DMASetup::SetupDMAModule(
       input_stream_setup_data.active_channel_count =
           (stream_init_data.stream_record_count + channel_record_count - 1) /
           channel_record_count;
+      input_stream_setup_data.channel_setup_data =
+          std::vector<DMAChannelSetupData>();
 
       for (int j = 0; j < input_stream_setup_data.active_channel_count; j++) {
         DMAChannelSetupData current_channel_setup_data;
@@ -105,27 +103,9 @@ void DMASetup::SetupDMAModule(
             current_channel_setup_data);
       }
 
-      // Writing values in
-      SetUpDMACrossbars(input_stream_setup_data, dma_engine);
-
-      dma_engine.SetInputControllerParams(
-          input_stream_setup_data.stream_id,
-          input_stream_setup_data.ddr_burst_length,
-          input_stream_setup_data.records_per_ddr_burst,
-          input_stream_setup_data.buffer_start,
-          input_stream_setup_data.buffer_end);
-      dma_engine.SetRecordSize(input_stream_setup_data.stream_id,
-                               input_stream_setup_data.chunks_per_record);
-      for (const auto& chunk_id_pair :
-           input_stream_setup_data.record_chunk_ids) {
-        dma_engine.SetRecordChunkIDs(input_stream_setup_data.stream_id,
-                                     std::get<0>(chunk_id_pair),
-                                     std::get<1>(chunk_id_pair));
-      }
-
       /*dma_engine.SetNumberOfActiveChannelsForMultiChannelStreams(
-          input_streams.at(i).stream_id,
-          input_stream_setup_data.active_channel_count);*/
+        input_streams.at(i).stream_id,
+        input_stream_setup_data.active_channel_count);*/
       dma_engine.SetNumberOfActiveChannelsForMultiChannelStreams(
           stream_init_data.stream_id, max_channel_count);
 
@@ -140,53 +120,20 @@ void DMASetup::SetupDMAModule(
       }
 
       dma_engine.SetDDRBurstSizeForMultiChannelStreams(
-          stream_init_data.stream_id, input_stream_setup_data.ddr_burst_length);
+          stream_init_data.stream_id, stream_setup_data.ddr_burst_length);
       dma_engine.SetRecordsPerBurstForMultiChannelStreams(
-          stream_init_data.stream_id,
-          input_stream_setup_data.records_per_ddr_burst);
-    } else {
-      DMASetupData stream_setup_data;
-
-      if (is_input_stream && !is_multichannel_stream) {
-        stream_setup_data.record_count = stream_init_data.stream_record_count;
-      } else {
-        stream_setup_data.record_count = 0;
-      }
-
-      stream_setup_data.is_input_stream = is_input_stream;
-
-      stream_setup_data.stream_id = stream_init_data.stream_id;
-
-      stream_setup_data.buffer_start = buffer_size * current_stream_count;
-      stream_setup_data.buffer_end =
-          stream_setup_data.buffer_start + buffer_size - 1;
-
-      stream_setup_data.stream_address =
-          reinterpret_cast<uintptr_t>(stream_init_data.physical_address);
-
-      StreamParameterCalculator::CalculateDMAStreamSetupData(
-          stream_setup_data, stream_init_data.stream_record_size);
-
-      SetUpDMAIOStreams({stream_setup_data}, dma_engine);
-
-      const int throwaway_chunk =
-          query_acceleration_constants::kDatapathLength - 1;
-      const int throwaway_position = 0;
-      DMACrossbarSetup::CalculateCrossbarSetupData(
-          throwaway_chunk, throwaway_position, stream_setup_data,
-          stream_init_data.stream_record_size);
-
-      SetUpDMACrossbars({stream_setup_data}, dma_engine);
+          stream_init_data.stream_id, stream_setup_data.records_per_ddr_burst);
     }
   }
+
   if (is_input_stream && multichannel_stream_count != 0) {
     dma_engine.SetNumberOfInputStreamsWithMultipleChannels(
         multichannel_stream_count);
   }
 }
 
-void DMASetup::SetUpDMACrossbars(DMASetupData& stream_setup_data,
-                                 DMAInterface& dma_engine) {
+void DMASetup::SetUpDMACrossbarsForStream(const DMASetupData& stream_setup_data,
+                                          DMAInterface& dma_engine) {
   for (size_t current_chunk_index = 0;
        current_chunk_index < stream_setup_data.crossbar_setup_data.size();
        ++current_chunk_index) {
@@ -240,23 +187,26 @@ void DMASetup::SetUpDMACrossbars(DMASetupData& stream_setup_data,
   }
 }
 
-void DMASetup::SetUpDMAIOStreams(DMASetupData& stream_setup_data,
-                                 DMAInterface& dma_engine) {
+void DMASetup::SetUpDMAIOStream(const DMASetupData& stream_setup_data,
+                                DMAInterface& dma_engine,
+                                bool is_multichannel_stream) {
   if (stream_setup_data.is_input_stream) {
     dma_engine.SetInputControllerParams(
         stream_setup_data.stream_id, stream_setup_data.ddr_burst_length,
         stream_setup_data.records_per_ddr_burst, stream_setup_data.buffer_start,
         stream_setup_data.buffer_end);
-    dma_engine.SetInputControllerStreamAddress(
-        stream_setup_data.stream_id, stream_setup_data.stream_address);
-    dma_engine.SetInputControllerStreamSize(stream_setup_data.stream_id,
-                                            stream_setup_data.record_count);
     dma_engine.SetRecordSize(stream_setup_data.stream_id,
                              stream_setup_data.chunks_per_record);
     for (auto& chunk_id_pair : stream_setup_data.record_chunk_ids) {
       dma_engine.SetRecordChunkIDs(stream_setup_data.stream_id,
                                    std::get<0>(chunk_id_pair),
                                    std::get<1>(chunk_id_pair));
+    }
+    if (!is_multichannel_stream) {
+      dma_engine.SetInputControllerStreamAddress(
+          stream_setup_data.stream_id, stream_setup_data.stream_address);
+      dma_engine.SetInputControllerStreamSize(stream_setup_data.stream_id,
+                                              stream_setup_data.record_count);
     }
   } else {
     dma_engine.SetOutputControllerParams(

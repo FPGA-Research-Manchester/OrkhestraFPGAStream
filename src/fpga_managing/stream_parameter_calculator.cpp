@@ -1,12 +1,13 @@
 #include "stream_parameter_calculator.hpp"
 #include "query_acceleration_constants.hpp"
+#include "merge_sort_setup.hpp"
 
 #include <cmath>
 #include <algorithm>
 
 void StreamParameterCalculator::CalculateDMAStreamSetupData(
     DMASetupData& stream_setup_data, 
-    const int record_size) {
+    const int record_size, bool is_multichannel_stream) {
   stream_setup_data.chunks_per_record = CalculateChunksPerRecord(record_size);
 
   // Temporarily for now.
@@ -15,8 +16,17 @@ void StreamParameterCalculator::CalculateDMAStreamSetupData(
         i, i % stream_setup_data.chunks_per_record);
   }
 
-  stream_setup_data.records_per_ddr_burst = FindMinViableRecordsPerDDRBurst(record_size);
-
+  if (is_multichannel_stream) {
+    int sort_buffer_size = MergeSortSetup::CalculateSortBufferSize(
+        2048, 64, stream_setup_data.chunks_per_record);
+    stream_setup_data.records_per_ddr_burst =
+        MergeSortSetup::CalculateRecordCountPerFetch(sort_buffer_size,
+                                                     record_size);
+  }else {
+    stream_setup_data.records_per_ddr_burst =
+        FindMinViableRecordsPerDDRBurst(record_size);
+  }
+  
   // ceil (recordSize * records_per_ddr_burst) / maxDDRSizePerCycle
   stream_setup_data.ddr_burst_length = CalculateDDRBurstLength(
       record_size, stream_setup_data.records_per_ddr_burst);

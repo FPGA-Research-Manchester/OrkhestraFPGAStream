@@ -16,8 +16,9 @@ class DMASetup {
  private:
   static auto CalculateMultiChannelStreamRecordCountPerChannel(
       int stream_record_count, int max_channel_count, int record_size) -> int;
-  static void SetUpDMAIOStreams(DMASetupData &stream_setup_data,
-                                DMAInterface &dma_engine);
-  static void SetUpDMACrossbars(DMASetupData &stream_setup_data,
+  static void SetUpDMAIOStream(const DMASetupData &stream_setup_data,
+                                DMAInterface &dma_engine,
+                                bool is_multichannel_stream);
+  static void SetUpDMACrossbarsForStream(const DMASetupData &stream_setup_data,
                                 DMAInterface &dma_engine);
 };
