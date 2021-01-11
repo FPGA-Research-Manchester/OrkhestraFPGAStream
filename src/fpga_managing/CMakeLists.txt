@@ -50,7 +50,6 @@ add_library(fpga_managing
 			"merge_sort_setup.cpp"
 			"merge_sort_setup.hpp"
 			"operation_types.hpp"
-			"dma_multi_channel_setup_data.hpp"
 			"accelerated_query_node.hpp"
             "linear_sort.cpp"
             "linear_sort.hpp"

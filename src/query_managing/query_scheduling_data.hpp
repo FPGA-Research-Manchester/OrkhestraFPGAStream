@@ -28,7 +28,7 @@ typedef std::multiset<std::pair<operation_types::QueryOperation, int>>
     ConfigurableModuleSet;
 
 const std::map<ConfigurableModuleSet, std::string>
-    corresponding_accelerator_bitstreams = {
+    supported_accelerator_bitstreams = {
         {{{operation_types::QueryOperation::kFilter, 1}}, "DSPI_filtering"},
 
         {{{operation_types::QueryOperation::kFilter, 1},
@@ -44,14 +44,18 @@ const std::map<ConfigurableModuleSet, std::string>
         {{{operation_types::QueryOperation::kMergeSort, 2}},
          "DSPI_double_merge_sorting"},
 
-        /*{{{operation_types::QueryOperation::kMergeSort, 2},
+        {{{operation_types::QueryOperation::kMergeSort, 2},
           {operation_types::QueryOperation::kPassThrough, 0}},
-         "DSPI_double_merge_sorting"}, not supported at the moment*/
+         "DSPI_double_merge_sorting"},
 
         {{{operation_types::QueryOperation::kMergeSort, 1}},
          "DSPI_merge_sorting"},
 
         {{{operation_types::QueryOperation::kLinearSort, 1}},
+         "DSPI_linear_sorting"},
+
+        {{{operation_types::QueryOperation::kLinearSort, 1},
+          {operation_types::QueryOperation::kPassThrough, 0}},
          "DSPI_linear_sorting"}};
 
 // Should be built up from the corresponding_accelerator_bitstreams map
