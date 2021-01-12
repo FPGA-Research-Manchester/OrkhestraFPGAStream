@@ -28,6 +28,9 @@ class TypesConverter {
   static void ConvertDecimalValuesToIntegerData(
       const std::string& input, std::vector<uint32_t>& data_vector,
       int output_size);
+  static void ConvertDateValuesToIntegerData(
+      const std::string& input, std::vector<uint32_t>& data_vector,
+      int output_size);
   static void ConvertStringValuesToString(
       const std::vector<uint32_t>& input_value,
       std::vector<std::string>& string_vector);
@@ -38,6 +41,9 @@ class TypesConverter {
       const std::vector<uint32_t>& input_value,
       std::vector<std::string>& string_vector);
   static void ConvertDecimalValuesToString(
+      const std::vector<uint32_t>& input_value,
+      std::vector<std::string>& string_vector);
+  static void ConvertDateValuesToString(
       const std::vector<uint32_t>& input_value,
       std::vector<std::string>& string_vector);
 

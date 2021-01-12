@@ -4,6 +4,8 @@
 #include <iomanip>
 #include <map>
 #include <sstream>
+#include <algorithm>
+#include <iostream>
 
 void TypesConverter::AddIntegerDataFromStringData(
     const std::vector<std::vector<std::string>>& string_data,
@@ -20,6 +22,8 @@ void TypesConverter::AddIntegerDataFromStringData(
       std::make_pair("null", TypesConverter::ConvertNullValuesToIntegerData));
   conversion_functions.insert(std::make_pair(
       "decimal", TypesConverter::ConvertDecimalValuesToIntegerData));
+  conversion_functions.insert(std::make_pair(
+      "date", TypesConverter::ConvertDateValuesToIntegerData));
 
   for (const auto& row : string_data) {
     for (int column = 0; column < row.size(); column++) {
@@ -44,6 +48,8 @@ void TypesConverter::AddStringDataFromIntegerData(
       std::make_pair("null", TypesConverter::ConvertNullValuesToString));
   conversion_functions.insert(
       std::make_pair("decimal", TypesConverter::ConvertDecimalValuesToString));
+  conversion_functions.insert(
+      std::make_pair("date", TypesConverter::ConvertDateValuesToString));
 
   std::vector<uint32_t> current_element;
   std::vector<std::string> current_output_row;
@@ -94,6 +100,15 @@ void TypesConverter::ConvertDecimalValuesToIntegerData(
   data_vector.push_back(std::stod(input) * 100);
 }
 
+void TypesConverter::ConvertDateValuesToIntegerData(
+    const std::string& input, std::vector<uint32_t>& data_vector,
+    int output_size) {
+  auto input_copy = input;
+  input_copy.erase(std::remove(input_copy.begin(), input_copy.end(), '-'),
+                   input_copy.end());
+  data_vector.push_back(std::stoi(input_copy));
+}
+
 void TypesConverter::ConvertStringValuesToString(
     const std::vector<uint32_t>& input_value,
     std::vector<std::string>& string_vector) {
@@ -125,6 +140,18 @@ void TypesConverter::ConvertDecimalValuesToString(
   oss << std::fixed << std::setprecision(2)
       << static_cast<double>(input_value[0]) / 100.0;
   string_vector.push_back(oss.str());
+}
+
+void TypesConverter::ConvertDateValuesToString(
+    const std::vector<uint32_t>& input_value,
+    std::vector<std::string>& string_vector) {
+  auto string_value = std::to_string(input_value[0]);
+  if (string_value.size() < 8) {
+    string_value.insert(0, 8 - string_value.size() , '0');
+  }
+  string_value.insert(4, "-");
+  string_value.insert(7, "-");
+  string_vector.push_back(string_value);
 }
 
 auto TypesConverter::ConvertHexStringToString(const std::string& hex)
