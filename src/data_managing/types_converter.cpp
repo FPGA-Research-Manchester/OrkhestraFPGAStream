@@ -1,6 +1,7 @@
 #include "types_converter.hpp"
 
 #include <cstdlib>
+#include <iomanip>
 #include <map>
 #include <sstream>
 
@@ -15,10 +16,12 @@ void TypesConverter::AddIntegerDataFromStringData(
       "integer", TypesConverter::ConvertIntegerValuesToIntegerData));
   conversion_functions.insert(std::make_pair(
       "varchar", TypesConverter::ConvertStringValuesToIntegerData));
+  conversion_functions.insert(
+      std::make_pair("null", TypesConverter::ConvertNullValuesToIntegerData));
   conversion_functions.insert(std::make_pair(
-      "null", TypesConverter::ConvertNullValuesToIntegerData));
+      "decimal", TypesConverter::ConvertDecimalValuesToIntegerData));
 
-  for (const auto &row : string_data) {
+  for (const auto& row : string_data) {
     for (int column = 0; column < row.size(); column++) {
       conversion_functions[data_types_vector[column].first](
           row[column], integer_data, data_types_vector[column].second);
@@ -39,6 +42,8 @@ void TypesConverter::AddStringDataFromIntegerData(
       std::make_pair("varchar", TypesConverter::ConvertStringValuesToString));
   conversion_functions.insert(
       std::make_pair("null", TypesConverter::ConvertNullValuesToString));
+  conversion_functions.insert(
+      std::make_pair("decimal", TypesConverter::ConvertDecimalValuesToString));
 
   std::vector<uint32_t> current_element;
   std::vector<std::string> current_output_row;
@@ -83,6 +88,12 @@ void TypesConverter::ConvertNullValuesToIntegerData(
   }
 }
 
+void TypesConverter::ConvertDecimalValuesToIntegerData(
+    const std::string& input, std::vector<uint32_t>& data_vector,
+    int /*output_size*/) {
+  data_vector.push_back(std::stod(input) * 100);
+}
+
 void TypesConverter::ConvertStringValuesToString(
     const std::vector<uint32_t>& input_value,
     std::vector<std::string>& string_vector) {
@@ -104,7 +115,16 @@ void TypesConverter::ConvertIntegerValuesToString(
 void TypesConverter::ConvertNullValuesToString(
     const std::vector<uint32_t>& input_value,
     std::vector<std::string>& string_vector) {
-    // These values are ignored.
+  // These values are ignored.
+}
+
+void TypesConverter::ConvertDecimalValuesToString(
+    const std::vector<uint32_t>& input_value,
+    std::vector<std::string>& string_vector) {
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(2)
+      << static_cast<double>(input_value[0]) / 100.0;
+  string_vector.push_back(oss.str());
 }
 
 auto TypesConverter::ConvertHexStringToString(const std::string& hex)
