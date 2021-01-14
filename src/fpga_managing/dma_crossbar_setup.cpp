@@ -16,28 +16,40 @@ void DMACrossbarSetup::CalculateCrossbarSetupData(
   const int last_chunk_leftover_size =
       record_size % query_acceleration_constants::kDatapathWidth;
 
-  const int steps_per_cycle =
-      query_acceleration_constants::kDatapathWidth /
-      std::gcd(record_size, query_acceleration_constants::kDatapathWidth);
-  const int cycle_count = std::ceil(
-      static_cast<float>(query_acceleration_constants::kDatapathLength) /
-      static_cast<float>(steps_per_cycle *
-                         stream_setup_data.chunks_per_record));
-
-  const float cycle_step_chunk_increase =
-      static_cast<float>(record_size) /
-      static_cast<float>(query_acceleration_constants::kDatapathWidth);
-
-  if (stream_setup_data.is_input_stream) {
-    CalculateBufferToInterfaceSetupConfig(
-        source_chunks, target_positions, any_chunk, any_position,
-        last_chunk_leftover_size, steps_per_cycle, cycle_count,
-        stream_setup_data.chunks_per_record, cycle_step_chunk_increase);
+  if (last_chunk_leftover_size == 0) {
+    for (int chunk_id = 0;
+         chunk_id < query_acceleration_constants::kDatapathLength; chunk_id++) {
+      for (int position_id = 0;
+           position_id < query_acceleration_constants::kDatapathWidth;
+           position_id++) {
+        source_chunks.push(chunk_id);
+        target_positions.push(position_id);
+      }
+    }
   } else {
-    CalculateInterfaceToBufferSetupConfig(
-        source_chunks, target_positions, any_chunk, any_position,
-        last_chunk_leftover_size, steps_per_cycle, cycle_count,
-        stream_setup_data.chunks_per_record, cycle_step_chunk_increase);
+    const int steps_per_cycle =
+        query_acceleration_constants::kDatapathWidth /
+        std::gcd(record_size, query_acceleration_constants::kDatapathWidth);
+    const int cycle_count = std::ceil(
+        static_cast<float>(query_acceleration_constants::kDatapathLength) /
+        static_cast<float>(steps_per_cycle *
+                           stream_setup_data.chunks_per_record));
+
+    const float cycle_step_chunk_increase =
+        static_cast<float>(record_size) /
+        static_cast<float>(query_acceleration_constants::kDatapathWidth);
+
+    if (stream_setup_data.is_input_stream) {
+      CalculateBufferToInterfaceSetupConfig(
+          source_chunks, target_positions, any_chunk, any_position,
+          last_chunk_leftover_size, steps_per_cycle, cycle_count,
+          stream_setup_data.chunks_per_record, cycle_step_chunk_increase);
+    } else {
+      CalculateInterfaceToBufferSetupConfig(
+          source_chunks, target_positions, any_chunk, any_position,
+          last_chunk_leftover_size, steps_per_cycle, cycle_count,
+          stream_setup_data.chunks_per_record, cycle_step_chunk_increase);
+    }
   }
 
   SetCrossbarSetupDataForStream(source_chunks, target_positions,
