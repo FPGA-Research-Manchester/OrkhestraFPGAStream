@@ -3,6 +3,10 @@
 #include <iostream>
 #include <stdexcept>
 
+#ifdef _FPGA_AVAILABLE
+#include <unistd.h>
+#endif
+
 #include "dma_setup.hpp"
 #include "filter.hpp"
 #include "filter_setup.hpp"
@@ -139,6 +143,7 @@ void FPGAManager::WaitForStreamsToFinish() {
 #ifdef _FPGA_AVAILABLE
   while (!(FPGAManager::dma_engine_.IsInputControllerFinished() &&
            FPGAManager::dma_engine_.IsOutputControllerFinished())) {
+    sleep(3);
     std::cout << "Processing..." << std::endl;
     std::cout << "Input:"
               << FPGAManager::dma_engine_.IsInputControllerFinished()

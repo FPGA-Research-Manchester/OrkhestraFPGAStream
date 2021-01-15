@@ -27,6 +27,8 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_linear_sorting.json DSPI_
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_double_merge_sorting.bin DSPI_double_merge_sorting.bin COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_double_merge_sorting.json DSPI_double_merge_sorting.json COPYONLY)
 
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/tpch_orders_small.csv tpch_orders_small.csv COPYONLY)
+
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/repo.json repo.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data_config.ini data_config.ini COPYONLY)
 

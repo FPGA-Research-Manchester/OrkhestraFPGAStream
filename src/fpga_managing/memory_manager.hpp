@@ -16,7 +16,8 @@
 class MemoryManager : public MemoryManagerInterface {
  private:
   std::stack<std::unique_ptr<MemoryBlockInterface>> available_memory_blocks_;
-  int memory_block_count_ = -1;
+  int memory_block_count_ = 0;
+  // Set in https://github.com/FPGA-Research-Manchester/fos/blob/fdac37e188e217293d296d9973c22500c8a4367c/udmalib/setupUdma.sh#L4
   static const int kMaxPossibleAllocations = 8;
 
   std::string loaded_bitstream_;

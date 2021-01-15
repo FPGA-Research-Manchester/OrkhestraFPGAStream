@@ -26,9 +26,19 @@ auto main() -> int {
       {"CUSTOMER_DATA.csv"},
       operation_types::QueryOperation::kPassThrough};
 
+  query_scheduling_data::QueryNode pass_through_tpch_data = {
+      {"tpch_orders_small.csv"},
+      {"tpch_orders_small.csv"},
+      operation_types::QueryOperation::kPassThrough};
+
   query_scheduling_data::QueryNode join_query_once = {
       {"CAR_DATA.csv", "CUSTOMER_DATA_FOR_JOIN.csv"},
       {"JOIN_DATA.csv"},
+      operation_types::QueryOperation::kJoin};
+
+  query_scheduling_data::QueryNode tpch_join_once = {
+      {"tpch_customer.csv", "tpch_orders_join.csv"},
+      {"tpch_customer_orders.csv"},
       operation_types::QueryOperation::kJoin};
 
   query_scheduling_data::QueryNode merge_sort_query_8k_once_double = {
@@ -69,13 +79,16 @@ auto main() -> int {
   filter_after_pass_through_query.previous_nodes = {
       &pass_through_and_filter_query};
 
-  /*QueryManager::RunQueries(
-      {filtering_query_once, pass_through_1k_data, pass_through_1k_data,
-       pass_through_1k_data, filtering_query_once,
-       merge_sort_query_8k_once_double, merge_sort_query_8k_once_double,
-       join_query_once, join_query_once});*/
-  QueryManager::RunQueries({linear_sort_query_8k_once, pass_through_1k_data,
+  // Run operations twice
+  QueryManager::RunQueries({filtering_query_once, filtering_query_once,
                             merge_sort_query_8k_once_double,
-                            pass_through_1k_data});
+                            merge_sort_query_8k_once_double, join_query_once,
+                            join_query_once/*, linear_sort_query_8k_once,
+                            linear_sort_query_8k_once*/});
+  // Run operations with pass through data
+  QueryManager::RunQueries({pass_through_tpch_data, pass_through_500_data,
+                            pass_through_small_data, /*pass_through_1k_data,*/
+                            join_query_once, merge_sort_query_8k_once_double/*,
+                            linear_sort_query_8k_once*/, filtering_query_once});
   return 0;
 }
