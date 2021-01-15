@@ -22,6 +22,10 @@ void TableManager::ReadOutputDataFromMemoryBlock(
 void TableManager::WriteInputDataToMemoryBlock(
     const std::unique_ptr<MemoryBlockInterface>& input_device,
     const TableData& input_table) {
+  if (input_table.table_data_vector.size() * 4 > input_device->GetSize()) {
+    throw std::runtime_error(
+        "Not enough memory in the allocated memory block!");
+  }
   volatile uint32_t* input = input_device->GetVirtualAddress();
   for (int i = 0; i < input_table.table_data_vector.size(); i++) {
     input[i] = input_table.table_data_vector[i];

@@ -1,11 +1,11 @@
 #include "types_converter.hpp"
 
+#include <algorithm>
 #include <cstdlib>
 #include <iomanip>
 #include <map>
 #include <sstream>
-#include <algorithm>
-#include <iostream>
+#include <stdexcept>
 
 void TypesConverter::AddIntegerDataFromStringData(
     const std::vector<std::vector<std::string>>& string_data,
@@ -22,8 +22,8 @@ void TypesConverter::AddIntegerDataFromStringData(
       std::make_pair("null", TypesConverter::ConvertNullValuesToIntegerData));
   conversion_functions.insert(std::make_pair(
       "decimal", TypesConverter::ConvertDecimalValuesToIntegerData));
-  conversion_functions.insert(std::make_pair(
-      "date", TypesConverter::ConvertDateValuesToIntegerData));
+  conversion_functions.insert(
+      std::make_pair("date", TypesConverter::ConvertDateValuesToIntegerData));
 
   for (const auto& row : string_data) {
     for (int column = 0; column < row.size(); column++) {
@@ -147,7 +147,7 @@ void TypesConverter::ConvertDateValuesToString(
     std::vector<std::string>& string_vector) {
   auto string_value = std::to_string(input_value[0]);
   if (string_value.size() < 8) {
-    string_value.insert(0, 8 - string_value.size() , '0');
+    string_value.insert(0, 8 - string_value.size(), '0');
   }
   string_value.insert(4, "-");
   string_value.insert(7, "-");

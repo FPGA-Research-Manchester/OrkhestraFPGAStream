@@ -1,6 +1,7 @@
 #include "data_manager.hpp"
 
 #include <iostream>
+#include <stdexcept>
 
 #include "config_reader.hpp"
 #include "csv_reader.hpp"
@@ -16,6 +17,12 @@ auto DataManager::ParseDataFromCSV(const std::string& filename) -> TableData {
     auto delimiter_position = column_data.find('-');
     auto name = column_data.substr(0, delimiter_position);
     auto value = column_data.substr(delimiter_position + 1);
+
+    double data_type_size = data_type_sizes_[name] * std::stoi(value);
+
+    if (data_type_size != static_cast<int>(data_type_size)) {
+      throw std::runtime_error(value + "size is not supported!");
+    }
 
     table_column_label_vector.emplace_back(
         name, data_type_sizes_[name] * std::stoi(value));
@@ -45,9 +52,12 @@ void DataManager::PrintStringData(
     const std::vector<std::vector<std::string>>& string_data) {
   for (const auto& row : string_data) {
     for (const auto& element : row) {
-      std::cout << element << " ";
+      if (element != row.back()) {
+        std::cout << element << ",";
+      } else {
+        std::cout << element << std::endl;
+      }
     }
-    std::cout << std::endl;
   }
 }
 

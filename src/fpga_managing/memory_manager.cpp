@@ -51,12 +51,12 @@ auto MemoryManager::GetVirtualRegisterAddress(int offset)
 
 auto MemoryManager::AllocateMemoryBlock()
     -> std::unique_ptr<MemoryBlockInterface> {
-  if (++memory_block_count_ >= kMaxPossibleAllocations) {
+  if (memory_block_count_++ >= kMaxPossibleAllocations) {
     throw std::runtime_error("Can't allocate any more memory!");
   }
 #ifdef _FPGA_AVAILABLE
   return std::make_unique<UDMAMemoryBlock>(
-      udma_repo_.device(memory_block_count_));
+      udma_repo_.device(memory_block_count_-1));
 #else
   return std::make_unique<VirtualMemoryBlock>();
 #endif
