@@ -199,8 +199,8 @@ TEST(DMACrossbarSetupTest, RecordSize57InterfaceToBufferSetupCheck) {
       "DMACrossbarSetupTest/RecordSize57InterfaceToBufferPositionSetup.txt");
 }
 
-TEST(DMACrossbarSetupTest, RecordSize510BufferToInterfaceSetupCheck) {
-  const int record_size = 510;
+TEST(DMACrossbarSetupTest, RecordSize478BufferToInterfaceSetupCheck) {
+  const int record_size = 478;
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.chunks_per_record =
       CalculateChunksPerRecord(record_size);
@@ -212,12 +212,12 @@ TEST(DMACrossbarSetupTest, RecordSize510BufferToInterfaceSetupCheck) {
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
-      "DMACrossbarSetupTest/RecordSize510BufferToInterfaceChunkSetup.txt",
-      "DMACrossbarSetupTest/RecordSize510BufferToInterfacePositionSetup.txt");
+      "DMACrossbarSetupTest/RecordSize478BufferToInterfaceChunkSetup.txt",
+      "DMACrossbarSetupTest/RecordSize478BufferToInterfacePositionSetup.txt");
 }
 
-TEST(DMACrossbarSetupTest, RecordSize510InterfaceToBufferSetupCheck) {
-  const int record_size = 510;
+TEST(DMACrossbarSetupTest, RecordSize478InterfaceToBufferSetupCheck) {
+  const int record_size = 478;
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.chunks_per_record =
       CalculateChunksPerRecord(record_size);
@@ -229,12 +229,12 @@ TEST(DMACrossbarSetupTest, RecordSize510InterfaceToBufferSetupCheck) {
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
-      "DMACrossbarSetupTest/RecordSize510InterfaceToBufferChunkSetup.txt",
-      "DMACrossbarSetupTest/RecordSize510InterfaceToBufferPositionSetup.txt");
+      "DMACrossbarSetupTest/RecordSize478InterfaceToBufferChunkSetup.txt",
+      "DMACrossbarSetupTest/RecordSize478InterfaceToBufferPositionSetup.txt");
 }
 
-TEST(DMACrossbarSetupTest, RecordSize32BufferToInterfaceSetupCheck) {
-  const int record_size = 32;
+TEST(DMACrossbarSetupTest, RecordSize80BufferToInterfaceSetupCheck) {
+  const int record_size = 80;
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.chunks_per_record =
       CalculateChunksPerRecord(record_size);
@@ -246,12 +246,12 @@ TEST(DMACrossbarSetupTest, RecordSize32BufferToInterfaceSetupCheck) {
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
-      "DMACrossbarSetupTest/RecordSize32BufferToInterfaceChunkSetup.txt",
-      "DMACrossbarSetupTest/RecordSize32BufferToInterfacePositionSetup.txt");
+      "DMACrossbarSetupTest/RecordSize80BufferToInterfaceChunkSetup.txt",
+      "DMACrossbarSetupTest/RecordSize80BufferToInterfacePositionSetup.txt");
 }
 
-TEST(DMACrossbarSetupTest, RecordSize32InterfaceToBufferSetupCheck) {
-  const int record_size = 32;
+TEST(DMACrossbarSetupTest, RecordSize80InterfaceToBufferSetupCheck) {
+  const int record_size = 80;
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.chunks_per_record =
       CalculateChunksPerRecord(record_size);
@@ -263,8 +263,8 @@ TEST(DMACrossbarSetupTest, RecordSize32InterfaceToBufferSetupCheck) {
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
-      "DMACrossbarSetupTest/RecordSize32InterfaceToBufferChunkSetup.txt",
-      "DMACrossbarSetupTest/RecordSize32InterfaceToBufferPositionSetup.txt");
+      "DMACrossbarSetupTest/RecordSize80InterfaceToBufferChunkSetup.txt",
+      "DMACrossbarSetupTest/RecordSize80InterfaceToBufferPositionSetup.txt");
 }
 
 }  // namespace

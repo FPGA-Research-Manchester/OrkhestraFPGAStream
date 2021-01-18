@@ -71,4 +71,12 @@ class DMACrossbarSetup {
   static void SetCrossbarSetupDataForStream(std::queue<int>& source_chunks,
                                             std::queue<int>& target_positions,
                                             DMASetupData& stream_setup_data);
+
+  static void AddBubbleChunkAndPositionData(std::queue<int>& source_chunks,
+                                            std::queue<int>& target_positions,
+                                            const int& chunks_per_record,
+                                            const int& any_chunk,
+                                            const int& any_position);
+
+  static auto FindNextPowerOfTwo(const int& value) -> int;
 };
