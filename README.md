@@ -18,11 +18,11 @@ As you can see from the image the input would be a query plan graph form a DBMS 
 - [Filter](https://docs.google.com/document/d/1aYy9Etr1Ixwe3E7jI4mP0RaP6_JUYoRPTvVph6-HNGM/view)
 - [Join](https://docs.google.com/document/d/1r0RVhj606VpfFN-_qD-pGoYDA3DNoBDvr2w0ZUhhkLU/view)
 - [Linear Sort](https://docs.google.com/document/d/1rDDLILdMLcuyK8YAFJgvJH6Eq8vFAtm5XBoBC7NX44E/view)
-- [Mege Sort](https://docs.google.com/document/d/1PdNX-QX6q9c99VxUFVUgqroxa9sadZm0mU3asQ_sdqQ/view)
+- [Merge Sort](https://docs.google.com/document/d/1PdNX-QX6q9c99VxUFVUgqroxa9sadZm0mU3asQ_sdqQ/view)
 - [DMA](https://docs.google.com/document/d/1cxJLcjkrTCrByOmtiYwsu4Ptbp78npZbajhQ878ixp0/view)
 
 The **DMA** is a compulsory module which will set up the interface.
 The **sort** modules are meant to be used together.
-The **join** module is for sort-merge join operations. So it'l only join sorted streams.
+The **join** module is for sort-merge join operations. So it will only join sorted streams.
 
 The interface specification documentation will be available later.

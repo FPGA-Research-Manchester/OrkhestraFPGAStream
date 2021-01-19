@@ -398,11 +398,6 @@ void DMACrossbarSetup::SetCrossbarSetupDataForStream(
       target_positions.pop();
     }
     stream_setup_data.crossbar_setup_data.push_back(current_chunk_data);
-
-    for (const auto& thing : current_chunk_data.chunk_data) {
-      std::cout << thing << " ";
-    }
-    std::cout << std::endl;
   }
 }
 
