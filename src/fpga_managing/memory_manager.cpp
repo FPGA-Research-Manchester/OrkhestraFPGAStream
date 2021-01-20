@@ -1,6 +1,7 @@
 #include "memory_manager.hpp"
 
 #include <stdexcept>
+#include <iostream>
 
 #ifdef _FPGA_AVAILABLE
 #include "udma_memory_block.hpp"
@@ -12,8 +13,9 @@ MemoryManager::~MemoryManager() = default;
 
 void MemoryManager::LoadBitstreamIfNew(const std::string& bitstream_name,
                                        const int register_space_size) {
-  if (bitstream_name != loaded_bitstream_ &&
+  if (bitstream_name != loaded_bitstream_ ||
       register_space_size != loaded_register_space_size_) {
+    std::cout << bitstream_name << " loaded!" << std::endl;
 #ifdef _FPGA_AVAILABLE
     acceleration_instance_ =
         pr_manager_.fpgaLoadStatic(bitstream_name, register_space_size);

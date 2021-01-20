@@ -83,12 +83,18 @@ auto main() -> int {
   QueryManager::RunQueries({filtering_query_once, filtering_query_once,
                             merge_sort_query_8k_once_double,
                             merge_sort_query_8k_once_double, join_query_once,
-                            join_query_once/*, linear_sort_query_8k_once,
-                            linear_sort_query_8k_once*/});
+                            join_query_once, linear_sort_query_8k_once,
+                            linear_sort_query_8k_once});
   // Run operations with pass through data
   QueryManager::RunQueries({pass_through_tpch_data, pass_through_500_data,
-                            pass_through_small_data, /*pass_through_1k_data,*/
-                            join_query_once, merge_sort_query_8k_once_double/*,
-                            linear_sort_query_8k_once*/, filtering_query_once});
+                            pass_through_small_data, pass_through_1k_data,
+                            join_query_once, merge_sort_query_8k_once_double,
+                            linear_sort_query_8k_once, filtering_query_once});
+
+  ////QueryManager::RunQueries({join_query_once, filtering_query_once}); // Second one can be what ever different bitstream and there can't be a different bitstream before
+  //QueryManager::RunQueries(
+  //    {linear_sort_query_8k_once,
+  //     filtering_query_once});  // This specific combo doesn't work either
+  ////QueryManager::RunQueries({merge_sort_query_8k_once_double, filtering_query_once}); // Works
   return 0;
 }

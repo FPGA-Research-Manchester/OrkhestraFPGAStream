@@ -67,4 +67,5 @@ void DataManager::PrintTableData(const TableData& table_data) {
       table_data.table_data_vector, string_data_vector,
       table_data.table_column_label_vector);
   DataManager::PrintStringData(string_data_vector);
+  std::cout << std::endl;
 }
