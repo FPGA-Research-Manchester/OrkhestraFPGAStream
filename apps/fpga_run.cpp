@@ -51,16 +51,6 @@ auto main() -> int {
       {"CAR_DATA_HALF_SORTED_8K_512WAY.csv"},
       operation_types::QueryOperation::kLinearSort};
 
-  // Temp not supported
-  query_scheduling_data::QueryNode merge_sort_query_8k_once = {
-      {"CAR_DATA_HALF_SORTED_8K_128WAY.csv"},
-      {"CAR_DATA_SORTED_8K.csv"},
-      operation_types::QueryOperation::kMergeSort};
-  query_scheduling_data::QueryNode merge_sort_query_1k_once = {
-      {"CAR_DATA_HALF_SORTED.csv"},
-      {"CAR_DATA_SORTED.csv"},
-      operation_types::QueryOperation::kMergeSort};
-
   query_scheduling_data::QueryNode pass_through_and_filter_query;
   query_scheduling_data::QueryNode filter_after_pass_through_query;
 
@@ -79,22 +69,30 @@ auto main() -> int {
   filter_after_pass_through_query.previous_nodes = {
       &pass_through_and_filter_query};
 
-  // Run operations twice
-  QueryManager::RunQueries({filtering_query_once, filtering_query_once,
-                            merge_sort_query_8k_once_double,
-                            merge_sort_query_8k_once_double, join_query_once,
-                            join_query_once, linear_sort_query_8k_once,
-                            linear_sort_query_8k_once});
-  // Run operations with pass through data
-  QueryManager::RunQueries({pass_through_tpch_data, pass_through_500_data,
-                            pass_through_small_data, pass_through_1k_data,
-                            join_query_once, merge_sort_query_8k_once_double,
-                            linear_sort_query_8k_once, filtering_query_once});
+  // Temp not supported
+  query_scheduling_data::QueryNode merge_sort_query_8k_once = {
+      {"CAR_DATA_HALF_SORTED_8K_128WAY.csv"},
+      {"CAR_DATA_SORTED_8K.csv"},
+      operation_types::QueryOperation::kMergeSort};
+  query_scheduling_data::QueryNode merge_sort_query_1k_once = {
+      {"CAR_DATA_HALF_SORTED.csv"},
+      {"CAR_DATA_SORTED.csv"},
+      operation_types::QueryOperation::kMergeSort};
 
-  ////QueryManager::RunQueries({join_query_once, filtering_query_once}); // Second one can be what ever different bitstream and there can't be a different bitstream before
-  //QueryManager::RunQueries(
-  //    {linear_sort_query_8k_once,
-  //     filtering_query_once});  // This specific combo doesn't work either
-  ////QueryManager::RunQueries({merge_sort_query_8k_once_double, filtering_query_once}); // Works
+  // Run operations twice
+  //QueryManager::RunQueries({filtering_query_once, filtering_query_once,
+  //                          merge_sort_query_8k_once_double,
+  //                          merge_sort_query_8k_once_double, join_query_once,
+  //                          join_query_once, linear_sort_query_8k_once,
+  //                          linear_sort_query_8k_once});
+  // Run operations with pass through data
+  //QueryManager::RunQueries({pass_through_tpch_data, pass_through_500_data,
+  //                          pass_through_small_data, pass_through_1k_data,
+  //                          join_query_once, merge_sort_query_8k_once_double,
+  //                          linear_sort_query_8k_once, filtering_query_once});
+
+  QueryManager::RunQueries(
+      {pass_through_and_filter_query, filtering_query_once});
+
   return 0;
 }

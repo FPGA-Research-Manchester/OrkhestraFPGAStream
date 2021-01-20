@@ -29,7 +29,7 @@ void QueryManager::CheckTableData(const TableData& expected_table,
     std::cout << expected_table.table_data_vector.size() /
                      TableManager::GetRecordSizeFromTable(expected_table)
               << std::endl;
-    //DataManager::PrintTableData(expected_table);
+    // DataManager::PrintTableData(expected_table);
     std::cout << "vs:" << std::endl;
     std::cout << resulting_table.table_data_vector.size() /
                      TableManager::GetRecordSizeFromTable(resulting_table)
@@ -131,9 +131,15 @@ void QueryManager::RunQueries(
           current_node.output_data_definition_files, output_stream_id_vector,
           allocated_output_memory_blocks, expected_output_tables);
 
+      std::vector<bool> is_input_intermediate(input_stream_parameters.size(),
+                                              false);
+      std::vector<bool> is_output_intermediate(output_stream_parameters.size(),
+                                               false);
+
       query_nodes.push_back({std::move(input_stream_parameters),
                              std::move(output_stream_parameters),
-                             current_node.operation_type});
+                             current_node.operation_type, is_input_intermediate,
+                             is_output_intermediate});
 
       // Keep memory blocks during the query execution
       input_memory_blocks.push_back(std::move(allocated_input_memory_blocks));
@@ -141,7 +147,7 @@ void QueryManager::RunQueries(
     }
 
     // Run query
-    fpga_manager.SetupQueryAcceleration(query_nodes); 
+    fpga_manager.SetupQueryAcceleration(query_nodes);
     std::cout << "Running query!" << std::endl;
     auto result_sizes = fpga_manager.RunQueryAcceleration();
     std::cout << "Query done!" << std::endl;
