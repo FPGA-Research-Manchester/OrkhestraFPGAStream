@@ -32,6 +32,27 @@ void TableManager::WriteInputDataToMemoryBlock(
   }
 }
 
+// Debug method
+void TableManager::PrintWrittenData(
+    std::string table_name,
+    const std::unique_ptr<MemoryBlockInterface>& input_device,
+    const TableData& input_table) {
+  auto output_table = input_table;
+  const int table_size = static_cast<int>(input_table.table_data_vector.size() /
+                                          GetRecordSizeFromTable(input_table));
+
+  TableManager::ReadOutputDataFromMemoryBlock(input_device, output_table,
+                                              table_size);
+
+  std::cout << std::endl
+            << "Table " << table_name << " with " << table_size << " rows"
+            << std::endl;
+  std::cout << std::hex << "Address: "
+            << reinterpret_cast<uintptr_t>(input_device->GetPhysicalAddress())
+            << std::dec << std::endl;
+  DataManager::PrintTableData(output_table);
+}
+
 void TableManager::ReadInputTables(
     std::vector<StreamDataParameters>& input_stream_parameters,
     DataManager& data_manager,
@@ -49,6 +70,9 @@ void TableManager::ReadInputTables(
 
     WriteInputDataToMemoryBlock(allocated_memory_blocks[stream_index],
                                 current_table);
+
+    /*PrintWrittenData(stream_data_file_names[stream_index],
+                     allocated_memory_blocks[stream_index], current_table);*/
 
     StreamDataParameters current_stream_parameters = {
         stream_id_vector[stream_index], GetRecordSizeFromTable(current_table),
@@ -96,6 +120,7 @@ void TableManager::ReadResultTables(
     TableManager::ReadOutputDataFromMemoryBlock(
         allocated_memory_blocks[stream_index],
         output_tables[output_stream_parameters.at(stream_index).stream_id],
-        result_record_counts[output_stream_parameters.at(stream_index).stream_id]);
+        result_record_counts[output_stream_parameters.at(stream_index)
+                                 .stream_id]);
   }
 }

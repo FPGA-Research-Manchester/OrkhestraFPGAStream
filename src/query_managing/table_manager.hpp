@@ -42,4 +42,8 @@ class TableManager {
   static void WriteInputDataToMemoryBlock(
       const std::unique_ptr<MemoryBlockInterface>& input_device,
       const TableData& input_table);
+  static void PrintWrittenData(
+      std::string table_name,
+      const std::unique_ptr<MemoryBlockInterface>& input_device,
+      const TableData& input_table);
 };

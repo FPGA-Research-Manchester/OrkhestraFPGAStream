@@ -29,7 +29,7 @@ void QueryManager::CheckTableData(const TableData& expected_table,
     std::cout << expected_table.table_data_vector.size() /
                      TableManager::GetRecordSizeFromTable(expected_table)
               << std::endl;
-    //DataManager::PrintTableData(expected_table);
+    // DataManager::PrintTableData(expected_table);
     std::cout << "vs:" << std::endl;
     std::cout << resulting_table.table_data_vector.size() /
                      TableManager::GetRecordSizeFromTable(resulting_table)
@@ -39,7 +39,7 @@ void QueryManager::CheckTableData(const TableData& expected_table,
 }
 
 auto QueryManager::GetBitstreamFileFromQueryNode(
-    const std::pair<query_scheduling_data::ConfigurableModuleSet,
+    const std::pair<query_scheduling_data::ConfigurableModulesVector,
                     std::vector<query_scheduling_data::QueryNode>>& query_node)
     -> std::string {
   auto bitstreams_iterator =
@@ -54,12 +54,12 @@ auto QueryManager::GetBitstreamFileFromQueryNode(
 }
 
 auto QueryManager::GetModuleCountFromQueryNode(
-    const std::pair<query_scheduling_data::ConfigurableModuleSet,
+    const std::pair<query_scheduling_data::ConfigurableModulesVector,
                     std::vector<query_scheduling_data::QueryNode>>& query_node)
     -> int {
   int module_count = 1;  // +1 for DMA module
   for (const auto& operation_module : query_node.first) {
-    module_count += operation_module.second;
+    module_count++;
   }
   return module_count;
 }
@@ -71,15 +71,15 @@ void QueryManager::RunQueries(
   MemoryManager memory_manager;
   FPGAManager fpga_manager(&memory_manager);
 
-  std::queue<std::pair<query_scheduling_data::ConfigurableModuleSet,
+  std::queue<std::pair<query_scheduling_data::ConfigurableModulesVector,
                        std::vector<query_scheduling_data::QueryNode>>>
-      accelerated_query_node_sets;
+      query_node_runs_queue;
 
-  NodeScheduler::FindAcceleratedQueryNodeSets(&accelerated_query_node_sets,
+  NodeScheduler::FindAcceleratedQueryNodeSets(&query_node_runs_queue,
                                               std::move(starting_query_nodes));
 
-  while (!accelerated_query_node_sets.empty()) {
-    const auto executable_query_nodes = accelerated_query_node_sets.front();
+  while (!query_node_runs_queue.empty()) {
+    const auto executable_query_nodes = query_node_runs_queue.front();
 
     memory_manager.LoadBitstreamIfNew(
         GetBitstreamFileFromQueryNode(executable_query_nodes),
@@ -131,9 +131,19 @@ void QueryManager::RunQueries(
           current_node.output_data_definition_files, output_stream_id_vector,
           allocated_output_memory_blocks, expected_output_tables);
 
+      std::vector<bool> is_output_intermediate;
+      for (const auto& next_node : current_node.next_nodes) {
+        is_output_intermediate.push_back(next_node != nullptr);
+      }
+      std::vector<bool> is_input_intermediate;
+      for (const auto& previous_node : current_node.previous_nodes) {
+        is_input_intermediate.push_back(previous_node != nullptr);
+      }
+
       query_nodes.push_back({std::move(input_stream_parameters),
                              std::move(output_stream_parameters),
-                             current_node.operation_type});
+                             current_node.operation_type, is_input_intermediate,
+                             is_output_intermediate});
 
       // Keep memory blocks during the query execution
       input_memory_blocks.push_back(std::move(allocated_input_memory_blocks));
@@ -141,7 +151,7 @@ void QueryManager::RunQueries(
     }
 
     // Run query
-    fpga_manager.SetupQueryAcceleration(query_nodes); 
+    fpga_manager.SetupQueryAcceleration(query_nodes);
     std::cout << "Running query!" << std::endl;
     auto result_sizes = fpga_manager.RunQueryAcceleration();
     std::cout << "Query done!" << std::endl;
@@ -169,6 +179,6 @@ void QueryManager::RunQueries(
       }
     }
 
-    accelerated_query_node_sets.pop();
+    query_node_runs_queue.pop();
   }
 }

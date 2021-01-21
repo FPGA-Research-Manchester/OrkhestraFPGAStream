@@ -34,21 +34,27 @@ void FPGAManager::SetupQueryAcceleration(
   std::vector<std::pair<StreamDataParameters, bool>> input_streams;
   std::vector<std::pair<StreamDataParameters, bool>> output_streams;
   for (const auto& query_node : query_nodes) {
-    // For now assuming all streams aren't intermediate.
-    if (!query_node.is_input_intermediate) {
-      bool is_multichannel_stream = query_node.operation_type ==
-                                    operation_types::QueryOperation::kMergeSort;
-      for (const auto& input_stream : query_node.input_streams) {
-        input_streams.emplace_back(input_stream, is_multichannel_stream);
-        FPGAManager::input_streams_active_status_[input_stream.stream_id] =
-            true;
+    bool is_multichannel_stream = query_node.operation_type ==
+                                  operation_types::QueryOperation::kMergeSort;
+    for (int input_stream_counter = 0;
+         input_stream_counter < query_node.input_streams.size();
+         input_stream_counter++) {
+      if (!query_node.is_input_intermediate[input_stream_counter]) {
+        input_streams.emplace_back(
+            query_node.input_streams[input_stream_counter],
+            is_multichannel_stream);
+        FPGAManager::input_streams_active_status_
+            [query_node.input_streams[input_stream_counter].stream_id] = true;
       }
     }
-    if (!query_node.is_output_intermediate) {
-      for (const auto& output_stream : query_node.output_streams) {
-        output_streams.emplace_back(output_stream, false);
-        FPGAManager::output_streams_active_status_[output_stream.stream_id] =
-            true;
+    for (int output_stream_counter = 0;
+         output_stream_counter < query_node.output_streams.size();
+         output_stream_counter++) {
+      if (!query_node.is_output_intermediate[output_stream_counter]) {
+        output_streams.emplace_back(
+            query_node.output_streams[output_stream_counter], false);
+        FPGAManager::output_streams_active_status_
+            [query_node.output_streams[output_stream_counter].stream_id] = true;
       }
     }
   }

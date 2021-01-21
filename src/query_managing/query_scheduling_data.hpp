@@ -1,7 +1,6 @@
 #pragma once
 #include <map>
 #include <optional>
-#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -24,46 +23,21 @@ struct QueryNode {
   }
 };
 
-typedef std::multiset<std::pair<operation_types::QueryOperation, int>>
-    ConfigurableModuleSet;
+typedef std::vector<operation_types::QueryOperation>
+    ConfigurableModulesVector;
 
-const std::map<ConfigurableModuleSet, std::string>
+const std::map<ConfigurableModulesVector, std::string>
     supported_accelerator_bitstreams = {
-        {{{operation_types::QueryOperation::kFilter, 1}}, "DSPI_filtering"},
+        {{operation_types::QueryOperation::kFilter}, "DSPI_filtering"},
 
-        {{{operation_types::QueryOperation::kFilter, 1},
-          {operation_types::QueryOperation::kPassThrough, 0}},
-         "DSPI_filtering"},
+        {{operation_types::QueryOperation::kJoin}, "DSPI_joining"},
 
-        {{{operation_types::QueryOperation::kJoin, 1}}, "DSPI_joining"},
-
-        {{{operation_types::QueryOperation::kJoin, 1},
-          {operation_types::QueryOperation::kPassThrough, 0}},
-         "DSPI_joining"},
-
-        {{{operation_types::QueryOperation::kMergeSort, 2}},
+        {{operation_types::QueryOperation::kMergeSort,
+          operation_types::QueryOperation::kMergeSort},
          "DSPI_double_merge_sorting"},
 
-        {{{operation_types::QueryOperation::kMergeSort, 2},
-          {operation_types::QueryOperation::kPassThrough, 0}},
-         "DSPI_double_merge_sorting"},
+        {{operation_types::QueryOperation::kMergeSort}, "DSPI_merge_sorting"},
 
-        {{{operation_types::QueryOperation::kMergeSort, 1}},
-         "DSPI_merge_sorting"},
-
-        {{{operation_types::QueryOperation::kLinearSort, 1}},
-         "DSPI_linear_sorting"},
-
-        {{{operation_types::QueryOperation::kLinearSort, 1},
-          {operation_types::QueryOperation::kPassThrough, 0}},
+        {{operation_types::QueryOperation::kLinearSort},
          "DSPI_linear_sorting"}};
-
-// Should be built up from the corresponding_accelerator_bitstreams map
-const std::map<operation_types::QueryOperation, std::vector<int>>
-    available_modules = {{operation_types::QueryOperation::kFilter, {1}},
-                         {operation_types::QueryOperation::kJoin, {1}},
-                         {operation_types::QueryOperation::kMergeSort, {1, 2}},
-                         {operation_types::QueryOperation::kPassThrough, {0}},
-                         {operation_types::QueryOperation::kLinearSort, {1}}};
-
 }  // namespace query_scheduling_data

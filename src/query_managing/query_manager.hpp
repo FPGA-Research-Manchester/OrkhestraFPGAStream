@@ -14,11 +14,11 @@ class QueryManager {
                              const TableData& resulting_table);
 
   static auto GetBitstreamFileFromQueryNode(
-      const std::pair<query_scheduling_data::ConfigurableModuleSet,
+      const std::pair<query_scheduling_data::ConfigurableModulesVector,
                       std::vector<query_scheduling_data::QueryNode>>&
           query_node) -> std::string;
   static auto GetModuleCountFromQueryNode(
-      const std::pair<query_scheduling_data::ConfigurableModuleSet,
+      const std::pair<query_scheduling_data::ConfigurableModulesVector,
                       std::vector<query_scheduling_data::QueryNode>>&
           query_node) -> int;
 
