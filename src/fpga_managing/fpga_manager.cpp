@@ -36,27 +36,10 @@ void FPGAManager::SetupQueryAcceleration(
   for (const auto& query_node : query_nodes) {
     bool is_multichannel_stream = query_node.operation_type ==
                                   operation_types::QueryOperation::kMergeSort;
-    for (int input_stream_counter = 0;
-         input_stream_counter < query_node.input_streams.size();
-         input_stream_counter++) {
-      if (!query_node.is_input_intermediate[input_stream_counter]) {
-        input_streams.emplace_back(
-            query_node.input_streams[input_stream_counter],
-            is_multichannel_stream);
-        FPGAManager::input_streams_active_status_
-            [query_node.input_streams[input_stream_counter].stream_id] = true;
-      }
-    }
-    for (int output_stream_counter = 0;
-         output_stream_counter < query_node.output_streams.size();
-         output_stream_counter++) {
-      if (!query_node.is_output_intermediate[output_stream_counter]) {
-        output_streams.emplace_back(
-            query_node.output_streams[output_stream_counter], false);
-        FPGAManager::output_streams_active_status_
-            [query_node.output_streams[output_stream_counter].stream_id] = true;
-      }
-    }
+    FindIOStreams(query_node.input_streams, input_streams,
+                  is_multichannel_stream, input_streams_active_status_);
+    FindIOStreams(query_node.output_streams, output_streams,
+                  is_multichannel_stream, output_streams_active_status_);
   }
 
   if (input_streams.empty() || output_streams.empty()) {
@@ -108,6 +91,18 @@ void FPGAManager::SetupQueryAcceleration(
             query_node.input_streams[0].stream_record_size);
         break;
       }
+    }
+  }
+}
+
+void FPGAManager::FindIOStreams(
+    const std::vector<StreamDataParameters> all_streams,
+    std::vector<std::pair<StreamDataParameters, bool>>& found_streams,
+    const bool is_multichannel_stream, bool stream_status_array[]) {
+  for (const auto& current_stream : all_streams) {
+    if (current_stream.physical_address) {
+      found_streams.emplace_back(current_stream, is_multichannel_stream);
+      stream_status_array[current_stream.stream_id] = true;
     }
   }
 }

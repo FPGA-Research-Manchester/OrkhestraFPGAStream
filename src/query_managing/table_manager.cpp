@@ -68,17 +68,21 @@ void TableManager::ReadInputTables(
     auto current_table =
         data_manager.ParseDataFromCSV(stream_data_file_names[stream_index]);
 
-    WriteInputDataToMemoryBlock(allocated_memory_blocks[stream_index],
-                                current_table);
-
-    /*PrintWrittenData(stream_data_file_names[stream_index],
-                     allocated_memory_blocks[stream_index], current_table);*/
+    volatile uint32_t* physical_address_ptr;
+    if (allocated_memory_blocks[stream_index]) {
+      WriteInputDataToMemoryBlock(allocated_memory_blocks[stream_index],
+                                  current_table);
+      /*PrintWrittenData(stream_data_file_names[stream_index],
+                       allocated_memory_blocks[stream_index], current_table);*/
+      physical_address_ptr =
+          allocated_memory_blocks[stream_index]->GetPhysicalAddress();
+    }
 
     StreamDataParameters current_stream_parameters = {
         stream_id_vector[stream_index], GetRecordSizeFromTable(current_table),
         static_cast<int>(current_table.table_data_vector.size() /
                          GetRecordSizeFromTable(current_table)),
-        allocated_memory_blocks[stream_index]->GetPhysicalAddress()};
+        physical_address_ptr};
 
     input_stream_parameters.push_back(current_stream_parameters);
   }

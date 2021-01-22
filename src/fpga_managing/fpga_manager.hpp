@@ -9,6 +9,7 @@
 #include "filter.hpp"
 #include "ila.hpp"
 #include "memory_manager_interface.hpp"
+#include "stream_data_parameters.hpp"
 
 class FPGAManager {
  public:
@@ -35,4 +36,7 @@ class FPGAManager {
                                const std::vector<int>& active_output_stream_ids)
       -> std::vector<int>;
   void PrintDebuggingData();
+  void FindIOStreams(const std::vector<StreamDataParameters> all_streams,
+      std::vector<std::pair<StreamDataParameters, bool>>& found_streams,
+      const bool is_multichannel_stream, bool stream_status_array[]);
 };

@@ -131,19 +131,9 @@ void QueryManager::RunQueries(
           current_node.output_data_definition_files, output_stream_id_vector,
           allocated_output_memory_blocks, expected_output_tables);
 
-      std::vector<bool> is_output_intermediate;
-      for (const auto& next_node : current_node.next_nodes) {
-        is_output_intermediate.push_back(next_node != nullptr);
-      }
-      std::vector<bool> is_input_intermediate;
-      for (const auto& previous_node : current_node.previous_nodes) {
-        is_input_intermediate.push_back(previous_node != nullptr);
-      }
-
       query_nodes.push_back({std::move(input_stream_parameters),
                              std::move(output_stream_parameters),
-                             current_node.operation_type, is_input_intermediate,
-                             is_output_intermediate});
+                             current_node.operation_type});
 
       // Keep memory blocks during the query execution
       input_memory_blocks.push_back(std::move(allocated_input_memory_blocks));
