@@ -88,6 +88,7 @@ void QueryManager::RunQueries(
 
     IDManager id_manager;
     std::vector<std::vector<int>> output_ids;
+    std::vector<std::vector<int>> input_ids;
     std::vector<std::vector<std::unique_ptr<MemoryBlockInterface>>>
         input_memory_blocks;
     std::vector<std::vector<std::unique_ptr<MemoryBlockInterface>>>
@@ -95,40 +96,46 @@ void QueryManager::RunQueries(
     std::vector<TableData> expected_output_tables(16);
     std::vector<AcceleratedQueryNode> query_nodes;
 
-    for (const auto& current_node : executable_query_nodes.second) {
-      // Find IDs
-      std::vector<int> input_stream_id_vector;
-      std::vector<int> output_stream_id_vector;
-      id_manager.FindAvailableIDs(current_node, input_stream_id_vector,
-                                  output_stream_id_vector);
-      output_ids.push_back(output_stream_id_vector);
+    id_manager.AllocateStreamIDs(executable_query_nodes.second,
+                                 input_ids, output_ids);
 
+    int node_index = -1;
+    for (const auto& current_node : executable_query_nodes.second) {
+      node_index++;
       // Allocate memory blocks
       std::vector<std::unique_ptr<MemoryBlockInterface>>
           allocated_input_memory_blocks;
-      for (const auto& id : input_stream_id_vector) {
-        allocated_input_memory_blocks.push_back(
-            memory_manager.GetAvailableMemoryBlock());
+      for (const auto& previous_node_pointer : current_node.previous_nodes) {
+        if (!previous_node_pointer) {
+          allocated_input_memory_blocks.push_back(
+              memory_manager.GetAvailableMemoryBlock());
+        } else {
+          allocated_input_memory_blocks.push_back(nullptr);
+        }
       }
 
       std::vector<std::unique_ptr<MemoryBlockInterface>>
           allocated_output_memory_blocks;
-      for (const auto& id : output_stream_id_vector) {
-        allocated_output_memory_blocks.push_back(
-            memory_manager.GetAvailableMemoryBlock());
+      for (const auto& next_node_pointer : current_node.next_nodes) {
+        if (!next_node_pointer) {
+          allocated_output_memory_blocks.push_back(
+              memory_manager.GetAvailableMemoryBlock());
+        } else {
+          allocated_output_memory_blocks.push_back(nullptr);
+        }
       }
 
       // Get parameters and write input to allocated blocks
       std::vector<StreamDataParameters> input_stream_parameters;
       TableManager::ReadInputTables(input_stream_parameters, data_manager,
                                     current_node.input_data_definition_files,
-                                    input_stream_id_vector,
+                                    input_ids[node_index],
                                     allocated_input_memory_blocks);
 
       std::vector<StreamDataParameters> output_stream_parameters;
       TableManager::ReadExpectedTables(
           output_stream_parameters, data_manager,
-          current_node.output_data_definition_files, output_stream_id_vector,
+          current_node.output_data_definition_files, output_ids[node_index],
           allocated_output_memory_blocks, expected_output_tables);
 
       query_nodes.push_back({std::move(input_stream_parameters),
@@ -149,23 +156,33 @@ void QueryManager::RunQueries(
     // Check results & free memory
     std::vector<TableData> output_tables = expected_output_tables;
     for (int node_index = 0; node_index < query_nodes.size(); node_index++) {
+        // Check if output_memory_blocks are not empty
       TableManager::ReadResultTables(query_nodes[node_index].output_streams,
                                      output_tables, result_sizes,
                                      output_memory_blocks[node_index]);
-      for (auto const& output_stream_id : output_ids[node_index]) {
-        std::cout << "Result has " << result_sizes[output_stream_id] << " rows!"
-                  << std::endl;
+      for (int stream_index = 0; stream_index < output_ids[node_index].size();
+           stream_index++) {
+        if (output_memory_blocks[node_index][stream_index]) {
+          std::cout << "Result has "
+                    << result_sizes[output_ids[node_index][stream_index]]
+                    << " rows!" << std::endl;
 
-        CheckTableData(expected_output_tables[output_stream_id],
-                       output_tables[output_stream_id]);
+          CheckTableData(
+              expected_output_tables[output_ids[node_index][stream_index]],
+              output_tables[output_ids[node_index][stream_index]]);
+        }
       }
 
       // Free all memory for now.
       for (auto& memory_pointer : input_memory_blocks[node_index]) {
-        memory_manager.FreeMemoryBlock(std::move(memory_pointer));
+        if (memory_pointer) {
+          memory_manager.FreeMemoryBlock(std::move(memory_pointer));
+        }
       }
       for (auto& memory_pointer : output_memory_blocks[node_index]) {
-        memory_manager.FreeMemoryBlock(std::move(memory_pointer));
+        if (memory_pointer) {
+          memory_manager.FreeMemoryBlock(std::move(memory_pointer));
+        }
       }
     }
 

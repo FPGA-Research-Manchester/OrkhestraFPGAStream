@@ -9,9 +9,10 @@ class IDManager {
 
  public:
   IDManager();
-  void FindAvailableIDs(const query_scheduling_data::QueryNode& query_node,
-                        std::vector<int>& input_stream_id_vector,
-                        std::vector<int>& output_stream_id_vector);
-
   void MakeIDAvailable(int available_id);
+
+  void AllocateStreamIDs(
+      const std::vector<query_scheduling_data::QueryNode> node_vector,
+      std::vector<std::vector<int>>& input_ids,
+      std::vector<std::vector<int>>& output_ids);
 };
