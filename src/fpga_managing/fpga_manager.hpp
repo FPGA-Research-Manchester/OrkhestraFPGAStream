@@ -14,6 +14,7 @@
 class FPGAManager {
  public:
   void SetupQueryAcceleration(
+      const std::vector<operation_types::QueryOperation>& available_modules,
       const std::vector<AcceleratedQueryNode>& query_nodes);
   auto RunQueryAcceleration() -> std::vector<int>;
 
@@ -36,7 +37,8 @@ class FPGAManager {
                                const std::vector<int>& active_output_stream_ids)
       -> std::vector<int>;
   void PrintDebuggingData();
-  void FindIOStreams(const std::vector<StreamDataParameters> all_streams,
+  void FindIOStreams(
+      const std::vector<StreamDataParameters> all_streams,
       std::vector<std::pair<StreamDataParameters, bool>>& found_streams,
       const bool is_multichannel_stream, bool stream_status_array[]);
 };

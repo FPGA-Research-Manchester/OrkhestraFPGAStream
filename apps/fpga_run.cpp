@@ -102,37 +102,38 @@ auto main() -> int {
   join_after_filter_query.next_nodes = {nullptr};
 
   // Temp not supported
-  /*query_scheduling_data::QueryNode merge_sort_query_8k_once = {
-      {"CAR_DATA_HALF_SORTED_8K_128WAY.csv"},
-      {"CAR_DATA_SORTED_8K.csv"},
-      operation_types::QueryOperation::kMergeSort,
-      {nullptr},
-      {nullptr}};
-  query_scheduling_data::QueryNode merge_sort_query_1k_once = {
-      {"CAR_DATA_HALF_SORTED.csv"},
-      {"CAR_DATA_SORTED.csv"},
-      operation_types::QueryOperation::kMergeSort,
-      {nullptr},
-      {nullptr}};
-  query_scheduling_data::QueryNode merge_sort_query_8k_once_double = {
-      {"CAR_DATA_HALF_SORTED_8K_64WAY.csv"},
-      {"CAR_DATA_SORTED_8K.csv"},
-      operation_types::QueryOperation::kMergeSort,
-      {nullptr},
-      {nullptr}};*/
+  //query_scheduling_data::QueryNode merge_sort_query_8k_once = {
+  //    {"CAR_DATA_HALF_SORTED_8K_128WAY.csv"},
+  //    {"CAR_DATA_SORTED_8K.csv"},
+  //    operation_types::QueryOperation::kMergeSort,
+  //    {nullptr},
+  //    {nullptr}};
+  //query_scheduling_data::QueryNode merge_sort_query_8k_once_double = {
+  //    {"CAR_DATA_HALF_SORTED_8K_64WAY.csv"},
+  //    {"CAR_DATA_SORTED_8K.csv"},
+  //    operation_types::QueryOperation::kMergeSort,
+  //    {nullptr},
+  //    {nullptr}};
+  //query_scheduling_data::QueryNode merge_sort_query_1k_once = {
+  //    {"CAR_DATA_HALF_SORTED.csv"},
+  //    {"CAR_DATA_SORTED.csv"},
+  //    operation_types::QueryOperation::kMergeSort,
+  //    {nullptr},
+  //    {nullptr}};
 
   // Run operations twice
-  //QueryManager::RunQueries({filtering_query_once, filtering_query_once,
-  //                          merge_sort_query_8k_once_double,
-  //                          merge_sort_query_8k_once_double, join_query_once,
-  //                          join_query_once, linear_sort_query_8k_once,
-  //                          linear_sort_query_8k_once});
+  QueryManager::RunQueries({filtering_query_once, filtering_query_once,
+                            /*merge_sort_query_8k_once_double,
+                            merge_sort_query_8k_once_double,*/ join_query_once,
+                            join_query_once, linear_sort_query_8k_once,
+                            linear_sort_query_8k_once});
   // Run operations with pass through data
-  //QueryManager::RunQueries({pass_through_tpch_data, pass_through_500_data,
+  //QueryManager::RunQueries({/*pass_through_tpch_data,*/ pass_through_500_data,
   //                          pass_through_small_data, pass_through_1k_data,
-  //                          join_query_once, merge_sort_query_8k_once_double,
+  //                          join_query_once, /*merge_sort_query_8k_once_double,*/
   //                          linear_sort_query_8k_once, filtering_query_once});
 
   QueryManager::RunQueries({filter_and_join_query});
+  QueryManager::RunQueries({join_query_once, filter_and_join_query});
   return 0;
 }

@@ -148,7 +148,7 @@ void QueryManager::RunQueries(
     }
 
     // Run query
-    fpga_manager.SetupQueryAcceleration(query_nodes);
+    fpga_manager.SetupQueryAcceleration(executable_query_nodes.first, query_nodes);
     std::cout << "Running query!" << std::endl;
     auto result_sizes = fpga_manager.RunQueryAcceleration();
     std::cout << "Query done!" << std::endl;

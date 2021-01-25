@@ -26,7 +26,7 @@ void DMASetup::SetupDMAModule(
                                 stream_init_data);
     } else {
       multichannel_stream_count++;
-      const int max_channel_count = 64 * 2;
+      const int max_channel_count = 64; // Can't be hard coded. Needs to come from input data 
       SetMultiChannelSetupData(stream_init_data, max_channel_count,
                                stream_setup_data);
     }
