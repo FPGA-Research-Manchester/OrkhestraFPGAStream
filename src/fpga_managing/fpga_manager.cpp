@@ -66,7 +66,7 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperation::kJoin: {
-        Join join_module(memory_manager_, 1);
+        Join join_module(memory_manager_, 2);
         JoinSetup::SetupJoinModule(join_module,
                                    query_node.input_streams[0].stream_id,
                                    query_node.input_streams[1].stream_id,

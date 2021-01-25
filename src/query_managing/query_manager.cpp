@@ -96,17 +96,17 @@ void QueryManager::RunQueries(
     std::vector<TableData> expected_output_tables(16);
     std::vector<AcceleratedQueryNode> query_nodes;
 
-    id_manager.AllocateStreamIDs(executable_query_nodes.second,
-                                 input_ids, output_ids);
+    id_manager.AllocateStreamIDs(executable_query_nodes.second, input_ids,
+                                 output_ids);
 
-    int node_index = -1;
-    for (const auto& current_node : executable_query_nodes.second) {
-      node_index++;
+    for (int node_index = 0; node_index < executable_query_nodes.second.size();
+         node_index++) {
+      auto current_node = executable_query_nodes.second.at(node_index);
       // Allocate memory blocks
       std::vector<std::unique_ptr<MemoryBlockInterface>>
           allocated_input_memory_blocks;
-      for (const auto& previous_node_pointer : current_node.previous_nodes) {
-        if (!previous_node_pointer) {
+      for (const auto& linked_node : current_node.previous_nodes) {
+        if (!linked_node) {
           allocated_input_memory_blocks.push_back(
               memory_manager.GetAvailableMemoryBlock());
         } else {
@@ -116,8 +116,8 @@ void QueryManager::RunQueries(
 
       std::vector<std::unique_ptr<MemoryBlockInterface>>
           allocated_output_memory_blocks;
-      for (const auto& next_node_pointer : current_node.next_nodes) {
-        if (!next_node_pointer) {
+      for (const auto& linked_node : current_node.next_nodes) {
+        if (!linked_node) {
           allocated_output_memory_blocks.push_back(
               memory_manager.GetAvailableMemoryBlock());
         } else {
@@ -156,7 +156,6 @@ void QueryManager::RunQueries(
     // Check results & free memory
     std::vector<TableData> output_tables = expected_output_tables;
     for (int node_index = 0; node_index < query_nodes.size(); node_index++) {
-        // Check if output_memory_blocks are not empty
       TableManager::ReadResultTables(query_nodes[node_index].output_streams,
                                      output_tables, result_sizes,
                                      output_memory_blocks[node_index]);

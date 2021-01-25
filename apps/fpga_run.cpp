@@ -46,14 +46,14 @@ auto main() -> int {
       {"JOIN_DATA.csv"},
       operation_types::QueryOperation::kJoin,
       {nullptr},
-      {nullptr}};
+      {nullptr, nullptr}};
 
   query_scheduling_data::QueryNode tpch_join_once = {
       {"tpch_customer.csv", "tpch_orders_join.csv"},
       {"tpch_customer_orders.csv"},
       operation_types::QueryOperation::kJoin,
       {nullptr},
-      {nullptr}};
+      {nullptr, nullptr}};
 
   query_scheduling_data::QueryNode linear_sort_query_8k_once = {
       {"CAR_DATA_8K.csv"},
@@ -81,6 +81,25 @@ auto main() -> int {
   filter_after_pass_through_query.previous_nodes = {
       &pass_through_and_filter_query};
   filter_after_pass_through_query.next_nodes = {nullptr};
+
+  query_scheduling_data::QueryNode filter_and_join_query;
+  query_scheduling_data::QueryNode join_after_filter_query;
+
+  filter_and_join_query.input_data_definition_files = {"CAR_DATA.csv"};
+  filter_and_join_query.output_data_definition_files = {"CAR_FILTER_DATA.csv"};
+  filter_and_join_query.operation_type =
+      operation_types::QueryOperation::kFilter;
+  filter_and_join_query.next_nodes = {&join_after_filter_query};
+  filter_and_join_query.previous_nodes = {nullptr};
+
+  join_after_filter_query.input_data_definition_files = {
+      "CAR_FILTER_DATA.csv", "CUSTOMER_DATA_FOR_JOIN.csv"};
+  join_after_filter_query.output_data_definition_files = {
+      "FILTERED_JOIN_DATA.csv"};
+  join_after_filter_query.operation_type =
+      operation_types::QueryOperation::kJoin;
+  join_after_filter_query.previous_nodes = {&filter_and_join_query, nullptr};
+  join_after_filter_query.next_nodes = {nullptr};
 
   // Temp not supported
   /*query_scheduling_data::QueryNode merge_sort_query_8k_once = {
@@ -114,10 +133,6 @@ auto main() -> int {
   //                          join_query_once, merge_sort_query_8k_once_double,
   //                          linear_sort_query_8k_once, filtering_query_once});
 
-  std::vector<query_scheduling_data::QueryNode> thing = {
-      filtering_query_once, pass_through_and_filter_query};
-
-  QueryManager::RunQueries(thing);
-
+  QueryManager::RunQueries({filter_and_join_query});
   return 0;
 }

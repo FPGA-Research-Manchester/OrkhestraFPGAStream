@@ -38,6 +38,9 @@ const std::map<ConfigurableModulesVector, std::string>
 
         {{operation_types::QueryOperation::kMergeSort}, "DSPI_merge_sorting"},
 
-        {{operation_types::QueryOperation::kLinearSort},
-         "DSPI_linear_sorting"}};
+        {{operation_types::QueryOperation::kLinearSort}, "DSPI_linear_sorting"},
+
+        {{operation_types::QueryOperation::kFilter,
+          operation_types::QueryOperation::kJoin},
+         "DSPI_filter_join"}};
 }  // namespace query_scheduling_data

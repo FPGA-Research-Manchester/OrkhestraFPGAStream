@@ -1,12 +1,12 @@
 #pragma once
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include "memory_manager.hpp"
+#include "query_scheduling_data.hpp"
 #include "stream_data_parameters.hpp"
 #include "table_data.hpp"
-#include "query_scheduling_data.hpp"
 
 class QueryManager {
  private:
