@@ -68,17 +68,21 @@ void TableManager::ReadInputTables(
     auto current_table =
         data_manager.ParseDataFromCSV(stream_data_file_names[stream_index]);
 
-    WriteInputDataToMemoryBlock(allocated_memory_blocks[stream_index],
-                                current_table);
-
-    /*PrintWrittenData(stream_data_file_names[stream_index],
-                     allocated_memory_blocks[stream_index], current_table);*/
+    volatile uint32_t* physical_address_ptr = nullptr;
+    if (allocated_memory_blocks[stream_index]) {
+      WriteInputDataToMemoryBlock(allocated_memory_blocks[stream_index],
+                                  current_table);
+      /*PrintWrittenData(stream_data_file_names[stream_index],
+                       allocated_memory_blocks[stream_index], current_table);*/
+      physical_address_ptr =
+          allocated_memory_blocks[stream_index]->GetPhysicalAddress();
+    }
 
     StreamDataParameters current_stream_parameters = {
         stream_id_vector[stream_index], GetRecordSizeFromTable(current_table),
         static_cast<int>(current_table.table_data_vector.size() /
                          GetRecordSizeFromTable(current_table)),
-        allocated_memory_blocks[stream_index]->GetPhysicalAddress()};
+        physical_address_ptr};
 
     input_stream_parameters.push_back(current_stream_parameters);
   }
@@ -99,9 +103,14 @@ void TableManager::ReadExpectedTables(
     auto current_table =
         data_manager.ParseDataFromCSV(stream_data_file_names[stream_index]);
 
+    volatile uint32_t* physical_address_ptr = nullptr;
+    if (allocated_memory_blocks[stream_index]) {
+      physical_address_ptr =
+          allocated_memory_blocks[stream_index]->GetPhysicalAddress();
+    }
     StreamDataParameters current_stream_parameters = {
         stream_id_vector[stream_index], GetRecordSizeFromTable(current_table),
-        0, allocated_memory_blocks[stream_index]->GetPhysicalAddress()};
+        0, physical_address_ptr};
 
     output_stream_parameters.push_back(current_stream_parameters);
 
@@ -117,10 +126,12 @@ void TableManager::ReadResultTables(
         allocated_memory_blocks) {
   for (int stream_index = 0; stream_index < allocated_memory_blocks.size();
        stream_index++) {
-    TableManager::ReadOutputDataFromMemoryBlock(
-        allocated_memory_blocks[stream_index],
-        output_tables[output_stream_parameters.at(stream_index).stream_id],
-        result_record_counts[output_stream_parameters.at(stream_index)
-                                 .stream_id]);
+    if (output_stream_parameters.at(stream_index).physical_address) {
+      TableManager::ReadOutputDataFromMemoryBlock(
+          allocated_memory_blocks[stream_index],
+          output_tables[output_stream_parameters.at(stream_index).stream_id],
+          result_record_counts[output_stream_parameters.at(stream_index)
+                                   .stream_id]);
+    }
   }
 }

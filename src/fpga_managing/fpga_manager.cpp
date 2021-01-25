@@ -23,6 +23,7 @@
 // Eventually the idea would be to add operation type to StreamDataParameters.
 // Then the modules and streams can be set up accordingly.
 void FPGAManager::SetupQueryAcceleration(
+    const std::vector<operation_types::QueryOperation>& available_modules,
     const std::vector<AcceleratedQueryNode>& query_nodes) {
   dma_engine_.GlobalReset();
 
@@ -36,27 +37,10 @@ void FPGAManager::SetupQueryAcceleration(
   for (const auto& query_node : query_nodes) {
     bool is_multichannel_stream = query_node.operation_type ==
                                   operation_types::QueryOperation::kMergeSort;
-    for (int input_stream_counter = 0;
-         input_stream_counter < query_node.input_streams.size();
-         input_stream_counter++) {
-      if (!query_node.is_input_intermediate[input_stream_counter]) {
-        input_streams.emplace_back(
-            query_node.input_streams[input_stream_counter],
-            is_multichannel_stream);
-        FPGAManager::input_streams_active_status_
-            [query_node.input_streams[input_stream_counter].stream_id] = true;
-      }
-    }
-    for (int output_stream_counter = 0;
-         output_stream_counter < query_node.output_streams.size();
-         output_stream_counter++) {
-      if (!query_node.is_output_intermediate[output_stream_counter]) {
-        output_streams.emplace_back(
-            query_node.output_streams[output_stream_counter], false);
-        FPGAManager::output_streams_active_status_
-            [query_node.output_streams[output_stream_counter].stream_id] = true;
-      }
-    }
+    FindIOStreams(query_node.input_streams, input_streams,
+                  is_multichannel_stream, input_streams_active_status_);
+    FindIOStreams(query_node.output_streams, output_streams,
+                  is_multichannel_stream, output_streams_active_status_);
   }
 
   if (input_streams.empty() || output_streams.empty()) {
@@ -73,17 +57,29 @@ void FPGAManager::SetupQueryAcceleration(
     ila_module_.value().startILAs();
   }
 
-  for (const auto& query_node : query_nodes) {
+  for (int node_index = 0; node_index < available_modules.size();
+       node_index++) {
+    // Find out which module is associated with which query node. Current method
+    // doesn't work with multiple identical modules!
+    const AcceleratedQueryNode* current_query_node;
+    for (const auto& query_node : query_nodes) {
+      if (query_node.operation_type == available_modules[node_index]) {
+        current_query_node = &query_node;
+      }
+    }
+    int module_location = node_index + 1;
+    auto query_node = *current_query_node;
+
     switch (query_node.operation_type) {
       case operation_types::QueryOperation::kFilter: {
-        Filter filter_module(memory_manager_, 1);
+        Filter filter_module(memory_manager_, module_location);
         FilterSetup::SetupFilterModule(filter_module,
                                        query_node.input_streams[0].stream_id,
                                        query_node.output_streams[0].stream_id);
         break;
       }
       case operation_types::QueryOperation::kJoin: {
-        Join join_module(memory_manager_, 1);
+        Join join_module(memory_manager_, module_location);
         JoinSetup::SetupJoinModule(join_module,
                                    query_node.input_streams[0].stream_id,
                                    query_node.input_streams[1].stream_id,
@@ -91,23 +87,31 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperation::kMergeSort: {
-        MergeSort merge_sort_module(memory_manager_, 1);
+        MergeSort merge_sort_module(memory_manager_, module_location);
         MergeSortSetup::SetupMergeSortModule(
             merge_sort_module, query_node.input_streams[0].stream_id,
             query_node.input_streams[0].stream_record_size, 0, true);
-        MergeSort merge_sort_module_last(memory_manager_, 2);
-        MergeSortSetup::SetupMergeSortModule(
-            merge_sort_module_last, query_node.input_streams[0].stream_id,
-            query_node.input_streams[0].stream_record_size, 64, false);
         break;
       }
       case operation_types::QueryOperation::kLinearSort: {
-        LinearSort linear_sort_module(memory_manager_, 1);
+        LinearSort linear_sort_module(memory_manager_, module_location);
         LinearSortSetup::SetupLinearSortModule(
             linear_sort_module, query_node.input_streams[0].stream_id,
             query_node.input_streams[0].stream_record_size);
         break;
       }
+    }
+  }
+}
+
+void FPGAManager::FindIOStreams(
+    const std::vector<StreamDataParameters> all_streams,
+    std::vector<std::pair<StreamDataParameters, bool>>& found_streams,
+    const bool is_multichannel_stream, bool stream_status_array[]) {
+  for (const auto& current_stream : all_streams) {
+    if (current_stream.physical_address) {
+      found_streams.emplace_back(current_stream, is_multichannel_stream);
+      stream_status_array[current_stream.stream_id] = true;
     }
   }
 }

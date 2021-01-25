@@ -117,7 +117,6 @@ void NodeScheduler::CheckNodeForModuleSet(
         if (next_node && !IsNodeIncluded(starting_nodes, *next_node) &&
             IsNodeAvailable(scheduled_queries, *next_node)) {
           starting_nodes.push_back(*next_node);
-          return; // Temp here to stop pipelining modules into the same runs
         }
       }
     }
