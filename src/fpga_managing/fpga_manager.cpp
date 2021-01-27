@@ -40,7 +40,7 @@ void FPGAManager::SetupQueryAcceleration(
     FindIOStreams(query_node.input_streams, input_streams,
                   is_multichannel_stream, input_streams_active_status_);
     FindIOStreams(query_node.output_streams, output_streams,
-                  is_multichannel_stream, output_streams_active_status_);
+                  false, output_streams_active_status_);
   }
 
   if (input_streams.empty() || output_streams.empty()) {

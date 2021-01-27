@@ -34,9 +34,9 @@ const std::map<ConfigurableModulesVector, std::string>
 
         /*{{operation_types::QueryOperation::kMergeSort,
           operation_types::QueryOperation::kMergeSort},
-         "DSPI_double_merge_sorting"},
+         "DSPI_double_merge_sorting"},*/
 
-        {{operation_types::QueryOperation::kMergeSort}, "DSPI_merge_sorting"},*/
+        {{operation_types::QueryOperation::kMergeSort}, "DSPI_merge_sorting"},
 
         {{operation_types::QueryOperation::kLinearSort}, "DSPI_linear_sorting"},
 
