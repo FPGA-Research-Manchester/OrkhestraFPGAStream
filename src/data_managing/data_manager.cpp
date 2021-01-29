@@ -11,7 +11,7 @@ auto DataManager::ParseDataFromCSV(const std::string& filename) -> TableData {
   std::vector<std::vector<std::string>> data_rows;
   std::vector<std::string> header_row;
   CSVReader::ReadTableData(filename, header_row, data_rows);
-
+  int size = 0;
   std::vector<std::pair<std::string, int>> table_column_label_vector;
   for (const auto& column_data : header_row) {
     auto delimiter_position = column_data.find('-');
@@ -24,12 +24,13 @@ auto DataManager::ParseDataFromCSV(const std::string& filename) -> TableData {
       throw std::runtime_error(value + "size is not supported!");
     }
 
-    table_column_label_vector.emplace_back(
-        name, data_type_sizes_[name] * std::stoi(value));
+    table_column_label_vector.emplace_back(name, data_type_size);
+    size += static_cast<int> (data_type_size);
   }
 
   TableData table_data;
   table_data.table_column_label_vector = table_column_label_vector;
+  table_data.table_data_vector.reserve(size * data_rows.size());
   TypesConverter::AddIntegerDataFromStringData(
       data_rows, table_data.table_data_vector, table_column_label_vector);
   return table_data;

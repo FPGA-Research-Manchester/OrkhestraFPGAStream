@@ -22,6 +22,8 @@ void TableManager::ReadOutputDataFromMemoryBlock(
 void TableManager::WriteInputDataToMemoryBlock(
     const std::unique_ptr<MemoryBlockInterface>& input_device,
     const TableData& input_table) {
+  std::cout << "Table size: " << input_table.table_data_vector.size() * 4 / 1000
+            << "[KB]" << std::endl;
   if (input_table.table_data_vector.size() * 4 > input_device->GetSize()) {
     throw std::runtime_error(
         "Not enough memory in the allocated memory block!");

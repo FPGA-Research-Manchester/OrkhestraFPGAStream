@@ -7,6 +7,8 @@
 #include <unistd.h>
 #endif
 
+#include <chrono>
+
 #include "dma_setup.hpp"
 #include "filter.hpp"
 #include "filter_setup.hpp"
@@ -40,7 +42,7 @@ void FPGAManager::SetupQueryAcceleration(
     FindIOStreams(query_node.input_streams, input_streams,
                   is_multichannel_stream, input_streams_active_status_);
     FindIOStreams(query_node.output_streams, output_streams,
-                  is_multichannel_stream, output_streams_active_status_);
+                  false, output_streams_active_status_);
   }
 
   if (input_streams.empty() || output_streams.empty()) {
@@ -126,7 +128,16 @@ auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
     throw std::runtime_error("FPGA does not have active streams!");
   }
 
+  std::chrono::steady_clock::time_point begin =
+      std::chrono::steady_clock::now();
   WaitForStreamsToFinish();
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+  std::cout
+      << "Execution time = "
+      << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
+      << "[µs]" << std::endl;
+
   // PrintDebuggingData();
   return GetResultingStreamSizes(active_input_stream_ids,
                                  active_output_stream_ids);
@@ -153,14 +164,14 @@ void FPGAManager::WaitForStreamsToFinish() {
 #ifdef _FPGA_AVAILABLE
   while (!(FPGAManager::dma_engine_.IsInputControllerFinished() &&
            FPGAManager::dma_engine_.IsOutputControllerFinished())) {
-    sleep(3);
-    std::cout << "Processing..." << std::endl;
-    std::cout << "Input:"
-              << FPGAManager::dma_engine_.IsInputControllerFinished()
-              << std::endl;
-    std::cout << "Output:"
-              << FPGAManager::dma_engine_.IsOutputControllerFinished()
-              << std::endl;
+    //sleep(3);
+    //std::cout << "Processing..." << std::endl;
+    //std::cout << "Input:"
+    //          << FPGAManager::dma_engine_.IsInputControllerFinished()
+    //          << std::endl;
+    //std::cout << "Output:"
+    //          << FPGAManager::dma_engine_.IsOutputControllerFinished()
+    //          << std::endl;
   }
 #endif
 }

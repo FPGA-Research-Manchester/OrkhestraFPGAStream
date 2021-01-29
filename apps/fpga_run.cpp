@@ -1,9 +1,24 @@
+#include <chrono>
+#include <iostream>
 #include <optional>
 #include <vector>
 
 #include "operation_types.hpp"
 #include "query_manager.hpp"
 #include "query_scheduling_data.hpp"
+
+void MeasureOverallTime(
+    std::vector<query_scheduling_data::QueryNode> leaf_nodes) {
+  std::chrono::steady_clock::time_point begin =
+      std::chrono::steady_clock::now();
+  QueryManager::RunQueries(leaf_nodes);
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+  std::cout
+      << "Overall time = "
+      << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count()
+      << "[s]" << std::endl;
+}
 
 auto main() -> int {
   query_scheduling_data::QueryNode filtering_query_once = {
@@ -62,6 +77,60 @@ auto main() -> int {
       {nullptr},
       {nullptr}};
 
+  query_scheduling_data::QueryNode merge_sort_query_1k_once = {
+      {"CAR_DATA_HALF_SORTED.csv"},
+      {"CAR_DATA_SORTED.csv"},
+      operation_types::QueryOperation::kMergeSort,
+      {nullptr},
+      {nullptr}};
+  query_scheduling_data::QueryNode merge_sort_query_8k_once = {
+      {"CAR_DATA_HALF_SORTED_8K_128WAY.csv"},
+      {"CAR_DATA_SORTED_8K.csv"},
+      operation_types::QueryOperation::kMergeSort,
+      {nullptr},
+      {nullptr}};
+
+
+  query_scheduling_data::QueryNode tpch_pass_through_lineitem_001 = {
+      {"lineitem_sf0_01.csv"},
+      {"lineitem_sf0_01.csv"},
+      operation_types::QueryOperation::kPassThrough,
+      {nullptr},
+      {nullptr}};
+
+  query_scheduling_data::QueryNode tpch_pass_through_lineitem_01 = {
+      {"lineitem_sf0_1.csv"},
+      {"lineitem_sf0_1.csv"},
+      operation_types::QueryOperation::kPassThrough,
+      {nullptr},
+      {nullptr}};
+  //query_scheduling_data::QueryNode tpch_pass_through_lineitem_02 = {
+  //    {"lineitem_sf0_2.csv"},
+  //    {"lineitem_sf0_2.csv"},
+  //    operation_types::QueryOperation::kPassThrough,
+  //    {nullptr},
+  //    {nullptr}};
+  //query_scheduling_data::QueryNode tpch_pass_through_lineitem_03 = {
+  //    {"lineitem_sf0_3.csv"},
+  //    {"lineitem_sf0_3.csv"},
+  //    operation_types::QueryOperation::kPassThrough,
+  //    {nullptr},
+  //    {nullptr}};
+  // Need optimisations to enable
+  //query_scheduling_data::QueryNode tpch_pass_through_lineitem_04 = {
+  //    {"lineitem_sf0_4.csv"},
+  //    {"lineitem_sf0_4.csv"},
+  //    operation_types::QueryOperation::kPassThrough,
+  //    {nullptr},
+  //    {nullptr}};
+  //query_scheduling_data::QueryNode tpch_pass_through_lineitem_05 = {
+  //    {"lineitem_sf0_5.csv"},
+  //    {"lineitem_sf0_5.csv"},
+  //    operation_types::QueryOperation::kPassThrough,
+  //    {nullptr},
+  //    {nullptr}};
+
+
   query_scheduling_data::QueryNode pass_through_and_filter_query;
   query_scheduling_data::QueryNode filter_after_pass_through_query;
 
@@ -102,38 +171,33 @@ auto main() -> int {
   join_after_filter_query.next_nodes = {nullptr};
 
   // Temp not supported
-  //query_scheduling_data::QueryNode merge_sort_query_8k_once = {
-  //    {"CAR_DATA_HALF_SORTED_8K_128WAY.csv"},
-  //    {"CAR_DATA_SORTED_8K.csv"},
-  //    operation_types::QueryOperation::kMergeSort,
-  //    {nullptr},
-  //    {nullptr}};
   //query_scheduling_data::QueryNode merge_sort_query_8k_once_double = {
   //    {"CAR_DATA_HALF_SORTED_8K_64WAY.csv"},
   //    {"CAR_DATA_SORTED_8K.csv"},
   //    operation_types::QueryOperation::kMergeSort,
   //    {nullptr},
   //    {nullptr}};
-  //query_scheduling_data::QueryNode merge_sort_query_1k_once = {
-  //    {"CAR_DATA_HALF_SORTED.csv"},
-  //    {"CAR_DATA_SORTED.csv"},
-  //    operation_types::QueryOperation::kMergeSort,
-  //    {nullptr},
-  //    {nullptr}};
+
 
   // Run operations twice
-  QueryManager::RunQueries({filtering_query_once, filtering_query_once,
-                            /*merge_sort_query_8k_once_double,
-                            merge_sort_query_8k_once_double,*/ join_query_once,
-                            join_query_once, linear_sort_query_8k_once,
-                            linear_sort_query_8k_once});
-  // Run operations with pass through data
+  //QueryManager::RunQueries({filtering_query_once, filtering_query_once,
+  //                          merge_sort_query_8k_once,
+  //                          merge_sort_query_8k_once, join_query_once,
+  //                          join_query_once, linear_sort_query_8k_once,
+  //                          linear_sort_query_8k_once});
+  // Run operations with pass through data - Currently the scheduler doesn't take memory limits into consideration
   //QueryManager::RunQueries({/*pass_through_tpch_data,*/ pass_through_500_data,
   //                          pass_through_small_data, pass_through_1k_data,
-  //                          join_query_once, /*merge_sort_query_8k_once_double,*/
+  //                          join_query_once,
+  //                          /*merge_sort_query_8k_once_double,*/
   //                          linear_sort_query_8k_once, filtering_query_once});
 
-  QueryManager::RunQueries({filter_and_join_query});
-  QueryManager::RunQueries({join_query_once, filter_and_join_query});
+  /*QueryManager::RunQueries({filter_and_join_query});
+  QueryManager::RunQueries({join_query_once, filter_and_join_query});*/
+  // QueryManager::RunQueries({pass_through_tpch_data});
+
+  //MeasureOverallTime({tpch_pass_through_lineitem_01});
+
+  MeasureOverallTime({tpch_pass_through_lineitem_001});
   return 0;
 }

@@ -66,7 +66,7 @@ auto QueryManager::GetModuleCountFromQueryNode(
 
 void QueryManager::RunQueries(
     std::vector<query_scheduling_data::QueryNode> starting_query_nodes) {
-  std::cout << "Starting up!" << std::endl;
+  std::cout << std::endl << "Starting up!" << std::endl;
   DataManager data_manager("data_config.ini");
   MemoryManager memory_manager;
   FPGAManager fpga_manager(&memory_manager);
@@ -148,7 +148,8 @@ void QueryManager::RunQueries(
     }
 
     // Run query
-    fpga_manager.SetupQueryAcceleration(executable_query_nodes.first, query_nodes);
+    fpga_manager.SetupQueryAcceleration(executable_query_nodes.first,
+                                        query_nodes);
     std::cout << "Running query!" << std::endl;
     auto result_sizes = fpga_manager.RunQueryAcceleration();
     std::cout << "Query done!" << std::endl;
