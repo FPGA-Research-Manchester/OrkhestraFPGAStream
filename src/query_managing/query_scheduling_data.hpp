@@ -40,6 +40,8 @@ const std::map<ConfigurableModulesVector, std::string>
 
         {{operation_types::QueryOperation::kLinearSort}, "DSPI_linear_sorting"},
 
+        {{}, "DSPI_empty"},
+
         {{operation_types::QueryOperation::kFilter,
           operation_types::QueryOperation::kJoin},
          "DSPI_filter_join"}};

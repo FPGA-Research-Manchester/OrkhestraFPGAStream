@@ -17,6 +17,8 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CUSTOMER_DATA_FOR_JOIN.csv CUS
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/JOIN_DATA.csv JOIN_DATA.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/FILTERED_JOIN_DATA.csv FILTERED_JOIN_DATA.csv COPYONLY)
 
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_empty.bin DSPI_empty.bin COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_empty.json DSPI_empty.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_joining.bin DSPI_joining.bin COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_joining.json DSPI_joining.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_filtering.bin DSPI_filtering.bin COPYONLY)
@@ -31,6 +33,8 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_double_merge_sorting.bin 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_double_merge_sorting.json DSPI_double_merge_sorting.json COPYONLY)
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/tpch_orders_small.csv tpch_orders_small.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_01.csv lineitem_sf0_01.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_1.csv lineitem_sf0_1.csv COPYONLY)
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/repo.json repo.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data_config.ini data_config.ini COPYONLY)
