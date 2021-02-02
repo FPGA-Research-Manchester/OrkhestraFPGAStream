@@ -62,10 +62,10 @@ void Filter::FilterSetCompareTypes(
                            // Least significant bits (reference value)
   AccelerationModule::WriteToModule(
       ((1 << 15) + (data_position << 2) + (chunk_id << 7)),
-      (static_cast<int>(compare_4_type)
-       << 12 + static_cast<int>(compare_3_type)
-       << 8 + static_cast<int>(compare_2_type)
-       << 4 + static_cast<int>(compare_1_type)));
+      ((static_cast<int>(compare_4_type)
+       << 12) + (static_cast<int>(compare_3_type)
+       << 8) + (static_cast<int>(compare_2_type)
+       << 4) + static_cast<int>(compare_1_type)));
 }
 
 void Filter::FilterSetCompareReferenceValue(

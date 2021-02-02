@@ -36,6 +36,8 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/tpch_orders_small.csv tpch_ord
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_01.csv lineitem_sf0_01.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_1.csv lineitem_sf0_1.csv COPYONLY)
 
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_01_1st_filter.csv lineitem_sf0_01_1st_filter.csv COPYONLY)
+
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/repo.json repo.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data_config.ini data_config.ini COPYONLY)
 
