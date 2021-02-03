@@ -78,7 +78,7 @@ void FPGAManager::SetupQueryAcceleration(
         /*FilterSetup::SetupFilterModuleCars(filter_module,
                                        query_node.input_streams[0].stream_id,
                                        query_node.output_streams[0].stream_id);*/
-        FilterSetup::SetupFilterModuleLineitemQ19(
+        FilterSetup::SetupFilterModulePartQ19(
             filter_module, query_node.input_streams[0].stream_id,
             query_node.output_streams[0].stream_id);
         break;

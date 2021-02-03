@@ -9,6 +9,8 @@ class FilterSetup {
  public:
   static void SetupFilterModuleCars(FilterInterface& filter_module,
                                  int input_stream_id, int output_stream_id);
+  static void SetupFilterModulePartQ19(FilterInterface& filter_module,
+                                    int input_stream_id, int output_stream_id);
   static void SetupFilterModuleLineitemQ19(FilterInterface& filter_module,
                                  int input_stream_id, int output_stream_id);
 

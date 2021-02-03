@@ -35,6 +35,13 @@ auto main() -> int {
       {nullptr},
       {nullptr}};
 
+  query_scheduling_data::QueryNode first_part_filter = {
+      {"part_sf0_01.csv"},
+      {"part_sf0_01_1st_filter.csv"},
+      operation_types::QueryOperation::kFilter,
+      {nullptr},
+      {nullptr}};
+
   query_scheduling_data::QueryNode pass_through_1k_data = {
       {"CAR_DATA.csv"},
       {"CAR_DATA.csv"},
@@ -206,7 +213,7 @@ auto main() -> int {
   //MeasureOverallTime({tpch_pass_through_lineitem_01});
   //MeasureOverallTime({tpch_pass_through_lineitem_001});
 
-  MeasureOverallTime({first_lineitem_filter});
-  //MeasureOverallTime({filtering_query_once});
+  //MeasureOverallTime({first_lineitem_filter});
+  MeasureOverallTime({first_part_filter});
   return 0;
 }

@@ -24,20 +24,87 @@ void FilterSetup::SetupFilterModuleCars(FilterInterface& filter_module,
       query_acceleration_constants::kDatapathWidth);
 }
 
+// SELECT * FROM part
+// WHERE((p_size >= 1) AND(((p_brand = 'Brand#12' ::bpchar) AND(
+//    p_container = ANY('{"SM CASE","SM BOX","SM PACK","SM PKG"}' ::bpchar[]))
+//                        AND(p_size <= 5))))
+// Needs more OR cases for Q19. But that needs data duplication
+void FilterSetup::SetupFilterModulePartQ19(FilterInterface& filter_module,
+                                           const int input_stream_id,
+                                           const int output_stream_id) {
+  filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
+                                   output_stream_id);
+
+  SetOneOutputSingleModuleMode(filter_module);
+  // p_size
+  SetComparisons(
+      filter_module,
+      {{filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+        {5},
+        {filter_config_values::LiteralTypes::kLiteralPositive,
+         filter_config_values::LiteralTypes::kLiteralPositive,
+         filter_config_values::LiteralTypes::kLiteralPositive,
+         filter_config_values::LiteralTypes::kLiteralPositive},
+        {0,1,2,3}},
+       {filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
+        {1},
+        {filter_config_values::LiteralTypes::kLiteralPositive,
+         filter_config_values::LiteralTypes::kLiteralPositive,
+         filter_config_values::LiteralTypes::kLiteralPositive,
+         filter_config_values::LiteralTypes::kLiteralPositive},
+        {0,1,2,3}}},
+      2, 15);
+
+  // p_brand
+  SetComparisons(filter_module,
+                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("Brand#12  ", 3),
+                   {filter_config_values::LiteralTypes::kLiteralPositive,
+                    filter_config_values::LiteralTypes::kLiteralPositive,
+                    filter_config_values::LiteralTypes::kLiteralPositive,
+                    filter_config_values::LiteralTypes::kLiteralPositive},
+                   {0,1,2,3}}},
+                 1, 9);
+
+  // p_container 
+  SetComparisons(filter_module,
+                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("SM CASE   ", 3),
+                   {filter_config_values::LiteralTypes::kLiteralPositive},
+                   {0}},
+                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("SM BOX    ", 3),
+                   {filter_config_values::LiteralTypes::kLiteralPositive},
+                   {1}},
+                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("SM PACK   ", 3),
+                   {filter_config_values::LiteralTypes::kLiteralPositive},
+                   {2}},
+                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("SM PKG    ", 3),
+                   {filter_config_values::LiteralTypes::kLiteralPositive},
+                   {3}}},
+                 2, 14);
+
+  filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
+      query_acceleration_constants::kDatapathWidth);
+}
+
 // SELECT * FROM lineitem WHERE (l_shipmode = ANY ('{AIR,"AIR REG"}'::bpchar[]))
 // AND (l_shipinstruct = 'DELIVER IN PERSON'::bpchar) AND (((l_quantity >=
 // '1'::numeric) AND (l_quantity <= '11'::numeric)) OR ((l_quantity >=
 // '10'::numeric) AND (l_quantity <= '20'::numeric)) OR ((l_quantity >=
 // '20'::numeric) AND (l_quantity <= '30'::numeric)))
 void FilterSetup::SetupFilterModuleLineitemQ19(FilterInterface& filter_module,
-                                                const int input_stream_id,
-                                                const int output_stream_id) {
+                                               const int input_stream_id,
+                                               const int output_stream_id) {
   filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
                                    output_stream_id);
 
   SetOneOutputSingleModuleMode(filter_module);
   // l_quantity
-  // Since this module only has 4 compare lanes we will combine the query l_quantity comparisons
+  // Since this module only has 4 compare lanes we will combine the query
+  // l_quantity comparisons
   SetComparisons(
       filter_module,
       {{filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
@@ -56,7 +123,7 @@ void FilterSetup::SetupFilterModuleLineitemQ19(FilterInterface& filter_module,
   // The table only has REG AIR but we still keep the orignally generated query
   SetComparisons(filter_module,
                  {{filter_config_values::CompareFunctions::kFilter32BitEqual,
-                   ConvertCharStringToAscii("AIR REG   ", 3), 
+                   ConvertCharStringToAscii("AIR REG   ", 3),
                    {filter_config_values::LiteralTypes::kLiteralPositive},
                    {1}},
                   {filter_config_values::CompareFunctions::kFilter32BitEqual,
