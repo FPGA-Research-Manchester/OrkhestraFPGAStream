@@ -7,11 +7,9 @@
 #include "filter_interface.hpp"
 class FilterSetup {
  public:
-  static void SetupFilterModule1(FilterInterface& filter_module,
+  static void SetupFilterModuleCars(FilterInterface& filter_module,
                                  int input_stream_id, int output_stream_id);
-  static void SetupFilterModule2(FilterInterface& filter_module,
-                                 int input_stream_id, int output_stream_id);
-  static void SetupFilterModule3(FilterInterface& filter_module,
+  static void SetupFilterModuleLineitemQ19(FilterInterface& filter_module,
                                  int input_stream_id, int output_stream_id);
 
  private:

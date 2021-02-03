@@ -30,7 +30,7 @@ auto main() -> int {
 
   query_scheduling_data::QueryNode first_lineitem_filter = {
       {"lineitem_sf0_01.csv"},
-      {"lineitem_sf0_01_1st_filter.csv"},
+      {"lineitem_sf0_01_whole_filter.csv"},
       operation_types::QueryOperation::kFilter,
       {nullptr},
       {nullptr}};

@@ -16,7 +16,7 @@ TEST(FilterSetupTest, FilterStreamsSetting) {
                                               kOutputStreamId))
       .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModule1(mock_filter, kInputStreamId,
+  filter_configurer.SetupFilterModuleCars(mock_filter, kInputStreamId,
                                       kOutputStreamId);
 }
 TEST(FilterSetupTest, FilterModesSetting) {
@@ -36,7 +36,7 @@ TEST(FilterSetupTest, FilterModesSetting) {
                             expected_last_module_in_resource_elastic_chain))
       .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModule1(mock_filter, kInputStreamId,
+  filter_configurer.SetupFilterModuleCars(mock_filter, kInputStreamId,
                                       kOutputStreamId);
 }
 TEST(FilterSetupTest, CompareTypesSetting) {
@@ -48,7 +48,7 @@ TEST(FilterSetupTest, CompareTypesSetting) {
                   testing::_, testing::_, testing::_))
       .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModule1(mock_filter, kInputStreamId,
+  filter_configurer.SetupFilterModuleCars(mock_filter, kInputStreamId,
                                       kOutputStreamId);
 }
 TEST(FilterSetupTest, ReferenceValuesSetting) {
@@ -61,7 +61,7 @@ TEST(FilterSetupTest, ReferenceValuesSetting) {
                                expected_compare_reference_value))
       .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModule1(mock_filter, kInputStreamId,
+  filter_configurer.SetupFilterModuleCars(mock_filter, kInputStreamId,
                                       kOutputStreamId);
 }
 TEST(FilterSetupTest, DNFClauseSetting) {
@@ -75,7 +75,7 @@ TEST(FilterSetupTest, DNFClauseSetting) {
                   filter_config_values::LiteralTypes::kLiteralPositive))
       .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModule1(mock_filter, kInputStreamId,
+  filter_configurer.SetupFilterModuleCars(mock_filter, kInputStreamId,
                                       kOutputStreamId);
 }
 TEST(FilterSetupTest, CorrectFilterCalled) {
@@ -90,7 +90,7 @@ TEST(FilterSetupTest, CorrectFilterCalled) {
                                expected_datapath_width))
       .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModule1(mock_filter, kInputStreamId,
+  filter_configurer.SetupFilterModuleCars(mock_filter, kInputStreamId,
                                       kOutputStreamId);
 }
 }  // namespace

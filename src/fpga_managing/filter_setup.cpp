@@ -3,13 +3,12 @@
 #include <cstdio>
 #include <stdexcept>
 
-
 #include "query_acceleration_constants.hpp"
 
 // Car filtering
-void FilterSetup::SetupFilterModule1(FilterInterface& filter_module,
-                                     const int input_stream_id,
-                                     const int output_stream_id) {
+void FilterSetup::SetupFilterModuleCars(FilterInterface& filter_module,
+                                        const int input_stream_id,
+                                        const int output_stream_id) {
   filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
                                    output_stream_id);
 
@@ -25,74 +24,55 @@ void FilterSetup::SetupFilterModule1(FilterInterface& filter_module,
       query_acceleration_constants::kDatapathWidth);
 }
 
-// Filtering first column
-void FilterSetup::SetupFilterModule2(FilterInterface& filter_module,
-                                     const int input_stream_id,
-                                     const int output_stream_id) {
-  filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
-                                   output_stream_id);
-
-  SetOneOutputSingleModuleMode(filter_module);
-  SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitLessThan,
-                   {30},
-                   {filter_config_values::LiteralTypes::kLiteralPositive},
-                   {0}}},
-                 0, 15);
-
-  filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
-      query_acceleration_constants::kDatapathWidth);
-}
-
-// SELECT * FROM lineitem WHERE ((l_shipmode = ANY ('{AIR,"AIR
-// REG"}'::bpchar[])) AND (l_shipinstruct = 'DELIVER IN PERSON'::bpchar) AND
-// ((l_quantity >= '1'::numeric) AND (l_quantity <= '11'::numeric)))
-void FilterSetup::SetupFilterModule3(FilterInterface& filter_module,
-                                     const int input_stream_id,
-                                     const int output_stream_id) {
+// SELECT * FROM lineitem WHERE (l_shipmode = ANY ('{AIR,"AIR REG"}'::bpchar[]))
+// AND (l_shipinstruct = 'DELIVER IN PERSON'::bpchar) AND (((l_quantity >=
+// '1'::numeric) AND (l_quantity <= '11'::numeric)) OR ((l_quantity >=
+// '10'::numeric) AND (l_quantity <= '20'::numeric)) OR ((l_quantity >=
+// '20'::numeric) AND (l_quantity <= '30'::numeric)))
+void FilterSetup::SetupFilterModuleLineitemQ19(FilterInterface& filter_module,
+                                                const int input_stream_id,
+                                                const int output_stream_id) {
   filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
                                    output_stream_id);
 
   SetOneOutputSingleModuleMode(filter_module);
   // l_quantity
+  // Since this module only has 4 compare lanes we will combine the query l_quantity comparisons
   SetComparisons(
       filter_module,
       {{filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
-        {11},
+        {30 * 100},
         {filter_config_values::LiteralTypes::kLiteralPositive,
          filter_config_values::LiteralTypes::kLiteralPositive},
         {0, 1}},
        {filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
-        {1},
+        {1 * 100},
         {filter_config_values::LiteralTypes::kLiteralPositive,
          filter_config_values::LiteralTypes::kLiteralPositive},
         {0, 1}}},
       0, 11);
 
   // l_shipmode
-
+  // The table only has REG AIR but we still keep the orignally generated query
   SetComparisons(filter_module,
                  {{filter_config_values::CompareFunctions::kFilter32BitEqual,
-                   ConvertCharStringToAscii("AIR", 3),
+                   ConvertCharStringToAscii("AIR REG   ", 3), 
+                   {filter_config_values::LiteralTypes::kLiteralPositive},
+                   {1}},
+                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("AIR       ", 3),
                    {filter_config_values::LiteralTypes::kLiteralPositive},
                    {0}}},
-                 1, 9);
-
-  SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
-                   ConvertCharStringToAscii("AIR REG", 3),
-                   {filter_config_values::LiteralTypes::kLiteralPositive},
-                   {1}}},
-                 1, 9);
+                 1, 11);
 
   // l_shipinstruct - Could be wrong since it goes over 2 chunks
-  //SetComparisons(filter_module,
-  //               {{filter_config_values::CompareFunctions::kFilter32BitEqual,
-  //                 ConvertCharStringToAscii("DELIVER IN PERSON", 7),
-  //                 {filter_config_values::LiteralTypes::kLiteralPositive,
-  //                  filter_config_values::LiteralTypes::kLiteralPositive},
-  //                 {0, 1}}},
-  //               1, 9);
+  SetComparisons(filter_module,
+                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("DELIVER IN PERSON        ", 7),
+                   {filter_config_values::LiteralTypes::kLiteralPositive,
+                    filter_config_values::LiteralTypes::kLiteralPositive},
+                   {0, 1}}},
+                 0, 2);
 
   filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
       query_acceleration_constants::kDatapathWidth);
@@ -123,8 +103,9 @@ void FilterSetup::SetComparisons(FilterInterface& filter_module,
          comparisons[compare_lane_index].compare_reference_values.size();
          compare_value_index++) {
       int current_chunk_id =
-          chunk_id + ((15 - data_position + compare_value_index) / 15);
-      int current_data_position = data_position - compare_value_index % 15;
+          chunk_id + ((15 - data_position + compare_value_index) / 16);
+      int current_data_position =
+          15 - ((15 - data_position + compare_value_index) % 16);
       filter_module.FilterSetCompareReferenceValue(
           current_chunk_id, current_data_position, compare_lane_index,
           comparisons[compare_lane_index]
@@ -152,8 +133,9 @@ void FilterSetup::SetComparisons(FilterInterface& filter_module,
        compare_value_index < comparisons[0].compare_reference_values.size();
        compare_value_index++) {
     int current_chunk_id =
-        chunk_id + ((15 - data_position + compare_value_index) / 15);
-    int current_data_position = data_position - compare_value_index % 15;
+        chunk_id + ((15 - data_position + compare_value_index) / 16);
+    int current_data_position =
+        15 - ((15 - data_position + compare_value_index) % 16);
     filter_module.FilterSetCompareTypes(
         current_chunk_id, current_data_position, compare_functions[0],
         compare_functions[1], compare_functions[2], compare_functions[3]);
