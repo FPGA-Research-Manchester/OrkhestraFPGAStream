@@ -206,7 +206,7 @@ auto main() -> int {
   //MeasureOverallTime({tpch_pass_through_lineitem_01});
   //MeasureOverallTime({tpch_pass_through_lineitem_001});
 
-  //MeasureOverallTime({first_lineitem_filter});
+  MeasureOverallTime({first_lineitem_filter});
   //MeasureOverallTime({first_part_filter});
   MeasureOverallTime({lineitem_part_join});
   return 0;

@@ -45,14 +45,14 @@ void FilterSetup::SetupFilterModulePartQ19(FilterInterface& filter_module,
          filter_config_values::LiteralTypes::kLiteralPositive,
          filter_config_values::LiteralTypes::kLiteralPositive,
          filter_config_values::LiteralTypes::kLiteralPositive},
-        {0,1,2,3}},
+        {0, 1, 2, 3}},
        {filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
         {1},
         {filter_config_values::LiteralTypes::kLiteralPositive,
          filter_config_values::LiteralTypes::kLiteralPositive,
          filter_config_values::LiteralTypes::kLiteralPositive,
          filter_config_values::LiteralTypes::kLiteralPositive},
-        {0,1,2,3}}},
+        {0, 1, 2, 3}}},
       2, 15);
 
   // p_brand
@@ -63,10 +63,10 @@ void FilterSetup::SetupFilterModulePartQ19(FilterInterface& filter_module,
                     filter_config_values::LiteralTypes::kLiteralPositive,
                     filter_config_values::LiteralTypes::kLiteralPositive,
                     filter_config_values::LiteralTypes::kLiteralPositive},
-                   {0,1,2,3}}},
+                   {0, 1, 2, 3}}},
                  1, 9);
 
-  // p_container 
+  // p_container
   SetComparisons(filter_module,
                  {{filter_config_values::CompareFunctions::kFilter32BitEqual,
                    ConvertCharStringToAscii("SM CASE   ", 3),
@@ -110,13 +110,34 @@ void FilterSetup::SetupFilterModuleLineitemQ19(FilterInterface& filter_module,
       {{filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
         {30 * 100},
         {filter_config_values::LiteralTypes::kLiteralPositive,
+         filter_config_values::LiteralTypes::kLiteralPositive,
+         filter_config_values::LiteralTypes::kLiteralPositive,
          filter_config_values::LiteralTypes::kLiteralPositive},
-        {0, 1}},
+        {0, 1, 2, 3}},
        {filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
         {1 * 100},
         {filter_config_values::LiteralTypes::kLiteralPositive,
+         filter_config_values::LiteralTypes::kLiteralDontCare,
+         filter_config_values::LiteralTypes::kLiteralPositive,
+         filter_config_values::LiteralTypes::kLiteralDontCare},
+        {0, 1, 2, 3}}},
+      0, 10);
+  SetComparisons(
+      filter_module,
+      {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+        {0},
+        {filter_config_values::LiteralTypes::kLiteralPositive,
+         filter_config_values::LiteralTypes::kLiteralPositive,
+         filter_config_values::LiteralTypes::kLiteralPositive,
          filter_config_values::LiteralTypes::kLiteralPositive},
-        {0, 1}}},
+        {0, 1, 2, 3}},
+       {filter_config_values::CompareFunctions::kFilter32BitGreaterThan,
+        {1},
+        {filter_config_values::LiteralTypes::kLiteralDontCare,
+         filter_config_values::LiteralTypes::kLiteralPositive,
+         filter_config_values::LiteralTypes::kLiteralDontCare,
+         filter_config_values::LiteralTypes::kLiteralPositive},
+        {0, 1, 2, 3}}},
       0, 11);
 
   // l_shipmode
@@ -124,22 +145,30 @@ void FilterSetup::SetupFilterModuleLineitemQ19(FilterInterface& filter_module,
   SetComparisons(filter_module,
                  {{filter_config_values::CompareFunctions::kFilter32BitEqual,
                    ConvertCharStringToAscii("AIR REG   ", 3),
-                   {filter_config_values::LiteralTypes::kLiteralPositive},
-                   {1}},
+                   {filter_config_values::LiteralTypes::kLiteralPositive,
+                    filter_config_values::LiteralTypes::kLiteralPositive,
+                    filter_config_values::LiteralTypes::kLiteralDontCare,
+                    filter_config_values::LiteralTypes::kLiteralDontCare},
+                   {0, 1, 2, 3}},
                   {filter_config_values::CompareFunctions::kFilter32BitEqual,
                    ConvertCharStringToAscii("AIR       ", 3),
-                   {filter_config_values::LiteralTypes::kLiteralPositive},
-                   {0}}},
-                 1, 11);
+                   {filter_config_values::LiteralTypes::kLiteralDontCare,
+                    filter_config_values::LiteralTypes::kLiteralDontCare,
+                    filter_config_values::LiteralTypes::kLiteralPositive,
+                    filter_config_values::LiteralTypes::kLiteralPositive},
+                   {0, 1, 2, 3}}},
+                 1, 7);
 
-  // l_shipinstruct - Could be wrong since it goes over 2 chunks
+  // l_shipinstruct
   SetComparisons(filter_module,
                  {{filter_config_values::CompareFunctions::kFilter32BitEqual,
                    ConvertCharStringToAscii("DELIVER IN PERSON        ", 7),
                    {filter_config_values::LiteralTypes::kLiteralPositive,
+                    filter_config_values::LiteralTypes::kLiteralPositive,
+                    filter_config_values::LiteralTypes::kLiteralPositive,
                     filter_config_values::LiteralTypes::kLiteralPositive},
-                   {0, 1}}},
-                 0, 2);
+                   {0, 1, 2, 3}}},
+                 1, 14);
 
   filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
       query_acceleration_constants::kDatapathWidth);
