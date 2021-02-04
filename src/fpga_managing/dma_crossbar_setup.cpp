@@ -6,6 +6,7 @@
 
 #include "dma_crossbar_setup_data.hpp"
 #include "query_acceleration_constants.hpp"
+#include "stream_parameter_calculator.hpp"
 
 void DMACrossbarSetup::CalculateCrossbarSetupData(
     const int& any_chunk, const int& any_position,
@@ -19,11 +20,11 @@ void DMACrossbarSetup::CalculateCrossbarSetupData(
   if (last_chunk_leftover_size == 0) {
     for (int chunk_id = 0;
          chunk_id < query_acceleration_constants::kDatapathLength; chunk_id++) {
-      if (chunk_id % stream_setup_data.chunks_per_record == 0 && chunk_id != 0) {
+      if (chunk_id % stream_setup_data.chunks_per_record == 0 &&
+          chunk_id != 0) {
         AddBubbleChunkAndPositionData(source_chunks, target_positions,
                                       stream_setup_data.chunks_per_record,
-                                      any_chunk,
-                                      any_position);
+                                      any_chunk, any_position);
       }
       for (int position_id = 0;
            position_id < query_acceleration_constants::kDatapathWidth;
@@ -405,7 +406,8 @@ void DMACrossbarSetup::AddBubbleChunkAndPositionData(
     std::queue<int>& source_chunks, std::queue<int>& target_positions,
     const int& chunks_per_record, const int& any_chunk,
     const int& any_position) {
-  const int next_power_of_two = FindNextPowerOfTwo(chunks_per_record);
+  const int next_power_of_two =
+      StreamParameterCalculator::FindNextPowerOfTwo(chunks_per_record);
   if (next_power_of_two != chunks_per_record) {
     for (int bubble_element_id = 0;
          bubble_element_id < (next_power_of_two - chunks_per_record) *
@@ -415,8 +417,4 @@ void DMACrossbarSetup::AddBubbleChunkAndPositionData(
       target_positions.push(any_position);
     }
   }
-}
-
-auto DMACrossbarSetup::FindNextPowerOfTwo(const int& value) -> int {
-  return pow(2, static_cast<int>(ceil(log2(value))));
 }

@@ -12,4 +12,6 @@ class StreamParameterCalculator {
   static auto CalculateChunksPerRecord(int record_size) -> int;
   static auto CalculateDDRBurstLength(int record_size,
                                       int records_per_ddr_burst) -> int;
+
+  static auto FindNextPowerOfTwo(const int& value) -> int;
 };

@@ -1,40 +1,65 @@
 #include "join_setup.hpp"
 
 #include "query_acceleration_constants.hpp"
+#include "stream_parameter_calculator.hpp"
 
 // Hardcoded setup for joining customer table to the car table
 void JoinSetup::SetupJoinModule(JoinInterface& join_module,
                                 int first_input_stream_id,
+                                int first_input_record_size,
                                 int second_input_stream_id,
-                                int output_stream_id) {
-  join_module.Reset();
-  join_module.DefineOutputStream(2, first_input_stream_id,
-                                 second_input_stream_id, output_stream_id);
-  join_module.SetFirstInputStreamChunkCount(2);
-  join_module.SetSecondInputStreamChunkCount(1);
+                                int second_input_record_size,
+                                int output_stream_id, int output_record_size) {
 
-  SetupTimeMultiplexer(join_module);
+  join_module.Reset();
+  join_module.DefineOutputStream(
+      StreamParameterCalculator::CalculateChunksPerRecord(output_record_size),
+      first_input_stream_id, second_input_stream_id, output_stream_id);
+  join_module.SetFirstInputStreamChunkCount(
+      StreamParameterCalculator::CalculateChunksPerRecord(
+          first_input_record_size));
+  join_module.SetSecondInputStreamChunkCount(
+      StreamParameterCalculator::CalculateChunksPerRecord(
+          second_input_record_size));
+
+  SetupTimeMultiplexer(join_module, first_input_record_size,
+                       second_input_record_size, output_record_size);
 
   join_module.StartPrefetchingData();
 }
 
-void JoinSetup::SetupTimeMultiplexer(JoinInterface& join_module) {
-  // TODO(Kaspar): Simple initial algo should be to get the chunk count for both
-  // streams and then just configure first stream to go first and then second.
-  // Therefore stream configuration data is needed. Stream A Chunk 0
-  for (int i = 0; i < query_acceleration_constants::kDatapathWidth; i++) {
-    join_module.SelectOutputDataElement(0, 0, i, false);
+void JoinSetup::SetupTimeMultiplexer(JoinInterface& join_module,
+                                     int first_stream_size,
+                                     int second_stream_size,
+                                     int output_stream_size) {
+  int output_chunk_id = 0;
+  int data_position = 15;
+  for (int first_stream_element_count = 0;
+       first_stream_element_count < first_stream_size;
+       first_stream_element_count++) {
+    join_module.SelectOutputDataElement(
+        output_chunk_id, first_stream_element_count / 16, data_position, false);
+    data_position--;
+    if (data_position == -1) {
+      data_position = 15;
+      output_chunk_id++;
+    }
   }
-  // Chunk 1
-  join_module.SelectOutputDataElement(1, 1, 15, false);
-  join_module.SelectOutputDataElement(1, 1, 14, false);
-  // Stream B
-  join_module.SelectOutputDataElement(1, 0, 13, true);
-  join_module.SelectOutputDataElement(1, 0, 12, true);
-  join_module.SelectOutputDataElement(1, 0, 11, true);
-  join_module.SelectOutputDataElement(1, 0, 10, true);
-  join_module.SelectOutputDataElement(1, 0, 9, true);
-  join_module.SelectOutputDataElement(1, 0, 8, true);
-  join_module.SelectOutputDataElement(1, 0, 7, true);
-  join_module.SelectOutputDataElement(1, 0, 6, true);
+  int shift_size =
+      second_stream_size - (output_stream_size - first_stream_size);
+
+  for (int second_stream_element_count = 0;
+       second_stream_element_count < second_stream_size;
+       second_stream_element_count++) {
+    if (second_stream_element_count >= shift_size) {
+      join_module.SelectOutputDataElement(output_chunk_id,
+                                          second_stream_element_count / 16,
+                                          data_position, true);
+      data_position--;
+      if (data_position == -1) {
+        data_position = 15;
+        output_chunk_id++;
+      }
+    }
+  }
 }

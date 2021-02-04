@@ -41,8 +41,8 @@ void FPGAManager::SetupQueryAcceleration(
                                   operation_types::QueryOperation::kMergeSort;
     FindIOStreams(query_node.input_streams, input_streams,
                   is_multichannel_stream, input_streams_active_status_);
-    FindIOStreams(query_node.output_streams, output_streams,
-                  false, output_streams_active_status_);
+    FindIOStreams(query_node.output_streams, output_streams, false,
+                  output_streams_active_status_);
   }
 
   if (input_streams.empty() || output_streams.empty()) {
@@ -75,17 +75,23 @@ void FPGAManager::SetupQueryAcceleration(
     switch (query_node.operation_type) {
       case operation_types::QueryOperation::kFilter: {
         Filter filter_module(memory_manager_, module_location);
-        FilterSetup::SetupFilterModule(filter_module,
+        /*FilterSetup::SetupFilterModuleCars(filter_module,
                                        query_node.input_streams[0].stream_id,
-                                       query_node.output_streams[0].stream_id);
+                                       query_node.output_streams[0].stream_id);*/
+        FilterSetup::SetupFilterModulePartQ19(
+            filter_module, query_node.input_streams[0].stream_id,
+            query_node.output_streams[0].stream_id);
         break;
       }
       case operation_types::QueryOperation::kJoin: {
         Join join_module(memory_manager_, module_location);
-        JoinSetup::SetupJoinModule(join_module,
-                                   query_node.input_streams[0].stream_id,
-                                   query_node.input_streams[1].stream_id,
-                                   query_node.output_streams[0].stream_id);
+        JoinSetup::SetupJoinModule(
+            join_module, query_node.input_streams[0].stream_id,
+            query_node.input_streams[0].stream_record_size,
+            query_node.input_streams[1].stream_id,
+            query_node.input_streams[1].stream_record_size,
+            query_node.output_streams[0].stream_id,
+            query_node.output_streams[0].stream_record_size);
         break;
       }
       case operation_types::QueryOperation::kMergeSort: {
@@ -133,10 +139,11 @@ auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
   WaitForStreamsToFinish();
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-  std::cout
-      << "Execution time = "
-      << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
-      << "[µs]" << std::endl;
+  std::cout << "Execution time = "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << "[µs]" << std::endl;
 
   // PrintDebuggingData();
   return GetResultingStreamSizes(active_input_stream_ids,
@@ -164,12 +171,12 @@ void FPGAManager::WaitForStreamsToFinish() {
 #ifdef _FPGA_AVAILABLE
   while (!(FPGAManager::dma_engine_.IsInputControllerFinished() &&
            FPGAManager::dma_engine_.IsOutputControllerFinished())) {
-    //sleep(3);
-    //std::cout << "Processing..." << std::endl;
-    //std::cout << "Input:"
+    // sleep(3);
+    // std::cout << "Processing..." << std::endl;
+    // std::cout << "Input:"
     //          << FPGAManager::dma_engine_.IsInputControllerFinished()
     //          << std::endl;
-    //std::cout << "Output:"
+    // std::cout << "Output:"
     //          << FPGAManager::dma_engine_.IsOutputControllerFinished()
     //          << std::endl;
   }

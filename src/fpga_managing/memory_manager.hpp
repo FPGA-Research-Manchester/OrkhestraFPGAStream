@@ -45,4 +45,5 @@ class MemoryManager : public MemoryManagerInterface {
 
  private:
   auto AllocateMemoryBlock() -> std::unique_ptr<MemoryBlockInterface> override;
+  void SetFPGATo300MHz();
 };

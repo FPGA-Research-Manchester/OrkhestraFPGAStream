@@ -5,6 +5,7 @@
 
 #ifdef _FPGA_AVAILABLE
 #include "udma_memory_block.hpp"
+#include "mmio.h"
 #else
 #include "virtual_memory_block.hpp"
 #endif
@@ -20,6 +21,7 @@ void MemoryManager::LoadBitstreamIfNew(const std::string& bitstream_name,
     acceleration_instance_ =
         pr_manager_.fpgaLoadStatic(bitstream_name, register_space_size);
     register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
+    SetFPGATo300MHz();
 #else
     register_space_ = std::vector<uint32_t>(register_space_size, -1);
 #endif
@@ -67,4 +69,25 @@ auto MemoryManager::AllocateMemoryBlock()
 void MemoryManager::FreeMemoryBlock(
     std::unique_ptr<MemoryBlockInterface> memory_block_pointer) {
   available_memory_blocks_.push(std::move(memory_block_pointer));
+}
+
+void MemoryManager::SetFPGATo300MHz() {
+#ifdef _FPGA_AVAILABLE
+  auto clock_memory_map = mmioGetMmap("/dev/mem", 0xFF5E0000, 1024);
+  if (clock_memory_map.fd == -1)
+    throw std::runtime_error("Failed to mmap clock area");
+  auto clock_area_pointer = (uint32_t*)clock_memory_map.mmap;
+
+  volatile uint32_t* pl_clk0 = &(clock_area_pointer[192 / 4]);
+  uint32_t value = *pl_clk0;
+  value = value & 0xFEFFFFFF;
+  *pl_clk0 = value;
+  value = value & 0xFFC0C0FF;
+  value = value | 0x10500; // For 100MHz use 0x10F00
+  *pl_clk0 = value;
+  value = value | 0x01000000;
+  *pl_clk0 = value;
+#else
+  throw std::runtime_error("NoFPGAConnected!");
+#endif
 }
