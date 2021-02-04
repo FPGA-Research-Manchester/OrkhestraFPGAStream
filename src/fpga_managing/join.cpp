@@ -16,11 +16,14 @@ void Join::DefineOutputStream(int output_stream_chunk_count,
 }
 
 void Join::SetFirstInputStreamChunkCount(int chunk_count) {
-  AccelerationModule::WriteToModule(8, static_cast<int>(log2(chunk_count)));
+  AccelerationModule::WriteToModule(
+      8, static_cast<int>(log2(2 * (chunk_count - 1))));
 }
 
+// ceil log
 void Join::SetSecondInputStreamChunkCount(int chunk_count) {
-  AccelerationModule::WriteToModule(12, static_cast<int>(log2(chunk_count)));
+  AccelerationModule::WriteToModule(
+      12, static_cast<int>(log2(2 * (chunk_count - 1))));
 }
 
 void Join::SelectOutputDataElement(int output_chunk_id, int input_chunk_id,

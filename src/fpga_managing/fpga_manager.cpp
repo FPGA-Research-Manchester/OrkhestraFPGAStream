@@ -85,10 +85,13 @@ void FPGAManager::SetupQueryAcceleration(
       }
       case operation_types::QueryOperation::kJoin: {
         Join join_module(memory_manager_, module_location);
-        JoinSetup::SetupJoinModule(join_module,
-                                   query_node.input_streams[0].stream_id,
-                                   query_node.input_streams[1].stream_id,
-                                   query_node.output_streams[0].stream_id);
+        JoinSetup::SetupJoinModule(
+            join_module, query_node.input_streams[0].stream_id,
+            query_node.input_streams[0].stream_record_size,
+            query_node.input_streams[1].stream_id,
+            query_node.input_streams[1].stream_record_size,
+            query_node.output_streams[0].stream_id,
+            query_node.output_streams[0].stream_record_size);
         break;
       }
       case operation_types::QueryOperation::kMergeSort: {

@@ -28,20 +28,6 @@ auto main() -> int {
       {nullptr},
       {nullptr}};
 
-  query_scheduling_data::QueryNode first_lineitem_filter = {
-      {"lineitem_sf0_01.csv"},
-      {"lineitem_sf0_01_whole_filter.csv"},
-      operation_types::QueryOperation::kFilter,
-      {nullptr},
-      {nullptr}};
-
-  query_scheduling_data::QueryNode first_part_filter = {
-      {"part_sf0_01.csv"},
-      {"part_sf0_01_1st_filter.csv"},
-      operation_types::QueryOperation::kFilter,
-      {nullptr},
-      {nullptr}};
-
   query_scheduling_data::QueryNode pass_through_1k_data = {
       {"CAR_DATA.csv"},
       {"CAR_DATA.csv"},
@@ -63,23 +49,9 @@ auto main() -> int {
       {nullptr},
       {nullptr}};
 
-  query_scheduling_data::QueryNode pass_through_tpch_data = {
-      {"tpch_orders_small.csv"},
-      {"tpch_orders_small.csv"},
-      operation_types::QueryOperation::kPassThrough,
-      {nullptr},
-      {nullptr}};
-
   query_scheduling_data::QueryNode join_query_once = {
       {"CAR_DATA.csv", "CUSTOMER_DATA_FOR_JOIN.csv"},
       {"JOIN_DATA.csv"},
-      operation_types::QueryOperation::kJoin,
-      {nullptr},
-      {nullptr, nullptr}};
-
-  query_scheduling_data::QueryNode tpch_join_once = {
-      {"tpch_customer.csv", "tpch_orders_join.csv"},
-      {"tpch_customer_orders.csv"},
       operation_types::QueryOperation::kJoin,
       {nullptr},
       {nullptr, nullptr}};
@@ -193,6 +165,27 @@ auto main() -> int {
   //    {nullptr}};
 
 
+  //Q19
+  query_scheduling_data::QueryNode first_lineitem_filter = {
+      {"lineitem_sf0_01.csv"},
+      {"lineitem_sf0_01_filter.csv"},
+      operation_types::QueryOperation::kFilter,
+      {nullptr},
+      {nullptr}};
+  query_scheduling_data::QueryNode lineitem_part_join = {
+      {"lineitem_sf0_01_sort.csv",
+       "part_sf0_01_filter_shifted.csv"},
+      {"lineitem_part_sf0_01_1st_filter.csv"},
+      operation_types::QueryOperation::kJoin,
+      {nullptr},
+      {nullptr, nullptr}};
+  query_scheduling_data::QueryNode first_part_filter = {
+      {"part_sf0_01.csv"},
+      {"part_sf0_01_1st_filter.csv"},
+      operation_types::QueryOperation::kFilter,
+      {nullptr},
+      {nullptr}};
+
   // Run operations twice
   //QueryManager::RunQueries({filtering_query_once, filtering_query_once,
   //                          merge_sort_query_8k_once,
@@ -200,7 +193,7 @@ auto main() -> int {
   //                          join_query_once, linear_sort_query_8k_once,
   //                          linear_sort_query_8k_once});
   // Run operations with pass through data - Currently the scheduler doesn't take memory limits into consideration
-  //QueryManager::RunQueries({/*pass_through_tpch_data,*/ pass_through_500_data,
+  //QueryManager::RunQueries({/*tpch_pass_through_lineitem_01,*/ pass_through_500_data,
   //                          pass_through_small_data, pass_through_1k_data,
   //                          join_query_once,
   //                          /*merge_sort_query_8k_once_double,*/
@@ -214,6 +207,7 @@ auto main() -> int {
   //MeasureOverallTime({tpch_pass_through_lineitem_001});
 
   //MeasureOverallTime({first_lineitem_filter});
-  MeasureOverallTime({first_part_filter});
+  //MeasureOverallTime({first_part_filter});
+  MeasureOverallTime({lineitem_part_join});
   return 0;
 }
