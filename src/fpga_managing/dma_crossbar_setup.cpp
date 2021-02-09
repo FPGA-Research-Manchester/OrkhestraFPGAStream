@@ -14,6 +14,23 @@ void DMACrossbarSetup::CalculateCrossbarSetupData(
   std::queue<int> source_chunks;
   std::queue<int> target_positions;
 
+  // Should be input
+  std::vector<int> selected_columns;
+  for (int i = 0; i < record_size; i++) {
+    selected_columns.push_back(i);
+  }
+  // Currently selected columns is expanded to the full buffer size. 
+  // Later this can be made into the actual size.
+  std::vector<int> expanded_column_selection;
+  for (int i = 0; i < query_acceleration_constants::kDdrBurstSize * 10; i++) {
+    expanded_column_selection.push_back(
+        selected_columns[i % selected_columns.size()] +
+        (record_size * (i / selected_columns.size())));
+  }
+
+  auto selected_columns_iterator = expanded_column_selection.begin();
+  int rows_processed = 0;
+
   const int last_chunk_leftover_size =
       record_size % query_acceleration_constants::kDatapathWidth;
 
@@ -29,8 +46,11 @@ void DMACrossbarSetup::CalculateCrossbarSetupData(
       for (int position_id = 0;
            position_id < query_acceleration_constants::kDatapathWidth;
            position_id++) {
-        source_chunks.push(chunk_id);
-        target_positions.push(position_id);
+        int column_number = *selected_columns_iterator;
+        source_chunks.push(column_number /
+                           16);
+        target_positions.push(column_number % 16);
+        selected_columns_iterator++;
       }
     }
   } else {
@@ -50,7 +70,8 @@ void DMACrossbarSetup::CalculateCrossbarSetupData(
       CalculateBufferToInterfaceSetupConfig(
           source_chunks, target_positions, any_chunk, any_position,
           last_chunk_leftover_size, steps_per_cycle, cycle_count,
-          stream_setup_data.chunks_per_record, cycle_step_chunk_increase);
+          stream_setup_data.chunks_per_record, cycle_step_chunk_increase,
+          selected_columns_iterator);
     } else {
       CalculateInterfaceToBufferSetupConfig(
           source_chunks, target_positions, any_chunk, any_position,
@@ -63,12 +84,14 @@ void DMACrossbarSetup::CalculateCrossbarSetupData(
                                 stream_setup_data);
 }
 
+// Input
 void DMACrossbarSetup::CalculateBufferToInterfaceSetupConfig(
     std::queue<int>& source_chunks, std::queue<int>& target_positions,
     const int& any_chunk, const int& any_position,
     const int& last_chunk_leftover_size, const int& steps_per_cycle,
     const int& cycle_count, const int& chunks_per_record,
-    const float& cycle_step_chunk_increase) {
+    const float& cycle_step_chunk_increase,
+    std::vector<int>::iterator& selected_columns_iterator) {
   for (int cycle_counter = 0; cycle_counter < cycle_count; cycle_counter++) {
     for (int cycle_step = 0; cycle_step < steps_per_cycle; cycle_step++) {
       const int used_leftover_chunks_count =
@@ -84,12 +107,13 @@ void DMACrossbarSetup::CalculateBufferToInterfaceSetupConfig(
 
       InitialDataSetupFromBufferToInterface(
           chunks_per_record, current_cycle_step_initial_chunk,
-          current_offset_point, source_chunks, target_positions);
+          current_offset_point, source_chunks, target_positions, selected_columns_iterator);
 
       FinalDataSetupFromBufferToInterface(
           used_leftover_chunks_count, current_cycle_step_initial_chunk,
           current_offset_point, last_chunk_leftover_size, chunks_per_record,
-          source_chunks, any_chunk, target_positions, any_position);
+          source_chunks, any_chunk, target_positions, any_position,
+          selected_columns_iterator);
 
       AddBubbleChunkAndPositionData(source_chunks, target_positions,
                                     chunks_per_record, any_chunk, any_position);
@@ -97,6 +121,7 @@ void DMACrossbarSetup::CalculateBufferToInterfaceSetupConfig(
   }
 }
 
+// Output
 void DMACrossbarSetup::CalculateInterfaceToBufferSetupConfig(
     std::queue<int>& source_chunks, std::queue<int>& target_positions,
     const int& any_chunk, const int& any_position,
@@ -137,15 +162,16 @@ void DMACrossbarSetup::CalculateInterfaceToBufferSetupConfig(
 void DMACrossbarSetup::InitialDataSetupFromBufferToInterface(
     const int& chunks_per_record, const int& current_cycle_step_initial_chunk,
     const int& current_offset_point, std::queue<int>& source_chunks,
-    std::queue<int>& target_positions) {
+    std::queue<int>& target_positions,
+    std::vector<int>::iterator& selected_columns_iterator) {
   for (int initial_chunk_count = 0; initial_chunk_count < chunks_per_record - 1;
        initial_chunk_count++) {
     const int current_chunk =
         current_cycle_step_initial_chunk + initial_chunk_count;
-    InitialChunkSetupFromBufferToInterface(current_offset_point, source_chunks,
-                                           current_chunk);
-    InitialPositionSetupFromBufferToInterface(current_offset_point,
-                                              target_positions);
+    InitialChunkSetupFromBufferToInterface(current_offset_point, source_chunks, current_chunk,
+        std::vector<int>::iterator (selected_columns_iterator));
+    InitialPositionSetupFromBufferToInterface(current_offset_point, target_positions,
+        selected_columns_iterator);
   }
 }
 
@@ -155,14 +181,15 @@ void DMACrossbarSetup::FinalDataSetupFromBufferToInterface(
     const int& current_offset_point, const int& last_chunk_leftover_size,
     const int& chunks_per_record, std::queue<int>& source_chunks,
     const int& any_chunk, std::queue<int>& target_positions,
-    const int& any_position) {
+    const int& any_position,
+    std::vector<int>::iterator& selected_columns_iterator) {
   FinalChunkSetupFromBufferToInterface(
       used_leftover_chunks_count, last_chunk_leftover_size,
       current_cycle_step_initial_chunk, chunks_per_record, source_chunks,
-      any_chunk);
+      any_chunk, std::vector<int>::iterator(selected_columns_iterator));
   FinalPositionSetupFromBufferToInterface(last_chunk_leftover_size,
-                                          current_offset_point,
-                                          target_positions, any_position);
+                                          current_offset_point, target_positions,
+      any_position, selected_columns_iterator);
 }
 
 void DMACrossbarSetup::InitialDataSetupFromInterfaceToBuffer(
@@ -248,7 +275,8 @@ void DMACrossbarSetup::FinalDataSetupFromInterfaceToBuffer(
 
 void DMACrossbarSetup::FinalPositionSetupFromBufferToInterface(
     const int& last_chunk_leftover_size, const int& current_offset_point,
-    std::queue<int>& target_positions, const int& any_position) {
+    std::queue<int>& target_positions, const int& any_position,
+    std::vector<int>::iterator& selected_columns_iterator) {
   for (int empty_initial_chunk_position = 0;
        empty_initial_chunk_position <
        query_acceleration_constants::kDatapathWidth - last_chunk_leftover_size;
@@ -258,9 +286,10 @@ void DMACrossbarSetup::FinalPositionSetupFromBufferToInterface(
   for (int left_over_chunk_position = 0;
        left_over_chunk_position < last_chunk_leftover_size;
        left_over_chunk_position++) {
-    const int current_position = current_offset_point -
-                                 last_chunk_leftover_size +
-                                 left_over_chunk_position;
+    auto next_element_it =
+        std::next(selected_columns_iterator,
+                  last_chunk_leftover_size - left_over_chunk_position);
+    const int current_position = (query_acceleration_constants::kDatapathWidth - *next_element_it) % 16;
     if (current_position < 0) {
       target_positions.push(query_acceleration_constants::kDatapathWidth +
                             current_position);
@@ -268,12 +297,14 @@ void DMACrossbarSetup::FinalPositionSetupFromBufferToInterface(
       target_positions.push(current_position);
     }
   }
+  std::advance(selected_columns_iterator, last_chunk_leftover_size);
 }
 
 void DMACrossbarSetup::FinalChunkSetupFromBufferToInterface(
     const int& used_leftover_chunks_count, const int& last_chunk_leftover_size,
     const int& current_cycle_step_initial_chunk, const int& chunks_per_record,
-    std::queue<int>& source_chunks, const int& any_chunk) {
+    std::queue<int>& source_chunks, const int& any_chunk,
+    std::vector<int>::iterator& selected_columns_iterator) {
   const int initial_any_chunk_sequence_size =
       query_acceleration_constants::kDatapathWidth -
       (used_leftover_chunks_count %
@@ -306,8 +337,10 @@ void DMACrossbarSetup::FinalChunkSetupFromBufferToInterface(
   for (int initial_valid_chunk_index = 0;
        initial_valid_chunk_index < initial_valid_chunk_sequence_size;
        initial_valid_chunk_index++) {
-    source_chunks.push(current_cycle_step_initial_chunk + chunks_per_record -
-                       1);
+    //source_chunks.push(current_cycle_step_initial_chunk + chunks_per_record -
+    //                   1);
+    source_chunks.push(*selected_columns_iterator / 16);
+    selected_columns_iterator++;
   }
   for (int last_any_chunk_index = 0;
        last_any_chunk_index < last_any_chunk_sequence_size;
@@ -317,37 +350,72 @@ void DMACrossbarSetup::FinalChunkSetupFromBufferToInterface(
   for (int last_valid_chunk_index = 0;
        last_valid_chunk_index < last_valid_chunk_sequence_size;
        last_valid_chunk_index++) {
-    source_chunks.push(current_cycle_step_initial_chunk + chunks_per_record);
+    //source_chunks.push(current_cycle_step_initial_chunk + chunks_per_record);
+    source_chunks.push(*selected_columns_iterator / 16);
+    selected_columns_iterator++;
   }
 }
 
 void DMACrossbarSetup::InitialPositionSetupFromBufferToInterface(
-    const int& current_offset_point, std::queue<int>& target_positions) {
-  for (int forward_chunk_position = current_offset_point;
-       forward_chunk_position < query_acceleration_constants::kDatapathWidth;
-       forward_chunk_position++) {
-    target_positions.push(forward_chunk_position);
+    const int& current_offset_point, std::queue<int>& target_positions,
+    std::vector<int>::iterator& selected_columns_iterator) {
+  //for (int forward_chunk_position = current_offset_point;
+  //     forward_chunk_position < query_acceleration_constants::kDatapathWidth;
+  //     forward_chunk_position++) {
+  //  //target_positions.push(forward_chunk_position);
+  //  auto next_element_it = std::next(
+  //      selected_columns_iterator,
+  //      forward_chunk_position);
+  //  target_positions.push(*next_element_it % 16);
+  //}
+  //for (int current_chunk_position = 0;
+  //     current_chunk_position < current_offset_point;
+  //     current_chunk_position++) {
+  //  //target_positions.push(current_chunk_position);
+  //  auto next_element_it = std::next(
+  //      selected_columns_iterator,
+  //      current_chunk_position);
+  //  target_positions.push(*next_element_it % 16);
+  //}
+  for (int i = query_acceleration_constants::kDatapathWidth; i > 0; i--) {
+    auto next_element_it =
+        std::next(selected_columns_iterator, i);
+    const int current_position =
+        (query_acceleration_constants::kDatapathWidth - *next_element_it) % 16;
+    if (current_position < 0) {
+      target_positions.push(query_acceleration_constants::kDatapathWidth +
+                            current_position);
+    } else {
+      target_positions.push(current_position);
+    }
   }
-  for (int current_chunk_position = 0;
-       current_chunk_position < current_offset_point;
-       current_chunk_position++) {
-    target_positions.push(current_chunk_position);
-  }
+  std::advance(selected_columns_iterator, 16);
+  //for (int i = 0; i < query_acceleration_constants::kDatapathWidth; i++) {
+  //  target_positions.push(*selected_columns_iterator % 16);
+  //  selected_columns_iterator++;
+  //}
 }
 
 void DMACrossbarSetup::InitialChunkSetupFromBufferToInterface(
     const int& current_offset_point, std::queue<int>& source_chunks,
-    const int& current_chunk) {
+    const int& current_chunk,
+    std::vector<int>::iterator& selected_columns_iterator) {
   // Beginning of the chunk until current_offset_point
-  for (int current_position = 0; current_position < current_offset_point;
-       current_position++) {
-    source_chunks.push(current_chunk);
-  }
-  // Rest of the chunk
-  for (int forward_chunk_position = current_offset_point;
-       forward_chunk_position < query_acceleration_constants::kDatapathWidth;
-       forward_chunk_position++) {
-    source_chunks.push(current_chunk + 1);
+  //for (int current_position = 0; current_position < current_offset_point;
+  //     current_position++) {
+  //  source_chunks.push(current_chunk);
+  //}
+  //// Rest of the chunk
+  //for (int forward_chunk_position = current_offset_point;
+  //     forward_chunk_position < query_acceleration_constants::kDatapathWidth;
+  //     forward_chunk_position++) {
+  //  source_chunks.push(current_chunk + 1);
+  //}
+    for (int i = 0;
+       i < query_acceleration_constants::kDatapathWidth;
+       i++) {
+    source_chunks.push(*selected_columns_iterator / 16);
+      selected_columns_iterator++;
   }
 }
 
@@ -399,6 +467,12 @@ void DMACrossbarSetup::SetCrossbarSetupDataForStream(
       target_positions.pop();
     }
     stream_setup_data.crossbar_setup_data.push_back(current_chunk_data);
+  }
+  for (const auto& thing : stream_setup_data.crossbar_setup_data) {
+    std::cout << std::endl;
+    for (const auto& thing2 : thing.position_data) {
+      std::cout << thing2 << " ";
+    }
   }
 }
 
