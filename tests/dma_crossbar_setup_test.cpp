@@ -32,8 +32,12 @@ void GetGoldenConfigFromFile(std::vector<std::vector<int>>& golden_config,
   }
 }
 
-auto CalculateChunksPerRecord(int record_size) -> int {
-  return (record_size + kDatapathWidth - 1) / kDatapathWidth;
+auto CreateLinearSelectedColumnsVector(const int vector_size)
+    -> std::vector<int> {
+  std::vector<int> selected_column(vector_size);
+  std::generate(selected_column.begin(), selected_column.end(),
+                [n = 0]() mutable { return n++; });
+  return selected_column;
 }
 
 void ExpectConfigurationDataIsUnconfigured(DMASetupData configuration_data) {
@@ -64,15 +68,14 @@ void ExpectConfigurationDataIsConfigured(
 }
 
 TEST(DMACrossbarSetupTest, RecordSize18BufferToInterfaceSetupCheck) {
-  const int record_size = 18;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = true;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data,
+      18, 
+      CreateLinearSelectedColumnsVector(18));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -81,15 +84,13 @@ TEST(DMACrossbarSetupTest, RecordSize18BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize18InterfaceToBufferSetupCheck) {
-  const int record_size = 18;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = false;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, 18,
+      CreateLinearSelectedColumnsVector(18));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -98,15 +99,13 @@ TEST(DMACrossbarSetupTest, RecordSize18InterfaceToBufferSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize4BufferToInterfaceSetupCheck) {
-  const int record_size = 4;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = true;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, 4,
+      CreateLinearSelectedColumnsVector(4));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -115,15 +114,13 @@ TEST(DMACrossbarSetupTest, RecordSize4BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize4InterfaceToBufferSetupCheck) {
-  const int record_size = 4;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = false;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, 4,
+      CreateLinearSelectedColumnsVector(4));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -132,15 +129,13 @@ TEST(DMACrossbarSetupTest, RecordSize4InterfaceToBufferSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize46BufferToInterfaceSetupCheck) {
-  int record_size = 46;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = true;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, 46,
+      CreateLinearSelectedColumnsVector(46));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -149,15 +144,13 @@ TEST(DMACrossbarSetupTest, RecordSize46BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize46InterfaceToBufferSetupCheck) {
-  int record_size = 46;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = false;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, 46,
+      CreateLinearSelectedColumnsVector(46));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -166,15 +159,13 @@ TEST(DMACrossbarSetupTest, RecordSize46InterfaceToBufferSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize57BufferToInterfaceSetupCheck) {
-  int record_size = 57;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = true;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, 57,
+      CreateLinearSelectedColumnsVector(57));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -183,15 +174,13 @@ TEST(DMACrossbarSetupTest, RecordSize57BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize57InterfaceToBufferSetupCheck) {
-  int record_size = 57;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = false;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, 57,
+      CreateLinearSelectedColumnsVector(57));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -200,15 +189,13 @@ TEST(DMACrossbarSetupTest, RecordSize57InterfaceToBufferSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize478BufferToInterfaceSetupCheck) {
-  const int record_size = 478;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = true;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, 478,
+      CreateLinearSelectedColumnsVector(478));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -217,15 +204,13 @@ TEST(DMACrossbarSetupTest, RecordSize478BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize478InterfaceToBufferSetupCheck) {
-  const int record_size = 478;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = false;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, 478,
+      CreateLinearSelectedColumnsVector(478));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -234,15 +219,13 @@ TEST(DMACrossbarSetupTest, RecordSize478InterfaceToBufferSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize80BufferToInterfaceSetupCheck) {
-  const int record_size = 80;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = true;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, 80,
+      CreateLinearSelectedColumnsVector(80));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -251,15 +234,30 @@ TEST(DMACrossbarSetupTest, RecordSize80BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize80InterfaceToBufferSetupCheck) {
-  const int record_size = 80;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = false;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, 80,
+      CreateLinearSelectedColumnsVector(80));
+
+  ExpectConfigurationDataIsConfigured(
+      test_stream_setup_data,
+      "DMACrossbarSetupTest/RecordSize80InterfaceToBufferChunkSetup.txt",
+      "DMACrossbarSetupTest/RecordSize80InterfaceToBufferPositionSetup.txt");
+}
+
+TEST(DMACrossbarSetupTest, thing) {
+  DMASetupData test_stream_setup_data;
+  test_stream_setup_data.is_input_stream = false;
+  ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
+
+  //DMACrossbarSetup::CalculateCrossbarSetupData(
+  //    kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, 16, {5,5,5,5,5,3,3,3,4,4,4,4});
+
+  DMACrossbarSetup::CalculateCrossbarSetupData(
+      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, 16, {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,15,15});
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
