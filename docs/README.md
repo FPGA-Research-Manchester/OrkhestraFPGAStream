@@ -15,7 +15,7 @@ ID - 1 | Sentence - 29 | Length - 1 | Rating - 1
 1|Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.|116|5
 2|Boring sentence|15|1
 
-Let's say we want to see the whole table in the original order on the interface as well as on Figure X. 
+Let's say we want to see the whole table in the original order on the interface as well as shown in the figure below. 
 
 <center><img src="buffer_to_interface.svg" width=100%></center>
 
@@ -162,7 +162,7 @@ X|X|31|31|31|31|31|31|31|31|31|31|31|31|31|*X*
 
 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
 --|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--
-*15*| *0* | *1*| *2* | *3*| *4* |*5*| *6*|*7* | *8*| *9 *| *10* | *11* |*12* |*13* | ***14***
+*15*| *0* | *1*| *2* | *3*| *4* |*5*| *6*|*7* | *8*| *9*| *10* | *11* |*12* |*13* | ***14***
 X | X | X | 2| 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 
 15| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14
 X | X | X | 2| 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 
@@ -209,7 +209,7 @@ We can see first the position selection and then the chunk selection configurati
 512/29 = ~17.7
 Log2(17) = ~4.1 
 2^4 = 16 
-16 X 2 X 16 = **512**
+16 X 2 X 16 = 512
 ```
 
 ### Output position selection
@@ -309,7 +309,79 @@ Before we go into modifying the data we also need to discuss one additional quir
 
 ## Number of chunks_per_record
 
-Further details needed here...
+The crossbar configuration is as explained before with records which are 1, 2, 4, 8, or even more chunks large. What happens if each record is 3 chunks large like it is the case for the part table from TPC-H? Well since the DMA is configured to have records with 3 chunks it will only send the 3 chunks of data to the interface. But the crossbar will have to be configured like it gets an additional made up chunk. That chunk can be ignored in the configuration. The way to do that is shown below for the chunk and position configurations for the input crossbar. In this example we assume we want all of the data from the part table in the original order on the interface wires.
+
+### Ignored chunk chunk selection
+0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--
+0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0
+1|1|1|1|1|1|1|1|1|1|1|1|1|1|1|1
+X|X|X|X|2|2|2|2|2|2|2|2|2|2|2|2
+X|X|X|X|X|X|X|X|X|X|X|X|X|X|X|X
+2|2|2|2|3|3|3|3|3|3|3|3|3|3|3|3
+3|3|3|3|4|4|4|4|4|4|4|4|4|4|4|4
+4|4|4|4|X|X|X|X|5|5|5|5|5|5|5|5
+X|X|X|X|X|X|X|X|X|X|X|X|X|X|X|X
+5|5|5|5|5|5|5|5|6|6|6|6|6|6|6|6
+6|6|6|6|6|6|6|6|7|7|7|7|7|7|7|7
+7|7|7|7|7|7|7|7|X|X|X|X|8|8|8|8
+X|X|X|X|X|X|X|X|X|X|X|X|X|X|X|X
+8|8|8|8|8|8|8|8|8|8|8|8|9|9|9|9
+9|9|9|9|9|9|9|9|9|9|9|9|10|10|10|10
+10|10|10|10|10|10|10|10|10|10|10|10|X|X|X|X
+X|X|X|X|X|X|X|X|X|X|X|X|X|X|X|X
+11|11|11|11|11|11|11|11|11|11|11|11|11|11|11|11
+12|12|12|12|12|12|12|12|12|12|12|12|12|12|12|12
+X|X|X|X|13|13|13|13|13|13|13|13|13|13|13|13
+X|X|X|X|X|X|X|X|X|X|X|X|X|X|X|X
+13|13|13|13|14|14|14|14|14|14|14|14|14|14|14|14
+14|14|14|14|15|15|15|15|15|15|15|15|15|15|15|15
+15|15|15|15|X|X|X|X|16|16|16|16|16|16|16|16
+X|X|X|X|X|X|X|X|X|X|X|X|X|X|X|X
+16|16|16|16|16|16|16|16|17|17|17|17|17|17|17|17
+17|17|17|17|17|17|17|17|18|18|18|18|18|18|18|18
+18|18|18|18|18|18|18|18|X|X|X|X|19|19|19|19
+X|X|X|X|X|X|X|X|X|X|X|X|X|X|X|X
+19|19|19|19|19|19|19|19|19|19|19|19|20|20|20|20
+20|20|20|20|20|20|20|20|20|20|20|20|21|21|21|21
+21|21|21|21|21|21|21|21|21|21|21|21|X|X|X|X
+X|X|X|X|X|X|X|X|X|X|X|X|X|X|X|X
+
+### Ignored chunk position selection
+0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--
+0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15
+0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15
+X|X|X|X|4|5|6|7|8|9|10|11|12|13|14|15
+X|X|X|X|X|X|X|X|X|X|X|X|X|X|X|X
+4|5|6|7|8|9|10|11|12|13|14|15|0|1|2|3
+4|5|6|7|8|9|10|11|12|13|14|15|0|1|2|3
+X|X|X|X|8|9|10|11|12|13|14|15|0|1|2|3
+X|X|X|X|X|X|X|X|X|X|X|X|X|X|X|X
+8|9|10|11|12|13|14|15|0|1|2|3|4|5|6|7
+8|9|10|11|12|13|14|15|0|1|2|3|4|5|6|7
+X|X|X|X|12|13|14|15|0|1|2|3|4|5|6|7
+X|X|X|X|X|X|X|X|X|X|X|X|X|X|X|X
+12|13|14|15|0|1|2|3|4|5|6|7|8|9|10|11
+12|13|14|15|0|1|2|3|4|5|6|7|8|9|10|11
+X|X|X|X|0|1|2|3|4|5|6|7|8|9|10|11
+X|X|X|X|X|X|X|X|X|X|X|X|X|X|X|X
+0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15
+0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15
+X|X|X|X|4|5|6|7|8|9|10|11|12|13|14|15
+X|X|X|X|X|X|X|X|X|X|X|X|X|X|X|X
+4|5|6|7|8|9|10|11|12|13|14|15|0|1|2|3
+4|5|6|7|8|9|10|11|12|13|14|15|0|1|2|3
+X|X|X|X|8|9|10|11|12|13|14|15|0|1|2|3
+X|X|X|X|X|X|X|X|X|X|X|X|X|X|X|X
+8|9|10|11|12|13|14|15|0|1|2|3|4|5|6|7
+8|9|10|11|12|13|14|15|0|1|2|3|4|5|6|7
+X|X|X|X|12|13|14|15|0|1|2|3|4|5|6|7
+X|X|X|X|X|X|X|X|X|X|X|X|X|X|X|X
+12|13|14|15|0|1|2|3|4|5|6|7|8|9|10|11
+12|13|14|15|0|1|2|3|4|5|6|7|8|9|10|11
+X|X|X|X|0|1|2|3|4|5|6|7|8|9|10|11
+X|X|X|X|X|X|X|X|X|X|X|X|X|X|X|X
 
 ## Problems with shuffling
 

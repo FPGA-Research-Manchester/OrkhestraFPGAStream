@@ -488,7 +488,7 @@ void DMACrossbarSetup::SetCrossbarSetupDataForStream(
   }
   for (const auto& thing : stream_setup_data.crossbar_setup_data) {
     std::cout << std::endl;
-    for (const auto& thing2 : thing.position_data) {
+    for (const auto& thing2 : thing.chunk_data) {
       std::cout << thing2 << " ";
     }
   }
