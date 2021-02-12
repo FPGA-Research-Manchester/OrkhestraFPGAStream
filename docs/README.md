@@ -17,7 +17,7 @@ ID - 1 | Sentence - 29 | Length - 1 | Rating - 1
 
 Let's say we want to see the whole table in the original order on the interface as well as on Figure X. 
 
-[Figure]
+<center><img src="buffer_to_interface.svg" width=100%></center>
 
 To do that we need to understand how much we need to configure. Each buffer can have 32 chunks of data in it where each chunk is 16 integers large. Thus one buffer can currently hold 2KB of data at a time. The crossbar has to be configured to map each integer in time and space to the interface wires. Do we then write more than 2KB of configuration data to give coordinates for each integer? No, in our case we configure an AXI burst size worth of records. Each burst has a full number of records transferred. So we need to configure records per burst amount of data. In our example the system would be configured to transfer 16 (512/32) records per burst and each record is fit into 2 (32/16) chunks of data. So we would need to configure 32 chunks of data which is 512 integers. 
 
@@ -68,7 +68,7 @@ Now, the configuration is done in 2 phases. First we configure the chunk selecti
 
 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
 --|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--
-*0 *| *1* | *2* | *3* | *4* | *5* | *6* | *7* |* 8* | *9* | *10* | *11* | *12* | *13* | *14 *| ***15***
+*0*| *1* | *2* | *3* | *4* | *5* | *6* | *7* |*8* | *9* | *10* | *11* | *12* | *13* | *14*| ***15***
 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
@@ -162,7 +162,7 @@ X|X|31|31|31|31|31|31|31|31|31|31|31|31|31|*X*
 
 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
 --|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--
-*15*| *0* | *1 *| *2* | *3 *| *4* |* 5 *| *6 *|* 7* | *8 *| *9 *| *10* | *11* |* 12* |* 13* | ***14***
+*15*| *0* | *1*| *2* | *3*| *4* |*5*| *6*|*7* | *8*| *9 *| *10* | *11* |*12* |*13* | ***14***
 X | X | X | 2| 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 
 15| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14
 X | X | X | 2| 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 
@@ -203,22 +203,124 @@ There's another crossbar to worry about as well. The one which places data at th
 
 Let's continue with the example we ended with at the input side. Here we can start seeing a slight complication. Since we don't want any garbage data between the records we won't have aligned data in the buffers any more after removing some of the data columns from the original table. Every record won't start from position 0 in the chunk which ID is equal to element/16. 
 
-We can see first the position selection and then the chunk selection configuration tables below. One thing you can notice is that the chunk selection table would be the same for the input if the table originally started with records which size is 29 integers. And we are still configuring 512 integers since 512/29 = ~17.7. Log2(17) = ~4.1 and 2^4 = 16. 16 X 2 X 16 = 512.
+We can see first the position selection and then the chunk selection configuration tables below. One thing you can notice is that the chunk selection table would be the same for the input if the table originally started with records which size is 29 integers. And we are still configuring 512 integers because of the following calculations:
 
-[Position selection]
+```
+512/29 = ~17.7
+Log2(17) = ~4.1 
+2^4 = 16 
+16 X 2 X 16 = **512**
+```
 
-[Chunk selection]
+### Output position selection
+
+0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--
+0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15
+X|X|X|3|4|5|6|7|8|9|10|11|12|13|14|15
+13|14|15|0|1|2|3|4|5|6|7|8|9|10|11|12
+13|14|15|X|X|X|3|4|5|6|7|8|9|10|11|12
+10|11|12|13|14|15|0|1|2|3|4|5|6|7|8|9
+10|11|12|13|14|15|X|X|X|3|4|5|6|7|8|9
+7|8|9|10|11|12|13|14|15|0|1|2|3|4|5|6
+7|8|9|10|11|12|13|14|15|X|X|X|3|4|5|6
+4|5|6|7|8|9|10|11|12|13|14|15|0|1|2|3
+4|5|6|7|8|9|10|11|12|13|14|15|X|X|X|3
+1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|0
+X|X|3|4|5|6|7|8|9|10|11|12|13|14|15|X
+14|15|0|1|2|3|4|5|6|7|8|9|10|11|12|13
+14|15|X|X|X|3|4|5|6|7|8|9|10|11|12|13
+11|12|13|14|15|0|1|2|3|4|5|6|7|8|9|10
+11|12|13|14|15|X|X|X|3|4|5|6|7|8|9|10
+8|9|10|11|12|13|14|15|0|1|2|3|4|5|6|7
+8|9|10|11|12|13|14|15|X|X|X|3|4|5|6|7
+5|6|7|8|9|10|11|12|13|14|15|0|1|2|3|4
+5|6|7|8|9|10|11|12|13|14|15|X|X|X|3|4
+2|3|4|5|6|7|8|9|10|11|12|13|14|15|0|1
+X|3|4|5|6|7|8|9|10|11|12|13|14|15|X|X
+15|0|1|2|3|4|5|6|7|8|9|10|11|12|13|14
+15|X|X|X|3|4|5|6|7|8|9|10|11|12|13|14
+12|13|14|15|0|1|2|3|4|5|6|7|8|9|10|11
+12|13|14|15|X|X|X|3|4|5|6|7|8|9|10|11
+9|10|11|12|13|14|15|0|1|2|3|4|5|6|7|8
+9|10|11|12|13|14|15|X|X|X|3|4|5|6|7|8
+6|7|8|9|10|11|12|13|14|15|0|1|2|3|4|5
+6|7|8|9|10|11|12|13|14|15|X|X|X|3|4|5
+3|4|5|6|7|8|9|10|11|12|13|14|15|0|1|2
+3|4|5|6|7|8|9|10|11|12|13|14|15|X|X|X
+
+### Output chunk selection
+0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--
+0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0
+X|X|X|1|1|1|1|1|1|1|1|1|1|1|1|1
+1|1|1|2|2|2|2|2|2|2|2|2|2|2|2|2
+2|2|2|X|X|X|3|3|3|3|3|3|3|3|3|3
+3|3|3|3|3|3|4|4|4|4|4|4|4|4|4|4
+4|4|4|4|4|4|X|X|X|5|5|5|5|5|5|5
+5|5|5|5|5|5|5|5|5|6|6|6|6|6|6|6
+6|6|6|6|6|6|6|6|6|X|X|X|7|7|7|7
+7|7|7|7|7|7|7|7|7|7|7|7|8|8|8|8
+8|8|8|8|8|8|8|8|8|8|8|8|X|X|X|9
+9|9|9|9|9|9|9|9|9|9|9|9|9|9|9|10
+X|X|10|10|10|10|10|10|10|10|10|10|10|10|10|X
+10|10|11|11|11|11|11|11|11|11|11|11|11|11|11|11
+11|11|X|X|X|12|12|12|12|12|12|12|12|12|12|12
+12|12|12|12|12|13|13|13|13|13|13|13|13|13|13|13
+13|13|13|13|13|X|X|X|14|14|14|14|14|14|14|14
+14|14|14|14|14|14|14|14|15|15|15|15|15|15|15|15
+15|15|15|15|15|15|15|15|X|X|X|16|16|16|16|16
+16|16|16|16|16|16|16|16|16|16|16|17|17|17|17|17
+17|17|17|17|17|17|17|17|17|17|17|X|X|X|18|18
+18|18|18|18|18|18|18|18|18|18|18|18|18|18|19|19
+X|19|19|19|19|19|19|19|19|19|19|19|19|19|X|X
+19|20|20|20|20|20|20|20|20|20|20|20|20|20|20|20
+20|X|X|X|21|21|21|21|21|21|21|21|21|21|21|21
+21|21|21|21|22|22|22|22|22|22|22|22|22|22|22|22
+22|22|22|22|X|X|X|23|23|23|23|23|23|23|23|23
+23|23|23|23|23|23|23|24|24|24|24|24|24|24|24|24
+24|24|24|24|24|24|24|X|X|X|25|25|25|25|25|25
+25|25|25|25|25|25|25|25|25|25|26|26|26|26|26|26
+26|26|26|26|26|26|26|26|26|26|X|X|X|27|27|27
+27|27|27|27|27|27|27|27|27|27|27|27|27|28|28|28
+28|28|28|28|28|28|28|28|28|28|28|28|28|X|X|X
  
-But the position selection is different since the order of the phases is reversed.
+But the position selection is different since the order of the phases is reversed. To summarise this is how you can think about input and output configurations:
 
-Non-aligned data isn't that big of a problem once you calculate how many records does it take to reach an aligned record again. Then this number of records can be iterated over and different cases have been tested against in this unit test[LINK TO TEST] But shuffling causes a lot more problems even on its own. This is discussed in the next section.
+* For input crossbars
+	1. Select which chunk the integer should be from for that current location - **vertical selection**
+	2. Select which position the integer should be from for that current location after the first selection has been made - **horisontal selection**
+* For output crossbars
+	1. Select which position the integer should be from for that current location - **horisontal selection**
+	2. Select which chunk the integer should be from for that current location after the first selection has been made - **vertical selection** 
+
+Non-aligned data isn't that big of a problem once you calculate how many records does it take to reach an aligned record again. Then this number of records can be iterated over and different cases have been tested against in this [unit test](../tests/dma_crossbar_setup_test.cpp) But shuffling causes a lot more problems even on its own. This is discussed in the next section.
 
 # The issues of modifying data with the crossbars
 
-Let's look at TPC-H part. This is how a record looks like.
+Let's look at TPC-H table named "part". This is how the table looks like.
 
-Before we go into modifying the data we also need to discuss one additional quirk of the system.
+P_PARTKEY - 1 | P_NAME - 14 | P_MFGR - 7 | P_BRAND - 3 | P_TYPE - 7| P_SIZE - 1 | P_CONTAINER - 3 | P_RETAILPRICE - 2 | P_COMMENT - 6
+------------ | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | -------------
+1|goldenrod lavender spring chocolate lace|Manufacturer#1           |Brand#13  |PROMO BURNISHED COPPER|7|JUMBO PKG |901.00|ly. slyly ironi
+2|blush thistle blue yellow saddle|Manufacturer#1           |Brand#13  |LARGE BRUSHED BRASS|1|LG CASE   |902.00|lar accounts amo
+
+Before we go into modifying the data we also need to discuss one additional quirk of the system which is only supporting power of two number of chunks per record.
 
 ## Number of chunks_per_record
 
-...
+Further details needed here...
+
+## Problems with shuffling
+
+We want to do the following actions with the crossbars:
+
+1. Remove data
+2. Duplicate data
+3. Reorder data
+
+These requirements can be specified with the parameters for the configuration. Further details needed here...
+
+# Multi channel stream setup
+
+There are some more details about multi-channel streams. Further details needed here...
