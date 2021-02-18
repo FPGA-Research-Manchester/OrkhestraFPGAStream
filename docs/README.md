@@ -412,7 +412,7 @@ First let's look at reordering data. To reorder data you can move it horisontall
 
 Let's assume we want to change this orignal data
 
-<!-- -->|<!-- -->|<!-- -->
+[]()  |  |  
 -|-|-
 1|a|A
 2|b|B
@@ -424,7 +424,7 @@ Let's assume we want to change this orignal data
 
 And we want to reorder the data to finally look like this after the input crossbar
 
-<!-- -->|<!-- -->|<!-- -->
+[]()  |  |  
 -|-|-
 A|a|1
 3|b|C
@@ -438,13 +438,13 @@ So for the first option of moving horisontally we use these settings:
 
 Chunk selection:
 
-<!-- -->|<!-- -->|<!-- -->
+[]()  |  |   
 -|-|-
 0|0|0
 
 Position selection:
 
-<!-- -->|<!-- -->|<!-- -->
+[]()  |  |  
 -|-|-
 2|1|0
 
@@ -452,14 +452,14 @@ For the second option of moving vertically we use these settings:
 
 Chunk selection:
 
-<!-- -->|<!-- -->|<!-- -->
+[]()  |  |  
 -|-|-
 2|1|2
 1|2|1
 
 Position selection:
 
-<!-- -->|<!-- -->|<!-- -->
+[]()  |  |  
 -|-|-
 0|1|2
 0|1|2
@@ -468,14 +468,14 @@ For the third working diagonal option we use these settings:
 
 Chunk selection:
 
-<!-- -->|<!-- -->|<!-- -->
+[]()  |  |  
 -|-|-
 4|3|3
 3|4|4
 
 Position selection:
 
-<!-- -->|<!-- -->|<!-- -->
+[]()  |  |  
 -|-|-
 1|0|2
 0|1|2
@@ -484,7 +484,7 @@ But now for the non-working diagonal case. We can't do it since we only have 2 s
 
 1st option. Swap chunks on the position 0. Then swap position 0 and 1 in chunk 0 to get the following result:
 
-<!-- -->|<!-- -->|<!-- -->
+[]()  |  |  
 -|-|-
 f|7|F
 6|g|G
@@ -493,7 +493,7 @@ You would need one more shuffle to get the desired end result.
 
 2nd option. Swap chunks on the position 1. Then swap positions 0 and 1 in chunk 1 to get the following result:
 
-<!-- -->|<!-- -->|<!-- -->
+   <!-- -->  |  <!-- -->  |  <!-- -->  
 -|-|-
 6|g|F 
 f|7|G
@@ -502,42 +502,42 @@ And again we need one more swap to get the desired end result. What's the differ
 
 In the first scenario we have this:
 
-<!-- -->|<!-- -->|<!-- -->
+[]()  |[]()  |[]()  
 -|-|-
 4|d|D
 5|e|E
 
 to
 
-<!-- -->|<!-- -->|<!-- -->
+[]()  |  |[]()  
 -|-|-
 d|5|D
 4|e|E
 
 In the second scenario we have the exact same swap + the one additional swap we can't make:
 
-<!-- -->|<!-- -->|<!-- -->
+  | |[]()  
 -|-|-
 6|f|F
 7|g|G
 
 to
 
-<!-- -->|<!-- -->|<!-- -->
+[]()  |  |
 -|-|-
 f|7|F
 6|g|G
 
 + 1 swap to
 
-<!-- -->|<!-- -->|<!-- -->
+[]()  |  |  
 -|-|-
 6|7|F
 f|g|G
 
 We could also use additional chunks and then we could do diagonal moves easily in various ways like this:
 
-<!-- -->|<!-- -->|<!-- --> 
+[]()  |[]()  |[]()   
 -|-|-
 6|X|X
 7|X|X
@@ -564,11 +564,11 @@ They look really similar. We need to look at from which position each integer co
 
 Good|Bad
 --|--
-<!-- -->| Chunk 0
+[]()  | Chunk 0
 1%3 = 1|0%3 = 0
 3%3 = 0|3%3 = 0
 2%3 = 2|2%3 = 2
-<!-- -->| Chunk 1
+[]()  | Chunk 1
 0%3 = 0|1%3 = 1
 4%3 = 1|4%3 = 1
 5%3 = 2|5%3 = 2
