@@ -199,7 +199,7 @@ Here we can see some of the shuffling taking place. For example, since we are no
 
 ## Output and non-aligned data
 
-There's another crossbar to worry about as well. The one which places data at the other end of the stream. Output configuration is the other way around in terms of the 2 phases. The position is chosen first and the chunk is chosen second.
+There's another crossbar to worry about as well. The one which places data at the other end of the stream. Output configuration is the other way around in terms of the 2 phases. The position is chosen first and the chunk is chosen second. But in the chunk selection instead of choosing from which chunk the integer comes from you choose to which chunk the integer will be placed to.
 
 Let's continue with the example we ended with at the input side. Here we can start seeing a slight complication. Since we don't want any garbage data between the records we won't have aligned data in the buffers any more after removing some of the data columns from the original table. Every record won't start from position 0 in the chunk which ID is equal to element/16. 
 
@@ -288,11 +288,11 @@ X|19|19|19|19|19|19|19|19|19|19|19|19|19|X|X
 But the position selection is different since the order of the phases is reversed. To summarise this is how you can think about input and output configurations:
 
 * For input crossbars
-	1. Select which chunk the integer should be from for that current location - **vertical selection**
-	2. Select which position the integer should be from for that current location after the first selection has been made - **horisontal selection**
+	1. Select which chunk the integer should be from for that current location - **vertical pull**
+	2. Select which position the integer should be from for that current location after the first selection has been made - **horisontal pull**
 * For output crossbars
-	1. Select which position the integer should be from for that current location - **horisontal selection**
-	2. Select which chunk the integer should be from for that current location after the first selection has been made - **vertical selection** 
+	1. Select which position the integer should be from for that current location - **horisontal pull**
+	2. Select which chunk the integer should go to from that current location after the first selection has been made - **vertical push** 
 
 Non-aligned data isn't that big of a problem once you calculate how many records does it take to reach an aligned record again. Then this number of records can be iterated over and different cases have been tested against in this [unit test](../tests/dma_crossbar_setup_test.cpp) But shuffling causes a lot more problems even on its own. This is discussed in the next section.
 
@@ -576,9 +576,9 @@ There is a problem when there are multiple integers from the same position in th
 
 The same problem shows up with the other crossbar. Then it's just multiple integers in the same chunk in different positions move to the same position in different chunks. Therefore to detect clashes you have to look at the configuration data column wise to see if integers in the same position don't come from the same chunk. To confirm that you can see that the in the previous example the working version doesn't work for output crossbar anymore.
 
-This problem doesn't show up more with misaligned data at the input crossbar. The distance between two integers is the same no matter how the record is aligned. Therefore the modulo with the interface size which determines the positions will always be clashing independent from the misalignement of the records. But with the output crossbar we have to use division with the interface size. Then the result does change depending on the alignment of the data. 
+This problem doesn't show up more with misaligned data at the input crossbar. The distance between two integers is the same no matter how the record is aligned. Therefore the modulo with the interface size which determines the positions will always be clashing independent from the misalignement of the records. But with the output crossbar we have to use division with the interface size. Then the result does change depending on the alignment of the data. But luckily we stream all data in an aligned fashion on the interface!
 
-So this problem just has to be solved in the aligned case for the input crossbar. But for the output crossbar the solution will also have to take misalignment into consideration. Before looking at the solution though let's look at the other 2 data manipulation options the crossbar has.
+So this problem just has to be solved in the aligned case for the input crossbar. For the output crossbar the mis-aligned case doesn't even show up. Before looking at the solution though let's look at the other 2 data manipulation options the crossbar has.
 
 ### Removing data
 
@@ -586,11 +586,13 @@ To simply remove data you can replace the parameters which configure the data pl
 
 ### Duplicating data
 
-With duplicating you can just duplicate the amount of chunks needed for the record and you can easily set the rest of the non-duplicated integers to X. The problem comes again if we want to keep the record data compact and it will probably then need diagonal movements again to shift the other data or to place the duplicated integers at the end of the record.
+For duplicating you can just pull integers from multiple locations. The input crossbar has two pulling selections while the output has one. Let's start with the output pulling selection. The horisontal pull. If you want to duplicate the first integer you will just have to configure two positions to have the value from position 0. And then for the vertical shuffling you can choose to which chunks the first integer goes to. For the vertical pulling it is the same. Just you can also duplicate with the vertical shuffle.
+
+But there are limits to how much we can dublicate! If all of the 32 chunks have valid data in them there isn't a 33rd chunk to use. Some of the data will be overwritten then. It's the same for the horisontal duplication. If all of the 16 integers in a chunk are valid then the duplication will overwrite some valid data. The horisontal duplication can't be fixed since we can't make the interface any wider. So duplicating on the output crossbar is restricted. On the input side you have another direction to duplicate though. And that direction can be expanded. If you are using all 32 chunks then you can reduce the burst size and you'll gain empty chunks to use!
 
 ### A compromise to support diagonal moves
 
-One solution described at the end of this document would be to insert junk data into the records before the crossbar. The junk data inserts don't fix the clashing problem all the time though because the inserts aren't fine grain enough. Thus we won't be trying to use it. It allows us to tightly pack the records but the extra complexity is not worth it at the moment since the interface throughput is larger than the AXI bursts anyway so we can afford to be more relaxed with the data packing. So the idea is to have the record contain junk data bubbles. This is fine for input. For output it's not that good since the DBMS would expect record fields in the order it requested. !!!The solution could be using NULL columns which then can be removed in software while writing the results back to the filesystem. !!!
+One solution described at the end of this document would be to insert junk data into the records before the crossbar. The junk data inserts don't fix the clashing problem all the time though because the inserts aren't fine grain enough. Thus we won't be trying to use it. It allows us to tightly pack the records but the extra complexity is not worth it at the moment since the interface throughput is larger than the AXI bursts anyway so we can afford to be more relaxed with the data packing. So the idea is to have the record contain junk data bubbles. This is fine for input. For output it's not that good since the DBMS would expect record fields in the order it requested. The solution will be using NULL columns which then can be removed in software while writing the results back to the filesystem.
 
 #### Clash free input
 
@@ -614,13 +616,86 @@ record_size = 6;
 selected_columns = {0,0,2,1,4,5,3};
 ```
 
-So instead of 2 chunks per record the data is using 3 chunks per record.  And we do this until we have a clash free integer ordering.
+and then to make it finally clash free
+
+```
+record_size = 6;
+selected_columns = {0,0,2,1,1,5,3,4};
+```
+
+To show you how the data looks like:
+
+#### Original
+
+[]()  |[]()  |[]()  
+-|-|-
+6|f|F
+7|g|G
+
+#### Clashing
+
+[]()  |[]()  |[]()  
+-|-|-
+6|7|F
+f|g|G
+
+#### Fixed
+
+[]()  |[]()  |[]()  
+-|-|-
+6|X|F
+f|X|G
+7|G|X
+
+So instead of 2 chunks per record the data is using 3 chunks per record. And we do this until we have a clash free integer ordering.
 
 #### Clash free output
 
-Need more details here...
+For the output crossbar there are usually less clashes since records have less chunks and there is less data manipulation on the output side. But since the order of all of the integers now matters and we don't want to have many bubbles we have less flexibility. So how would we fix the same example we used for the input? By adding a null data element. The order will be the same. The software can see the null element and not write it as a result.
 
-# Multi channel stream setup
+```
+record_size = 6;
+selected_columns = {0,3,2,1,4,5};
+```
+
+will change to
+
+```
+record_size = 6;
+selected_columns = {0,3,2,-1,1,4,5};
+```
+
+The -1 in the data tells the configurer to find garbage data to place in that location. If there is no garbage data available then the burst size can be reduced to avoid filling the buffers with only valid data. How the data would look like then:
+
+#### Original
+
+[]()  |[]()  |[]()  
+-|-|-
+6|f|F
+7|g|G
+
+#### Clashing
+
+[]()  |[]()  |[]()  
+-|-|-
+6|7|F
+f|g|G
+
+#### Fixed
+
+[]()  |[]()  |[]()  
+-|-|-
+6|7|F
+X|f|G
+G|X|X
+
+So basically for the output we would have to place garbage on the second clashing integer position. That will shift the rest of the integers away from the clash. And this can be done for all 16 positions rather than the 4 the method described in the end does. And then you can do the clash checks again until the record is clash free.
+
+# Smaller burst sizes
+
+How the crossbar behaves when the burst size is less than optimal? Optimal here means that the maximum number of records are put into the burst with as little garbage data as possible. 
+
+For this we need to understand 2 parameters with which we configure the DMA with. Records per DDR burst and DDR burst size. More details needed here...
 
 There are some more details about multi-channel streams. Further details needed here...
 
