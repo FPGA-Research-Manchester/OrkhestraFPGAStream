@@ -15,13 +15,13 @@ ID - 1 | Sentence - 29 | Length - 1 | Rating - 1
 1|Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.|116|5
 2|Boring sentence|15|1
 
-Let's say we want to see the whole table in the original order on the interface as well as shown in the figure below. 
+Let's say we want to see the whole table in the original order on the interface as shown in the figure below. 
 
 <center><img src="buffer_to_interface.svg" width=100%></center>
 
 To do that we need to understand how much we need to configure. Each buffer can have 32 chunks of data in it where each chunk is 16 integers large. Thus one buffer can currently hold 2KB of data at a time. The crossbar has to be configured to map each integer in time and space to the interface wires. Do we then write more than 2KB of configuration data to give coordinates for each integer? No, in our case we configure an AXI burst size worth of records. Each burst has a full number of records transferred. So we need to configure records per burst amount of data. In our example the system would be configured to transfer 16 (512/32) records per burst and each record is fit into 2 (32/16) chunks of data. So we would need to configure 32 chunks of data which is 512 integers. 
 
-As a side note, the system can only transfer power of 2 number of records. And it can't transfer more than 32 records. In our case 16 is a power of 2 and it is less than 32. But it if was more than 32 then we'd just choose 32 instead and if it wasn't a power of 2 we'd choose the next available power of 2 number.
+As a side note, the system can only transfer power of 2 number of records. And it can't transfer more than 32 records. In our case 16 is a power of 2 and it is less than 32. But it if was more than 32 then we'd just choose 32 instead. If the most optimal number of records wasn't a power of 2 we'd choose the next available power of 2 number.
 
 ## Input crossbar configuration
 
@@ -112,14 +112,14 @@ record_size = 32;
 selected_columns = {0,1,2,3,...,30,31};
 ```
 
-Let's say we only want the string data and none of the integer data from our table. In that case the input will be:
+Let's say we only want the string data and none of the integer data from our table. In that case the input will be missing the first index and the last two indices:
 
 ```
 record_size = 32;
 selected_columns = {1,2,3,...,28,29};
 ```
 
-We can see that we are not interested in the first and the last two integers for each record. To show which configuration inputs mark the garbage data I use X but in reality the FPGA will recieve chunk ID 31 and position 0 configuration for those integers marked with X below.  
+We can see that we are not interested in the first and the last two integers for each record. To show which configuration inputs mark the garbage data I use X but in reality the FPGA will recieve chunk ID 31 and position 0 configuration for those integers marked with X below. This will be explained more in a bit.
 
 ### Reduced chunk selection
 
@@ -199,11 +199,11 @@ Here we can see some of the shuffling taking place. For example, since we are no
 
 ## Output and non-aligned data
 
-There's another crossbar to worry about as well. The one which places data at the other end of the stream. Output configuration is the other way around in terms of the 2 phases. The position is chosen first and the chunk is chosen second. But in the chunk selection instead of choosing from which chunk the integer comes from you choose to which chunk the integer will be placed to.
+There's another crossbar to worry about as well. The one which places data at the other end of the stream. Output configuration is the other way around in terms of the 2 phases. The position is chosen first and the chunk is chosen second. But in the chunk selection instead of choosing the chunk the integer comes **from** you choose the chunk the integer will be placed **to**.
 
-Let's continue with the example we ended with at the input side. Here we can start seeing a slight complication. Since we don't want any garbage data between the records we won't have aligned data in the buffers any more after removing some of the data columns from the original table. Every record won't start from position 0 in the chunk which ID is equal to element/16. 
+Let's continue with the example we ended with at the input side. Here we can start seeing a slight complication. Since we don't want any garbage data between the records we won't have aligned data in the buffers any more after removing some of the data columns from the original table. Every record won't start from position 0 in the chunk which ID is equal to element/16. Therefore the end result will look similar to modulo scheduling.
 
-We can see first the position selection and then the chunk selection configuration tables below. One thing you can notice is that the chunk selection table would be the same for the input if the table originally started with records which size is 29 integers. And we are still configuring 512 integers because of the following calculations:
+We can see first the position selection and then the chunk selection configuration tables below. One thing you can notice is that the chunk selection table would be the same for the input if the table originally started with records whose size would have been 29 integers. And we are still configuring 512 integers because of the following calculations:
 
 ```
 512/29 = ~17.7
@@ -294,7 +294,9 @@ But the position selection is different since the order of the phases is reverse
 	1. Select which position the integer should be from for that current location - **horisontal pull**
 	2. Select which chunk the integer should go to from that current location after the first selection has been made - **vertical push** 
 
-Non-aligned data isn't that big of a problem once you calculate how many records does it take to reach an aligned record again. Then this number of records can be iterated over and different cases have been tested against in this [unit test](../tests/dma_crossbar_setup_test.cpp) But shuffling causes a lot more problems even on its own. This is discussed in the next section.
+What about the X-s? For the input the X-s can be any chunk or position index since both of the shuffles are configured with pulls. So you will just duplicate some data but you aren't interested in it anyway. But for the output we have one push operation. Which means you can overwrite useful data. In most cases the correct data will be written last. But in the case of vertical reordering you can lose data. Therefore X has to be some chunk index where we know that we don't care about the data in that particular position.  
+
+Non-aligned data isn't that big of a problem once you calculate how many records does it take to reach an aligned record again. Then this number of records can be iterated over and different cases have been tested against in this [unit test](../tests/dma_crossbar_setup_test.cpp). But shuffling causes a lot more problems even on its own. This is discussed in the next section.
 
 # The issues of modifying data with the crossbars
 
@@ -588,11 +590,13 @@ To simply remove data you can replace the parameters which configure the data pl
 
 For duplicating you can just pull integers from multiple locations. The input crossbar has two pulling selections while the output has one. Let's start with the output pulling selection. The horisontal pull. If you want to duplicate the first integer you will just have to configure two positions to have the value from position 0. And then for the vertical shuffling you can choose to which chunks the first integer goes to. For the vertical pulling it is the same. Just you can also duplicate with the vertical shuffle.
 
-But there are limits to how much we can dublicate! If all of the 32 chunks have valid data in them there isn't a 33rd chunk to use. Some of the data will be overwritten then. It's the same for the horisontal duplication. If all of the 16 integers in a chunk are valid then the duplication will overwrite some valid data. The horisontal duplication can't be fixed since we can't make the interface any wider. So duplicating on the output crossbar is restricted. On the input side you have another direction to duplicate though. And that direction can be expanded. If you are using all 32 chunks then you can reduce the burst size and you'll gain empty chunks to use!
+But there are limits to how much we can dublicate! If all of the 32 chunks have valid data in them there isn't a 33rd chunk to use. Some of the data will be overwritten then. It's the same for the horisontal duplication. If all of the 16 integers in a chunk are valid then the duplication will overwrite some valid data. The horisontal duplication can't be fixed since we can't make the interface any wider. So duplicating on the output crossbar is restricted. On the input side you have another direction to duplicate though. And that direction can be expanded. If you are using all 32 chunks then you can reduce the burst size and you'll gain empty chunks to use! More about that later on.
 
 ### A compromise to support diagonal moves
 
-One solution described at the end of this document would be to insert junk data into the records before the crossbar. The junk data inserts don't fix the clashing problem all the time though because the inserts aren't fine grain enough. Thus we won't be trying to use it. It allows us to tightly pack the records but the extra complexity is not worth it at the moment since the interface throughput is larger than the AXI bursts anyway so we can afford to be more relaxed with the data packing. So the idea is to have the record contain junk data bubbles. This is fine for input. For output it's not that good since the DBMS would expect record fields in the order it requested. The solution will be using NULL columns which then can be removed in software while writing the results back to the filesystem.
+One solution described at the end of this document would be to insert junk data into the records before the crossbar. The junk data inserts don't fix the clashing problem all the time though because the inserts aren't fine grain enough. Thus we won't be trying to use it. It allows us to tightly pack the records but the extra complexity is not worth it at the moment since the interface throughput is larger than the AXI bursts anyway so we can afford to be more relaxed with the data packing. So the idea is to have the record contain junk data bubbles. 
+
+This is fine for input. For output it's not that good since then we are wasting the limited throughput for transporting garbage data. But the DBMS would expect record fields in the order it requested and this constraint allows the solution to be simple. The solution will be using NULL columns which then can be removed in software while writing the results back to the filesystem. To further optimise this constraint can be ignored and then the columns can be in any arbitrary order on the output side to avoid NULL columns.
 
 #### Clash free input
 
@@ -645,7 +649,7 @@ f|g|G
 -|-|-
 6|X|F
 f|X|G
-7|G|X
+7|g|X
 
 So instead of 2 chunks per record the data is using 3 chunks per record. And we do this until we have a clash free integer ordering.
 
@@ -689,21 +693,55 @@ f|g|G
 X|f|G
 G|X|X
 
-So basically for the output we would have to place garbage on the second clashing integer position. That will shift the rest of the integers away from the clash. And this can be done for all 16 positions rather than the 4 the method described in the end does. And then you can do the clash checks again until the record is clash free.
+So basically for the output we would have to place garbage on the second clashing integer position. That will shift the rest of the integers away from the clash. And this can be done for all 16 positions which is better than 4, which the method described in the end allows. And then you can do the clash checks again until the record is clash free.
 
-# Smaller burst sizes
+# How to get more duplication space?
 
-How the crossbar behaves when the burst size is less than optimal? Optimal here means that the maximum number of records are put into the burst with as little garbage data as possible. 
+How the crossbar behaves when the all of the parameters aren't optimal? Optimal here means that the maximum number of records are put into the burst with as little garbage data as possible. For this we need to understand 3 parameters with which we configure the DMA with. 
 
-For this we need to understand 2 parameters with which we configure the DMA with. Records per DDR burst and DDR burst size. More details needed here...
+1. Records per DDR burst 
+2. DDR burst size
+3. Chunks per record
 
-There are some more details about multi-channel streams. Further details needed here...
+First of all, records per DDR burst means how many records will be placed into a single DDR burst. As briefly showed in the beginning of this document it is calculated by dividing the max DDR burst payload size size (512 integers) by the record size. And then it is changed to be smaller than or equal to 32 and to a number which is a power of 2. That power of 2 has to be a smaller one not the bigger one.
+
+Second, DDR burst size means how many clock cycles the burst lasts. This is straight forward to calculate. Simply multiply records per DDR burst with the size of a record to know how many integers of data is needed to transfer with a single burst. And then divide it by the throughput. In our system each clock cycle can transfer 4 integers worth of data. So the formula will look like this:
+
+```
+DDRBurstLength = ceil((RecordSize * RecordsPerDDRBurst) / 4)
+```
+
+Last, chunks per record means how many chunks does it take to fit a whole record. Since the width of the current interface is 16 integers then the chunks per record is a simple division between the size of the record and 16.
+
+As described in the beginning of the document we need to map the whole burst worth of records with the crossbar. To find out how many chunks of data we need to map we just need to multiply records per DDR burst with chunks per record. With the added caveat that the simply supported chunks per record must be a power of 2. So if it isn't a power of 2 additional chunks are needed to be configured in the crossbar but which are eventually ignored. Therefore the number of chunks which need to be configured is always a power of 2 and smaller than or equal to 32. But this is all assuming that we actually need all of that space for valid data. What if these parameters aren't as optimised?
+
+## Smaller burst sizes
+
+All of the described variables are important to understanding how we can get more duplication space. If we already have 32 chunks of useful data we need to decrease the burst size. We can only do that if we reduce the amount of records moved per DDR burst. Since it can only be a power of 2 then we just need to divide it by 2. And then recalculate the DDR burst length. Now with less records per burst we suddenly have half as much data as before. But that doesn't mean that we still don't need to configure 32 chunks worth of data. The records are actually placed into sections according to the records per burst parameter. If it is equal to 2 then the first record will be placed into chunks 0...7 and the second record is placed into chunks 8...15 instead of right after each other. That means we have chunks with no useful data to spend for duplication between the records and after the last record.
+
+Let's take another example. When the records per burst parameter is equal to 4 then the first record will be placed into chunks 0...3. The second into chunks 4...7 and so forth. But the record can be smaller than 4 chunks and therefore we have some free space to use for duplication and reordering. 
+
+## Multi-channel streams
+
+With multi-channel streams it is a little bit different. If there are fewer records per burst then the records get placed according to the chunks per record parameter instead. If it isn't a power of two it'll be made larger to be equal to the next power of 2 number as before. But this time the records actually get placed one after another so we won't get empty chunks to play with in the crossbar for data reordering and duplication. In order to get space for data duplication vertically we just have to set the chunks per record parameter higher. That can be incremented by one if that's all the space is needed but we need to keep in mind that more chunk configurations would be needed if it isn't a power of 2.
+
+Last important fact is that the multi-channel streams are only supported on the input side. For output side all streams are just regular streams and therefore will be placed according to the records per DDR burst parameter value.
+
+# General algorithm
+
+Just noting down the most general steps here:
+
+1. Query parsing -> All of the requirements for all of the query nodes
+2. Query scheduling -> Query nodes processing order
+3. Writing data to DDR -> Record size of the original data
+4. Checking for clashes -> Fixing stream and module parameters
+5. Configuring modules -> Extend required record format to the length of the burst and write the configuration data
 
 # Inserting junk data before crossbars
 
 Partial solution - Read only for curiosity!!!
 
-So one solution would be to add more garbage data before the crossbar as kind of a third shuffle. The problem is that the garbage data can't be inserted everywhere. Only at positions which mod 4 = 0; First let's look at a case where it works. 
+So one solution would be to add more garbage data before the crossbar to act like a third shuffle. The problem is that the garbage data can't be inserted everywhere. Only at positions which mod 4 = 0; First let's look at a case where it works. 
 
 Let's say we want the lower case characters next to each other. We have:
 
