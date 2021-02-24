@@ -38,4 +38,21 @@ TEST(DMACrossbarSpecifierTest, SpecifierDetectsOutputClash) {
       {0, 3, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0, 17, 18}));
 }
 
+TEST(DMACrossbarSpecifierTest, SpecifierDetectsOutputOverwrites) {
+  // Normal
+  EXPECT_FALSE(DMACrossbarSpecifier::IsOutputOverwritingData(
+      {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17}));
+  // Legal overwrites
+  EXPECT_FALSE(DMACrossbarSpecifier::IsOutputOverwritingData(
+      {0, 0, 2, 3, 0, 5, 15, 7, 8, 9, 2, 11, 1, 13, 14, 15, 16, 16}));
+  // Garbage data
+  EXPECT_FALSE(DMACrossbarSpecifier::IsOutputOverwritingData(
+      {0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1}));
+  // Too much duplication
+  EXPECT_TRUE(DMACrossbarSpecifier::IsOutputOverwritingData(
+      {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0}));
+  EXPECT_TRUE(DMACrossbarSpecifier::IsOutputOverwritingData(
+      {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18}));
+}
+
 }  // namespace

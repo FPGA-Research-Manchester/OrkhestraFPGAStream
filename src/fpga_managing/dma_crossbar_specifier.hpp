@@ -5,7 +5,11 @@ class DMACrossbarSpecifier {
   // Check modulo clashes
   static auto IsInputClashing(const std::vector<int>& record_specification) -> bool;
   // Check division clashes
-  static auto IsOutputClashing(const std::vector<int>& record_specification) -> bool;
+  static auto IsOutputClashing(const std::vector<int>& record_specification)
+      -> bool;
+  // Check if the output configuration is overwriting data
+  static auto IsOutputOverwritingData(const std::vector<int>& record_specification)
+      -> bool;
   // If you need garbage data how do I know that I have some? These functions
   // will figure it out and will change the additional values as required.
   /*auto ResolveInputClashes(const int record_size,

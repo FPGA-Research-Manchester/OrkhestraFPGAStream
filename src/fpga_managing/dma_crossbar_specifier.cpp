@@ -73,6 +73,30 @@ auto DMACrossbarSpecifier::IsOutputClashing(
   return false;
 }
 
+auto DMACrossbarSpecifier::IsOutputOverwritingData(
+    const std::vector<int>& record_specification) -> bool {
+  std::map<int, int> chunk_count;
+  for (int i = 0; i < record_specification.size(); i++) {
+    if (record_specification[i] != -1) {
+      if (chunk_count.find(record_specification[i] /
+                           query_acceleration_constants::kDatapathWidth) ==
+          chunk_count.end()) {
+        chunk_count[record_specification[i] /
+                    query_acceleration_constants::kDatapathWidth] = 1;
+      } else {
+        chunk_count[record_specification[i] /
+                    query_acceleration_constants::kDatapathWidth]++;
+      }
+    }
+  }
+  for (const auto& [chunk, count] : chunk_count) {
+    if (count > query_acceleration_constants::kDatapathWidth) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void DMACrossbarSpecifier::ResolveInputClashesMultiChannel(
     const int record_size, std::vector<int>& record_specification,
     const int records_per_ddr_burst, int& chunks_per_record) {}
