@@ -248,21 +248,4 @@ TEST(DMACrossbarSetupTest, RecordSize80InterfaceToBufferSetupCheck) {
       "DMACrossbarSetupTest/RecordSize80InterfaceToBufferPositionSetup.txt");
 }
 
-TEST(DMACrossbarSetupTest, thing) {
-  DMASetupData test_stream_setup_data;
-  test_stream_setup_data.is_input_stream = false;
-  ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
-
-  //DMACrossbarSetup::CalculateCrossbarSetupData(
-  //    kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, 16, {5,5,5,5,5,3,3,3,4,4,4,4});
-
-  DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, 16, {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,15,15});
-
-  ExpectConfigurationDataIsConfigured(
-      test_stream_setup_data,
-      "DMACrossbarSetupTest/RecordSize80InterfaceToBufferChunkSetup.txt",
-      "DMACrossbarSetupTest/RecordSize80InterfaceToBufferPositionSetup.txt");
-}
-
 }  // namespace
