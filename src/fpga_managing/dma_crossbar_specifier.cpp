@@ -1,11 +1,11 @@
 #include "dma_crossbar_specifier.hpp"
 
-#include <math.h>
-
+#include <cmath>
 #include <iostream>
 #include <map>
 #include <set>
 #include <utility>
+#include <stdexcept>
 
 #include "query_acceleration_constants.hpp"
 
@@ -97,21 +97,32 @@ auto DMACrossbarSpecifier::IsOutputOverwritingData(
   return false;
 }
 
+// Remove code duplication between these two methods
 void DMACrossbarSpecifier::ResolveInputClashesMultiChannel(
     const int record_size, std::vector<int>& record_specification,
-    const int records_per_ddr_burst, int& chunks_per_record) {}
-
+    const int records_per_ddr_burst, int& chunks_per_record) {
+  while (IsInputClashing(record_specification)) {
+    record_specification = {-1};
+  }
+}
 void DMACrossbarSpecifier::ResolveInputClashesSingleChannel(
     const int record_size, std::vector<int>& record_specification,
-    int& records_per_ddr_burst) {}
-
-void DMACrossbarSpecifier::ResolveOutputClashesMultiChannel(
-    const int record_size, std::vector<int>& record_specification,
-    const int records_per_ddr_burst, int& chunks_per_record) {}
+    int& records_per_ddr_burst) {
+  while (IsInputClashing(record_specification)) {
+    record_specification = {-1};
+  }
+}
 
 void DMACrossbarSpecifier::ResolveOutputClashesSingleChannel(
-    const int record_size, const std::vector<int> record_specification,
-    int& records_per_ddr_burst) {}
+    const int record_size, std::vector<int>& record_specification,
+    int& records_per_ddr_burst) {
+  if (IsOutputOverwritingData(record_specification)) {
+    throw std::runtime_error("Unresolvable input!");
+  }
+  while (IsOutputClashing(record_specification)) {
+    record_specification = {-1};
+  }
+}
 
 auto DMACrossbarSpecifier::ExtendSpecificationMultiChannel(
     const int record_size, const std::vector<int> record_specification,

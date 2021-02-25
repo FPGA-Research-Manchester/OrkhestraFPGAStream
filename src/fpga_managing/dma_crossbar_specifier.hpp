@@ -27,13 +27,9 @@ class DMACrossbarSpecifier {
   /*auto ResolveOutputClashes(const int record_size,
                             const std::vector<int> record_specification)
       -> std::vector<int>;*/
-
-  static void ResolveOutputClashesMultiChannel(
-      const int record_size, std::vector<int>& record_specification,
-      const int records_per_ddr_burst, int& chunks_per_record);
-
+  // Output crossbar can only deal with single channel streams
   static void ResolveOutputClashesSingleChannel(
-      const int record_size, const std::vector<int> record_specification,
+      const int record_size, std::vector<int>& record_specification,
       int& records_per_ddr_burst);
 
   // Figure out a way when do I need to reduce the burst size. Probably need
