@@ -4,10 +4,11 @@
 #include <iostream>
 #include <map>
 #include <set>
-#include <utility>
 #include <stdexcept>
+#include <utility>
 
 #include "query_acceleration_constants.hpp"
+#include "stream_parameter_calculator.hpp"
 
 auto DMACrossbarSpecifier::IsInputClashing(
     const std::vector<int>& record_specification) -> bool {
@@ -124,15 +125,73 @@ void DMACrossbarSpecifier::ResolveOutputClashesSingleChannel(
   }
 }
 
+// Can't throw any errors. Input only
 auto DMACrossbarSpecifier::ExtendSpecificationMultiChannel(
     const int record_size, const std::vector<int> record_specification,
     const int records_per_ddr_burst, const int chunks_per_record)
     -> std::vector<int> {
-  return std::vector<int>();
-}
+  std::vector<int> extended_specification;
+  const int next_power_of_two =
+      StreamParameterCalculator::FindNextPowerOfTwo(chunks_per_record);
 
+  for (int record_index = 0; record_index < records_per_ddr_burst;
+       record_index++) {
+    for (const auto& selection : record_specification) {
+      if (selection != -1) {
+        extended_specification.push_back(selection +
+                                         (record_size * record_index));
+      } else {
+        extended_specification.push_back(selection);
+      }
+    }
+    for (int junk_data_index = record_specification.size();
+         junk_data_index <
+         next_power_of_two * query_acceleration_constants::kDatapathWidth;
+         junk_data_index++) {
+      extended_specification.push_back(-1);
+    }
+  }
+
+  std::cout << "multi" << std::endl;
+  for (const auto& thing : extended_specification) {
+    std::cout << thing << ",";
+  }
+  std::cout << std::endl;
+
+  return extended_specification;
+}
 auto DMACrossbarSpecifier::ExtendSpecificationSingleChannel(
     const int record_size, const std::vector<int> record_specification,
     const int records_per_ddr_burst) -> std::vector<int> {
-  return std::vector<int>();
+  std::vector<int> extended_specification;
+
+  for (int record_index = 0; record_index < records_per_ddr_burst;
+       record_index++) {
+    for (const auto& selection : record_specification) {
+      if (selection != -1) {
+        extended_specification.push_back(selection +
+                                         (record_size * record_index));
+      } else {
+        extended_specification.push_back(selection);
+      }
+    }
+    for (int junk_data_index = record_specification.size();
+         junk_data_index < query_acceleration_constants::kDdrBurstSize/records_per_ddr_burst;
+         junk_data_index++) {
+      extended_specification.push_back(-1);
+    }
+  }
+
+  std::cout << "single"<< std::endl;
+  for (const auto& thing : extended_specification) {
+    std::cout << thing << ",";
+  }
+  std::cout << std::endl;
+
+  return extended_specification;
 }
+
+// For output instead of padding with -1 you just increment the thing. I want
+// here something from the 27th integer
+
+// Add two more methods to change -1 to valid numbers - can throw errors
