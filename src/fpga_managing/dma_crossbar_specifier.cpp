@@ -115,7 +115,7 @@ void DMACrossbarSpecifier::ResolveInputClashesSingleChannel(
 }
 
 void DMACrossbarSpecifier::ResolveOutputClashesSingleChannel(
-    const int record_size, std::vector<int>& record_specification,
+    int record_size, std::vector<int>& record_specification,
     int& records_per_ddr_burst) {
   if (IsOutputOverwritingData(record_specification)) {
     throw std::runtime_error("Unresolvable input!");
@@ -152,14 +152,9 @@ auto DMACrossbarSpecifier::ExtendSpecificationMultiChannel(
     }
   }
 
-  std::cout << "multi" << std::endl;
-  for (const auto& thing : extended_specification) {
-    std::cout << thing << ",";
-  }
-  std::cout << std::endl;
-
   return extended_specification;
 }
+
 auto DMACrossbarSpecifier::ExtendSpecificationSingleChannel(
     const int record_size, const std::vector<int> record_specification,
     const int records_per_ddr_burst) -> std::vector<int> {
@@ -176,22 +171,37 @@ auto DMACrossbarSpecifier::ExtendSpecificationSingleChannel(
       }
     }
     for (int junk_data_index = record_specification.size();
-         junk_data_index < query_acceleration_constants::kDdrBurstSize/records_per_ddr_burst;
+         junk_data_index <
+         query_acceleration_constants::kDdrBurstSize / records_per_ddr_burst;
          junk_data_index++) {
       extended_specification.push_back(-1);
     }
   }
 
-  std::cout << "single"<< std::endl;
-  for (const auto& thing : extended_specification) {
-    std::cout << thing << ",";
-  }
-  std::cout << std::endl;
-
   return extended_specification;
 }
 
-// For output instead of padding with -1 you just increment the thing. I want
-// here something from the 27th integer
+auto DMACrossbarSpecifier::ExtendOutputSpecification(
+    const std::vector<int> record_specification,
+    const int records_per_ddr_burst, const int chunks_per_record)
+    -> std::vector<int> {
+  std::vector<int> extended_specification;
+
+  for (int record_index = 0; record_index < records_per_ddr_burst;
+       record_index++) {
+    for (const auto& selection : record_specification) {
+      if (selection != -1) {
+        extended_specification.push_back(
+            selection + ((chunks_per_record *
+                          query_acceleration_constants::kDatapathWidth) *
+                         record_index));
+      } else {
+        extended_specification.push_back(selection);
+      }
+    }
+  }
+
+  return extended_specification;
+}
 
 // Add two more methods to change -1 to valid numbers - can throw errors
