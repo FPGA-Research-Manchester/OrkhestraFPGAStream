@@ -719,13 +719,17 @@ As described in the beginning of the document we need to map the whole burst wor
 
 All of the described variables are important to understanding how we can get more duplication space. If we already have 32 chunks of useful data we need to decrease the burst size. We can only do that if we reduce the amount of records moved per DDR burst. Since it can only be a power of 2 then we just need to divide it by 2. And then recalculate the DDR burst length. Now with less records per burst we suddenly have half as much data as before. But that doesn't mean that we still don't need to configure 32 chunks worth of data. The records are actually placed into sections according to the records per burst parameter. If it is equal to 2 then the first record will be placed into chunks 0...7 and the second record is placed into chunks 8...15 instead of right after each other. That means we have chunks with no useful data to spend for duplication between the records and after the last record.
 
-Let's take another example. When the records per burst parameter is equal to 4 then the first record will be placed into chunks 0...3. The second into chunks 4...7 and so forth. But the record can be smaller than 4 chunks and therefore we have some free space to use for duplication and reordering. 
+Let's take another example. When the records per burst parameter is equal to 4 then the first record will be placed into chunks 0...3. The second into chunks 4...7 and so forth. But the record can be smaller than 4 chunks and therefore we have some free space to use for duplication and reordering. And the additional free space is only in the crossbar configuration space. The records will be exactly the number of chunks the chunks_per_record variable is given to the crossbar. 
 
 ## Multi-channel streams
 
 With multi-channel streams it is a little bit different. If there are fewer records per burst then the records get placed according to the chunks per record parameter instead. If it isn't a power of two it'll be made larger to be equal to the next power of 2 number as before. But this time the records actually get placed one after another so we won't get empty chunks to play with in the crossbar for data reordering and duplication. In order to get space for data duplication vertically we just have to set the chunks per record parameter higher. That can be incremented by one if that's all the space is needed but we need to keep in mind that more chunk configurations would be needed if it isn't a power of 2.
 
 Last important fact is that the multi-channel streams are only supported on the input side. For output side all streams are just regular streams and therefore will be placed according to the records per DDR burst parameter value.
+
+## Record size
+
+One last variable to mention is record size. This variable shows how many integers worth of data there is in each record. This variable is needed for the input crossbar configuration. With record_size we know where the next record starts and how the input has to be handled after some of the data might have been deleted with the crossbar. The value is from the DBMS table data. But the DMA doesn't need the value. And the record size at the interface will have to be remembered since we only know the record_size at the input and output from the DBMS data. 
 
 # General algorithm
 
@@ -736,6 +740,8 @@ Just noting down the most general steps here:
 3. Writing data to DDR -> Record size of the original data
 4. Checking for clashes -> Fixing stream and module parameters
 5. Configuring modules -> Extend required record format to the length of the burst and write the configuration data
+
+How the clashes are checked and how the crossbar configuration data is extended is shown in the tests [here](../tests/dma_crossbar_specifier_test.cpp). The interesting thing to note in those tests is the input specification extension step after clearing clashes. First of all, the extension is mirroring the initial input specification. That's because the first integer is in position 15 rather than 0. Second, the input crossbar specifiation tells where the data should come from before the crossbar. The output crossbar specifaction tells where the data should go to after the crossbar. But thanks to these extensions the crossbar configuration data [generation](../src/fpga_managing/dma_crossbar_setup.cpp) is a lot easier.
 
 # Inserting junk data before crossbars
 

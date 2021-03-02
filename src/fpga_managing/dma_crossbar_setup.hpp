@@ -5,9 +5,7 @@
 #include "dma_setup_data.hpp"
 class DMACrossbarSetup {
  public:
-  static void CalculateCrossbarSetupData(const int& any_chunk,
-                                         const int& any_position,
-      DMASetupData& stream_setup_data,
+  static void CalculateCrossbarSetupData(DMASetupData& stream_setup_data,
       int stream_size,
                                          std::vector <int> selected_columns);
 

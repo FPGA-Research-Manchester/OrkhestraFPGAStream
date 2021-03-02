@@ -1,6 +1,7 @@
 #include "dma_crossbar_specifier.hpp"
 
 #include <cmath>
+#include <deque>
 #include <iostream>
 #include <map>
 #include <set>
@@ -125,7 +126,6 @@ void DMACrossbarSpecifier::ResolveOutputClashesSingleChannel(
   }
 }
 
-// Can't throw any errors. Input only
 auto DMACrossbarSpecifier::ExtendSpecificationMultiChannel(
     const int record_size, const std::vector<int> record_specification,
     const int records_per_ddr_burst, const int chunks_per_record)
@@ -136,21 +136,50 @@ auto DMACrossbarSpecifier::ExtendSpecificationMultiChannel(
 
   for (int record_index = 0; record_index < records_per_ddr_burst;
        record_index++) {
+    std::deque<int> chunk_specfication;
     for (const auto& selection : record_specification) {
       if (selection != -1) {
-        extended_specification.push_back(selection +
-                                         (record_size * record_index));
+        const int extended_selection = selection + (record_size * record_index);
+        const int selection_original_chunk =
+            extended_selection / query_acceleration_constants::kDatapathWidth;
+        const int selection_position =
+            query_acceleration_constants::kDatapathWidth - 1 -
+            (extended_selection % query_acceleration_constants::kDatapathWidth);
+
+        chunk_specfication.push_front(
+            (query_acceleration_constants::kDatapathWidth *
+                 (selection_original_chunk) +
+             selection_position));
       } else {
-        extended_specification.push_back(selection);
+        chunk_specfication.push_front(selection);
+      }
+      if (chunk_specfication.size() ==
+          query_acceleration_constants::kDatapathWidth) {
+        extended_specification.insert(std::end(extended_specification),
+                                      std::begin(chunk_specfication),
+                                      std::end(chunk_specfication));
+        chunk_specfication.clear();
       }
     }
     for (int junk_data_index = record_specification.size();
          junk_data_index <
          next_power_of_two * query_acceleration_constants::kDatapathWidth;
          junk_data_index++) {
-      extended_specification.push_back(-1);
+      chunk_specfication.push_front(-1);
+      if (chunk_specfication.size() ==
+          query_acceleration_constants::kDatapathWidth) {
+        extended_specification.insert(std::end(extended_specification),
+                                      std::begin(chunk_specfication),
+                                      std::end(chunk_specfication));
+        chunk_specfication.clear();
+      }
     }
   }
+
+  for (const auto& thing : extended_specification) {
+    std::cout << thing << ",";
+  }
+  std::cout << std::endl;
 
   return extended_specification;
 }
@@ -162,21 +191,50 @@ auto DMACrossbarSpecifier::ExtendSpecificationSingleChannel(
 
   for (int record_index = 0; record_index < records_per_ddr_burst;
        record_index++) {
+    std::deque<int> chunk_specfication;
     for (const auto& selection : record_specification) {
       if (selection != -1) {
-        extended_specification.push_back(selection +
-                                         (record_size * record_index));
+        const int extended_selection = selection + (record_size * record_index);
+        const int selection_original_chunk =
+            extended_selection / query_acceleration_constants::kDatapathWidth;
+        const int selection_position =
+            query_acceleration_constants::kDatapathWidth - 1 -
+            (extended_selection % query_acceleration_constants::kDatapathWidth);
+
+        chunk_specfication.push_front(
+            (query_acceleration_constants::kDatapathWidth *
+                 (selection_original_chunk) +
+             selection_position));
       } else {
-        extended_specification.push_back(selection);
+        chunk_specfication.push_front(selection);
+      }
+      if (chunk_specfication.size() ==
+          query_acceleration_constants::kDatapathWidth) {
+        extended_specification.insert(std::end(extended_specification),
+                                      std::begin(chunk_specfication),
+                                      std::end(chunk_specfication));
+        chunk_specfication.clear();
       }
     }
     for (int junk_data_index = record_specification.size();
          junk_data_index <
          query_acceleration_constants::kDdrBurstSize / records_per_ddr_burst;
          junk_data_index++) {
-      extended_specification.push_back(-1);
+      chunk_specfication.push_front(-1);
+      if (chunk_specfication.size() ==
+          query_acceleration_constants::kDatapathWidth) {
+        extended_specification.insert(std::end(extended_specification),
+                                      std::begin(chunk_specfication),
+                                      std::end(chunk_specfication));
+        chunk_specfication.clear();
+      }
     }
   }
+
+  for (const auto& thing : extended_specification) {
+    std::cout << thing << ",";
+  }
+  std::cout << std::endl;
 
   return extended_specification;
 }

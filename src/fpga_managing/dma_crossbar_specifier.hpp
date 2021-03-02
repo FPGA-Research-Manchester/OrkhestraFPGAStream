@@ -11,11 +11,6 @@ class DMACrossbarSpecifier {
   // Check if the output configuration is overwriting data
   static auto IsOutputOverwritingData(
       const std::vector<int>& record_specification) -> bool;
-  // If you need garbage data how do I know that I have some? These functions
-  // will figure it out and will change the additional values as required.
-  /*auto ResolveInputClashes(const int record_size,
-                           const std::vector<int> record_specification)
-      -> std::vector<int>;*/
 
   static void ResolveInputClashesMultiChannel(
       const int record_size, std::vector<int>& record_specification,
@@ -25,16 +20,13 @@ class DMACrossbarSpecifier {
       const int record_size, std::vector<int>& record_specification,
       int& records_per_ddr_burst);
 
-  /*auto ResolveOutputClashes(const int record_size,
-                            const std::vector<int> record_specification)
-      -> std::vector<int>;*/
   // Output crossbar can only deal with single channel streams
   static void ResolveOutputClashesSingleChannel(
       int record_size, std::vector<int>& record_specification,
       int& records_per_ddr_burst);
 
-  // Figure out a way when do I need to reduce the burst size. Probably need
-  // some method for it. By these methods the parameters have been figured out!
+  // Since the first data element starts from pos 15 we want to keep the same
+  // ordering on the interface and thus the extended specification is mirrored.
   static auto ExtendSpecificationMultiChannel(
       const int record_size, const std::vector<int> record_specification,
       const int records_per_ddr_burst, const int chunks_per_record)
@@ -42,6 +34,8 @@ class DMACrossbarSpecifier {
   static auto ExtendSpecificationSingleChannel(
       const int record_size, const std::vector<int> record_specification,
       const int records_per_ddr_burst) -> std::vector<int>;
+  // Extended output specification is for specifying what happens with the data
+  // on the interface rather than how it will look like after the crossbar
   static auto ExtendOutputSpecification(
       const std::vector<int> record_specification,
       const int records_per_ddr_burst, const int chunks_per_record)

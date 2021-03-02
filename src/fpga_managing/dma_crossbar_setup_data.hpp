@@ -3,9 +3,9 @@
 #include <vector>
 struct DMACrossbarSetupData {
   DMACrossbarSetupData()
-      : chunk_data(query_acceleration_constants::kDatapathWidth),
-        position_data(query_acceleration_constants::kDatapathWidth) {}
-  // TODO(Kaspar): Think about these names!
-  std::vector<int> chunk_data;
-  std::vector<int> position_data;
+      : chunk_selection(query_acceleration_constants::kDatapathWidth,
+                        (query_acceleration_constants::kDatapathLength - 1)),
+        position_selection(query_acceleration_constants::kDatapathWidth, 0) {}
+  std::vector<int> chunk_selection;
+  std::vector<int> position_selection;
 };
