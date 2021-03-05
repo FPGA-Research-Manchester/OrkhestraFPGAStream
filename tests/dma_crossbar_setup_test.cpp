@@ -87,7 +87,6 @@ TEST(DMACrossbarSetupTest, RecordSize18BufferToInterfaceSetupCheck) {
 TEST(DMACrossbarSetupTest, RecordSize18InterfaceToBufferSetupCheck) {
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
-  test_stream_setup_data.active_channel_count = -1;
   test_stream_setup_data.chunks_per_record = 2;
   test_stream_setup_data.records_per_ddr_burst = 16;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
@@ -121,7 +120,6 @@ TEST(DMACrossbarSetupTest, RecordSize4BufferToInterfaceSetupCheck) {
 TEST(DMACrossbarSetupTest, RecordSize4InterfaceToBufferSetupCheck) {
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
-  test_stream_setup_data.active_channel_count = -1;
   test_stream_setup_data.chunks_per_record = 1;
   test_stream_setup_data.records_per_ddr_burst = 32;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
@@ -155,7 +153,6 @@ TEST(DMACrossbarSetupTest, RecordSize46BufferToInterfaceSetupCheck) {
 TEST(DMACrossbarSetupTest, RecordSize46InterfaceToBufferSetupCheck) {
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
-  test_stream_setup_data.active_channel_count = -1;
   test_stream_setup_data.chunks_per_record = 3;
   test_stream_setup_data.records_per_ddr_burst = 8;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
@@ -189,7 +186,6 @@ TEST(DMACrossbarSetupTest, RecordSize57BufferToInterfaceSetupCheck) {
 TEST(DMACrossbarSetupTest, RecordSize57InterfaceToBufferSetupCheck) {
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
-  test_stream_setup_data.active_channel_count = -1;
   test_stream_setup_data.chunks_per_record = 4;
   test_stream_setup_data.records_per_ddr_burst = 8;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
@@ -223,7 +219,6 @@ TEST(DMACrossbarSetupTest, RecordSize478BufferToInterfaceSetupCheck) {
 TEST(DMACrossbarSetupTest, RecordSize478InterfaceToBufferSetupCheck) {
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
-  test_stream_setup_data.active_channel_count = -1;
   test_stream_setup_data.chunks_per_record = 30;
   test_stream_setup_data.records_per_ddr_burst = 1;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
@@ -257,7 +252,6 @@ TEST(DMACrossbarSetupTest, RecordSize80BufferToInterfaceSetupCheck) {
 TEST(DMACrossbarSetupTest, RecordSize80InterfaceToBufferSetupCheck) {
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
-  test_stream_setup_data.active_channel_count = -1;
   test_stream_setup_data.chunks_per_record = 5;
   test_stream_setup_data.records_per_ddr_burst = 4;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
@@ -269,6 +263,26 @@ TEST(DMACrossbarSetupTest, RecordSize80InterfaceToBufferSetupCheck) {
       test_stream_setup_data,
       "DMACrossbarSetupTest/RecordSize80InterfaceToBufferChunkSetup.txt",
       "DMACrossbarSetupTest/RecordSize80InterfaceToBufferPositionSetup.txt");
+}
+
+TEST(DMACrossbarSetupTest, InterfaceToBufferWithOverwritesSetup) {
+  DMASetupData test_stream_setup_data;
+  test_stream_setup_data.is_input_stream = false;
+  test_stream_setup_data.chunks_per_record = 2;
+  test_stream_setup_data.records_per_ddr_burst = 16;
+  ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
+
+  const int any_record_size = -1;
+
+  DMACrossbarSetup::CalculateCrossbarSetupData(
+      test_stream_setup_data, any_record_size,
+      {0,  1,  -1, 3,  4,  5,  22, 7,  -1, 25, 10, 11, 12, 13, 14, 15, 
+      16, 17, 18, 19, 20, 21, 6, 23, 24, 9, 26, 27, 28, -1, -1, 25});
+
+  ExpectConfigurationDataIsConfigured(
+      test_stream_setup_data,
+      "DMACrossbarSetupTest/InterfaceToBufferWithOverwritesChunkSetup.txt",
+      "DMACrossbarSetupTest/InterfaceToBufferWithOverwritesPositionSetup.txt");
 }
 
 }  // namespace

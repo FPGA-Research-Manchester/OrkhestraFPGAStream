@@ -5,89 +5,46 @@
 #include "dma_setup_data.hpp"
 class DMACrossbarSetup {
  public:
-  static void CalculateCrossbarSetupData(DMASetupData& stream_setup_data,
-      int stream_size,
-                                         std::vector <int> selected_columns);
+  static void CalculateCrossbarSetupData(
+      DMASetupData& stream_setup_data, const int stream_size,
+      const std::vector<int>& selected_columns);
 
  private:
-  static void CalculateInterfaceToBufferSetupConfig(
-      std::queue<int>& source_chunks, std::queue<int>& target_positions,
-      const int& any_chunk, const int& any_position,
-      const int& last_chunk_leftover_size, const int& steps_per_cycle,
-      const int& cycle_count, const int& chunks_per_record,
-      const float& cycle_step_chunk_increase,
-      std::vector<int>::iterator& selected_columns_iterator);
-  static void CalculateBufferToInterfaceSetupConfig(
-      std::queue<int>& source_chunks, std::queue<int>& target_positions,
-      const int& any_chunk, const int& any_position,
-      const int& last_chunk_leftover_size, const int& steps_per_cycle,
-      const int& cycle_count, const int& chunks_per_record,
-      const float& cycle_step_chunk_increase,
-      std::vector<int>::iterator& selected_columns_iterator);
-
-  static void InitialDataSetupFromInterfaceToBuffer(
-      const int& chunks_per_record, const int& current_cycle_step_initial_chunk,
-      const int& current_offset_point, const int& current_position_shift,
-      std::queue<int>& source_chunks, std::queue<int>& target_positions,
-      std::vector<int>::iterator& selected_columns_iterator);
-  static void FinalDataSetupFromInterfaceToBuffer(
-      const int& used_leftover_chunks_count,
-      const int& current_cycle_step_initial_chunk,
-      const int& last_chunk_leftover_size,
-      const int& chunks_per_record, std::queue<int>& source_chunks,
-      const int& any_chunk, std::queue<int>& target_positions, const int& any_position,
-      std::vector<int>::iterator& selected_columns_iterator);
-  
-  static void InitialDataSetupFromBufferToInterface(
-      const int& chunks_per_record, const int& current_cycle_step_initial_chunk,
-      const int& current_offset_point, std::queue<int>& source_chunks,
-      std::queue<int>& target_positions,
-      std::vector<int>::iterator& selected_columns_iterator);
-  static void FinalDataSetupFromBufferToInterface(
-      const int& used_leftover_chunks_count,
-      const int& current_cycle_step_initial_chunk,
-      const int& current_offset_point,
-      const int& last_chunk_leftover_size,
-      const int& chunks_per_record,
-      std::queue<int>& source_chunks, const int& any_chunk, std::queue<int>& target_positions,
-      const int& any_position,
-      std::vector<int>::iterator& selected_columns_iterator);
-
-  static void InitialChunkSetupFromBufferToInterface(
-      const int& current_offset_point, std::queue<int>& source_chunks,
-      const int& current_chunk,
-      std::vector<int>::iterator& selected_columns_iterator);
-  static void InitialPositionSetupFromBufferToInterface(
-      const int& current_offset_point, std::queue<int>& target_positions,
-      std::vector<int>::iterator& selected_columns_iterator);
-  static void FinalPositionSetupFromBufferToInterface(
-      const int& last_chunk_leftover_size, const int& current_offset_point,
-      std::queue<int>& target_positions, const int& any_position,
-      std::vector<int>::iterator& selected_columns_iterator);
-  static void FinalChunkSetupFromBufferToInterface(
-      const int& used_leftover_chunks_count,
-      const int& last_chunk_leftover_size,
-      const int& current_cycle_step_initial_chunk, const int& chunks_per_record,
-      std::queue<int>& source_chunks, const int& any_chunk,
-      std::vector<int>::iterator& selected_columns_iterator);
-
-  static void InitialChunkSetupFromInterfaceToBuffer(
-      const int& current_offset_point, std::queue<int>& source_chunks,
-      const int& current_chunk,
-      std::vector<int>::iterator& selected_columns_iterator);
-  static void InitialPositionSetupFromInterfaceToBuffer(
-      const int& current_position_shift, std::queue<int>& target_positions,
-      std::vector<int>::iterator& selected_columns_iterator);
-  
-  static void SetCrossbarSetupDataForStream(std::queue<int>& source_chunks,
-                                            std::queue<int>& target_positions,
-                                            DMASetupData& stream_setup_data);
-
-  static void AddBubbleChunkAndPositionData(std::queue<int>& source_chunks,
-                                            std::queue<int>& target_positions,
-                                            const int& chunks_per_record,
-                                            const int& any_chunk,
-                                            const int& any_position);
-
   static auto GetReverseIndex(int index, int row_size) -> int;
+
+  static void SetUpEmptyCrossbarSetupData(DMASetupData& stream_setup_data,
+                                          const int required_chunk_count);
+
+  static void FillSetupDataWithNegativePositions(
+      DMASetupData& stream_setup_data);
+
+  static void SetNextInputConfiguration(DMASetupData& stream_setup_data,
+                                        const int current_location,
+                                        const int target_location);
+  static void SetNextOutputConfiguration(DMASetupData& stream_setup_data,
+                                         const int current_location,
+                                         const int target_location);
+
+  static auto CreateFreeChunksVector() -> std::vector<int>;
+  static void MarkChunksAsUsed(const DMASetupData& stream_setup_data,
+                               const int column_id,
+                               std::vector<int>& free_chunks);
+  static void AllocateAvailableChunks(DMASetupData& stream_setup_data,
+                                      const int column_id,
+                                      const std::vector<int>& free_chunks);
+  static void InsertMissingEmptySetupChunks(
+      DMASetupData& stream_setup_data,
+      const int missing_chunk_count_per_record);
+
+  static void PrintCrossbarConfigData(
+      const std::vector<int>& expanded_column_selection,
+      const DMASetupData& stream_setup_data);
+
+  static void ConfigureInputCrossbarSetupData(
+      const std::vector<int>& selected_columns, DMASetupData& stream_setup_data,
+      std::vector<int>& expanded_column_selection, const int& record_size);
+  static void ConfigureOutputCrossbarSetupData(
+      const std::vector<int>& selected_columns,
+      std::vector<int>& expanded_column_selection,
+      DMASetupData& stream_setup_data);
 };
