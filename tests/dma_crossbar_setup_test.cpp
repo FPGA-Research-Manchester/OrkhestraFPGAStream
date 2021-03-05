@@ -84,7 +84,7 @@ TEST(DMACrossbarSetupTest, RecordSize18BufferToInterfaceSetupCheck) {
       "DMACrossbarSetupTest/RecordSize18BufferToInterfacePositionSetup.txt");
 }
 
-TEST(DMACrossbarSetupTest, DISABLED_RecordSize18InterfaceToBufferSetupCheck) {
+TEST(DMACrossbarSetupTest, RecordSize18InterfaceToBufferSetupCheck) {
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
   test_stream_setup_data.active_channel_count = -1;
@@ -118,7 +118,7 @@ TEST(DMACrossbarSetupTest, RecordSize4BufferToInterfaceSetupCheck) {
       "DMACrossbarSetupTest/RecordSize4BufferToInterfacePositionSetup.txt");
 }
 
-TEST(DMACrossbarSetupTest, DISABLED_RecordSize4InterfaceToBufferSetupCheck) {
+TEST(DMACrossbarSetupTest, RecordSize4InterfaceToBufferSetupCheck) {
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
   test_stream_setup_data.active_channel_count = -1;
@@ -152,7 +152,7 @@ TEST(DMACrossbarSetupTest, RecordSize46BufferToInterfaceSetupCheck) {
       "DMACrossbarSetupTest/RecordSize46BufferToInterfacePositionSetup.txt");
 }
 
-TEST(DMACrossbarSetupTest, DISABLED_RecordSize46InterfaceToBufferSetupCheck) {
+TEST(DMACrossbarSetupTest, RecordSize46InterfaceToBufferSetupCheck) {
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
   test_stream_setup_data.active_channel_count = -1;
@@ -186,7 +186,7 @@ TEST(DMACrossbarSetupTest, RecordSize57BufferToInterfaceSetupCheck) {
       "DMACrossbarSetupTest/RecordSize57BufferToInterfacePositionSetup.txt");
 }
 
-TEST(DMACrossbarSetupTest, DISABLED_RecordSize57InterfaceToBufferSetupCheck) {
+TEST(DMACrossbarSetupTest, RecordSize57InterfaceToBufferSetupCheck) {
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
   test_stream_setup_data.active_channel_count = -1;
@@ -220,7 +220,7 @@ TEST(DMACrossbarSetupTest, RecordSize478BufferToInterfaceSetupCheck) {
       "DMACrossbarSetupTest/RecordSize478BufferToInterfacePositionSetup.txt");
 }
 
-TEST(DMACrossbarSetupTest, DISABLED_RecordSize478InterfaceToBufferSetupCheck) {
+TEST(DMACrossbarSetupTest, RecordSize478InterfaceToBufferSetupCheck) {
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
   test_stream_setup_data.active_channel_count = -1;
@@ -254,7 +254,7 @@ TEST(DMACrossbarSetupTest, RecordSize80BufferToInterfaceSetupCheck) {
       "DMACrossbarSetupTest/RecordSize80BufferToInterfacePositionSetup.txt");
 }
 
-TEST(DMACrossbarSetupTest, DISABLED_RecordSize80InterfaceToBufferSetupCheck) {
+TEST(DMACrossbarSetupTest, RecordSize80InterfaceToBufferSetupCheck) {
   DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
   test_stream_setup_data.active_channel_count = -1;

@@ -1,5 +1,6 @@
 #include "dma_crossbar_setup.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <iostream>
@@ -73,20 +74,193 @@ void DMACrossbarSetup::CalculateCrossbarSetupData(
         selected_columns, stream_setup_data.records_per_ddr_burst,
         stream_setup_data.chunks_per_record);
     for (int current_chunk_count = stream_setup_data.crossbar_setup_data.size();
-         current_chunk_count < expanded_column_selection.size() /
-                                   query_acceleration_constants::kDatapathWidth;
+         current_chunk_count < stream_setup_data.chunks_per_record *
+                                   stream_setup_data.records_per_ddr_burst;
          current_chunk_count++) {
       stream_setup_data.crossbar_setup_data.emplace_back(
           DMACrossbarSetupData());
     }
-    // record_size tells us the location where garbage data starts at the last chunk of the record
-    for (int current_selection_id = 0;
-         current_selection_id < expanded_column_selection.size();
-         current_selection_id++) {
-      if (expanded_column_selection[current_selection_id] != -1) {
-        // expanded_column_selection has to be changed to show where integers go to rather than where they come from.
+
+    // Check if the default 31st chunk selection can be used
+    bool needs_overwrite_check =
+        expanded_column_selection.size() -
+            std::count(expanded_column_selection.begin(),
+                       expanded_column_selection.end(), -2) >
+        query_acceleration_constants::kDdrBurstSize -
+            query_acceleration_constants::kDatapathWidth;
+
+    if (needs_overwrite_check) {
+      for (int chunk_index = 0;
+           chunk_index < stream_setup_data.crossbar_setup_data.size();
+           chunk_index++) {
+        for (int position_index = 0;
+             position_index < stream_setup_data.crossbar_setup_data[chunk_index]
+                                  .chunk_selection.size();
+             position_index++) {
+          stream_setup_data.crossbar_setup_data[chunk_index]
+              .chunk_selection[position_index] = -1;
+        }
       }
     }
+
+    // for (int current_selection_id = 0;
+    //     current_selection_id < expanded_column_selection.size();
+    //     current_selection_id++) {
+    //  if (expanded_column_selection[current_selection_id] >= 0) {
+    //    stream_setup_data
+    //        .crossbar_setup_data
+    //            [expanded_column_selection[current_selection_id] /
+    //             query_acceleration_constants::kDatapathWidth]
+    //        .position_selection[current_selection_id %
+    //                            query_acceleration_constants::kDatapathWidth]
+    //                            =
+    //        expanded_column_selection[current_selection_id] %
+    //        query_acceleration_constants::kDatapathWidth;
+
+    //    stream_setup_data
+    //        .crossbar_setup_data
+    //            [expanded_column_selection[current_selection_id] /
+    //             query_acceleration_constants::kDatapathWidth]
+    //        .chunk_selection[current_selection_id %
+    //                         query_acceleration_constants::kDatapathWidth] =
+    //        current_selection_id /
+    //        query_acceleration_constants::kDatapathWidth;
+    //  }
+    //}
+
+    int post_record_junk_data_count = 0;
+    for (int selection_id = 0; selection_id < expanded_column_selection.size();
+         selection_id++) {
+      const int current_reversed_selection_id = GetReverseIndex(
+          selection_id, query_acceleration_constants::kDatapathWidth);
+      const int current_reversed_selection =
+          expanded_column_selection[current_reversed_selection_id];
+      if (current_reversed_selection == -1) {
+        // Do nothing
+      } else if (current_reversed_selection == -2) {
+        post_record_junk_data_count++;
+      } else {
+        const int current_location =
+            GetReverseIndex(selection_id - post_record_junk_data_count,
+                            query_acceleration_constants::kDatapathWidth);
+
+        stream_setup_data
+            .crossbar_setup_data[current_reversed_selection /
+                                 query_acceleration_constants::kDatapathWidth]
+            .position_selection[current_location %
+                                query_acceleration_constants::kDatapathWidth] =
+            current_reversed_selection %
+            query_acceleration_constants::kDatapathWidth;
+
+        stream_setup_data
+            .crossbar_setup_data[current_reversed_selection /
+                                 query_acceleration_constants::kDatapathWidth]
+            .chunk_selection[current_location %
+                             query_acceleration_constants::kDatapathWidth] =
+            current_location / query_acceleration_constants::kDatapathWidth;
+      }
+    }
+
+    // int post_record_junk_data_count = 0;
+    // for (int selection_id = 0; selection_id <
+    // expanded_column_selection.size();
+    //     selection_id++) {
+    //   if (expanded_column_selection[selection_id] == -1) {
+    //    // Do nothing
+    //   } else if (expanded_column_selection[selection_id] ==
+    //             -2) {
+    //    post_record_junk_data_count++;
+    //  } else {
+    //    int current_location = selection_id - post_record_junk_data_count;
+
+    //    stream_setup_data
+    //        .crossbar_setup_data[expanded_column_selection[selection_id] /
+    //             query_acceleration_constants::kDatapathWidth]
+    //        .position_selection[current_location %
+    //                            query_acceleration_constants::kDatapathWidth]
+    //                            =
+    //        expanded_column_selection[selection_id] %
+    //        query_acceleration_constants::kDatapathWidth;
+
+    //    stream_setup_data
+    //        .crossbar_setup_data[expanded_column_selection[selection_id] /
+    //             query_acceleration_constants::kDatapathWidth]
+    //        .chunk_selection[current_location %
+    //                         query_acceleration_constants::kDatapathWidth] =
+    //        current_location / query_acceleration_constants::kDatapathWidth;
+    //  }
+    //}
+
+     const int next_power_of_two =
+     StreamParameterCalculator::FindNextPowerOfTwo(
+        stream_setup_data.chunks_per_record);
+     int missing_chunk_count_per_record =
+        next_power_of_two - stream_setup_data.chunks_per_record;
+     if (missing_chunk_count_per_record != 0) {
+      const int current_chunk_count =
+          stream_setup_data.crossbar_setup_data.size();
+      for (int missing_chunk_index =
+               stream_setup_data.crossbar_setup_data.size();
+           missing_chunk_index > 0;
+           missing_chunk_index -= stream_setup_data.chunks_per_record) {
+        stream_setup_data.crossbar_setup_data.insert(
+            stream_setup_data.crossbar_setup_data.begin() +
+            missing_chunk_index, missing_chunk_count_per_record,
+            DMACrossbarSetupData());
+      }
+    }
+
+    //#include <algorithm>
+    // std::vector<int>::iterator position =
+    //    std::find(myVector.begin(), myVector.end(), 8);
+    // if (position !=
+    //    myVector.end())  // == myVector.end() means the element was not found
+    //  myVector.erase(position);
+
+    // Iterate over all of the columns. Check if 31 exists? If not just use 31.
+    // If it does exist take the next one which doesn't exist. This can be done
+    // with removing data from a vector Finish later
+    if (needs_overwrite_check) {
+      for (int column_id = 0;
+           column_id < query_acceleration_constants::kDatapathWidth;
+           column_id++) {
+        std::vector<int> free_chunks(
+            query_acceleration_constants::kDatapathLength);
+        std::iota(free_chunks.begin(), free_chunks.end(), 0);
+        std::reverse(free_chunks.begin(), free_chunks.end());
+
+        for (int chunk_id = 0;
+             chunk_id < stream_setup_data.crossbar_setup_data.size();
+             chunk_id++) {
+          if (stream_setup_data.crossbar_setup_data[chunk_id]
+                  .chunk_selection[column_id] != -1) {
+            std::vector<int>::iterator find_iterator =
+                std::find(free_chunks.begin(), free_chunks.end(),
+                          stream_setup_data.crossbar_setup_data[chunk_id]
+                              .chunk_selection[column_id]);
+            if (find_iterator != free_chunks.end()) {
+              free_chunks.erase(find_iterator);
+            }
+          }
+        }
+        for (int chunk_id = 0;
+             chunk_id < stream_setup_data.crossbar_setup_data.size();
+             chunk_id++) {
+          if (stream_setup_data.crossbar_setup_data[chunk_id]
+                  .chunk_selection[column_id] == -1) {
+            stream_setup_data.crossbar_setup_data[chunk_id]
+                .chunk_selection[column_id] = free_chunks[0];
+          }
+        }
+      }
+    }
+  }
+
+  for (int i = 0; i < expanded_column_selection.size(); i++) {
+    if (i % 16 == 0) {
+      std::cout << std::endl;
+    }
+    std::cout << expanded_column_selection[i] << " ";
   }
 
   for (const auto& thing : stream_setup_data.crossbar_setup_data) {
@@ -167,6 +341,12 @@ void DMACrossbarSetup::CalculateCrossbarSetupData(
 
   // SetCrossbarSetupDataForStream(source_chunks, target_positions,
   //                              stream_setup_data);
+}
+
+auto DMACrossbarSetup::GetReverseIndex(int index, int row_size) -> int {
+  int current_chunk = index / row_size;
+  int current_pos = row_size - 1 - (index % row_size);
+  return current_chunk * row_size + current_pos;
 }
 
 // Input

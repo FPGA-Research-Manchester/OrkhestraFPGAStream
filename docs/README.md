@@ -294,7 +294,7 @@ But the position selection is different since the order of the phases is reverse
 	1. Select which position the integer should be from for that current location - **horisontal pull**
 	2. Select which chunk the integer should go to from that current location after the first selection has been made - **vertical push** 
 
-What about the X-s? For the input the X-s can be any chunk or position index since both of the shuffles are configured with pulls. So you will just duplicate some data but you aren't interested in it anyway. But for the output we have one push operation. Which means you can overwrite useful data. In most cases the correct data will be written last. But in the case of vertical reordering you can lose data. Therefore X has to be some chunk index where we know that we don't care about the data in that particular position.  
+What about the X-s? For the input the X-s can be any chunk or position index since both of the shuffles are configured with pulls. So you will just duplicate some data but you aren't interested in it anyway. But for the output we have one push operation. Which means you can overwrite useful data. In most cases the correct data will be written last. But in the case of vertical reordering you can lose data. Therefore X has to be some chunk index where we know that we don't care about the data in that particular position. That index is found out by looking at all of the indexes in that column.
 
 Non-aligned data isn't that big of a problem once you calculate how many records does it take to reach an aligned record again. Then this number of records can be iterated over and different cases have been tested against in this [unit test](../tests/dma_crossbar_setup_test.cpp). But shuffling causes a lot more problems even on its own. This is discussed in the next section.
 
@@ -596,7 +596,7 @@ But there are limits to how much we can dublicate! If all of the 32 chunks have 
 
 One solution described at the end of this document would be to insert junk data into the records before the crossbar. The junk data inserts don't fix the clashing problem all the time though because the inserts aren't fine grain enough. Thus we won't be trying to use it. It allows us to tightly pack the records but the extra complexity is not worth it at the moment since the interface throughput is larger than the AXI bursts anyway so we can afford to be more relaxed with the data packing. So the idea is to have the record contain junk data bubbles. 
 
-This is fine for input. For output it's not that good since then we are wasting the limited throughput for transporting garbage data. But the DBMS would expect record fields in the order it requested and this constraint allows the solution to be simple. The solution will be using NULL columns which then can be removed in software while writing the results back to the filesystem. To further optimise this constraint can be ignored and then the columns can be in any arbitrary order on the output side to avoid NULL columns.
+This is fine for input. For output it's not that good since then we are wasting the limited throughput for transporting garbage data. But the DBMS would expect record fields in the order it requested and this constraint allows the solution to be simple. The solution will be using NULL columns which then can be removed in software while writing the results back to the filesystem. To further optimise, this constraint can be ignored and then the columns can be in any arbitrary order on the output side to avoid NULL columns. Just a different clash resolver can be used.
 
 #### Clash free input
 
@@ -693,7 +693,7 @@ f|g|G
 X|f|G
 G|X|X
 
-So basically for the output we would have to place garbage on the second clashing integer position. That will shift the rest of the integers away from the clash. And this can be done for all 16 positions which is better than 4, which the method described in the end allows. And then you can do the clash checks again until the record is clash free.
+So basically for the output we would have to place garbage on the second clashing integer position. That will shift the rest of the integers away from the clash. And this can be done for all 16 positions which is better than 4, which the method described in the end allows. After you can do the clash checks again until the record is clash free.
 
 # How to get more duplication space?
 
@@ -741,7 +741,7 @@ Just noting down the most general steps here:
 4. Checking for clashes -> Fixing stream and module parameters
 5. Configuring modules -> Extend required record format to the length of the burst and write the configuration data
 
-How the clashes are checked and how the crossbar configuration data is extended is shown in the tests [here](../tests/dma_crossbar_specifier_test.cpp). The interesting thing to note in those tests is the input specification extension step after clearing clashes. First of all, the extension is mirroring the initial input specification. That's because the first integer is in position 15 rather than 0. Second, the input crossbar specifiation tells where the data should come from before the crossbar. The output crossbar specifaction tells where the data should go to after the crossbar. But thanks to these extensions the crossbar configuration data [generation](../src/fpga_managing/dma_crossbar_setup.cpp) is a lot easier.
+How the clashes are checked and how the crossbar configuration data is extended is shown in the tests [here](../tests/dma_crossbar_specifier_test.cpp). The interesting thing to note in those tests is the input specification extension step after clearing clashes. First of all, the extension is mirroring the initial input specification. That's because the first integer is in position 15 rather than 0. Second, the input crossbar specifiation tells where the data should come from before the crossbar. With the output crossbar we don't want to have garbage data in the buffer. So we use -2 to say "Delete this" data element. This allows the extended specification to still show where the data bubbles at the end of the records are. The full implementation can be see in this [class](../src/fpga_managing/dma_crossbar_setup.cpp).
 
 # Inserting junk data before crossbars
 

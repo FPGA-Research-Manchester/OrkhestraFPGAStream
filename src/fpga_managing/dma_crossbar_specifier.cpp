@@ -1,7 +1,6 @@
 #include "dma_crossbar_specifier.hpp"
 
 #include <cmath>
-#include <deque>
 #include <iostream>
 #include <map>
 #include <set>
@@ -126,140 +125,100 @@ void DMACrossbarSpecifier::ResolveOutputClashesSingleChannel(
   }
 }
 
-auto DMACrossbarSpecifier::ExtendSpecificationMultiChannel(
-    const int record_size, const std::vector<int> record_specification,
-    const int records_per_ddr_burst, const int chunks_per_record)
-    -> std::vector<int> {
-  std::vector<int> extended_specification;
-  const int next_power_of_two =
-      StreamParameterCalculator::FindNextPowerOfTwo(chunks_per_record);
-
-  for (int record_index = 0; record_index < records_per_ddr_burst;
-       record_index++) {
-    std::deque<int> chunk_specfication;
-    for (const auto& selection : record_specification) {
-      if (selection != -1) {
-        const int extended_selection = selection + (record_size * record_index);
-        const int selection_original_chunk =
-            extended_selection / query_acceleration_constants::kDatapathWidth;
-        const int selection_position =
-            query_acceleration_constants::kDatapathWidth - 1 -
-            (extended_selection % query_acceleration_constants::kDatapathWidth);
-
-        chunk_specfication.push_front(
-            (query_acceleration_constants::kDatapathWidth *
-                 (selection_original_chunk) +
-             selection_position));
-      } else {
-        chunk_specfication.push_front(selection);
-      }
-      if (chunk_specfication.size() ==
-          query_acceleration_constants::kDatapathWidth) {
-        extended_specification.insert(std::end(extended_specification),
-                                      std::begin(chunk_specfication),
-                                      std::end(chunk_specfication));
-        chunk_specfication.clear();
-      }
-    }
-    for (int junk_data_index = record_specification.size();
-         junk_data_index <
-         next_power_of_two * query_acceleration_constants::kDatapathWidth;
-         junk_data_index++) {
-      chunk_specfication.push_front(-1);
-      if (chunk_specfication.size() ==
-          query_acceleration_constants::kDatapathWidth) {
-        extended_specification.insert(std::end(extended_specification),
-                                      std::begin(chunk_specfication),
-                                      std::end(chunk_specfication));
-        chunk_specfication.clear();
-      }
-    }
-  }
-
-  for (const auto& thing : extended_specification) {
-    std::cout << thing << ",";
-  }
-  std::cout << std::endl;
-
-  return extended_specification;
-}
-
 auto DMACrossbarSpecifier::ExtendSpecificationSingleChannel(
-    const int record_size, const std::vector<int> record_specification,
-    const int records_per_ddr_burst) -> std::vector<int> {
-  std::vector<int> extended_specification;
-
-  for (int record_index = 0; record_index < records_per_ddr_burst;
-       record_index++) {
-    std::deque<int> chunk_specfication;
-    for (const auto& selection : record_specification) {
-      if (selection != -1) {
-        const int extended_selection = selection + (record_size * record_index);
-        const int selection_original_chunk =
-            extended_selection / query_acceleration_constants::kDatapathWidth;
-        const int selection_position =
-            query_acceleration_constants::kDatapathWidth - 1 -
-            (extended_selection % query_acceleration_constants::kDatapathWidth);
-
-        chunk_specfication.push_front(
-            (query_acceleration_constants::kDatapathWidth *
-                 (selection_original_chunk) +
-             selection_position));
-      } else {
-        chunk_specfication.push_front(selection);
-      }
-      if (chunk_specfication.size() ==
-          query_acceleration_constants::kDatapathWidth) {
-        extended_specification.insert(std::end(extended_specification),
-                                      std::begin(chunk_specfication),
-                                      std::end(chunk_specfication));
-        chunk_specfication.clear();
-      }
-    }
-    for (int junk_data_index = record_specification.size();
-         junk_data_index <
-         query_acceleration_constants::kDdrBurstSize / records_per_ddr_burst;
-         junk_data_index++) {
-      chunk_specfication.push_front(-1);
-      if (chunk_specfication.size() ==
-          query_acceleration_constants::kDatapathWidth) {
-        extended_specification.insert(std::end(extended_specification),
-                                      std::begin(chunk_specfication),
-                                      std::end(chunk_specfication));
-        chunk_specfication.clear();
-      }
-    }
-  }
-
-  for (const auto& thing : extended_specification) {
-    std::cout << thing << ",";
-  }
-  std::cout << std::endl;
-
-  return extended_specification;
+    const int record_size, const std::vector<int>& record_specification,
+    const int records_per_ddr_burst) -> const std::vector<int> {
+  return ExtendSpecification(
+      records_per_ddr_burst, record_specification, record_size, -1,
+      query_acceleration_constants::kDdrBurstSize / records_per_ddr_burst);
 }
 
-auto DMACrossbarSpecifier::ExtendOutputSpecification(
-    const std::vector<int> record_specification,
+auto DMACrossbarSpecifier::ExtendSpecificationMultiChannel(
+    const int record_size, const std::vector<int>& record_specification,
     const int records_per_ddr_burst, const int chunks_per_record)
-    -> std::vector<int> {
-  std::vector<int> extended_specification;
+    -> const std::vector<int> {
+  return ExtendSpecification(
+      records_per_ddr_burst, record_specification, record_size, -1,
+      StreamParameterCalculator::FindNextPowerOfTwo(chunks_per_record) *
+          query_acceleration_constants::kDatapathWidth);
+}
 
+// In this method we are using -2 to denote a backspace kind of symbol to say
+// where does the record end. This is to keep track of the garbage data between
+// records.
+auto DMACrossbarSpecifier::ExtendOutputSpecification(
+    const std::vector<int>& record_specification,
+    const int records_per_ddr_burst, const int chunks_per_record)
+    -> const std::vector<int> {
+  return ExtendSpecification(
+      records_per_ddr_burst, record_specification,
+      chunks_per_record * query_acceleration_constants::kDatapathWidth, -2,
+      query_acceleration_constants::kDdrBurstSize / records_per_ddr_burst);
+}
+
+auto DMACrossbarSpecifier::ExtendSpecification(
+    const int& records_per_ddr_burst,
+    const std::vector<int>& record_specification, const int& record_size,
+    const int post_record_junk_data, const int junk_data_end_point)
+    -> const std::vector<int> {
+  std::vector<int> extended_specification;
+  std::vector<int> chunk_specfication;
   for (int record_index = 0; record_index < records_per_ddr_burst;
        record_index++) {
-    for (const auto& selection : record_specification) {
-      if (selection != -1) {
-        extended_specification.push_back(
-            selection + ((chunks_per_record *
-                          query_acceleration_constants::kDatapathWidth) *
-                         record_index));
-      } else {
-        extended_specification.push_back(selection);
-      }
-    }
+    InsertValidRecordData(record_specification, record_size * record_index,
+                          chunk_specfication, extended_specification);
+    InsertJunkDataAfterRecord(record_specification.size(), junk_data_end_point,
+                              post_record_junk_data, chunk_specfication,
+                              extended_specification);
   }
-
   return extended_specification;
 }
 
-// Add two more methods to change -1 to valid numbers - can throw errors
+void DMACrossbarSpecifier::InsertValidRecordData(
+    const std::vector<int>& record_specification, const int start_point,
+    std::vector<int>& chunk_specfication,
+    std::vector<int>& extended_specification) {
+  for (const auto& selection : record_specification) {
+    if (selection != -1) {
+      const int extended_selection = selection + start_point;
+      const int selection_original_chunk =
+          extended_selection / query_acceleration_constants::kDatapathWidth;
+      // Position is reversed such that the first integer is at the LSB side.
+      const int selection_position =
+          query_acceleration_constants::kDatapathWidth - 1 -
+          (extended_selection % query_acceleration_constants::kDatapathWidth);
+
+      chunk_specfication.push_back(
+          (query_acceleration_constants::kDatapathWidth *
+               (selection_original_chunk) +
+           selection_position));
+    } else {
+      chunk_specfication.push_back(selection);
+    }
+    InsertChunkIfFull(chunk_specfication, extended_specification);
+  }
+}
+
+void DMACrossbarSpecifier::InsertJunkDataAfterRecord(
+    const int start_point, const int end_point, const int junk_data,
+    std::vector<int>& chunk_specfication,
+    std::vector<int>& extended_specification) {
+  for (int junk_data_index = start_point; junk_data_index < end_point;
+       junk_data_index++) {
+    chunk_specfication.push_back(junk_data);
+    InsertChunkIfFull(chunk_specfication, extended_specification);
+  }
+}
+
+void DMACrossbarSpecifier::InsertChunkIfFull(
+    std::vector<int>& chunk_specfication,
+    std::vector<int>& extended_specification) {
+  if (chunk_specfication.size() ==
+      query_acceleration_constants::kDatapathWidth) {
+    std::reverse(chunk_specfication.begin(), chunk_specfication.end());
+    extended_specification.insert(std::end(extended_specification),
+                                  std::begin(chunk_specfication),
+                                  std::end(chunk_specfication));
+    chunk_specfication.clear();
+  }
+}

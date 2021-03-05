@@ -88,4 +88,6 @@ class DMACrossbarSetup {
                                             const int& chunks_per_record,
                                             const int& any_chunk,
                                             const int& any_position);
+
+  static auto GetReverseIndex(int index, int row_size) -> int;
 };
