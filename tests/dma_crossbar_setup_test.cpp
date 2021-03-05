@@ -10,8 +10,6 @@
 #include "dma_setup_data.hpp"
 #include "query_acceleration_constants.hpp"
 namespace {
-const int kTestAnyChunk = 0;
-const int kTestAnyPosition = 1;
 const int kDatapathLength = query_acceleration_constants::kDatapathLength;
 const int kDatapathWidth = query_acceleration_constants::kDatapathWidth;
 
@@ -32,8 +30,12 @@ void GetGoldenConfigFromFile(std::vector<std::vector<int>>& golden_config,
   }
 }
 
-auto CalculateChunksPerRecord(int record_size) -> int {
-  return (record_size + kDatapathWidth - 1) / kDatapathWidth;
+auto CreateLinearSelectedColumnsVector(const int vector_size)
+    -> std::vector<int> {
+  std::vector<int> selected_column(vector_size);
+  std::generate(selected_column.begin(), selected_column.end(),
+                [n = 0]() mutable { return n++; });
+  return selected_column;
 }
 
 void ExpectConfigurationDataIsUnconfigured(DMASetupData configuration_data) {
@@ -53,26 +55,28 @@ void ExpectConfigurationDataIsConfigured(
   for (int clock_cycle_index = 0; clock_cycle_index < kDatapathLength;
        clock_cycle_index++) {
     EXPECT_THAT(
-        configuration_data.crossbar_setup_data[clock_cycle_index].chunk_data,
+        configuration_data.crossbar_setup_data[clock_cycle_index]
+            .chunk_selection,
         testing::ElementsAreArray(golden_chunk_config[clock_cycle_index]))
         << "Vectors differ at clock cycle: " << clock_cycle_index;
     EXPECT_THAT(
-        configuration_data.crossbar_setup_data[clock_cycle_index].position_data,
+        configuration_data.crossbar_setup_data[clock_cycle_index]
+            .position_selection,
         testing::ElementsAreArray(golden_position_config[clock_cycle_index]))
         << "Vectors differ at clock cycle: " << clock_cycle_index;
   }
 }
 
 TEST(DMACrossbarSetupTest, RecordSize18BufferToInterfaceSetupCheck) {
-  const int record_size = 18;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = true;
+  test_stream_setup_data.active_channel_count = -1;
+  test_stream_setup_data.chunks_per_record = 2;
+  test_stream_setup_data.records_per_ddr_burst = 16;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      test_stream_setup_data, 18, CreateLinearSelectedColumnsVector(18));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -81,15 +85,14 @@ TEST(DMACrossbarSetupTest, RecordSize18BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize18InterfaceToBufferSetupCheck) {
-  const int record_size = 18;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = false;
+  test_stream_setup_data.chunks_per_record = 2;
+  test_stream_setup_data.records_per_ddr_burst = 16;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      test_stream_setup_data, 18, CreateLinearSelectedColumnsVector(18));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -98,15 +101,15 @@ TEST(DMACrossbarSetupTest, RecordSize18InterfaceToBufferSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize4BufferToInterfaceSetupCheck) {
-  const int record_size = 4;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = true;
+  test_stream_setup_data.active_channel_count = -1;
+  test_stream_setup_data.chunks_per_record = 1;
+  test_stream_setup_data.records_per_ddr_burst = 32;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      test_stream_setup_data, 4, CreateLinearSelectedColumnsVector(4));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -115,15 +118,14 @@ TEST(DMACrossbarSetupTest, RecordSize4BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize4InterfaceToBufferSetupCheck) {
-  const int record_size = 4;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = false;
+  test_stream_setup_data.chunks_per_record = 1;
+  test_stream_setup_data.records_per_ddr_burst = 32;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      test_stream_setup_data, 4, CreateLinearSelectedColumnsVector(4));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -132,15 +134,15 @@ TEST(DMACrossbarSetupTest, RecordSize4InterfaceToBufferSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize46BufferToInterfaceSetupCheck) {
-  int record_size = 46;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = true;
+  test_stream_setup_data.active_channel_count = -1;
+  test_stream_setup_data.chunks_per_record = 3;
+  test_stream_setup_data.records_per_ddr_burst = 8;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      test_stream_setup_data, 46, CreateLinearSelectedColumnsVector(46));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -149,15 +151,14 @@ TEST(DMACrossbarSetupTest, RecordSize46BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize46InterfaceToBufferSetupCheck) {
-  int record_size = 46;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = false;
+  test_stream_setup_data.chunks_per_record = 3;
+  test_stream_setup_data.records_per_ddr_burst = 8;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      test_stream_setup_data, 46, CreateLinearSelectedColumnsVector(46));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -166,15 +167,15 @@ TEST(DMACrossbarSetupTest, RecordSize46InterfaceToBufferSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize57BufferToInterfaceSetupCheck) {
-  int record_size = 57;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = true;
+  test_stream_setup_data.active_channel_count = -1;
+  test_stream_setup_data.chunks_per_record = 4;
+  test_stream_setup_data.records_per_ddr_burst = 8;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      test_stream_setup_data, 57, CreateLinearSelectedColumnsVector(57));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -183,15 +184,14 @@ TEST(DMACrossbarSetupTest, RecordSize57BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize57InterfaceToBufferSetupCheck) {
-  int record_size = 57;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = false;
+  test_stream_setup_data.chunks_per_record = 4;
+  test_stream_setup_data.records_per_ddr_burst = 8;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      test_stream_setup_data, 57, CreateLinearSelectedColumnsVector(57));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -200,15 +200,15 @@ TEST(DMACrossbarSetupTest, RecordSize57InterfaceToBufferSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize478BufferToInterfaceSetupCheck) {
-  const int record_size = 478;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = true;
+  test_stream_setup_data.active_channel_count = -1;
+  test_stream_setup_data.chunks_per_record = 30;
+  test_stream_setup_data.records_per_ddr_burst = 1;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      test_stream_setup_data, 478, CreateLinearSelectedColumnsVector(478));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -217,15 +217,14 @@ TEST(DMACrossbarSetupTest, RecordSize478BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize478InterfaceToBufferSetupCheck) {
-  const int record_size = 478;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = false;
+  test_stream_setup_data.chunks_per_record = 30;
+  test_stream_setup_data.records_per_ddr_burst = 1;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      test_stream_setup_data, 478, CreateLinearSelectedColumnsVector(478));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -234,15 +233,15 @@ TEST(DMACrossbarSetupTest, RecordSize478InterfaceToBufferSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize80BufferToInterfaceSetupCheck) {
-  const int record_size = 80;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = true;
+  test_stream_setup_data.active_channel_count = -1;
+  test_stream_setup_data.chunks_per_record = 5;
+  test_stream_setup_data.records_per_ddr_burst = 4;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      test_stream_setup_data, 80, CreateLinearSelectedColumnsVector(80));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
@@ -251,20 +250,39 @@ TEST(DMACrossbarSetupTest, RecordSize80BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize80InterfaceToBufferSetupCheck) {
-  const int record_size = 80;
   DMASetupData test_stream_setup_data;
-  test_stream_setup_data.chunks_per_record =
-      CalculateChunksPerRecord(record_size);
   test_stream_setup_data.is_input_stream = false;
+  test_stream_setup_data.chunks_per_record = 5;
+  test_stream_setup_data.records_per_ddr_burst = 4;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
-      kTestAnyChunk, kTestAnyPosition, test_stream_setup_data, record_size);
+      test_stream_setup_data, 80, CreateLinearSelectedColumnsVector(80));
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,
       "DMACrossbarSetupTest/RecordSize80InterfaceToBufferChunkSetup.txt",
       "DMACrossbarSetupTest/RecordSize80InterfaceToBufferPositionSetup.txt");
+}
+
+TEST(DMACrossbarSetupTest, InterfaceToBufferWithOverwritesSetup) {
+  DMASetupData test_stream_setup_data;
+  test_stream_setup_data.is_input_stream = false;
+  test_stream_setup_data.chunks_per_record = 2;
+  test_stream_setup_data.records_per_ddr_burst = 16;
+  ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
+
+  const int any_record_size = -1;
+
+  DMACrossbarSetup::CalculateCrossbarSetupData(
+      test_stream_setup_data, any_record_size,
+      {0,  1,  -1, 3,  4,  5,  22, 7,  -1, 25, 10, 11, 12, 13, 14, 15, 
+      16, 17, 18, 19, 20, 21, 6, 23, 24, 9, 26, 27, 28, -1, -1, 25});
+
+  ExpectConfigurationDataIsConfigured(
+      test_stream_setup_data,
+      "DMACrossbarSetupTest/InterfaceToBufferWithOverwritesChunkSetup.txt",
+      "DMACrossbarSetupTest/InterfaceToBufferWithOverwritesPositionSetup.txt");
 }
 
 }  // namespace

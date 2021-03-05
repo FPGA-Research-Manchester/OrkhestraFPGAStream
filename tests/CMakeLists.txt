@@ -17,7 +17,7 @@ target_link_libraries(testlib
 					  gmock
 					  gmock_main
 					  fpga_managing
-					  data_managing # I guess the data_managing and fos would be tested in a different lib
+					  data_managing # I guess the data_managing and fos should be tested in a different lib
 )
 
 if (NOT WIN32)
@@ -28,6 +28,7 @@ target_include_directories(testlib INTERFACE "${DBMStoDSPI_SOURCE_DIR}/tests")
 
 file(COPY ${DBMStoDSPI_SOURCE_DIR}/tests/resources/DMACrossbarSetupTest DESTINATION .)
 
+add_test(NAME DMACrossbarSpecifierTest COMMAND testlib)
 add_test(NAME AccelerationModuleTest COMMAND testlib)
 add_test(NAME DMACrossbarSetupTest COMMAND testlib)
 add_test(NAME FilterSetupTest COMMAND testlib)

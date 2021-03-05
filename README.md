@@ -26,3 +26,7 @@ The **sort** modules are meant to be used together.
 The **join** module is for sort-merge join operations. So it will only join sorted streams.
 
 The interface specification documentation will be available later.
+
+## How does it work?
+
+More info on the how the data is mapped to the interface can be found [here](./docs/README.md).

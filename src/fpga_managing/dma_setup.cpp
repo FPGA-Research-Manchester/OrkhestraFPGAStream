@@ -39,12 +39,15 @@ void DMASetup::SetupDMAModule(
 
     SetUpDMAIOStream(stream_setup_data, dma_engine);
 
-    const int throwaway_chunk =
-        query_acceleration_constants::kDatapathLength - 1;
-    const int throwaway_position = 0;
+    // Manual creation of selected_columns. This data needs to be input.
+    std::vector<int> selected_columns;
+    for (int i = 0; i < stream_init_data.stream_record_size; i++) {
+      selected_columns.push_back(i);
+    }
+
     DMACrossbarSetup::CalculateCrossbarSetupData(
-        throwaway_chunk, throwaway_position, stream_setup_data,
-        stream_init_data.stream_record_size);
+        stream_setup_data, stream_init_data.stream_record_size,
+        selected_columns);
 
     SetUpDMACrossbarsForStream(stream_setup_data, dma_engine);
   }
@@ -137,46 +140,46 @@ void DMASetup::SetUpDMACrossbarsForStream(const DMASetupData& stream_setup_data,
         dma_engine.SetBufferToInterfaceChunk(
             stream_setup_data.stream_id, current_chunk_index, current_offset,
             stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .chunk_data[3 + current_offset * 4],
+                .chunk_selection[3 + current_offset * 4],
             stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .chunk_data[2 + current_offset * 4],
+                .chunk_selection[2 + current_offset * 4],
             stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .chunk_data[1 + current_offset * 4],
+                .chunk_selection[1 + current_offset * 4],
             stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .chunk_data[0 + current_offset * 4]);
+                .chunk_selection[0 + current_offset * 4]);
         dma_engine.SetBufferToInterfaceSourcePosition(
             stream_setup_data.stream_id, current_chunk_index, current_offset,
             stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .position_data[3 + current_offset * 4],
+                .position_selection[3 + current_offset * 4],
             stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .position_data[2 + current_offset * 4],
+                .position_selection[2 + current_offset * 4],
             stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .position_data[1 + current_offset * 4],
+                .position_selection[1 + current_offset * 4],
             stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .position_data[0 + current_offset * 4]);
+                .position_selection[0 + current_offset * 4]);
       }
     } else {
       for (int current_offset = 0; current_offset < 4; current_offset++) {
         dma_engine.SetInterfaceToBufferChunk(
             stream_setup_data.stream_id, current_chunk_index, current_offset,
             stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .chunk_data[3 + current_offset * 4],
+                .chunk_selection[3 + current_offset * 4],
             stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .chunk_data[2 + current_offset * 4],
+                .chunk_selection[2 + current_offset * 4],
             stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .chunk_data[1 + current_offset * 4],
+                .chunk_selection[1 + current_offset * 4],
             stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .chunk_data[0 + current_offset * 4]);
+                .chunk_selection[0 + current_offset * 4]);
         dma_engine.SetInterfaceToBufferSourcePosition(
             stream_setup_data.stream_id, current_chunk_index, current_offset,
             stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .position_data[3 + current_offset * 4],
+                .position_selection[3 + current_offset * 4],
             stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .position_data[2 + current_offset * 4],
+                .position_selection[2 + current_offset * 4],
             stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .position_data[1 + current_offset * 4],
+                .position_selection[1 + current_offset * 4],
             stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .position_data[0 + current_offset * 4]);
+                .position_selection[0 + current_offset * 4]);
       }
     }
   }
