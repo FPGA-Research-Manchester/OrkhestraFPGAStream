@@ -817,6 +817,20 @@ TEST(DMACrossbarSpecifierTest,
            -2,  -2,  -2,  -2,  -2,  -2,  -2,  -2,  -2,  -2,  -2,  -2,  -2,  -2,
            -2,  -2,  -2,  -2,  -2,  -2,  -2,  -2}));
 }
+
+TEST(DMACrossbarSpecifierTest,
+     SpecificationExtensionThrowsErrorWithTooManyRecords) {
+  const int records_per_ddr_burst = 8;
+  const std::vector<int> record_specification = {
+      0, 3, 16, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1, -1, 0, 17, 18};
+  const int chunks_per_record = 8;
+
+  ASSERT_THROW(
+      DMACrossbarSpecifier::ExtendOutputSpecification(
+          record_specification, records_per_ddr_burst, chunks_per_record),
+               std::runtime_error);
+}
+
 }  // namespace
 
 // Fix input clashes in the tests!

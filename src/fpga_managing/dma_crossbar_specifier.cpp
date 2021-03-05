@@ -1,5 +1,6 @@
 #include "dma_crossbar_specifier.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <map>
@@ -171,6 +172,10 @@ auto DMACrossbarSpecifier::ExtendSpecification(
                               post_record_junk_data, chunk_specfication,
                               extended_specification);
   }
+  if (!IsSpecificationValid(extended_specification)) {
+    throw std::runtime_error(
+        "Incorrect parameters created a specification which doesn't fit!");
+  }
   return extended_specification;
 }
 
@@ -221,4 +226,13 @@ void DMACrossbarSpecifier::InsertChunkIfFull(
                                   std::end(chunk_specfication));
     chunk_specfication.clear();
   }
+}
+
+auto DMACrossbarSpecifier::IsSpecificationValid(
+    const std::vector<int>& record_specification) -> bool {
+  return record_specification.size() <=
+             query_acceleration_constants::kDdrBurstSize &&
+         *std::max_element(record_specification.begin(),
+                           record_specification.end()) <
+             query_acceleration_constants::kDdrBurstSize;
 }

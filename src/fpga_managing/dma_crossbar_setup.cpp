@@ -161,10 +161,6 @@ void DMACrossbarSetup::ConfigureInputCrossbarSetupData(
             stream_setup_data.records_per_ddr_burst,
             stream_setup_data.chunks_per_record);
   }
-  // This assert should be moved inside the extension methods. And it should
-  // check that no number goes over 512!
-  assert(expanded_column_selection.size() <=
-         query_acceleration_constants::kDdrBurstSize);
 
   SetUpEmptyCrossbarSetupData(stream_setup_data,
                               expanded_column_selection.size() /

@@ -61,4 +61,7 @@ class DMACrossbarSpecifier {
                                   const int post_record_junk_data,
                                   const int junk_data_end_point)
       -> const std::vector<int>;
+
+  static auto IsSpecificationValid(
+      const std::vector<int>& record_specification) -> bool;
 };
