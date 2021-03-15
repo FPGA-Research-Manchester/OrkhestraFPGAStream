@@ -8,4 +8,5 @@ struct AcceleratedQueryNode {
   const std::vector<StreamDataParameters> input_streams;
   const std::vector<StreamDataParameters> output_streams;
   const operation_types::QueryOperation operation_type;
+  const std::vector<std::vector<int>> operation_parameters;
 };

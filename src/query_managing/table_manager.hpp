@@ -19,7 +19,8 @@ class TableManager {
       const std::vector<std::string>& stream_data_file_names,
       const std::vector<int>& stream_id_vector,
       std::vector<std::unique_ptr<MemoryBlockInterface>>&
-          allocated_memory_blocks);
+          allocated_memory_blocks,
+      const std::vector<std::vector<int>> stream_specifications);
   static void ReadExpectedTables(
       std::vector<StreamDataParameters>& output_stream_parameters,
       DataManager& data_manager,
@@ -27,7 +28,8 @@ class TableManager {
       const std::vector<int>& stream_id_vector,
       std::vector<std::unique_ptr<MemoryBlockInterface>>&
           allocated_memory_blocks,
-      std::vector<TableData>& output_tables);
+      std::vector<TableData>& output_tables,
+      const std::vector<std::vector<int>> stream_specifications);
   static void ReadResultTables(
       const std::vector<StreamDataParameters>& output_stream_parameters,
       std::vector<TableData>& output_tables,
@@ -46,4 +48,5 @@ class TableManager {
       std::string table_name,
       const std::unique_ptr<MemoryBlockInterface>& input_device,
       const TableData& input_table);
+  static void PrintDataSize(const TableData& data_table);
 };

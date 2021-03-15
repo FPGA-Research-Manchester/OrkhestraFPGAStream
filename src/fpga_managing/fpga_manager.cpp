@@ -45,6 +45,10 @@ void FPGAManager::SetupQueryAcceleration(
                   output_streams_active_status_);
   }
 
+  // MISSING PIECE OF LOGIC HERE...
+  // Need to check for stream specification validity and intermediate stream
+  // specifications have to be merged with the IO stream specs.
+
   if (input_streams.empty() || output_streams.empty()) {
     throw std::runtime_error("Input or output streams missing!");
   } else {
@@ -75,12 +79,12 @@ void FPGAManager::SetupQueryAcceleration(
     switch (query_node.operation_type) {
       case operation_types::QueryOperation::kFilter: {
         Filter filter_module(memory_manager_, module_location);
-        /*FilterSetup::SetupFilterModuleCars(filter_module,
-                                       query_node.input_streams[0].stream_id,
-                                       query_node.output_streams[0].stream_id);*/
-        FilterSetup::SetupFilterModuleLineitemQ19(
+        FilterSetup::SetupFilterModuleCars(
             filter_module, query_node.input_streams[0].stream_id,
             query_node.output_streams[0].stream_id);
+        /*FilterSetup::SetupFilterModuleLineitemQ19(
+            filter_module, query_node.input_streams[0].stream_id,
+            query_node.output_streams[0].stream_id);*/
         break;
       }
       case operation_types::QueryOperation::kJoin: {

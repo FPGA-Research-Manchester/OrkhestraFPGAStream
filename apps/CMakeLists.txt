@@ -13,7 +13,6 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_SORTED_8K.csv CAR_DAT
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_FILTER_DATA.csv CAR_FILTER_DATA.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CUSTOMER_DATA.csv CUSTOMER_DATA.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CUSTOMER_DATA_FOR_JOIN.csv CUSTOMER_DATA_FOR_JOIN.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/JOIN_DATA.csv JOIN_DATA.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/FILTERED_JOIN_DATA.csv FILTERED_JOIN_DATA.csv COPYONLY)
 
@@ -29,6 +28,8 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_merge_sorting.bin DSPI_me
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_merge_sorting.json DSPI_merge_sorting.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_linear_sorting.bin DSPI_linear_sorting.bin COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_linear_sorting.json DSPI_linear_sorting.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_filtering_linear_sort.bin DSPI_filtering_linear_sort.bin COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_filtering_linear_sort.json DSPI_filtering_linear_sort.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_double_merge_sorting.bin DSPI_double_merge_sorting.bin COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_double_merge_sorting.json DSPI_double_merge_sorting.json COPYONLY)
 

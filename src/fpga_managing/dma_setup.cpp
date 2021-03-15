@@ -1,5 +1,7 @@
 #include "dma_setup.hpp"
 
+#include <numeric>
+
 #include "dma_crossbar_setup.hpp"
 #include "merge_sort_setup.hpp"
 #include "query_acceleration_constants.hpp"
@@ -26,7 +28,8 @@ void DMASetup::SetupDMAModule(
                                 stream_init_data);
     } else {
       multichannel_stream_count++;
-      const int max_channel_count = 64; // Can't be hard coded. Needs to come from input data 
+      const int max_channel_count =
+          64;  // Can't be hard coded. Needs to come from input data
       SetMultiChannelSetupData(stream_init_data, max_channel_count,
                                stream_setup_data);
     }
@@ -39,15 +42,17 @@ void DMASetup::SetupDMAModule(
 
     SetUpDMAIOStream(stream_setup_data, dma_engine);
 
-    // Manual creation of selected_columns. This data needs to be input.
-    std::vector<int> selected_columns;
-    for (int i = 0; i < stream_init_data.stream_record_size; i++) {
-      selected_columns.push_back(i);
+    std::vector<int> stream_specification;
+    if (stream_init_data.stream_specification.empty()) {
+      stream_specification.resize(stream_init_data.stream_record_size);
+      std::iota(stream_specification.begin(), stream_specification.end(), 0);
+    } else {
+      stream_specification = stream_init_data.stream_specification;
     }
 
     DMACrossbarSetup::CalculateCrossbarSetupData(
         stream_setup_data, stream_init_data.stream_record_size,
-        selected_columns);
+        stream_specification);
 
     SetUpDMACrossbarsForStream(stream_setup_data, dma_engine);
   }

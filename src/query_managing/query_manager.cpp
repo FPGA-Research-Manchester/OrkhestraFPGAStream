@@ -22,6 +22,7 @@
 
 void QueryManager::CheckTableData(const TableData& expected_table,
                                   const TableData& resulting_table) {
+  std::cout << std::endl;
   if (expected_table == resulting_table) {
     std::cout << "Query results are correct!" << std::endl;
   } else {
@@ -36,6 +37,7 @@ void QueryManager::CheckTableData(const TableData& expected_table,
               << std::endl;
     DataManager::PrintTableData(resulting_table);
   }
+  std::cout << std::endl;
 }
 
 auto QueryManager::GetBitstreamFileFromQueryNode(
@@ -102,6 +104,7 @@ void QueryManager::RunQueries(
     for (int node_index = 0; node_index < executable_query_nodes.second.size();
          node_index++) {
       auto current_node = executable_query_nodes.second.at(node_index);
+
       // Allocate memory blocks
       std::vector<std::unique_ptr<MemoryBlockInterface>>
           allocated_input_memory_blocks;
@@ -127,20 +130,23 @@ void QueryManager::RunQueries(
 
       // Get parameters and write input to allocated blocks
       std::vector<StreamDataParameters> input_stream_parameters;
-      TableManager::ReadInputTables(input_stream_parameters, data_manager,
-                                    current_node.input_data_definition_files,
-                                    input_ids[node_index],
-                                    allocated_input_memory_blocks);
+      TableManager::ReadInputTables(
+          input_stream_parameters, data_manager,
+          current_node.input_data_definition_files, input_ids[node_index],
+          allocated_input_memory_blocks,
+          current_node.operation_parameters.input_stream_parameters);
 
       std::vector<StreamDataParameters> output_stream_parameters;
       TableManager::ReadExpectedTables(
           output_stream_parameters, data_manager,
           current_node.output_data_definition_files, output_ids[node_index],
-          allocated_output_memory_blocks, expected_output_tables);
+          allocated_output_memory_blocks, expected_output_tables,
+          current_node.operation_parameters.output_stream_parameters);
 
-      query_nodes.push_back({std::move(input_stream_parameters),
-                             std::move(output_stream_parameters),
-                             current_node.operation_type});
+      query_nodes.push_back(
+          {std::move(input_stream_parameters),
+           std::move(output_stream_parameters), current_node.operation_type,
+           current_node.operation_parameters.operation_parameters});
 
       // Keep memory blocks during the query execution
       input_memory_blocks.push_back(std::move(allocated_input_memory_blocks));
@@ -150,9 +156,9 @@ void QueryManager::RunQueries(
     // Run query
     fpga_manager.SetupQueryAcceleration(executable_query_nodes.first,
                                         query_nodes);
-    std::cout << "Running query!" << std::endl;
+    /*std::cout << "Running query!" << std::endl;*/
     auto result_sizes = fpga_manager.RunQueryAcceleration();
-    std::cout << "Query done!" << std::endl;
+    /*std::cout << "Query done!" << std::endl;*/
 
     // Check results & free memory
     std::vector<TableData> output_tables = expected_output_tables;
