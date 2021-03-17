@@ -9,8 +9,6 @@
 void StreamParameterCalculator::CalculateDMAStreamSetupData(
     DMASetupData& stream_setup_data, const int record_size,
     bool is_multichannel_stream) {
-  stream_setup_data.chunks_per_record = CalculateChunksPerRecord(record_size);
-
   // Temporarily for now.
   for (int i = 0; i < query_acceleration_constants::kDatapathLength; i++) {
     stream_setup_data.record_chunk_ids.emplace_back(

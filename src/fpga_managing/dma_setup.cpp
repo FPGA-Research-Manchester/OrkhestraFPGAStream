@@ -36,12 +36,6 @@ void DMASetup::SetupDMAModule(
 
     AllocateStreamBuffers(stream_setup_data, buffer_size, current_stream_count);
 
-    StreamParameterCalculator::CalculateDMAStreamSetupData(
-        stream_setup_data, stream_init_data.stream_record_size,
-        is_multichannel_stream);
-
-    SetUpDMAIOStream(stream_setup_data, dma_engine);
-
     std::vector<int> stream_specification;
     if (stream_init_data.stream_specification.empty()) {
       stream_specification.resize(stream_init_data.stream_record_size);
@@ -49,6 +43,15 @@ void DMASetup::SetupDMAModule(
     } else {
       stream_specification = stream_init_data.stream_specification;
     }
+
+    stream_setup_data.chunks_per_record =
+        StreamParameterCalculator::CalculateChunksPerRecord(
+            stream_specification.size());
+    StreamParameterCalculator::CalculateDMAStreamSetupData(
+        stream_setup_data, stream_init_data.stream_record_size,
+        is_multichannel_stream);
+
+    SetUpDMAIOStream(stream_setup_data, dma_engine);
 
     DMACrossbarSetup::CalculateCrossbarSetupData(
         stream_setup_data, stream_init_data.stream_record_size,
