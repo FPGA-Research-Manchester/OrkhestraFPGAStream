@@ -4,11 +4,11 @@
 #include "acceleration_module.hpp"
 #include "filter_config_values.hpp"
 #include "filter_interface.hpp"
-
 #include "memory_manager_interface.hpp"
 
 class Filter : public AccelerationModule, public FilterInterface {
  private:
+  filter_config_values::DNFClauseStates dnf_states;
   void FilterWriteDNFClauseLiteralsToModule(int datapath_width,
                                             int module_compares_per_field,
                                             int module_dnf_clauses);
@@ -41,4 +41,6 @@ class Filter : public AccelerationModule, public FilterInterface {
   void WriteDNFClauseLiteralsToFilter_1CMP_8DNF(int datapath_width) override;
   void WriteDNFClauseLiteralsToFilter_2CMP_16DNF(int datapath_width) override;
   void WriteDNFClauseLiteralsToFilter_4CMP_32DNF(int datapath_width) override;
+
+  void ResetDNFStates() override;
 };

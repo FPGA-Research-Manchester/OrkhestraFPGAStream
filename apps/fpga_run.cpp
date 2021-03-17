@@ -167,6 +167,7 @@ auto main() -> int {
       {nullptr},
       {nullptr},
       {{{}}, {{}}, {{1}}}};
+
   query_scheduling_data::QueryNode lineitem_part_join = {
       {"lineitem_sf0_01_sort.csv", "part_sf0_01_filter_shifted.csv"},
       {"lineitem_part_sf0_01_1st_filter.csv"},
@@ -206,7 +207,9 @@ auto main() -> int {
   // MeasureOverallTime({merge_sort_query_1k_once, filtering_query_once,
   //                    join_query_once, linear_sort_query_8k_once});
 
+  MeasureOverallTime({first_lineitem_filter});
   MeasureOverallTime({first_part_filter});
+  
 
   // Pipelined tests
   // QueryManager::RunQueries({filter_and_join_query});

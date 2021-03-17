@@ -41,4 +41,7 @@ class MockFilter : public FilterInterface {
               (int datapath_width), (override));
   MOCK_METHOD(void, WriteDNFClauseLiteralsToFilter_4CMP_32DNF,
               (int datapath_width), (override));
+
+  MOCK_METHOD(void, ResetDNFStates,
+              (), (override));
 };

@@ -32,4 +32,6 @@ class FilterInterface {
       int datapath_width) = 0;
   virtual void WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
       int datapath_width) = 0;
+
+  virtual void ResetDNFStates() = 0;
 };

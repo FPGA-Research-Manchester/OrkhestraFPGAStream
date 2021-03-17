@@ -10,6 +10,7 @@ class FilterSetup {
   static void SetupFilterModule(FilterInterface& filter_module, int input_stream_id, int output_stream_id,
       const std::vector<std::vector<int>>& operation_parameters);
  private:
+
   struct FilterComparison {
     filter_config_values::CompareFunctions compare_function;
     std::vector<int> compare_reference_values;
@@ -37,9 +38,6 @@ class FilterSetup {
   static void SetupFilterModuleCars(FilterInterface& filter_module,
                                     int input_stream_id, int output_stream_id);
   static void SetupFilterModulePartQ19(FilterInterface& filter_module,
-                                       int input_stream_id,
-                                       int output_stream_id);
-  static void SetupFilterModulePartPartialQ19(FilterInterface& filter_module,
                                        int input_stream_id,
                                        int output_stream_id);
   static void SetupFilterModuleLineitemQ19(FilterInterface& filter_module,

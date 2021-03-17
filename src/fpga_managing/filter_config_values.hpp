@@ -1,4 +1,7 @@
 #pragma once
+#include<utility>
+#include<array>
+
 namespace filter_config_values {
 enum class CompareFunctions {
   kFilter32BitLessThan = 0,
@@ -16,8 +19,18 @@ enum class CompareFunctions {
 };
 
 enum class LiteralTypes {
-  kLiteralDontCare = 0,
+  kLiteralDontCare = 0, // The 0th one is the default one!
   kLiteralPositive = 1,
   kLiteralNegative = 2
 };
+
+// Which array is for what is explained in the Filter::FilterSetDNFClauseLiteral function
+typedef std::array<
+    std::pair<
+        bool,
+        std::array<
+            std::array<std::array<filter_config_values::LiteralTypes, 32>, 32>,
+            4>>,
+    32>
+    DNFClauseStates;
 }  // namespace filter_config_values

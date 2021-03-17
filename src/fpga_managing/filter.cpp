@@ -1,4 +1,6 @@
 #include "filter.hpp"
+
+#include<iostream>
 // Filter module low driver
 
 // Selects stream_id and stream_id manipulations
@@ -85,36 +87,13 @@ void Filter::FilterSetCompareReferenceValue(
       compare_reference_value);
 }
 
-struct {
-  bool DNF_is_used = false;
-  struct {
-    struct {
-      struct {
-        filter_config_values::LiteralTypes literalState =
-            filter_config_values::LiteralTypes::
-                kLiteralDontCare;  // 0 - literal is not present in the DNF
-                                   // clause; 1 - positive literal in the DNF
-                                   // clause ; 2 - negative literal in the DNF
-                                   // clause
-      } data_position[32];  // Up to 32 data positions of integers (32-bit) for
-                            // a maximum 1024-bit datapath (for 512-bit datapath
-                            // use 0-15 only)
-    } chunk_id[32];         // Every chunkID can produce different literals
-  } compare_number[4];      // Up to four different compares with different
-                        // reference values per 32-bit field (for 2 compares per
-                        // field use 0-1 only)
-} dnf_clause[32];  // Up to 32 Clauses (for 16 DNF clause module use 0-15 only)
-
 void Filter::FilterSetDNFClauseLiteral(
     int dnf_clause_id /*0-31*/, int compare_number /*0-3*/,
     int chunk_id /*0-31*/, int data_position /*0-15 for 512-bit datapath etc*/,
     filter_config_values::LiteralTypes literal_type) {
-  dnf_clause[dnf_clause_id].DNF_is_used = true;
-  dnf_clause[dnf_clause_id]
-      .compare_number[compare_number]
-      .chunk_id[chunk_id]
-      .data_position[data_position]
-      .literalState = literal_type;
+  dnf_states[dnf_clause_id].first = true; // DNF clause is used
+  dnf_states[dnf_clause_id].second[compare_number][chunk_id][data_position] =
+      literal_type;
 }
 
 void Filter::FilterWriteDNFClauseLiteralsToModule(int datapath_width,
@@ -134,28 +113,20 @@ void Filter::FilterWriteDNFClauseLiteralsToModule(int datapath_width,
              dnf_clause_index--) {
           clauses_packed_positive_result <<= 1;
           clauses_packed_negative_result <<= 1;
-          if (dnf_clause[dnf_clause_index].DNF_is_used) {
-            if (dnf_clause[dnf_clause_index]
-                    .compare_number[compare_lane]
-                    .chunk_id[chunk_id]
-                    .data_position[data_position]
-                    .literalState ==
+          if (dnf_states[dnf_clause_index].first) {
+            if (dnf_states[dnf_clause_index]
+                    .second[compare_lane][chunk_id]
+                           [data_position] ==
                 filter_config_values::LiteralTypes::kLiteralDontCare) {
               clauses_packed_positive_result |= 1;
               clauses_packed_negative_result |= 1;
-            } else if (dnf_clause[dnf_clause_index]
-                           .compare_number[compare_lane]
-                           .chunk_id[chunk_id]
-                           .data_position[data_position]
-                           .literalState ==
+            } else if (dnf_states[dnf_clause_index]
+                           .second[compare_lane][chunk_id][data_position] ==
                        filter_config_values::LiteralTypes::kLiteralPositive) {
               clauses_packed_positive_result |= 1;
               clauses_packed_negative_result |= 0;
-            } else if (dnf_clause[dnf_clause_index]
-                           .compare_number[compare_lane]
-                           .chunk_id[chunk_id]
-                           .data_position[data_position]
-                           .literalState ==
+            } else if (dnf_states[dnf_clause_index]
+                           .second[compare_lane][chunk_id][data_position] ==
                        filter_config_values::LiteralTypes::kLiteralNegative) {
               clauses_packed_positive_result |= 0;
               clauses_packed_negative_result |= 1;
@@ -188,4 +159,8 @@ void Filter::WriteDNFClauseLiteralsToFilter_2CMP_16DNF(
 void Filter::WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
     int datapath_width /*1-32: 16->512bit datapath; 32->1024-bit datapath*/) {
   FilterWriteDNFClauseLiteralsToModule(datapath_width, 4, 32);
+}
+
+void Filter::ResetDNFStates() {
+  dnf_states = filter_config_values::DNFClauseStates();
 }

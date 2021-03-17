@@ -16,8 +16,8 @@ TEST(FilterSetupTest, FilterStreamsSetting) {
                                               kOutputStreamId))
       .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModuleCars(mock_filter, kInputStreamId,
-                                      kOutputStreamId);
+  filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
+                                      kOutputStreamId, {{0}});
 }
 TEST(FilterSetupTest, FilterModesSetting) {
   bool expected_request_on_invalid_if_last = true;
@@ -36,8 +36,8 @@ TEST(FilterSetupTest, FilterModesSetting) {
                             expected_last_module_in_resource_elastic_chain))
       .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModuleCars(mock_filter, kInputStreamId,
-                                      kOutputStreamId);
+  filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
+                                      kOutputStreamId, {{0}});
 }
 TEST(FilterSetupTest, CompareTypesSetting) {
   MockFilter mock_filter;
@@ -48,8 +48,8 @@ TEST(FilterSetupTest, CompareTypesSetting) {
                   testing::_, testing::_, testing::_))
       .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModuleCars(mock_filter, kInputStreamId,
-                                      kOutputStreamId);
+  filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
+                                      kOutputStreamId, {{0}});
 }
 TEST(FilterSetupTest, ReferenceValuesSetting) {
   int expected_compare_reference_value = 12000;
@@ -61,8 +61,8 @@ TEST(FilterSetupTest, ReferenceValuesSetting) {
                                expected_compare_reference_value))
       .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModuleCars(mock_filter, kInputStreamId,
-                                      kOutputStreamId);
+  filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
+                                      kOutputStreamId, {{0}});
 }
 TEST(FilterSetupTest, DNFClauseSetting) {
   int expected_compare_unit_index = 0;
@@ -75,8 +75,8 @@ TEST(FilterSetupTest, DNFClauseSetting) {
                   filter_config_values::LiteralTypes::kLiteralPositive))
       .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModuleCars(mock_filter, kInputStreamId,
-                                      kOutputStreamId);
+  filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
+                                      kOutputStreamId, {{0}});
 }
 TEST(FilterSetupTest, CorrectFilterCalled) {
   int expected_datapath_width = 16;
@@ -90,7 +90,7 @@ TEST(FilterSetupTest, CorrectFilterCalled) {
                                expected_datapath_width))
       .Times(1);
   FilterSetup filter_configurer;
-  filter_configurer.SetupFilterModuleCars(mock_filter, kInputStreamId,
-                                      kOutputStreamId);
+  filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
+                                      kOutputStreamId, {{0}});
 }
 }  // namespace

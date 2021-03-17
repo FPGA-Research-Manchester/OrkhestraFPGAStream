@@ -12,6 +12,7 @@ void FilterSetup::SetupFilterModule(
   if (operation_parameters.empty() || operation_parameters.at(0).empty()) {
     throw std::runtime_error("No parameters given!");
   }
+  filter_module.ResetDNFStates();
   switch (operation_parameters.at(0).at(0)) {
     case 0:
       SetupFilterModuleCars(filter_module, input_stream_id, output_stream_id);
@@ -43,72 +44,6 @@ void FilterSetup::SetupFilterModuleCars(FilterInterface& filter_module,
                    {filter_config_values::LiteralTypes::kLiteralPositive},
                    {0}}},
                  1, 14);
-
-  filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
-      query_acceleration_constants::kDatapathWidth);
-}
-
-// SELECT * FROM part
-// WHERE((p_size >= 1) AND(((p_brand = 'Brand#12' ::bpchar) AND(
-//    p_container = ANY('{"SM CASE","SM BOX","SM PACK","SM PKG"}' ::bpchar[]))
-//                        AND(p_size <= 5))))
-// Needs more OR cases for Q19. But that needs data duplication
-void FilterSetup::SetupFilterModulePartPartialQ19(
-    FilterInterface& filter_module, const int input_stream_id,
-    const int output_stream_id) {
-  filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
-                                   output_stream_id);
-
-  SetOneOutputSingleModuleMode(filter_module);
-  // p_size
-  SetComparisons(
-      filter_module,
-      {{filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
-        {5},
-        {filter_config_values::LiteralTypes::kLiteralPositive,
-         filter_config_values::LiteralTypes::kLiteralPositive,
-         filter_config_values::LiteralTypes::kLiteralPositive,
-         filter_config_values::LiteralTypes::kLiteralPositive},
-        {0, 1, 2, 3}},
-       {filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
-        {1},
-        {filter_config_values::LiteralTypes::kLiteralPositive,
-         filter_config_values::LiteralTypes::kLiteralPositive,
-         filter_config_values::LiteralTypes::kLiteralPositive,
-         filter_config_values::LiteralTypes::kLiteralPositive},
-        {0, 1, 2, 3}}},
-      2, 15);
-
-  // p_brand
-  SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
-                   ConvertCharStringToAscii("Brand#12  ", 3),
-                   {filter_config_values::LiteralTypes::kLiteralPositive,
-                    filter_config_values::LiteralTypes::kLiteralPositive,
-                    filter_config_values::LiteralTypes::kLiteralPositive,
-                    filter_config_values::LiteralTypes::kLiteralPositive},
-                   {0, 1, 2, 3}}},
-                 1, 9);
-
-  // p_container
-  SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
-                   ConvertCharStringToAscii("SM CASE   ", 3),
-                   {filter_config_values::LiteralTypes::kLiteralPositive},
-                   {0}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
-                   ConvertCharStringToAscii("SM BOX    ", 3),
-                   {filter_config_values::LiteralTypes::kLiteralPositive},
-                   {1}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
-                   ConvertCharStringToAscii("SM PACK   ", 3),
-                   {filter_config_values::LiteralTypes::kLiteralPositive},
-                   {2}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
-                   ConvertCharStringToAscii("SM PKG    ", 3),
-                   {filter_config_values::LiteralTypes::kLiteralPositive},
-                   {3}}},
-                 2, 14);
 
   filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
       query_acceleration_constants::kDatapathWidth);
@@ -335,8 +270,30 @@ void FilterSetup::SetComparisons(FilterInterface& filter_module,
           current_chunk_id, current_data_position, compare_lane_index,
           comparisons[compare_lane_index]
               .compare_reference_values[compare_value_index]);
+      //std::cout << "FilterSetCompareReferenceValue("
+      //             "chunk_id="
+      //          << current_chunk_id
+      //          << ", data_position=" << current_data_position
+      //          << ", compare_number=" << compare_lane_index
+      //          << ","
+      //             "compare_reference_value="
+      //          << comparisons[compare_lane_index]
+      //                 .compare_reference_values[compare_value_index]
+      //          << ")"
+      //          << std::endl;
       for (int dnf = 0;
            dnf < comparisons[compare_lane_index].dnf_clause_ids.size(); dnf++) {
+        //std::cout << "FilterSetDNFClauseLiteral("
+        //             "dnf_clause_id="
+        //          << comparisons[compare_lane_index].dnf_clause_ids[dnf]
+        //          << ", compare_number=" << compare_lane_index
+        //          << ", chunk_id=" << current_chunk_id
+        //          << ", "
+        //             "data_position=" <<current_data_position<<
+        //             ","
+        //             "literal_type="
+        //          << (int)comparisons[compare_lane_index].literal_types[dnf] << ")"
+        //          << std::endl;
         filter_module.FilterSetDNFClauseLiteral(
             comparisons[compare_lane_index].dnf_clause_ids[dnf],
             compare_lane_index, current_chunk_id, current_data_position,
@@ -361,6 +318,23 @@ void FilterSetup::SetComparisons(FilterInterface& filter_module,
         chunk_id + ((15 - data_position + compare_value_index) / 16);
     int current_data_position =
         15 - ((15 - data_position + compare_value_index) % 16);
+    //std::cout << "FilterSetCompareTypes("
+    //             "chunk_id="
+    //          << current_chunk_id << ", data_position=" << current_data_position
+    //          <<
+    //             ","
+    //             "compare_1_type="
+    //          << (int)compare_functions[0]
+    //          << ","
+    //             "compare_2_type="
+    //          << (int)compare_functions[1]
+    //          << ","
+    //             "compare_3_type="
+    //          << (int)compare_functions[2]
+    //          << ","
+    //             "compare_4_type="
+    //          << (int)compare_functions[3] << ")"
+    //          << std::endl;
     filter_module.FilterSetCompareTypes(
         current_chunk_id, current_data_position, compare_functions[0],
         compare_functions[1], compare_functions[2], compare_functions[3]);
