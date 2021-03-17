@@ -35,7 +35,7 @@ auto main() -> int {
       operation_types::QueryOperation::kFilter,
       {nullptr},
       {nullptr},
-      {{{}}, {{}}, {}}};
+      {{{}}, {{}}, {{0}}}};
   query_scheduling_data::QueryNode join_query_once = {
       {"CAR_DATA.csv", "CUSTOMER_DATA.csv"},
       {"JOIN_DATA.csv"},
@@ -93,7 +93,7 @@ auto main() -> int {
   filter_after_pass_through_query.previous_nodes = {
       &pass_through_and_filter_query};
   filter_after_pass_through_query.next_nodes = {nullptr};
-  filter_after_pass_through_query.operation_parameters = {{{}}, {{}}, {}};
+  filter_after_pass_through_query.operation_parameters = {{{}}, {{}}, {{0}}};
 
   query_scheduling_data::QueryNode filter_and_join_query;
   query_scheduling_data::QueryNode join_after_filter_query;
@@ -104,7 +104,7 @@ auto main() -> int {
       operation_types::QueryOperation::kFilter;
   filter_and_join_query.next_nodes = {&join_after_filter_query};
   filter_and_join_query.previous_nodes = {nullptr};
-  filter_and_join_query.operation_parameters = {{{}}, {{}}, {}};
+  filter_and_join_query.operation_parameters = {{{}}, {{}}, {{0}}};
 
   join_after_filter_query.input_data_definition_files = {"CAR_FILTER_DATA.csv",
                                                          "CUSTOMER_DATA.csv"};
@@ -166,7 +166,7 @@ auto main() -> int {
       operation_types::QueryOperation::kFilter,
       {nullptr},
       {nullptr},
-      {{{}}, {{}}, {}}};
+      {{{}}, {{}}, {{1}}}};
   query_scheduling_data::QueryNode lineitem_part_join = {
       {"lineitem_sf0_01_sort.csv", "part_sf0_01_filter_shifted.csv"},
       {"lineitem_part_sf0_01_1st_filter.csv"},
@@ -176,11 +176,17 @@ auto main() -> int {
       {{{}, {}}, {{}}, {}}};
   query_scheduling_data::QueryNode first_part_filter = {
       {"part_sf0_01.csv"},
-      {"part_sf0_01_1st_filter.csv"},
+      {"part_sf0_01_filter.csv"},
       operation_types::QueryOperation::kFilter,
       {nullptr},
       {nullptr},
-      {{{}}, {{}}, {}}};
+      {{{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16,
+         17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
+         34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 33, 34, 35, 33, 34, 35}},
+       {{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14,
+         15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+         30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43}},
+       {{2}}}};
 
   // Run operations twice
   // QueryManager::RunQueries(
@@ -197,8 +203,10 @@ auto main() -> int {
   //                          linear_sort_query_8k_once, filtering_query_once});
 
   // Individual operation tests with car data
-  MeasureOverallTime({merge_sort_query_1k_once, filtering_query_once,
-                      join_query_once, linear_sort_query_8k_once});
+  // MeasureOverallTime({merge_sort_query_1k_once, filtering_query_once,
+  //                    join_query_once, linear_sort_query_8k_once});
+
+  MeasureOverallTime({first_part_filter});
 
   // Pipelined tests
   // QueryManager::RunQueries({filter_and_join_query});

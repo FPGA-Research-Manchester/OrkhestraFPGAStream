@@ -79,12 +79,9 @@ void FPGAManager::SetupQueryAcceleration(
     switch (query_node.operation_type) {
       case operation_types::QueryOperation::kFilter: {
         Filter filter_module(memory_manager_, module_location);
-        FilterSetup::SetupFilterModuleCars(
+        FilterSetup::SetupFilterModule(
             filter_module, query_node.input_streams[0].stream_id,
-            query_node.output_streams[0].stream_id);
-        /*FilterSetup::SetupFilterModuleLineitemQ19(
-            filter_module, query_node.input_streams[0].stream_id,
-            query_node.output_streams[0].stream_id);*/
+            query_node.output_streams[0].stream_id, query_node.operation_parameters);
         break;
       }
       case operation_types::QueryOperation::kJoin: {
