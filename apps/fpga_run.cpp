@@ -167,14 +167,26 @@ auto main() -> int {
       {nullptr},
       {nullptr},
       {{{}}, {{}}, {{1}}}};
-
-  query_scheduling_data::QueryNode lineitem_part_join = {
-      {"lineitem_sf0_01_sort.csv", "part_sf0_01_filter_shifted.csv"},
-      {"lineitem_part_sf0_01_1st_filter.csv"},
-      operation_types::QueryOperation::kJoin,
+  query_scheduling_data::QueryNode lineitem_linear_sort = {
+      {"lineitem_sf0_01_filter.csv"},
+      {"lineitem_sf0_01_linear_sort.csv"},
+      operation_types::QueryOperation::kLinearSort,
       {nullptr},
-      {nullptr, nullptr},
-      {{{}, {}}, {{}}, {}}};
+      {nullptr},
+      {{{1,  0,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12,
+         13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+         26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38}},
+       {{}},
+       {{}}}};
+  //query_scheduling_data::QueryNode lineitem_linear_merge_sort = {
+  //    {"lineitem_sf0_01_linear_sort.csv"},
+  //    {"lineitem_sf0_01_sort.csv"},
+  //    operation_types::QueryOperation::kMergeSort,
+  //    {nullptr},
+  //    {nullptr},
+  //    {{{}},
+  //     {{}},
+  //     {{64, 512}}}};
   query_scheduling_data::QueryNode first_part_filter = {
       {"part_sf0_01.csv"},
       {"part_sf0_01_filter.csv"},
@@ -188,6 +200,20 @@ auto main() -> int {
          15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
          30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43}},
        {{2}}}};
+  // query_scheduling_data::QueryNode lineitem_part_join = {
+  //    {"lineitem_sf0_01_sort.csv", "part_sf0_01_filter.csv"},
+  //    {"lineitem_part_sf0_01_1st_filter.csv"},
+  //    operation_types::QueryOperation::kJoin,
+  //    {nullptr},
+  //    {nullptr, nullptr},
+  //    {{{}, {}}, {{}}, {}}};
+  // query_scheduling_data::QueryNode lineitem_part_second_filter = {
+  //    {"lineitem_part_sf0_01_1st_filter.csv"},
+  //    {"lineitem_part_sf0_01_second_filter.csv"},
+  //    operation_types::QueryOperation::kFilter,
+  //    {nullptr},
+  //    {nullptr},
+  //    {{{}}, {{}}, {{}}}};
 
   // Run operations twice
   // QueryManager::RunQueries(
@@ -208,8 +234,9 @@ auto main() -> int {
   //                    join_query_once, linear_sort_query_8k_once});
 
   MeasureOverallTime({first_lineitem_filter});
+  MeasureOverallTime({lineitem_linear_sort});
+  //MeasureOverallTime({lineitem_linear_merge_sort});
   MeasureOverallTime({first_part_filter});
-  
 
   // Pipelined tests
   // QueryManager::RunQueries({filter_and_join_query});

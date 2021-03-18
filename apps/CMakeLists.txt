@@ -40,6 +40,7 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/part_sf0_01.csv part_sf0_01.cs
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_01_filter.csv lineitem_sf0_01_filter.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_01_sort.csv lineitem_sf0_01_sort.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_01_linear_sort.csv lineitem_sf0_01_linear_sort.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/part_sf0_01_filter.csv part_sf0_01_filter.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_part_sf0_01_1st_filter.csv lineitem_part_sf0_01_1st_filter.csv COPYONLY)
 

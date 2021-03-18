@@ -6,6 +6,7 @@
 #include <map>
 #include <sstream>
 #include <stdexcept>
+#include <cmath>
 
 void TypesConverter::AddIntegerDataFromStringData(
     const std::vector<std::vector<std::string>>& string_data,
@@ -97,7 +98,7 @@ void TypesConverter::ConvertNullValuesToIntegerData(
 void TypesConverter::ConvertDecimalValuesToIntegerData(
     const std::string& input, std::vector<uint32_t>& data_vector,
     int /*output_size*/) {
-  long long input_value = std::stod(input) * 100;
+  long long input_value = std::round(std::stod(input) * 100.0);
   data_vector.push_back(static_cast<uint32_t>(input_value >> 32));
   data_vector.push_back(static_cast<uint32_t>(input_value & 0xFFFFFFFF));
 }

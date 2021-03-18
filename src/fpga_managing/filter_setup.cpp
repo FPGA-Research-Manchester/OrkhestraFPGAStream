@@ -270,30 +270,8 @@ void FilterSetup::SetComparisons(FilterInterface& filter_module,
           current_chunk_id, current_data_position, compare_lane_index,
           comparisons[compare_lane_index]
               .compare_reference_values[compare_value_index]);
-      //std::cout << "FilterSetCompareReferenceValue("
-      //             "chunk_id="
-      //          << current_chunk_id
-      //          << ", data_position=" << current_data_position
-      //          << ", compare_number=" << compare_lane_index
-      //          << ","
-      //             "compare_reference_value="
-      //          << comparisons[compare_lane_index]
-      //                 .compare_reference_values[compare_value_index]
-      //          << ")"
-      //          << std::endl;
       for (int dnf = 0;
            dnf < comparisons[compare_lane_index].dnf_clause_ids.size(); dnf++) {
-        //std::cout << "FilterSetDNFClauseLiteral("
-        //             "dnf_clause_id="
-        //          << comparisons[compare_lane_index].dnf_clause_ids[dnf]
-        //          << ", compare_number=" << compare_lane_index
-        //          << ", chunk_id=" << current_chunk_id
-        //          << ", "
-        //             "data_position=" <<current_data_position<<
-        //             ","
-        //             "literal_type="
-        //          << (int)comparisons[compare_lane_index].literal_types[dnf] << ")"
-        //          << std::endl;
         filter_module.FilterSetDNFClauseLiteral(
             comparisons[compare_lane_index].dnf_clause_ids[dnf],
             compare_lane_index, current_chunk_id, current_data_position,
@@ -318,23 +296,6 @@ void FilterSetup::SetComparisons(FilterInterface& filter_module,
         chunk_id + ((15 - data_position + compare_value_index) / 16);
     int current_data_position =
         15 - ((15 - data_position + compare_value_index) % 16);
-    //std::cout << "FilterSetCompareTypes("
-    //             "chunk_id="
-    //          << current_chunk_id << ", data_position=" << current_data_position
-    //          <<
-    //             ","
-    //             "compare_1_type="
-    //          << (int)compare_functions[0]
-    //          << ","
-    //             "compare_2_type="
-    //          << (int)compare_functions[1]
-    //          << ","
-    //             "compare_3_type="
-    //          << (int)compare_functions[2]
-    //          << ","
-    //             "compare_4_type="
-    //          << (int)compare_functions[3] << ")"
-    //          << std::endl;
     filter_module.FilterSetCompareTypes(
         current_chunk_id, current_data_position, compare_functions[0],
         compare_functions[1], compare_functions[2], compare_functions[3]);
