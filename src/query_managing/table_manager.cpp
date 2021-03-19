@@ -81,14 +81,18 @@ void TableManager::ReadInputTables(
           allocated_memory_blocks[stream_index]->GetPhysicalAddress();
     }
 
-    StreamDataParameters current_stream_parameters = {
-        stream_id_vector[stream_index], GetRecordSizeFromTable(current_table),
+    const int record_count =
         static_cast<int>(current_table.table_data_vector.size() /
-                         GetRecordSizeFromTable(current_table)),
+                         GetRecordSizeFromTable(current_table));
+
+    StreamDataParameters current_stream_parameters = {
+        stream_id_vector[stream_index], GetRecordSizeFromTable(current_table), record_count,
         physical_address_ptr, stream_specification.at(stream_index)};
 
     // std::cout << "RECORD_SIZE = " << GetRecordSizeFromTable(current_table)
     //          << std::endl;
+    std::cout << "RECORD_COUNT = " << record_count
+              << std::endl;
 
     input_stream_parameters.push_back(current_stream_parameters);
   }

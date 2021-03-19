@@ -233,6 +233,16 @@ auto main() -> int {
        {{0,  1,  2,  3},
         {2}},
        {{2}}}};
+  query_scheduling_data::QueryNode first_part_filter1 = {
+      {"part_sf0_1.csv"},
+      {"part_sf0_1_filter.csv"},
+      operation_types::QueryOperation::kFilter,
+      {nullptr},
+      {nullptr},
+      {{{0,  22, 23, 24, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+         -1, -1, -1, 32, 33, 34, 35, 33, 34, 35, 33, 34, 35}},
+       {{0, 1, 2, 3}, {2}},
+       {{2}}}};
    query_scheduling_data::QueryNode lineitem_part_join = {
       {"lineitem_sf0_01_sort.csv", "part_sf0_01_filter.csv"},
       {"lineitem_part_sf0_01_1st_filter.csv"},
@@ -240,6 +250,15 @@ auto main() -> int {
       {nullptr},
       {nullptr, nullptr},
       {{{}, {0, -1, -1, -1, -1, -1, -1, 1, 2, 3}}, {{1,2,3,4,5,6,7,8,9}, {1}}, {}}};
+  query_scheduling_data::QueryNode lineitem_part_join1 = {
+      {"lineitem_sf0_1_sort.csv", "part_sf0_1_filter.csv"},
+      {"lineitem_part_sf0_1_1st_filter.csv"},
+      operation_types::QueryOperation::kJoin,
+      {nullptr},
+      {nullptr, nullptr},
+      {{{}, {0, -1, -1, -1, -1, -1, -1, 1, 2, 3}},
+       {{1, 2, 3, 4, 5, 6, 7, 8, 9}, {1}},
+       {}}};
    query_scheduling_data::QueryNode lineitem_part_second_filter = {
       {"lineitem_part_sf0_01_1st_filter.csv"},
       {"lineitem_part_sf0_01_2nd_filter.csv"},
@@ -248,6 +267,13 @@ auto main() -> int {
       {nullptr},
        {{{0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1}}, {{2, 3, 4, 5}, {1}},
         {{3}}}};
+  query_scheduling_data::QueryNode lineitem_part_second_filter1 = {
+      {"lineitem_part_sf0_1_1st_filter.csv"},
+      {"lineitem_part_sf0_1_2nd_filter.csv"},
+      operation_types::QueryOperation::kFilter,
+      {nullptr},
+      {nullptr},
+      {{{0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1}}, {{2, 3, 4, 5}, {1}}, {{3}}}};
 
   // Run operations twice
   // QueryManager::RunQueries(
@@ -267,16 +293,19 @@ auto main() -> int {
    //MeasureOverallTime({merge_sort_query_1k_once, filtering_query_once,
    //                   join_query_once, linear_sort_query_8k_once});
 
-  //MeasureOverallTime({first_lineitem_filter1});
-  //MeasureOverallTime({lineitem_linear_sort1});
-  //MeasureOverallTime({lineitem_linear_merge_sort1});
+  MeasureOverallTime({first_lineitem_filter1});
+  MeasureOverallTime({lineitem_linear_sort1});
+  MeasureOverallTime({lineitem_linear_merge_sort1});
+  MeasureOverallTime({first_part_filter1});
+  MeasureOverallTime({lineitem_part_join1});
+  MeasureOverallTime({lineitem_part_second_filter1});
 
-  MeasureOverallTime({first_lineitem_filter});
-  MeasureOverallTime({lineitem_linear_sort});
-  MeasureOverallTime({lineitem_linear_merge_sort});
-  MeasureOverallTime({first_part_filter});
-  MeasureOverallTime({lineitem_part_join});
-  MeasureOverallTime({lineitem_part_second_filter});
+  //MeasureOverallTime({first_lineitem_filter});
+  //MeasureOverallTime({lineitem_linear_sort});
+  //MeasureOverallTime({lineitem_linear_merge_sort});
+  //MeasureOverallTime({first_part_filter});
+  //MeasureOverallTime({lineitem_part_join});
+  //MeasureOverallTime({lineitem_part_second_filter});
 
   // Pipelined tests
   // QueryManager::RunQueries({filter_and_join_query});
