@@ -1,23 +1,24 @@
 #include "dma_setup.hpp"
 
 #include <numeric>
+#include <stdexcept>
 
 #include "dma_crossbar_setup.hpp"
 #include "merge_sort_setup.hpp"
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
 
-void DMASetup::SetupDMAModule(
-    DMAInterface& dma_engine,
-    const std::vector<StreamDataParameters>& streams,
-    const bool is_input_stream) {
+void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
+                              const std::vector<StreamDataParameters>& streams,
+                              const bool is_input_stream) {
   const int buffer_size = 16 / streams.size();
   int multichannel_stream_count = 0;
   for (int current_stream_count = 0; current_stream_count < streams.size();
        current_stream_count++) {
     const StreamDataParameters stream_init_data =
         streams.at(current_stream_count);
-    const bool is_multichannel_stream = (stream_init_data.max_channel_count != -1);
+    const bool is_multichannel_stream =
+        (stream_init_data.max_channel_count != -1);
 
     DMASetupData stream_setup_data;
     stream_setup_data.is_input_stream = is_input_stream;
@@ -28,8 +29,7 @@ void DMASetup::SetupDMAModule(
                                 stream_init_data);
     } else {
       multichannel_stream_count++;
-      SetMultiChannelSetupData(stream_init_data,
-                               stream_setup_data);
+      SetMultiChannelSetupData(stream_init_data, stream_setup_data);
     }
 
     AllocateStreamBuffers(stream_setup_data, buffer_size, current_stream_count);
@@ -40,11 +40,24 @@ void DMASetup::SetupDMAModule(
       std::iota(stream_specification.begin(), stream_specification.end(), 0);
     } else {
       stream_specification = stream_init_data.stream_specification;
+      if (!stream_setup_data.is_input_stream &&
+          stream_specification.size() != stream_init_data.stream_record_size) {
+        throw std::runtime_error("Expected data and projection don't match!");
+      }
     }
 
-    stream_setup_data.chunks_per_record =
-        StreamParameterCalculator::CalculateChunksPerRecord(
-            stream_specification.size());
+    // For output crossbar the chunks_per_record is about the data on the
+    // interface which is input information rather than something deducted.
+    // Need a check that it isn't -1 like for input streams
+    if (!stream_setup_data.is_input_stream) {
+        // Could still be wrong if output crossbar duplicates data enough!!!
+      stream_setup_data.chunks_per_record =
+          stream_init_data.input_chunks_per_record;
+    } else {
+      stream_setup_data.chunks_per_record =
+          StreamParameterCalculator::CalculateChunksPerRecord(
+              stream_specification.size());
+    }
     StreamParameterCalculator::CalculateDMAStreamSetupData(
         stream_setup_data, stream_init_data.stream_record_size,
         is_multichannel_stream);
@@ -114,8 +127,7 @@ void DMASetup::SetMultiChannelSetupData(
 
   // Just in case setting the unused channels to 0
   for (int j = stream_setup_data.active_channel_count;
-       j < stream_init_data.max_channel_count;
-       j++) {
+       j < stream_init_data.max_channel_count; j++) {
     DMAChannelSetupData current_channel_setup_data = {0, 0, j};
     stream_setup_data.channel_setup_data.push_back(current_channel_setup_data);
   }

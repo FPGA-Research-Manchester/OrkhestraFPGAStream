@@ -9,7 +9,7 @@
 void StreamParameterCalculator::CalculateDMAStreamSetupData(
     DMASetupData& stream_setup_data, const int record_size,
     bool is_multichannel_stream) {
-  // Temporarily for now.
+  // Temporarily for now. Possibly wrong for output which is reduced in chunks!
   for (int i = 0; i < query_acceleration_constants::kDatapathLength; i++) {
     stream_setup_data.record_chunk_ids.emplace_back(
         i, i % FindNextPowerOfTwo(stream_setup_data.chunks_per_record));
@@ -22,8 +22,15 @@ void StreamParameterCalculator::CalculateDMAStreamSetupData(
         MergeSortSetup::CalculateRecordCountPerFetch(sort_buffer_size,
                                                      record_size);
   } else {
-    stream_setup_data.records_per_ddr_burst =
-        FindMinViableRecordsPerDDRBurst(record_size);
+    if (stream_setup_data.is_input_stream) {
+      stream_setup_data.records_per_ddr_burst =
+          FindMinViableRecordsPerDDRBurst(record_size);
+    } else {
+      // chunks_per_record can't be bigger than 32.
+      stream_setup_data.records_per_ddr_burst =
+          query_acceleration_constants::kMaxRecordsPerDDRBurst /
+          FindNextPowerOfTwo(stream_setup_data.chunks_per_record);
+    }
   }
 
   // ceil (recordSize * records_per_ddr_burst) / maxDDRSizePerCycle

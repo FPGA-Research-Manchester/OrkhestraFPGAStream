@@ -174,6 +174,12 @@ void FilterSetup::SetupFilterModuleLineitemQ19(FilterInterface& filter_module,
   filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
                                    output_stream_id);
 
+  // Possibly don't need to bother with the 1 and 3
+  // 0 - AIR REG & >=
+  // 1 - AIR REG & > 
+  // 2 - AIR & >= 
+  // 3 - AIR & >
+
   SetOneOutputSingleModuleMode(filter_module);
   // l_quantity
   // Since this module only has 4 compare lanes we will combine the query
@@ -191,7 +197,7 @@ void FilterSetup::SetupFilterModuleLineitemQ19(FilterInterface& filter_module,
          filter_config_values::LiteralTypes::kLiteralPositive,
          filter_config_values::LiteralTypes::kLiteralDontCare},
         {0, 1, 2, 3}}},
-      0, 10);
+      0, 13);
   SetComparisons(
       filter_module,
       {{filter_config_values::CompareFunctions::kFilter32BitEqual,
@@ -205,7 +211,7 @@ void FilterSetup::SetupFilterModuleLineitemQ19(FilterInterface& filter_module,
          filter_config_values::LiteralTypes::kLiteralDontCare,
          filter_config_values::LiteralTypes::kLiteralPositive},
         {0, 1, 2, 3}}},
-      0, 11);
+      0, 14);
 
   // l_shipmode
   // The table only has REG AIR but we still keep the orignally generated query
@@ -224,7 +230,7 @@ void FilterSetup::SetupFilterModuleLineitemQ19(FilterInterface& filter_module,
                     filter_config_values::LiteralTypes::kLiteralPositive,
                     filter_config_values::LiteralTypes::kLiteralPositive},
                    {0, 1, 2, 3}}},
-                 1, 7);
+                 1, 8);
 
   // l_shipinstruct
   SetComparisons(filter_module,
@@ -232,7 +238,7 @@ void FilterSetup::SetupFilterModuleLineitemQ19(FilterInterface& filter_module,
                    ConvertCharStringToAscii("DELIVER IN PERSON        ", 7),
                    {},
                    {0, 1, 2, 3}}},
-                 1, 14);
+                 1, 15);
 
   filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
       query_acceleration_constants::kDatapathWidth);

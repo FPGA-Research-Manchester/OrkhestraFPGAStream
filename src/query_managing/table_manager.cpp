@@ -75,7 +75,7 @@ void TableManager::ReadInputTables(
     if (allocated_memory_blocks[stream_index]) {
       WriteInputDataToMemoryBlock(allocated_memory_blocks[stream_index],
                                   current_table);
-      /*PrintWrittenData(stream_data_file_names[stream_index],
+    /*PrintWrittenData(stream_data_file_names[stream_index],
                        allocated_memory_blocks[stream_index], current_table);*/
       physical_address_ptr =
           allocated_memory_blocks[stream_index]->GetPhysicalAddress();
@@ -107,8 +107,8 @@ void TableManager::ReadExpectedTables(
   }
   for (int stream_index = 0; stream_index < stream_data_file_names.size();
        stream_index++) {
-    std::cout << "Reading output: " << stream_data_file_names[stream_index]
-              << std::endl;
+    //std::cout << "Reading output: " << stream_data_file_names[stream_index]
+    //          << std::endl;
     auto current_table =
         data_manager.ParseDataFromCSV(stream_data_file_names[stream_index]);
 
@@ -119,9 +119,12 @@ void TableManager::ReadExpectedTables(
     }
     StreamDataParameters current_stream_parameters = {
         stream_id_vector[stream_index], GetRecordSizeFromTable(current_table),
-        0, physical_address_ptr, stream_specification.at(stream_index)};
+        0,
+        physical_address_ptr,
+        stream_specification.at(stream_index),
+        stream_specification.back().at(stream_index)};
 
-    PrintDataSize(current_table);
+    //PrintDataSize(current_table);
     // std::cout << "RECORD_SIZE = " << GetRecordSizeFromTable(current_table)
     //          << std::endl;
 
