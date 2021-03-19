@@ -36,6 +36,10 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_double_merge_sorting.json
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_01.csv lineitem_sf0_01.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_1.csv lineitem_sf0_1.csv COPYONLY)
 
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_1_filter.csv lineitem_sf0_1_filter.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_1_sort.csv lineitem_sf0_1_sort.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_1_linear_sort.csv lineitem_sf0_1_linear_sort.csv COPYONLY)
+
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/part_sf0_01.csv part_sf0_01.csv COPYONLY)
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_01_filter.csv lineitem_sf0_01_filter.csv COPYONLY)

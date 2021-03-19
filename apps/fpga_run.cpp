@@ -184,6 +184,16 @@ auto main() -> int {
          -1, -1, -1, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26}},
        {{0, 1, 2, 3, 4, 5, 6}, {2}},
        {{1}}}};
+  query_scheduling_data::QueryNode first_lineitem_filter1 = {
+      {"lineitem_sf0_1.csv"},
+      {"lineitem_sf0_1_filter.csv"},
+      operation_types::QueryOperation::kFilter,
+      {nullptr},
+      {nullptr},
+      {{{1,  4,  5,  6,  7,  8,  9,  -1, -1, -1, -1, -1, -1,
+         -1, -1, -1, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26}},
+       {{0, 1, 2, 3, 4, 5, 6}, {2}},
+       {{1}}}};
   query_scheduling_data::QueryNode lineitem_linear_sort = {
       {"lineitem_sf0_01_filter.csv"},
       {"lineitem_sf0_01_linear_sort.csv"},
@@ -191,9 +201,23 @@ auto main() -> int {
       {nullptr},
       {nullptr},
       {{{}}, {{}, {1}}, {{}}}};
+  query_scheduling_data::QueryNode lineitem_linear_sort1 = {
+      {"lineitem_sf0_1_filter.csv"},
+      {"lineitem_sf0_1_linear_sort.csv"},
+      operation_types::QueryOperation::kLinearSort,
+      {nullptr},
+      {nullptr},
+      {{{}}, {{}, {1}}, {{}}}};
   query_scheduling_data::QueryNode lineitem_linear_merge_sort = {
       {"lineitem_sf0_01_linear_sort.csv"},
       {"lineitem_sf0_01_sort.csv"},
+      operation_types::QueryOperation::kMergeSort,
+      {nullptr},
+      {nullptr},
+      {{{}}, {{}, {1}}, {{64, 512}}}};
+  query_scheduling_data::QueryNode lineitem_linear_merge_sort1 = {
+      {"lineitem_sf0_1_linear_sort.csv"},
+      {"lineitem_sf0_1_sort.csv"},
       operation_types::QueryOperation::kMergeSort,
       {nullptr},
       {nullptr},
@@ -244,6 +268,10 @@ auto main() -> int {
   // Individual operation tests with car data
    //MeasureOverallTime({merge_sort_query_1k_once, filtering_query_once,
    //                   join_query_once, linear_sort_query_8k_once});
+
+  //MeasureOverallTime({first_lineitem_filter1});
+  //MeasureOverallTime({lineitem_linear_sort1});
+  //MeasureOverallTime({lineitem_linear_merge_sort1});
 
   MeasureOverallTime({first_lineitem_filter});
   MeasureOverallTime({lineitem_linear_sort});
