@@ -228,28 +228,26 @@ auto main() -> int {
       operation_types::QueryOperation::kFilter,
       {nullptr},
       {nullptr},
-      {{{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16,
-         17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
-         34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 33, 34, 35, 33, 34, 35}},
-       {{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14,
-         15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-         30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43},
-        {3}},
+      {{{0,  22, 23, 24, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+         -1, -1, -1, 32, 33, 34, 35, 33, 34, 35, 33, 34, 35}},
+       {{0,  1,  2,  3},
+        {2}},
        {{2}}}};
-  // query_scheduling_data::QueryNode lineitem_part_join = {
-  //    {"lineitem_sf0_01_sort.csv", "part_sf0_01_filter.csv"},
-  //    {"lineitem_part_sf0_01_1st_filter.csv"},
-  //    operation_types::QueryOperation::kJoin,
-  //    {nullptr},
-  //    {nullptr, nullptr},
-  //    {{{}, {}}, {{}}, {}}};
-  // query_scheduling_data::QueryNode lineitem_part_second_filter = {
-  //    {"lineitem_part_sf0_01_1st_filter.csv"},
-  //    {"lineitem_part_sf0_01_second_filter.csv"},
-  //    operation_types::QueryOperation::kFilter,
-  //    {nullptr},
-  //    {nullptr},
-  //    {{{}}, {{}}, {{}}}};
+   query_scheduling_data::QueryNode lineitem_part_join = {
+      {"lineitem_sf0_01_sort.csv", "part_sf0_01_filter.csv"},
+      {"lineitem_part_sf0_01_1st_filter.csv"},
+      operation_types::QueryOperation::kJoin,
+      {nullptr},
+      {nullptr, nullptr},
+      {{{}, {0, -1, -1, -1, -1, -1, -1, 1, 2, 3}}, {{1,2,3,4,5,6,7,8,9}, {1}}, {}}};
+   query_scheduling_data::QueryNode lineitem_part_second_filter = {
+      {"lineitem_part_sf0_01_1st_filter.csv"},
+      {"lineitem_part_sf0_01_2nd_filter.csv"},
+      operation_types::QueryOperation::kFilter,
+      {nullptr},
+      {nullptr},
+       {{{0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1}}, {{2, 3, 4, 5}, {1}},
+        {{3}}}};
 
   // Run operations twice
   // QueryManager::RunQueries(
@@ -276,7 +274,9 @@ auto main() -> int {
   MeasureOverallTime({first_lineitem_filter});
   MeasureOverallTime({lineitem_linear_sort});
   MeasureOverallTime({lineitem_linear_merge_sort});
-  // MeasureOverallTime({first_part_filter});
+  MeasureOverallTime({first_part_filter});
+  MeasureOverallTime({lineitem_part_join});
+  MeasureOverallTime({lineitem_part_second_filter});
 
   // Pipelined tests
   // QueryManager::RunQueries({filter_and_join_query});

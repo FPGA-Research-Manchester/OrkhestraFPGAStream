@@ -43,5 +43,8 @@ class FilterSetup {
   static void SetupFilterModuleLineitemQ19(FilterInterface& filter_module,
                                            int input_stream_id,
                                            int output_stream_id);
+  static void SetupFilterModuleFinalQ19(FilterInterface& filter_module,
+                                           int input_stream_id,
+                                           int output_stream_id);
 
 };
