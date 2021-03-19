@@ -4,6 +4,7 @@
 #include "stream_parameter_calculator.hpp"
 
 #include <stdexcept>
+#include <cmath>
 
 void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
                                           int stream_id, int record_size,
@@ -35,8 +36,8 @@ auto MergeSortSetup::CalculateSortBufferSize(int buffer_space,
   int max_buffered_record_count = buffer_space / chunks_per_record -
                                   16;  // -16 for records in the pipelines.
 
-  return (max_buffered_record_count - internal_logic_buffer_reserve) /
-         channel_count;
+  return std::min(16,(max_buffered_record_count - internal_logic_buffer_reserve) /
+         channel_count);
 }
 
 auto MergeSortSetup::CalculateRecordCountPerFetch(int sort_buffer_size, int record_size) -> int {

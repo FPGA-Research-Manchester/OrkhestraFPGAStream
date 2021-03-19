@@ -6,6 +6,12 @@ struct StreamDataParameters {
   const int stream_record_size;
   const int stream_record_count;
   const volatile uint32_t* physical_address;
+  const std::vector<int> stream_specification;
+  // For output streams
+  const int input_chunks_per_record = -1; 
+  // For multi-channel streams
+  const int max_channel_count = -1;
+  const int records_per_channel = -1;
 
   auto operator<(const StreamDataParameters& comparable) const -> bool {
     return stream_id < comparable.stream_id;

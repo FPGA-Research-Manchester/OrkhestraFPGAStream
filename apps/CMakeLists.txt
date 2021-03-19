@@ -13,7 +13,6 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_DATA_SORTED_8K.csv CAR_DAT
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CAR_FILTER_DATA.csv CAR_FILTER_DATA.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CUSTOMER_DATA.csv CUSTOMER_DATA.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/CUSTOMER_DATA_FOR_JOIN.csv CUSTOMER_DATA_FOR_JOIN.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/JOIN_DATA.csv JOIN_DATA.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/FILTERED_JOIN_DATA.csv FILTERED_JOIN_DATA.csv COPYONLY)
 
@@ -29,20 +28,28 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_merge_sorting.bin DSPI_me
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_merge_sorting.json DSPI_merge_sorting.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_linear_sorting.bin DSPI_linear_sorting.bin COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_linear_sorting.json DSPI_linear_sorting.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_filtering_linear_sort.bin DSPI_filtering_linear_sort.bin COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_filtering_linear_sort.json DSPI_filtering_linear_sort.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_double_merge_sorting.bin DSPI_double_merge_sorting.bin COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_double_merge_sorting.json DSPI_double_merge_sorting.json COPYONLY)
 
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_01.csv lineitem_sf0_01.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_1.csv lineitem_sf0_1.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_1_filter.csv lineitem_sf0_1_filter.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_1_linear_sort.csv lineitem_sf0_1_linear_sort.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_1_sort.csv lineitem_sf0_1_sort.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/part_sf0_1.csv part_sf0_1.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/part_sf0_1_filter.csv part_sf0_1_filter.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_part_sf0_1_1st_filter.csv lineitem_part_sf0_1_1st_filter.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_part_sf0_1_2nd_filter.csv lineitem_part_sf0_1_2nd_filter.csv COPYONLY)
 
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/part_sf0_01.csv part_sf0_01.csv COPYONLY)
-
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_01.csv lineitem_sf0_01.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_01_filter.csv lineitem_sf0_01_filter.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_01_linear_sort.csv lineitem_sf0_01_linear_sort.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_01_sort.csv lineitem_sf0_01_sort.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/part_sf0_01_1st_filter.csv part_sf0_01_1st_filter.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/part_sf0_01.csv part_sf0_01.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/part_sf0_01_filter.csv part_sf0_01_filter.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/part_sf0_01_filter_shifted.csv part_sf0_01_filter_shifted.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_part_sf0_01_1st_filter.csv lineitem_part_sf0_01_1st_filter.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_part_sf0_01_2nd_filter.csv lineitem_part_sf0_01_2nd_filter.csv COPYONLY)
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/repo.json repo.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data_config.ini data_config.ini COPYONLY)

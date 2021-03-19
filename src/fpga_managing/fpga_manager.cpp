@@ -34,16 +34,22 @@ void FPGAManager::SetupQueryAcceleration(
     ila_module_.value().startAxiILA();
   }*/
 
-  std::vector<std::pair<StreamDataParameters, bool>> input_streams;
-  std::vector<std::pair<StreamDataParameters, bool>> output_streams;
+  std::vector<StreamDataParameters> input_streams;
+  std::vector<StreamDataParameters> output_streams;
   for (const auto& query_node : query_nodes) {
     bool is_multichannel_stream = query_node.operation_type ==
                                   operation_types::QueryOperation::kMergeSort;
     FindIOStreams(query_node.input_streams, input_streams,
-                  is_multichannel_stream, input_streams_active_status_);
-    FindIOStreams(query_node.output_streams, output_streams, false,
+                  query_node.operation_parameters, is_multichannel_stream,
+                  input_streams_active_status_);
+    FindIOStreams(query_node.output_streams, output_streams,
+                  query_node.operation_parameters, false,
                   output_streams_active_status_);
   }
+
+  // MISSING PIECE OF LOGIC HERE...
+  // Need to check for stream specification validity and intermediate stream
+  // specifications have to be merged with the IO stream specs.
 
   if (input_streams.empty() || output_streams.empty()) {
     throw std::runtime_error("Input or output streams missing!");
@@ -72,15 +78,16 @@ void FPGAManager::SetupQueryAcceleration(
     int module_location = node_index + 1;
     auto query_node = *current_query_node;
 
+    // Assumptions are taken that the input and output streams are defined
+    // correctly and that the correct amount of streams have been given for each
+    // operation.
     switch (query_node.operation_type) {
       case operation_types::QueryOperation::kFilter: {
         Filter filter_module(memory_manager_, module_location);
-        /*FilterSetup::SetupFilterModuleCars(filter_module,
+        FilterSetup::SetupFilterModule(filter_module,
                                        query_node.input_streams[0].stream_id,
-                                       query_node.output_streams[0].stream_id);*/
-        FilterSetup::SetupFilterModuleLineitemQ19(
-            filter_module, query_node.input_streams[0].stream_id,
-            query_node.output_streams[0].stream_id);
+                                       query_node.output_streams[0].stream_id,
+                                       query_node.operation_parameters);
         break;
       }
       case operation_types::QueryOperation::kJoin: {
@@ -114,11 +121,24 @@ void FPGAManager::SetupQueryAcceleration(
 
 void FPGAManager::FindIOStreams(
     const std::vector<StreamDataParameters> all_streams,
-    std::vector<std::pair<StreamDataParameters, bool>>& found_streams,
+    std::vector<StreamDataParameters>& found_streams,
+    const std::vector<std::vector<int>> operation_parameters,
     const bool is_multichannel_stream, bool stream_status_array[]) {
   for (const auto& current_stream : all_streams) {
     if (current_stream.physical_address) {
-      found_streams.emplace_back(current_stream, is_multichannel_stream);
+      if (is_multichannel_stream) {
+        // Assumption is that there is only one multichannel stream in this node
+        // which gets the multi channel parameters
+        found_streams.push_back(
+            {current_stream.stream_id, current_stream.stream_record_size,
+             current_stream.stream_record_count,
+             current_stream.physical_address,
+             current_stream.stream_specification,
+             current_stream.input_chunks_per_record, operation_parameters[0][0],
+             operation_parameters[0][1]});
+      } else {
+        found_streams.push_back(current_stream);
+      }
       stream_status_array[current_stream.stream_id] = true;
     }
   }

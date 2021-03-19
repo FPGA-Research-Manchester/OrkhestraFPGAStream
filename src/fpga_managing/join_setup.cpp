@@ -45,6 +45,7 @@ void JoinSetup::SetupTimeMultiplexer(JoinInterface& join_module,
       output_chunk_id++;
     }
   }
+  // This shift is assumed to be present in the second stream
   int shift_size =
       second_stream_size - (output_stream_size - first_stream_size);
 
