@@ -4,8 +4,7 @@ class JoinSetup {
  private:
   static void SetupTimeMultiplexer(JoinInterface& join_module,
                                    int first_stream_size,
-                                   int second_stream_size,
-                                   int output_stream_size);
+                                   int second_stream_size, int shift_size);
 
  public:
   static void SetupJoinModule(JoinInterface& join_module,
@@ -13,5 +12,6 @@ class JoinSetup {
                               int first_input_record_size,
                               int second_input_stream_id,
                               int second_input_record_size,
-                              int output_stream_id, int output_record_size);
+                              int output_stream_id,
+                              int output_chunks_per_record, int shift_size);
 };

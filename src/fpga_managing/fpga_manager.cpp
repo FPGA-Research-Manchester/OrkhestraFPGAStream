@@ -94,25 +94,26 @@ void FPGAManager::SetupQueryAcceleration(
         Join join_module(memory_manager_, module_location);
         JoinSetup::SetupJoinModule(
             join_module, query_node.input_streams[0].stream_id,
-            query_node.input_streams[0].stream_record_size,
+            GetStreamRecordSize(query_node.input_streams[0]),
             query_node.input_streams[1].stream_id,
-            query_node.input_streams[1].stream_record_size,
+            GetStreamRecordSize(query_node.input_streams[1]),
             query_node.output_streams[0].stream_id,
-            query_node.output_streams[0].stream_record_size);
+            query_node.output_streams[0].input_chunks_per_record,
+            query_node.operation_parameters.at(0).at(0));
         break;
       }
       case operation_types::QueryOperation::kMergeSort: {
         MergeSort merge_sort_module(memory_manager_, module_location);
         MergeSortSetup::SetupMergeSortModule(
             merge_sort_module, query_node.input_streams[0].stream_id,
-            query_node.input_streams[0].stream_record_size, 0, true);
+            GetStreamRecordSize(query_node.input_streams[0]), 0, true);
         break;
       }
       case operation_types::QueryOperation::kLinearSort: {
         LinearSort linear_sort_module(memory_manager_, module_location);
         LinearSortSetup::SetupLinearSortModule(
             linear_sort_module, query_node.input_streams[0].stream_id,
-            query_node.input_streams[0].stream_record_size);
+            GetStreamRecordSize(query_node.input_streams[0]));
         break;
       }
     }
@@ -241,4 +242,15 @@ void FPGAManager::PrintDebuggingData() {
     FPGAManager::ila_module_.value().PrintDMAILAData(2048);
   }
 #endif
+}
+
+auto FPGAManager::GetStreamRecordSize(
+    const StreamDataParameters& stream_parameters) -> int {
+  std::cout << stream_parameters.stream_record_size << "vs"
+            << stream_parameters.stream_specification.size() << std::endl;
+  if (stream_parameters.stream_specification.empty()) {
+    return stream_parameters.stream_record_size;
+  } else {
+    stream_parameters.stream_specification.size();
+  }
 }
