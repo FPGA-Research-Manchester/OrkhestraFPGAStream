@@ -42,4 +42,7 @@ class FPGAManager {
       std::vector<StreamDataParameters>& found_streams,
       const std::vector<std::vector<int>> operation_parameters,
       const bool is_multichannel_stream, bool stream_status_array[]);
+
+  static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)
+      -> int;
 };

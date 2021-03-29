@@ -53,7 +53,7 @@ void DataManager::PrintStringData(
     const std::vector<std::vector<std::string>>& string_data) {
   for (const auto& row : string_data) {
     for (const auto& element : row) {
-      if (element != row.back()) {
+      if (&element != &row.back()) {
         std::cout << element << ",";
       } else {
         std::cout << element << std::endl;

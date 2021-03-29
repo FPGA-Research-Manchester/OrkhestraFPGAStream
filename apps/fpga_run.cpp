@@ -42,7 +42,7 @@ auto main() -> int {
       operation_types::QueryOperation::kJoin,
       {nullptr},
       {nullptr, nullptr},
-      {{{}, {0, -1, 1, 2, 3, 4, 5, 6}}, {{}, {2}}, {}}};
+      {{{}, {0, -1, 1, 2, 3, 4, 5, 6}}, {{}, {2}}, {{2}}}};
   query_scheduling_data::QueryNode linear_sort_query_8k_once = {
       {"CAR_DATA_8K.csv"},
       {"CAR_DATA_HALF_SORTED_8K_512WAY.csv"},
@@ -116,7 +116,7 @@ auto main() -> int {
   join_after_filter_query.previous_nodes = {&filter_and_join_query, nullptr};
   join_after_filter_query.next_nodes = {nullptr};
   join_after_filter_query.operation_parameters = {
-      {{}, {0, -1, 1, 2, 3, 4, 5, 6}}, {{}, {2}}, {}};
+      {{}, {0, -1, 1, 2, 3, 4, 5, 6}}, {{}, {2}}, {{2}}};
 
   // TPC-H DATA
   // Lineitem tables in different sizes
@@ -163,17 +163,6 @@ auto main() -> int {
   // Q19
   // Input: l_partkey, l_quantity, l_extendedprice, l_discount, l_shipinstruct,
   // l_shipmode Output: l_partkey, l_quantity, l_extendedprice, l_discount
-  // query_scheduling_data::QueryNode first_lineitem_filter = {
-  //   {"lineitem_sf0_01.csv"},
-  //   {"lineitem_sf0_01_filter.csv"},
-  //   operation_types::QueryOperation::kFilter,
-  //   {nullptr},
-  //   {nullptr},
-
-  //   {{{1, 4, 5, 6, 7, 8, 9, 0, 2, 3, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-  //   20, 21, 22, 23, 24,25,26,27,28,29,30,31,32,33,34,35,36,37,38}},
-  //    {{0, 1, 2, 3, 4, 5, 6}, {3}},
-  //    {{1}}}};
   query_scheduling_data::QueryNode first_lineitem_filter = {
       {"lineitem_sf0_01.csv"},
       {"lineitem_sf0_01_filter.csv"},
@@ -249,7 +238,9 @@ auto main() -> int {
       operation_types::QueryOperation::kJoin,
       {nullptr},
       {nullptr, nullptr},
-      {{{}, {0, -1, -1, -1, -1, -1, -1, 1, 2, 3}}, {{1,2,3,4,5,6,7,8,9}, {1}}, {}}};
+      {{{}, {0, -1, -1, -1, -1, -1, -1, 1, 2, 3}},
+       {{1, 2, 3, 4, 5, 6, 7, 8, 9}, {1}},
+       {{7}}}};
   query_scheduling_data::QueryNode lineitem_part_join1 = {
       {"lineitem_sf0_1_sort.csv", "part_sf0_1_filter.csv"},
       {"lineitem_part_sf0_1_1st_filter.csv"},
@@ -258,7 +249,7 @@ auto main() -> int {
       {nullptr, nullptr},
       {{{}, {0, -1, -1, -1, -1, -1, -1, 1, 2, 3}},
        {{1, 2, 3, 4, 5, 6, 7, 8, 9}, {1}},
-       {}}};
+        {{7}}}};
    query_scheduling_data::QueryNode lineitem_part_second_filter = {
       {"lineitem_part_sf0_01_1st_filter.csv"},
       {"lineitem_part_sf0_01_2nd_filter.csv"},
