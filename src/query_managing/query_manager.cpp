@@ -40,6 +40,7 @@ void QueryManager::CheckTableData(const TableData& expected_table,
   std::cout << std::endl;
 }
 
+// Possibly the whole pair isn't needed? Just use the ConfigurableModulesVector
 auto QueryManager::GetBitstreamFileFromQueryNode(
     const std::pair<query_scheduling_data::ConfigurableModulesVector,
                     std::vector<query_scheduling_data::QueryNode>>& query_node)
@@ -55,6 +56,8 @@ auto QueryManager::GetBitstreamFileFromQueryNode(
   }
 }
 
+// Possibly the whole pair isn't needed again? Then again, in the future each
+// node might not have just one module.
 auto QueryManager::GetModuleCountFromQueryNode(
     const std::pair<query_scheduling_data::ConfigurableModulesVector,
                     std::vector<query_scheduling_data::QueryNode>>& query_node)
@@ -143,6 +146,13 @@ void QueryManager::RunQueries(
           allocated_output_memory_blocks, expected_output_tables,
           current_node.operation_parameters.output_stream_parameters);
 
+      // Check if the loaded modules will have to get changed based on the input
+      // data.
+      CheckElasticityNeeds(
+          input_stream_parameters, current_node.operation_type,
+          current_node.operation_parameters.operation_parameters,
+          executable_query_nodes.first);
+
       query_nodes.push_back(
           {std::move(input_stream_parameters),
            std::move(output_stream_parameters), current_node.operation_type,
@@ -194,4 +204,23 @@ void QueryManager::RunQueries(
 
     query_node_runs_queue.pop();
   }
+}
+
+void QueryManager::CheckElasticityNeeds(
+    std::vector<StreamDataParameters> input_stream_parameters,
+    operation_types::QueryOperation operation_type,
+    std::vector<std::vector<int>> operation_parameters,
+    query_scheduling_data::ConfigurableModulesVector loaded_modules) {
+  if (operation_type == operation_types::QueryOperation::kMergeSort &&
+      !IsMergeSortBigEnough(input_stream_parameters, operation_parameters)) {
+    throw std::runtime_error(
+        "Unable to use current merge sort on the given data!");
+  }
+}
+
+auto QueryManager::IsMergeSortBigEnough(
+    std::vector<StreamDataParameters> input_stream_parameters,
+    std::vector<std::vector<int>> operation_parameters) -> bool {
+  return input_stream_parameters.at(0).stream_record_count <=
+         operation_parameters.at(0).at(0) * operation_parameters.at(0).at(1);
 }

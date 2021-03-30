@@ -246,8 +246,6 @@ void FPGAManager::PrintDebuggingData() {
 
 auto FPGAManager::GetStreamRecordSize(
     const StreamDataParameters& stream_parameters) -> int {
-  std::cout << stream_parameters.stream_record_size << "vs"
-            << stream_parameters.stream_specification.size() << std::endl;
   if (stream_parameters.stream_specification.empty()) {
     return stream_parameters.stream_record_size;
   } else {
