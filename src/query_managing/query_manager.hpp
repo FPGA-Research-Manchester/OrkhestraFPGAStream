@@ -7,6 +7,7 @@
 #include "query_scheduling_data.hpp"
 #include "stream_data_parameters.hpp"
 #include "table_data.hpp"
+#include "operation_types.hpp"
 
 class QueryManager {
  private:

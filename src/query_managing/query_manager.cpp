@@ -10,6 +10,7 @@
 
 #include "accelerated_query_node.hpp"
 #include "data_manager.hpp"
+#include "elastic_module_checker.hpp"
 #include "fpga_manager.hpp"
 #include "id_manager.hpp"
 #include "memory_block_interface.hpp"
@@ -40,6 +41,7 @@ void QueryManager::CheckTableData(const TableData& expected_table,
   std::cout << std::endl;
 }
 
+// Possibly the whole pair isn't needed? Just use the ConfigurableModulesVector
 auto QueryManager::GetBitstreamFileFromQueryNode(
     const std::pair<query_scheduling_data::ConfigurableModulesVector,
                     std::vector<query_scheduling_data::QueryNode>>& query_node)
@@ -55,6 +57,8 @@ auto QueryManager::GetBitstreamFileFromQueryNode(
   }
 }
 
+// Possibly the whole pair isn't needed again? Then again, in the future each
+// node might not have just one module.
 auto QueryManager::GetModuleCountFromQueryNode(
     const std::pair<query_scheduling_data::ConfigurableModulesVector,
                     std::vector<query_scheduling_data::QueryNode>>& query_node)
@@ -142,6 +146,12 @@ void QueryManager::RunQueries(
           current_node.output_data_definition_files, output_ids[node_index],
           allocated_output_memory_blocks, expected_output_tables,
           current_node.operation_parameters.output_stream_parameters);
+
+      // Check if the loaded modules are correct based on the input.
+      ElasticModuleChecker::CheckElasticityNeeds(
+          input_stream_parameters, current_node.operation_type,
+          current_node.operation_parameters.operation_parameters,
+          executable_query_nodes.first);
 
       query_nodes.push_back(
           {std::move(input_stream_parameters),

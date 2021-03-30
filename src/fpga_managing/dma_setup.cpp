@@ -1,5 +1,6 @@
 #include "dma_setup.hpp"
 
+#include <algorithm>
 #include <numeric>
 #include <stdexcept>
 
@@ -46,13 +47,19 @@ void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
       }
     }
 
-    // For output crossbar the chunks_per_record is about the data on the
-    // interface which is input information rather than something deducted.
-    // Need a check that it isn't -1 like for input streams
+    // For output crossbar the chunks_per_record is chosen between the interface
+    // data size and the output data size to make sure that everything fits to
+    // the crossbar configuration space if the projection operation does large
+    // changes to the record size.
     if (!stream_setup_data.is_input_stream) {
-        // Could still be wrong if output crossbar duplicates data enough!!!
+      if (stream_init_data.input_chunks_per_record == -1) {
+        throw std::runtime_error(
+            "Chunk size at the end of the acceleration isn't specified!");
+      }
       stream_setup_data.chunks_per_record =
-          stream_init_data.input_chunks_per_record;
+          std::max(stream_init_data.input_chunks_per_record,
+                   StreamParameterCalculator::CalculateChunksPerRecord(
+                       stream_specification.size()));
     } else {
       stream_setup_data.chunks_per_record =
           StreamParameterCalculator::CalculateChunksPerRecord(
