@@ -4,7 +4,7 @@ This software stack is meant to be transparently integrated with a proven DBMS f
 
 <center><img src="./docs/DBMStoDSPI_graph.svg" width=100%></center>
 
-As you can see from the image the input would be a query plan graph form a DBMS to the software stack which will use [FOS](https://github.com/FPGA-Research-Manchester/fos) and the modules described below to accelerate the query.
+As you can see from the image the input would be a query plan graph form a DBMS to the software stack which will use [FOS](https://github.com/FPGA-Research-Manchester/fos) and the modules described below to accelerate the query. The image is slightly out of date as the gray operation parameters are now used and there is an additional class for checking resource elastic module constraints.
 
 ## Currently supported data types:
 
