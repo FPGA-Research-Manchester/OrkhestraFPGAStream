@@ -1,12 +1,12 @@
 #include "types_converter.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <iomanip>
 #include <map>
 #include <sstream>
 #include <stdexcept>
-#include <cmath>
 
 void TypesConverter::AddIntegerDataFromStringData(
     const std::vector<std::vector<std::string>>& string_data,
@@ -174,14 +174,22 @@ auto TypesConverter::ConvertHexStringToString(const std::string& hex)
 auto TypesConverter::ConvertCharStringToAscii(const std::string& input_string,
                                               int output_size)
     -> std::vector<int> {
-  if (input_string.length() > output_size * 4) {
+  // If the string is surrounded by quotes we need to reduce parsing range
+  int length_reduction = 0;
+  int start_shift = 0;
+  if (input_string.at(0) == '"' && input_string.back() == '"') {
+    length_reduction = 2;
+    start_shift = 1;
+  }
+  if ((input_string.length() - length_reduction) > (output_size * 4)) {
     throw std::runtime_error(
         (input_string + " is longer than " + std::to_string(output_size * 4))
             .c_str());
   }
   std::vector<int> integer_values(output_size, 0);
-  for (int i = 0; i < input_string.length(); i++) {
-    integer_values[i / 4] += int(input_string[i]) << (3 - (i % 4)) * 8;
+  for (int i = 0; i < input_string.length() - length_reduction; i++) {
+    integer_values[i / 4] += int(input_string.at(i + start_shift))
+                             << (3 - (i % 4)) * 8;
   }
   return integer_values;
 }
