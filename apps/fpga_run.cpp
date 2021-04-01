@@ -7,6 +7,13 @@
 #include "query_manager.hpp"
 #include "query_scheduling_data.hpp"
 
+/**
+ * Helper method to run the given query nodes and their subsequent nodes while
+ * measuring and printing the overall time it took to process the queries. This
+ * includes data writing and reading from and to the DDR.
+ *
+ * @param leaf_nodes Vector of nodes from which the parsing starts.
+ */
 void MeasureOverallTime(
     std::vector<query_scheduling_data::QueryNode> leaf_nodes) {
   std::chrono::steady_clock::time_point begin =
@@ -20,6 +27,11 @@ void MeasureOverallTime(
       << "[s]" << std::endl;
 }
 
+/**
+ * Main method of the program. Creates query nodes to be processed and runs the
+ * query nodes in different runs meant to test different things like the module
+ * correctness and TPC-H support.
+ */
 auto main() -> int {
   // CAR DATA
   query_scheduling_data::QueryNode pass_through_1k_data = {
@@ -276,7 +288,7 @@ auto main() -> int {
   lineitem_part_second_filter.previous_nodes = {&lineitem_part_join};
 
   // Run operations twice
-   QueryManager::RunQueries(
+  QueryManager::RunQueries(
       {filtering_query_once, filtering_query_once, merge_sort_query_8k_once,
        merge_sort_query_8k_once, join_query_once, join_query_once,
        linear_sort_query_8k_once, linear_sort_query_8k_once});
@@ -291,7 +303,7 @@ auto main() -> int {
 
   // Individual operation tests with car data
   MeasureOverallTime({merge_sort_query_1k_once, filtering_query_once,
-                     join_query_once, linear_sort_query_8k_once});
+                      join_query_once, linear_sort_query_8k_once});
 
   MeasureOverallTime({first_lineitem_filter1});
   MeasureOverallTime({lineitem_linear_sort1});
@@ -303,8 +315,8 @@ auto main() -> int {
   // Pipelined tests
   MeasureOverallTime({first_lineitem_filter, first_part_filter});
 
-  //QueryManager::RunQueries({filter_and_join_query});
-  //QueryManager::RunQueries({join_query_once, filter_and_join_query});
+  // QueryManager::RunQueries({filter_and_join_query});
+  // QueryManager::RunQueries({join_query_once, filter_and_join_query});
   QueryManager::RunQueries({pass_through_and_filter_query});
 
   MeasureOverallTime({tpch_pass_through_lineitem_01});

@@ -34,8 +34,8 @@ More info on the how the data is mapped to the interface can be found [here](./d
 
 ## How to use the source?
 
-The documentation for this project is created using [CMake](https://cmake.org/cmake/help/latest/guide/tutorial/index.html) with [Doxygen](https://www.doxygen.nl/manual/starting.html). To turn the documentation build option on you need to change the main [CMakeLists.txt](./CMakeLists.txt) file and then you can find the output in the build directory under the *doc_doxygen* folder.
+The documentation for this project is created using [CMake](https://cmake.org/cmake/help/latest/guide/tutorial/index.html) with [Doxygen](https://www.doxygen.nl/manual/starting.html). To turn the documentation build option on you need to change the main [CMakeLists.txt](./CMakeLists.txt) file and then you can find the output in the build directory under the *doc_doxygen* folder. The FOS library and test library aren't included in the generated documentation.
 
-Formatting is done according to the clang-tidy options you can find [here](./.clang-tidy).
+Formatting is done according to the [clang-tidy](https://clang.llvm.org/extra/clang-tidy/) options you can find [here](./.clang-tidy).
 
 Testing for this code is done using [googletest](https://github.com/google/googletest) and is automatically downloaded when the code is built with testing options turned on.
