@@ -11,7 +11,7 @@
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
 
-// TODO: Rething record_size since it isn't used for output
+// TODO(Kaspar): Rething record_size since it isn't used for output
 void DMACrossbarSetup::CalculateCrossbarSetupData(
     DMASetupData& stream_setup_data, const int record_size,
     const std::vector<int>& selected_columns) {
@@ -44,15 +44,11 @@ void DMACrossbarSetup::SetUpEmptyCrossbarSetupData(
 
 void DMACrossbarSetup::FillSetupDataWithNegativePositions(
     DMASetupData& stream_setup_data) {
-  for (int chunk_index = 0;
-       chunk_index < stream_setup_data.crossbar_setup_data.size();
-       chunk_index++) {
+  for (auto& chunk_index : stream_setup_data.crossbar_setup_data) {
     for (int position_index = 0;
-         position_index < stream_setup_data.crossbar_setup_data[chunk_index]
-                              .chunk_selection.size();
+         position_index < chunk_index.chunk_selection.size();
          position_index++) {
-      stream_setup_data.crossbar_setup_data[chunk_index]
-          .chunk_selection[position_index] = -1;
+      chunk_index.chunk_selection[position_index] = -1;
     }
   }
 }
@@ -106,14 +102,10 @@ auto DMACrossbarSetup::CreateFreeChunksVector() -> std::vector<int> {
 void DMACrossbarSetup::MarkChunksAsUsed(const DMASetupData& stream_setup_data,
                                         const int column_id,
                                         std::vector<int>& free_chunks) {
-  for (int chunk_id = 0;
-       chunk_id < stream_setup_data.crossbar_setup_data.size(); chunk_id++) {
-    if (stream_setup_data.crossbar_setup_data.at(chunk_id)
-            .chunk_selection[column_id] != -1) {
-      auto find_iterator =
-          std::find(free_chunks.begin(), free_chunks.end(),
-                    stream_setup_data.crossbar_setup_data.at(chunk_id)
-                        .chunk_selection[column_id]);
+  for (const auto& chunk_id : stream_setup_data.crossbar_setup_data) {
+    if (chunk_id.chunk_selection[column_id] != -1) {
+      auto find_iterator = std::find(free_chunks.begin(), free_chunks.end(),
+                                     chunk_id.chunk_selection[column_id]);
       if (find_iterator != free_chunks.end()) {
         free_chunks.erase(find_iterator);
       }
@@ -124,12 +116,9 @@ void DMACrossbarSetup::MarkChunksAsUsed(const DMASetupData& stream_setup_data,
 void DMACrossbarSetup::AllocateAvailableChunks(
     DMASetupData& stream_setup_data, const int column_id,
     const std::vector<int>& free_chunks) {
-  for (int chunk_id = 0;
-       chunk_id < stream_setup_data.crossbar_setup_data.size(); chunk_id++) {
-    if (stream_setup_data.crossbar_setup_data[chunk_id]
-            .chunk_selection[column_id] == -1) {
-      stream_setup_data.crossbar_setup_data[chunk_id]
-          .chunk_selection[column_id] = free_chunks.at(0);
+  for (auto& chunk_id : stream_setup_data.crossbar_setup_data) {
+    if (chunk_id.chunk_selection[column_id] == -1) {
+      chunk_id.chunk_selection[column_id] = free_chunks.at(0);
     }
   }
 }

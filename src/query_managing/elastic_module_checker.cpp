@@ -1,5 +1,7 @@
 #include "elastic_module_checker.hpp"
 
+#include <stdexcept>
+
 void ElasticModuleChecker::CheckElasticityNeeds(
     std::vector<StreamDataParameters> input_stream_parameters,
     operation_types::QueryOperation operation_type,

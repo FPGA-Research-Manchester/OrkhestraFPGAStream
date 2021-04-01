@@ -35,7 +35,7 @@ class MemoryManager : public MemoryManagerInterface {
   ~MemoryManager() override;
 
   void LoadBitstreamIfNew(const std::string& bitstream_name,
-                     int register_space_size);
+                          int register_space_size) override;
 
   auto GetVirtualRegisterAddress(int offset) -> volatile uint32_t* override;
   auto GetAvailableMemoryBlock()
@@ -45,5 +45,5 @@ class MemoryManager : public MemoryManagerInterface {
 
  private:
   auto AllocateMemoryBlock() -> std::unique_ptr<MemoryBlockInterface> override;
-  void SetFPGATo300MHz();
+  static void SetFPGATo300MHz();
 };

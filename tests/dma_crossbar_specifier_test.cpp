@@ -828,7 +828,7 @@ TEST(DMACrossbarSpecifierTest,
   ASSERT_THROW(
       DMACrossbarSpecifier::ExtendOutputSpecification(
           record_specification, records_per_ddr_burst, chunks_per_record),
-               std::runtime_error);
+      std::runtime_error);
 }
 
 }  // namespace

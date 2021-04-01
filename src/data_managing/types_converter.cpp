@@ -105,7 +105,7 @@ void TypesConverter::ConvertDecimalValuesToIntegerData(
 
 void TypesConverter::ConvertDateValuesToIntegerData(
     const std::string& input, std::vector<uint32_t>& data_vector,
-    int output_size) {
+    int /*output_size*/) {
   auto input_copy = input;
   input_copy.erase(std::remove(input_copy.begin(), input_copy.end(), '-'),
                    input_copy.end());

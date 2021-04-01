@@ -8,7 +8,7 @@
 
 class DMA : public AccelerationModule, public DMAInterface {
  public:
-  ~DMA() = default;
+  ~DMA() override = default;
   explicit DMA(MemoryManagerInterface* memory_manager)
       : AccelerationModule(memory_manager, 0){};
 

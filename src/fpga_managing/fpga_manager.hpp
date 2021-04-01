@@ -37,11 +37,11 @@ class FPGAManager {
                                const std::vector<int>& active_output_stream_ids)
       -> std::vector<int>;
   void PrintDebuggingData();
-  void FindIOStreams(
-      const std::vector<StreamDataParameters> all_streams,
+  static void FindIOStreams(
+      const std::vector<StreamDataParameters>& all_streams,
       std::vector<StreamDataParameters>& found_streams,
-      const std::vector<std::vector<int>> operation_parameters,
-      const bool is_multichannel_stream, bool stream_status_array[]);
+      const std::vector<std::vector<int>>& operation_parameters,
+      bool is_multichannel_stream, bool stream_status_array[]);
 
   static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)
       -> int;

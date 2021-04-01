@@ -276,8 +276,8 @@ TEST(DMACrossbarSetupTest, InterfaceToBufferWithOverwritesSetup) {
 
   DMACrossbarSetup::CalculateCrossbarSetupData(
       test_stream_setup_data, any_record_size,
-      {0,  1,  -1, 3,  4,  5,  22, 7,  -1, 25, 10, 11, 12, 13, 14, 15, 
-      16, 17, 18, 19, 20, 21, 6, 23, 24, 9, 26, 27, 28, -1, -1, 25});
+      {0,  1,  -1, 3,  4,  5,  22, 7,  -1, 25, 10, 11, 12, 13, 14, 15,
+       16, 17, 18, 19, 20, 21, 6,  23, 24, 9,  26, 27, 28, -1, -1, 25});
 
   ExpectConfigurationDataIsConfigured(
       test_stream_setup_data,

@@ -8,13 +8,13 @@
 
 class Filter : public AccelerationModule, public FilterInterface {
  private:
-  filter_config_values::DNFClauseStates dnf_states;
+  filter_config_values::DNFClauseStates dnf_states_;
   void FilterWriteDNFClauseLiteralsToModule(int datapath_width,
                                             int module_compares_per_field,
                                             int module_dnf_clauses);
 
  public:
-  ~Filter() = default;
+  ~Filter() override = default;
   explicit Filter(MemoryManagerInterface* memory_manager, int module_position)
       : AccelerationModule(memory_manager, module_position){};
 

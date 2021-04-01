@@ -5,7 +5,7 @@
 class MergeSort: public AccelerationModule, public MergeSortInterface
 {
  public:
-  ~MergeSort() = default;
+  ~MergeSort() override = default;
   explicit MergeSort(MemoryManagerInterface* memory_manager,
                      int module_position)
       : AccelerationModule(memory_manager, module_position){};

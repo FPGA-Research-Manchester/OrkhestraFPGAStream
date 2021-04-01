@@ -91,8 +91,8 @@ void Filter::FilterSetDNFClauseLiteral(
     int dnf_clause_id /*0-31*/, int compare_number /*0-3*/,
     int chunk_id /*0-31*/, int data_position /*0-15 for 512-bit datapath etc*/,
     filter_config_values::LiteralTypes literal_type) {
-  dnf_states[dnf_clause_id].first = true; // DNF clause is used
-  dnf_states[dnf_clause_id].second[compare_number][chunk_id][data_position] =
+  dnf_states_[dnf_clause_id].first = true; // DNF clause is used
+  dnf_states_[dnf_clause_id].second[compare_number][chunk_id][data_position] =
       literal_type;
 }
 
@@ -113,19 +113,19 @@ void Filter::FilterWriteDNFClauseLiteralsToModule(int datapath_width,
              dnf_clause_index--) {
           clauses_packed_positive_result <<= 1;
           clauses_packed_negative_result <<= 1;
-          if (dnf_states[dnf_clause_index].first) {
-            if (dnf_states[dnf_clause_index]
+          if (dnf_states_[dnf_clause_index].first) {
+            if (dnf_states_[dnf_clause_index]
                     .second[compare_lane][chunk_id]
                            [data_position] ==
                 filter_config_values::LiteralTypes::kLiteralDontCare) {
               clauses_packed_positive_result |= 1;
               clauses_packed_negative_result |= 1;
-            } else if (dnf_states[dnf_clause_index]
+            } else if (dnf_states_[dnf_clause_index]
                            .second[compare_lane][chunk_id][data_position] ==
                        filter_config_values::LiteralTypes::kLiteralPositive) {
               clauses_packed_positive_result |= 1;
               clauses_packed_negative_result |= 0;
-            } else if (dnf_states[dnf_clause_index]
+            } else if (dnf_states_[dnf_clause_index]
                            .second[compare_lane][chunk_id][data_position] ==
                        filter_config_values::LiteralTypes::kLiteralNegative) {
               clauses_packed_positive_result |= 0;
@@ -162,5 +162,5 @@ void Filter::WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
 }
 
 void Filter::ResetDNFStates() {
-  dnf_states = filter_config_values::DNFClauseStates();
+  dnf_states_ = filter_config_values::DNFClauseStates();
 }

@@ -7,10 +7,9 @@
 #include "stream_data_parameters.hpp"
 class DMASetup {
  public:
-  static void SetupDMAModule(
-      DMAInterface &dma_engine,
-      const std::vector<StreamDataParameters> &streams,
-      const bool is_input_stream);
+  static void SetupDMAModule(DMAInterface &dma_engine,
+                             const std::vector<StreamDataParameters> &streams,
+                             bool is_input_stream);
 
  private:
   static auto CalculateMultiChannelStreamRecordCountPerChannel(

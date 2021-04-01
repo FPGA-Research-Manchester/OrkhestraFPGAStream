@@ -20,8 +20,8 @@ class FilterSetup {
     FilterComparison(
         filter_config_values::CompareFunctions compare_function,
         std::vector<int> compare_reference_values,
-        std::vector<filter_config_values::LiteralTypes> literal_types,
-        std::vector<int> dnf_clause_ids);
+        const std::vector<filter_config_values::LiteralTypes>& literal_types,
+        const std::vector<int>& dnf_clause_ids);
   };
 
   static void SetOneOutputSingleModuleMode(FilterInterface& filter_module);

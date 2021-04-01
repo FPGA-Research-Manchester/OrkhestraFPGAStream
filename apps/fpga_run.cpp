@@ -219,8 +219,7 @@ auto main() -> int {
       {nullptr},
       {{{0,  22, 23, 24, -1, -1, -1, -1, -1, -1, -1, -1, -1,
          -1, -1, -1, 32, 33, 34, 35, 33, 34, 35, 33, 34, 35}},
-       {{0,  1,  2,  3},
-        {2}},
+       {{0, 1, 2, 3}, {2}},
        {{2}}}};
   query_scheduling_data::QueryNode first_part_filter1 = {
       {"part_sf0_1.csv"},
@@ -232,7 +231,7 @@ auto main() -> int {
          -1, -1, -1, 32, 33, 34, 35, 33, 34, 35, 33, 34, 35}},
        {{0, 1, 2, 3}, {2}},
        {{2}}}};
-   query_scheduling_data::QueryNode lineitem_part_join = {
+  query_scheduling_data::QueryNode lineitem_part_join = {
       {"lineitem_sf0_01_sort.csv", "part_sf0_01_filter.csv"},
       {"lineitem_part_sf0_01_1st_filter.csv"},
       operation_types::QueryOperation::kJoin,
@@ -249,15 +248,14 @@ auto main() -> int {
       {nullptr, nullptr},
       {{{}, {0, -1, -1, -1, -1, -1, -1, 1, 2, 3}},
        {{1, 2, 3, 4, 5, 6, 7, 8, 9}, {1}},
-        {{7}}}};
-   query_scheduling_data::QueryNode lineitem_part_second_filter = {
+       {{7}}}};
+  query_scheduling_data::QueryNode lineitem_part_second_filter = {
       {"lineitem_part_sf0_01_1st_filter.csv"},
       {"lineitem_part_sf0_01_2nd_filter.csv"},
       operation_types::QueryOperation::kFilter,
       {nullptr},
       {nullptr},
-       {{{0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1}}, {{2, 3, 4, 5}, {1}},
-        {{3}}}};
+      {{{0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1}}, {{2, 3, 4, 5}, {1}}, {{3}}}};
   query_scheduling_data::QueryNode lineitem_part_second_filter1 = {
       {"lineitem_part_sf0_1_1st_filter.csv"},
       {"lineitem_part_sf0_1_2nd_filter.csv"},
@@ -278,10 +276,10 @@ auto main() -> int {
   lineitem_part_second_filter.previous_nodes = {&lineitem_part_join};
 
   // Run operations twice
-  // QueryManager::RunQueries(
-  //    {filtering_query_once, filtering_query_once, merge_sort_query_8k_once,
-  //     merge_sort_query_8k_once, join_query_once, join_query_once,
-  //     linear_sort_query_8k_once, linear_sort_query_8k_once});
+   QueryManager::RunQueries(
+      {filtering_query_once, filtering_query_once, merge_sort_query_8k_once,
+       merge_sort_query_8k_once, join_query_once, join_query_once,
+       linear_sort_query_8k_once, linear_sort_query_8k_once});
   // Run operations with pass through data - Currently the scheduler doesn't
   // take memory limits into consideration
   // QueryManager::RunQueries({pass_through_1k_data
@@ -292,28 +290,25 @@ auto main() -> int {
   //                          linear_sort_query_8k_once, filtering_query_once});
 
   // Individual operation tests with car data
-   //MeasureOverallTime({merge_sort_query_1k_once, filtering_query_once,
-   //                   join_query_once, linear_sort_query_8k_once});
+  MeasureOverallTime({merge_sort_query_1k_once, filtering_query_once,
+                     join_query_once, linear_sort_query_8k_once});
 
-  //MeasureOverallTime({first_lineitem_filter1});
-  //MeasureOverallTime({lineitem_linear_sort1});
+  MeasureOverallTime({first_lineitem_filter1});
+  MeasureOverallTime({lineitem_linear_sort1});
   MeasureOverallTime({lineitem_linear_merge_sort1});
-  //MeasureOverallTime({first_part_filter1});
-  //MeasureOverallTime({lineitem_part_join1});
-  //MeasureOverallTime({lineitem_part_second_filter1});
+  MeasureOverallTime({first_part_filter1});
+  MeasureOverallTime({lineitem_part_join1});
+  MeasureOverallTime({lineitem_part_second_filter1});
 
-  // Pipelined tests 
-  //MeasureOverallTime({first_lineitem_filter, first_part_filter});
+  // Pipelined tests
+  MeasureOverallTime({first_lineitem_filter, first_part_filter});
 
-  // QueryManager::RunQueries({filter_and_join_query});
-  // QueryManager::RunQueries({join_query_once, filter_and_join_query});
-  // QueryManager::RunQueries({pass_through_and_filter_query});
+  //QueryManager::RunQueries({filter_and_join_query});
+  //QueryManager::RunQueries({join_query_once, filter_and_join_query});
+  QueryManager::RunQueries({pass_through_and_filter_query});
 
-  // MeasureOverallTime({tpch_pass_through_lineitem_01});
-  // MeasureOverallTime({tpch_pass_through_lineitem_001});
+  MeasureOverallTime({tpch_pass_through_lineitem_01});
+  MeasureOverallTime({tpch_pass_through_lineitem_001});
 
-  // MeasureOverallTime({first_lineitem_filter});
-  // MeasureOverallTime({first_part_filter});
-  // MeasureOverallTime({lineitem_part_join});
   return 0;
 }

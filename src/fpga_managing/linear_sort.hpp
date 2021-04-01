@@ -6,7 +6,7 @@
 class LinearSort : public AccelerationModule, public LinearSortInterface {
  private:
  public:
-  ~LinearSort() = default;
+  ~LinearSort() override = default;
   explicit LinearSort(MemoryManagerInterface* memory_manager,
                       int module_position)
       : AccelerationModule(memory_manager, module_position){};
