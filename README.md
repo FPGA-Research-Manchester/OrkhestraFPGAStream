@@ -2,7 +2,7 @@
 
 This software stack is meant to be transparently integrated with a proven DBMS for increased performance. The software stack would accelerate specific query operations with an available FPGA. How the data flows through the FPGA stack is shown in the graph below:
 
-<center><img src="./docs/DBMStoDSPI_graph.svg" width=100%></center>
+![DBMStoDSPI source layout](./docs/DBMStoDSPI_graph.svg)
 
 As you can see from the image the input would be a query plan graph form a DBMS to the software stack which will use [FOS](https://github.com/FPGA-Research-Manchester/fos) and the modules described below to accelerate the query. The image is slightly out of date as the gray operation parameters are now used and there is an additional class for checking resource elastic module constraints.
 
@@ -12,6 +12,7 @@ As you can see from the image the input would be a query plan graph form a DBMS 
 - Fixed length string
 - SQL Date
 - SQL Decimal(15,2)
+- NULL
 
 ## Currently supported modules:
 
@@ -30,3 +31,11 @@ The interface specification documentation will be available later.
 ## How does it work?
 
 More info on the how the data is mapped to the interface can be found [here](./docs/README.md).
+
+## How to use the source?
+
+The documentation for this project is created using [CMake](https://cmake.org/cmake/help/latest/guide/tutorial/index.html) with [Doxygen](https://www.doxygen.nl/manual/starting.html). To turn the documentation build option on you need to change the main [CMakeLists.txt](./CMakeLists.txt) file and then you can find the output in the build directory under the *doc_doxygen* folder.
+
+Formatting is done according to the clang-tidy options you can find [here](./.clang-tidy).
+
+Testing for this code is done using [googletest](https://github.com/google/googletest) and is automatically downloaded when the code is built with testing options turned on.
