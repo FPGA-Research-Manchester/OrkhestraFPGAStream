@@ -132,10 +132,12 @@ void DMASetup::SetMultiChannelSetupData(
     stream_setup_data.channel_setup_data.push_back(current_channel_setup_data);
   }
 
-  // Just in case setting the unused channels to 0
+  // Just in case setting the unused channels to 0 size and use the start address
+  // of the used channels.
   for (int j = stream_setup_data.active_channel_count;
        j < stream_init_data.max_channel_count; j++) {
-    DMAChannelSetupData current_channel_setup_data = {0, 0, j};
+    DMAChannelSetupData current_channel_setup_data = {
+        reinterpret_cast<uintptr_t>(stream_init_data.physical_address), 0, j};
     stream_setup_data.channel_setup_data.push_back(current_channel_setup_data);
   }
   stream_setup_data.active_channel_count = stream_init_data.max_channel_count;
