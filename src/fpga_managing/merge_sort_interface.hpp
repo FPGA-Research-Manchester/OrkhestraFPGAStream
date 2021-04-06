@@ -1,4 +1,7 @@
 #pragma once
+/**
+ * Interface class for the merge sorting implemented by #MergeSort
+ */
 class MergeSortInterface {
  public:
   virtual ~MergeSortInterface() = default;

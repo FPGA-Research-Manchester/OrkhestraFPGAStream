@@ -17,7 +17,7 @@ ID - 1 | Sentence - 29 | Length - 1 | Rating - 1
 
 Let's say we want to see the whole table in the original order on the interface as shown in the figure below. 
 
-<center><img src="buffer_to_interface.svg" width=100%></center>
+![Buffer to interface data selection illustration](./buffer_to_interface.svg)
 
 To do that we need to understand how much we need to configure. Each buffer can have 32 chunks of data in it where each chunk is 16 integers large. Thus one buffer can currently hold 2KB of data at a time. The crossbar has to be configured to map each integer in time and space to the interface wires. Do we then write more than 2KB of configuration data to give coordinates for each integer? No, in our case we configure an AXI burst size worth of records. Each burst has a full number of records transferred. So we need to configure records per burst amount of data. In our example the system would be configured to transfer 16 (512/32) records per burst and each record is fit into 2 (32/16) chunks of data. So we would need to configure 32 chunks of data which is 512 integers. 
 

@@ -2,7 +2,11 @@
 #include<utility>
 #include<array>
 
+/**
+ * Namespace for configuration data used to configure the filtering module.
+*/
 namespace filter_config_values {
+/// Enum for selecting compare function type.
 enum class CompareFunctions {
   kFilter32BitLessThan = 0,
   kFilter32BitLessThanOrEqual = 1,
@@ -18,13 +22,18 @@ enum class CompareFunctions {
   kFilter64BitNotEqual = 13
 };
 
+/// Enum for selecting the literal type.
 enum class LiteralTypes {
   kLiteralDontCare = 0, // The 0th one is the default one!
   kLiteralPositive = 1,
   kLiteralNegative = 2
 };
 
-// Which array is for what is explained in the Filter::FilterSetDNFClauseLiteral function
+/**
+ * Matrix type for holding DNF clause states and types. 
+ * 
+ * Which array is for what is explained in the Filter::FilterSetDNFClauseLiteral function
+*/
 typedef std::array<
     std::pair<
         bool,

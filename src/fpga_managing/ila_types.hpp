@@ -1,4 +1,7 @@
 #pragma once
+/**
+ * Enumeration of all of the different types of data ILAs can collect.
+ */
 enum class ILADataTypes {
   kType = 0,
   kDataAtPos15 = 1,
@@ -25,7 +28,7 @@ enum class ILADataTypes {
   kInstrType = 22,
   kInstrStreamID = 23,
   kInstrChannelID = 24,
-  kInstrParam = 25, 
+  kInstrParam = 25,
   kJoinState = 26,
   kClockCycle = 30,
   kAxiAWV = 0,

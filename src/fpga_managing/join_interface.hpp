@@ -1,4 +1,7 @@
 #pragma once
+/**
+ * Interface class to be implemented by #Join
+ */
 class JoinInterface{
  public:
   virtual ~JoinInterface() = default;

@@ -4,6 +4,9 @@
 #include <string>
 
 #include "memory_block_interface.hpp"
+/**
+ * Interface class implemented in #MemoryManager
+*/
 class MemoryManagerInterface {
  public:
   virtual ~MemoryManagerInterface() = default;

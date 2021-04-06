@@ -1,5 +1,8 @@
 #pragma once
 #include <cstdint>
+/**
+ * Interface class whose implementation can be seen at #DMA.
+*/
 class DMAInterface {
  public:
   virtual ~DMAInterface() = default;

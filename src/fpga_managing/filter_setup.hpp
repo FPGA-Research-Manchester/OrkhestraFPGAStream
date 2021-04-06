@@ -1,16 +1,30 @@
 #pragma once
-#include <vector>
-
 #include <string>
+#include <vector>
 
 #include "filter_config_values.hpp"
 #include "filter_interface.hpp"
+/**
+ * Filter setup class which calculates the correct configuration data to be
+ * written into the filter configuration registers.
+ */
 class FilterSetup {
  public:
-  static void SetupFilterModule(FilterInterface& filter_module, int input_stream_id, int output_stream_id,
+  /**
+   * Setup filter module according to the input and output streams and the given
+   *  operation parameters. Currently operation parameters are used to select
+   *  between hardcoded filter configurations.
+   * @param filter_module Filter instance which is used to write to memory
+   *  mapped registers.
+   * @param input_stream_id Input stream ID.
+   * @param output_stream_id Output stream ID.
+   * @param operation_parameters Operation parameters to setup the filter with.
+   */
+  static void SetupFilterModule(
+      FilterInterface& filter_module, int input_stream_id, int output_stream_id,
       const std::vector<std::vector<int>>& operation_parameters);
- private:
 
+ private:
   struct FilterComparison {
     filter_config_values::CompareFunctions compare_function;
     std::vector<int> compare_reference_values;
@@ -33,7 +47,6 @@ class FilterSetup {
   static auto ConvertCharStringToAscii(const std::string& input_string,
                                        int output_size) -> std::vector<int>;
 
-
   // Hard-coded filters for now
   static void SetupFilterModuleCars(FilterInterface& filter_module,
                                     int input_stream_id, int output_stream_id);
@@ -44,7 +57,6 @@ class FilterSetup {
                                            int input_stream_id,
                                            int output_stream_id);
   static void SetupFilterModuleFinalQ19(FilterInterface& filter_module,
-                                           int input_stream_id,
-                                           int output_stream_id);
-
+                                        int input_stream_id,
+                                        int output_stream_id);
 };

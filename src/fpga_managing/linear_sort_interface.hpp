@@ -1,4 +1,7 @@
 #pragma once
+/**
+ * Interface class to be implemented in #LinearSort
+*/
 class LinearSortInterface{
  public:
   virtual ~LinearSortInterface() = default;

@@ -11,13 +11,33 @@
 #include "memory_manager_interface.hpp"
 #include "stream_data_parameters.hpp"
 
+/**
+ * Class to configure all of the modules loaded in with the bitstream. Then
+ * start the streaming to accelerate the query node.
+ */
 class FPGAManager {
  public:
+  /**
+   * Reset and setup all of the loaded modules and the DMA engine with the input
+   *  and output crossbars.
+   * @param available_modules Which modules have been loaded in the current
+   *  bitstream.
+   * @param query_nodes Which query nodes will be run with the current
+   *  bitstream.
+   */
   void SetupQueryAcceleration(
       const std::vector<operation_types::QueryOperation>& available_modules,
       const std::vector<AcceleratedQueryNode>& query_nodes);
+  /**
+   * Start the output controller and wait for the controllers to finish.
+   * @return How many records each output stream had in its results.
+   */
   auto RunQueryAcceleration() -> std::vector<int>;
 
+  /**
+   * Constructor to setup memory mapped registers.
+   * @param memory_manager Instance to access memory mapped registers.
+   */
   explicit FPGAManager(MemoryManagerInterface* memory_manager)
       : memory_manager_{memory_manager}, dma_engine_{memory_manager} {};
 
