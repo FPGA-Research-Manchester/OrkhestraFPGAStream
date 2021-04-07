@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+using namespace dbmstodspi::fpga_managing;
+
 void ILA::StartILAs() {
   ILA::WriteToModule(0x10000000, 1);
   ILA::WriteToModule(0x10000004, 3);
