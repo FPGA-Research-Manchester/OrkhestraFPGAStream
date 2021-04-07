@@ -4,12 +4,19 @@
 #include <string>
 
 #include "memory_block_interface.hpp"
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
+/**
+ * @brief Interface class implemented in #MemoryManager
+ */
 class MemoryManagerInterface {
  public:
   virtual ~MemoryManagerInterface() = default;
 
   virtual void LoadBitstreamIfNew(const std::string& bitstream_name,
-                             int register_space_size) = 0;
+                                  int register_space_size) = 0;
 
   virtual auto GetVirtualRegisterAddress(int offset) -> volatile uint32_t* = 0;
 
@@ -22,3 +29,6 @@ class MemoryManagerInterface {
   virtual auto AllocateMemoryBlock()
       -> std::unique_ptr<MemoryBlockInterface> = 0;
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

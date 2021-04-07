@@ -9,6 +9,8 @@
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
 
+using namespace dbmstodspi::fpga_managing;
+
 void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
                               const std::vector<StreamDataParameters>& streams,
                               const bool is_input_stream) {
@@ -16,7 +18,7 @@ void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
   int multichannel_stream_count = 0;
   for (int current_stream_count = 0; current_stream_count < streams.size();
        current_stream_count++) {
-    const StreamDataParameters stream_init_data =
+    const StreamDataParameters& stream_init_data =
         streams.at(current_stream_count);
     const bool is_multichannel_stream =
         (stream_init_data.max_channel_count != -1);
@@ -110,7 +112,7 @@ void DMASetup::SetMultiChannelSetupData(
       stream_init_data.records_per_channel;
 
   for (int j = 0; j < stream_setup_data.active_channel_count; j++) {
-    DMAChannelSetupData current_channel_setup_data;
+    DMAChannelSetupData current_channel_setup_data{};
     if (j == stream_setup_data.active_channel_count - 1 &&
         stream_init_data.stream_record_count %
                 stream_init_data.records_per_channel !=
@@ -132,10 +134,12 @@ void DMASetup::SetMultiChannelSetupData(
     stream_setup_data.channel_setup_data.push_back(current_channel_setup_data);
   }
 
-  // Just in case setting the unused channels to 0
+  // Just in case setting the unused channels to 0 size and use the start address
+  // of the used channels.
   for (int j = stream_setup_data.active_channel_count;
        j < stream_init_data.max_channel_count; j++) {
-    DMAChannelSetupData current_channel_setup_data = {0, 0, j};
+    DMAChannelSetupData current_channel_setup_data = {
+        reinterpret_cast<uintptr_t>(stream_init_data.physical_address), 0, j};
     stream_setup_data.channel_setup_data.push_back(current_channel_setup_data);
   }
   stream_setup_data.active_channel_count = stream_init_data.max_channel_count;
@@ -155,7 +159,7 @@ void DMASetup::SetSingleChannelSetupData(
     DMASetupData& stream_setup_data, const bool& is_input_stream,
     const StreamDataParameters& stream_init_data) {
   stream_setup_data.active_channel_count = -1;
-  DMAChannelSetupData single_channel_stream_data;
+  DMAChannelSetupData single_channel_stream_data{};
   if (is_input_stream) {
     single_channel_stream_data.record_count =
         stream_init_data.stream_record_count;
@@ -231,7 +235,7 @@ void DMASetup::SetUpDMAIOStream(const DMASetupData& stream_setup_data,
         stream_setup_data.buffer_end);
     dma_engine.SetRecordSize(stream_setup_data.stream_id,
                              stream_setup_data.chunks_per_record);
-    for (auto& chunk_id_pair : stream_setup_data.record_chunk_ids) {
+    for (const auto& chunk_id_pair : stream_setup_data.record_chunk_ids) {
       dma_engine.SetRecordChunkIDs(stream_setup_data.stream_id,
                                    std::get<0>(chunk_id_pair),
                                    std::get<1>(chunk_id_pair));

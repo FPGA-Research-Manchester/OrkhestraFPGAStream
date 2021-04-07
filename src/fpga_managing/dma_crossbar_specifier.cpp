@@ -11,6 +11,8 @@
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
 
+using namespace dbmstodspi::fpga_managing;
+
 auto DMACrossbarSpecifier::IsInputClashing(
     const std::vector<int>& record_specification) -> bool {
   int integers_processed = 0;
@@ -49,6 +51,9 @@ auto DMACrossbarSpecifier::IsOutputClashing(
        positions_processed < query_acceleration_constants::kDatapathWidth;
        positions_processed++) {
     std::vector<int> current_position_locations;
+    current_position_locations.reserve(std::ceil(
+        (record_specification.size() - positions_processed) /
+        static_cast<double>(query_acceleration_constants::kDatapathWidth)));
     for (int chunk_id = 0;
          chunk_id <
          std::ceil(
@@ -78,16 +83,13 @@ auto DMACrossbarSpecifier::IsOutputClashing(
 auto DMACrossbarSpecifier::IsOutputOverwritingData(
     const std::vector<int>& record_specification) -> bool {
   std::map<int, int> chunk_count;
-  for (int i = 0; i < record_specification.size(); i++) {
-    if (record_specification[i] != -1) {
-      if (chunk_count.find(record_specification[i] /
-                           query_acceleration_constants::kDatapathWidth) ==
+  for (int i : record_specification) {
+    if (i != -1) {
+      if (chunk_count.find(i / query_acceleration_constants::kDatapathWidth) ==
           chunk_count.end()) {
-        chunk_count[record_specification[i] /
-                    query_acceleration_constants::kDatapathWidth] = 1;
+        chunk_count[i / query_acceleration_constants::kDatapathWidth] = 1;
       } else {
-        chunk_count[record_specification[i] /
-                    query_acceleration_constants::kDatapathWidth]++;
+        chunk_count[i / query_acceleration_constants::kDatapathWidth]++;
       }
     }
   }
@@ -101,23 +103,23 @@ auto DMACrossbarSpecifier::IsOutputOverwritingData(
 
 // Remove code duplication between these two methods
 void DMACrossbarSpecifier::ResolveInputClashesMultiChannel(
-    const int record_size, std::vector<int>& record_specification,
-    const int records_per_ddr_burst, int& chunks_per_record) {
+    const int /*record_size*/, std::vector<int>& record_specification,
+    const int /*records_per_ddr_burst*/, int& /*chunks_per_record*/) {
   while (IsInputClashing(record_specification)) {
     record_specification = {-1};
   }
 }
 void DMACrossbarSpecifier::ResolveInputClashesSingleChannel(
-    const int record_size, std::vector<int>& record_specification,
-    int& records_per_ddr_burst) {
+    const int /*record_size*/, std::vector<int>& record_specification,
+    int& /*records_per_ddr_burst*/) {
   while (IsInputClashing(record_specification)) {
     record_specification = {-1};
   }
 }
 
 void DMACrossbarSpecifier::ResolveOutputClashesSingleChannel(
-    int record_size, std::vector<int>& record_specification,
-    int& records_per_ddr_burst) {
+    int /*record_size*/, std::vector<int>& record_specification,
+    int& /*records_per_ddr_burst*/) {
   if (IsOutputOverwritingData(record_specification)) {
     throw std::runtime_error("Unresolvable input!");
   }

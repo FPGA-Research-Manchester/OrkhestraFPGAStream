@@ -3,7 +3,10 @@
 #include <iostream>
 #include <stdexcept>
 
-auto TableManager::GetRecordSizeFromTable(const TableData& input_table) -> int {
+using namespace dbmstodspi::query_managing;
+
+auto TableManager::GetRecordSizeFromTable(
+    const data_managing::TableData& input_table) -> int {
   int record_size = 0;
   for (const auto& column_type : input_table.table_column_label_vector) {
     record_size += column_type.second;
@@ -12,16 +15,16 @@ auto TableManager::GetRecordSizeFromTable(const TableData& input_table) -> int {
 }
 
 void TableManager::ReadOutputDataFromMemoryBlock(
-    const std::unique_ptr<MemoryBlockInterface>& output_device,
-    TableData& resulting_table, const int& result_size) {
+    const std::unique_ptr<fpga_managing::MemoryBlockInterface>& output_device,
+    data_managing::TableData& resulting_table, const int& result_size) {
   volatile uint32_t* output = output_device->GetVirtualAddress();
   resulting_table.table_data_vector = std::vector<uint32_t>(
       output, output + (result_size * GetRecordSizeFromTable(resulting_table)));
 }
 
 void TableManager::WriteInputDataToMemoryBlock(
-    const std::unique_ptr<MemoryBlockInterface>& input_device,
-    const TableData& input_table) {
+    const std::unique_ptr<fpga_managing::MemoryBlockInterface>& input_device,
+    const data_managing::TableData& input_table) {
   PrintDataSize(input_table);
   if (input_table.table_data_vector.size() * 4 > input_device->GetSize()) {
     throw std::runtime_error(
@@ -36,8 +39,8 @@ void TableManager::WriteInputDataToMemoryBlock(
 // Debug method
 void TableManager::PrintWrittenData(
     std::string table_name,
-    const std::unique_ptr<MemoryBlockInterface>& input_device,
-    const TableData& input_table) {
+    const std::unique_ptr<fpga_managing::MemoryBlockInterface>& input_device,
+    const data_managing::TableData& input_table) {
   auto output_table = input_table;
   const int table_size = static_cast<int>(input_table.table_data_vector.size() /
                                           GetRecordSizeFromTable(input_table));
@@ -51,15 +54,16 @@ void TableManager::PrintWrittenData(
   std::cout << std::hex << "Address: "
             << reinterpret_cast<uintptr_t>(input_device->GetPhysicalAddress())
             << std::dec << std::endl;
-  DataManager::PrintTableData(output_table);
+  data_managing::DataManager::PrintTableData(output_table);
 }
 
 void TableManager::ReadInputTables(
-    std::vector<StreamDataParameters>& input_stream_parameters,
-    DataManager& data_manager,
+    std::vector<fpga_managing::StreamDataParameters>& input_stream_parameters,
+    data_managing::DataManager& data_manager,
     const std::vector<std::string>& stream_data_file_names,
     const std::vector<int>& stream_id_vector,
-    std::vector<std::unique_ptr<MemoryBlockInterface>>& allocated_memory_blocks,
+    std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
+        allocated_memory_blocks,
     const std::vector<std::vector<int>> stream_specification) {
   if (stream_data_file_names.size() != stream_id_vector.size()) {
     throw std::runtime_error("The amount of stream IDs given is not correct!");
@@ -75,8 +79,9 @@ void TableManager::ReadInputTables(
     if (allocated_memory_blocks[stream_index]) {
       WriteInputDataToMemoryBlock(allocated_memory_blocks[stream_index],
                                   current_table);
-    /*PrintWrittenData(stream_data_file_names[stream_index],
-                       allocated_memory_blocks[stream_index], current_table);*/
+      /*PrintWrittenData(stream_data_file_names[stream_index],
+                         allocated_memory_blocks[stream_index],
+         current_table);*/
       physical_address_ptr =
           allocated_memory_blocks[stream_index]->GetPhysicalAddress();
     }
@@ -85,33 +90,34 @@ void TableManager::ReadInputTables(
         static_cast<int>(current_table.table_data_vector.size() /
                          GetRecordSizeFromTable(current_table));
 
-    StreamDataParameters current_stream_parameters = {
-        stream_id_vector[stream_index], GetRecordSizeFromTable(current_table), record_count,
-        physical_address_ptr, stream_specification.at(stream_index)};
+    fpga_managing::StreamDataParameters current_stream_parameters = {
+        stream_id_vector[stream_index], GetRecordSizeFromTable(current_table),
+        record_count, physical_address_ptr,
+        stream_specification.at(stream_index)};
 
     // std::cout << "RECORD_SIZE = " << GetRecordSizeFromTable(current_table)
     //          << std::endl;
-    std::cout << "RECORD_COUNT = " << record_count
-              << std::endl;
+    std::cout << "RECORD_COUNT = " << record_count << std::endl;
 
     input_stream_parameters.push_back(current_stream_parameters);
   }
 }
 
 void TableManager::ReadExpectedTables(
-    std::vector<StreamDataParameters>& output_stream_parameters,
-    DataManager& data_manager,
+    std::vector<fpga_managing::StreamDataParameters>& output_stream_parameters,
+    data_managing::DataManager& data_manager,
     const std::vector<std::string>& stream_data_file_names,
     const std::vector<int>& stream_id_vector,
-    std::vector<std::unique_ptr<MemoryBlockInterface>>& allocated_memory_blocks,
-    std::vector<TableData>& output_tables,
+    std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
+        allocated_memory_blocks,
+    std::vector<data_managing::TableData>& output_tables,
     const std::vector<std::vector<int>> stream_specification) {
   if (stream_data_file_names.size() != stream_id_vector.size()) {
     throw std::runtime_error("The amount of stream IDs given is not correct!");
   }
   for (int stream_index = 0; stream_index < stream_data_file_names.size();
        stream_index++) {
-    //std::cout << "Reading output: " << stream_data_file_names[stream_index]
+    // std::cout << "Reading output: " << stream_data_file_names[stream_index]
     //          << std::endl;
     auto current_table =
         data_manager.ParseDataFromCSV(stream_data_file_names[stream_index]);
@@ -121,14 +127,15 @@ void TableManager::ReadExpectedTables(
       physical_address_ptr =
           allocated_memory_blocks[stream_index]->GetPhysicalAddress();
     }
-    StreamDataParameters current_stream_parameters = {
-        stream_id_vector[stream_index], GetRecordSizeFromTable(current_table),
+    fpga_managing::StreamDataParameters current_stream_parameters = {
+        stream_id_vector[stream_index],
+        GetRecordSizeFromTable(current_table),
         0,
         physical_address_ptr,
         stream_specification.at(stream_index),
         stream_specification.back().at(stream_index)};
 
-    //PrintDataSize(current_table);
+    // PrintDataSize(current_table);
     // std::cout << "RECORD_SIZE = " << GetRecordSizeFromTable(current_table)
     //          << std::endl;
 
@@ -139,10 +146,11 @@ void TableManager::ReadExpectedTables(
 }
 
 void TableManager::ReadResultTables(
-    const std::vector<StreamDataParameters>& output_stream_parameters,
-    std::vector<TableData>& output_tables,
+    const std::vector<fpga_managing::StreamDataParameters>&
+        output_stream_parameters,
+    std::vector<data_managing::TableData>& output_tables,
     const std::vector<int>& result_record_counts,
-    std::vector<std::unique_ptr<MemoryBlockInterface>>&
+    std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
         allocated_memory_blocks) {
   for (int stream_index = 0; stream_index < allocated_memory_blocks.size();
        stream_index++) {
@@ -156,7 +164,7 @@ void TableManager::ReadResultTables(
   }
 }
 
-void TableManager::PrintDataSize(const TableData& data_table) {
+void TableManager::PrintDataSize(const data_managing::TableData& data_table) {
   std::cout << "Table size: " << data_table.table_data_vector.size() * 4 / 1000
             << "[KB]" << std::endl;
 }

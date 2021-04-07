@@ -3,8 +3,11 @@
 #include <cstdio>
 #include <iostream>
 #include <stdexcept>
+#include <utility>
 
 #include "query_acceleration_constants.hpp"
+
+using namespace dbmstodspi::fpga_managing;
 
 void FilterSetup::SetupFilterModule(
     FilterInterface& filter_module, int input_stream_id, int output_stream_id,
@@ -406,13 +409,14 @@ auto FilterSetup::ConvertCharStringToAscii(const std::string& input_string,
 FilterSetup::FilterComparison::FilterComparison(
     filter_config_values::CompareFunctions compare_function,
     std::vector<int> compare_reference_values,
-    std::vector<filter_config_values::LiteralTypes> literal_types,
-    std::vector<int> dnf_clause_ids) {
+    const std::vector<filter_config_values::LiteralTypes>& literal_types,
+    const std::vector<int>& dnf_clause_ids) {
   if (literal_types.empty()) {
     if (dnf_clause_ids.empty()) {
       throw std::runtime_error("No DNF IDs given!");
     }
     std::vector<filter_config_values::LiteralTypes> default_literal_types;
+    default_literal_types.reserve(dnf_clause_ids.size());
     for (const auto& dnf_id : dnf_clause_ids) {
       default_literal_types.push_back(
           filter_config_values::LiteralTypes::kLiteralPositive);
@@ -426,5 +430,5 @@ FilterSetup::FilterComparison::FilterComparison(
   }
   this->dnf_clause_ids = dnf_clause_ids;
   this->compare_function = compare_function;
-  this->compare_reference_values = compare_reference_values;
+  this->compare_reference_values = std::move(compare_reference_values);
 }

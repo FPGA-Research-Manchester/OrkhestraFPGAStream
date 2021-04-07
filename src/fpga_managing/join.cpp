@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 
+using namespace dbmstodspi::fpga_managing;
+
 void Join::StartPrefetchingData() { AccelerationModule::WriteToModule(0, 1); }
 
 void Join::DefineOutputStream(int output_stream_chunk_count,

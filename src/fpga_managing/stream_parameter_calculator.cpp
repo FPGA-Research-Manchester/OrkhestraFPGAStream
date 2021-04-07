@@ -6,6 +6,8 @@
 #include "merge_sort_setup.hpp"
 #include "query_acceleration_constants.hpp"
 
+using namespace dbmstodspi::fpga_managing;
+
 void StreamParameterCalculator::CalculateDMAStreamSetupData(
     DMASetupData& stream_setup_data, const int record_size,
     bool is_multichannel_stream) {

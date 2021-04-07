@@ -1,4 +1,11 @@
 #pragma once
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
+/**
+ * @brief Interface class for the merge sorting implemented by #MergeSort
+ */
 class MergeSortInterface {
  public:
   virtual ~MergeSortInterface() = default;
@@ -11,3 +18,6 @@ class MergeSortInterface {
   virtual void SetFetchCount(int fetch_count) = 0;
   virtual void SetFetchOffset(int padded_fetch_count) = 0;
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

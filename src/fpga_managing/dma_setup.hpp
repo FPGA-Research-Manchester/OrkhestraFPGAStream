@@ -5,12 +5,29 @@
 #include "dma.hpp"
 #include "dma_setup_data.hpp"
 #include "stream_data_parameters.hpp"
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
+/**
+ * @brief Class to setup DMA configuration data and write the data into the DMA
+ * registers.
+ */
 class DMASetup {
  public:
-  static void SetupDMAModule(
-      DMAInterface &dma_engine,
-      const std::vector<StreamDataParameters> &streams,
-      const bool is_input_stream);
+  /**
+   * @brief Based on the input stream parameters calculate DMA setup data and
+   * then write the configuration data to the memory mapped registers.
+   * @param dma_engine The modules where the information about memory mapped
+   * registers is.
+   * @param streams Vector of definition data for all of the input or output
+   * streams.
+   * @param is_input_stream Boolean saying if the given streams are input or
+   * output streams.
+   */
+  static void SetupDMAModule(DMAInterface &dma_engine,
+                             const std::vector<StreamDataParameters> &streams,
+                             bool is_input_stream);
 
  private:
   static auto CalculateMultiChannelStreamRecordCountPerChannel(
@@ -29,3 +46,6 @@ class DMASetup {
                                     const int &buffer_size,
                                     int current_stream_count);
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

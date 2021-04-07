@@ -3,6 +3,9 @@
 #include <cmath>
 #include <iostream>
 
+using namespace dbmstodspi::fpga_managing;
+
+// TODO: Input and output controller settings could be combined.
 // Input Controller
 void DMA::SetInputControllerParams(int stream_id, int ddr_burst_size,
                                    int records_per_ddr_burst, int buffer_start,

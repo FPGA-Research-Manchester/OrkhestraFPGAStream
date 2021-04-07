@@ -1,11 +1,19 @@
 #pragma once
-#include <vector>
+#include <cstdint>
 #include <string>
 #include <utility>
-#include <cstdint>
+#include <vector>
 
+namespace dbmstodspi {
+namespace data_managing {
+
+/**
+ * @brief Struct to hold the information about the table data.
+ */
 struct TableData {
+  /// Vector to hold data about column data types and sizes.
   std::vector<std::pair<std::string, int>> table_column_label_vector;
+  /// Vector to hold the table data in integer format.
   std::vector<uint32_t> table_data_vector;
 
   auto operator==(const TableData& comparable_table) const -> bool {
@@ -16,3 +24,6 @@ struct TableData {
     return same_columns && same_data;
   }
 };
+
+}  // namespace data_managing
+}  // namespace dbmstodspi

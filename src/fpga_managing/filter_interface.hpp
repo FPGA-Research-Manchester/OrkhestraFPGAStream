@@ -2,6 +2,13 @@
 #include <cstdint>
 
 #include "filter_config_values.hpp"
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
+/**
+ * @brief Interface class to be implemented by #Filter
+ */
 class FilterInterface {
  public:
   virtual ~FilterInterface() = default;
@@ -35,3 +42,6 @@ class FilterInterface {
 
   virtual void ResetDNFStates() = 0;
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

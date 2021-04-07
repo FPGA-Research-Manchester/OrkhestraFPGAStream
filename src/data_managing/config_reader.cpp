@@ -4,6 +4,8 @@
 
 #include <stdexcept>
 
+using namespace dbmstodspi::data_managing;
+
 auto ConfigReader::ParseDataTypeSizesConfig(const std::string& filename)
     -> std::map<std::string, double> {
   std::ifstream filestream(filename);

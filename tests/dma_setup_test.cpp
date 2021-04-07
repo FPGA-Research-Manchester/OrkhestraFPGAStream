@@ -30,10 +30,10 @@ TEST(DMASetupTest, InputParamsSettings) {
                                                      expected_stream_size))
       .Times(1);
 
-  std::vector<std::pair<StreamDataParameters, bool>> input_streams = {
-      {{kInputStreamId, 18, expected_stream_size, mock_db_data.data()}, false}};
+  std::vector<dbmstodspi::fpga_managing::StreamDataParameters> input_streams = {
+      {kInputStreamId, 18, expected_stream_size, mock_db_data.data(), {}}};
 
-  DMASetup dma_configurer;
+  dbmstodspi::fpga_managing::DMASetup dma_configurer;
   dma_configurer.SetupDMAModule(mock_dma, input_streams, true);
   free(mock_output_memory_address);
 }
@@ -57,10 +57,10 @@ TEST(DMASetupTest, OutputParamsSettings) {
   EXPECT_CALL(mock_dma, SetOutputControllerStreamSize(kOutputStreamId, 0))
       .Times(1);
 
-  std::vector<std::pair<StreamDataParameters, bool>> output_streams = {
-      {{kOutputStreamId, 18, 0, mock_output_memory_address}, false}};
+  std::vector<dbmstodspi::fpga_managing::StreamDataParameters> output_streams =
+      {{kOutputStreamId, 18, 0, mock_output_memory_address, {}, 2}};
 
-  DMASetup dma_configurer;
+  dbmstodspi::fpga_managing::DMASetup dma_configurer;
   dma_configurer.SetupDMAModule(mock_dma, output_streams, false);
   free(mock_output_memory_address);
 }
@@ -78,10 +78,10 @@ TEST(DMASetupTest, RecordSettings) {
   EXPECT_CALL(mock_dma, SetRecordChunkIDs(kInputStreamId, testing::_, 1))
       .Times(16);
 
-  std::vector<std::pair<StreamDataParameters, bool>> input_streams = {
-      {{kInputStreamId, 18, 1000, mock_db_data.data()}, false}};
+  std::vector<dbmstodspi::fpga_managing::StreamDataParameters> input_streams = {
+      {kInputStreamId, 18, 1000, mock_db_data.data(), {}}};
 
-  DMASetup dma_configurer;
+  dbmstodspi::fpga_managing::DMASetup dma_configurer;
   dma_configurer.SetupDMAModule(mock_dma, input_streams, true);
   free(mock_output_memory_address);
 }

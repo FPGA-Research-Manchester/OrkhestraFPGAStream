@@ -5,6 +5,8 @@
 
 #include "operation_types.hpp"
 
+using namespace dbmstodspi::query_managing;
+
 IDManager::IDManager() {
   for (int available_index = 15; available_index >= 0; available_index--) {
     available_ids_.push(available_index);

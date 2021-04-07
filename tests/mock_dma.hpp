@@ -4,7 +4,7 @@
 #include "dma_interface.hpp"
 #include "gmock/gmock.h"
 
-class MockDMA : public DMAInterface {
+class MockDMA : public dbmstodspi::fpga_managing::DMAInterface {
  public:
   MOCK_METHOD(void, SetInputControllerParams,
               (int stream_id, int ddr_burst_size, int records_per_ddr_burst,

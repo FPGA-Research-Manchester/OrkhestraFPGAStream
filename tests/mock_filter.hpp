@@ -5,7 +5,7 @@
 #include "filter_interface.hpp"
 #include "gmock/gmock.h"
 
-class MockFilter : public FilterInterface {
+class MockFilter : public dbmstodspi::fpga_managing::FilterInterface {
  public:
   MOCK_METHOD(void, FilterSetStreamIDs,
               (int stream_id_input, int stream_id_valid_output,
@@ -20,10 +20,14 @@ class MockFilter : public FilterInterface {
               (override));
   MOCK_METHOD(void, FilterSetCompareTypes,
               (int chunk_id, int data_position,
-               filter_config_values::CompareFunctions compare_1_type,
-               filter_config_values::CompareFunctions compare_2_type,
-               filter_config_values::CompareFunctions compare_3_type,
-               filter_config_values::CompareFunctions compare_4_type),
+               dbmstodspi::fpga_managing::filter_config_values::CompareFunctions
+                   compare_1_type,
+               dbmstodspi::fpga_managing::filter_config_values::CompareFunctions
+                   compare_2_type,
+               dbmstodspi::fpga_managing::filter_config_values::CompareFunctions
+                   compare_3_type,
+               dbmstodspi::fpga_managing::filter_config_values::CompareFunctions
+                   compare_4_type),
               (override));
   MOCK_METHOD(void, FilterSetCompareReferenceValue,
               (int chunk_id, int data_position, int compare_index,
@@ -32,7 +36,8 @@ class MockFilter : public FilterInterface {
   MOCK_METHOD(void, FilterSetDNFClauseLiteral,
               (int dnf_clause_id, int compare_index, int chunk_id,
                int data_position,
-               filter_config_values::LiteralTypes literal_type),
+               dbmstodspi::fpga_managing::filter_config_values::LiteralTypes
+                   literal_type),
               (override));
 
   MOCK_METHOD(void, WriteDNFClauseLiteralsToFilter_1CMP_8DNF,
@@ -42,6 +47,5 @@ class MockFilter : public FilterInterface {
   MOCK_METHOD(void, WriteDNFClauseLiteralsToFilter_4CMP_32DNF,
               (int datapath_width), (override));
 
-  MOCK_METHOD(void, ResetDNFStates,
-              (), (override));
+  MOCK_METHOD(void, ResetDNFStates, (), (override));
 };

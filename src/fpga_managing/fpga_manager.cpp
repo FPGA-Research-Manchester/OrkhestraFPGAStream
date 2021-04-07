@@ -22,6 +22,8 @@
 #include "operation_types.hpp"
 #include "query_acceleration_constants.hpp"
 
+using namespace dbmstodspi::fpga_managing;
+
 // Eventually the idea would be to add operation type to StreamDataParameters.
 // Then the modules and streams can be set up accordingly.
 void FPGAManager::SetupQueryAcceleration(
@@ -53,23 +55,22 @@ void FPGAManager::SetupQueryAcceleration(
 
   if (input_streams.empty() || output_streams.empty()) {
     throw std::runtime_error("Input or output streams missing!");
-  } else {
-    DMASetup::SetupDMAModule(dma_engine_, input_streams, true);
-    DMASetup::SetupDMAModule(dma_engine_, output_streams, false);
   }
+  DMASetup::SetupDMAModule(dma_engine_, input_streams, true);
+  DMASetup::SetupDMAModule(dma_engine_, output_streams, false);
 
   FPGAManager::dma_engine_.StartInputController(
       FPGAManager::input_streams_active_status_);
 
   if (ila_module_) {
-    ila_module_.value().startILAs();
+    ila_module_.value().StartILAs();
   }
 
   for (int node_index = 0; node_index < available_modules.size();
        node_index++) {
     // Find out which module is associated with which query node. Current method
     // doesn't work with multiple identical modules!
-    const AcceleratedQueryNode* current_query_node;
+    const AcceleratedQueryNode* current_query_node = nullptr;
     for (const auto& query_node : query_nodes) {
       if (query_node.operation_type == available_modules[node_index]) {
         current_query_node = &query_node;
@@ -121,9 +122,9 @@ void FPGAManager::SetupQueryAcceleration(
 }
 
 void FPGAManager::FindIOStreams(
-    const std::vector<StreamDataParameters> all_streams,
+    const std::vector<StreamDataParameters>& all_streams,
     std::vector<StreamDataParameters>& found_streams,
-    const std::vector<std::vector<int>> operation_parameters,
+    const std::vector<std::vector<int>>& operation_parameters,
     const bool is_multichannel_stream, bool stream_status_array[]) {
   for (const auto& current_stream : all_streams) {
     if (current_stream.physical_address) {
@@ -248,7 +249,6 @@ auto FPGAManager::GetStreamRecordSize(
     const StreamDataParameters& stream_parameters) -> int {
   if (stream_parameters.stream_specification.empty()) {
     return stream_parameters.stream_record_size;
-  } else {
-    stream_parameters.stream_specification.size();
   }
+  return stream_parameters.stream_specification.size();
 }

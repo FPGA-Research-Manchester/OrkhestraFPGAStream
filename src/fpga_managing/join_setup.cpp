@@ -3,6 +3,8 @@
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
 
+using namespace dbmstodspi::fpga_managing;
+
 void JoinSetup::SetupJoinModule(JoinInterface& join_module,
                                 int first_input_stream_id,
                                 int first_input_record_size,
