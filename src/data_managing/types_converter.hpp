@@ -5,6 +5,9 @@
 #include <utility>
 #include <vector>
 
+namespace dbmstodspi {
+namespace data_managing {
+
 /**
  * @brief Class to convert different types of data to string and integer
  * formats.
@@ -139,3 +142,6 @@ class TypesConverter {
   static auto ConvertCharStringToAscii(const std::string& input_string,
                                        int output_size) -> std::vector<int>;
 };
+
+}  // namespace data_managing
+}  // namespace dbmstodspi

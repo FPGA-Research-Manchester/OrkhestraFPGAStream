@@ -7,6 +7,8 @@
 #include "csv_reader.hpp"
 #include "types_converter.hpp"
 
+using namespace dbmstodspi::data_managing;
+
 auto DataManager::ParseDataFromCSV(const std::string& filename) -> TableData {
   std::vector<std::vector<std::string>> data_rows;
   std::vector<std::string> header_row;

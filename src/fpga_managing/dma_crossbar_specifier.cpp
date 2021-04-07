@@ -11,6 +11,8 @@
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
 
+using namespace dbmstodspi::fpga_managing;
+
 auto DMACrossbarSpecifier::IsInputClashing(
     const std::vector<int>& record_specification) -> bool {
   int integers_processed = 0;

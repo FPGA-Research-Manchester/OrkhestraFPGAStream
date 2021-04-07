@@ -1,6 +1,10 @@
 #pragma once
 #include <map>
 #include <string>
+
+namespace dbmstodspi {
+namespace data_managing {
+
 /**
  * @brief Class to read the config of available data types and their sizes.
  */
@@ -17,3 +21,6 @@ class ConfigReader {
   static auto ParseDataTypeSizesConfig(const std::string& filename)
       -> std::map<std::string, double>;
 };
+
+}  // namespace data_managing
+}  // namespace dbmstodspi

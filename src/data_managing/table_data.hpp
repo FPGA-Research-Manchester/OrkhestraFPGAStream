@@ -4,6 +4,9 @@
 #include <utility>
 #include <vector>
 
+namespace dbmstodspi {
+namespace data_managing {
+
 /**
  * @brief Struct to hold the information about the table data.
  */
@@ -21,3 +24,6 @@ struct TableData {
     return same_columns && same_data;
   }
 };
+
+}  // namespace data_managing
+}  // namespace dbmstodspi

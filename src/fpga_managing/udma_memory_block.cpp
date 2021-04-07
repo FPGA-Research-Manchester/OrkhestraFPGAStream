@@ -1,5 +1,7 @@
 #include "udma_memory_block.hpp"
 
+using namespace dbmstodspi::fpga_managing;
+
 UDMAMemoryBlock::~UDMAMemoryBlock() = default;
 
 // Needs to get rid of the volatile. Current stuff below doesn't make sense

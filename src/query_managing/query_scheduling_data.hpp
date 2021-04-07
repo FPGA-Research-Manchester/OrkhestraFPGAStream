@@ -6,6 +6,10 @@
 #include <vector>
 
 #include "operation_types.hpp"
+
+namespace dbmstodspi {
+namespace query_managing {
+
 /**
  * @brief Namespace for types to help with scheduling the query nodes correctly.
  */
@@ -35,7 +39,7 @@ struct QueryNode {
   /// Expected data files.
   std::vector<std::string> output_data_definition_files;
   /// Query operation.
-  operation_types::QueryOperation operation_type;
+  fpga_managing::operation_types::QueryOperation operation_type;
   /// Pointers to the next query nodes.
   std::vector<query_scheduling_data::QueryNode *> next_nodes;
   /// Pointers to the prerequisite query nodes
@@ -54,30 +58,34 @@ struct QueryNode {
 };
 
 /// Type definition of a collection of operation types for selecting bitstreams.
-typedef std::vector<operation_types::QueryOperation> ConfigurableModulesVector;
+typedef std::vector<fpga_managing::operation_types::QueryOperation>
+    ConfigurableModulesVector;
 
 /// Map of supported collections of operations.
 const std::map<ConfigurableModulesVector, std::string>
     supported_accelerator_bitstreams = {
-        {{operation_types::QueryOperation::kFilter}, "DSPI_filtering"},
+        {{fpga_managing::operation_types::QueryOperation::kFilter}, "DSPI_filtering"},
 
-        {{operation_types::QueryOperation::kJoin}, "DSPI_joining"},
+        {{fpga_managing::operation_types::QueryOperation::kJoin}, "DSPI_joining"},
 
-        /*{{operation_types::QueryOperation::kMergeSort,
-          operation_types::QueryOperation::kMergeSort},
+        /*{{fpga_managing::operation_types::QueryOperation::kMergeSort,
+          fpga_managing::operation_types::QueryOperation::kMergeSort},
          "DSPI_double_merge_sorting"},*/
 
-        {{operation_types::QueryOperation::kMergeSort}, "DSPI_merge_sorting"},
+        {{fpga_managing::operation_types::QueryOperation::kMergeSort}, "DSPI_merge_sorting"},
 
-        {{operation_types::QueryOperation::kLinearSort}, "DSPI_linear_sorting"},
+        {{fpga_managing::operation_types::QueryOperation::kLinearSort}, "DSPI_linear_sorting"},
 
         {{}, "DSPI_empty"}/*,
 
-        {{operation_types::QueryOperation::kFilter,
-          operation_types::QueryOperation::kJoin},
+        {{fpga_managing::operation_types::QueryOperation::kFilter,
+          fpga_managing::operation_types::QueryOperation::kJoin},
          "DSPI_filter_join"},*/
 
-        /*{{operation_types::QueryOperation::kFilter,
-          operation_types::QueryOperation::kLinearSort},
+        /*{{fpga_managing::operation_types::QueryOperation::kFilter,
+          fpga_managing::operation_types::QueryOperation::kLinearSort},
          "DSPI_filtering_linear_sort"}*/};
 }  // namespace query_scheduling_data
+
+}  // namespace query_managing
+}  // namespace dbmstodspi

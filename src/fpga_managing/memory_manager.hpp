@@ -12,6 +12,10 @@
 #else
 #include <vector>
 #endif
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Memory manager class to setup the FPGA memory accesses and to
  * facilitate the memory mapping.
@@ -70,3 +74,6 @@ class MemoryManager : public MemoryManagerInterface {
   auto AllocateMemoryBlock() -> std::unique_ptr<MemoryBlockInterface> override;
   static void SetFPGATo300MHz();
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

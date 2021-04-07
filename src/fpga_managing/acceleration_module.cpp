@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+using namespace dbmstodspi::fpga_managing;
+
 auto AccelerationModule::CalculateMemoryMappedAddress(
     int module_internal_address) -> volatile uint32_t* {
   uintptr_t address_offset =

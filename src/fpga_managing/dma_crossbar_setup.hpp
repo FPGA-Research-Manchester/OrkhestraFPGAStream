@@ -3,6 +3,10 @@
 #include <vector>
 
 #include "dma_setup_data.hpp"
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Class to write the correct setup data to the DMASetupData struct
  * according to the specification.
@@ -60,3 +64,6 @@ class DMACrossbarSetup {
       std::vector<int>& expanded_column_selection,
       DMASetupData& stream_setup_data);
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

@@ -3,6 +3,9 @@
 
 #include "memory_manager_interface.hpp"
 
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Base abstract class which all acceleration modules have to extend to
  * be able to access memory mapped registers
@@ -53,3 +56,6 @@ class AccelerationModule {
  public:
   virtual ~AccelerationModule() = 0;
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

@@ -21,8 +21,11 @@
 #include "stream_parameter_calculator.hpp"
 #include "table_manager.hpp"
 
-void QueryManager::CheckTableData(const TableData& expected_table,
-                                  const TableData& resulting_table) {
+using namespace dbmstodspi::query_managing;
+
+void QueryManager::CheckTableData(
+    const data_managing::TableData& expected_table,
+    const data_managing::TableData& resulting_table) {
   std::cout << std::endl;
   if (expected_table == resulting_table) {
     std::cout << "Query results are correct!" << std::endl;
@@ -36,7 +39,7 @@ void QueryManager::CheckTableData(const TableData& expected_table,
     std::cout << resulting_table.table_data_vector.size() /
                      TableManager::GetRecordSizeFromTable(resulting_table)
               << std::endl;
-    DataManager::PrintTableData(resulting_table);
+    data_managing::DataManager::PrintTableData(resulting_table);
   }
   std::cout << std::endl;
 }
@@ -73,9 +76,9 @@ auto QueryManager::GetModuleCountFromQueryNode(
 void QueryManager::RunQueries(
     std::vector<query_scheduling_data::QueryNode> starting_query_nodes) {
   std::cout << std::endl << "Starting up!" << std::endl;
-  DataManager data_manager("data_config.ini");
-  MemoryManager memory_manager;
-  FPGAManager fpga_manager(&memory_manager);
+  data_managing::DataManager data_manager("data_config.ini");
+  fpga_managing::MemoryManager memory_manager;
+  fpga_managing::FPGAManager fpga_manager(&memory_manager);
 
   std::queue<std::pair<query_scheduling_data::ConfigurableModulesVector,
                        std::vector<query_scheduling_data::QueryNode>>>
@@ -90,17 +93,19 @@ void QueryManager::RunQueries(
     memory_manager.LoadBitstreamIfNew(
         GetBitstreamFileFromQueryNode(executable_query_nodes),
         GetModuleCountFromQueryNode(executable_query_nodes) *
-            query_acceleration_constants::kModuleSize);
+            fpga_managing::query_acceleration_constants::kModuleSize);
 
     IDManager id_manager;
     std::vector<std::vector<int>> output_ids;
     std::vector<std::vector<int>> input_ids;
-    std::vector<std::vector<std::unique_ptr<MemoryBlockInterface>>>
+    std::vector<
+        std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>>
         input_memory_blocks;
-    std::vector<std::vector<std::unique_ptr<MemoryBlockInterface>>>
+    std::vector<
+        std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>>
         output_memory_blocks;
-    std::vector<TableData> expected_output_tables(16);
-    std::vector<AcceleratedQueryNode> query_nodes;
+    std::vector<data_managing::TableData> expected_output_tables(16);
+    std::vector<fpga_managing::AcceleratedQueryNode> query_nodes;
 
     id_manager.AllocateStreamIDs(executable_query_nodes.second, input_ids,
                                  output_ids);
@@ -110,7 +115,7 @@ void QueryManager::RunQueries(
       auto current_node = executable_query_nodes.second.at(node_index);
 
       // Allocate memory blocks
-      std::vector<std::unique_ptr<MemoryBlockInterface>>
+      std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>
           allocated_input_memory_blocks;
       for (const auto& linked_node : current_node.previous_nodes) {
         if (!linked_node) {
@@ -121,7 +126,7 @@ void QueryManager::RunQueries(
         }
       }
 
-      std::vector<std::unique_ptr<MemoryBlockInterface>>
+      std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>
           allocated_output_memory_blocks;
       for (const auto& linked_node : current_node.next_nodes) {
         if (!linked_node) {
@@ -133,14 +138,14 @@ void QueryManager::RunQueries(
       }
 
       // Get parameters and write input to allocated blocks
-      std::vector<StreamDataParameters> input_stream_parameters;
+      std::vector<fpga_managing::StreamDataParameters> input_stream_parameters;
       TableManager::ReadInputTables(
           input_stream_parameters, data_manager,
           current_node.input_data_definition_files, input_ids[node_index],
           allocated_input_memory_blocks,
           current_node.operation_parameters.input_stream_parameters);
 
-      std::vector<StreamDataParameters> output_stream_parameters;
+      std::vector<fpga_managing::StreamDataParameters> output_stream_parameters;
       TableManager::ReadExpectedTables(
           output_stream_parameters, data_manager,
           current_node.output_data_definition_files, output_ids[node_index],
@@ -171,7 +176,8 @@ void QueryManager::RunQueries(
     /*std::cout << "Query done!" << std::endl;*/
 
     // Check results & free memory
-    std::vector<TableData> output_tables = expected_output_tables;
+    std::vector<data_managing::TableData> output_tables =
+        expected_output_tables;
     for (int node_index = 0; node_index < query_nodes.size(); node_index++) {
       TableManager::ReadResultTables(query_nodes[node_index].output_streams,
                                      output_tables, result_sizes,

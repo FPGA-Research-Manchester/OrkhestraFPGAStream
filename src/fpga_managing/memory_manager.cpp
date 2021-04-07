@@ -10,6 +10,8 @@
 #include "virtual_memory_block.hpp"
 #endif
 
+using namespace dbmstodspi::fpga_managing;
+
 MemoryManager::~MemoryManager() = default;
 
 void MemoryManager::LoadBitstreamIfNew(const std::string& bitstream_name,
@@ -83,7 +85,7 @@ void MemoryManager::SetFPGATo300MHz() {
   value = value & 0xFEFFFFFF;
   *pl_clk0 = value;
   value = value & 0xFFC0C0FF;
-  value = value | 0x10500; // For 100MHz use 0x10F00
+  value = value | 0x10500;  // For 100MHz use 0x10F00
   *pl_clk0 = value;
   value = value | 0x01000000;
   *pl_clk0 = value;

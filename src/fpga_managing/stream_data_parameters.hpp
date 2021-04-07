@@ -1,6 +1,10 @@
 #pragma once
 #include <cstdint>
 #include <vector>
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Struct for holding data about how to configure a stream in the DMA
  * engine.
@@ -28,3 +32,6 @@ struct StreamDataParameters {
     return stream_id < comparable.stream_id;
   }
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

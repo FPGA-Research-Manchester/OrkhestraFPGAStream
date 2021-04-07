@@ -9,6 +9,8 @@
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
 
+using namespace dbmstodspi::fpga_managing;
+
 void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
                               const std::vector<StreamDataParameters>& streams,
                               const bool is_input_stream) {

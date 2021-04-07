@@ -8,6 +8,8 @@
 #include <sstream>
 #include <stdexcept>
 
+using namespace dbmstodspi::data_managing;
+
 void TypesConverter::AddIntegerDataFromStringData(
     const std::vector<std::vector<std::string>>& string_data,
     std::vector<uint32_t>& integer_data,

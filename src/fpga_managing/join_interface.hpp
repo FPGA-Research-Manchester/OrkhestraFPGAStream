@@ -1,4 +1,8 @@
 #pragma once
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Interface class to be implemented by #Join
  */
@@ -18,3 +22,6 @@ class JoinInterface {
   virtual void StartPrefetchingData() = 0;
   virtual void Reset() = 0;
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

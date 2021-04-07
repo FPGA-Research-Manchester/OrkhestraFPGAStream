@@ -1,5 +1,7 @@
 #include "virtual_memory_block.hpp"
 
+using namespace dbmstodspi::fpga_managing;
+
 VirtualMemoryBlock::~VirtualMemoryBlock() = default;
 
 auto VirtualMemoryBlock::GetVirtualAddress() -> volatile uint32_t* {

@@ -11,6 +11,9 @@
 #include "memory_manager_interface.hpp"
 #include "stream_data_parameters.hpp"
 
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Class to configure all of the modules loaded in with the bitstream.
  * Then start the streaming to accelerate the query node.
@@ -66,3 +69,6 @@ class FPGAManager {
   static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)
       -> int;
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

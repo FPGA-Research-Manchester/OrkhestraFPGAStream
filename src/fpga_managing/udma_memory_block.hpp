@@ -3,6 +3,10 @@
 
 #include "memory_block_interface.hpp"
 #include "udma.h"
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Memory mapped UDMA memory block for transferring data between the DDR
  * and the FPGA. Implements #MemoryBlockInterface
@@ -19,3 +23,6 @@ class UDMAMemoryBlock : public MemoryBlockInterface {
   auto GetPhysicalAddress() -> volatile uint32_t* override;
   auto GetSize() -> const uint32_t override;
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

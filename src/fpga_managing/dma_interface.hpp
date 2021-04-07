@@ -1,8 +1,12 @@
 #pragma once
 #include <cstdint>
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Interface class whose implementation can be seen at #DMA.
-*/
+ */
 class DMAInterface {
  public:
   virtual ~DMAInterface() = default;
@@ -65,10 +69,13 @@ class DMAInterface {
                                                 uintptr_t address) = 0;
   virtual void SetSizeForMultiChannelStreams(int stream_id, int channel_id,
                                              int number_of_records) = 0;
-  
+
   virtual auto GetRuntime() -> volatile uint64_t = 0;
   virtual auto GetValidReadCyclesCount() -> volatile uint64_t = 0;
   virtual auto GetValidWriteCyclesCount() -> volatile uint64_t = 0;
 
   virtual void GlobalReset() = 0;
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

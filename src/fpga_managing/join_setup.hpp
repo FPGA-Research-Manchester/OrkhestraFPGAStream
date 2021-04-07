@@ -1,5 +1,9 @@
 #pragma once
 #include "join_interface.hpp"
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Class to calculate the join module configuration data and write the
  * data to the registers.
@@ -38,3 +42,6 @@ class JoinSetup {
                               int output_stream_id,
                               int output_chunks_per_record, int shift_size);
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

@@ -1,6 +1,9 @@
 #include "filter.hpp"
 
 #include<iostream>
+
+using namespace dbmstodspi::fpga_managing;
+
 // Filter module low driver
 
 // Selects stream_id and stream_id manipulations

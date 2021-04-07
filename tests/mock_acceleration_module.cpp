@@ -6,10 +6,12 @@ MockAccelerationModule::~MockAccelerationModule() = default;
 
 void MockAccelerationModule::WriteToModule(int module_internal_address,
                                            uint32_t write_data) {
-  AccelerationModule::WriteToModule(module_internal_address, write_data);
+  dbmstodspi::fpga_managing::AccelerationModule::WriteToModule(
+      module_internal_address, write_data);
 }
 
 auto MockAccelerationModule::ReadFromModule(int module_internal_address)
     -> uint32_t {
-  return AccelerationModule::ReadFromModule(module_internal_address);
+  return dbmstodspi::fpga_managing::AccelerationModule::ReadFromModule(
+      module_internal_address);
 }

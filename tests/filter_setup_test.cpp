@@ -15,7 +15,7 @@ TEST(FilterSetupTest, FilterStreamsSetting) {
   EXPECT_CALL(mock_filter, FilterSetStreamIDs(kInputStreamId, kOutputStreamId,
                                               kOutputStreamId))
       .Times(1);
-  FilterSetup filter_configurer;
+  dbmstodspi::fpga_managing::FilterSetup filter_configurer;
   filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
                                       kOutputStreamId, {{0}});
 }
@@ -35,19 +35,19 @@ TEST(FilterSetupTest, FilterModesSetting) {
                             expected_first_module_in_resource_elastic_chain,
                             expected_last_module_in_resource_elastic_chain))
       .Times(1);
-  FilterSetup filter_configurer;
+  dbmstodspi::fpga_managing::FilterSetup filter_configurer;
   filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
                                       kOutputStreamId, {{0}});
 }
 TEST(FilterSetupTest, CompareTypesSetting) {
   MockFilter mock_filter;
-  EXPECT_CALL(mock_filter,
-              FilterSetCompareTypes(
-                  kExpectedChunkId, kExpectedPosition,
-                  filter_config_values::CompareFunctions::kFilter32BitLessThan,
-                  testing::_, testing::_, testing::_))
+  EXPECT_CALL(mock_filter, FilterSetCompareTypes(
+                               kExpectedChunkId, kExpectedPosition,
+                               dbmstodspi::fpga_managing::filter_config_values::
+                                   CompareFunctions::kFilter32BitLessThan,
+                               testing::_, testing::_, testing::_))
       .Times(1);
-  FilterSetup filter_configurer;
+  dbmstodspi::fpga_managing::FilterSetup filter_configurer;
   filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
                                       kOutputStreamId, {{0}});
 }
@@ -60,7 +60,7 @@ TEST(FilterSetupTest, ReferenceValuesSetting) {
                                expected_compare_unit_index,
                                expected_compare_reference_value))
       .Times(1);
-  FilterSetup filter_configurer;
+  dbmstodspi::fpga_managing::FilterSetup filter_configurer;
   filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
                                       kOutputStreamId, {{0}});
 }
@@ -72,9 +72,10 @@ TEST(FilterSetupTest, DNFClauseSetting) {
               FilterSetDNFClauseLiteral(
                   expected_dnf_clause_id, expected_compare_unit_index,
                   kExpectedChunkId, kExpectedPosition,
-                  filter_config_values::LiteralTypes::kLiteralPositive))
+                  dbmstodspi::fpga_managing::filter_config_values::
+                      LiteralTypes::kLiteralPositive))
       .Times(1);
-  FilterSetup filter_configurer;
+  dbmstodspi::fpga_managing::FilterSetup filter_configurer;
   filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
                                       kOutputStreamId, {{0}});
 }
@@ -89,7 +90,7 @@ TEST(FilterSetupTest, CorrectFilterCalled) {
   EXPECT_CALL(mock_filter, WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
                                expected_datapath_width))
       .Times(1);
-  FilterSetup filter_configurer;
+  dbmstodspi::fpga_managing::FilterSetup filter_configurer;
   filter_configurer.SetupFilterModule(mock_filter, kInputStreamId,
                                       kOutputStreamId, {{0}});
 }

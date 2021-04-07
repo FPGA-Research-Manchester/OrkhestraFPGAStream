@@ -1,5 +1,9 @@
 #pragma once
 #include <cstdint>
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Interface class for accessing DDR memory where the table data is
  * stored.
@@ -24,3 +28,6 @@ class MemoryBlockInterface {
    */
   virtual auto GetSize() -> const uint32_t = 0;
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

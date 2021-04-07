@@ -2,6 +2,10 @@
 #include <vector>
 
 #include "query_acceleration_constants.hpp"
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Struct to hold crossbar configuration data vectors.
  */
@@ -18,3 +22,6 @@ struct DMACrossbarSetupData {
   /// Data which helps choose the position within a chunk.
   std::vector<int> position_selection;
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

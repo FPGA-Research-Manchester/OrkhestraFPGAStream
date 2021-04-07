@@ -9,6 +9,9 @@
 #include "stream_data_parameters.hpp"
 #include "table_data.hpp"
 
+namespace dbmstodspi {
+namespace query_managing {
+
 /**
  * @brief Class which contains the pipeline shown in the main README file. This
  * class processes query nodes and configures the FPGA according to the
@@ -23,8 +26,8 @@ class QueryManager {
    * @param expected_table Given expected data
    * @param expected_table Data which was output by the FPGA.
    */
-  static void CheckTableData(const TableData& expected_table,
-                             const TableData& resulting_table);
+  static void CheckTableData(const data_managing::TableData& expected_table,
+                             const data_managing::TableData& resulting_table);
 
   /**
    * @brief Check the module library to see which bitstream should get loaded on
@@ -62,3 +65,6 @@ class QueryManager {
   static void RunQueries(
       std::vector<query_scheduling_data::QueryNode> starting_query_nodes);
 };
+
+}  // namespace query_managing
+}  // namespace dbmstodspi

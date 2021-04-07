@@ -1,5 +1,7 @@
 #include "csv_reader.hpp"
 
+using namespace dbmstodspi::data_managing;
+
 void CSVReader::ReadTableData(
     const std::string& filename, std::vector<std::string>& header_row,
     std::vector<std::vector<std::string>>& read_rows) {

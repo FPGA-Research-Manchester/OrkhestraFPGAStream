@@ -1,5 +1,9 @@
 #pragma once
 #include <vector>
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Class to create an extended specification based on the original
  * specification vector.
@@ -153,3 +157,6 @@ class DMACrossbarSpecifier {
   static auto IsSpecificationValid(const std::vector<int>& record_specification)
       -> bool;
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

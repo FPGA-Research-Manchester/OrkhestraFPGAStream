@@ -2,6 +2,10 @@
 #include "acceleration_module.hpp"
 #include "memory_manager_interface.hpp"
 #include "merge_sort_interface.hpp"
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Class for writing the merge sort configuration data into the module
  * registers.
@@ -57,3 +61,6 @@ class MergeSort : public AccelerationModule, public MergeSortInterface {
    */
   void SetFetchOffset(int offset_record_count) override;
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

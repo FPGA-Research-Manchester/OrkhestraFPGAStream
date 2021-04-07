@@ -1,4 +1,8 @@
 #pragma once
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Constants which are used throughout the stack for calculating the
  * correct configuration parameters.
@@ -23,3 +27,6 @@ const int kMaxRecordsPerDDRBurst = 32;
 /// How much memory space is required for a single module
 const int kModuleSize = 1024 * 1024;
 }  // namespace query_acceleration_constants
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

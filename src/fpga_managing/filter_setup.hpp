@@ -4,6 +4,10 @@
 
 #include "filter_config_values.hpp"
 #include "filter_interface.hpp"
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Filter setup class which calculates the correct configuration data to
  * be written into the filter configuration registers.
@@ -62,3 +66,6 @@ class FilterSetup {
                                         int input_stream_id,
                                         int output_stream_id);
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

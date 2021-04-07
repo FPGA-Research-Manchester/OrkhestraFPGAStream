@@ -6,6 +6,10 @@
 
 #include "operation_types.hpp"
 #include "query_scheduling_data.hpp"
+
+namespace dbmstodspi {
+namespace query_managing {
+
 /**
  * @brief Class to schedule nodes to groups of different FPGA runs.
  */
@@ -58,7 +62,11 @@ class NodeScheduler {
       query_scheduling_data::ConfigurableModulesVector &current_modules_vector)
       -> int;
   static auto CreateNewModulesVector(
-      operation_types::QueryOperation query_operation, int current_position,
+      fpga_managing::operation_types::QueryOperation query_operation,
+      int current_position,
       query_scheduling_data::ConfigurableModulesVector current_modules_vector)
       -> query_scheduling_data::ConfigurableModulesVector;
 };
+
+}  // namespace query_managing
+}  // namespace dbmstodspi

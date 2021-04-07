@@ -10,8 +10,9 @@
 #include "dma_setup_data.hpp"
 #include "query_acceleration_constants.hpp"
 namespace {
-const int kDatapathLength = query_acceleration_constants::kDatapathLength;
-const int kDatapathWidth = query_acceleration_constants::kDatapathWidth;
+const int kDatapathLength = dbmstodspi::fpga_managing::query_acceleration_constants::kDatapathLength;
+const int kDatapathWidth =
+    dbmstodspi::fpga_managing::query_acceleration_constants::kDatapathWidth;
 
 void GetGoldenConfigFromFile(std::vector<std::vector<int>>& golden_config,
                              const std::string& file_name) {
@@ -38,7 +39,8 @@ auto CreateLinearSelectedColumnsVector(const int vector_size)
   return selected_column;
 }
 
-void ExpectConfigurationDataIsUnconfigured(DMASetupData configuration_data) {
+void ExpectConfigurationDataIsUnconfigured(
+    dbmstodspi::fpga_managing::DMASetupData configuration_data) {
   for (int clock_cycle_index = 0; clock_cycle_index < kDatapathLength;
        clock_cycle_index++) {
     EXPECT_THAT(configuration_data.crossbar_setup_data.size(), testing::Eq(0));
@@ -46,7 +48,8 @@ void ExpectConfigurationDataIsUnconfigured(DMASetupData configuration_data) {
 }
 
 void ExpectConfigurationDataIsConfigured(
-    DMASetupData configuration_data, std::string golden_chunk_data_file,
+    dbmstodspi::fpga_managing::DMASetupData configuration_data,
+    std::string golden_chunk_data_file,
     std::string golden_position_data_file) {
   std::vector<std::vector<int>> golden_chunk_config;
   GetGoldenConfigFromFile(golden_chunk_config, golden_chunk_data_file);
@@ -68,14 +71,14 @@ void ExpectConfigurationDataIsConfigured(
 }
 
 TEST(DMACrossbarSetupTest, RecordSize18BufferToInterfaceSetupCheck) {
-  DMASetupData test_stream_setup_data;
+  dbmstodspi::fpga_managing::DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = true;
   test_stream_setup_data.active_channel_count = -1;
   test_stream_setup_data.chunks_per_record = 2;
   test_stream_setup_data.records_per_ddr_burst = 16;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
-  DMACrossbarSetup::CalculateCrossbarSetupData(
+  dbmstodspi::fpga_managing::DMACrossbarSetup::CalculateCrossbarSetupData(
       test_stream_setup_data, 18, CreateLinearSelectedColumnsVector(18));
 
   ExpectConfigurationDataIsConfigured(
@@ -85,13 +88,13 @@ TEST(DMACrossbarSetupTest, RecordSize18BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize18InterfaceToBufferSetupCheck) {
-  DMASetupData test_stream_setup_data;
+  dbmstodspi::fpga_managing::DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
   test_stream_setup_data.chunks_per_record = 2;
   test_stream_setup_data.records_per_ddr_burst = 16;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
-  DMACrossbarSetup::CalculateCrossbarSetupData(
+  dbmstodspi::fpga_managing::DMACrossbarSetup::CalculateCrossbarSetupData(
       test_stream_setup_data, 18, CreateLinearSelectedColumnsVector(18));
 
   ExpectConfigurationDataIsConfigured(
@@ -101,14 +104,14 @@ TEST(DMACrossbarSetupTest, RecordSize18InterfaceToBufferSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize4BufferToInterfaceSetupCheck) {
-  DMASetupData test_stream_setup_data;
+  dbmstodspi::fpga_managing::DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = true;
   test_stream_setup_data.active_channel_count = -1;
   test_stream_setup_data.chunks_per_record = 1;
   test_stream_setup_data.records_per_ddr_burst = 32;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
-  DMACrossbarSetup::CalculateCrossbarSetupData(
+  dbmstodspi::fpga_managing::DMACrossbarSetup::CalculateCrossbarSetupData(
       test_stream_setup_data, 4, CreateLinearSelectedColumnsVector(4));
 
   ExpectConfigurationDataIsConfigured(
@@ -118,13 +121,13 @@ TEST(DMACrossbarSetupTest, RecordSize4BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize4InterfaceToBufferSetupCheck) {
-  DMASetupData test_stream_setup_data;
+  dbmstodspi::fpga_managing::DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
   test_stream_setup_data.chunks_per_record = 1;
   test_stream_setup_data.records_per_ddr_burst = 32;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
-  DMACrossbarSetup::CalculateCrossbarSetupData(
+  dbmstodspi::fpga_managing::DMACrossbarSetup::CalculateCrossbarSetupData(
       test_stream_setup_data, 4, CreateLinearSelectedColumnsVector(4));
 
   ExpectConfigurationDataIsConfigured(
@@ -134,14 +137,14 @@ TEST(DMACrossbarSetupTest, RecordSize4InterfaceToBufferSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize46BufferToInterfaceSetupCheck) {
-  DMASetupData test_stream_setup_data;
+  dbmstodspi::fpga_managing::DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = true;
   test_stream_setup_data.active_channel_count = -1;
   test_stream_setup_data.chunks_per_record = 3;
   test_stream_setup_data.records_per_ddr_burst = 8;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
-  DMACrossbarSetup::CalculateCrossbarSetupData(
+  dbmstodspi::fpga_managing::DMACrossbarSetup::CalculateCrossbarSetupData(
       test_stream_setup_data, 46, CreateLinearSelectedColumnsVector(46));
 
   ExpectConfigurationDataIsConfigured(
@@ -151,13 +154,13 @@ TEST(DMACrossbarSetupTest, RecordSize46BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize46InterfaceToBufferSetupCheck) {
-  DMASetupData test_stream_setup_data;
+  dbmstodspi::fpga_managing::DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
   test_stream_setup_data.chunks_per_record = 3;
   test_stream_setup_data.records_per_ddr_burst = 8;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
-  DMACrossbarSetup::CalculateCrossbarSetupData(
+  dbmstodspi::fpga_managing::DMACrossbarSetup::CalculateCrossbarSetupData(
       test_stream_setup_data, 46, CreateLinearSelectedColumnsVector(46));
 
   ExpectConfigurationDataIsConfigured(
@@ -167,14 +170,14 @@ TEST(DMACrossbarSetupTest, RecordSize46InterfaceToBufferSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize57BufferToInterfaceSetupCheck) {
-  DMASetupData test_stream_setup_data;
+  dbmstodspi::fpga_managing::DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = true;
   test_stream_setup_data.active_channel_count = -1;
   test_stream_setup_data.chunks_per_record = 4;
   test_stream_setup_data.records_per_ddr_burst = 8;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
-  DMACrossbarSetup::CalculateCrossbarSetupData(
+  dbmstodspi::fpga_managing::DMACrossbarSetup::CalculateCrossbarSetupData(
       test_stream_setup_data, 57, CreateLinearSelectedColumnsVector(57));
 
   ExpectConfigurationDataIsConfigured(
@@ -184,13 +187,13 @@ TEST(DMACrossbarSetupTest, RecordSize57BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize57InterfaceToBufferSetupCheck) {
-  DMASetupData test_stream_setup_data;
+  dbmstodspi::fpga_managing::DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
   test_stream_setup_data.chunks_per_record = 4;
   test_stream_setup_data.records_per_ddr_burst = 8;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
-  DMACrossbarSetup::CalculateCrossbarSetupData(
+  dbmstodspi::fpga_managing::DMACrossbarSetup::CalculateCrossbarSetupData(
       test_stream_setup_data, 57, CreateLinearSelectedColumnsVector(57));
 
   ExpectConfigurationDataIsConfigured(
@@ -200,14 +203,14 @@ TEST(DMACrossbarSetupTest, RecordSize57InterfaceToBufferSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize478BufferToInterfaceSetupCheck) {
-  DMASetupData test_stream_setup_data;
+  dbmstodspi::fpga_managing::DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = true;
   test_stream_setup_data.active_channel_count = -1;
   test_stream_setup_data.chunks_per_record = 30;
   test_stream_setup_data.records_per_ddr_burst = 1;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
-  DMACrossbarSetup::CalculateCrossbarSetupData(
+  dbmstodspi::fpga_managing::DMACrossbarSetup::CalculateCrossbarSetupData(
       test_stream_setup_data, 478, CreateLinearSelectedColumnsVector(478));
 
   ExpectConfigurationDataIsConfigured(
@@ -217,13 +220,13 @@ TEST(DMACrossbarSetupTest, RecordSize478BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize478InterfaceToBufferSetupCheck) {
-  DMASetupData test_stream_setup_data;
+  dbmstodspi::fpga_managing::DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
   test_stream_setup_data.chunks_per_record = 30;
   test_stream_setup_data.records_per_ddr_burst = 1;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
-  DMACrossbarSetup::CalculateCrossbarSetupData(
+  dbmstodspi::fpga_managing::DMACrossbarSetup::CalculateCrossbarSetupData(
       test_stream_setup_data, 478, CreateLinearSelectedColumnsVector(478));
 
   ExpectConfigurationDataIsConfigured(
@@ -233,14 +236,14 @@ TEST(DMACrossbarSetupTest, RecordSize478InterfaceToBufferSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize80BufferToInterfaceSetupCheck) {
-  DMASetupData test_stream_setup_data;
+  dbmstodspi::fpga_managing::DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = true;
   test_stream_setup_data.active_channel_count = -1;
   test_stream_setup_data.chunks_per_record = 5;
   test_stream_setup_data.records_per_ddr_burst = 4;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
-  DMACrossbarSetup::CalculateCrossbarSetupData(
+  dbmstodspi::fpga_managing::DMACrossbarSetup::CalculateCrossbarSetupData(
       test_stream_setup_data, 80, CreateLinearSelectedColumnsVector(80));
 
   ExpectConfigurationDataIsConfigured(
@@ -250,13 +253,13 @@ TEST(DMACrossbarSetupTest, RecordSize80BufferToInterfaceSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, RecordSize80InterfaceToBufferSetupCheck) {
-  DMASetupData test_stream_setup_data;
+  dbmstodspi::fpga_managing::DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
   test_stream_setup_data.chunks_per_record = 5;
   test_stream_setup_data.records_per_ddr_burst = 4;
   ExpectConfigurationDataIsUnconfigured(test_stream_setup_data);
 
-  DMACrossbarSetup::CalculateCrossbarSetupData(
+  dbmstodspi::fpga_managing::DMACrossbarSetup::CalculateCrossbarSetupData(
       test_stream_setup_data, 80, CreateLinearSelectedColumnsVector(80));
 
   ExpectConfigurationDataIsConfigured(
@@ -266,7 +269,7 @@ TEST(DMACrossbarSetupTest, RecordSize80InterfaceToBufferSetupCheck) {
 }
 
 TEST(DMACrossbarSetupTest, InterfaceToBufferWithOverwritesSetup) {
-  DMASetupData test_stream_setup_data;
+  dbmstodspi::fpga_managing::DMASetupData test_stream_setup_data;
   test_stream_setup_data.is_input_stream = false;
   test_stream_setup_data.chunks_per_record = 2;
   test_stream_setup_data.records_per_ddr_burst = 16;
@@ -274,7 +277,7 @@ TEST(DMACrossbarSetupTest, InterfaceToBufferWithOverwritesSetup) {
 
   const int any_record_size = -1;
 
-  DMACrossbarSetup::CalculateCrossbarSetupData(
+  dbmstodspi::fpga_managing::DMACrossbarSetup::CalculateCrossbarSetupData(
       test_stream_setup_data, any_record_size,
       {0,  1,  -1, 3,  4,  5,  22, 7,  -1, 25, 10, 11, 12, 13, 14, 15,
        16, 17, 18, 19, 20, 21, 6,  23, 24, 9,  26, 27, 28, -1, -1, 25});

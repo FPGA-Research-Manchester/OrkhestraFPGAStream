@@ -3,6 +3,9 @@
 #include "linear_sort_interface.hpp"
 #include "memory_manager_interface.hpp"
 
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Class to implement the linear sorting operation acceleration.
  */
@@ -35,3 +38,6 @@ class LinearSort : public AccelerationModule, public LinearSortInterface {
    */
   void StartPrefetchingData() override;
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

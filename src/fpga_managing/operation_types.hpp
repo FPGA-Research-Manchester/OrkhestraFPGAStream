@@ -1,4 +1,8 @@
 #pragma once
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Accelerated operation types are listed here.
  */
@@ -17,3 +21,6 @@ enum class QueryOperation {
   kLinearSort
 };
 }  // namespace operation_types
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

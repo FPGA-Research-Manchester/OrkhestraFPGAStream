@@ -2,6 +2,9 @@
 #include <array>
 #include <utility>
 
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Namespace for configuration data used to configure the filtering
  * module.
@@ -45,3 +48,6 @@ typedef std::array<
     32>
     DNFClauseStates;
 }  // namespace filter_config_values
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

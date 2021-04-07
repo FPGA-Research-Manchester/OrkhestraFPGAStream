@@ -5,6 +5,8 @@
 
 #include "operation_types.hpp"
 
+using namespace dbmstodspi::query_managing;
+
 void NodeScheduler::FindAcceleratedQueryNodeSets(
     std::queue<std::pair<query_scheduling_data::ConfigurableModulesVector,
                          std::vector<query_scheduling_data::QueryNode>>>*
@@ -70,11 +72,10 @@ auto NodeScheduler::FindMinPosition(
                     *previous_node);
       if (current_nodes_iterator != current_query_nodes.end() &&
           previous_node->operation_type !=
-              operation_types::QueryOperation::kPassThrough) {
-        auto current_modules_iterator =
-            std::find(current_modules_vector.begin(),
-                      current_modules_vector.end(),
-                      previous_node->operation_type);
+              fpga_managing::operation_types::QueryOperation::kPassThrough) {
+        auto current_modules_iterator = std::find(
+            current_modules_vector.begin(), current_modules_vector.end(),
+            previous_node->operation_type);
         if (current_modules_iterator == current_modules_vector.end()) {
           throw std::runtime_error("Something went wrong with scheduling!");
         }
@@ -144,7 +145,8 @@ auto NodeScheduler::FindSuitableModulePosition(
     query_scheduling_data::ConfigurableModulesVector& current_modules_vector)
     -> int {
   int current_position = FindMinPosition(current_node, current_query_nodes,
-                                         current_modules_vector) - 1;
+                                         current_modules_vector) -
+                         1;
 
   bool is_suitable_set_found = false;
   while (!is_suitable_set_found &&
@@ -152,7 +154,7 @@ auto NodeScheduler::FindSuitableModulePosition(
     current_position++;
     auto new_modules_vector = CreateNewModulesVector(
         current_node.operation_type, current_position, current_modules_vector);
-        is_suitable_set_found = IsModuleSetSupported(new_modules_vector);
+    is_suitable_set_found = IsModuleSetSupported(new_modules_vector);
   }
   if (!is_suitable_set_found) {
     return -1;
@@ -161,10 +163,12 @@ auto NodeScheduler::FindSuitableModulePosition(
 }
 
 auto NodeScheduler::CreateNewModulesVector(
-    operation_types::QueryOperation query_operation, int current_position,
+    fpga_managing::operation_types::QueryOperation query_operation,
+    int current_position,
     query_scheduling_data::ConfigurableModulesVector current_modules_vector)
     -> query_scheduling_data::ConfigurableModulesVector {
-  if (query_operation == operation_types::QueryOperation::kPassThrough) {
+  if (query_operation ==
+      fpga_managing::operation_types::QueryOperation::kPassThrough) {
     return current_modules_vector;
   }
   if (current_modules_vector.empty()) {

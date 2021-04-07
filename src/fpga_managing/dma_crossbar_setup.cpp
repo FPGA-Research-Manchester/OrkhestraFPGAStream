@@ -11,6 +11,8 @@
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
 
+using namespace dbmstodspi::fpga_managing;
+
 // TODO(Kaspar): Rething record_size since it isn't used for output
 void DMACrossbarSetup::CalculateCrossbarSetupData(
     DMASetupData& stream_setup_data, const int record_size,

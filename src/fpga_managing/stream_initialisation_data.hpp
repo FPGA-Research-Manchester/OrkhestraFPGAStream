@@ -3,6 +3,10 @@
 #include <string>
 
 #include "memory_block_interface.hpp"
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Struct to hold data from which the configuration data can be
  * calculated before FPGA configuration
@@ -15,3 +19,6 @@ struct StreamInitialisationData {
   /// Memory mapped DDR location where the data will be written to.
   std::unique_ptr<MemoryBlockInterface> memory_block;
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

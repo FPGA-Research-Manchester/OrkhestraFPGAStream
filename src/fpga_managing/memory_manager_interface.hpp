@@ -4,6 +4,10 @@
 #include <string>
 
 #include "memory_block_interface.hpp"
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Interface class implemented in #MemoryManager
  */
@@ -25,3 +29,6 @@ class MemoryManagerInterface {
   virtual auto AllocateMemoryBlock()
       -> std::unique_ptr<MemoryBlockInterface> = 0;
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

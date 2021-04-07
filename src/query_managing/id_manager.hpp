@@ -3,6 +3,10 @@
 #include <vector>
 
 #include "query_scheduling_data.hpp"
+
+namespace dbmstodspi {
+namespace query_managing {
+
 /**
  * @brief Class which assigns stream IDs to the input and output streams.
  */
@@ -65,3 +69,6 @@ class IDManager {
       std::vector<std::vector<int>> &input_ids,
       std::vector<std::vector<int>> &output_ids);
 };
+
+}  // namespace query_managing
+}  // namespace dbmstodspi

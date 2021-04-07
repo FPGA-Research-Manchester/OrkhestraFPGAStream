@@ -1,5 +1,9 @@
 #pragma once
 #include "merge_sort_interface.hpp"
+
+namespace dbmstodspi {
+namespace fpga_managing {
+
 /**
  * @brief Class to calculate the configuration data and setup the merge sorting
  * acceleration.
@@ -41,3 +45,6 @@ class MergeSortSetup {
   static auto PotentialRecordCountIsValid(int potential_record_count,
                                           int record_size) -> bool;
 };
+
+}  // namespace fpga_managing
+}  // namespace dbmstodspi

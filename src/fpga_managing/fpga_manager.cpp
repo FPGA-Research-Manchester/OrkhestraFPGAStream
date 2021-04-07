@@ -22,6 +22,8 @@
 #include "operation_types.hpp"
 #include "query_acceleration_constants.hpp"
 
+using namespace dbmstodspi::fpga_managing;
+
 // Eventually the idea would be to add operation type to StreamDataParameters.
 // Then the modules and streams can be set up accordingly.
 void FPGAManager::SetupQueryAcceleration(
@@ -61,7 +63,7 @@ void FPGAManager::SetupQueryAcceleration(
       FPGAManager::input_streams_active_status_);
 
   if (ila_module_) {
-    ila_module_.value().startILAs();
+    ila_module_.value().StartILAs();
   }
 
   for (int node_index = 0; node_index < available_modules.size();

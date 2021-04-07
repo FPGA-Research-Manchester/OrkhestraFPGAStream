@@ -7,6 +7,8 @@
 
 #include "query_acceleration_constants.hpp"
 
+using namespace dbmstodspi::fpga_managing;
+
 void FilterSetup::SetupFilterModule(
     FilterInterface& filter_module, int input_stream_id, int output_stream_id,
     const std::vector<std::vector<int>>& operation_parameters) {

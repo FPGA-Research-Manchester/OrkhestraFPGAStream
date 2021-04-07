@@ -7,6 +7,9 @@
 
 #include "table_data.hpp"
 
+namespace dbmstodspi {
+namespace data_managing {
+
 /**
  * @brief Class to manage the data types and reading and writing of data to and
  * from CSV files.
@@ -62,3 +65,6 @@ class DataManager {
   static void PrintStringData(
       const std::vector<std::vector<std::string>>& string_data);
 };
+
+}  // namespace data_managing
+}  // namespace dbmstodspi
