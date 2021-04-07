@@ -87,5 +87,17 @@ enum class ILADataTypes {
   IB_L = 36,
   IB_SI = 37,
   IB_VS = 38,
-  IB_BU = 39
+  IB_BU = 39,
+  U_NA_DIN = 40,
+  U_NA_DOUT = 41,
+  U_NA_WADD = 42,
+  U_NA_RADD = 43,
+  U_NA_WEN = 44,
+  U_RR_DIN = 45,
+  U_RR_DOUT = 46,
+  U_RR_WADD = 47,
+  U_RR_RADD = 48,
+  U_RR_WEN = 49,
+  U_RPB = 50,
+  U_BS = 51
 };
