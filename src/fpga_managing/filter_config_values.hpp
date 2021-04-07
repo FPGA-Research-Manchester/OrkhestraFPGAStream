@@ -1,10 +1,11 @@
 #pragma once
-#include<utility>
-#include<array>
+#include <array>
+#include <utility>
 
 /**
- * Namespace for configuration data used to configure the filtering module.
-*/
+ * @brief Namespace for configuration data used to configure the filtering
+ * module.
+ */
 namespace filter_config_values {
 /// Enum for selecting compare function type.
 enum class CompareFunctions {
@@ -24,16 +25,17 @@ enum class CompareFunctions {
 
 /// Enum for selecting the literal type.
 enum class LiteralTypes {
-  kLiteralDontCare = 0, // The 0th one is the default one!
+  kLiteralDontCare = 0,  // The 0th one is the default one!
   kLiteralPositive = 1,
   kLiteralNegative = 2
 };
 
 /**
- * Matrix type for holding DNF clause states and types. 
- * 
- * Which array is for what is explained in the Filter::FilterSetDNFClauseLiteral function
-*/
+ * @brief Matrix type for holding DNF clause states and types.
+ *
+ * Which array is for what is explained in the Filter::FilterSetDNFClauseLiteral
+ * function
+ */
 typedef std::array<
     std::pair<
         bool,

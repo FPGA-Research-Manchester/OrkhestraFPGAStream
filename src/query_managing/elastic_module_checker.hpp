@@ -6,19 +6,20 @@
 #include "query_scheduling_data.hpp"
 #include "stream_data_parameters.hpp"
 /**
- * For checking the resource elastic options to better accomodate the input data
- * requirements.
+ * @brief For checking the resource elastic options to better accomodate the
+ * input data requirements.
  */
 class ElasticModuleChecker {
  public:
   /**
-   * Check if the currently selected modules need to be replaced with other
-   *  resource elastic variants to better suite the input stream requirements.
+   * @brief Check if the currently selected modules need to be replaced with
+   * other resource elastic variants to better suite the input stream
+   * requirements.
    *
    * @param input_stream_parameters Vector of input stream requirements.
    * @param operation_type What operation is going to get used.
    * @param operation_parameters What are the given parameters for the given
-   *  operation.
+   * operation.
    * @param loaded_modules Which modules have been chosen currently.
    */
   static void CheckElasticityNeeds(
@@ -29,7 +30,8 @@ class ElasticModuleChecker {
 
  private:
   /**
-   * Check if the chosen merge sort module is big enough for the input data.
+   * @brief Check if the chosen merge sort module is big enough for the input
+   * data.
    *
    * @param input_stream_parameters Input data requirements.
    * @param operation_parameters Current operation requirements.

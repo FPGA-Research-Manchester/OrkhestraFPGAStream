@@ -6,13 +6,14 @@
 #include <vector>
 
 /**
- * Class to convert different types of data to string and integer formats.
+ * @brief Class to convert different types of data to string and integer
+ * formats.
  */
 class TypesConverter {
  public:
   /**
-   * Add integer typed data to the output vector given input data in string
-   *  format.
+   * @brief Add integer typed data to the output vector given input data in
+   * string format.
    * @param string_data Input data vector.
    * @param integer_data Output data vector.
    * @param data_types_vector Column data types.
@@ -22,8 +23,8 @@ class TypesConverter {
       std::vector<uint32_t>& integer_data,
       std::vector<std::pair<std::string, int>> data_types_vector);
   /**
-   * Add string typed data to the output vector given input data in integer
-   *  format.
+   * @brief Add string typed data to the output vector given input data in
+   * integer format.
    * @param integer_data Input data vector.
    * @param resulting_string_data Output data vector.
    * @param data_types_vector Column data types.
@@ -34,7 +35,7 @@ class TypesConverter {
       const std::vector<std::pair<std::string, int>>& data_types_vector);
 
   /**
-   * Convert string table element to integers.
+   * @brief Convert string table element to integers.
    * @param input String element.
    * @param data_vector Output integer vector.
    * @param output_size String size.
@@ -43,7 +44,7 @@ class TypesConverter {
       const std::string& input, std::vector<uint32_t>& data_vector,
       int output_size);
   /**
-   * Convert integer table element to integers.
+   * @brief Convert integer table element to integers.
    * @param input String input representing an integer.
    * @param data_vector Output integer vector.
    * @param output_size How many integers should be added to the output.
@@ -52,7 +53,7 @@ class TypesConverter {
       const std::string& input, std::vector<uint32_t>& data_vector,
       int output_size);
   /**
-   * Convert null table element to integers.
+   * @brief Convert null table element to integers.
    * @param input String input representing a NULL value.
    * @param data_vector Output integer vector.
    * @param output_size How many integers should be added to the output.
@@ -61,7 +62,7 @@ class TypesConverter {
                                              std::vector<uint32_t>& data_vector,
                                              int output_size);
   /**
-   * Convert decimal table element to integers.
+   * @brief Convert decimal table element to integers.
    * @param input String input representing a decimal value.
    * @param data_vector Output integer vector.
    * @param output_size How many integers should be added to the output.
@@ -70,7 +71,7 @@ class TypesConverter {
       const std::string& input, std::vector<uint32_t>& data_vector,
       int output_size);
   /**
-   * Convert date table element to integers.
+   * @brief Convert date table element to integers.
    * @param input String input representing a date value.
    * @param data_vector Output integer vector.
    * @param output_size How many integers should be added to the output
@@ -79,7 +80,7 @@ class TypesConverter {
                                              std::vector<uint32_t>& data_vector,
                                              int output_size);
   /**
-   * Convert a vector of integers to string format.
+   * @brief Convert a vector of integers to string format.
    * @param input_value Integer vector representing a string value.
    * @param string_vector Output string vector.
    */
@@ -88,7 +89,7 @@ class TypesConverter {
       std::vector<std::string>& string_vector);
 
   /**
-   * Convert a vector of integers to string format.
+   * @brief Convert a vector of integers to string format.
    * @param input_value Integer vector representing an integer value.
    * @param string_vector Output string vector.
    */
@@ -96,7 +97,7 @@ class TypesConverter {
       const std::vector<uint32_t>& input_value,
       std::vector<std::string>& string_vector);
   /**
-   * Convert a vector of integers to string format.
+   * @brief Convert a vector of integers to string format.
    * @param input_value Integer vector representing a NULL value.
    * @param string_vector Output string vector.
    */
@@ -104,7 +105,7 @@ class TypesConverter {
       const std::vector<uint32_t>& input_value,
       std::vector<std::string>& string_vector);
   /**
-   * Convert a vector of integers to string format.
+   * @brief Convert a vector of integers to string format.
    * @param input_value Integer vector representing a decimal value.
    * @param string_vector Output string vector.
    */
@@ -112,7 +113,7 @@ class TypesConverter {
       const std::vector<uint32_t>& input_value,
       std::vector<std::string>& string_vector);
   /**
-   * Convert a vector of integers to string format.
+   * @brief Convert a vector of integers to string format.
    * @param input_value Integer vector representing a date value.
    * @param string_vector Output string vector.
    */
@@ -122,18 +123,18 @@ class TypesConverter {
 
  private:
   /**
-   * Helper method to convert strings with hexadecimal values to strings.
+   * @brief Helper method to convert strings with hexadecimal values to strings.
    * @param hex Input string with hex values which can be converted to a string
-   *  with ASCII characters.
+   * with ASCII characters.
    * @return Converted Ascii string.
    */
   static auto ConvertHexStringToString(const std::string& hex) -> std::string;
   /**
-   * Helper method to convert strings to ASCII integer values.
+   * @brief Helper method to convert strings to ASCII integer values.
    * @param input_string String to be converted to integers.
    * @param output_size How many integers can be used.
    * @return Vector of integers representing the ASCII integer value of the
-   *  input string.
+   * input string.
    */
   static auto ConvertCharStringToAscii(const std::string& input_string,
                                        int output_size) -> std::vector<int>;

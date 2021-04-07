@@ -7,12 +7,12 @@
 
 #include "operation_types.hpp"
 /**
- * Namespace for types to help with scheduling the query nodes correctly.
+ * @brief Namespace for types to help with scheduling the query nodes correctly.
  */
 namespace query_scheduling_data {
 
 /**
- * Struct for collecting all of the parameter vectors.
+ * @brief Struct for collecting all of the parameter vectors.
  */
 struct NodeOperationParameters {
   std::vector<std::vector<int>> input_stream_parameters;
@@ -27,7 +27,7 @@ struct NodeOperationParameters {
 };
 
 /**
- * Struct for defining a query node.
+ * @brief Struct for defining a query node.
  */
 struct QueryNode {
   /// Input data files.

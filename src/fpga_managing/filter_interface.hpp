@@ -3,8 +3,8 @@
 
 #include "filter_config_values.hpp"
 /**
- * Interface class to be implemented by #Filter
-*/
+ * @brief Interface class to be implemented by #Filter
+ */
 class FilterInterface {
  public:
   virtual ~FilterInterface() = default;

@@ -6,7 +6,7 @@
 #include "dma_crossbar_setup_data.hpp"
 
 /**
- * Struct to hold channel setup data for an individual stream.
+ * @brief Struct to hold channel setup data for an individual stream.
  */
 struct DMAChannelSetupData {
   /// Pointer to the start of the data.
@@ -18,8 +18,8 @@ struct DMAChannelSetupData {
 };
 
 /**
- * Struct to hold all configuration data required for a stream to be streamed
- * through the DMA engine.
+ * @brief Struct to hold all configuration data required for a stream to be
+ * streamed through the DMA engine.
  */
 struct DMASetupData {
   int stream_id, ddr_burst_length, records_per_ddr_burst, chunks_per_record,

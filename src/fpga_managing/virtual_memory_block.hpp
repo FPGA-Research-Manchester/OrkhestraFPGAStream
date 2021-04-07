@@ -4,9 +4,10 @@
 
 #include "memory_block_interface.hpp"
 /**
- * Virtual memory block where there is no physical counterpart. Only for testing
- * and the data will be written to a virtual address. Implements
- * #MemoryBlockInterface.
+ * @brief Virtual memory block where there is no physical counterpart.
+ *
+ * Only for testing and the data will be written to a virtual address.
+ * Implements #MemoryBlockInterface.
  */
 class VirtualMemoryBlock : public MemoryBlockInterface {
  private:

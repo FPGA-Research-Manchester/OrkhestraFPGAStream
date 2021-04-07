@@ -6,7 +6,7 @@
 #include "stream_data_parameters.hpp"
 
 /**
- * Struct to hold all of the important information about a query node to
+ * @brief Struct to hold all of the important information about a query node to
  * accelerate it with an FPGA.
  */
 struct AcceleratedQueryNode {

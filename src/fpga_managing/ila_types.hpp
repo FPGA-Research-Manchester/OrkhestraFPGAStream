@@ -1,6 +1,6 @@
 #pragma once
 /**
- * Enumeration of all of the different types of data ILAs can collect.
+ * @brief Enumeration of all of the different types of data ILAs can collect.
  */
 enum class ILADataTypes {
   kType = 0,

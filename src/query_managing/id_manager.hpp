@@ -4,14 +4,14 @@
 
 #include "query_scheduling_data.hpp"
 /**
- * Class which assigns stream IDs to the input and output streams.
+ * @brief Class which assigns stream IDs to the input and output streams.
  */
 class IDManager {
  private:
   /// Keep track of available IDs
   std::stack<int> available_ids_{};
   /**
-   * Generic method for finding the index of an element in a vector.
+   * @brief Generic method for finding the index of an element in a vector.
    * @tparam T Type of the elements in the vector.
    * @param vector Vector where the element should be found from.
    * @param element Element whose location in the vector we want to know.
@@ -21,7 +21,7 @@ class IDManager {
   auto FindElementIndex(const std::vector<T> &vector, const T &element) -> int;
 
   /**
-   * Allocate IDs which the input and output streams share.
+   * @brief Allocate IDs which the input and output streams share.
    * @param current_node Current node which needs IDs.
    * @param all_nodes Collection of all nodes to find already assigned IDs.
    * @param current_node_input_ids Current input IDs vector.
@@ -35,7 +35,7 @@ class IDManager {
       std::vector<std::vector<int>> &output_ids,
       std::vector<int> &current_node_output_ids);
   /**
-   * Allocate IDs to output streams without IDs yet.
+   * @brief Allocate IDs to output streams without IDs yet.
    * @param current_node Current node which needs to get more IDs
    * @param current_node_output_ids Vector of currently assigned output IDs.
    */
@@ -45,17 +45,17 @@ class IDManager {
 
  public:
   /**
-   * Constructor for IDManager to setup the available IDs stack.
+   * @brief Constructor for IDManager to setup the available IDs stack.
    */
   IDManager();
   /**
-   * Make an used ID available again.
+   * @brief Make an used ID available again.
    * @param available_id ID which can be made available.
    */
   void MakeIDAvailable(int available_id);
   /**
-   * Main method to start allocating IDs to all of the input and output streams
-   *  of the given nodes.
+   * @brief Main method to start allocating IDs to all of the input and output
+   * streams of the given nodes.
    * @param node_vector Vector of the nodes of the next FPGA run.
    * @param input_ids Vector of all assigned input IDs.
    * @param output_ids Vector of all assigned output IDs.

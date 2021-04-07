@@ -4,17 +4,17 @@
 
 #include "dma_setup_data.hpp"
 /**
- * Class to write the correct setup data to the DMASetupData struct according to
- * the specification.
+ * @brief Class to write the correct setup data to the DMASetupData struct
+ * according to the specification.
  */
 class DMACrossbarSetup {
  public:
   /**
-   * Calculate crossbar setup data such that the configuration data can be
-   *  directly written to the DMA registers to configure the crossbar according
-   *  to the the given specifications.
+   * @brief Calculate crossbar setup data such that the configuration data can
+   * be directly written to the DMA registers to configure the crossbar
+   * according to the the given specifications.
    * @param stream_setup_data Setup data struct where the DMA configuration is
-   *  stored.
+   * stored.
    * @param record_size How many integers worth of data there is in a record.
    * @param selected_columns Integer vector noting which columns should be
    * where.

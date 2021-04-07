@@ -2,7 +2,8 @@
 #include <cstdint>
 #include <vector>
 /**
- * Struct for holding data about how to configure a stream in the DMA engine.
+ * @brief Struct for holding data about how to configure a stream in the DMA
+ * engine.
  */
 struct StreamDataParameters {
   /// ID

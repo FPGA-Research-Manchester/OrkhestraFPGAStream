@@ -3,11 +3,11 @@
 
 #include "query_acceleration_constants.hpp"
 /**
- * Struct to hold crossbar configuration data vectors.
+ * @brief Struct to hold crossbar configuration data vectors.
  */
 struct DMACrossbarSetupData {
   /**
-   * Constructor to initialise default configuration data.
+   * @brief Constructor to initialise default configuration data.
    */
   DMACrossbarSetupData()
       : chunk_selection(query_acceleration_constants::kDatapathWidth,

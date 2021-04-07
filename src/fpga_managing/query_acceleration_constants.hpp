@@ -1,7 +1,7 @@
 #pragma once
 /**
- * Constants which are used throughout the stack for calculating the correct
- * configuration parameters.
+ * @brief Constants which are used throughout the stack for calculating the
+ * correct configuration parameters.
  *
  * Size values are in integers. That means that the value should be multiplied 4
  * times for bytes and x32 for bits.

@@ -4,8 +4,8 @@
 #include "memory_block_interface.hpp"
 #include "udma.h"
 /**
- * Memory mapped UDMA memory block for transferring data between the DDR and the
- * FPGA. Implements #MemoryBlockInterface
+ * @brief Memory mapped UDMA memory block for transferring data between the DDR
+ * and the FPGA. Implements #MemoryBlockInterface
  */
 class UDMAMemoryBlock : public MemoryBlockInterface {
  private:

@@ -7,17 +7,17 @@
 #include "operation_types.hpp"
 #include "query_scheduling_data.hpp"
 /**
- * Class to schedule nodes to groups of different FPGA runs.
+ * @brief Class to schedule nodes to groups of different FPGA runs.
  */
 class NodeScheduler {
  public:
   /**
-   * Find groups of accelerated query nodes which can be run in the same FPGA
-   *  run.
+   * @brief Find groups of accelerated query nodes which can be run in the same
+   * FPGA run.
    * @param accelerated_query_node_sets Queue of groups of accelerated query
-   *  nodes to be accelerated next.
+   * nodes to be accelerated next.
    * @param starting_nodes Input vector of leaf nodes from which the parsing can
-   *  begin.
+   * begin.
    */
   static void FindAcceleratedQueryNodeSets(
       std::queue<std::pair<query_scheduling_data::ConfigurableModulesVector,

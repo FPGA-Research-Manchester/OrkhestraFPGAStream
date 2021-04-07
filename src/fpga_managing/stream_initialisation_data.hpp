@@ -4,8 +4,8 @@
 
 #include "memory_block_interface.hpp"
 /**
- * Struct to hold data from which the configuration data can be calculated
- * before FPGA configuration
+ * @brief Struct to hold data from which the configuration data can be
+ * calculated before FPGA configuration
  */
 struct StreamInitialisationData {
   /// ID

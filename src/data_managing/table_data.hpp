@@ -5,7 +5,7 @@
 #include <vector>
 
 /**
- * Struct to hold the information about the table data.
+ * @brief Struct to hold the information about the table data.
  */
 struct TableData {
   /// Vector to hold data about column data types and sizes.

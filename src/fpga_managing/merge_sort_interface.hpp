@@ -1,6 +1,6 @@
 #pragma once
 /**
- * Interface class for the merge sorting implemented by #MergeSort
+ * @brief Interface class for the merge sorting implemented by #MergeSort
  */
 class MergeSortInterface {
  public:

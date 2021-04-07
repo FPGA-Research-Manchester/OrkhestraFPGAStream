@@ -1,22 +1,22 @@
 #pragma once
 #include <vector>
 /**
- * Class to create an extended specification based on the original specification
- * vector.
+ * @brief Class to create an extended specification based on the original
+ * specification vector.
  */
 class DMACrossbarSpecifier {
  public:
   /**
-   * Check modulo clashes. Two column selections in the same chunk can't have
-   *  the same modulo.
+   * @brief Check modulo clashes. Two column selections in the same chunk can't
+   * have the same modulo.
    * @param record_specification Initial specification vector to be checked.
    * @return Boolean noting if any modulo clashes were found.
    */
   static auto IsInputClashing(const std::vector<int>& record_specification)
       -> bool;
   /**
-   * Check division clashes. Two column selections in the same position (column)
-   *  can't have the same division result.
+   * @brief Check division clashes. Two column selections in the same position
+   * (column) can't have the same division result.
    * @param record_specification Initial specification vector to be checked.
    * @return Boolean noting if division clashes were found.
    */
@@ -24,9 +24,10 @@ class DMACrossbarSpecifier {
       -> bool;
 
   /**
-   * Check if the output configuration is overwriting data. That means it is
-   *  impossible to solve the clash only with the output crossbar. This happens
-   *  when too much data is duplicated within a chunk.
+   * @brief Check if the output configuration is overwriting data.
+   *
+   * That means it is impossible to solve the clash only with the output
+   * crossbar. This happens when too much data is duplicated within a chunk.
    * @param record_specification Initial specification vector to be checked.
    * @return Boolean noting if the output specification is unfeasible.
    */
@@ -34,13 +35,14 @@ class DMACrossbarSpecifier {
       const std::vector<int>& record_specification) -> bool;
 
   /**
-   * Resolve multi-channel clashes. To make space to resolve the clashes the
-   *  crossbar configuration space creating variable could get changed. Yet to be
-   *  implemented.
+   * @brief Resolve multi-channel clashes.
+   *
+   * To make space to resolve the clashes the crossbar configuration space
+   * creating variable could get changed. Yet to be implemented.
    * @param record_size How many integers worth of data is there in a record.
    * @param record_specification Initial specification vector to be fixed.
    * @param records_per_ddr_burst How many records get transferred with a DDR
-   *  burst.
+   * burst.
    * @param chunks_per_record How many chunks are used for each record.
    */
   static void ResolveInputClashesMultiChannel(
@@ -48,37 +50,39 @@ class DMACrossbarSpecifier {
       int records_per_ddr_burst, int& chunks_per_record);
 
   /**
-   * Resolve single channel input crossbar clashes. To make space DDR burst size
-   *  can be changed with the records per DDR burst parameter. Yet to be
-   *  implemented.
+   * @brief Resolve single channel input crossbar clashes.
+   *
+   * To make space DDR burst size can be changed with the records per DDR burst
+   * parameter. Yet to be implemented.
    * @param record_size How many integers worth of data there is in a record.
    * @param record_specification Initial specification vector to be fixed.
    * @param records_per_ddr_burst How many records get transferred with a DDR
-   *  burst.
+   * burst.
    */
   static void ResolveInputClashesSingleChannel(
       int record_size, std::vector<int>& record_specification,
       int& records_per_ddr_burst);
 
   /**
-   * Resolve output crossbar clashes. Output crossbar can only deal with single
-   *  channel streams. To make space records per DDR burst parameter can be
-   *  changed. Yet to be implemented.
+   * @brief Resolve output crossbar clashes.
+   *
+   * Output crossbar can only deal with single channel streams. To make space
+   * records per DDR burst parameter can be changed. Yet to be implemented.
    * @param record_size How many integers worth of data there is in a record.
    * @param record_specification Initial specification vector to be fixed.
    * @param records_per_ddr_burst How many records get transferred with a DDR
-   *  burst.
+   * burst.
    */
   static void ResolveOutputClashesSingleChannel(
       int record_size, std::vector<int>& record_specification,
       int& records_per_ddr_burst);
 
   /**
-   * Extend multi-channel input stream specification such that the whole
-   *  crossbar configuration space will get configured.
+   * @brief Extend multi-channel input stream specification such that the whole
+   * crossbar configuration space will get configured.
    *
    * Since the first data element starts from pos 15 we want to keep the same
-   *  ordering on the interface and thus the extended specification is mirrored.
+   * ordering on the interface and thus the extended specification is mirrored.
    *
    * @param record_size How many integers worth of data there is in a record.
    * @param record_specification Initial specification vector.
@@ -93,33 +97,33 @@ class DMACrossbarSpecifier {
       int records_per_ddr_burst, int chunks_per_record)
       -> const std::vector<int>;
   /**
-   * Extend single channel input stream specification such that the whole
-   *  crossbar configuration space will get configured.
+   * @brief Extend single channel input stream specification such that the whole
+   * crossbar configuration space will get configured.
    * @param record_size How many integers worth of data there is in a record.
    * @param record_specification Initial specification vector.
    * @param records_per_ddr_burst How many records are transferred with a DDR
-   *  burst.
+   * burst.
    * @return Extended and mirrored specification vector which shows which
-   *  column's data goes to which location.
+   * column's data goes to which location.
    */
   static auto ExtendSpecificationSingleChannel(
       int record_size, const std::vector<int>& record_specification,
       int records_per_ddr_burst) -> const std::vector<int>;
 
   /**
-   * Extend output stream specification such that the whole crossbar
-   *  configuration space will get configured.
+   * @brief Extend output stream specification such that the whole crossbar
+   * configuration space will get configured.
    *
    * Extended output specification is for specifying what happens with the data
-   *  on the interface rather than how it will look like after the crossbar.
+   * on the interface rather than how it will look like after the crossbar.
    *
    * @param record_specification Initial specification vector.
    * @param records_per_ddr_burst How many records are transferred with a DDR
-   *  burst.
+   * burst.
    * @param chunks_per_record How many chunks are used for each record during
-   *  the burst.
+   * the burst.
    * @return Extended and mirrored specification vector which shows which
-   *  column's data goes to which location.
+   * column's data goes to which location.
    */
   static auto ExtendOutputSpecification(
       const std::vector<int>& record_specification, int records_per_ddr_burst,

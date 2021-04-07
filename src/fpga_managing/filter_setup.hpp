@@ -5,17 +5,19 @@
 #include "filter_config_values.hpp"
 #include "filter_interface.hpp"
 /**
- * Filter setup class which calculates the correct configuration data to be
- * written into the filter configuration registers.
+ * @brief Filter setup class which calculates the correct configuration data to
+ * be written into the filter configuration registers.
  */
 class FilterSetup {
  public:
   /**
-   * Setup filter module according to the input and output streams and the given
-   *  operation parameters. Currently operation parameters are used to select
-   *  between hardcoded filter configurations.
+   * @brief Setup filter module according to the input and output streams and
+   * the given operation parameters.
+   *
+   * Currently operation parameters are used to select between hardcoded filter
+   * configurations.
    * @param filter_module Filter instance which is used to write to memory
-   *  mapped registers.
+   * mapped registers.
    * @param input_stream_id Input stream ID.
    * @param output_stream_id Output stream ID.
    * @param operation_parameters Operation parameters to setup the filter with.

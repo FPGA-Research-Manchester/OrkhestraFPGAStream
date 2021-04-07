@@ -4,27 +4,27 @@
 #include "ila_types.hpp"
 #include "memory_manager_interface.hpp"
 /**
- * Debug class to access ILA values if is in the used bitstream.
+ * @brief Debug class to access ILA values if is in the used bitstream.
  */
 class ILA {
  public:
   /**
-   * Constructor to setup memory mapped registers.
+   * @brief Constructor to setup memory mapped registers.
    * @param memory_manager Instance with which it is possible to access memory
-   *  mapped registers.
+   * mapped registers.
    */
   explicit ILA(MemoryManagerInterface* memory_manager)
       : memory_manager_(memory_manager){};
   /**
-   * Start ILA data collection.
+   * @brief Start ILA data collection.
    */
   void StartILAs();
   /**
-   * Start ILA data collection at the AXI ports.
+   * @brief Start ILA data collection at the AXI ports.
    */
   void StartAxiILA();
   /**
-   * Get data ILA has been collecting.
+   * @brief Get data ILA has been collecting.
    * @param clock_cycle Which clock cycle data should be read.
    * @param location What ILA location should be read.
    * @param data_type Which data should be read.
@@ -33,18 +33,18 @@ class ILA {
   auto GetValues(int clock_cycle, int location, ILADataTypes data_type)
       -> uint32_t;
   /**
-   * Print all data ILA has been collecting.
+   * @brief Print all data ILA has been collecting.
    * @param ila_id ID of the ILA
    * @param max_clock How many clock cycles of data there is.
    */
   void PrintILAData(int ila_id, int max_clock);
   /**
-   * Print all ILA data at the AXI ports.
+   * @brief Print all ILA data at the AXI ports.
    * @param max_clock How many clock cycles of data there is.
    */
   void PrintAxiILAData(int max_clock);
   /**
-   * Print all ILA data at the DMA location.
+   * @brief Print all ILA data at the DMA location.
    * @param max_clock How many clock cycles of data there is.
    */
   void PrintDMAILAData(int max_clock);

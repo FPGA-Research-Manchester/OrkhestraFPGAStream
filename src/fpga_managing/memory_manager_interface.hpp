@@ -5,14 +5,14 @@
 
 #include "memory_block_interface.hpp"
 /**
- * Interface class implemented in #MemoryManager
-*/
+ * @brief Interface class implemented in #MemoryManager
+ */
 class MemoryManagerInterface {
  public:
   virtual ~MemoryManagerInterface() = default;
 
   virtual void LoadBitstreamIfNew(const std::string& bitstream_name,
-                             int register_space_size) = 0;
+                                  int register_space_size) = 0;
 
   virtual auto GetVirtualRegisterAddress(int offset) -> volatile uint32_t* = 0;
 
