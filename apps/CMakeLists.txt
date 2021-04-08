@@ -32,6 +32,8 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_filtering_linear_sort.bin
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_filtering_linear_sort.json DSPI_filtering_linear_sort.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_double_merge_sorting.bin DSPI_double_merge_sorting.bin COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_double_merge_sorting.json DSPI_double_merge_sorting.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_sort_join_filter.bin DSPI_sort_join_filter.bin COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_sort_join_filter.json DSPI_sort_join_filter.json COPYONLY)
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_1.csv lineitem_sf0_1.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_1_filter.csv lineitem_sf0_1_filter.csv COPYONLY)

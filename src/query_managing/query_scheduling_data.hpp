@@ -78,6 +78,11 @@ const std::map<ConfigurableModulesVector, std::string>
 
         {{}, "DSPI_empty"}/*,
 
+        {{fpga_managing::operation_types::QueryOperation::kMergeSort,
+          fpga_managing::operation_types::QueryOperation::kJoin, 
+          fpga_managing::operation_types::QueryOperation::kFilter},
+         "DSPI_sort_join_filter"},
+
         {{fpga_managing::operation_types::QueryOperation::kFilter,
           fpga_managing::operation_types::QueryOperation::kJoin},
          "DSPI_filter_join"},*/
