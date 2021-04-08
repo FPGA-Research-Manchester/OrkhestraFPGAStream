@@ -1,10 +1,10 @@
 #include "merge_sort_setup.hpp"
 
+#include <cmath>
+#include <stdexcept>
+
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
-
-#include <stdexcept>
-#include <cmath>
 
 using namespace dbmstodspi::fpga_managing;
 
@@ -13,6 +13,11 @@ void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
                                           int base_channel_id, bool is_first) {
   int chunks_per_record =
       StreamParameterCalculator::CalculateChunksPerRecord(record_size);
+
+  if (stream_id != 0) {
+    throw std::runtime_error(
+        "The module doesn't support running other streams!");
+  }
 
   merge_sort_module.SetStreamParams(stream_id, chunks_per_record);
 
@@ -38,15 +43,17 @@ auto MergeSortSetup::CalculateSortBufferSize(int buffer_space,
   int max_buffered_record_count = buffer_space / chunks_per_record -
                                   16;  // -16 for records in the pipelines.
 
-  return std::min(16,(max_buffered_record_count - internal_logic_buffer_reserve) /
-         channel_count);
+  return std::min(16,
+                  (max_buffered_record_count - internal_logic_buffer_reserve) /
+                      channel_count);
 }
 
-auto MergeSortSetup::CalculateRecordCountPerFetch(int sort_buffer_size, int record_size) -> int {
+auto MergeSortSetup::CalculateRecordCountPerFetch(int sort_buffer_size,
+                                                  int record_size) -> int {
   // record_count_per_fetch should be twice as small as sort_buffer_size
   int potential_record_count = sort_buffer_size / 2;
-  while (!PotentialRecordCountIsValid(potential_record_count, record_size)){
-    potential_record_count --;
+  while (!PotentialRecordCountIsValid(potential_record_count, record_size)) {
+    potential_record_count--;
   }
   if (potential_record_count == 0) {
     throw std::runtime_error("Records are too big for sorting!");
@@ -55,9 +62,10 @@ auto MergeSortSetup::CalculateRecordCountPerFetch(int sort_buffer_size, int reco
 }
 
 auto MergeSortSetup::PotentialRecordCountIsValid(int potential_record_count,
-    int record_size) -> bool {
-    switch (potential_record_count % 4) { 
-    case 1: case 3:
+                                                 int record_size) -> bool {
+  switch (potential_record_count % 4) {
+    case 1:
+    case 3:
       return record_size % 4 == 0;
     case 2:
       return record_size % 2 == 0;

@@ -290,45 +290,50 @@ auto main() -> int {
           {nullptr},
           {{{0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1}}, {{2, 3, 4, 5}, {1}}, {{3}}}};
 
-  // first_lineitem_filter.next_nodes = {&lineitem_linear_sort};
-  // lineitem_linear_sort.previous_nodes = {&first_lineitem_filter};
-  // lineitem_linear_sort.next_nodes = {&lineitem_linear_merge_sort};
-  // lineitem_linear_merge_sort.previous_nodes = {&lineitem_linear_sort};
-  // lineitem_linear_merge_sort.next_nodes = {&lineitem_part_join};
-  // first_part_filter.next_nodes = {&lineitem_part_join};
-  // lineitem_part_join.previous_nodes = {&lineitem_linear_merge_sort,
-  //                                     &first_part_filter};
-  // lineitem_part_join.next_nodes = {&lineitem_part_second_filter};
-  // lineitem_part_second_filter.previous_nodes = {&lineitem_part_join};
+  first_lineitem_filter.next_nodes = {&lineitem_linear_sort};
+  lineitem_linear_sort.previous_nodes = {&first_lineitem_filter};
+  lineitem_linear_sort.next_nodes = {&lineitem_linear_merge_sort};
+  lineitem_linear_merge_sort.previous_nodes = {&lineitem_linear_sort};
+  lineitem_linear_merge_sort.next_nodes = {&lineitem_part_join};
+  first_part_filter.next_nodes = {&lineitem_part_join};
+  lineitem_part_join.previous_nodes = {&lineitem_linear_merge_sort,
+                                       &first_part_filter};
+  lineitem_part_join.next_nodes = {&lineitem_part_second_filter};
+  lineitem_part_second_filter.previous_nodes = {&lineitem_part_join};
+
+  first_lineitem_filter1.next_nodes = {&lineitem_linear_sort1};
+  lineitem_linear_sort1.previous_nodes = {&first_lineitem_filter1};
+  lineitem_linear_sort1.next_nodes = {&lineitem_linear_merge_sort1};
+  lineitem_linear_merge_sort1.previous_nodes = {&lineitem_linear_sort1};
+  lineitem_linear_merge_sort1.next_nodes = {&lineitem_part_join1};
+  first_part_filter1.next_nodes = {&lineitem_part_join1};
+  lineitem_part_join1.previous_nodes = {&lineitem_linear_merge_sort1,
+                                        &first_part_filter1};
+  lineitem_part_join1.next_nodes = {&lineitem_part_second_filter1};
+  lineitem_part_second_filter1.previous_nodes = {&lineitem_part_join1};
 
   // Run operations twice
-  // QueryManager::RunQueries(
-  //    {filtering_query_once, filtering_query_once, merge_sort_query_8k_once,
-  //     merge_sort_query_8k_once, join_query_once, join_query_once,
-  //     linear_sort_query_8k_once, linear_sort_query_8k_once});
+  query_managing::QueryManager::RunQueries(
+      {filtering_query_once, filtering_query_once, merge_sort_query_8k_once,
+       merge_sort_query_8k_once, join_query_once, join_query_once,
+       linear_sort_query_8k_once, linear_sort_query_8k_once});
   // Run operations with pass through data - Currently the scheduler doesn't
   // take memory limits into consideration
-  // QueryManager::RunQueries({pass_through_1k_data
-  // pass_through_1k_data,
-  //                          pass_through_1k_data, pass_through_1k_data,
-  //                          join_query_once,
-  //                          merge_sort_query_8k_once,
-  //                          linear_sort_query_8k_once, filtering_query_once});
+  query_managing::QueryManager::RunQueries(
+      {
+   /*pass_through_1k_data,
+                            pass_through_1k_data, pass_through_1k_data,*/
+                            /*join_query_once,*/
+                            merge_sort_query_8k_once, pass_through_1k_data/*,
+                            linear_sort_query_8k_once, filtering_query_once*/});
 
   // Individual operation tests with car data
   // MeasureOverallTime({merge_sort_query_1k_once, filtering_query_once,
-  //                    join_query_once, linear_sort_query_8k_once});
-
-  // MeasureOverallTime({first_lineitem_filter1});
-  // MeasureOverallTime({lineitem_linear_sort1});
-  // MeasureOverallTime({lineitem_linear_merge_sort1});
-  MeasureOverallTime({lineitem_linear_merge_sort});
-  // MeasureOverallTime({first_part_filter1});
-  // MeasureOverallTime({lineitem_part_join1});
-  // MeasureOverallTime({lineitem_part_second_filter1});
+  //                   join_query_once, linear_sort_query_8k_once});
 
   // Pipelined tests
-  // MeasureOverallTime({first_lineitem_filter, first_part_filter});
+  MeasureOverallTime({first_lineitem_filter, first_part_filter});
+  MeasureOverallTime({first_lineitem_filter1, first_part_filter1});
 
   // QueryManager::RunQueries({filter_and_join_query});
   // QueryManager::RunQueries({join_query_once, filter_and_join_query});
