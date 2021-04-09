@@ -258,7 +258,7 @@ void FilterSetup::SetupFilterModuleFinalDoubleQ19(
                    {},
                    {6}},
                   {filter_config_values::CompareFunctions::kFilter32BitEqual,
-                   ConvertCharStringToAscii("MED PACK   ", 3),
+                   ConvertCharStringToAscii("MED PACK  ", 3),
                    {},
                    {7}}},
                  1, 11);

@@ -7,6 +7,7 @@
     "DSPI_linear_sorting",
     "DSPI_filter_join",
     "DSPI_empty",
-    "DSPI_sort_join_filter"
+    "DSPI_sort_join_filter",
+    "DSPI_filtering_linear_sort"
   ]
 }

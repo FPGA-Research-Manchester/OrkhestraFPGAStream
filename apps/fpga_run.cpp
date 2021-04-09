@@ -290,35 +290,57 @@ auto main() -> int {
           {nullptr},
           {{{0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1}}, {{2, 3, 4, 5}, {1}}, {{3}}}};
 
+  // Query nodes for double bitstream
+  query_managing::query_scheduling_data::QueryNode first_lineitem_filter3 = {
+      {"lineitem_sf0_3.csv"},
+      {"lineitem_sf0_3_filter.csv"},
+      fpga_managing::operation_types::QueryOperation::kFilter,
+      {nullptr},
+      {nullptr},
+      {{{1,  4,  5,  6,  7,  8,  9,  -1, -1, -1, -1, -1, -1,
+         -1, -1, -1, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26}},
+       {{}, {2}},
+       {{1}}}};
+  query_managing::query_scheduling_data::QueryNode lineitem_linear_sort3 = {
+      {"lineitem_sf0_3_filter.csv"},
+      {"lineitem_sf0_3_linear_sort.csv"},
+      fpga_managing::operation_types::QueryOperation::kLinearSort,
+      {nullptr},
+      {nullptr},
+      {{{}}, {{0, 1, 2, 3, 4, 5, 6}, {2}}, {{}}}};
+
   // Query nodes for triple bitstream
   query_managing::query_scheduling_data::QueryNode lineitem_linear_merge_sort3 =
-      {{"lineitem_sf0_1_linear_sort.csv"},
-       {"lineitem_sf0_1_sort_triple.csv"},
+      {{"lineitem_sf0_3_linear_sort.csv"},
+       {"lineitem_sf0_3_sort.csv"},
        fpga_managing::operation_types::QueryOperation::kMergeSort,
        {nullptr},
        {nullptr},
-       {{{0, 1, 2, 1, 2, 3, 4, 5, 6}}, {{}, {1}}, {{64, 512}}}};
+       {{{0, 1, 2, 1, 2, 3, 4, 5, 6}}, {{}, {1}}, {{64, 1024}}}};
   query_managing::query_scheduling_data::QueryNode lineitem_part_join3 = {
-      {"lineitem_sf0_1_sort_triple.csv", "part_sf0_1.csv"},
-      {"lineitem_part_sf0_1_1st_filter_triple.csv"},
+      {"lineitem_sf0_3_sort.csv", "part_sf0_3.csv"},
+      {"lineitem_part_sf0_3_1st_filter.csv"},
       fpga_managing::operation_types::QueryOperation::kJoin,
       {nullptr},
       {nullptr, nullptr},
       {{{}, {0,  -1, -1, -1, -1, -1, -1, -1, -1, 22, 23, 24, -1,
              -1, -1, -1, 32, 33, 34, 35, 33, 34, 35, 33, 34, 35}},
-       {{0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, -1,
-         -1, -1, -1, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+       {{/*0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, -1,
+         -1, -1, -1, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25*/},
         {2}},
        {{9}}}};
   query_managing::query_scheduling_data::QueryNode
       lineitem_part_second_filter3 = {
-          {"lineitem_part_sf0_1_1st_filter_triple.csv"},
-          {"lineitem_part_sf0_1_2nd_filter.csv"},
+          {"lineitem_part_sf0_3_1st_filter.csv"},
+          {"lineitem_part_sf0_3_2nd_filter.csv"},
           fpga_managing::operation_types::QueryOperation::kFilter,
           {nullptr},
           {nullptr},
           {{{}}, {{5, 6, 7, 8}, {2}}, {{4}}}};
 
+  first_lineitem_filter3.next_nodes = {&lineitem_linear_sort3};
+  lineitem_linear_sort3.previous_nodes = {&first_lineitem_filter3};
+  lineitem_linear_sort3.next_nodes = {&lineitem_linear_merge_sort3};
   lineitem_linear_merge_sort3.next_nodes = {&lineitem_part_join3};
   lineitem_part_join3.previous_nodes = {&lineitem_linear_merge_sort3, nullptr};
   lineitem_part_join3.next_nodes = {&lineitem_part_second_filter3};
@@ -369,8 +391,8 @@ auto main() -> int {
   // Pipelined tests
   MeasureOverallTime({first_lineitem_filter, first_part_filter});
   MeasureOverallTime({first_lineitem_filter1, first_part_filter1});
-  // Triple bitstream test
-  /*MeasureOverallTime({lineitem_linear_merge_sort3});*/
+  // SF=0.3
+  // MeasureOverallTime({first_lineitem_filter3});
 
   // QueryManager::RunQueries({filter_and_join_query});
   // QueryManager::RunQueries({join_query_once, filter_and_join_query});
