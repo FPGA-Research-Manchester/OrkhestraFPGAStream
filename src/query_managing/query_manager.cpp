@@ -84,8 +84,9 @@ void QueryManager::RunQueries(
                        std::vector<query_scheduling_data::QueryNode>>>
       query_node_runs_queue;
 
-  NodeScheduler::FindAcceleratedQueryNodeSets(&query_node_runs_queue,
-                                              std::move(starting_query_nodes));
+  NodeScheduler::FindAcceleratedQueryNodeSets(
+      &query_node_runs_queue, std::move(starting_query_nodes),
+      query_scheduling_data::supported_accelerator_bitstreams);
 
   while (!query_node_runs_queue.empty()) {
     const auto executable_query_nodes = query_node_runs_queue.front();

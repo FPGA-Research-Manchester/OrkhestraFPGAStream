@@ -17,7 +17,8 @@ target_link_libraries(testlib
 					  gmock
 					  gmock_main
 					  fpga_managing
-					  data_managing # I guess the data_managing and fos should be tested in a different lib
+					  data_managing 
+					  query_managing # I guess the data_managing, query_managing and fos (?) should be tested in a different lib
 )
 
 if (NOT WIN32)
@@ -33,6 +34,7 @@ add_test(NAME AccelerationModuleTest COMMAND testlib)
 add_test(NAME DMACrossbarSetupTest COMMAND testlib)
 add_test(NAME FilterSetupTest COMMAND testlib)
 add_test(NAME DMASetupTest COMMAND testlib)
+add_test(NAME NodeSchedulerTest COMMAND testlib)
 
 add_custom_command(TARGET testlib
         POST_BUILD
