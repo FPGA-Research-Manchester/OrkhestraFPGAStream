@@ -31,7 +31,7 @@ if(BUILD_TESTING)
 endif()
 
 # Build docs
-set (BUILD_DOCS ON)
+set (BUILD_DOCS OFF)
 if(BUILD_DOCS)
     # From https://vicrucann.github.io/tutorials/quick-cmake-doxygen/
     # first we can indicate the documentation build as an option and set it to ON by default

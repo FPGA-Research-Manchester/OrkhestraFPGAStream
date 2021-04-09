@@ -76,12 +76,23 @@ const std::map<ConfigurableModulesVector, std::string>
 
         {{fpga_managing::operation_types::QueryOperation::kLinearSort}, "DSPI_linear_sorting"},
 
-        {{}, "DSPI_empty"}/*,
+        {{}, "DSPI_empty"},
 
-        {{fpga_managing::operation_types::QueryOperation::kFilter,
+        //{{fpga_managing::operation_types::QueryOperation::kMergeSort,
+        //  fpga_managing::operation_types::QueryOperation::kJoin, 
+        //  fpga_managing::operation_types::QueryOperation::kFilter},
+        // "DSPI_sort_join_filter"},
+        // // Needed to find the triple bitstream
+        // {{fpga_managing::operation_types::QueryOperation::kMergeSort,
+        //  fpga_managing::operation_types::QueryOperation::kJoin},
+        // "nonsense"},
+
+        // DNF 8 CMP 1 
+        /*{{fpga_managing::operation_types::QueryOperation::kFilter,
           fpga_managing::operation_types::QueryOperation::kJoin},
          "DSPI_filter_join"},*/
 
+        // DNF 16 CMP 2 + 1024 way sort
         /*{{fpga_managing::operation_types::QueryOperation::kFilter,
           fpga_managing::operation_types::QueryOperation::kLinearSort},
          "DSPI_filtering_linear_sort"}*/};

@@ -32,6 +32,10 @@ void FilterSetup::SetupFilterModule(
       SetupFilterModuleFinalQ19(filter_module, input_stream_id,
                                 output_stream_id);
       break;
+    case 4:
+      SetupFilterModuleFinalDoubleQ19(filter_module, input_stream_id,
+                                      output_stream_id);
+      break;
     default:
       throw std::runtime_error("Wrong parameters given!");
   }
@@ -126,6 +130,157 @@ void FilterSetup::SetupFilterModuleFinalQ19(FilterInterface& filter_module,
                    {},
                    {2}}},
                  0, 9);
+
+  filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
+      query_acceleration_constants::kDatapathWidth);
+}
+
+void FilterSetup::SetupFilterModuleFinalDoubleQ19(
+    FilterInterface& filter_module, const int input_stream_id,
+    const int output_stream_id) {
+  filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
+                                   output_stream_id);
+
+  SetOneOutputSingleModuleMode(filter_module);
+
+  // l_quantity
+  SetComparisons(
+      filter_module,
+      {{filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+        {11 * 100},
+        {},
+        {0, 1, 2, 3}},
+       {filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+        {20 * 100},
+        {},
+        {4, 5, 6, 7}},
+       {filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+        {30 * 100},
+        {},
+        {8, 9, 10, 11}}},
+      0, 13);
+  SetComparisons(
+      filter_module,
+      {{filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
+        {1 * 100},
+        {},
+        {0, 1, 2, 3}},
+       {filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
+        {10 * 100},
+        {},
+        {4, 5, 6, 7}},
+       {filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
+        {20 * 100},
+        {},
+        {8, 9, 10, 11}}},
+      0, 11);
+  SetComparisons(filter_module,
+                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   {0},
+                   {},
+                   {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}}},
+                 0, 14);
+  SetComparisons(filter_module,
+                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   {0},
+                   {},
+                   {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}}},
+                 0, 12);
+
+  // p_brand
+  SetComparisons(filter_module,
+                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("Brand#12  ", 3),
+                   {},
+                   {0, 1, 2, 3}},
+                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("Brand#23  ", 3),
+                   {},
+                   {4, 5, 6, 7}},
+                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("Brand#34  ", 3),
+                   {},
+                   {8, 9, 10, 11}}},
+                 0, 6);
+
+  // p_size
+  SetComparisons(
+      filter_module,
+      {{filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+        {5},
+        {},
+        {0, 1, 2, 3}},
+       {filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+        {10},
+        {},
+        {4, 5, 6, 7}},
+       {filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+        {15},
+        {},
+        {8, 9, 10, 11}},
+       {filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
+        {1},
+        {},
+        {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}}},
+      1, 15);
+
+  // p_container
+  SetComparisons(filter_module,
+                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("SM CASE   ", 3),
+                   {},
+                   {0}},
+                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("SM BOX    ", 3),
+                   {},
+                   {1}},
+                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("SM PACK   ", 3),
+                   {},
+                   {2}},
+                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("SM PKG    ", 3),
+                   {},
+                   {3}}},
+                 1, 14);
+
+  SetComparisons(filter_module,
+                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("MED BAG   ", 3),
+                   {},
+                   {4}},
+                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("MED BOX   ", 3),
+                   {},
+                   {5}},
+                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("MED PKG   ", 3),
+                   {},
+                   {6}},
+                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("MED PACK  ", 3),
+                   {},
+                   {7}}},
+                 1, 11);
+
+  SetComparisons(filter_module,
+                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("LG CASE   ", 3),
+                   {},
+                   {8}},
+                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("LG BOX    ", 3),
+                   {},
+                   {9}},
+                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("LG PACK   ", 3),
+                   {},
+                   {10}},
+                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                   ConvertCharStringToAscii("LG PKG    ", 3),
+                   {},
+                   {11}}},
+                 1, 8);
 
   filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
       query_acceleration_constants::kDatapathWidth);
