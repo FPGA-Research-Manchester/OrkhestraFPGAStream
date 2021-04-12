@@ -18,7 +18,8 @@ enum class QueryOperation {
   kJoin,
   kMergeSort,
   kPassThrough,
-  kLinearSort
+  kLinearSort,
+  kAddition
 };
 }  // namespace operation_types
 

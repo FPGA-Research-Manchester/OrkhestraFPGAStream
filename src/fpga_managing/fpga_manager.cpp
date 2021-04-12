@@ -9,6 +9,8 @@
 
 #include <chrono>
 
+#include "addition.hpp"
+#include "addition_setup.hpp"
 #include "dma_setup.hpp"
 #include "filter.hpp"
 #include "filter_setup.hpp"
@@ -116,6 +118,12 @@ void FPGAManager::SetupQueryAcceleration(
         LinearSortSetup::SetupLinearSortModule(
             linear_sort_module, query_node.input_streams[0].stream_id,
             GetStreamRecordSize(query_node.input_streams[0]));
+        break;
+      }
+      case operation_types::QueryOperation::kAddition: {
+        modules::Addition addition_module(memory_manager_, module_location);
+        AdditionSetup::SetupAdditionModule(
+            addition_module, query_node.input_streams[0].stream_id);
         break;
       }
     }

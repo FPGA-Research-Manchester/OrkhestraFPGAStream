@@ -76,6 +76,8 @@ const std::map<ConfigurableModulesVector, std::string>
 
         {{fpga_managing::operation_types::QueryOperation::kLinearSort}, "DSPI_linear_sorting"},
 
+        {{fpga_managing::operation_types::QueryOperation::kAddition}, "DSPI_addition"},
+
         {{}, "DSPI_empty"},
 
         //{{fpga_managing::operation_types::QueryOperation::kMergeSort,

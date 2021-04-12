@@ -57,7 +57,12 @@ add_library(fpga_managing
             "linear_sort_setup.hpp"
             "linear_sort_setup.cpp"
 			"dma_crossbar_specifier.cpp"
-			"dma_crossbar_specifier.hpp")
+			"dma_crossbar_specifier.hpp"
+			"modules/addition.hpp"
+			"modules/addition.cpp"
+			"modules/addition_interface.hpp"
+			"addition_setup.hpp"
+			"addition_setup.cpp")
 
 target_include_directories(fpga_managing PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/modules")
 
