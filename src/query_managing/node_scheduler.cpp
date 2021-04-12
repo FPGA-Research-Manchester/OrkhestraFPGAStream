@@ -11,7 +11,9 @@ void NodeScheduler::FindAcceleratedQueryNodeSets(
     std::queue<std::pair<query_scheduling_data::ConfigurableModulesVector,
                          std::vector<query_scheduling_data::QueryNode>>>*
         accelerated_query_node_runs,
-    std::vector<query_scheduling_data::QueryNode> starting_nodes) {
+    std::vector<query_scheduling_data::QueryNode> starting_nodes,
+    const std::map<query_scheduling_data::ConfigurableModulesVector,
+                   std::string>& supported_accelerator_bitstreams) {
   std::vector<query_scheduling_data::QueryNode> scheduled_queries;
 
   // Not checking for cycles nor for unsupported opperations
@@ -30,7 +32,7 @@ void NodeScheduler::FindAcceleratedQueryNodeSets(
 
     CheckNodeForModuleSet(available_nodes_iterator, current_set,
                           current_query_nodes, scheduled_queries,
-                          starting_nodes);
+                          starting_nodes, supported_accelerator_bitstreams);
 
     if (current_query_nodes.empty()) {
       throw std::runtime_error("Failed to schedule!");
@@ -99,11 +101,14 @@ void NodeScheduler::CheckNodeForModuleSet(
     query_scheduling_data::ConfigurableModulesVector& current_modules_vector,
     std::vector<query_scheduling_data::QueryNode>& current_query_nodes,
     std::vector<query_scheduling_data::QueryNode>& scheduled_queries,
-    std::vector<query_scheduling_data::QueryNode>& starting_nodes) {
+    std::vector<query_scheduling_data::QueryNode>& starting_nodes,
+    const std::map<query_scheduling_data::ConfigurableModulesVector,
+                   std::string>& supported_accelerator_bitstreams) {
   auto current_node = *current_node_iterator;
 
   int suitable_position = FindSuitableModulePosition(
-      current_node, current_query_nodes, current_modules_vector);
+      current_node, current_query_nodes, current_modules_vector,
+      supported_accelerator_bitstreams);
 
   if (suitable_position != -1) {
     current_query_nodes.push_back(current_node);
@@ -127,14 +132,14 @@ void NodeScheduler::CheckNodeForModuleSet(
     if (new_iterator != starting_nodes.end()) {
       CheckNodeForModuleSet(new_iterator, current_modules_vector,
                             current_query_nodes, scheduled_queries,
-                            starting_nodes);
+                            starting_nodes, supported_accelerator_bitstreams);
     }
   } else {
     std::advance(current_node_iterator, 1);
     if (current_node_iterator != starting_nodes.end()) {
       CheckNodeForModuleSet(current_node_iterator, current_modules_vector,
                             current_query_nodes, scheduled_queries,
-                            starting_nodes);
+                            starting_nodes, supported_accelerator_bitstreams);
     }
   }
 }
@@ -142,8 +147,9 @@ void NodeScheduler::CheckNodeForModuleSet(
 auto NodeScheduler::FindSuitableModulePosition(
     query_scheduling_data::QueryNode& current_node,
     std::vector<query_scheduling_data::QueryNode>& current_query_nodes,
-    query_scheduling_data::ConfigurableModulesVector& current_modules_vector)
-    -> int {
+    query_scheduling_data::ConfigurableModulesVector& current_modules_vector,
+    const std::map<query_scheduling_data::ConfigurableModulesVector,
+                   std::string>& supported_accelerator_bitstreams) -> int {
   int current_position = FindMinPosition(current_node, current_query_nodes,
                                          current_modules_vector) -
                          1;
@@ -154,7 +160,8 @@ auto NodeScheduler::FindSuitableModulePosition(
     current_position++;
     auto new_modules_vector = CreateNewModulesVector(
         current_node.operation_type, current_position, current_modules_vector);
-    is_suitable_set_found = IsModuleSetSupported(new_modules_vector);
+    is_suitable_set_found = IsModuleSetSupported(
+        new_modules_vector, supported_accelerator_bitstreams);
   }
   if (!is_suitable_set_found) {
     return -1;
@@ -192,10 +199,11 @@ auto NodeScheduler::CreateNewModulesVector(
 }
 
 auto NodeScheduler::IsModuleSetSupported(
-    query_scheduling_data::ConfigurableModulesVector module_set) -> bool {
-  return query_scheduling_data::supported_accelerator_bitstreams.find(
-             module_set) !=
-         query_scheduling_data::supported_accelerator_bitstreams.end();
+    query_scheduling_data::ConfigurableModulesVector module_set,
+    const std::map<query_scheduling_data::ConfigurableModulesVector,
+                   std::string>& supported_accelerator_bitstreams) -> bool {
+  return supported_accelerator_bitstreams.find(module_set) !=
+         supported_accelerator_bitstreams.end();
 }
 
 auto NodeScheduler::IsNodeIncluded(
