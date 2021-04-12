@@ -1,6 +1,6 @@
 #include "linear_sort.hpp"
 
-using namespace dbmstodspi::fpga_managing;
+using namespace dbmstodspi::fpga_managing::modules;
 
 void LinearSort::StartPrefetchingData() {
   AccelerationModule::WriteToModule(0, 1);

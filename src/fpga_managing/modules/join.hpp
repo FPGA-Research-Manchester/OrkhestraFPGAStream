@@ -5,6 +5,7 @@
 
 namespace dbmstodspi {
 namespace fpga_managing {
+namespace modules {
 
 /**
  * @brief Class to write in the join operation acceleration module settings.
@@ -68,5 +69,6 @@ class Join : public AccelerationModule, public JoinInterface {
   void Reset() override;
 };
 
+}  // namespace modules
 }  // namespace fpga_managing
 }  // namespace dbmstodspi

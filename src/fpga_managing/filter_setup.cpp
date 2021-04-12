@@ -10,7 +10,8 @@
 using namespace dbmstodspi::fpga_managing;
 
 void FilterSetup::SetupFilterModule(
-    FilterInterface& filter_module, int input_stream_id, int output_stream_id,
+    modules::FilterInterface& filter_module, int input_stream_id,
+    int output_stream_id,
     const std::vector<std::vector<int>>& operation_parameters) {
   if (operation_parameters.empty() || operation_parameters.at(0).empty()) {
     throw std::runtime_error("No parameters given!");
@@ -42,7 +43,7 @@ void FilterSetup::SetupFilterModule(
 }
 
 // Car filtering
-void FilterSetup::SetupFilterModuleCars(FilterInterface& filter_module,
+void FilterSetup::SetupFilterModuleCars(modules::FilterInterface& filter_module,
                                         const int input_stream_id,
                                         const int output_stream_id) {
   filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
@@ -63,7 +64,8 @@ void FilterSetup::SetupFilterModuleCars(FilterInterface& filter_module,
 // (p_brand = ‘Brand#12’ AND l_quantity between 1 and 11) OR
 // (p_brand = ‘Brand #23’ AND l_quantity between 10 and 20) OR
 // (p_brand = ‘Brand #34’ AND l_quantity between 20 and 30)
-void FilterSetup::SetupFilterModuleFinalQ19(FilterInterface& filter_module,
+void FilterSetup::SetupFilterModuleFinalQ19(
+    modules::FilterInterface& filter_module,
                                             const int input_stream_id,
                                             const int output_stream_id) {
   filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
@@ -136,7 +138,7 @@ void FilterSetup::SetupFilterModuleFinalQ19(FilterInterface& filter_module,
 }
 
 void FilterSetup::SetupFilterModuleFinalDoubleQ19(
-    FilterInterface& filter_module, const int input_stream_id,
+    modules::FilterInterface& filter_module, const int input_stream_id,
     const int output_stream_id) {
   filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
                                    output_stream_id);
@@ -294,7 +296,8 @@ void FilterSetup::SetupFilterModuleFinalDoubleQ19(
 // OR ((p_brand = 'Brand#34'::bpchar) AND (p_container = ANY ('{"LG CASE","LG
 // BOX","LG PACK","LG PKG"}'::bpchar[])) AND (p_size <= 15)))))
 // p_container is originally at 2, 14. Will be duplicated to 2, 4 and to 2, 1
-void FilterSetup::SetupFilterModulePartQ19(FilterInterface& filter_module,
+void FilterSetup::SetupFilterModulePartQ19(
+    modules::FilterInterface& filter_module,
                                            const int input_stream_id,
                                            const int output_stream_id) {
   filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
@@ -406,7 +409,8 @@ void FilterSetup::SetupFilterModulePartQ19(FilterInterface& filter_module,
 // '1'::numeric) AND (l_quantity <= '11'::numeric)) OR ((l_quantity >=
 // '10'::numeric) AND (l_quantity <= '20'::numeric)) OR ((l_quantity >=
 // '20'::numeric) AND (l_quantity <= '30'::numeric)))
-void FilterSetup::SetupFilterModuleLineitemQ19(FilterInterface& filter_module,
+void FilterSetup::SetupFilterModuleLineitemQ19(
+    modules::FilterInterface& filter_module,
                                                const int input_stream_id,
                                                const int output_stream_id) {
   filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
@@ -482,7 +486,8 @@ void FilterSetup::SetupFilterModuleLineitemQ19(FilterInterface& filter_module,
       query_acceleration_constants::kDatapathWidth);
 }
 
-void FilterSetup::SetOneOutputSingleModuleMode(FilterInterface& filter_module) {
+void FilterSetup::SetOneOutputSingleModuleMode(
+    modules::FilterInterface& filter_module) {
   bool request_on_invalid_if_last = true;
   bool forward_invalid_record_first_chunk = false;
   bool forward_full_invalid_records = false;
@@ -496,7 +501,7 @@ void FilterSetup::SetOneOutputSingleModuleMode(FilterInterface& filter_module) {
       last_module_in_resource_elastic_chain);
 }
 
-void FilterSetup::SetComparisons(FilterInterface& filter_module,
+void FilterSetup::SetComparisons(modules::FilterInterface& filter_module,
                                  std::vector<FilterComparison> comparisons,
                                  int chunk_id, int data_position) {
   std::vector<filter_config_values::CompareFunctions> compare_functions;

@@ -5,6 +5,7 @@
 
 namespace dbmstodspi {
 namespace fpga_managing {
+namespace modules {
 
 /**
  * @brief Class to implement the linear sorting operation acceleration.
@@ -39,5 +40,6 @@ class LinearSort : public AccelerationModule, public LinearSortInterface {
   void StartPrefetchingData() override;
 };
 
+}  // namespace modules
 }  // namespace fpga_managing
 }  // namespace dbmstodspi

@@ -5,7 +5,7 @@
 #include "memory_manager_interface.hpp"
 
 class MockAccelerationModule
-    : public dbmstodspi::fpga_managing::AccelerationModule {
+    : public dbmstodspi::fpga_managing::modules::AccelerationModule {
  public:
   MockAccelerationModule(
       dbmstodspi::fpga_managing::MemoryManagerInterface* memory_manager,

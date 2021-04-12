@@ -27,7 +27,8 @@ class FilterSetup {
    * @param operation_parameters Operation parameters to setup the filter with.
    */
   static void SetupFilterModule(
-      FilterInterface& filter_module, int input_stream_id, int output_stream_id,
+      modules::FilterInterface& filter_module, int input_stream_id,
+      int output_stream_id,
       const std::vector<std::vector<int>>& operation_parameters);
 
  private:
@@ -44,8 +45,9 @@ class FilterSetup {
         const std::vector<int>& dnf_clause_ids);
   };
 
-  static void SetOneOutputSingleModuleMode(FilterInterface& filter_module);
-  static void SetComparisons(FilterInterface& filter_module,
+  static void SetOneOutputSingleModuleMode(
+      modules::FilterInterface& filter_module);
+  static void SetComparisons(modules::FilterInterface& filter_module,
                              std::vector<FilterComparison> comparisons,
                              int chunk_id, int data_position);
 
@@ -54,18 +56,20 @@ class FilterSetup {
                                        int output_size) -> std::vector<int>;
 
   // Hard-coded filters for now
-  static void SetupFilterModuleCars(FilterInterface& filter_module,
+  static void SetupFilterModuleCars(modules::FilterInterface& filter_module,
                                     int input_stream_id, int output_stream_id);
-  static void SetupFilterModulePartQ19(FilterInterface& filter_module,
+  static void SetupFilterModulePartQ19(modules::FilterInterface& filter_module,
                                        int input_stream_id,
                                        int output_stream_id);
-  static void SetupFilterModuleLineitemQ19(FilterInterface& filter_module,
+  static void SetupFilterModuleLineitemQ19(
+      modules::FilterInterface& filter_module,
                                            int input_stream_id,
                                            int output_stream_id);
-  static void SetupFilterModuleFinalQ19(FilterInterface& filter_module,
+  static void SetupFilterModuleFinalQ19(modules::FilterInterface& filter_module,
                                         int input_stream_id,
                                         int output_stream_id);
-  static void SetupFilterModuleFinalDoubleQ19(FilterInterface& filter_module,
+  static void SetupFilterModuleFinalDoubleQ19(
+      modules::FilterInterface& filter_module,
                                               int input_stream_id,
                                               int output_stream_id);
 };

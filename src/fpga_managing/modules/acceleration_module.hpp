@@ -5,6 +5,7 @@
 
 namespace dbmstodspi {
 namespace fpga_managing {
+namespace modules {
 
 /**
  * @brief Base abstract class which all acceleration modules have to extend to
@@ -57,5 +58,6 @@ class AccelerationModule {
   virtual ~AccelerationModule() = 0;
 };
 
+}  // namespace modules
 }  // namespace fpga_managing
 }  // namespace dbmstodspi

@@ -5,6 +5,7 @@
 
 namespace dbmstodspi {
 namespace fpga_managing {
+namespace modules {
 
 /**
  * @brief Interface class to be implemented by #Filter
@@ -43,5 +44,6 @@ class FilterInterface {
   virtual void ResetDNFStates() = 0;
 };
 
+}  // namespace modules
 }  // namespace fpga_managing
 }  // namespace dbmstodspi

@@ -10,7 +10,7 @@ namespace fpga_managing {
  */
 class JoinSetup {
  private:
-  static void SetupTimeMultiplexer(JoinInterface& join_module,
+  static void SetupTimeMultiplexer(modules::JoinInterface& join_module,
                                    int first_stream_size,
                                    int second_stream_size, int shift_size);
 
@@ -34,7 +34,7 @@ class JoinSetup {
    * stream.
    * @param shift_size How much is the second stream shifted.
    */
-  static void SetupJoinModule(JoinInterface& join_module,
+  static void SetupJoinModule(modules::JoinInterface& join_module,
                               int first_input_stream_id,
                               int first_input_record_size,
                               int second_input_stream_id,

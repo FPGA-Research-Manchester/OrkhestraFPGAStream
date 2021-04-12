@@ -8,6 +8,7 @@
 
 namespace dbmstodspi {
 namespace fpga_managing {
+namespace modules {
 
 /**
  * @brief Class which implements the filtering operation acceleration module.
@@ -119,5 +120,6 @@ class Filter : public AccelerationModule, public FilterInterface {
   void ResetDNFStates() override;
 };
 
+}  // namespace modules
 }  // namespace fpga_managing
 }  // namespace dbmstodspi

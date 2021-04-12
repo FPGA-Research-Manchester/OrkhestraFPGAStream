@@ -2,6 +2,7 @@
 
 namespace dbmstodspi {
 namespace fpga_managing {
+namespace modules {
 
 /**
  * @brief Interface class for the merge sorting implemented by #MergeSort
@@ -19,5 +20,6 @@ class MergeSortInterface {
   virtual void SetFetchOffset(int padded_fetch_count) = 0;
 };
 
+}  // namespace modules
 }  // namespace fpga_managing
 }  // namespace dbmstodspi

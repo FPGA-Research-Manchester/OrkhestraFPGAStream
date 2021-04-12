@@ -3,7 +3,8 @@
 
 using namespace dbmstodspi::fpga_managing;
 
-void LinearSortSetup::SetupLinearSortModule(LinearSortInterface& linear_sort_module,
+void LinearSortSetup::SetupLinearSortModule(
+    modules::LinearSortInterface& linear_sort_module,
                                 int stream_id, int record_size) {
   int chunks_per_record =
       StreamParameterCalculator::CalculateChunksPerRecord(record_size);

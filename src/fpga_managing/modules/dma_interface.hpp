@@ -3,6 +3,7 @@
 
 namespace dbmstodspi {
 namespace fpga_managing {
+namespace modules {
 
 /**
  * @brief Interface class whose implementation can be seen at #DMA.
@@ -77,5 +78,6 @@ class DMAInterface {
   virtual void GlobalReset() = 0;
 };
 
+}  // namespace modules
 }  // namespace fpga_managing
 }  // namespace dbmstodspi

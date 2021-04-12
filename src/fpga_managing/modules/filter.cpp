@@ -2,7 +2,7 @@
 
 #include<iostream>
 
-using namespace dbmstodspi::fpga_managing;
+using namespace dbmstodspi::fpga_managing::modules;
 
 // Filter module low driver
 

@@ -20,7 +20,8 @@ class MergeSortSetup {
    * @param base_channel_id The channel ID where this module starts sorting.
    * @param is_first Is this the first module in the resource elastic chain.
    */
-  static void SetupMergeSortModule(MergeSortInterface& merge_sort_module,
+  static void SetupMergeSortModule(
+      modules::MergeSortInterface& merge_sort_module,
                                    int stream_id, int record_size,
                                    int base_channel_id, bool is_first);
   /**

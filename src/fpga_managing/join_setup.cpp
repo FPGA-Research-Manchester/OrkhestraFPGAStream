@@ -5,7 +5,7 @@
 
 using namespace dbmstodspi::fpga_managing;
 
-void JoinSetup::SetupJoinModule(JoinInterface& join_module,
+void JoinSetup::SetupJoinModule(modules::JoinInterface& join_module,
                                 int first_input_stream_id,
                                 int first_input_record_size,
                                 int second_input_stream_id,
@@ -28,7 +28,7 @@ void JoinSetup::SetupJoinModule(JoinInterface& join_module,
   join_module.StartPrefetchingData();
 }
 
-void JoinSetup::SetupTimeMultiplexer(JoinInterface& join_module,
+void JoinSetup::SetupTimeMultiplexer(modules::JoinInterface& join_module,
                                      int first_stream_size,
                                      int second_stream_size, int shift_size) {
   int output_chunk_id = 0;

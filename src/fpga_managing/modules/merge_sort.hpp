@@ -5,6 +5,7 @@
 
 namespace dbmstodspi {
 namespace fpga_managing {
+namespace modules {
 
 /**
  * @brief Class for writing the merge sort configuration data into the module
@@ -62,5 +63,6 @@ class MergeSort : public AccelerationModule, public MergeSortInterface {
   void SetFetchOffset(int offset_record_count) override;
 };
 
+}  // namespace modules
 }  // namespace fpga_managing
 }  // namespace dbmstodspi

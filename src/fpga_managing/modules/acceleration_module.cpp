@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-using namespace dbmstodspi::fpga_managing;
+using namespace dbmstodspi::fpga_managing::modules;
 
 auto AccelerationModule::CalculateMemoryMappedAddress(
     int module_internal_address) -> volatile uint32_t* {

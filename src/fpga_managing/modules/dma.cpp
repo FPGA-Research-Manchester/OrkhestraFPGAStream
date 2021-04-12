@@ -3,7 +3,7 @@
 #include <cmath>
 #include <iostream>
 
-using namespace dbmstodspi::fpga_managing;
+using namespace dbmstodspi::fpga_managing::modules;
 
 // TODO: Input and output controller settings could be combined.
 // Input Controller

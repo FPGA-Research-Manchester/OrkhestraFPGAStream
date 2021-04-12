@@ -84,7 +84,7 @@ void FPGAManager::SetupQueryAcceleration(
     // operation.
     switch (query_node.operation_type) {
       case operation_types::QueryOperation::kFilter: {
-        Filter filter_module(memory_manager_, module_location);
+        modules::Filter filter_module(memory_manager_, module_location);
         FilterSetup::SetupFilterModule(filter_module,
                                        query_node.input_streams[0].stream_id,
                                        query_node.output_streams[0].stream_id,
@@ -92,7 +92,7 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperation::kJoin: {
-        Join join_module(memory_manager_, module_location);
+        modules::Join join_module(memory_manager_, module_location);
         JoinSetup::SetupJoinModule(
             join_module, query_node.input_streams[0].stream_id,
             GetStreamRecordSize(query_node.input_streams[0]),
@@ -104,14 +104,15 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperation::kMergeSort: {
-        MergeSort merge_sort_module(memory_manager_, module_location);
+        modules::MergeSort merge_sort_module(memory_manager_, module_location);
         MergeSortSetup::SetupMergeSortModule(
             merge_sort_module, query_node.input_streams[0].stream_id,
             GetStreamRecordSize(query_node.input_streams[0]), 0, true);
         break;
       }
       case operation_types::QueryOperation::kLinearSort: {
-        LinearSort linear_sort_module(memory_manager_, module_location);
+        modules::LinearSort linear_sort_module(memory_manager_,
+                                               module_location);
         LinearSortSetup::SetupLinearSortModule(
             linear_sort_module, query_node.input_streams[0].stream_id,
             GetStreamRecordSize(query_node.input_streams[0]));

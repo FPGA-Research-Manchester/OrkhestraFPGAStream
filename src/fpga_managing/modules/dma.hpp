@@ -7,6 +7,7 @@
 
 namespace dbmstodspi {
 namespace fpga_managing {
+namespace modules {
 
 /**
  * @brief DMA module which handles AXI bursts and sends data to the acceleration
@@ -303,5 +304,6 @@ class DMA : public AccelerationModule, public DMAInterface {
   void GlobalReset() override;
 };
 
+}  // namespace modules
 }  // namespace fpga_managing
 }  // namespace dbmstodspi

@@ -3,7 +3,7 @@
 #include <cmath>
 #include <iostream>
 
-using namespace dbmstodspi::fpga_managing;
+using namespace dbmstodspi::fpga_managing::modules;
 
 void Join::StartPrefetchingData() { AccelerationModule::WriteToModule(0, 1); }
 

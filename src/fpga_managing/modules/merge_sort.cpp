@@ -1,6 +1,6 @@
 #include "merge_sort.hpp"
 
-using namespace dbmstodspi::fpga_managing;
+using namespace dbmstodspi::fpga_managing::modules;
 
 void MergeSort::StartPrefetchingData(int base_channel_id,
                                      bool is_not_first_module) {

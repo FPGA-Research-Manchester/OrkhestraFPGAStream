@@ -50,7 +50,7 @@ class FPGAManager {
   bool output_streams_active_status_[kMaxStreamAmount] = {false};
 
   MemoryManagerInterface* memory_manager_;
-  DMA dma_engine_;
+  modules::DMA dma_engine_;
   std::optional<ILA> ila_module_;
 
   void FindActiveStreams(std::vector<int>& active_input_stream_ids,
