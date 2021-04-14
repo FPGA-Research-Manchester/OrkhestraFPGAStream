@@ -21,6 +21,8 @@
 #include "linear_sort_setup.hpp"
 #include "merge_sort.hpp"
 #include "merge_sort_setup.hpp"
+#include "multiplication.hpp"
+#include "multiplication_setup.hpp"
 #include "operation_types.hpp"
 #include "query_acceleration_constants.hpp"
 
@@ -124,6 +126,12 @@ void FPGAManager::SetupQueryAcceleration(
         modules::Addition addition_module(memory_manager_, module_location);
         AdditionSetup::SetupAdditionModule(
             addition_module, query_node.input_streams[0].stream_id);
+        break;
+      }
+      case operation_types::QueryOperation::kMultiplication: {
+        modules::Multiplication multiplication_module(memory_manager_, module_location);
+        MultiplicationSetup::SetupMultiplicationModule(
+            multiplication_module, query_node.input_streams[0].stream_id);
         break;
       }
     }

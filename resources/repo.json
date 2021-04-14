@@ -9,6 +9,7 @@
     "DSPI_empty",
     "DSPI_sort_join_filter",
     "DSPI_filtering_linear_sort",
-    "DSPI_addition"
+    "DSPI_addition",
+    "DSPI_multiplication"
   ]
 }
