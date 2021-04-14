@@ -310,7 +310,7 @@ auto main() -> int {
           fpga_managing::operation_types::QueryOperation::kMultiplication,
           {nullptr},
           {nullptr},
-          {{{}}, {{0,1}, {1}}, {{}}}};
+          {{{}}, {{0, 1}, {1}}, {{}}}};
   query_managing::query_scheduling_data::QueryNode
       lineitem_part_multiplication1 = {
           {"lineitem_part_sf0_1_inverted.csv"},
@@ -318,7 +318,21 @@ auto main() -> int {
           fpga_managing::operation_types::QueryOperation::kMultiplication,
           {nullptr},
           {nullptr},
-          {{{}}, {{0,1}, {1}}, {{}}}};
+          {{{}}, {{0, 1}, {1}}, {{}}}};
+  query_managing::query_scheduling_data::QueryNode lineitem_part_aggregate = {
+      {"lineitem_part_sf0_01_multiplied.csv"},
+      {"lineitem_part_sf0_01_multiplied.csv"},
+      fpga_managing::operation_types::QueryOperation::kAggregationSum,
+      {nullptr},
+      {nullptr},
+      {{{}}, {{}, {1}}, {{}}}};
+  query_managing::query_scheduling_data::QueryNode lineitem_part_aggregate1 = {
+      {"lineitem_part_sf0_1_multiplied.csv"},
+      {"lineitem_part_sf0_1_multiplied.csv"},
+      fpga_managing::operation_types::QueryOperation::kAggregationSum,
+      {nullptr},
+      {nullptr},
+      {{{}}, {{}, {1}}, {{}}}};
 
   // Query nodes for double bitstream
   query_managing::query_scheduling_data::QueryNode first_lineitem_filter3 = {
@@ -386,6 +400,12 @@ auto main() -> int {
                                        &first_part_filter};
   lineitem_part_join.next_nodes = {&lineitem_part_second_filter};
   lineitem_part_second_filter.previous_nodes = {&lineitem_part_join};
+  lineitem_part_second_filter.next_nodes = {&lineitem_part_addition};
+  lineitem_part_addition.previous_nodes = {&lineitem_part_second_filter};
+  lineitem_part_addition.next_nodes = {&lineitem_part_multiplication};
+  lineitem_part_multiplication.previous_nodes = {&lineitem_part_addition};
+  lineitem_part_multiplication.next_nodes = {&lineitem_part_aggregate};
+  lineitem_part_aggregate.previous_nodes = {&lineitem_part_multiplication};
 
   first_lineitem_filter1.next_nodes = {&lineitem_linear_sort1};
   lineitem_linear_sort1.previous_nodes = {&first_lineitem_filter1};
@@ -397,6 +417,12 @@ auto main() -> int {
                                         &first_part_filter1};
   lineitem_part_join1.next_nodes = {&lineitem_part_second_filter1};
   lineitem_part_second_filter1.previous_nodes = {&lineitem_part_join1};
+  lineitem_part_second_filter1.next_nodes = {&lineitem_part_addition1};
+  lineitem_part_addition1.previous_nodes = {&lineitem_part_second_filter1};
+  lineitem_part_addition1.next_nodes = {&lineitem_part_multiplication1};
+  lineitem_part_multiplication1.previous_nodes = {&lineitem_part_addition1};
+  lineitem_part_multiplication1.next_nodes = {&lineitem_part_aggregate1};
+  lineitem_part_aggregate1.previous_nodes = {&lineitem_part_multiplication1};
 
   // Run operations twice
   // query_managing::QueryManager::RunQueries(
@@ -419,13 +445,10 @@ auto main() -> int {
   //                   join_query_once, linear_sort_query_8k_once});
 
   // Pipelined tests
-  // MeasureOverallTime({first_lineitem_filter, first_part_filter});
-  // MeasureOverallTime({first_lineitem_filter1, first_part_filter1});
+  MeasureOverallTime({first_lineitem_filter, first_part_filter});
+  MeasureOverallTime({first_lineitem_filter1, first_part_filter1});
   // SF=0.3
   // MeasureOverallTime({first_lineitem_filter3});
-
-  MeasureOverallTime(
-      {lineitem_part_multiplication, lineitem_part_multiplication1});
 
   // QueryManager::RunQueries({filter_and_join_query});
   // QueryManager::RunQueries({join_query_once, filter_and_join_query});

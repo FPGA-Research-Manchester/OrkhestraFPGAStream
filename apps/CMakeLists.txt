@@ -38,6 +38,8 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_addition.bin DSPI_additio
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_addition.json DSPI_addition.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_multiplication.bin DSPI_multiplication.bin COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_multiplication.json DSPI_multiplication.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_aggregation_sum.bin DSPI_aggregation_sum.bin COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/DSPI_aggregation_sum.json DSPI_aggregation_sum.json COPYONLY)
 
 #configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_3.csv lineitem_sf0_3.csv COPYONLY)
 #configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_sf0_3_filter.csv lineitem_sf0_3_filter.csv COPYONLY)
@@ -68,6 +70,8 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_part_sf0_01_1st_filte
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_part_sf0_01_2nd_filter.csv lineitem_part_sf0_01_2nd_filter.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_part_sf0_01_inverted.csv lineitem_part_sf0_01_inverted.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_part_sf0_01_multiplied.csv lineitem_part_sf0_01_multiplied.csv COPYONLY)
+
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/empty.csv empty.csv COPYONLY)
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/repo.json repo.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data_config.ini data_config.ini COPYONLY)

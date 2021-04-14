@@ -20,7 +20,8 @@ enum class QueryOperation {
   kPassThrough,
   kLinearSort,
   kAddition,
-  kMultiplication
+  kMultiplication,
+  kAggregationSum
 };
 }  // namespace operation_types
 

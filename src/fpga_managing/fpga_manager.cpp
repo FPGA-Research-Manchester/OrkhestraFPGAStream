@@ -8,9 +8,12 @@
 #endif
 
 #include <chrono>
+#include <iomanip>
 
 #include "addition.hpp"
 #include "addition_setup.hpp"
+#include "aggregation_sum.hpp"
+#include "aggregation_sum_setup.hpp"
 #include "dma_setup.hpp"
 #include "filter.hpp"
 #include "filter_setup.hpp"
@@ -129,9 +132,19 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperation::kMultiplication: {
-        modules::Multiplication multiplication_module(memory_manager_, module_location);
+        modules::Multiplication multiplication_module(memory_manager_,
+                                                      module_location);
         MultiplicationSetup::SetupMultiplicationModule(
             multiplication_module, query_node.input_streams[0].stream_id);
+        break;
+      }
+      case operation_types::QueryOperation::kAggregationSum: {
+        modules::AggregationSum aggregation_module(memory_manager_,
+                                                   module_location);
+        read_back_modules_.push_back(aggregation_module);
+        AggregationSumSetup::SetupAggregationSum(
+            aggregation_module, query_node.input_streams[0].stream_id);
+
         break;
       }
     }
@@ -219,6 +232,13 @@ void FPGAManager::WaitForStreamsToFinish() {
     //          << FPGAManager::dma_engine_.IsOutputControllerFinished()
     //          << std::endl;
   }
+  if (!FPGAManager::read_back_modules_.empty()) {
+    // TODO: Change this to go through all of the read_back_modules and read the
+    // specified locations instead of the first one only!
+    std::cout << "SUM: " << std::fixed << std::setprecision(2)
+              << ReadModuleResultRegisters(read_back_modules_.at(0), 7)
+              << std::endl;
+  }
 #endif
 }
 
@@ -268,4 +288,13 @@ auto FPGAManager::GetStreamRecordSize(
     return stream_parameters.stream_record_size;
   }
   return stream_parameters.stream_specification.size();
+}
+
+auto dbmstodspi::fpga_managing::FPGAManager::ReadModuleResultRegisters(
+    modules::AggregationSum read_back_module, int position) -> double {
+  // Reversed reading because the data is reversed.
+  uint32_t high_bits = read_back_module.ReadSum(position, true);
+  uint32_t low_bits = read_back_module.ReadSum(position, false);
+
+  return ((static_cast<long long>(high_bits) << 32) + low_bits) / 100.0;
 }

@@ -67,7 +67,12 @@ add_library(fpga_managing
 			"modules/multiplication.cpp"
 			"modules/multiplication_interface.hpp"
 			"multiplication_setup.hpp"
-			"multiplication_setup.cpp")
+			"multiplication_setup.cpp"
+			"modules/aggregation_sum.hpp"
+			"modules/aggregation_sum.cpp"
+			"modules/aggregation_sum_interface.hpp"
+			"aggregation_sum_setup.hpp"
+			"aggregation_sum_setup.cpp")
 
 target_include_directories(fpga_managing PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/modules")
 

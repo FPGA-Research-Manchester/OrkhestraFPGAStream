@@ -23,6 +23,7 @@ As you can see from the image the input would be a query plan graph form a DBMS 
 - [DMA](https://docs.google.com/document/d/1cxJLcjkrTCrByOmtiYwsu4Ptbp78npZbajhQ878ixp0/view)
 - [Addition](https://docs.google.com/document/d/1z2pN-B5mMqBWMHZfsHWlNOEh4y0oQSoJJaQwMiRgKD8/view)
 - [Multiplication](https://docs.google.com/document/d/13FvDpvQOcqsJmrKadfZ0wl7sOHxVujxV2PWCQ0EDBH0/view)
+- [Global Aggregation Sum](https://docs.google.com/document/d/17INhz4SAK0X97FyJYAxEcWI2qQLcixy8q_eU_KDbDEw/view)
 
 The **DMA** is a compulsory module which will set up the interface.
 The **sort** modules are meant to be used together.

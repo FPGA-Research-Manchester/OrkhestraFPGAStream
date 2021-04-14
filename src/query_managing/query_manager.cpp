@@ -34,7 +34,7 @@ void QueryManager::CheckTableData(
     std::cout << expected_table.table_data_vector.size() /
                      TableManager::GetRecordSizeFromTable(expected_table)
               << std::endl;
-    data_managing::DataManager::PrintTableData(expected_table);
+    // data_managing::DataManager::PrintTableData(expected_table);
     std::cout << "vs:" << std::endl;
     std::cout << resulting_table.table_data_vector.size() /
                      TableManager::GetRecordSizeFromTable(resulting_table)
