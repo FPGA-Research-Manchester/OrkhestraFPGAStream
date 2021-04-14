@@ -18,7 +18,8 @@ class LinearSortSetup {
    * @param stream_id ID of the stream to be sorted.
    * @param record_size How many integers worth of data does a record have.
    */
-  static void SetupLinearSortModule(LinearSortInterface& linear_sort_module,
+  static void SetupLinearSortModule(
+      modules::LinearSortInterface& linear_sort_module,
                                     int stream_id, int record_size);
 };
 

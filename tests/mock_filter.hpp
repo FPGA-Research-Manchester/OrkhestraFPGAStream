@@ -5,7 +5,7 @@
 #include "filter_interface.hpp"
 #include "gmock/gmock.h"
 
-class MockFilter : public dbmstodspi::fpga_managing::FilterInterface {
+class MockFilter : public dbmstodspi::fpga_managing::modules::FilterInterface {
  public:
   MOCK_METHOD(void, FilterSetStreamIDs,
               (int stream_id_input, int stream_id_valid_output,

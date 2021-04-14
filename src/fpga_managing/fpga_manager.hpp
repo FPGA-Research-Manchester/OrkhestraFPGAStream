@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "accelerated_query_node.hpp"
+#include "aggregation_sum.hpp"
 #include "dma.hpp"
 #include "filter.hpp"
 #include "ila.hpp"
@@ -50,8 +51,10 @@ class FPGAManager {
   bool output_streams_active_status_[kMaxStreamAmount] = {false};
 
   MemoryManagerInterface* memory_manager_;
-  DMA dma_engine_;
+  modules::DMA dma_engine_;
   std::optional<ILA> ila_module_;
+  // TODO: Change this to not only store the AggregationSum module!
+  std::vector<modules::AggregationSum> read_back_modules_;
 
   void FindActiveStreams(std::vector<int>& active_input_stream_ids,
                          std::vector<int>& active_output_stream_ids);
@@ -68,6 +71,9 @@ class FPGAManager {
 
   static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)
       -> int;
+
+  static auto ReadModuleResultRegisters(
+      modules::AggregationSum read_back_module, int position) -> double;
 };
 
 }  // namespace fpga_managing

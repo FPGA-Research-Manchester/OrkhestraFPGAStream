@@ -11,7 +11,7 @@
 
 using namespace dbmstodspi::fpga_managing;
 
-void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
+void DMASetup::SetupDMAModule(modules::DMAInterface& dma_engine,
                               const std::vector<StreamDataParameters>& streams,
                               const bool is_input_stream) {
   const int buffer_size = 16 / streams.size();
@@ -172,7 +172,7 @@ void DMASetup::SetSingleChannelSetupData(
 }
 
 void DMASetup::SetUpDMACrossbarsForStream(const DMASetupData& stream_setup_data,
-                                          DMAInterface& dma_engine) {
+                                          modules::DMAInterface& dma_engine) {
   for (size_t current_chunk_index = 0;
        current_chunk_index < stream_setup_data.crossbar_setup_data.size();
        ++current_chunk_index) {
@@ -227,7 +227,7 @@ void DMASetup::SetUpDMACrossbarsForStream(const DMASetupData& stream_setup_data,
 }
 
 void DMASetup::SetUpDMAIOStream(const DMASetupData& stream_setup_data,
-                                DMAInterface& dma_engine) {
+                                modules::DMAInterface& dma_engine) {
   if (stream_setup_data.is_input_stream) {
     dma_engine.SetInputControllerParams(
         stream_setup_data.stream_id, stream_setup_data.ddr_burst_length,

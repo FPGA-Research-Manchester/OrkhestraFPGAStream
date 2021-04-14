@@ -8,7 +8,12 @@
 #endif
 
 #include <chrono>
+#include <iomanip>
 
+#include "addition.hpp"
+#include "addition_setup.hpp"
+#include "aggregation_sum.hpp"
+#include "aggregation_sum_setup.hpp"
 #include "dma_setup.hpp"
 #include "filter.hpp"
 #include "filter_setup.hpp"
@@ -19,6 +24,8 @@
 #include "linear_sort_setup.hpp"
 #include "merge_sort.hpp"
 #include "merge_sort_setup.hpp"
+#include "multiplication.hpp"
+#include "multiplication_setup.hpp"
 #include "operation_types.hpp"
 #include "query_acceleration_constants.hpp"
 
@@ -84,7 +91,7 @@ void FPGAManager::SetupQueryAcceleration(
     // operation.
     switch (query_node.operation_type) {
       case operation_types::QueryOperation::kFilter: {
-        Filter filter_module(memory_manager_, module_location);
+        modules::Filter filter_module(memory_manager_, module_location);
         FilterSetup::SetupFilterModule(filter_module,
                                        query_node.input_streams[0].stream_id,
                                        query_node.output_streams[0].stream_id,
@@ -92,7 +99,7 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperation::kJoin: {
-        Join join_module(memory_manager_, module_location);
+        modules::Join join_module(memory_manager_, module_location);
         JoinSetup::SetupJoinModule(
             join_module, query_node.input_streams[0].stream_id,
             GetStreamRecordSize(query_node.input_streams[0]),
@@ -104,17 +111,40 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperation::kMergeSort: {
-        MergeSort merge_sort_module(memory_manager_, module_location);
+        modules::MergeSort merge_sort_module(memory_manager_, module_location);
         MergeSortSetup::SetupMergeSortModule(
             merge_sort_module, query_node.input_streams[0].stream_id,
             GetStreamRecordSize(query_node.input_streams[0]), 0, true);
         break;
       }
       case operation_types::QueryOperation::kLinearSort: {
-        LinearSort linear_sort_module(memory_manager_, module_location);
+        modules::LinearSort linear_sort_module(memory_manager_,
+                                               module_location);
         LinearSortSetup::SetupLinearSortModule(
             linear_sort_module, query_node.input_streams[0].stream_id,
             GetStreamRecordSize(query_node.input_streams[0]));
+        break;
+      }
+      case operation_types::QueryOperation::kAddition: {
+        modules::Addition addition_module(memory_manager_, module_location);
+        AdditionSetup::SetupAdditionModule(
+            addition_module, query_node.input_streams[0].stream_id);
+        break;
+      }
+      case operation_types::QueryOperation::kMultiplication: {
+        modules::Multiplication multiplication_module(memory_manager_,
+                                                      module_location);
+        MultiplicationSetup::SetupMultiplicationModule(
+            multiplication_module, query_node.input_streams[0].stream_id);
+        break;
+      }
+      case operation_types::QueryOperation::kAggregationSum: {
+        modules::AggregationSum aggregation_module(memory_manager_,
+                                                   module_location);
+        read_back_modules_.push_back(aggregation_module);
+        AggregationSumSetup::SetupAggregationSum(
+            aggregation_module, query_node.input_streams[0].stream_id);
+
         break;
       }
     }
@@ -202,6 +232,13 @@ void FPGAManager::WaitForStreamsToFinish() {
     //          << FPGAManager::dma_engine_.IsOutputControllerFinished()
     //          << std::endl;
   }
+  if (!FPGAManager::read_back_modules_.empty()) {
+    // TODO: Change this to go through all of the read_back_modules and read the
+    // specified locations instead of the first one only!
+    std::cout << "SUM: " << std::fixed << std::setprecision(2)
+              << ReadModuleResultRegisters(read_back_modules_.at(0), 7)
+              << std::endl;
+  }
 #endif
 }
 
@@ -251,4 +288,13 @@ auto FPGAManager::GetStreamRecordSize(
     return stream_parameters.stream_record_size;
   }
   return stream_parameters.stream_specification.size();
+}
+
+auto dbmstodspi::fpga_managing::FPGAManager::ReadModuleResultRegisters(
+    modules::AggregationSum read_back_module, int position) -> double {
+  // Reversed reading because the data is reversed.
+  uint32_t high_bits = read_back_module.ReadSum(position, true);
+  uint32_t low_bits = read_back_module.ReadSum(position, false);
+
+  return ((static_cast<long long>(high_bits) << 32) + low_bits) / 100.0;
 }

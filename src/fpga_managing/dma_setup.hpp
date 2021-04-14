@@ -25,7 +25,7 @@ class DMASetup {
    * @param is_input_stream Boolean saying if the given streams are input or
    * output streams.
    */
-  static void SetupDMAModule(DMAInterface &dma_engine,
+  static void SetupDMAModule(modules::DMAInterface &dma_engine,
                              const std::vector<StreamDataParameters> &streams,
                              bool is_input_stream);
 
@@ -33,9 +33,9 @@ class DMASetup {
   static auto CalculateMultiChannelStreamRecordCountPerChannel(
       int stream_record_count, int max_channel_count, int record_size) -> int;
   static void SetUpDMAIOStream(const DMASetupData &stream_setup_data,
-                               DMAInterface &dma_engine);
+                               modules::DMAInterface &dma_engine);
   static void SetUpDMACrossbarsForStream(const DMASetupData &stream_setup_data,
-                                         DMAInterface &dma_engine);
+                                         modules::DMAInterface &dma_engine);
   static void SetSingleChannelSetupData(
       DMASetupData &stream_setup_data, const bool &is_input_stream,
       const StreamDataParameters &stream_init_data);

@@ -8,7 +8,8 @@
 
 using namespace dbmstodspi::fpga_managing;
 
-void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
+void MergeSortSetup::SetupMergeSortModule(
+    modules::MergeSortInterface& merge_sort_module,
                                           int stream_id, int record_size,
                                           int base_channel_id, bool is_first) {
   int chunks_per_record =
