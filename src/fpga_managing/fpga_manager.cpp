@@ -128,7 +128,8 @@ void FPGAManager::SetupQueryAcceleration(
       case operation_types::QueryOperation::kAddition: {
         modules::Addition addition_module(memory_manager_, module_location);
         AdditionSetup::SetupAdditionModule(
-            addition_module, query_node.input_streams[0].stream_id);
+            addition_module, query_node.input_streams[0].stream_id,
+            query_node.operation_parameters);
         break;
       }
       case operation_types::QueryOperation::kMultiplication: {

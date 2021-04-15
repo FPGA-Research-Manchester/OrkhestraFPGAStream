@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cmath>
 #include <iostream>
 #include <optional>
 #include <vector>
@@ -27,6 +28,18 @@ void MeasureOverallTime(
       << "Overall time = "
       << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count()
       << "[s]" << std::endl;
+}
+
+auto ConvertDoubleValuesToIntegers(const std::vector<double> input_values)
+    -> std::vector<int> {
+  std::vector<int> converted_integers;
+  for (const auto& input_double : input_values) {
+    long long input_value = std::round(input_double * 100.0);
+    converted_integers.push_back(static_cast<uint32_t>(input_value >> 32));
+    converted_integers.push_back(
+        static_cast<uint32_t>(input_value & 0xFFFFFFFF));
+  }
+  return converted_integers;
 }
 
 /**
@@ -295,14 +308,22 @@ auto main() -> int {
       fpga_managing::operation_types::QueryOperation::kAddition,
       {nullptr},
       {nullptr},
-      {{{}}, {{}, {1}}, {{}}}};
+      {{{}},
+       {{}, {1}},
+       {{0},
+        {0, 1, 0, 0, 0, 0, 0, 0},
+        ConvertDoubleValuesToIntegers({0, 1, 0, 0, 0, 0, 0, 0})}}};
   query_managing::query_scheduling_data::QueryNode lineitem_part_addition1 = {
       {"lineitem_part_sf0_1_2nd_filter.csv"},
       {"lineitem_part_sf0_1_inverted.csv"},
       fpga_managing::operation_types::QueryOperation::kAddition,
       {nullptr},
       {nullptr},
-      {{{}}, {{}, {1}}, {{}}}};
+      {{{}},
+       {{}, {1}},
+       {{0},
+        {0, 1, 0, 0, 0, 0, 0, 0},
+        ConvertDoubleValuesToIntegers({0, 1, 0, 0, 0, 0, 0, 0})}}};
   query_managing::query_scheduling_data::QueryNode
       lineitem_part_multiplication = {
           {"lineitem_part_sf0_01_inverted.csv"},
@@ -382,7 +403,7 @@ auto main() -> int {
           {nullptr},
           {{{}}, {{5, 6, 7, 8}, {2}}, {{4}}}};
 
-  first_lineitem_filter3.next_nodes = {&lineitem_linear_sort3};
+  /*first_lineitem_filter3.next_nodes = {&lineitem_linear_sort3};
   lineitem_linear_sort3.previous_nodes = {&first_lineitem_filter3};
   lineitem_linear_sort3.next_nodes = {&lineitem_linear_merge_sort3};
   lineitem_linear_merge_sort3.next_nodes = {&lineitem_part_join3};
@@ -422,7 +443,7 @@ auto main() -> int {
   lineitem_part_addition1.next_nodes = {&lineitem_part_multiplication1};
   lineitem_part_multiplication1.previous_nodes = {&lineitem_part_addition1};
   lineitem_part_multiplication1.next_nodes = {&lineitem_part_aggregate1};
-  lineitem_part_aggregate1.previous_nodes = {&lineitem_part_multiplication1};
+  lineitem_part_aggregate1.previous_nodes = {&lineitem_part_multiplication1};*/
 
   // Run operations twice
   // query_managing::QueryManager::RunQueries(
@@ -445,8 +466,8 @@ auto main() -> int {
   //                   join_query_once, linear_sort_query_8k_once});
 
   // Pipelined tests
-  MeasureOverallTime({first_lineitem_filter, first_part_filter});
-  MeasureOverallTime({first_lineitem_filter1, first_part_filter1});
+  MeasureOverallTime({lineitem_part_addition/*, first_part_filter*/});
+  // MeasureOverallTime({first_lineitem_filter1, first_part_filter1});
   // SF=0.3
   // MeasureOverallTime({first_lineitem_filter3});
 
