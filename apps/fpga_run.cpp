@@ -346,14 +346,14 @@ auto main() -> int {
       fpga_managing::operation_types::QueryOperation::kAggregationSum,
       {nullptr},
       {nullptr},
-      {{{}}, {{}, {1}}, {{}}}};
+      {{{}}, {{}, {1}}, {{0}, {7}}}};
   query_managing::query_scheduling_data::QueryNode lineitem_part_aggregate1 = {
       {"lineitem_part_sf0_1_multiplied.csv"},
       {"lineitem_part_sf0_1_multiplied.csv"},
       fpga_managing::operation_types::QueryOperation::kAggregationSum,
       {nullptr},
       {nullptr},
-      {{{}}, {{}, {1}}, {{}}}};
+      {{{}}, {{}, {1}}, {{0}, {7}}}};
 
   // Query nodes for double bitstream
   query_managing::query_scheduling_data::QueryNode first_lineitem_filter3 = {
@@ -468,7 +468,8 @@ auto main() -> int {
   // Pipelined tests
   MeasureOverallTime({lineitem_part_addition, lineitem_part_addition1,
                       lineitem_part_multiplication,
-                      lineitem_part_multiplication1});
+                      lineitem_part_multiplication1, lineitem_part_aggregate,
+                      lineitem_part_aggregate1});
   // MeasureOverallTime({first_lineitem_filter1, first_part_filter1});
   // SF=0.3
   // MeasureOverallTime({first_lineitem_filter3});

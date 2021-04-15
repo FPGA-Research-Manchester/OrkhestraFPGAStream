@@ -55,10 +55,12 @@ class FPGAManager {
   std::optional<ILA> ila_module_;
   // TODO: Change this to not only store the AggregationSum module!
   std::vector<modules::AggregationSum> read_back_modules_;
+  std::vector<std::vector<int>> read_back_parameters_;
 
   void FindActiveStreams(std::vector<int>& active_input_stream_ids,
                          std::vector<int>& active_output_stream_ids);
   void WaitForStreamsToFinish();
+  void ReadResultsFromRegisters();
   auto GetResultingStreamSizes(const std::vector<int>& active_input_stream_ids,
                                const std::vector<int>& active_output_stream_ids)
       -> std::vector<int>;

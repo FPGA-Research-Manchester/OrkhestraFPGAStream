@@ -55,6 +55,12 @@ class AggregationSum : public AccelerationModule,
    */
   auto ReadSum(int data_position, bool is_low) -> uint32_t override;
   /**
+   * @brief Read the command register to see if it is still active
+   * @return Boolean noting if the module is still active when the output
+   * controller isn't driving the data.
+   */
+  auto IsModuleActive() -> bool override;
+  /**
    * @brief Reset all registers to 0.
    */
   void ResetSumRegisters() override;
