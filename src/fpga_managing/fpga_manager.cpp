@@ -318,8 +318,10 @@ auto dbmstodspi::fpga_managing::FPGAManager::ReadModuleResultRegisters(
   // Reversed reading because the data is reversed.
   uint32_t high_bits = read_back_module->ReadResult(
       ((query_acceleration_constants::kDatapathWidth - 1) - position * 2));
-  uint32_t low_bits = read_back_module->ReadResult(
-      ((query_acceleration_constants::kDatapathWidth - 1) - (position * 2 + 1)));
+  uint32_t low_bits = read_back_module->ReadResult((
+      (query_acceleration_constants::kDatapathWidth - 1) - (position * 2 + 1)));
 
-  return ((static_cast<long long>(high_bits) << 32) + low_bits) / 100.0;
+  return static_cast<long long>((static_cast<uint64_t>(high_bits) << 32) +
+                                low_bits) /
+         100.0;
 }

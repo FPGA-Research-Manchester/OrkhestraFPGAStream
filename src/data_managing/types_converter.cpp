@@ -143,7 +143,8 @@ void TypesConverter::ConvertDecimalValuesToString(
     std::vector<std::string>& string_vector) {
   std::ostringstream oss;
   oss << std::fixed << std::setprecision(2)
-      << ((static_cast<long long>(input_value[0]) << 32) + input_value[1]) /
+      << static_cast<long long>((static_cast<uint64_t>(input_value[0]) << 32) +
+                                input_value[1]) /
              100.0;
   string_vector.push_back(oss.str());
 }
