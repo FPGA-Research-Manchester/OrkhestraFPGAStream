@@ -331,7 +331,7 @@ auto main() -> int {
           fpga_managing::operation_types::QueryOperation::kMultiplication,
           {nullptr},
           {nullptr},
-          {{{}}, {{0, 1}, {1}}, {{}}}};
+          {{{}}, {{0, 1}, {1}}, {{0, 1, 0, 0, 0, 0, 0, 0, 0}}}};
   query_managing::query_scheduling_data::QueryNode
       lineitem_part_multiplication1 = {
           {"lineitem_part_sf0_1_inverted.csv"},
@@ -339,7 +339,7 @@ auto main() -> int {
           fpga_managing::operation_types::QueryOperation::kMultiplication,
           {nullptr},
           {nullptr},
-          {{{}}, {{0, 1}, {1}}, {{}}}};
+          {{{}}, {{0, 1}, {1}}, {{0, 1, 0, 0, 0, 0, 0, 0, 0}}}};
   query_managing::query_scheduling_data::QueryNode lineitem_part_aggregate = {
       {"lineitem_part_sf0_01_multiplied.csv"},
       {"lineitem_part_sf0_01_multiplied.csv"},
@@ -466,7 +466,8 @@ auto main() -> int {
   //                   join_query_once, linear_sort_query_8k_once});
 
   // Pipelined tests
-  MeasureOverallTime({lineitem_part_addition/*, first_part_filter*/});
+  MeasureOverallTime(
+      {lineitem_part_multiplication, lineitem_part_multiplication1 });
   // MeasureOverallTime({first_lineitem_filter1, first_part_filter1});
   // SF=0.3
   // MeasureOverallTime({first_lineitem_filter3});
