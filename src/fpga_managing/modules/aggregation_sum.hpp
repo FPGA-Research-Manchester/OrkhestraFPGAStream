@@ -2,6 +2,7 @@
 #include "acceleration_module.hpp"
 #include "aggregation_sum_interface.hpp"
 #include "memory_manager_interface.hpp"
+#include "read_back_module_interface.hpp"
 
 namespace dbmstodspi {
 namespace fpga_managing {
@@ -12,7 +13,8 @@ namespace modules {
  * global sum operation accelerator.
  */
 class AggregationSum : public AccelerationModule,
-                       public AggregationSumInterface {
+                       public AggregationSumInterface,
+                       public ReadBackModuleInterface {
  private:
  public:
   ~AggregationSum() override = default;
@@ -54,6 +56,12 @@ class AggregationSum : public AccelerationModule,
    * @return The sum value from the given location.
    */
   auto ReadSum(int data_position, bool is_low) -> uint32_t override;
+  /**
+   * @brief Read the result of the read back module using the #ReadSum method.
+   * @param data_position Position of the data to be read.
+   * @return 32bit integer value read from the result register.
+  */
+  auto ReadResult(int data_position) -> uint32_t override; 
   /**
    * @brief Read the command register to see if it is still active
    * @return Boolean noting if the module is still active when the output

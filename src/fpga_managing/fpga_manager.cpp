@@ -147,14 +147,13 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperation::kAggregationSum: {
-        modules::AggregationSum aggregation_module(memory_manager_,
-                                                   module_location);
-        read_back_modules_.push_back(aggregation_module);
-        read_back_parameters_.push_back(query_node.operation_parameters.at(1));
+        auto aggregation_module = std::make_unique<modules::AggregationSum>(
+            memory_manager_, module_location);
         AggregationSumSetup::SetupAggregationSum(
-            aggregation_module, query_node.input_streams[0].stream_id,
+            *aggregation_module, query_node.input_streams[0].stream_id,
             query_node.operation_parameters);
-
+        read_back_modules_.push_back(std::move(aggregation_module));
+        read_back_parameters_.push_back(query_node.operation_parameters.at(1));
         break;
       }
     }
@@ -256,7 +255,8 @@ void FPGAManager::ReadResultsFromRegisters() {
            FPGAManager::read_back_parameters_.at(module_index)) {
         std::cout << "SUM: " << std::fixed << std::setprecision(2)
                   << ReadModuleResultRegisters(
-                         FPGAManager::read_back_modules_.at(module_index),
+                         std::move(
+                             FPGAManager::read_back_modules_.at(module_index)),
                          position)
                   << std::endl;
       }
@@ -313,10 +313,13 @@ auto FPGAManager::GetStreamRecordSize(
 }
 
 auto dbmstodspi::fpga_managing::FPGAManager::ReadModuleResultRegisters(
-    modules::AggregationSum read_back_module, int position) -> double {
+    std::unique_ptr<modules::ReadBackModuleInterface> read_back_module,
+    int position) -> double {
   // Reversed reading because the data is reversed.
-  uint32_t high_bits = read_back_module.ReadSum(position, true);
-  uint32_t low_bits = read_back_module.ReadSum(position, false);
+  uint32_t high_bits = read_back_module->ReadResult(
+      ((query_acceleration_constants::kDatapathWidth - 1) - position * 2));
+  uint32_t low_bits = read_back_module->ReadResult(
+      ((query_acceleration_constants::kDatapathWidth - 1) - (position * 2 + 1)));
 
   return ((static_cast<long long>(high_bits) << 32) + low_bits) / 100.0;
 }

@@ -346,14 +346,14 @@ auto main() -> int {
       fpga_managing::operation_types::QueryOperation::kAggregationSum,
       {nullptr},
       {nullptr},
-      {{{}}, {{}, {1}}, {{0}, {7}}}};
+      {{{}}, {{}, {1}}, {{0}, {0}}}};
   query_managing::query_scheduling_data::QueryNode lineitem_part_aggregate1 = {
       {"lineitem_part_sf0_1_multiplied.csv"},
       {"lineitem_part_sf0_1_multiplied.csv"},
       fpga_managing::operation_types::QueryOperation::kAggregationSum,
       {nullptr},
       {nullptr},
-      {{{}}, {{}, {1}}, {{0}, {7}}}};
+      {{{}}, {{}, {1}}, {{0}, {0}}}};
 
   // Query nodes for double bitstream
   query_managing::query_scheduling_data::QueryNode first_lineitem_filter3 = {
@@ -403,7 +403,7 @@ auto main() -> int {
           {nullptr},
           {{{}}, {{5, 6, 7, 8}, {2}}, {{4}}}};
 
-  /*first_lineitem_filter3.next_nodes = {&lineitem_linear_sort3};
+  first_lineitem_filter3.next_nodes = {&lineitem_linear_sort3};
   lineitem_linear_sort3.previous_nodes = {&first_lineitem_filter3};
   lineitem_linear_sort3.next_nodes = {&lineitem_linear_merge_sort3};
   lineitem_linear_merge_sort3.next_nodes = {&lineitem_part_join3};
@@ -443,7 +443,7 @@ auto main() -> int {
   lineitem_part_addition1.next_nodes = {&lineitem_part_multiplication1};
   lineitem_part_multiplication1.previous_nodes = {&lineitem_part_addition1};
   lineitem_part_multiplication1.next_nodes = {&lineitem_part_aggregate1};
-  lineitem_part_aggregate1.previous_nodes = {&lineitem_part_multiplication1};*/
+  lineitem_part_aggregate1.previous_nodes = {&lineitem_part_multiplication1};
 
   // Run operations twice
   // query_managing::QueryManager::RunQueries(
@@ -466,11 +466,8 @@ auto main() -> int {
   //                   join_query_once, linear_sort_query_8k_once});
 
   // Pipelined tests
-  MeasureOverallTime({lineitem_part_addition, lineitem_part_addition1,
-                      lineitem_part_multiplication,
-                      lineitem_part_multiplication1, lineitem_part_aggregate,
-                      lineitem_part_aggregate1});
-  // MeasureOverallTime({first_lineitem_filter1, first_part_filter1});
+  MeasureOverallTime({first_lineitem_filter, first_part_filter});
+  MeasureOverallTime({first_lineitem_filter1, first_part_filter1});
   // SF=0.3
   // MeasureOverallTime({first_lineitem_filter3});
 

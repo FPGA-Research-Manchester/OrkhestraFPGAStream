@@ -18,7 +18,7 @@ class AggregationSumSetup {
    *
    * The operation parameters just consist of the chunk ID where the aggregation
    * should take place. The second vector is for read_back specification to know
-   * which positions should get read. This data should already be reversed!
+   * which positions should get read.
    *
    * @param aggregation_module Module instance to have access to the memory
    * mapped registers.
