@@ -33,7 +33,7 @@ class Multiplication : public AccelerationModule,
    * @brief Defube which streams need to have the multiplication operation.
    * @param active_streams Array of booleans noting active streams.
    */
-  void DefineActiveStreams(std::array<bool, 16> active_streams) override;
+  void DefineActiveStreams(std::bitset<16> active_streams) override;
   /**
    * @brief Define which positions in which chunk should have the multiplication
    * results.
@@ -41,8 +41,8 @@ class Multiplication : public AccelerationModule,
    * @param active_positions Which positions should have the multiplication
    * result.
    */
-  void ChooseMultiplicationResults(
-      int chunk_id, std::array<bool, 8> active_positions) override;
+  void ChooseMultiplicationResults(int chunk_id,
+                                   std::bitset<8> active_positions) override;
 };
 
 }  // namespace modules

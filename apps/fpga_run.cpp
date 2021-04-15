@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cmath>
 #include <iostream>
 #include <optional>
 #include <vector>
@@ -27,6 +28,18 @@ void MeasureOverallTime(
       << "Overall time = "
       << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count()
       << "[s]" << std::endl;
+}
+
+auto ConvertDoubleValuesToIntegers(const std::vector<double> input_values)
+    -> std::vector<int> {
+  std::vector<int> converted_integers;
+  for (const auto& input_double : input_values) {
+    long long input_value = std::round(input_double * 100.0);
+    converted_integers.push_back(static_cast<uint32_t>(input_value >> 32));
+    converted_integers.push_back(
+        static_cast<uint32_t>(input_value & 0xFFFFFFFF));
+  }
+  return converted_integers;
 }
 
 /**
@@ -295,14 +308,22 @@ auto main() -> int {
       fpga_managing::operation_types::QueryOperation::kAddition,
       {nullptr},
       {nullptr},
-      {{{}}, {{}, {1}}, {{}}}};
+      {{{}},
+       {{}, {1}},
+       {{0},
+        {0, 1, 0, 0, 0, 0, 0, 0},
+        ConvertDoubleValuesToIntegers({0, 1, 0, 0, 0, 0, 0, 0})}}};
   query_managing::query_scheduling_data::QueryNode lineitem_part_addition1 = {
       {"lineitem_part_sf0_1_2nd_filter.csv"},
       {"lineitem_part_sf0_1_inverted.csv"},
       fpga_managing::operation_types::QueryOperation::kAddition,
       {nullptr},
       {nullptr},
-      {{{}}, {{}, {1}}, {{}}}};
+      {{{}},
+       {{}, {1}},
+       {{0},
+        {0, 1, 0, 0, 0, 0, 0, 0},
+        ConvertDoubleValuesToIntegers({0, 1, 0, 0, 0, 0, 0, 0})}}};
   query_managing::query_scheduling_data::QueryNode
       lineitem_part_multiplication = {
           {"lineitem_part_sf0_01_inverted.csv"},
@@ -310,7 +331,7 @@ auto main() -> int {
           fpga_managing::operation_types::QueryOperation::kMultiplication,
           {nullptr},
           {nullptr},
-          {{{}}, {{0, 1}, {1}}, {{}}}};
+          {{{}}, {{0, 1}, {1}}, {{0, 1, 0, 0, 0, 0, 0, 0, 0}}}};
   query_managing::query_scheduling_data::QueryNode
       lineitem_part_multiplication1 = {
           {"lineitem_part_sf0_1_inverted.csv"},
@@ -318,21 +339,21 @@ auto main() -> int {
           fpga_managing::operation_types::QueryOperation::kMultiplication,
           {nullptr},
           {nullptr},
-          {{{}}, {{0, 1}, {1}}, {{}}}};
+          {{{}}, {{0, 1}, {1}}, {{0, 1, 0, 0, 0, 0, 0, 0, 0}}}};
   query_managing::query_scheduling_data::QueryNode lineitem_part_aggregate = {
       {"lineitem_part_sf0_01_multiplied.csv"},
       {"lineitem_part_sf0_01_multiplied.csv"},
       fpga_managing::operation_types::QueryOperation::kAggregationSum,
       {nullptr},
       {nullptr},
-      {{{}}, {{}, {1}}, {{}}}};
+      {{{}}, {{}, {1}}, {{0}, {0}}}};
   query_managing::query_scheduling_data::QueryNode lineitem_part_aggregate1 = {
       {"lineitem_part_sf0_1_multiplied.csv"},
       {"lineitem_part_sf0_1_multiplied.csv"},
       fpga_managing::operation_types::QueryOperation::kAggregationSum,
       {nullptr},
       {nullptr},
-      {{{}}, {{}, {1}}, {{}}}};
+      {{{}}, {{}, {1}}, {{0}, {0}}}};
 
   // Query nodes for double bitstream
   query_managing::query_scheduling_data::QueryNode first_lineitem_filter3 = {

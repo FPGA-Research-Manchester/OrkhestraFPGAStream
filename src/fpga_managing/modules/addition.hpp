@@ -35,7 +35,7 @@ class Addition : public AccelerationModule, public AdditionInterface {
    * @brief Set which sign the input should have.
    * @param is_value_negative Array of booleans noting negative input values.
    */
-  void SetInputSigns(std::array<bool, 8> is_value_negative) override;
+  void SetInputSigns(std::bitset<8> is_value_negative) override;
   /**
    * @brief Set the literal constant values for addition.
    * @param literal_values Array of 64-bit values.

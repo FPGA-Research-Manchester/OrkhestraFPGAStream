@@ -1,6 +1,6 @@
 #pragma once
 
-#include <array>
+#include <bitset>
 
 namespace dbmstodspi {
 namespace fpga_managing {
@@ -13,9 +13,9 @@ class MultiplicationInterface {
  public:
   virtual ~MultiplicationInterface() = default;
 
-  virtual void DefineActiveStreams(std::array<bool, 16> active_streams) = 0;
+  virtual void DefineActiveStreams(std::bitset<16> active_streams) = 0;
   virtual void ChooseMultiplicationResults(
-      int chunk_id, std::array<bool, 8> active_positions) = 0;
+      int chunk_id, std::bitset<8> active_positions) = 0;
 };
 
 }  // namespace modules

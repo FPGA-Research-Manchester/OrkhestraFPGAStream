@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdint>
 #include <utility>
+#include <bitset>
 
 namespace dbmstodspi {
 namespace fpga_managing {
@@ -16,7 +17,7 @@ class AdditionInterface {
   virtual ~AdditionInterface() = default;
 
   virtual void DefineInput(int stream_id, int chunk_id) = 0;
-  virtual void SetInputSigns(std::array<bool, 8> is_value_negative) = 0;
+  virtual void SetInputSigns(std::bitset<8> is_value_negative) = 0;
   virtual void SetLiteralValues(
       std::array<std::pair<uint32_t, uint32_t>, 8> literal_values) = 0;
 };

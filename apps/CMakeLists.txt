@@ -71,8 +71,6 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_part_sf0_01_2nd_filte
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_part_sf0_01_inverted.csv lineitem_part_sf0_01_inverted.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_part_sf0_01_multiplied.csv lineitem_part_sf0_01_multiplied.csv COPYONLY)
 
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/empty.csv empty.csv COPYONLY)
-
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/repo.json repo.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data_config.ini data_config.ini COPYONLY)
 

@@ -3,6 +3,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "accelerated_query_node.hpp"
 #include "aggregation_sum.hpp"
@@ -11,6 +12,7 @@
 #include "ila.hpp"
 #include "memory_manager_interface.hpp"
 #include "stream_data_parameters.hpp"
+#include "read_back_module_interface.hpp"
 
 namespace dbmstodspi {
 namespace fpga_managing {
@@ -53,12 +55,13 @@ class FPGAManager {
   MemoryManagerInterface* memory_manager_;
   modules::DMA dma_engine_;
   std::optional<ILA> ila_module_;
-  // TODO: Change this to not only store the AggregationSum module!
-  std::vector<modules::AggregationSum> read_back_modules_;
+  std::vector<std::unique_ptr<modules::ReadBackModuleInterface>> read_back_modules_;
+  std::vector<std::vector<int>> read_back_parameters_;
 
   void FindActiveStreams(std::vector<int>& active_input_stream_ids,
                          std::vector<int>& active_output_stream_ids);
   void WaitForStreamsToFinish();
+  void ReadResultsFromRegisters();
   auto GetResultingStreamSizes(const std::vector<int>& active_input_stream_ids,
                                const std::vector<int>& active_output_stream_ids)
       -> std::vector<int>;
@@ -73,7 +76,9 @@ class FPGAManager {
       -> int;
 
   static auto ReadModuleResultRegisters(
-      modules::AggregationSum read_back_module, int position) -> double;
+      std::unique_ptr<modules::ReadBackModuleInterface> read_back_module,
+      int position)
+      -> double;
 };
 
 }  // namespace fpga_managing

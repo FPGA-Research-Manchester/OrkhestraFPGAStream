@@ -10,13 +10,23 @@ void dbmstodspi::fpga_managing::modules::AggregationSum::StartPrefetching(
 
 void dbmstodspi::fpga_managing::modules::AggregationSum::DefineInput(
     int stream_id, int chunk_id) {
-  AccelerationModule::WriteToModule(
-      4, (chunk_id << 8) + stream_id);
+  AccelerationModule::WriteToModule(4, (chunk_id << 8) + stream_id);
 }
 
 auto dbmstodspi::fpga_managing::modules::AggregationSum::ReadSum(
     int data_position, bool is_low) -> uint32_t {
-  return AccelerationModule::ReadFromModule(64 + data_position * 8 + (is_low * 4));
+  return AccelerationModule::ReadFromModule(64 + data_position * 8 +
+                                            (!is_low * 4));
+}
+
+auto dbmstodspi::fpga_managing::modules::AggregationSum::ReadResult(
+    int data_position) -> uint32_t {
+  return AggregationSum::ReadSum(data_position / 2, data_position % 2 == 0);
+}
+
+auto dbmstodspi::fpga_managing::modules::AggregationSum::IsModuleActive()
+    -> bool {
+  return 1 & AccelerationModule::ReadFromModule(4);
 }
 
 void dbmstodspi::fpga_managing::modules::AggregationSum::ResetSumRegisters() {

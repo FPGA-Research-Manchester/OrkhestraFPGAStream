@@ -37,6 +37,8 @@ void FPGAManager::SetupQueryAcceleration(
     const std::vector<operation_types::QueryOperation>& available_modules,
     const std::vector<AcceleratedQueryNode>& query_nodes) {
   dma_engine_.GlobalReset();
+  read_back_modules_.clear();
+  read_back_parameters_.clear();
 
   // ila_module_ = std::make_optional (ILA(memory_manager_));
   /*if (ila_module_) {
@@ -57,8 +59,8 @@ void FPGAManager::SetupQueryAcceleration(
   }
 
   // MISSING PIECE OF LOGIC HERE...
-  // Need to check for stream specification validity and intermediate stream
-  // specifications have to be merged with the IO stream specs.
+  // TODO: Need to check for stream specification validity and intermediate
+  // stream specifications have to be merged with the IO stream specs.
 
   if (input_streams.empty() || output_streams.empty()) {
     throw std::runtime_error("Input or output streams missing!");
@@ -75,8 +77,8 @@ void FPGAManager::SetupQueryAcceleration(
 
   for (int node_index = 0; node_index < available_modules.size();
        node_index++) {
-    // Find out which module is associated with which query node. Current method
-    // doesn't work with multiple identical modules!
+    // TODO: Find out which module is associated with which query node. Current
+    // method doesn't work with multiple identical modules!
     const AcceleratedQueryNode* current_query_node = nullptr;
     for (const auto& query_node : query_nodes) {
       if (query_node.operation_type == available_modules[node_index]) {
@@ -85,6 +87,10 @@ void FPGAManager::SetupQueryAcceleration(
     }
     int module_location = node_index + 1;
     auto query_node = *current_query_node;
+
+    // TODO: For each of the operations different properties have to be written
+    // down to add classifications. The operation_parameters can be generalised
+    // based on classifiactions
 
     // Assumptions are taken that the input and output streams are defined
     // correctly and that the correct amount of streams have been given for each
@@ -128,23 +134,26 @@ void FPGAManager::SetupQueryAcceleration(
       case operation_types::QueryOperation::kAddition: {
         modules::Addition addition_module(memory_manager_, module_location);
         AdditionSetup::SetupAdditionModule(
-            addition_module, query_node.input_streams[0].stream_id);
+            addition_module, query_node.input_streams[0].stream_id,
+            query_node.operation_parameters);
         break;
       }
       case operation_types::QueryOperation::kMultiplication: {
         modules::Multiplication multiplication_module(memory_manager_,
                                                       module_location);
         MultiplicationSetup::SetupMultiplicationModule(
-            multiplication_module, query_node.input_streams[0].stream_id);
+            multiplication_module, {query_node.input_streams[0].stream_id},
+            query_node.operation_parameters);
         break;
       }
       case operation_types::QueryOperation::kAggregationSum: {
-        modules::AggregationSum aggregation_module(memory_manager_,
-                                                   module_location);
-        read_back_modules_.push_back(aggregation_module);
+        auto aggregation_module = std::make_unique<modules::AggregationSum>(
+            memory_manager_, module_location);
         AggregationSumSetup::SetupAggregationSum(
-            aggregation_module, query_node.input_streams[0].stream_id);
-
+            *aggregation_module, query_node.input_streams[0].stream_id,
+            query_node.operation_parameters);
+        read_back_modules_.push_back(std::move(aggregation_module));
+        read_back_parameters_.push_back(query_node.operation_parameters.at(1));
         break;
       }
     }
@@ -232,14 +241,27 @@ void FPGAManager::WaitForStreamsToFinish() {
     //          << FPGAManager::dma_engine_.IsOutputControllerFinished()
     //          << std::endl;
   }
-  if (!FPGAManager::read_back_modules_.empty()) {
-    // TODO: Change this to go through all of the read_back_modules and read the
-    // specified locations instead of the first one only!
-    std::cout << "SUM: " << std::fixed << std::setprecision(2)
-              << ReadModuleResultRegisters(read_back_modules_.at(0), 7)
-              << std::endl;
-  }
+  ReadResultsFromRegisters();
 #endif
+}
+
+void FPGAManager::ReadResultsFromRegisters() {
+  if (!FPGAManager::read_back_modules_.empty()) {
+    // Assuming there are equal number of read back modules and parameters
+    for (int module_index = 0;
+         module_index < FPGAManager::read_back_modules_.size();
+         module_index++) {
+      for (auto const& position :
+           FPGAManager::read_back_parameters_.at(module_index)) {
+        std::cout << "SUM: " << std::fixed << std::setprecision(2)
+                  << ReadModuleResultRegisters(
+                         std::move(
+                             FPGAManager::read_back_modules_.at(module_index)),
+                         position)
+                  << std::endl;
+      }
+    }
+  }
 }
 
 auto FPGAManager::GetResultingStreamSizes(
@@ -291,10 +313,15 @@ auto FPGAManager::GetStreamRecordSize(
 }
 
 auto dbmstodspi::fpga_managing::FPGAManager::ReadModuleResultRegisters(
-    modules::AggregationSum read_back_module, int position) -> double {
+    std::unique_ptr<modules::ReadBackModuleInterface> read_back_module,
+    int position) -> double {
   // Reversed reading because the data is reversed.
-  uint32_t high_bits = read_back_module.ReadSum(position, true);
-  uint32_t low_bits = read_back_module.ReadSum(position, false);
+  uint32_t high_bits = read_back_module->ReadResult(
+      ((query_acceleration_constants::kDatapathWidth - 1) - position * 2));
+  uint32_t low_bits = read_back_module->ReadResult((
+      (query_acceleration_constants::kDatapathWidth - 1) - (position * 2 + 1)));
 
-  return ((static_cast<long long>(high_bits) << 32) + low_bits) / 100.0;
+  return static_cast<long long>((static_cast<uint64_t>(high_bits) << 32) +
+                                low_bits) /
+         100.0;
 }
