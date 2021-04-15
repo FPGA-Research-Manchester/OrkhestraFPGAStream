@@ -466,8 +466,9 @@ auto main() -> int {
   //                   join_query_once, linear_sort_query_8k_once});
 
   // Pipelined tests
-  MeasureOverallTime(
-      {lineitem_part_multiplication, lineitem_part_multiplication1 });
+  MeasureOverallTime({lineitem_part_addition, lineitem_part_addition1,
+                      lineitem_part_multiplication,
+                      lineitem_part_multiplication1});
   // MeasureOverallTime({first_lineitem_filter1, first_part_filter1});
   // SF=0.3
   // MeasureOverallTime({first_lineitem_filter3});

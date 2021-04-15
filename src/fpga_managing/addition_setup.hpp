@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <bitset>
 
 #include "addition_interface.hpp"
 
@@ -14,8 +15,7 @@ class AdditionSetup {
   static auto ReverseLiteralValues(std::vector<int> input_constant_values)
       -> std::array<std::pair<uint32_t, uint32_t>, 8>;
   static auto ReverseNegationSpecification(
-      std::vector<int> negation_specification)
-      -> std::array<bool, 8>;
+      std::vector<int> negation_specification) -> std::bitset<8>;
  public:
   /**
    * @brief Method to setup the addition operation acceleration.

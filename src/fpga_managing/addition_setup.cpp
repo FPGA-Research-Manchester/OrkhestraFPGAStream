@@ -24,10 +24,10 @@ auto dbmstodspi::fpga_managing::AdditionSetup::ReverseLiteralValues(
   return literal_values;
 }
 auto dbmstodspi::fpga_managing::AdditionSetup::ReverseNegationSpecification(
-    std::vector<int> negation_specification) -> std::array<bool, 8> {
-  std::array<bool, 8> negation_required;
+    std::vector<int> negation_specification) -> std::bitset<8> {
+  std::bitset<8> negation_required;
   for (int i = negation_required.size() - 1; i >= 0; i--) {
-    negation_required.at(7-i) = negation_specification.at(i);
+    negation_required.set(7 - i, negation_specification.at(i));
   }
   return negation_required;
 }
