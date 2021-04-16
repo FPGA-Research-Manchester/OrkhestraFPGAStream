@@ -4,3 +4,4 @@ Different concepts on how to use and how does the software work with the hardwar
 
 - [Crossbar configuration data](./crossbar_configuration.md)
 - [Input CSV file configuration](./input_data_configuration.md)
+- [Acceleration module characteristics](./acceleration_modules.md)

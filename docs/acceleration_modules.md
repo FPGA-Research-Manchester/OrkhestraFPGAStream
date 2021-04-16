@@ -4,7 +4,7 @@ Here we will discuss what type of operations there are in SQL queries and what t
 
 ## Stream count.
 
-|1 input|1 output|2 inputs|2 outputs|N inputs|N outputs
+[]()  |1 input|1 output|2 inputs|2 outputs|N inputs|N outputs
 :--|:-:|:-:|:-:|:-:|:-:|:-:
 *Filter*|✔️|❌|❌|✔️|❌|❌
 *Join*|❌|✔️|✔️|❌|❌|❌
@@ -19,7 +19,7 @@ The global sum can also completely destroy the stream and output nothing.
 
 ## Data columns
 
-|no change|change columns|first column important|strict column placement
+[]()  |no change|change columns|first column important|strict column placement
 :--|:-:|:-:|:-:|:-:
 *Filter*|✔️|❌|❌|❌
 *Join*|❌|✔️|✔️|❌
