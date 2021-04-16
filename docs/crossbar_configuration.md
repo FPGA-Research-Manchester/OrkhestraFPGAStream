@@ -850,3 +850,6 @@ This is possible since there are 4 integers in a block. What if only one of them
 To conclude in the general case, the worst case scenario is the transposing action. Let's assume we have a record which on the interface wires is as wide as it is long. And if you view that as a matrix and you wish to transpose it we have our worst case scenario. To fix that we need to be able to add garbage data in any of the positions but we can add garbage data only in a more granular way since we don't want to spend the resources on another full crossbar. In reality the worst case scenario won't happen but the problem would show with duplication and removal of integers which require diagonal moves.
 
 So to stay on the safe side the this solution would be usable if there were less than 4 clashes. Keep in mind that fixing one clash might cause another one. And this is all from the perspective on input crossbars. For output crossbars the 4 integer shift doesn't do anything if the two clashing integers are always in the same chunk in some cases. 
+
+
+[Back to the main page](./README.md)

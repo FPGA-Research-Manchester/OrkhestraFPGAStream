@@ -25,4 +25,27 @@ This is how the [CAR_DATA](../resources/CAR_DATA.csv) file starts. The whole fil
 
 The type must be followed by a hyphon "-" and a number showing how long the data element is. For integer, decimal, date only 1 is currently supported but for varchar and null the data type has a variable size. The whole data element always needs to have a size which is divisible by 4. The sizes of the data types can be configured in the [data_config.ini](../resources/data_config.ini) file. This data size modified multiplied with the number given in the .CSV file will show how many integers will the data element take on the interface.
 
-Rest of the data file is one record per one row. Varchar elements can be surrounded by quotation marks in which those will be removed. These are needed if the string has a comma.
+Rest of the data file is one record per one row. 
+
+## Decimal
+
+The only decimal supported currently is 15,2. Which means that the total number of digits possible to store is 15 and that 2 of them are right of the decimal point. This value is stored as two 32 bit integers on the interface.
+
+## Date
+
+The date has to be supplied with hyphon "-" characters. These are removed and the resulting integer is stored.
+
+## NULL
+
+This is a data type where so to say meaningless or "grabage" data is needed or expected on the specified data column in all of the records.
+
+## VarChar
+
+Varchar elements can be surrounded by quotation marks in which those will be removed. These are needed if the string has a comma. 
+
+## Integer
+
+Integer values are stored directly. Currently only 32 bit integers are supported.
+
+
+[Back to the main page](./README.md)
