@@ -6,13 +6,13 @@ Here we will discuss what type of operations there are in SQL queries and what t
 
 []()  |1 input|1 output|2 inputs|2 outputs|N inputs|N outputs
 :--|:-:|:-:|:-:|:-:|:-:|:-:
-*Filter*|✔️|❌|❌|✔️|❌|❌
-*Join*|❌|✔️|✔️|❌|❌|❌
-*Linear Sort*|✔️|✔️|❌|❌|❌|❌
-*Merge Sort*|✔️|✔️|❌|❌|❌|❌
-*Addition*|✔️|✔️|❌|❌|❌|❌
-*Multiplication*|❌|❌|❌|❌|✔️|✔️
-*Global Sum*|✔️|✔️|❌|❌|❌|❌
+**Filter**|✔️|❌|❌|✔️|❌|❌
+**Join**|❌|✔️|✔️|❌|❌|❌
+**Linear Sort**|✔️|✔️|❌|❌|❌|❌
+**Merge Sort**|✔️|✔️|❌|❌|❌|❌
+**Addition**|✔️|✔️|❌|❌|❌|❌
+**Multiplication**|❌|❌|❌|❌|✔️|✔️
+**Global Sum**|✔️|✔️|❌|❌|❌|❌
 
 The filter can also output a single stream.
 The global sum can also completely destroy the stream and output nothing.
@@ -21,25 +21,63 @@ The global sum can also completely destroy the stream and output nothing.
 
 []()  |no change|change columns|first column important|strict column placement
 :--|:-:|:-:|:-:|:-:
-*Filter*|✔️|❌|❌|❌
-*Join*|❌|✔️|✔️|❌
-*Linear Sort*|✔️|❌|✔️|❌
-*Merge Sort*|✔️|❌|✔️|❌
-*Addition*|✔️|❌|❌|✔️
-*Multiplication*|✔️|❌|❌|✔️
-*Global Sum*|✔️|❌|❌|✔️
+**Filter**|✔️|❌|❌|❌
+**Join**|❌|✔️|✔️|❌
+**Linear Sort**|✔️|❌|✔️|❌
+**Merge Sort**|✔️|❌|✔️|❌
+**Addition**|✔️|❌|❌|✔️
+**Multiplication**|✔️|❌|❌|✔️
+**Global Sum**|✔️|❌|❌|✔️
 
 ## Reduce/increase record count
 
+[]()  |increase|reduce
+:--|:-:|:-:
+**Filter**|❌|✔️
+**Join**|✔️|✔️
+**Linear Sort**|❌|❌
+**Merge Sort**|❌|❌
+**Addition**|❌|❌
+**Multiplication**|❌|❌
+**Global Sum**|❌|❌
+
 ## Configuration data
+
+[]()  |temp
+:--|:-:
+**Filter**|❌
+**Join**|❌
+**Linear Sort**|❌
+**Merge Sort**|❌
+**Addition**|❌
+**Multiplication**|❌
+**Global Sum**|❌
 
 ## Resource elasticity
 
-## Multi-Channel
+[]()  |different modules|multiple modules
+:--|:-:
+**Filter**|✔️|✔️
+**Join**|❌|❌
+**Linear Sort**|✔️|❌
+**Merge Sort**|❌|✔️
+**Addition**|❌|❌
+**Multiplication**|❌|❌
+**Global Sum**|❌|❌
 
-## Read back
+## Special characteristics
 
-##DMA
+[]()  |read back|multi channel
+:--|:-:|:-:
+**Filter**|❌|❌
+**Join**|❌|❌
+**Linear Sort**|❌|❌
+**Merge Sort**|❌|✔️
+**Addition**|❌|❌
+**Multiplication**|❌|❌
+**Global Sum**|✔️|❌
+
+## DMA
 
 The DMA module is also an acceleration module like all the other modules in the list which is configured exactly the same. The difference is that this module must be always used and it must be on the first position.
 
