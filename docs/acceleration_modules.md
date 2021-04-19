@@ -115,22 +115,22 @@ To sum all of this information the following abstract module ideas are present w
 
 []()  |Filter|Join|Linear Sort|Merge Sort|Addition|Multiplication|Global Sum
 :--|:-:|:-:|:-:|:-:|:-:|:-:|:-:
-1. **1-in-1-out**|✔️|❌|✔️|✔️|✔️|✔️|✔️
-2. **2-in-1-out**|❌|✔️|❌|❌|❌|❌|❌
-3. **64 bit**|❌|❌|❌|❌|✔️|✔️|✔️
-4. **First column**|❌|✔️|✔️|✔️|❌|❌|❌
-5. **Crossbar**|❌|✔️|❌|❌|❌|❌|❌
-6. **Increase data**|❌|✔️|❌|❌|❌|❌|❌
-7. **Reduce data**|✔️|✔️|❌|❌|❌|❌|❌
-8. **Extra params**|✔️|✔️|❌|✔️|✔️|✔️|✔️
-9. **Size info**|❌|✔️|✔️|✔️|❌|❌|❌
-10.**Prefetch**|❌|✔️|✔️|✔️|❌|❌|✔️
-11.**Different modules**|✔️|❌|✔️|❌|❌|❌|❌
-12.**Multiple modules**|✔️|❌|❌|✔️|❌|❌|❌
-13.**Read-back**|❌|❌|❌|❌|❌|❌|✔️
-14.**Multi-channel**|❌|❌|❌|✔️|❌|❌|❌
-15.**Partially sorted**|❌|❌|❌|✔️|❌|❌|❌
-16.**Fully sorted**|❌|✔️|❌|❌|❌|❌|❌
+**1 1-in-1-out**|✔️|❌|✔️|✔️|✔️|✔️|✔️
+**2 2-in-1-out**|❌|✔️|❌|❌|❌|❌|❌
+**3 64 bit**|❌|❌|❌|❌|✔️|✔️|✔️
+**4 First column**|❌|✔️|✔️|✔️|❌|❌|❌
+**5 Crossbar**|❌|✔️|❌|❌|❌|❌|❌
+**6 Increase data**|❌|✔️|❌|❌|❌|❌|❌
+**7 Reduce data**|✔️|✔️|❌|❌|❌|❌|❌
+**8 Extra params**|✔️|✔️|❌|✔️|✔️|✔️|✔️
+**9 Size info**|❌|✔️|✔️|✔️|❌|❌|❌
+**10 Prefetch**|❌|✔️|✔️|✔️|❌|❌|✔️
+**11 Different modules**|✔️|❌|✔️|❌|❌|❌|❌
+**12 Multiple modules**|✔️|❌|❌|✔️|❌|❌|❌
+**13 Read-back**|❌|❌|❌|❌|❌|❌|✔️
+**14 Multi-channel**|❌|❌|❌|✔️|❌|❌|❌
+**15 Partially sorted**|❌|❌|❌|✔️|❌|❌|❌
+**16 Fully sorted**|❌|✔️|❌|❌|❌|❌|❌
 
 Module classifications 1, 2 are important for assigning stream IDs.
 
