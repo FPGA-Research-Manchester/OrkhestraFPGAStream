@@ -35,7 +35,7 @@ Here more classifications are possible:
 
 - **64 bit** modules
 - **First column** modules
-- **Crossbar** module
+- **Crossbar** modules
 
 And the filter can have no additional classification showing the default behaviour of everything in terms of how the data should be placed is configurable and it will stay the same after the module.
 
@@ -71,9 +71,9 @@ As a side note, currently the merge sort module can only sort streams with ID 0.
 
 Here the classification can be as follows:
 
-- additional parameters
-- requires stream size
-- prefetching module
+- **additional parameters**
+- **requires stream size**
+- **prefetching modules**
 
 The chunk ID can be given with additional parameters and the bulk configuration is noteworthy in terms of generalising modules from the development view point.
 
@@ -94,7 +94,7 @@ The filter module can have different amounts of dnf clauses and comparison lanes
 ## Special characteristics
 
 []()  |read back|multi-channel|half-sorted input|sorted input
-:--|:-:|:-:
+:--|:-:|:-:|:-:|:-:
 **Filter**|❌|❌|❌|❌
 **Join**|❌|❌|❌|✔️
 **Linear Sort**|❌|❌|❌|❌
@@ -114,23 +114,23 @@ The DMA module is also an acceleration module like all the other modules in the 
 To sum all of this information the following abstract module ideas are present which different modules implement:
 
 []()  |Filter|Join|Linear Sort|Merge Sort|Addition|Multiplication|Global Sum
-:--						|:-:|:-:|:-:|:-:|:-:|:-:|:-:
-1. **1-in-1-out**		|✔️|❌|✔️|✔️|✔️|✔️|✔️
-2. **2-in-1-out**		|❌|✔️|❌|❌|❌|❌|❌
-3. **64 bit**			|❌|❌|❌|❌|✔️|✔️|✔️
-4. **First column**		|❌|✔️|✔️|✔️|❌|❌|❌
-5. **Crossbar**			|❌|✔️|❌|❌|❌|❌|❌
-6. **Increase data**	|❌|✔️|❌|❌|❌|❌|❌
-7. **Reduce data**		|✔️|✔️|❌|❌|❌|❌|❌
-8. **Extra params**		|✔️|✔️|❌|✔️|✔️|✔️|✔️
-9. **Size info**		|❌|✔️|✔️|✔️|❌|❌|❌
-10.**Prefetch**			|❌|✔️|✔️|✔️|❌|❌|✔️
+:--|:-:|:-:|:-:|:-:|:-:|:-:|:-:
+1. **1-in-1-out**|✔️|❌|✔️|✔️|✔️|✔️|✔️
+2. **2-in-1-out**|❌|✔️|❌|❌|❌|❌|❌
+3. **64 bit**|❌|❌|❌|❌|✔️|✔️|✔️
+4. **First column**|❌|✔️|✔️|✔️|❌|❌|❌
+5. **Crossbar**|❌|✔️|❌|❌|❌|❌|❌
+6. **Increase data**|❌|✔️|❌|❌|❌|❌|❌
+7. **Reduce data**|✔️|✔️|❌|❌|❌|❌|❌
+8. **Extra params**|✔️|✔️|❌|✔️|✔️|✔️|✔️
+9. **Size info**|❌|✔️|✔️|✔️|❌|❌|❌
+10.**Prefetch**|❌|✔️|✔️|✔️|❌|❌|✔️
 11.**Different modules**|✔️|❌|✔️|❌|❌|❌|❌
-12.**Multiple modules**	|✔️|❌|❌|✔️|❌|❌|❌
-13.**Read-back**		|❌|❌|❌|❌|❌|❌|✔️
-14.**Multi-channel**	|❌|❌|❌|✔️|❌|❌|❌
-15.**Partially sorted**	|❌|❌|❌|✔️|❌|❌|❌
-16.**Fully sorted**		|❌|✔️|❌|❌|❌|❌|❌
+12.**Multiple modules**|✔️|❌|❌|✔️|❌|❌|❌
+13.**Read-back**|❌|❌|❌|❌|❌|❌|✔️
+14.**Multi-channel**|❌|❌|❌|✔️|❌|❌|❌
+15.**Partially sorted**|❌|❌|❌|✔️|❌|❌|❌
+16.**Fully sorted**|❌|✔️|❌|❌|❌|❌|❌
 
 Module classifications 1, 2 are important for assigning stream IDs.
 
