@@ -3,17 +3,17 @@
 This page describes how to use the software and what kind of input is expected. The types of input needed are:
 
 - Query plan
- - JSON file with defined query nodes
+  - JSON file with defined query nodes
 - Input table data
- - Comma separated CSV files containing exported tables from the DBMS
+  - Comma separated CSV files containing exported tables from the DBMS
 - Data types configuration
- - INI file defining supported data types and their sizes
+  - INI file defining supported data types and their sizes
 - Module library
- - JSON file defining supporting bitstreams
+  - JSON file defining supporting bitstreams
 - Bitstream files
- - BIN & JSON files containing module bitstreams
+  - BIN & JSON files containing module bitstreams
 - Bitstream repository
- - JSON file defining available bitstreams for FOS
+  - JSON file defining available bitstreams for FOS
 
 ## Query nodes json
 
@@ -125,25 +125,25 @@ In the future this value could be required for a different reason. For pipelined
 Lastly, there are the actual operation parameters for different modules. How the parameters should look for each module is documented at the corresponding module setup classes. But brief overview is the following:
 
 - Filter
- - An integer choosing one of the hard coded configurations
+  - An integer choosing one of the hard coded configurations
 - Join
- - How much is the second stream shifted
+  - How much is the second stream shifted
 - Linear Sort
- - Nothing
+  - Nothing
 - Merge Sort
- - Max channel count 
- - Sorted sequence length
+  - Max channel count 
+  - Sorted sequence length
 - Addition
- - Chunk ID
- - Negation bitset
- - Literal value
-- Multiplication
- - N amount of vectors
   - Chunk ID
-  - Position 
+  - Negation bitset
+  - Literal value
+- Multiplication
+  - N amount of vectors
+    - Chunk ID
+    - Position 
 - Global Sum
- - Chunk ID
- - Position
+  - Chunk ID
+  - Position
 
 ## Available bitstream library
 
