@@ -33,7 +33,7 @@ To simplify it even further just the following in some form is needed:
 
 Currently the input is hard-coded but in the near future the input will look like the following
 
-```
+```JSON
 [{
 	"first_filter_node": {
 		"input": "first_input_table.csv",
@@ -168,10 +168,10 @@ The first two steps are also described in the [FOS tutorials](https://github.com
 
 First of all a .bif file is required. The contents of the .bif file have to be the following:
 
-```
+```JSON
 all:
 {
-  [YOUR_BITSTREAM_FILE].bit
+  your_bitstream_name.bit
 }
 ```
 
@@ -185,7 +185,7 @@ bootgen -image bitstream.bif -arch zynqmp -o bitstream.bin -w
 
 FOS uses this [repo.json](../resources/repo.json) file. The new bitstream name just has to get added to the list. You can see how it currently looks like below:
 
-```
+```JSON
 {
   "accelerators": [
     "DSPI_joining",
