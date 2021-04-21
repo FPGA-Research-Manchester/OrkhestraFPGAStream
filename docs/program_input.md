@@ -168,7 +168,7 @@ The first two steps are also described in the [FOS tutorials](https://github.com
 
 First of all a .bif file is required. The contents of the .bif file have to be the following:
 
-```JSON
+```
 all:
 {
   your_bitstream_name.bit
@@ -177,7 +177,7 @@ all:
 
 Then the .bif file can be given to the Bootgen tool with the following command:
 
-```
+```Shell
 bootgen -image bitstream.bif -arch zynqmp -o bitstream.bin -w
 ```
 

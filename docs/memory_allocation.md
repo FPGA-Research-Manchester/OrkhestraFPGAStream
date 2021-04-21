@@ -18,11 +18,11 @@ StaticAccelInst accelerator_instance_= prmanager.fpgaLoadStatic("DSPI_filtering"
 accelerator_instance_->pr_manager->accelRegs[register_offset_address/ 4] = register data
 ```
 
-The two instances are stored in the [MemoryManager class](../src/fpga_managing/memory_manager.hpp). The MemoryManager is instantiated at the beginning of the scheduling process in the [QueryManager class](../src/query_managing/query_manager.hpp) and is kept in memory throughout the process. The pointer to the MemoryManager instance is used in all module driver code to access configuration registers for both read and write operations. 
+In DBMStoDSPI the two instances are stored in the [MemoryManager class](../src/fpga_managing/memory_manager.hpp). The MemoryManager is instantiated at the beginning of the scheduling process in the [QueryManager class](../src/query_managing/query_manager.hpp) and is kept in memory throughout the process. The pointer to the MemoryManager instance is used in all module driver code to access configuration registers for both read and write operations. 
 
 ## Pinning DDR memory on the FPGA
 
-But register space memory is not the only memory aree we want to access. We also need access to the DDR memory of the board. This is required to stream larger datasets through the interface on the FPGA. For this we are using the [Udmalib](https://github.com/FPGA-Research-Manchester/fos/blob/fdac37e188e217293d296d9973c22500c8a4367c/udmalib/udma.h) library from FOS. An example on how the *udmabuf* area can be used:
+But register space memory is not the only memory area we want to access. We also need access to the DDR memory of the board. This is required to stream larger datasets through the interface on the FPGA. For this we are using the [Udmalib](https://github.com/FPGA-Research-Manchester/fos/blob/fdac37e188e217293d296d9973c22500c8a4367c/udmalib/udma.h) library from FOS. An example on how the memory area accessible through the *udmabuf* device can be used:
 
 ```C++
 // Instantite repo.
@@ -44,7 +44,7 @@ The UdmaDevice can be used to check the allocated memory size as well. The UdmaR
 
 How much memory is allocated by the UdmaDevices per *map()* function call is defined in the [setupUdma.sh](https://github.com/FPGA-Research-Manchester/fos/blob/f457cc33e99c606ca18e06abd669c237b71055ba/udmalib/setupUdma.sh#L2) script. How many devices will be available is also defined in the same script. This *setupUdma.sh* has to be run on the system before running this application. The script will use the **insmod** command to create the *udmabuf* devices. To remove the new devices the **rmmod** command can be used. How to add and remove devices is demonstrated in the below image:
 
-![Removing and adding devices](./docs/create_remove_device.png)
+![Removing and adding devices](./create_remove_device.png)
 
 These device allocations should also be visible with the **dmesg** command. To see how much memory is available and how much of that is used by the *udmabuf* devices the following command can be used: 
 
@@ -55,10 +55,10 @@ cat /proc/meminfo | grep -i cma
 ### But how can I use even more memory?
 
 Now to explain in more detail what does this *udmabuf* device actually do. Here is the documentation for the renamed [udmabuf library](https://github.com/ikwzm/udmabuf). 
-"u-dma-buf is a Linux device driver that allocates contiguous memory blocks in the kernel space as DMA buffers and makes them available from the user space"
-This contiguous memory blocks can only be allocated in the *cma* space. This cma space is in the kernel space. For 32-bit processors with 4 GB of memory it's 1GB kernel space and 3GB userspace. For 64-bit it's fifty-fifty. The ZCU102 used for this development uses a 64-bit processor. So we should be able to use up to 2GB memory. Problem is that kernel space is used for other stuff as well including configuring the FPGA. Thus we tested changing the size of the cma in the kernel space. Up to 1792m cma size was successfully configured. 
+"*u-dma-buf is a Linux device driver that allocates contiguous memory blocks in the kernel space as DMA buffers and makes them available from the user space*"
+This contiguous memory block can only be allocated in the *cma* space. This *cma* space is in the kernel space. For 32-bit processors with 4 GB of memory it's 1GB kernel space and 3GB userspace. For 64-bit it's fifty-fifty. The ZCU102 used for this development uses a 64-bit processor. So we should be able to use up to 2GB memory. Problem is that kernel space is used for other stuff as well including configuring the FPGA. Thus we tested changing the size of the *cma* in the kernel space. Up to 1792m *cma* size was successfully configured. 
 
-The parameter was found from [this Android document](https://android.googlesource.com/kernel/exynos/+/android-exynos-3.4/Documentation/contiguous-memory.txt?fbclid=IwAR3aeX64eQU6sRFk3v_BzjHhtAP08om-5qfM91ztbjUoCQrQJmFopKlJlGY#310). How the bootimage can be changed is using **u-boot-tools** and **device-tree-compiler**. Then the following script can be used to unpack the boot image into *kern.img* and the device tree file (dtb). The dtb file is also converted into a human readable DTS file.
+The parameter was found from [this Android document](https://android.googlesource.com/kernel/exynos/+/android-exynos-3.4/Documentation/contiguous-memory.txt?fbclid=IwAR3aeX64eQU6sRFk3v_BzjHhtAP08om-5qfM91ztbjUoCQrQJmFopKlJlGY#310). How the bootimage can be changed is using **u-boot-tools** and **device-tree-compiler**. Then the following script can be used to unpack the boot image into the *kern.img* and the device tree file (DTB). The DTB file is also converted then into a human readable DTS file for us the edit.
 
 ```Shell
 #!/bin/bash
@@ -76,7 +76,7 @@ echo Converting to device tree source
 dtc -I dtb -O dts ./system.dtb -o ./system.dts
 ```
 
-Then the *bootargs* parameter can be changed by appending "cma=1792m" to set the cma size. Next the device tree has to be packed with the kernel image again and overwrite the current boot image. That can be done with this script:
+Then the *bootargs* parameter can be changed by appending "cma=1792m" to set the *cma* size. Next the device tree has to be packed with the kernel image again. Then the current boot image needs to bet overwritten. All that can be done with this script:
 
 ```Shell
 #!/bin/bash
@@ -99,7 +99,7 @@ echo install new uboot image
 sudo cp ./image.ub $UBOOT
 ```
 
-After rebooting the system the cmdline value could be seen to be changed to the following:
+After rebooting the system, the **cmdline** value should be like the following:
 
 ```Shell
 cat /proc/cmdline
