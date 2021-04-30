@@ -69,6 +69,8 @@ The current driver set is supposed to support the characteristics described in t
 
 ## Conclusion
 
-As a next step this platform would need an implementation for a different use case. The input files don't have to be as big as they are for DBMS queries. But there could be more. And then there would be a different balance between the amount of bulk data and parameterisation. But the whole platform is similar to SIMD instructions. You jsut have to setup both the data and the instructions in an optimised pipeline and execute.
+As a next big step this platform would need an implementation for a different use case. The input files don't have to be as big as they are for DBMS queries. But there could be more. And then there would be a different balance between the amount of bulk data and parameterisation. But the whole platform is similar to SIMD instructions. You just have to setup both the data and the instructions in an optimised pipeline and execute.
+
+Thus the next concrete step would be to redesign the whole stack and move the DSBMS acceleration specifications only to the HW level and keep the upper levels of abstraction generalised. The interfaces and the data structures to do that are explained in the next [end vision specification documentation](./vision_implementation_details.md).
 
 [Back to the main page](./README.md)
