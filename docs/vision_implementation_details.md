@@ -10,11 +10,19 @@ To summarise, the system promises to be flexible enough to be able to support an
 
 Here we can see the static parts of the system in blue. The replacable parts of the system in orange and the input for each run given in white. How the FSM operates is shown in the next section.
 
+From the graph you can see that the proposed platfomr can be used in many different ways. The input is a set of trees consisting of operation nodes. This means that both linear problem and/or parallelisable problem inputs can be used with the system. A brief example with a DBMS software client would be to get query execution time estimations with a few operations which don't trigger the HW is called first with multiple various functions and then a query tree is given to be executed in the next invocation of the same platform.
+
+With the proposed system there are still a lot of different aspects to explore and consider: **security**, **virtual memory management**, **multi-tenancy** (or multiple clients), **software fallback**, **using multiple interfaces with FOS scheduling**, **not using FOS** and etc... 
+
 ## Extensible data-flow to guarantee deterministic execution
 
 ![Defined Execution Manager FSM](./fsm_graph.svg)
 
 Here we can see the parts of the scheduler in blue and the parts of the data, acceleration and memory manager in yellow. The system will fully exhaust searching all options before crashing unless the input is given in a way such that the different parsers and checkers did not catch any errors. You can now see how different schedulers can implement different strategies. The way how next available nodes or schedule-ready nodes are chosen can be easily costumised without changing how the rest of the system operates on. So it is simple to test and implement new schedulers with wildly different strategies while still avoiding large scale changes to the rest of the platform which is the main goal of the platform. Easy to test out novel acceleration options.
+
+The read data block could be done such that if some data has to be used multiple times it won't have to be written and read each time. For example, some memory block could be saved for later because the data written there still needs to be processed further.
+
+Finding new nodes can be done using different strategies as well. Available resources on the HW and the FPGA can be tried to be used as well as possible in a way such that if there are two different problems being executed in parallel modules which use a lot BRAMs can be scheduled for on problem and modules which use a lot of DSP blocks can be scheduled for the second problem.
 
 ### Example from the DBMS operation acceleration case study
 
