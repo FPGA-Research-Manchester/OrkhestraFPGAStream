@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <tuple>
 #include <vector>
 
 namespace dbmstodspi {
@@ -28,8 +29,28 @@ struct StreamDataParameters {
   /// How many records will there be for each channel.
   const int records_per_channel = -1;
 
+  //auto operator==(const StreamDataParameters& rhs) const -> bool {
+  //  return stream_id == rhs.stream_id &&
+  //         stream_record_size == rhs.stream_record_size &&
+  //         stream_record_count == rhs.stream_record_count &&
+  //         physical_address == rhs.physical_address &&
+  //         stream_specification == rhs.stream_specification &&
+  //         input_chunks_per_record == rhs.input_chunks_per_record &&
+  //         max_channel_count == rhs.max_channel_count &&
+  //         records_per_channel == rhs.records_per_channel;
+  //}
+
   auto operator<(const StreamDataParameters& comparable) const -> bool {
-    return stream_id < comparable.stream_id;
+    return std::tie(stream_id, stream_record_size, stream_record_count,
+                    physical_address, stream_specification,
+                    input_chunks_per_record, max_channel_count,
+                    records_per_channel) <
+           std::tie(comparable.stream_id, comparable.stream_record_size,
+                    comparable.stream_record_count, comparable.physical_address,
+                    comparable.stream_specification,
+                    comparable.input_chunks_per_record,
+                    comparable.max_channel_count,
+                    comparable.records_per_channel);
   }
 };
 

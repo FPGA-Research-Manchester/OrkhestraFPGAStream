@@ -31,10 +31,7 @@
 
 using namespace dbmstodspi::fpga_managing;
 
-// Eventually the idea would be to add operation type to StreamDataParameters.
-// Then the modules and streams can be set up accordingly.
 void FPGAManager::SetupQueryAcceleration(
-    const std::vector<operation_types::QueryOperation>& available_modules,
     const std::vector<AcceleratedQueryNode>& query_nodes) {
   dma_engine_.GlobalReset();
   read_back_modules_.clear();
@@ -48,8 +45,9 @@ void FPGAManager::SetupQueryAcceleration(
   std::vector<StreamDataParameters> input_streams;
   std::vector<StreamDataParameters> output_streams;
   for (const auto& query_node : query_nodes) {
-    bool is_multichannel_stream = query_node.operation_type ==
-                                  operation_types::QueryOperation::kMergeSort;
+    bool is_multichannel_stream =
+        query_node.operation_type ==
+        operation_types::QueryOperationType::kMergeSort;
     FindIOStreams(query_node.input_streams, input_streams,
                   query_node.operation_parameters, is_multichannel_stream,
                   input_streams_active_status_);
@@ -75,18 +73,9 @@ void FPGAManager::SetupQueryAcceleration(
     ila_module_.value().StartILAs();
   }
 
-  for (int node_index = 0; node_index < available_modules.size();
-       node_index++) {
-    // TODO: Find out which module is associated with which query node. Current
-    // method doesn't work with multiple identical modules!
-    const AcceleratedQueryNode* current_query_node = nullptr;
-    for (const auto& query_node : query_nodes) {
-      if (query_node.operation_type == available_modules[node_index]) {
-        current_query_node = &query_node;
-      }
-    }
+  for (int node_index = 0; node_index < query_nodes.size(); node_index++) {
     int module_location = node_index + 1;
-    auto query_node = *current_query_node;
+    const auto& query_node = query_nodes.at(node_index);
 
     // TODO: For each of the operations different properties have to be written
     // down to add classifications. The operation_parameters can be generalised
@@ -95,8 +84,8 @@ void FPGAManager::SetupQueryAcceleration(
     // Assumptions are taken that the input and output streams are defined
     // correctly and that the correct amount of streams have been given for each
     // operation.
-    switch (query_node.operation_type) {
-      case operation_types::QueryOperation::kFilter: {
+    switch (query_nodes.at(node_index).operation_type) {
+      case operation_types::QueryOperationType::kFilter: {
         modules::Filter filter_module(memory_manager_, module_location);
         FilterSetup::SetupFilterModule(filter_module,
                                        query_node.input_streams[0].stream_id,
@@ -104,7 +93,7 @@ void FPGAManager::SetupQueryAcceleration(
                                        query_node.operation_parameters);
         break;
       }
-      case operation_types::QueryOperation::kJoin: {
+      case operation_types::QueryOperationType::kJoin: {
         modules::Join join_module(memory_manager_, module_location);
         JoinSetup::SetupJoinModule(
             join_module, query_node.input_streams[0].stream_id,
@@ -116,14 +105,14 @@ void FPGAManager::SetupQueryAcceleration(
             query_node.operation_parameters.at(0).at(0));
         break;
       }
-      case operation_types::QueryOperation::kMergeSort: {
+      case operation_types::QueryOperationType::kMergeSort: {
         modules::MergeSort merge_sort_module(memory_manager_, module_location);
         MergeSortSetup::SetupMergeSortModule(
             merge_sort_module, query_node.input_streams[0].stream_id,
             GetStreamRecordSize(query_node.input_streams[0]), 0, true);
         break;
       }
-      case operation_types::QueryOperation::kLinearSort: {
+      case operation_types::QueryOperationType::kLinearSort: {
         modules::LinearSort linear_sort_module(memory_manager_,
                                                module_location);
         LinearSortSetup::SetupLinearSortModule(
@@ -131,14 +120,14 @@ void FPGAManager::SetupQueryAcceleration(
             GetStreamRecordSize(query_node.input_streams[0]));
         break;
       }
-      case operation_types::QueryOperation::kAddition: {
+      case operation_types::QueryOperationType::kAddition: {
         modules::Addition addition_module(memory_manager_, module_location);
         AdditionSetup::SetupAdditionModule(
             addition_module, query_node.input_streams[0].stream_id,
             query_node.operation_parameters);
         break;
       }
-      case operation_types::QueryOperation::kMultiplication: {
+      case operation_types::QueryOperationType::kMultiplication: {
         modules::Multiplication multiplication_module(memory_manager_,
                                                       module_location);
         MultiplicationSetup::SetupMultiplicationModule(
@@ -146,7 +135,7 @@ void FPGAManager::SetupQueryAcceleration(
             query_node.operation_parameters);
         break;
       }
-      case operation_types::QueryOperation::kAggregationSum: {
+      case operation_types::QueryOperationType::kAggregationSum: {
         auto aggregation_module = std::make_unique<modules::AggregationSum>(
             memory_manager_, module_location);
         AggregationSumSetup::SetupAggregationSum(

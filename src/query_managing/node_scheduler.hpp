@@ -24,6 +24,8 @@ class NodeScheduler {
    * begin.
    * @param supported_accelerator_bitstreams Map of hardware module combinations
    * which have a corresponding bitstream.
+   * @param existing_modules_library Map of hardware modules and the available
+   * variations with different computational capacity values.
    */
   static void FindAcceleratedQueryNodeSets(
       std::queue<std::pair<query_scheduling_data::ConfigurableModulesVector,
@@ -31,22 +33,24 @@ class NodeScheduler {
           *accelerated_query_node_sets,
       std::vector<query_scheduling_data::QueryNode> starting_nodes,
       const std::map<query_scheduling_data::ConfigurableModulesVector,
-                     std::string> &supported_accelerator_bitstreams);
+                     std::string> &supported_accelerator_bitstreams,
+      const std::map<fpga_managing::operation_types::QueryOperationType,
+                     std::vector<std::vector<int>>> &existing_modules_library);
 
  private:
   static void RemoveLinkedNodes(
       std::vector<query_scheduling_data::QueryNode *> &linked_nodes,
       std::vector<query_scheduling_data::QueryNode> &current_query_nodes);
   static auto IsModuleSetSupported(
-      query_scheduling_data::ConfigurableModulesVector module_set,
+      const query_scheduling_data::ConfigurableModulesVector &module_set,
       const std::map<query_scheduling_data::ConfigurableModulesVector,
                      std::string> &supported_accelerator_bitstreams) -> bool;
   static auto IsNodeIncluded(
-      std::vector<query_scheduling_data::QueryNode> node_vector,
-      query_scheduling_data::QueryNode searched_node) -> bool;
+      const std::vector<query_scheduling_data::QueryNode> &node_vector,
+      const query_scheduling_data::QueryNode &searched_node) -> bool;
   static auto IsNodeAvailable(
-      std::vector<query_scheduling_data::QueryNode> scheduled_nodes,
-      query_scheduling_data::QueryNode current_node) -> bool;
+      const std::vector<query_scheduling_data::QueryNode> &scheduled_nodes,
+      const query_scheduling_data::QueryNode &current_node) -> bool;
   static auto FindNextAvailableNode(
       std::vector<query_scheduling_data::QueryNode> &already_scheduled_nodes,
       std::vector<query_scheduling_data::QueryNode> &starting_nodes)
@@ -63,17 +67,32 @@ class NodeScheduler {
       std::vector<query_scheduling_data::QueryNode> &scheduled_queries,
       std::vector<query_scheduling_data::QueryNode> &starting_nodes,
       const std::map<query_scheduling_data::ConfigurableModulesVector,
-                     std::string> &supported_accelerator_bitstreams);
-  static auto FindSuitableModulePosition(
+                     std::string> &supported_accelerator_bitstreams,
+      const std::map<fpga_managing::operation_types::QueryOperationType,
+                     std::vector<std::vector<int>>> &existing_modules_library);
+  static auto FindSuitableModuleCombination(
       query_scheduling_data::QueryNode &current_node,
       std::vector<query_scheduling_data::QueryNode> &current_query_nodes,
       query_scheduling_data::ConfigurableModulesVector &current_modules_vector,
       const std::map<query_scheduling_data::ConfigurableModulesVector,
-                     std::string> &supported_accelerator_bitstreams) -> int;
+                     std::string> &supported_accelerator_bitstreams,
+      const std::map<fpga_managing::operation_types::QueryOperationType,
+                     std::vector<std::vector<int>>> &existing_modules_library)
+      -> query_scheduling_data::ConfigurableModulesVector;
   static auto CreateNewModulesVector(
-      fpga_managing::operation_types::QueryOperation query_operation,
+      fpga_managing::operation_types::QueryOperationType query_operation,
       int current_position,
-      query_scheduling_data::ConfigurableModulesVector current_modules_vector)
+      query_scheduling_data::ConfigurableModulesVector current_modules_vector,
+      std::vector<int> module_parameters)
+      -> query_scheduling_data::ConfigurableModulesVector;
+  static auto CheckModuleParameterSupport(
+      std::vector<int> module_parameters,
+      query_scheduling_data::ConfigurableModulesVector &current_modules_vector,
+      int module_position, int parameter_option_index,
+      fpga_managing::operation_types::QueryOperationType query_operation,
+      std::vector<std::vector<int>> current_module_possible_parameters,
+      const std::map<query_scheduling_data::ConfigurableModulesVector,
+                     std::string> &supported_accelerator_bitstreams)
       -> query_scheduling_data::ConfigurableModulesVector;
 };
 
