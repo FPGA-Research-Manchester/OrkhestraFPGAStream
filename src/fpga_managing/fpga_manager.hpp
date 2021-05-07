@@ -1,9 +1,9 @@
 #pragma once
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
-#include <memory>
 
 #include "accelerated_query_node.hpp"
 #include "aggregation_sum.hpp"
@@ -11,8 +11,8 @@
 #include "filter.hpp"
 #include "ila.hpp"
 #include "memory_manager_interface.hpp"
-#include "stream_data_parameters.hpp"
 #include "read_back_module_interface.hpp"
+#include "stream_data_parameters.hpp"
 
 namespace dbmstodspi {
 namespace fpga_managing {
@@ -26,13 +26,10 @@ class FPGAManager {
   /**
    * @brief Reset and setup all of the loaded modules and the DMA engine with
    * the input and output crossbars.
-   * @param available_modules Which modules have been loaded in the current
-   * bitstream.
    * @param query_nodes Which query nodes will be run with the current
    * bitstream.
    */
   void SetupQueryAcceleration(
-      const std::vector<operation_types::QueryOperation>& available_modules,
       const std::vector<AcceleratedQueryNode>& query_nodes);
   /**
    * @brief Start the output controller and wait for the controllers to finish.
@@ -55,7 +52,8 @@ class FPGAManager {
   MemoryManagerInterface* memory_manager_;
   modules::DMA dma_engine_;
   std::optional<ILA> ila_module_;
-  std::vector<std::unique_ptr<modules::ReadBackModuleInterface>> read_back_modules_;
+  std::vector<std::unique_ptr<modules::ReadBackModuleInterface>>
+      read_back_modules_;
   std::vector<std::vector<int>> read_back_parameters_;
 
   void FindActiveStreams(std::vector<int>& active_input_stream_ids,
@@ -77,8 +75,7 @@ class FPGAManager {
 
   static auto ReadModuleResultRegisters(
       std::unique_ptr<modules::ReadBackModuleInterface> read_back_module,
-      int position)
-      -> double;
+      int position) -> double;
 };
 
 }  // namespace fpga_managing

@@ -23,7 +23,7 @@ struct NodeOperationParameters {
   std::vector<std::vector<int>> output_stream_parameters;
   std::vector<std::vector<int>> operation_parameters;
 
-  bool operator==(const NodeOperationParameters &rhs) const {
+  auto operator==(const NodeOperationParameters &rhs) const -> bool {
     return input_stream_parameters == rhs.input_stream_parameters &&
            output_stream_parameters == rhs.output_stream_parameters &&
            operation_parameters == rhs.operation_parameters;
@@ -39,7 +39,7 @@ struct QueryNode {
   /// Expected data files.
   std::vector<std::string> output_data_definition_files;
   /// Query operation.
-  fpga_managing::operation_types::QueryOperation operation_type;
+  fpga_managing::operation_types::QueryOperationType operation_type;
   /// Pointers to the next query nodes.
   std::vector<query_scheduling_data::QueryNode *> next_nodes;
   /// Pointers to the prerequisite query nodes
@@ -47,7 +47,7 @@ struct QueryNode {
   /// Operation parameters to configure the streams with modules.
   NodeOperationParameters operation_parameters;
 
-  bool operator==(const QueryNode &rhs) const {
+  auto operator==(const QueryNode &rhs) const -> bool {
     return input_data_definition_files == rhs.input_data_definition_files &&
            output_data_definition_files == rhs.output_data_definition_files &&
            operation_type == rhs.operation_type &&
@@ -61,46 +61,65 @@ struct QueryNode {
 typedef std::vector<fpga_managing::operation_types::QueryOperation>
     ConfigurableModulesVector;
 
+const std::map<fpga_managing::operation_types::QueryOperationType,
+               std::vector<std::vector<int>>>
+    existing_modules = {
+        {fpga_managing::operation_types::QueryOperationType::kFilter,
+         {{8, 16, 32}, {1, 2, 4}}},
+        {fpga_managing::operation_types::QueryOperationType::kJoin, {}},
+        {fpga_managing::operation_types::QueryOperationType::kMergeSort,
+         {{64}}},
+        {fpga_managing::operation_types::QueryOperationType::kLinearSort,
+         {{512, 1024}}},
+        {fpga_managing::operation_types::QueryOperationType::kAddition, {}},
+        {fpga_managing::operation_types::QueryOperationType::kMultiplication,
+         {}},
+        {fpga_managing::operation_types::QueryOperationType::kAggregationSum,
+         {}}};
+
 /// Map of supported collections of operations.
 const std::map<ConfigurableModulesVector, std::string>
     supported_accelerator_bitstreams = {
-        {{fpga_managing::operation_types::QueryOperation::kFilter}, "DSPI_filtering"},
+        {{{fpga_managing::operation_types::QueryOperationType::kFilter, {32, 4}}}, "DSPI_filtering"},
 
-        {{fpga_managing::operation_types::QueryOperation::kJoin}, "DSPI_joining"},
+        {{{fpga_managing::operation_types::QueryOperationType::kJoin, {}}},
+         "DSPI_joining"},
 
-        /*{{fpga_managing::operation_types::QueryOperation::kMergeSort,
-          fpga_managing::operation_types::QueryOperation::kMergeSort},
+        /*{{{fpga_managing::operation_types::QueryOperationType::kMergeSort, {64}},{
+          fpga_managing::operation_types::QueryOperationType::kMergeSort, {64}}},
          "DSPI_double_merge_sorting"},*/
 
-        {{fpga_managing::operation_types::QueryOperation::kMergeSort}, "DSPI_merge_sorting"},
+        {{{fpga_managing::operation_types::QueryOperationType::kMergeSort,
+           {64}}},
+         "DSPI_merge_sorting"},
 
-        {{fpga_managing::operation_types::QueryOperation::kLinearSort}, "DSPI_linear_sorting"},
+        {{{fpga_managing::operation_types::QueryOperationType::kLinearSort, {512}}}, "DSPI_linear_sorting"},
 
-        {{fpga_managing::operation_types::QueryOperation::kAddition}, "DSPI_addition"},
+        {{{fpga_managing::operation_types::QueryOperationType::kAddition, {}}}, "DSPI_addition"},
 
-        {{fpga_managing::operation_types::QueryOperation::kMultiplication}, "DSPI_multiplication"},
+        {{{fpga_managing::operation_types::QueryOperationType::kMultiplication, {}}}, "DSPI_multiplication"},
 
-        {{fpga_managing::operation_types::QueryOperation::kAggregationSum}, "DSPI_aggregation_sum"},
+        {{{fpga_managing::operation_types::QueryOperationType::kAggregationSum, {}}}, "DSPI_aggregation_sum"},
 
         {{}, "DSPI_empty"},
 
-        //{{fpga_managing::operation_types::QueryOperation::kMergeSort,
-        //  fpga_managing::operation_types::QueryOperation::kJoin, 
-        //  fpga_managing::operation_types::QueryOperation::kFilter},
+        //{{{fpga_managing::operation_types::QueryOperationType::kMergeSort,{64}},
+        //  {fpga_managing::operation_types::QueryOperationType::kJoin,{}}, 
+        //  {fpga_managing::operation_types::QueryOperationType::kFilter,{32, 4}}},
         // "DSPI_sort_join_filter"},
         // // Needed to find the triple bitstream
-        // {{fpga_managing::operation_types::QueryOperation::kMergeSort,
-        //  fpga_managing::operation_types::QueryOperation::kJoin},
+        // {{{fpga_managing::operation_types::QueryOperationType::kMergeSort},{},
+        //  {fpga_managing::operation_types::QueryOperationType::kJoin},{}},
         // "nonsense"},
 
         // DNF 8 CMP 1 
-        /*{{fpga_managing::operation_types::QueryOperation::kFilter,
-          fpga_managing::operation_types::QueryOperation::kJoin},
+        /*{{{fpga_managing::operation_types::QueryOperationType::kFilter,{8,1}},
+          {fpga_managing::operation_types::QueryOperationType::kJoin,{}}},
          "DSPI_filter_join"},*/
 
         // DNF 16 CMP 2 + 1024 way sort
-        /*{{fpga_managing::operation_types::QueryOperation::kFilter,
-          fpga_managing::operation_types::QueryOperation::kLinearSort},
+        /*{{{fpga_managing::operation_types::QueryOperationType::kFilter,{16,2}},
+          fpga_managing::operation_types::QueryOperationType::kLinearSort{1024}},
          "DSPI_filtering_linear_sort"}*/};
 }  // namespace query_scheduling_data
 

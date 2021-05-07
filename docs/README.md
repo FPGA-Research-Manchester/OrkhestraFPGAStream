@@ -14,3 +14,5 @@ Different concepts on how to use and how does the software work with the hardwar
   - Explanation of how memory is allocated using FOS. And how the Linux kernel memory is usable in userspace.
 - [End vision](./vision.md)
   - Brief explanation how this software could be extended to become a fully configurable engine not only supporting the current DBMS workflow.
+- [Defined interfaces](./vision_implementation_details.md)
+  - Specification document defining the required data structures, interfaces and data-flow to be able to implement the end vision.

@@ -86,7 +86,8 @@ void QueryManager::RunQueries(
 
   NodeScheduler::FindAcceleratedQueryNodeSets(
       &query_node_runs_queue, std::move(starting_query_nodes),
-      query_scheduling_data::supported_accelerator_bitstreams);
+      query_scheduling_data::supported_accelerator_bitstreams,
+      query_scheduling_data::existing_modules);
 
   while (!query_node_runs_queue.empty()) {
     const auto executable_query_nodes = query_node_runs_queue.front();
@@ -170,8 +171,7 @@ void QueryManager::RunQueries(
     }
 
     // Run query
-    fpga_manager.SetupQueryAcceleration(executable_query_nodes.first,
-                                        query_nodes);
+    fpga_manager.SetupQueryAcceleration(query_nodes);
     /*std::cout << "Running query!" << std::endl;*/
     auto result_sizes = fpga_manager.RunQueryAcceleration();
     /*std::cout << "Query done!" << std::endl;*/
