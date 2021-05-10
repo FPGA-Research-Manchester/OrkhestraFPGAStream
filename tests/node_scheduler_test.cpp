@@ -2,6 +2,8 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <memory>
 namespace {
 
 const int kSomeInteger = 2;
@@ -150,16 +152,22 @@ TEST(NodeSchedulerTest, PassthroughNodeIsUsedInTheSameRun) {
 }
 
 TEST(NodeSchedulerTest, TwoPipelinedNodesWereFoundWithDifferentRuns) {
-  Node first_query = {
-      {"Some_input.csv"}, {"Some_output.csv"},
-      OpType::kJoin,      {nullptr},
-      {nullptr},          {{{}}, {{}, {kSomeInteger}}, {{kSomeInteger}}}};
-  Node second_query = {
-      {"Some_input.csv"}, {"Some_output.csv"},
-      OpType::kMergeSort, {nullptr},
-      {nullptr},          {{{}}, {{}, {kSomeInteger}}, {{kSomeInteger}}}};
-  first_query.next_nodes = {&second_query};
-  second_query.previous_nodes = {&first_query};
+  auto first_query = std::make_shared<Node>(
+      Node{{"Some_input.csv"},
+           {"Some_output.csv"},
+           OpType::kJoin,
+           {nullptr},
+           {nullptr},
+           {{{}}, {{}, {kSomeInteger}}, {{kSomeInteger}}}});
+  auto second_query = std::make_shared<Node>(
+      Node{{"Some_input.csv"},
+           {"Some_output.csv"},
+           OpType::kMergeSort,
+           {nullptr},
+           {nullptr},
+           {{{}}, {{}, {kSomeInteger}}, {{kSomeInteger}}}});
+  first_query->next_nodes = {second_query};
+  second_query->previous_nodes = {first_query};
 
   const std::map<ModulesCombo, std::string> supported_bitstreams = {
       {{{OpType::kMergeSort, {}}}, "Some_bitstream"},
@@ -178,11 +186,11 @@ TEST(NodeSchedulerTest, TwoPipelinedNodesWereFoundWithDifferentRuns) {
   std::queue<std::pair<ModulesCombo, std::vector<Node>>> scheduling_results;
 
   dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
-      &scheduling_results, {first_query}, supported_bitstreams,
+      &scheduling_results, {*first_query}, supported_bitstreams,
       existing_modules);
 
-  auto expected_first_query = first_query;
-  auto expected_second_query = second_query;
+  auto expected_first_query = *first_query;
+  auto expected_second_query = *second_query;
   expected_first_query.next_nodes = {nullptr};
   expected_second_query.previous_nodes = {nullptr};
 
@@ -193,16 +201,22 @@ TEST(NodeSchedulerTest, TwoPipelinedNodesWereFoundWithDifferentRuns) {
 }
 
 TEST(NodeSchedulerTest, TwoPipelinedNodesWereFoundWithinTheSameRun) {
-  Node first_query = {
-      {"Some_input.csv"}, {"Some_output.csv"},
-      OpType::kJoin,      {nullptr},
-      {nullptr},          {{{}}, {{}, {kSomeInteger}}, {{kSomeInteger}}}};
-  Node second_query = {
-      {"Some_input.csv"}, {"Some_output.csv"},
-      OpType::kMergeSort, {nullptr},
-      {nullptr},          {{{}}, {{}, {kSomeInteger}}, {{kSomeInteger}}}};
-  first_query.next_nodes = {&second_query};
-  second_query.previous_nodes = {&first_query};
+  auto first_query = std::make_shared<Node>(
+      Node{{"Some_input.csv"},
+           {"Some_output.csv"},
+           OpType::kJoin,
+           {nullptr},
+           {nullptr},
+           {{{}}, {{}, {kSomeInteger}}, {{kSomeInteger}}}});
+  auto second_query = std::make_shared<Node>(
+      Node{{"Some_input.csv"},
+           {"Some_output.csv"},
+           OpType::kMergeSort,
+           {nullptr},
+           {nullptr},
+           {{{}}, {{}, {kSomeInteger}}, {{kSomeInteger}}}});
+  first_query->next_nodes = {second_query};
+  second_query->previous_nodes = {first_query};
 
   const std::map<ModulesCombo, std::string> supported_bitstreams = {
       {{{OpType::kMergeSort, {}}}, "Some_bitstream"},
@@ -222,12 +236,12 @@ TEST(NodeSchedulerTest, TwoPipelinedNodesWereFoundWithinTheSameRun) {
   std::queue<std::pair<ModulesCombo, std::vector<Node>>> scheduling_results;
 
   dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
-      &scheduling_results, {first_query}, supported_bitstreams,
+      &scheduling_results, {*first_query}, supported_bitstreams,
       existing_modules);
 
   std::queue<std::pair<ModulesCombo, std::vector<Node>>> expected_results;
   expected_results.push({{{OpType::kJoin, {}}, {OpType::kMergeSort, {}}},
-                         {first_query, second_query}});
+                         {*first_query, *second_query}});
   ASSERT_EQ(expected_results, scheduling_results);
 }
 

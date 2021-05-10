@@ -1,6 +1,6 @@
 #pragma once
 #include <map>
-#include <optional>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -41,9 +41,9 @@ struct QueryNode {
   /// Query operation.
   fpga_managing::operation_types::QueryOperationType operation_type;
   /// Pointers to the next query nodes.
-  std::vector<query_scheduling_data::QueryNode *> next_nodes;
+  std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> next_nodes;
   /// Pointers to the prerequisite query nodes
-  std::vector<query_scheduling_data::QueryNode *> previous_nodes;
+  std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> previous_nodes;
   /// Operation parameters to configure the streams with modules.
   NodeOperationParameters operation_parameters;
 

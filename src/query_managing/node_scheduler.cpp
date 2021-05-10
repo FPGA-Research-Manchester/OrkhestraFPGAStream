@@ -50,10 +50,10 @@ void NodeScheduler::FindAcceleratedQueryNodeSets(
 // Method to remove next or previous nodes from a node once it has been
 // scheduled
 void NodeScheduler::RemoveLinkedNodes(
-    std::vector<query_scheduling_data::QueryNode*>& linked_nodes,
+    std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>& linked_nodes,
     std::vector<query_scheduling_data::QueryNode>& current_query_nodes) {
   for (int i = 0; i < linked_nodes.size(); i++) {
-    auto* linked_node = linked_nodes[i];
+    auto linked_node = linked_nodes[i];
     if (linked_node != nullptr &&
         std::find(current_query_nodes.begin(), current_query_nodes.end(),
                   *linked_node) == current_query_nodes.end()) {
