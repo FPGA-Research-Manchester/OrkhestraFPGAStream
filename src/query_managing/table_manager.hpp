@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <map>
 #include <memory>
 #include <string>
@@ -7,6 +8,7 @@
 #include "data_manager.hpp"
 #include "memory_block_interface.hpp"
 #include "memory_manager.hpp"
+#include "query_acceleration_constants.hpp"
 #include "stream_data_parameters.hpp"
 #include "table_data.hpp"
 
@@ -80,7 +82,9 @@ class TableManager {
       const std::vector<fpga_managing::StreamDataParameters>&
           output_stream_parameters,
       std::vector<data_managing::TableData>& output_tables,
-      const std::vector<int>& result_record_counts,
+      const std::array<
+          int, fpga_managing::query_acceleration_constants::kMaxIOStreamCount>&
+          result_record_counts,
       std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
           allocated_memory_blocks);
 

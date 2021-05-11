@@ -77,7 +77,9 @@ class DMA : public AccelerationModule, public DMAInterface {
    * @param stream_active Array of booleans showing which streams should start
    * streaming towards the modules.
    */
-  void StartInputController(bool stream_active[16]) override;
+  void StartInputController(
+      std::bitset<query_acceleration_constants::kMaxIOStreamCount>
+          stream_active) override;
   /**
    * @brief Find out if input controller has fully streamed all input streams.
    * @return Boolean showing if the input controller has finished.
@@ -157,7 +159,9 @@ class DMA : public AccelerationModule, public DMAInterface {
    * @param stream_active Array of booleans showing which streams should start
    * getting pulled through the accelerators.
    */
-  void StartOutputController(bool stream_active[16]) override;
+  void StartOutputController(
+      std::bitset<query_acceleration_constants::kMaxIOStreamCount>
+          stream_active) override;
   /**
    * @brief Find out if output controller has fully streamed all output streams.
    * @return Boolean which says if all streams have been processed.
@@ -302,6 +306,8 @@ class DMA : public AccelerationModule, public DMAInterface {
    * The reset signal will be high for 8 clock cycles.
    */
   void GlobalReset() override;
+
+  const int kResetDuration_ = 8;
 };
 
 }  // namespace modules

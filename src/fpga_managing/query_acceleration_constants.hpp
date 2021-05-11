@@ -24,8 +24,11 @@ const int kDdrSizePerCycle = 4;
 /// What is the limit for the amount of records that can be transferred.
 const int kMaxRecordsPerDDRBurst = 32;
 
-/// How much memory space is required for a single module
+/// How much memory space is required for a single module.
 const int kModuleSize = 1024 * 1024;
+
+/// How many IO streams can there be concurrently.
+const int kMaxIOStreamCount = 16;
 }  // namespace query_acceleration_constants
 
 }  // namespace fpga_managing

@@ -153,7 +153,9 @@ void FPGAManager::FindIOStreams(
     const std::vector<StreamDataParameters>& all_streams,
     std::vector<StreamDataParameters>& found_streams,
     const std::vector<std::vector<int>>& operation_parameters,
-    const bool is_multichannel_stream, bool stream_status_array[]) {
+    const bool is_multichannel_stream,
+    std::bitset<query_acceleration_constants::kMaxIOStreamCount>&
+        stream_status_array) {
   for (const auto& current_stream : all_streams) {
     if (current_stream.physical_address) {
       if (is_multichannel_stream) {
@@ -174,10 +176,13 @@ void FPGAManager::FindIOStreams(
   }
 }
 
-auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
+auto FPGAManager::RunQueryAcceleration()
+    -> std::array<int, query_acceleration_constants::kMaxIOStreamCount> {
   std::vector<int> active_input_stream_ids;
   std::vector<int> active_output_stream_ids;
 
+  // This can be expanded on in the future with multi threaded processing where
+  // some streams are checked while others are being setup and fired.
   FindActiveStreams(active_input_stream_ids, active_output_stream_ids);
 
   if (active_input_stream_ids.empty() || active_output_stream_ids.empty()) {
@@ -203,7 +208,8 @@ auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
 void FPGAManager::FindActiveStreams(
     std::vector<int>& active_input_stream_ids,
     std::vector<int>& active_output_stream_ids) {
-  for (int stream_id = 0; stream_id < FPGAManager::kMaxStreamAmount;
+  for (int stream_id = 0;
+       stream_id < query_acceleration_constants::kMaxIOStreamCount;
        stream_id++) {
     if (input_streams_active_status_[stream_id]) {
       active_input_stream_ids.push_back(stream_id);
@@ -255,11 +261,12 @@ void FPGAManager::ReadResultsFromRegisters() {
 
 auto FPGAManager::GetResultingStreamSizes(
     const std::vector<int>& active_input_stream_ids,
-    const std::vector<int>& active_output_stream_ids) -> std::vector<int> {
+    const std::vector<int>& active_output_stream_ids)
+    -> std::array<int, query_acceleration_constants::kMaxIOStreamCount> {
   for (auto stream_id : active_input_stream_ids) {
     FPGAManager::input_streams_active_status_[stream_id] = false;
   }
-  std::vector<int> result_sizes(16, 0);
+  std::array<int, query_acceleration_constants::kMaxIOStreamCount> result_sizes;
   for (auto stream_id : active_output_stream_ids) {
     FPGAManager::output_streams_active_status_[stream_id] = false;
     result_sizes[stream_id] =

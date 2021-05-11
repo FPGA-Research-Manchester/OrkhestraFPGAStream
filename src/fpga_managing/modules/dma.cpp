@@ -2,6 +2,8 @@
 
 #include <cmath>
 #include <iostream>
+#include <algorithm>
+#include <string>
 
 using namespace dbmstodspi::fpga_managing::modules;
 
@@ -33,10 +35,13 @@ auto DMA::GetInputControllerStreamSize(int stream_id) -> volatile int {
   return AccelerationModule::ReadFromModule(((3 << 6) + (stream_id * 4)));
 }
 void DMA::StartInputController(
-    bool stream_active[16]) {  // indicate which streams can be read from DDR
-                               // and start processing
+    std::bitset<query_acceleration_constants::kMaxIOStreamCount>
+        stream_active) {  // indicate which streams can be read from DDR
+                          // and start processing
+
   int active_streams = 0;
-  for (int i = 15; i >= 0; i--) {
+  for (int i = query_acceleration_constants::kMaxIOStreamCount - 1; i >= 0;
+       i--) {
     active_streams = active_streams << 1;
     if (stream_active[i]) {
       active_streams = active_streams + 1;
@@ -97,10 +102,12 @@ auto DMA::GetOutputControllerStreamSize(int stream_id)
       ((1 << 16) + (2 << 6) + (stream_id * 4)));
 }
 void DMA::StartOutputController(
-    bool stream_active[16]) {  // indicate which streams can be written to DDR
-                               // and start processing
+    std::bitset<query_acceleration_constants::kMaxIOStreamCount>
+        stream_active) {  // indicate which streams can be written to DDR
+                          // and start processing
   int active_streams = 0;
-  for (int i = 15; i >= 0; i--) {
+  for (int i = query_acceleration_constants::kMaxIOStreamCount - 1; i >= 0;
+       i--) {
     active_streams = active_streams << 1;
     if (stream_active[i]) {
       active_streams = active_streams + 1;
@@ -191,8 +198,8 @@ void DMA::SetRecordsPerBurstForMultiChannelStreams(
                                     records_per_burst);
 }
 
-void DMA::SetDDRBurstSizeForMultiChannelStreams(
-    int stream_id, int ddr_burst_size) {
+void DMA::SetDDRBurstSizeForMultiChannelStreams(int stream_id,
+                                                int ddr_burst_size) {
   AccelerationModule::WriteToModule(0x80000 + (1 << 6) + (stream_id * 4),
                                     ddr_burst_size - 1);
 }
@@ -234,8 +241,6 @@ auto DMA::GetValidWriteCyclesCount() -> volatile uint64_t {
   return ((static_cast<uint64_t>(high)) << 32) | (static_cast<uint64_t>(low));
 }
 
-const int kResetDuration = 8;
-
 void DMA::GlobalReset() {
-  AccelerationModule::WriteToModule(8, kResetDuration);
+  AccelerationModule::WriteToModule(8, kResetDuration_);
 }

@@ -1,5 +1,8 @@
 #pragma once
+#include <bitset>
 #include <cstdint>
+
+#include "query_acceleration_constants.hpp"
 
 namespace dbmstodspi {
 namespace fpga_managing {
@@ -22,7 +25,9 @@ class DMAInterface {
       -> volatile uintptr_t = 0;
   virtual void SetInputControllerStreamSize(int stream_id, int size) = 0;
   virtual auto GetInputControllerStreamSize(int stream_id) -> volatile int = 0;
-  virtual void StartInputController(bool stream_active[16]) = 0;
+  virtual void StartInputController(
+      std::bitset<query_acceleration_constants::kMaxIOStreamCount>
+          stream_active) = 0;
   virtual auto IsInputControllerFinished() -> bool = 0;
 
   virtual void SetRecordSize(int stream_id, int record_size) = 0;
@@ -40,7 +45,9 @@ class DMAInterface {
       -> volatile uintptr_t = 0;
   virtual void SetOutputControllerStreamSize(int stream_id, int size) = 0;
   virtual auto GetOutputControllerStreamSize(int stream_id) -> volatile int = 0;
-  virtual void StartOutputController(bool stream_active[16]) = 0;
+  virtual void StartOutputController(
+      std::bitset<query_acceleration_constants::kMaxIOStreamCount>
+          stream_active) = 0;
   virtual auto IsOutputControllerFinished() -> bool = 0;
 
   virtual void SetBufferToInterfaceChunk(int stream_id, int clock_cycle,

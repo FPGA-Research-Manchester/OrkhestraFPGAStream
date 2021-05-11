@@ -106,7 +106,8 @@ void QueryManager::RunQueries(
     std::vector<
         std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>>
         output_memory_blocks;
-    std::vector<data_managing::TableData> expected_output_tables(16);
+    std::vector<data_managing::TableData> expected_output_tables(
+        fpga_managing::query_acceleration_constants::kMaxIOStreamCount);
     std::vector<fpga_managing::AcceleratedQueryNode> query_nodes;
 
     id_manager.AllocateStreamIDs(executable_query_nodes.second, input_ids,

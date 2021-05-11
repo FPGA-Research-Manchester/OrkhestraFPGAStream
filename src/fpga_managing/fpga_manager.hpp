@@ -1,4 +1,6 @@
 #pragma once
+#include <array>
+#include <bitset>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -35,7 +37,8 @@ class FPGAManager {
    * @brief Start the output controller and wait for the controllers to finish.
    * @return How many records each output stream had in its results.
    */
-  auto RunQueryAcceleration() -> std::vector<int>;
+  auto RunQueryAcceleration()
+      -> std::array<int, query_acceleration_constants::kMaxIOStreamCount>;
 
   /**
    * @brief Constructor to setup memory mapped registers.
@@ -45,9 +48,11 @@ class FPGAManager {
       : memory_manager_{memory_manager}, dma_engine_{memory_manager} {};
 
  private:
-  const static int kMaxStreamAmount = 16;
-  bool input_streams_active_status_[kMaxStreamAmount] = {false};
-  bool output_streams_active_status_[kMaxStreamAmount] = {false};
+  // Could be array<bool> as well since none of the bitset functions are being used.
+  std::bitset<query_acceleration_constants::kMaxIOStreamCount>
+      input_streams_active_status_;
+  std::bitset<query_acceleration_constants::kMaxIOStreamCount>
+      output_streams_active_status_;
 
   MemoryManagerInterface* memory_manager_;
   modules::DMA dma_engine_;
@@ -62,13 +67,15 @@ class FPGAManager {
   void ReadResultsFromRegisters();
   auto GetResultingStreamSizes(const std::vector<int>& active_input_stream_ids,
                                const std::vector<int>& active_output_stream_ids)
-      -> std::vector<int>;
+      -> std::array<int, query_acceleration_constants::kMaxIOStreamCount>;
   void PrintDebuggingData();
   static void FindIOStreams(
       const std::vector<StreamDataParameters>& all_streams,
       std::vector<StreamDataParameters>& found_streams,
       const std::vector<std::vector<int>>& operation_parameters,
-      bool is_multichannel_stream, bool stream_status_array[]);
+      bool is_multichannel_stream,
+      std::bitset<query_acceleration_constants::kMaxIOStreamCount>&
+          stream_status_array);
 
   static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)
       -> int;
