@@ -9,7 +9,6 @@
 #include "query_scheduling_data.hpp"
 
 using namespace dbmstodspi;
-using Node = query_managing::query_scheduling_data::QueryNode;
 
 /**
  * @brief Helper method to run the given query nodes and their subsequent nodes
@@ -18,7 +17,8 @@ using Node = query_managing::query_scheduling_data::QueryNode;
  * This includes data writing and reading from and to the DDR.
  * @param leaf_nodes Vector of nodes from which the parsing starts.
  */
-void MeasureOverallTime(std::vector<Node> leaf_nodes) {
+void MeasureOverallTime(
+    std::vector<query_managing::query_scheduling_data::QueryNode> leaf_nodes) {
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
   query_managing::QueryManager::RunQueries(leaf_nodes);
@@ -51,50 +51,50 @@ auto ConvertDoubleValuesToIntegers(const std::vector<double> input_values)
  */
 auto main() -> int {
   // CAR DATA
-  auto pass_through_1k_data = std::make_shared<Node>(
-      Node{{"CAR_DATA.csv"},
-           {"CAR_DATA.csv"},
-           fpga_managing::operation_types::QueryOperationType::kPassThrough,
-           {nullptr},
-           {nullptr},
-           {{{}}, {{}, {2}}, {}}});
-  auto filtering_query_once = std::make_shared<Node>(
-      Node{{"CAR_DATA.csv"},
-           {"CAR_FILTER_DATA.csv"},
-           fpga_managing::operation_types::QueryOperationType::kFilter,
-           {nullptr},
-           {nullptr},
-           {{{}}, {{}, {2}}, {{0}}}});
-  auto join_query_once = std::make_shared<Node>(
-      Node{{"CAR_DATA.csv", "CUSTOMER_DATA.csv"},
-           {"JOIN_DATA.csv"},
-           fpga_managing::operation_types::QueryOperationType::kJoin,
-           {nullptr},
-           {nullptr, nullptr},
-           {{{}, {0, -1, 1, 2, 3, 4, 5, 6}}, {{}, {2}}, {{2}}}});
-  auto linear_sort_query_8k_once = std::make_shared<Node>(
-      Node{{"CAR_DATA_8K.csv"},
-           {"CAR_DATA_HALF_SORTED_8K_512WAY.csv"},
-           fpga_managing::operation_types::QueryOperationType::kLinearSort,
-           {nullptr},
-           {nullptr},
-           {{{}}, {{}, {2}}, {}}});
-  auto merge_sort_query_1k_once = std::make_shared<Node>(
-      Node{{"CAR_DATA_HALF_SORTED.csv"},
-           {"CAR_DATA_SORTED.csv"},
-           fpga_managing::operation_types::QueryOperationType::kMergeSort,
-           {nullptr},
-           {nullptr},
-           {{{}}, {{}, {2}}, {{64, 16}}}});
-  auto merge_sort_query_8k_once = std::make_shared<Node>(
-      Node{{"CAR_DATA_HALF_SORTED_8K_128WAY.csv"},
-           {"CAR_DATA_SORTED_8K.csv"},
-           fpga_managing::operation_types::QueryOperationType::kMergeSort,
-           {nullptr},
-           {nullptr},
-           {{{}}, {{}, {2}}, {{64, 128}}}});
+  query_managing::query_scheduling_data::QueryNode pass_through_1k_data = {
+      {"CAR_DATA.csv"},
+      {"CAR_DATA.csv"},
+      fpga_managing::operation_types::QueryOperationType::kPassThrough,
+      {nullptr},
+      {nullptr},
+      {{{}}, {{}, {2}}, {}}};
+  query_managing::query_scheduling_data::QueryNode filtering_query_once = {
+      {"CAR_DATA.csv"},
+      {"CAR_FILTER_DATA.csv"},
+      fpga_managing::operation_types::QueryOperationType::kFilter,
+      {nullptr},
+      {nullptr},
+      {{{}}, {{}, {2}}, {{0}}}};
+  query_managing::query_scheduling_data::QueryNode join_query_once = {
+      {"CAR_DATA.csv", "CUSTOMER_DATA.csv"},
+      {"JOIN_DATA.csv"},
+      fpga_managing::operation_types::QueryOperationType::kJoin,
+      {nullptr},
+      {nullptr, nullptr},
+      {{{}, {0, -1, 1, 2, 3, 4, 5, 6}}, {{}, {2}}, {{2}}}};
+  query_managing::query_scheduling_data::QueryNode linear_sort_query_8k_once = {
+      {"CAR_DATA_8K.csv"},
+      {"CAR_DATA_HALF_SORTED_8K_512WAY.csv"},
+      fpga_managing::operation_types::QueryOperationType::kLinearSort,
+      {nullptr},
+      {nullptr},
+      {{{}}, {{}, {2}}, {}}};
+  query_managing::query_scheduling_data::QueryNode merge_sort_query_1k_once = {
+      {"CAR_DATA_HALF_SORTED.csv"},
+      {"CAR_DATA_SORTED.csv"},
+      fpga_managing::operation_types::QueryOperationType::kMergeSort,
+      {nullptr},
+      {nullptr},
+      {{{}}, {{}, {2}}, {{64, 16}}}};
+  query_managing::query_scheduling_data::QueryNode merge_sort_query_8k_once = {
+      {"CAR_DATA_HALF_SORTED_8K_128WAY.csv"},
+      {"CAR_DATA_SORTED_8K.csv"},
+      fpga_managing::operation_types::QueryOperationType::kMergeSort,
+      {nullptr},
+      {nullptr},
+      {{{}}, {{}, {2}}, {{64, 128}}}};
   // Temp not supported
-  // auto
+  // query_managing::query_scheduling_data::QueryNode
   // merge_sort_query_8k_once_double = {
   //    {"CAR_DATA_HALF_SORTED_8K_64WAY.csv"},
   //    {"CAR_DATA_SORTED_8K.csv"},
@@ -103,252 +103,286 @@ auto main() -> int {
   //    {nullptr}};
 
   // PIPELINED QUERY NODES
-  std::shared_ptr<Node> pass_through_and_filter_query =
-      std::make_shared<Node>();
-  std::shared_ptr<Node> filter_after_pass_through_query =
-      std::make_shared<Node>();
+  query_managing::query_scheduling_data::QueryNode
+      pass_through_and_filter_query;
+  query_managing::query_scheduling_data::QueryNode
+      filter_after_pass_through_query;
 
-  pass_through_and_filter_query->input_data_definition_files = {"CAR_DATA.csv"};
-  pass_through_and_filter_query->output_data_definition_files = {
-      "CAR_DATA.csv"};
-  pass_through_and_filter_query->operation_type =
+  pass_through_and_filter_query.input_data_definition_files = {"CAR_DATA.csv"};
+  pass_through_and_filter_query.output_data_definition_files = {"CAR_DATA.csv"};
+  pass_through_and_filter_query.operation_type =
       fpga_managing::operation_types::QueryOperationType::kPassThrough;
-  pass_through_and_filter_query->next_nodes = {filter_after_pass_through_query};
-  pass_through_and_filter_query->previous_nodes = {nullptr};
-  pass_through_and_filter_query->operation_parameters = {{{}}, {{}, {2}}, {}};
+  pass_through_and_filter_query.next_nodes = {&filter_after_pass_through_query};
+  pass_through_and_filter_query.previous_nodes = {nullptr};
+  pass_through_and_filter_query.operation_parameters = {{{}}, {{}, {2}}, {}};
 
-  filter_after_pass_through_query->input_data_definition_files = {
+  filter_after_pass_through_query.input_data_definition_files = {
       "CAR_DATA.csv"};
-  filter_after_pass_through_query->output_data_definition_files = {
+  filter_after_pass_through_query.output_data_definition_files = {
       "CAR_FILTER_DATA.csv"};
-  filter_after_pass_through_query->operation_type =
+  filter_after_pass_through_query.operation_type =
       fpga_managing::operation_types::QueryOperationType::kFilter;
-  filter_after_pass_through_query->previous_nodes = {
-      pass_through_and_filter_query};
-  filter_after_pass_through_query->next_nodes = {nullptr};
-  filter_after_pass_through_query->operation_parameters = {
+  filter_after_pass_through_query.previous_nodes = {
+      &pass_through_and_filter_query};
+  filter_after_pass_through_query.next_nodes = {nullptr};
+  filter_after_pass_through_query.operation_parameters = {
       {{}}, {{}, {2}}, {{0}}};
 
-  std::shared_ptr<Node> filter_and_join_query = std::make_shared<Node>();
-  std::shared_ptr<Node> join_after_filter_query = std::make_shared<Node>();
+  query_managing::query_scheduling_data::QueryNode filter_and_join_query;
+  query_managing::query_scheduling_data::QueryNode join_after_filter_query;
 
-  filter_and_join_query->input_data_definition_files = {"CAR_DATA.csv"};
-  filter_and_join_query->output_data_definition_files = {"CAR_FILTER_DATA.csv"};
-  filter_and_join_query->operation_type =
+  filter_and_join_query.input_data_definition_files = {"CAR_DATA.csv"};
+  filter_and_join_query.output_data_definition_files = {"CAR_FILTER_DATA.csv"};
+  filter_and_join_query.operation_type =
       fpga_managing::operation_types::QueryOperationType::kFilter;
-  filter_and_join_query->next_nodes = {join_after_filter_query};
-  filter_and_join_query->previous_nodes = {nullptr};
-  filter_and_join_query->operation_parameters = {{{}}, {{}, {2}}, {{0}}};
+  filter_and_join_query.next_nodes = {&join_after_filter_query};
+  filter_and_join_query.previous_nodes = {nullptr};
+  filter_and_join_query.operation_parameters = {{{}}, {{}, {2}}, {{0}}};
 
-  join_after_filter_query->input_data_definition_files = {"CAR_FILTER_DATA.csv",
-                                                          "CUSTOMER_DATA.csv"};
-  join_after_filter_query->output_data_definition_files = {
+  join_after_filter_query.input_data_definition_files = {"CAR_FILTER_DATA.csv",
+                                                         "CUSTOMER_DATA.csv"};
+  join_after_filter_query.output_data_definition_files = {
       "FILTERED_JOIN_DATA.csv"};
-  join_after_filter_query->operation_type =
+  join_after_filter_query.operation_type =
       fpga_managing::operation_types::QueryOperationType::kJoin;
-  join_after_filter_query->previous_nodes = {filter_and_join_query, nullptr};
-  join_after_filter_query->next_nodes = {nullptr};
-  join_after_filter_query->operation_parameters = {
+  join_after_filter_query.previous_nodes = {&filter_and_join_query, nullptr};
+  join_after_filter_query.next_nodes = {nullptr};
+  join_after_filter_query.operation_parameters = {
       {{}, {0, -1, 1, 2, 3, 4, 5, 6}}, {{}, {2}}, {{2}}};
 
   // TPC-H DATA
   // Lineitem tables in different sizes
-  auto tpch_pass_through_lineitem_001 = std::make_shared<Node>(
-      Node{{"lineitem_sf0_01.csv"},
-           {"lineitem_sf0_01.csv"},
-           fpga_managing::operation_types::QueryOperationType::kPassThrough,
-           {nullptr},
-           {nullptr},
-           {{{}}, {{}, {3}}, {}}});
-  auto tpch_pass_through_lineitem_01 = std::make_shared<Node>(
-      Node{{"lineitem_sf0_1.csv"},
-           {"lineitem_sf0_1.csv"},
-           fpga_managing::operation_types::QueryOperationType::kPassThrough,
-           {nullptr},
-           {nullptr},
-           {{{}}, {{}, {3}}, {}}});
+  query_managing::query_scheduling_data::QueryNode
+      tpch_pass_through_lineitem_001 = {
+          {"lineitem_sf0_01.csv"},
+          {"lineitem_sf0_01.csv"},
+          fpga_managing::operation_types::QueryOperationType::kPassThrough,
+          {nullptr},
+          {nullptr},
+          {{{}}, {{}, {3}}, {}}};
+  query_managing::query_scheduling_data::QueryNode
+      tpch_pass_through_lineitem_01 = {
+          {"lineitem_sf0_1.csv"},
+          {"lineitem_sf0_1.csv"},
+          fpga_managing::operation_types::QueryOperationType::kPassThrough,
+          {nullptr},
+          {nullptr},
+          {{{}}, {{}, {3}}, {}}};
+  // query_managing::query_scheduling_data::QueryNode
+  // tpch_pass_through_lineitem_02 = {
+  //    {"lineitem_sf0_2.csv"},
+  //    {"lineitem_sf0_2.csv"},
+  //    fpga_managing::operation_types::QueryOperationType::kPassThrough,
+  //    {nullptr},
+  //    {nullptr}};
+  // query_managing::query_scheduling_data::QueryNode
+  // tpch_pass_through_lineitem_03 = {
+  //    {"lineitem_sf0_3.csv"},
+  //    {"lineitem_sf0_3.csv"},
+  //    fpga_managing::operation_types::QueryOperationType::kPassThrough,
+  //    {nullptr},
+  //    {nullptr}};
+  // Need optimisations to enable
+  // query_managing::query_scheduling_data::QueryNode
+  // tpch_pass_through_lineitem_04 = {
+  //    {"lineitem_sf0_4.csv"},
+  //    {"lineitem_sf0_4.csv"},
+  //    fpga_managing::operation_types::QueryOperationType::kPassThrough,
+  //    {nullptr},
+  //    {nullptr}};
+  // query_managing::query_scheduling_data::QueryNode
+  // tpch_pass_through_lineitem_05 = {
+  //    {"lineitem_sf0_5.csv"},
+  //    {"lineitem_sf0_5.csv"},
+  //    fpga_managing::operation_types::QueryOperationType::kPassThrough,
+  //    {nullptr},
+  //    {nullptr}};
 
   // Q19
-  auto first_lineitem_filter = std::make_shared<Node>(
-      Node{{"lineitem_sf0_01.csv"},
-           {"lineitem_sf0_01_filter.csv"},
-           fpga_managing::operation_types::QueryOperationType::kFilter,
-           {nullptr},
-           {nullptr},
-           {{{1,  4,  5,  6,  7,  8,  9,  -1, -1, -1, -1, -1, -1,
-              -1, -1, -1, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26}},
-            {{0, 1, 2, 3, 4, 5, 6}, {2}},
-            {{1}}}});
-  auto first_lineitem_filter1 = std::make_shared<Node>(
-      Node{{"lineitem_sf0_1.csv"},
-           {"lineitem_sf0_1_filter.csv"},
-           fpga_managing::operation_types::QueryOperationType::kFilter,
-           {nullptr},
-           {nullptr},
-           {{{1,  4,  5,  6,  7,  8,  9,  -1, -1, -1, -1, -1, -1,
-              -1, -1, -1, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26}},
-            {{0, 1, 2, 3, 4, 5, 6}, {2}},
-            {{1}}}});
-  auto lineitem_linear_sort = std::make_shared<Node>(
-      Node{{"lineitem_sf0_01_filter.csv"},
-           {"lineitem_sf0_01_linear_sort.csv"},
-           fpga_managing::operation_types::QueryOperationType::kLinearSort,
-           {nullptr},
-           {nullptr},
-           {{{}}, {{}, {1}}, {{}}}});
-  auto lineitem_linear_sort1 = std::make_shared<Node>(
-      Node{{"lineitem_sf0_1_filter.csv"},
-           {"lineitem_sf0_1_linear_sort.csv"},
-           fpga_managing::operation_types::QueryOperationType::kLinearSort,
-           {nullptr},
-           {nullptr},
-           {{{}}, {{}, {1}}, {{}}}});
-  auto lineitem_linear_merge_sort = std::make_shared<Node>(
-      Node{{"lineitem_sf0_01_linear_sort.csv"},
-           {"lineitem_sf0_01_sort.csv"},
-           fpga_managing::operation_types::QueryOperationType::kMergeSort,
-           {nullptr},
-           {nullptr},
-           {{{}}, {{}, {1}}, {{64, 512}}}});
-  auto lineitem_linear_merge_sort1 = std::make_shared<Node>(
-      Node{{"lineitem_sf0_1_linear_sort.csv"},
-           {"lineitem_sf0_1_sort.csv"},
-           fpga_managing::operation_types::QueryOperationType::kMergeSort,
-           {nullptr},
-           {nullptr},
-           {{{}}, {{}, {1}}, {{64, 512}}}});
-  auto first_part_filter = std::make_shared<Node>(
-      Node{{"part_sf0_01.csv"},
-           {"part_sf0_01_filter.csv"},
-           fpga_managing::operation_types::QueryOperationType::kFilter,
-           {nullptr},
-           {nullptr},
-           {{{0,  22, 23, 24, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-              -1, -1, -1, 32, 33, 34, 35, 33, 34, 35, 33, 34, 35}},
-            {{0, 1, 2, 3}, {2}},
-            {{2}}}});
-  auto first_part_filter1 = std::make_shared<Node>(
-      Node{{"part_sf0_1.csv"},
-           {"part_sf0_1_filter.csv"},
-           fpga_managing::operation_types::QueryOperationType::kFilter,
-           {nullptr},
-           {nullptr},
-           {{{0,  22, 23, 24, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-              -1, -1, -1, 32, 33, 34, 35, 33, 34, 35, 33, 34, 35}},
-            {{0, 1, 2, 3}, {2}},
-            {{2}}}});
-  auto lineitem_part_join = std::make_shared<Node>(
-      Node{{"lineitem_sf0_01_sort.csv", "part_sf0_01_filter.csv"},
-           {"lineitem_part_sf0_01_1st_filter.csv"},
-           fpga_managing::operation_types::QueryOperationType::kJoin,
-           {nullptr},
-           {nullptr, nullptr},
-           {{{}, {0, -1, -1, -1, -1, -1, -1, 1, 2, 3}},
-            {{1, 2, 3, 4, 5, 6, 7, 8, 9}, {1}},
-            {{7}}}});
-  auto lineitem_part_join1 = std::make_shared<Node>(
-      Node{{"lineitem_sf0_1_sort.csv", "part_sf0_1_filter.csv"},
-           {"lineitem_part_sf0_1_1st_filter.csv"},
-           fpga_managing::operation_types::QueryOperationType::kJoin,
-           {nullptr},
-           {nullptr, nullptr},
-           {{{}, {0, -1, -1, -1, -1, -1, -1, 1, 2, 3}},
-            {{1, 2, 3, 4, 5, 6, 7, 8, 9}, {1}},
-            {{7}}}});
-  auto lineitem_part_second_filter = std::make_shared<Node>(
-      Node{{"lineitem_part_sf0_01_1st_filter.csv"},
-           {"lineitem_part_sf0_01_2nd_filter.csv"},
-           fpga_managing::operation_types::QueryOperationType::kFilter,
-           {nullptr},
-           {nullptr},
-           {{{0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1}}, {{2, 3, 4, 5}, {1}}, {{3}}}});
-  auto lineitem_part_second_filter1 = std::make_shared<Node>(
-      Node{{"lineitem_part_sf0_1_1st_filter.csv"},
-           {"lineitem_part_sf0_1_2nd_filter.csv"},
-           fpga_managing::operation_types::QueryOperationType::kFilter,
-           {nullptr},
-           {nullptr},
-           {{{0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1}}, {{2, 3, 4, 5}, {1}}, {{3}}}});
-  auto lineitem_part_addition = std::make_shared<Node>(
-      Node{{"lineitem_part_sf0_01_2nd_filter.csv"},
-           {"lineitem_part_sf0_01_inverted.csv"},
-           fpga_managing::operation_types::QueryOperationType::kAddition,
-           {nullptr},
-           {nullptr},
-           {{{}},
-            {{}, {1}},
-            {{0},
-             {0, 1, 0, 0, 0, 0, 0, 0},
-             ConvertDoubleValuesToIntegers({0, 1, 0, 0, 0, 0, 0, 0})}}});
-  auto lineitem_part_addition1 = std::make_shared<Node>(
-      Node{{"lineitem_part_sf0_1_2nd_filter.csv"},
-           {"lineitem_part_sf0_1_inverted.csv"},
-           fpga_managing::operation_types::QueryOperationType::kAddition,
-           {nullptr},
-           {nullptr},
-           {{{}},
-            {{}, {1}},
-            {{0},
-             {0, 1, 0, 0, 0, 0, 0, 0},
-             ConvertDoubleValuesToIntegers({0, 1, 0, 0, 0, 0, 0, 0})}}});
-  auto lineitem_part_multiplication = std::make_shared<Node>(
-      Node{{"lineitem_part_sf0_01_inverted.csv"},
-           {"lineitem_part_sf0_01_multiplied.csv"},
-           fpga_managing::operation_types::QueryOperationType::kMultiplication,
-           {nullptr},
-           {nullptr},
-           {{{}}, {{0, 1}, {1}}, {{0, 1, 0, 0, 0, 0, 0, 0, 0}}}});
-  auto lineitem_part_multiplication1 = std::make_shared<Node>(
-      Node{{"lineitem_part_sf0_1_inverted.csv"},
-           {"lineitem_part_sf0_1_multiplied.csv"},
-           fpga_managing::operation_types::QueryOperationType::kMultiplication,
-           {nullptr},
-           {nullptr},
-           {{{}}, {{0, 1}, {1}}, {{0, 1, 0, 0, 0, 0, 0, 0, 0}}}});
-  auto lineitem_part_aggregate = std::make_shared<Node>(
-      Node{{"lineitem_part_sf0_01_multiplied.csv"},
-           {"lineitem_part_sf0_01_multiplied.csv"},
-           fpga_managing::operation_types::QueryOperationType::kAggregationSum,
-           {nullptr},
-           {nullptr},
-           {{{}}, {{}, {1}}, {{0}, {0}}}});
-  auto lineitem_part_aggregate1 = std::make_shared<Node>(
-      Node{{"lineitem_part_sf0_1_multiplied.csv"},
-           {"lineitem_part_sf0_1_multiplied.csv"},
-           fpga_managing::operation_types::QueryOperationType::kAggregationSum,
-           {nullptr},
-           {nullptr},
-           {{{}}, {{}, {1}}, {{0}, {0}}}});
+  // Input: l_partkey, l_quantity, l_extendedprice, l_discount, l_shipinstruct,
+  // l_shipmode Output: l_partkey, l_quantity, l_extendedprice, l_discount
+  query_managing::query_scheduling_data::QueryNode first_lineitem_filter = {
+      {"lineitem_sf0_01.csv"},
+      {"lineitem_sf0_01_filter.csv"},
+      fpga_managing::operation_types::QueryOperationType::kFilter,
+      {nullptr},
+      {nullptr},
+      {{{1,  4,  5,  6,  7,  8,  9,  -1, -1, -1, -1, -1, -1,
+         -1, -1, -1, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26}},
+       {{0, 1, 2, 3, 4, 5, 6}, {2}},
+       {{1}}}};
+  query_managing::query_scheduling_data::QueryNode first_lineitem_filter1 = {
+      {"lineitem_sf0_1.csv"},
+      {"lineitem_sf0_1_filter.csv"},
+      fpga_managing::operation_types::QueryOperationType::kFilter,
+      {nullptr},
+      {nullptr},
+      {{{1,  4,  5,  6,  7,  8,  9,  -1, -1, -1, -1, -1, -1,
+         -1, -1, -1, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26}},
+       {{0, 1, 2, 3, 4, 5, 6}, {2}},
+       {{1}}}};
+  query_managing::query_scheduling_data::QueryNode lineitem_linear_sort = {
+      {"lineitem_sf0_01_filter.csv"},
+      {"lineitem_sf0_01_linear_sort.csv"},
+      fpga_managing::operation_types::QueryOperationType::kLinearSort,
+      {nullptr},
+      {nullptr},
+      {{{}}, {{}, {1}}, {{}}}};
+  query_managing::query_scheduling_data::QueryNode lineitem_linear_sort1 = {
+      {"lineitem_sf0_1_filter.csv"},
+      {"lineitem_sf0_1_linear_sort.csv"},
+      fpga_managing::operation_types::QueryOperationType::kLinearSort,
+      {nullptr},
+      {nullptr},
+      {{{}}, {{}, {1}}, {{}}}};
+  query_managing::query_scheduling_data::QueryNode lineitem_linear_merge_sort =
+      {{"lineitem_sf0_01_linear_sort.csv"},
+       {"lineitem_sf0_01_sort.csv"},
+       fpga_managing::operation_types::QueryOperationType::kMergeSort,
+       {nullptr},
+       {nullptr},
+       {{{}}, {{}, {1}}, {{64, 512}}}};
+  query_managing::query_scheduling_data::QueryNode lineitem_linear_merge_sort1 =
+      {{"lineitem_sf0_1_linear_sort.csv"},
+       {"lineitem_sf0_1_sort.csv"},
+       fpga_managing::operation_types::QueryOperationType::kMergeSort,
+       {nullptr},
+       {nullptr},
+       {{{}}, {{}, {1}}, {{64, 512}}}};
+  query_managing::query_scheduling_data::QueryNode first_part_filter = {
+      {"part_sf0_01.csv"},
+      {"part_sf0_01_filter.csv"},
+      fpga_managing::operation_types::QueryOperationType::kFilter,
+      {nullptr},
+      {nullptr},
+      {{{0,  22, 23, 24, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+         -1, -1, -1, 32, 33, 34, 35, 33, 34, 35, 33, 34, 35}},
+       {{0, 1, 2, 3}, {2}},
+       {{2}}}};
+  query_managing::query_scheduling_data::QueryNode first_part_filter1 = {
+      {"part_sf0_1.csv"},
+      {"part_sf0_1_filter.csv"},
+      fpga_managing::operation_types::QueryOperationType::kFilter,
+      {nullptr},
+      {nullptr},
+      {{{0,  22, 23, 24, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+         -1, -1, -1, 32, 33, 34, 35, 33, 34, 35, 33, 34, 35}},
+       {{0, 1, 2, 3}, {2}},
+       {{2}}}};
+  query_managing::query_scheduling_data::QueryNode lineitem_part_join = {
+      {"lineitem_sf0_01_sort.csv", "part_sf0_01_filter.csv"},
+      {"lineitem_part_sf0_01_1st_filter.csv"},
+      fpga_managing::operation_types::QueryOperationType::kJoin,
+      {nullptr},
+      {nullptr, nullptr},
+      {{{}, {0, -1, -1, -1, -1, -1, -1, 1, 2, 3}},
+       {{1, 2, 3, 4, 5, 6, 7, 8, 9}, {1}},
+       {{7}}}};
+  query_managing::query_scheduling_data::QueryNode lineitem_part_join1 = {
+      {"lineitem_sf0_1_sort.csv", "part_sf0_1_filter.csv"},
+      {"lineitem_part_sf0_1_1st_filter.csv"},
+      fpga_managing::operation_types::QueryOperationType::kJoin,
+      {nullptr},
+      {nullptr, nullptr},
+      {{{}, {0, -1, -1, -1, -1, -1, -1, 1, 2, 3}},
+       {{1, 2, 3, 4, 5, 6, 7, 8, 9}, {1}},
+       {{7}}}};
+  query_managing::query_scheduling_data::QueryNode lineitem_part_second_filter =
+      {{"lineitem_part_sf0_01_1st_filter.csv"},
+       {"lineitem_part_sf0_01_2nd_filter.csv"},
+       fpga_managing::operation_types::QueryOperationType::kFilter,
+       {nullptr},
+       {nullptr},
+       {{{0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1}}, {{2, 3, 4, 5}, {1}}, {{3}}}};
+  query_managing::query_scheduling_data::QueryNode
+      lineitem_part_second_filter1 = {
+          {"lineitem_part_sf0_1_1st_filter.csv"},
+          {"lineitem_part_sf0_1_2nd_filter.csv"},
+          fpga_managing::operation_types::QueryOperationType::kFilter,
+          {nullptr},
+          {nullptr},
+          {{{0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1}}, {{2, 3, 4, 5}, {1}}, {{3}}}};
+  query_managing::query_scheduling_data::QueryNode lineitem_part_addition = {
+      {"lineitem_part_sf0_01_2nd_filter.csv"},
+      {"lineitem_part_sf0_01_inverted.csv"},
+      fpga_managing::operation_types::QueryOperationType::kAddition,
+      {nullptr},
+      {nullptr},
+      {{{}},
+       {{}, {1}},
+       {{0},
+        {0, 1, 0, 0, 0, 0, 0, 0},
+        ConvertDoubleValuesToIntegers({0, 1, 0, 0, 0, 0, 0, 0})}}};
+  query_managing::query_scheduling_data::QueryNode lineitem_part_addition1 = {
+      {"lineitem_part_sf0_1_2nd_filter.csv"},
+      {"lineitem_part_sf0_1_inverted.csv"},
+      fpga_managing::operation_types::QueryOperationType::kAddition,
+      {nullptr},
+      {nullptr},
+      {{{}},
+       {{}, {1}},
+       {{0},
+        {0, 1, 0, 0, 0, 0, 0, 0},
+        ConvertDoubleValuesToIntegers({0, 1, 0, 0, 0, 0, 0, 0})}}};
+  query_managing::query_scheduling_data::QueryNode
+      lineitem_part_multiplication = {
+          {"lineitem_part_sf0_01_inverted.csv"},
+          {"lineitem_part_sf0_01_multiplied.csv"},
+          fpga_managing::operation_types::QueryOperationType::kMultiplication,
+          {nullptr},
+          {nullptr},
+          {{{}}, {{0, 1}, {1}}, {{0, 1, 0, 0, 0, 0, 0, 0, 0}}}};
+  query_managing::query_scheduling_data::QueryNode
+      lineitem_part_multiplication1 = {
+          {"lineitem_part_sf0_1_inverted.csv"},
+          {"lineitem_part_sf0_1_multiplied.csv"},
+          fpga_managing::operation_types::QueryOperationType::kMultiplication,
+          {nullptr},
+          {nullptr},
+          {{{}}, {{0, 1}, {1}}, {{0, 1, 0, 0, 0, 0, 0, 0, 0}}}};
+  query_managing::query_scheduling_data::QueryNode lineitem_part_aggregate = {
+      {"lineitem_part_sf0_01_multiplied.csv"},
+      {"lineitem_part_sf0_01_multiplied.csv"},
+      fpga_managing::operation_types::QueryOperationType::kAggregationSum,
+      {nullptr},
+      {nullptr},
+      {{{}}, {{}, {1}}, {{0}, {0}}}};
+  query_managing::query_scheduling_data::QueryNode lineitem_part_aggregate1 = {
+      {"lineitem_part_sf0_1_multiplied.csv"},
+      {"lineitem_part_sf0_1_multiplied.csv"},
+      fpga_managing::operation_types::QueryOperationType::kAggregationSum,
+      {nullptr},
+      {nullptr},
+      {{{}}, {{}, {1}}, {{0}, {0}}}};
 
   // Query nodes for double bitstream
-  auto first_lineitem_filter3 = std::make_shared<Node>(
-      Node{{"lineitem_sf0_3.csv"},
-           {"lineitem_sf0_3_filter.csv"},
-           fpga_managing::operation_types::QueryOperationType::kFilter,
-           {nullptr},
-           {nullptr},
-           {{{1,  4,  5,  6,  7,  8,  9,  -1, -1, -1, -1, -1, -1,
-              -1, -1, -1, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26}},
-            {{}, {2}},
-            {{1}}}});
-  auto lineitem_linear_sort3 = std::make_shared<Node>(
-      Node{{"lineitem_sf0_3_filter.csv"},
-           {"lineitem_sf0_3_linear_sort.csv"},
-           fpga_managing::operation_types::QueryOperationType::kLinearSort,
-           {nullptr},
-           {nullptr},
-           {{{}}, {{0, 1, 2, 3, 4, 5, 6}, {2}}, {{}}}});
+  query_managing::query_scheduling_data::QueryNode first_lineitem_filter3 = {
+      {"lineitem_sf0_3.csv"},
+      {"lineitem_sf0_3_filter.csv"},
+      fpga_managing::operation_types::QueryOperationType::kFilter,
+      {nullptr},
+      {nullptr},
+      {{{1,  4,  5,  6,  7,  8,  9,  -1, -1, -1, -1, -1, -1,
+         -1, -1, -1, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26}},
+       {{}, {2}},
+       {{1}}}};
+  query_managing::query_scheduling_data::QueryNode lineitem_linear_sort3 = {
+      {"lineitem_sf0_3_filter.csv"},
+      {"lineitem_sf0_3_linear_sort.csv"},
+      fpga_managing::operation_types::QueryOperationType::kLinearSort,
+      {nullptr},
+      {nullptr},
+      {{{}}, {{0, 1, 2, 3, 4, 5, 6}, {2}}, {{}}}};
 
   // Query nodes for triple bitstream
-  auto lineitem_linear_merge_sort3 = std::make_shared<Node>(
-      Node{{"lineitem_sf0_3_linear_sort.csv"},
-           {"lineitem_sf0_3_sort.csv"},
-           fpga_managing::operation_types::QueryOperationType::kMergeSort,
-           {nullptr},
-           {nullptr},
-           {{{0, 1, 2, 1, 2, 3, 4, 5, 6}}, {{}, {1}}, {{64, 1024}}}});
-  auto lineitem_part_join3 = std::make_shared<Node>(
-      Node{
+  query_managing::query_scheduling_data::QueryNode lineitem_linear_merge_sort3 =
+      {{"lineitem_sf0_3_linear_sort.csv"},
+       {"lineitem_sf0_3_sort.csv"},
+       fpga_managing::operation_types::QueryOperationType::kMergeSort,
+       {nullptr},
+       {nullptr},
+       {{{0, 1, 2, 1, 2, 3, 4, 5, 6}}, {{}, {1}}, {{64, 1024}}}};
+  query_managing::query_scheduling_data::QueryNode lineitem_part_join3 = {
       {"lineitem_sf0_3_sort.csv", "part_sf0_3.csv"},
       {"lineitem_part_sf0_3_1st_filter.csv"},
       fpga_managing::operation_types::QueryOperationType::kJoin,
@@ -359,56 +393,57 @@ auto main() -> int {
        {{/*0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, -1,
          -1, -1, -1, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25*/},
         {2}},
-       {{9}}}});
-  auto lineitem_part_second_filter3 = std::make_shared<Node>(
-      Node{{"lineitem_part_sf0_3_1st_filter.csv"},
-           {"lineitem_part_sf0_3_2nd_filter.csv"},
-           fpga_managing::operation_types::QueryOperationType::kFilter,
-           {nullptr},
-           {nullptr},
-           {{{}}, {{5, 6, 7, 8}, {2}}, {{4}}}});
+       {{9}}}};
+  query_managing::query_scheduling_data::QueryNode
+      lineitem_part_second_filter3 = {
+          {"lineitem_part_sf0_3_1st_filter.csv"},
+          {"lineitem_part_sf0_3_2nd_filter.csv"},
+          fpga_managing::operation_types::QueryOperationType::kFilter,
+          {nullptr},
+          {nullptr},
+          {{{}}, {{5, 6, 7, 8}, {2}}, {{4}}}};
 
-  first_lineitem_filter3->next_nodes = {lineitem_linear_sort3};
-  lineitem_linear_sort3->previous_nodes = {first_lineitem_filter3};
-  lineitem_linear_sort3->next_nodes = {lineitem_linear_merge_sort3};
-  lineitem_linear_merge_sort3->next_nodes = {lineitem_part_join3};
-  lineitem_part_join3->previous_nodes = {lineitem_linear_merge_sort3, nullptr};
-  lineitem_part_join3->next_nodes = {lineitem_part_second_filter3};
-  lineitem_part_second_filter3->previous_nodes = {lineitem_part_join3};
+  first_lineitem_filter3.next_nodes = {&lineitem_linear_sort3};
+  lineitem_linear_sort3.previous_nodes = {&first_lineitem_filter3};
+  lineitem_linear_sort3.next_nodes = {&lineitem_linear_merge_sort3};
+  lineitem_linear_merge_sort3.next_nodes = {&lineitem_part_join3};
+  lineitem_part_join3.previous_nodes = {&lineitem_linear_merge_sort3, nullptr};
+  lineitem_part_join3.next_nodes = {&lineitem_part_second_filter3};
+  lineitem_part_second_filter3.previous_nodes = {&lineitem_part_join3};
 
-  first_lineitem_filter->next_nodes = {lineitem_linear_sort};
-  lineitem_linear_sort->previous_nodes = {first_lineitem_filter};
-  lineitem_linear_sort->next_nodes = {lineitem_linear_merge_sort};
-  lineitem_linear_merge_sort->previous_nodes = {lineitem_linear_sort};
-  lineitem_linear_merge_sort->next_nodes = {lineitem_part_join};
-  first_part_filter->next_nodes = {lineitem_part_join};
-  lineitem_part_join->previous_nodes = {lineitem_linear_merge_sort,
-                                        first_part_filter};
-  lineitem_part_join->next_nodes = {lineitem_part_second_filter};
-  lineitem_part_second_filter->previous_nodes = {lineitem_part_join};
-  lineitem_part_second_filter->next_nodes = {lineitem_part_addition};
-  lineitem_part_addition->previous_nodes = {lineitem_part_second_filter};
-  lineitem_part_addition->next_nodes = {lineitem_part_multiplication};
-  lineitem_part_multiplication->previous_nodes = {lineitem_part_addition};
-  lineitem_part_multiplication->next_nodes = {lineitem_part_aggregate};
-  lineitem_part_aggregate->previous_nodes = {lineitem_part_multiplication};
+  first_lineitem_filter.next_nodes = {&lineitem_linear_sort};
+  lineitem_linear_sort.previous_nodes = {&first_lineitem_filter};
+  lineitem_linear_sort.next_nodes = {&lineitem_linear_merge_sort};
+  lineitem_linear_merge_sort.previous_nodes = {&lineitem_linear_sort};
+  lineitem_linear_merge_sort.next_nodes = {&lineitem_part_join};
+  first_part_filter.next_nodes = {&lineitem_part_join};
+  lineitem_part_join.previous_nodes = {&lineitem_linear_merge_sort,
+                                       &first_part_filter};
+  lineitem_part_join.next_nodes = {&lineitem_part_second_filter};
+  lineitem_part_second_filter.previous_nodes = {&lineitem_part_join};
+  lineitem_part_second_filter.next_nodes = {&lineitem_part_addition};
+  lineitem_part_addition.previous_nodes = {&lineitem_part_second_filter};
+  lineitem_part_addition.next_nodes = {&lineitem_part_multiplication};
+  lineitem_part_multiplication.previous_nodes = {&lineitem_part_addition};
+  lineitem_part_multiplication.next_nodes = {&lineitem_part_aggregate};
+  lineitem_part_aggregate.previous_nodes = {&lineitem_part_multiplication};
 
-  first_lineitem_filter1->next_nodes = {lineitem_linear_sort1};
-  lineitem_linear_sort1->previous_nodes = {first_lineitem_filter1};
-  lineitem_linear_sort1->next_nodes = {lineitem_linear_merge_sort1};
-  lineitem_linear_merge_sort1->previous_nodes = {lineitem_linear_sort1};
-  lineitem_linear_merge_sort1->next_nodes = {lineitem_part_join1};
-  first_part_filter1->next_nodes = {lineitem_part_join1};
-  lineitem_part_join1->previous_nodes = {lineitem_linear_merge_sort1,
-                                         first_part_filter1};
-  lineitem_part_join1->next_nodes = {lineitem_part_second_filter1};
-  lineitem_part_second_filter1->previous_nodes = {lineitem_part_join1};
-  lineitem_part_second_filter1->next_nodes = {lineitem_part_addition1};
-  lineitem_part_addition1->previous_nodes = {lineitem_part_second_filter1};
-  lineitem_part_addition1->next_nodes = {lineitem_part_multiplication1};
-  lineitem_part_multiplication1->previous_nodes = {lineitem_part_addition1};
-  lineitem_part_multiplication1->next_nodes = {lineitem_part_aggregate1};
-  lineitem_part_aggregate1->previous_nodes = {lineitem_part_multiplication1};
+  first_lineitem_filter1.next_nodes = {&lineitem_linear_sort1};
+  lineitem_linear_sort1.previous_nodes = {&first_lineitem_filter1};
+  lineitem_linear_sort1.next_nodes = {&lineitem_linear_merge_sort1};
+  lineitem_linear_merge_sort1.previous_nodes = {&lineitem_linear_sort1};
+  lineitem_linear_merge_sort1.next_nodes = {&lineitem_part_join1};
+  first_part_filter1.next_nodes = {&lineitem_part_join1};
+  lineitem_part_join1.previous_nodes = {&lineitem_linear_merge_sort1,
+                                        &first_part_filter1};
+  lineitem_part_join1.next_nodes = {&lineitem_part_second_filter1};
+  lineitem_part_second_filter1.previous_nodes = {&lineitem_part_join1};
+  lineitem_part_second_filter1.next_nodes = {&lineitem_part_addition1};
+  lineitem_part_addition1.previous_nodes = {&lineitem_part_second_filter1};
+  lineitem_part_addition1.next_nodes = {&lineitem_part_multiplication1};
+  lineitem_part_multiplication1.previous_nodes = {&lineitem_part_addition1};
+  lineitem_part_multiplication1.next_nodes = {&lineitem_part_aggregate1};
+  lineitem_part_aggregate1.previous_nodes = {&lineitem_part_multiplication1};
 
   // Run operations twice
   // query_managing::QueryManager::RunQueries(
@@ -431,8 +466,8 @@ auto main() -> int {
   //                   join_query_once, linear_sort_query_8k_once});
 
   // Pipelined tests
-  MeasureOverallTime({*first_lineitem_filter, *first_part_filter});
-  MeasureOverallTime({*first_lineitem_filter1, *first_part_filter1});
+  MeasureOverallTime({first_lineitem_filter, first_part_filter});
+  MeasureOverallTime({first_lineitem_filter1, first_part_filter1});
   // SF=0.3
   // MeasureOverallTime({first_lineitem_filter3});
 
