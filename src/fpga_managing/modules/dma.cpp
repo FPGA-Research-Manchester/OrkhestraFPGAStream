@@ -1,43 +1,60 @@
 #include "dma.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
-#include <algorithm>
 #include <string>
 
 using namespace dbmstodspi::fpga_managing::modules;
 
-// TODO: Input and output controller settings could be combined.
-// Input Controller
-void DMA::SetInputControllerParams(int stream_id, int ddr_burst_size,
-                                   int records_per_ddr_burst, int buffer_start,
-                                   int buffer_end) {
+void DMA::SetControllerParams(bool is_input, int stream_id, int ddr_burst_size,
+                              int records_per_ddr_burst, int buffer_start,
+                              int buffer_end) {
+  int base_address = (is_input) ? (1 << 6) : (1 << 16);
   AccelerationModule::WriteToModule(
-      (1 << 6) + stream_id * 4,
+      base_address + stream_id * 4,
       ((ddr_burst_size - 1) << 24) +
           (static_cast<int>(log2(records_per_ddr_burst)) << 16) +
           (buffer_start << 8) + (buffer_end));
 }
-auto DMA::GetInputControllerParams(int stream_id) -> volatile uint32_t {
-  return AccelerationModule::ReadFromModule((1 << 6) + stream_id * 4);
+
+auto DMA::GetControllerParams(bool is_input, int stream_id)
+    -> volatile uint32_t {
+  int base_address = (is_input) ? (1 << 6) : (1 << 16);
+  return AccelerationModule::ReadFromModule(base_address + stream_id * 4);
 }
-void DMA::SetInputControllerStreamAddress(int stream_id, uintptr_t address) {
-  AccelerationModule::WriteToModule(((2 << 6) + (stream_id * 4)), address >> 4);
+
+void DMA::SetControllerStreamAddress(bool is_input, int stream_id,
+                                     uintptr_t address) {
+  int base_address = (is_input) ? (2 << 6) : ((1 << 16) + (1 << 6));
+  AccelerationModule::WriteToModule(base_address + stream_id * 4, address >> 4);
 }
-auto DMA::GetInputControllerStreamAddress(int stream_id) -> volatile uintptr_t {
-  return AccelerationModule::ReadFromModule((2 << 6) + (stream_id * 4)) << 4;
+
+auto DMA::GetControllerStreamAddress(bool is_input, int stream_id)
+    -> volatile uintptr_t {
+  int base_address = (is_input) ? (2 << 6) : ((1 << 16) + (1 << 6));
+  return AccelerationModule::ReadFromModule(base_address + stream_id * 4) << 4;
 }
-void DMA::SetInputControllerStreamSize(
-    int stream_id, int size) {  // starting size of stream in amount of records
-  AccelerationModule::WriteToModule(((3 << 6) + (stream_id * 4)), size);
+
+void DMA::SetControllerStreamSize(
+    bool is_input, int stream_id,
+    int size) {  // starting size of stream in amount of records
+  int base_address = (is_input) ? (3 << 6) : ((1 << 16) + (2 << 6));
+  AccelerationModule::WriteToModule(base_address + stream_id * 4, size);
 }
-auto DMA::GetInputControllerStreamSize(int stream_id) -> volatile int {
-  return AccelerationModule::ReadFromModule(((3 << 6) + (stream_id * 4)));
+
+auto DMA::GetControllerStreamSize(bool is_input, int stream_id)
+    -> volatile int {
+  int base_address = (is_input) ? (3 << 6) : ((1 << 16) + (2 << 6));
+  return AccelerationModule::ReadFromModule(base_address + stream_id * 4);
 }
-void DMA::StartInputController(
+
+void DMA::StartController(
+    bool is_input,
     std::bitset<query_acceleration_constants::kMaxIOStreamCount>
         stream_active) {  // indicate which streams can be read from DDR
                           // and start processing
+  int base_address = (is_input) ? (0) : ((1 << 16) + (3 << 6));
 
   int active_streams = 0;
   for (int i = query_acceleration_constants::kMaxIOStreamCount - 1; i >= 0;
@@ -47,14 +64,16 @@ void DMA::StartInputController(
       active_streams = active_streams + 1;
     }
   }
-  AccelerationModule::WriteToModule(0, active_streams);
+  AccelerationModule::WriteToModule(base_address, active_streams);
 }
-auto DMA::IsInputControllerFinished()
-    -> bool {  // true if all input streams were read from DDR
-  int active_streams = AccelerationModule::ReadFromModule(3 << 6);
-  return (active_streams == 0);
+
+auto DMA::IsControllerFinished(bool is_input)
+    -> bool {  // true if all streams were read from DDR
+  int base_address =
+      (is_input) ? (0)
+                 : ((1 << 16) + (3 << 6));  // input (3 << 6) && other output address in specs?
+  return (AccelerationModule::ReadFromModule(base_address) == 0);
 }
-// Input Controller in Crossbar
 
 // How many chunks is a record on a particular stream_id
 void DMA::SetRecordSize(int stream_id, int record_size) {
@@ -69,60 +88,6 @@ void DMA::SetRecordChunkIDs(int stream_id, int interface_cycle, int chunk_id) {
       chunk_id);
 }
 
-// Output Controller
-void DMA::SetOutputControllerParams(int stream_id, int ddr_burst_size,
-                                    int records_per_ddr_burst, int buffer_start,
-                                    int buffer_end) {
-  AccelerationModule::WriteToModule(
-      ((1 << 16) + (stream_id * 4)),
-      ((ddr_burst_size - 1) << 24) +
-          (static_cast<int>(log2(records_per_ddr_burst)) << 16) +
-          (buffer_start << 8) + (buffer_end));
-}
-auto DMA::GetOutputControllerParams(int stream_id) -> volatile uint32_t {
-  return AccelerationModule::ReadFromModule(((1 << 16) + (stream_id * 4)));
-}
-void DMA::SetOutputControllerStreamAddress(int stream_id, uintptr_t address) {
-  AccelerationModule::WriteToModule(((1 << 16) + (1 << 6) + (stream_id * 4)),
-                                    address >> 4);
-}
-auto DMA::GetOutputControllerStreamAddress(int stream_id)
-    -> volatile uintptr_t {
-  return AccelerationModule::ReadFromModule(
-      ((1 << 16) + (1 << 6) + stream_id * 4));
-}
-void DMA::SetOutputControllerStreamSize(
-    int stream_id, int size) {  // starting size of stream in amount of records
-  AccelerationModule::WriteToModule(((1 << 16) + (2 << 6) + (stream_id * 4)),
-                                    size);
-}
-auto DMA::GetOutputControllerStreamSize(int stream_id)
-    -> volatile int {  // starting size of stream in amount of records
-  return AccelerationModule::ReadFromModule(
-      ((1 << 16) + (2 << 6) + (stream_id * 4)));
-}
-void DMA::StartOutputController(
-    std::bitset<query_acceleration_constants::kMaxIOStreamCount>
-        stream_active) {  // indicate which streams can be written to DDR
-                          // and start processing
-  int active_streams = 0;
-  for (int i = query_acceleration_constants::kMaxIOStreamCount - 1; i >= 0;
-       i--) {
-    active_streams = active_streams << 1;
-    if (stream_active[i]) {
-      active_streams = active_streams + 1;
-    }
-  }
-  AccelerationModule::WriteToModule(((1 << 16) + (3 << 6)), active_streams);
-}
-auto DMA::IsOutputControllerFinished()
-    -> bool {  // true if all streams saw EOS from PR modules
-  int active_streams =
-      AccelerationModule::ReadFromModule(((1 << 16) + (3 << 6)));
-  return (active_streams == 0);
-}
-
-// Input Crossbar from Buffers to Interface
 void DMA::SetBufferToInterfaceChunk(int stream_id, int clock_cycle, int offset,
                                     int source_chunk4, int source_chunk3,
                                     int source_chunk2, int source_chunk1) {
@@ -191,19 +156,16 @@ void DMA::SetNumberOfInputStreamsWithMultipleChannels(
                    // 0..(number-1)
   AccelerationModule::WriteToModule(4, number);
 }
-
 void DMA::SetRecordsPerBurstForMultiChannelStreams(
     int stream_id, int records_per_burst) {  // possible values 1-32
   AccelerationModule::WriteToModule(0x80000 + (stream_id * 4),
                                     records_per_burst);
 }
-
 void DMA::SetDDRBurstSizeForMultiChannelStreams(int stream_id,
                                                 int ddr_burst_size) {
   AccelerationModule::WriteToModule(0x80000 + (1 << 6) + (stream_id * 4),
                                     ddr_burst_size - 1);
 }
-
 void DMA::SetNumberOfActiveChannelsForMultiChannelStreams(
     int stream_id,
     int active_channels) {  // possible values 1 to the synthesized channel
@@ -211,7 +173,6 @@ void DMA::SetNumberOfActiveChannelsForMultiChannelStreams(
   AccelerationModule::WriteToModule(0x80000 + (2 << 6) + (stream_id * 4),
                                     active_channels);
 }
-
 void DMA::SetAddressForMultiChannelStreams(int stream_id, int channel_id,
                                            uintptr_t address) {
   AccelerationModule::WriteToModule(
@@ -225,6 +186,7 @@ void DMA::SetSizeForMultiChannelStreams(int stream_id, int channel_id,
       number_of_records + 1);
 }
 
+// Debugging
 auto DMA::GetRuntime() -> volatile uint64_t {
   auto high = AccelerationModule::ReadFromModule(0x8000);
   auto low = AccelerationModule::ReadFromModule(0x8004);

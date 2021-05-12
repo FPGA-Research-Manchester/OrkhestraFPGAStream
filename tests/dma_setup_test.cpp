@@ -17,17 +17,17 @@ TEST(DMASetupTest, InputParamsSettings) {
   std::vector<uint32_t> mock_db_data(1, 0);  // NOLINT
   auto* mock_output_memory_address = static_cast<uint32_t*>(malloc(1));
   MockDMA mock_dma;
-  EXPECT_CALL(mock_dma, SetInputControllerParams(
-                            kInputStreamId, expected_ddr_burst_length,
+  EXPECT_CALL(mock_dma, SetControllerParams(
+                            true, kInputStreamId, expected_ddr_burst_length,
                             expected_records_per_ddr_burst,
                             expected_buffer_start, expected_buffer_end))
       .Times(1);
-  EXPECT_CALL(mock_dma, SetInputControllerStreamAddress(
-                            kInputStreamId,
+  EXPECT_CALL(mock_dma, SetControllerStreamAddress(
+                            true, kInputStreamId,
                             reinterpret_cast<uintptr_t>(&mock_db_data[0])))
       .Times(1);
-  EXPECT_CALL(mock_dma, SetInputControllerStreamSize(kInputStreamId,
-                                                     expected_stream_size))
+  EXPECT_CALL(mock_dma, SetControllerStreamSize(true, kInputStreamId,
+                                                expected_stream_size))
       .Times(1);
 
   std::vector<dbmstodspi::fpga_managing::StreamDataParameters> input_streams = {
@@ -45,16 +45,17 @@ TEST(DMASetupTest, OutputParamsSettings) {
   std::vector<uint32_t> mock_db_data(1, 0);  // NOLINT
   auto* mock_output_memory_address = static_cast<uint32_t*>(malloc(1));
   MockDMA mock_dma;
-  EXPECT_CALL(mock_dma, SetOutputControllerParams(
-                            kOutputStreamId, expected_ddr_burst_length,
+  EXPECT_CALL(mock_dma, SetControllerParams(
+                            false, kOutputStreamId, expected_ddr_burst_length,
                             expected_records_per_ddr_burst,
                             expected_buffer_start, expected_buffer_end))
       .Times(1);
-  EXPECT_CALL(mock_dma, SetOutputControllerStreamAddress(
-                            kOutputStreamId, reinterpret_cast<uintptr_t>(
-                                                 mock_output_memory_address)))
+  EXPECT_CALL(mock_dma,
+              SetControllerStreamAddress(
+                  false, kOutputStreamId,
+                  reinterpret_cast<uintptr_t>(mock_output_memory_address)))
       .Times(1);
-  EXPECT_CALL(mock_dma, SetOutputControllerStreamSize(kOutputStreamId, 0))
+  EXPECT_CALL(mock_dma, SetControllerStreamSize(false, kOutputStreamId, 0))
       .Times(1);
 
   std::vector<dbmstodspi::fpga_managing::StreamDataParameters> output_streams =

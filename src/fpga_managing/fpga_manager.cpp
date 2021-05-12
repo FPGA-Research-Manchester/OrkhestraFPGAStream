@@ -68,8 +68,8 @@ void FPGAManager::SetupQueryAcceleration(
   DMASetup::SetupDMAModule(dma_engine_, input_streams, true);
   DMASetup::SetupDMAModule(dma_engine_, output_streams, false);
 
-  FPGAManager::dma_engine_.StartInputController(
-      FPGAManager::input_streams_active_status_);
+  FPGAManager::dma_engine_.StartController(
+      true, FPGAManager::input_streams_active_status_);
 
   if (ila_module_) {
     ila_module_.value().StartILAs();
@@ -226,12 +226,12 @@ void FPGAManager::FindActiveStreams(
 }
 
 void FPGAManager::WaitForStreamsToFinish() {
-  FPGAManager::dma_engine_.StartOutputController(
-      FPGAManager::output_streams_active_status_);
+  FPGAManager::dma_engine_.StartController(
+      false, FPGAManager::output_streams_active_status_);
 
 #ifdef _FPGA_AVAILABLE
-  while (!(FPGAManager::dma_engine_.IsInputControllerFinished() &&
-           FPGAManager::dma_engine_.IsOutputControllerFinished())) {
+  while (!(FPGAManager::dma_engine_.IsControllerFinished(true) &&
+           FPGAManager::dma_engine_.IsControllerFinished(false))) {
     // sleep(3);
     // std::cout << "Processing..." << std::endl;
     // std::cout << "Input:"
@@ -275,7 +275,7 @@ auto FPGAManager::GetResultingStreamSizes(
   for (auto stream_id : active_output_stream_ids) {
     FPGAManager::output_streams_active_status_[stream_id] = false;
     result_sizes[stream_id] =
-        dma_engine_.GetOutputControllerStreamSize(stream_id);
+        dma_engine_.GetControllerStreamSize(false, stream_id);
   }
   return result_sizes;
 }

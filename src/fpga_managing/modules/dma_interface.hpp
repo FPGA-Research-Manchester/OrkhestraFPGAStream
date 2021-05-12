@@ -15,40 +15,29 @@ class DMAInterface {
  public:
   virtual ~DMAInterface() = default;
 
-  virtual void SetInputControllerParams(int stream_id, int ddr_burst_size,
-                                        int records_per_ddr_burst,
-                                        int buffer_start, int buffer_end) = 0;
-  virtual auto GetInputControllerParams(int stream_id) -> volatile uint32_t = 0;
-  virtual void SetInputControllerStreamAddress(int stream_id,
-                                               uintptr_t address) = 0;
-  virtual auto GetInputControllerStreamAddress(int stream_id)
+  virtual void SetControllerParams(bool is_input, int stream_id,
+                                   int ddr_burst_size,
+                                   int records_per_ddr_burst, int buffer_start,
+                                   int buffer_end) = 0;
+  virtual auto GetControllerParams(bool is_input, int stream_id)
+      -> volatile uint32_t = 0;
+  virtual void SetControllerStreamAddress(bool is_input, int stream_id,
+                                          uintptr_t address) = 0;
+  virtual auto GetControllerStreamAddress(bool is_input, int stream_id)
       -> volatile uintptr_t = 0;
-  virtual void SetInputControllerStreamSize(int stream_id, int size) = 0;
-  virtual auto GetInputControllerStreamSize(int stream_id) -> volatile int = 0;
-  virtual void StartInputController(
+  virtual void SetControllerStreamSize(bool is_input, int stream_id,
+                                       int size) = 0;
+  virtual auto GetControllerStreamSize(bool is_input, int stream_id)
+      -> volatile int = 0;
+  virtual void StartController(
+      bool is_input,
       std::bitset<query_acceleration_constants::kMaxIOStreamCount>
           stream_active) = 0;
-  virtual auto IsInputControllerFinished() -> bool = 0;
+  virtual auto IsControllerFinished(bool is_input) -> bool = 0;
 
   virtual void SetRecordSize(int stream_id, int record_size) = 0;
   virtual void SetRecordChunkIDs(int stream_id, int interface_cycle,
                                  int chunk_id) = 0;
-
-  virtual void SetOutputControllerParams(int stream_id, int ddr_burst_size,
-                                         int records_per_ddr_burst,
-                                         int buffer_start, int buffer_end) = 0;
-  virtual auto GetOutputControllerParams(int stream_id)
-      -> volatile uint32_t = 0;
-  virtual void SetOutputControllerStreamAddress(int stream_id,
-                                                uintptr_t address) = 0;
-  virtual auto GetOutputControllerStreamAddress(int stream_id)
-      -> volatile uintptr_t = 0;
-  virtual void SetOutputControllerStreamSize(int stream_id, int size) = 0;
-  virtual auto GetOutputControllerStreamSize(int stream_id) -> volatile int = 0;
-  virtual void StartOutputController(
-      std::bitset<query_acceleration_constants::kMaxIOStreamCount>
-          stream_active) = 0;
-  virtual auto IsOutputControllerFinished() -> bool = 0;
 
   virtual void SetBufferToInterfaceChunk(int stream_id, int clock_cycle,
                                          int offset, int source_chunk4,

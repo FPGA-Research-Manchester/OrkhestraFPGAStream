@@ -25,66 +25,79 @@ class DMA : public AccelerationModule, public DMAInterface {
       : AccelerationModule(memory_manager, 0){};
 
   /**
-   * @brief Give input stream information to the input controller.
-   * @param stream_id ID of the input stream.
-   * @param ddr_burst_size How many clock cycles should the DDR burst be for the
-   * input.
-   * @param records_per_ddr_burst How many records are going to be transfered
-   * during a DDR burst.
-   * @param buffer_start Index of an input buffer where the stream will be
+   * @brief Give stream information to the input/output controller.
+   * @param is_input Bool noting if the configuration is for input or
+   * output.
+   * @param stream_id ID of the stream.
+   * @param ddr_burst_size How many clock cycles should the DDR burst be
+   * for the input.
+   * @param records_per_ddr_burst How many records are going to be
+   * transfered during a DDR burst.
+   * @param buffer_start Index of a buffer where the stream will be
    * buffered to.
-   * @param buffer_end Index of an input buffer up to where the stream can be
+   * @param buffer_end Index of a buffer up to where the stream can be
    * buffered to.
    */
-  void SetInputControllerParams(int stream_id, int ddr_burst_size,
-                                int records_per_ddr_burst, int buffer_start,
-                                int buffer_end) override;
+  void SetControllerParams(bool is_input, int stream_id, int ddr_burst_size,
+                           int records_per_ddr_burst, int buffer_start,
+                           int buffer_end) override;
   /**
-   * @brief Read input controller parameters.
+   * @brief Read input/output controller parameters.
+   * @param is_input Bool noting if the configuration is for input or output.
    * @param stream_id ID of the stream to read.
    * @return Read configuration data.
    */
-  auto GetInputControllerParams(int stream_id) -> volatile uint32_t override;
+  auto GetControllerParams(bool is_input, int stream_id)
+      -> volatile uint32_t override;
   /**
-   * @brief Set the starting address of an input stream in DDR.
+   * @brief Set the starting address of a stream in DDR.
+   * @param is_input Bool noting if the configuration is for input or output.
    * @param stream_id ID of the stream to be configured.
    * @param address Pointer to the starting point of the stream data.
    */
-  void SetInputControllerStreamAddress(int stream_id,
-                                       uintptr_t address) override;
+  void SetControllerStreamAddress(bool is_input, int stream_id,
+                                  uintptr_t address) override;
   /**
-   * @brief Read input stream's starting address.
+   * @brief Read stream's starting address.
+   * @param is_input Bool noting if the configuration is for input or output.
    * @param stream_id ID of the stream.
    * @return Pointer to the start of the stream's data in DDR.
    */
-  auto GetInputControllerStreamAddress(int stream_id)
+  auto GetControllerStreamAddress(bool is_input, int stream_id)
       -> volatile uintptr_t override;
   /**
-   * @brief Set how many records does the input stream have.
-   * @param stream_id ID of the input stream.
-   * @param size Number of records in the input stream.
+   * @brief Set how many records does the input/output stream have.
+   * @param is_input Bool noting if the configuration is for input or output.
+   * @param stream_id ID of the input/output stream.
+   * @param size Number of records in the input/output stream.
    */
-  void SetInputControllerStreamSize(int stream_id, int size) override;
+  void SetControllerStreamSize(bool is_input, int stream_id, int size) override;
   /**
-   * @brief Read how many records does the input stream have.
-   * @param stream_id ID of the input stream.
-   * @return Number of records in the input stream.
+   * @brief Read how many records does the input/output stream have.
+   * @param is_input Bool noting if the configuration is for input or output.
+   * @param stream_id ID of the input/output stream.
+   * @return Number of records in the input/output stream.
    */
-  auto GetInputControllerStreamSize(int stream_id) -> volatile int override;
+  auto GetControllerStreamSize(bool is_input, int stream_id)
+      -> volatile int override;
   /**
-   * @brief Start the input controller to start buffering input streams and
-   * sending them to the acceleration modules.
+   * @brief Start the input/output controller to start buffering streams and
+   * then sending them to the acceleration modules.
+   * @param is_input Bool noting if the configuration is for input or output.
    * @param stream_active Array of booleans showing which streams should start
    * streaming towards the modules.
    */
-  void StartInputController(
+  void StartController(
+      bool is_input,
       std::bitset<query_acceleration_constants::kMaxIOStreamCount>
           stream_active) override;
   /**
-   * @brief Find out if input controller has fully streamed all input streams.
-   * @return Boolean showing if the input controller has finished.
+   * @brief Find out if input/output controller has fully streamed all the
+   * streams.
+   * @param is_input Bool noting if the configuration is for input or output.
+   * @return Boolean showing if the input/output controller has finished.
    */
-  auto IsInputControllerFinished() -> bool override;
+  auto IsControllerFinished(bool is_input) -> bool override;
 
   /**
    * @brief Set record size in terms of integers of a stream.
@@ -100,73 +113,6 @@ class DMA : public AccelerationModule, public DMAInterface {
    */
   void SetRecordChunkIDs(int stream_id, int interface_cycle,
                          int chunk_id) override;
-
-  /**
-   * @brief Give input stream information to the output controller.
-   * @param stream_id ID of the output stream.
-   * @param ddr_burst_size How many clock cycles should the DDR burst be for the
-   * output.
-   * @param records_per_ddr_burst How many records are going to be transfered
-   * during an output DDR burst.
-   * @param buffer_start Index of an output buffer where the stream will be
-   * buffered to.
-   * @param buffer_end Index of an input buffer up to where the stream can be
-   * buffered to.
-   */
-  void SetOutputControllerParams(int stream_id, int ddr_burst_size,
-                                 int records_per_ddr_burst, int buffer_start,
-                                 int buffer_end) override;
-  /**
-   * @brief Read output controller parameters.
-   * @param stream_id Output stream ID.
-   * @return Data used to configure the given output stream.
-   */
-  auto GetOutputControllerParams(int stream_id) -> volatile uint32_t override;
-  /**
-   * @brief Set the starting address of an output stream in DDR.
-   * @param stream_id Output stream ID.
-   * @param address Pointer to the starting point of the stream data.
-   */
-  void SetOutputControllerStreamAddress(int stream_id,
-                                        uintptr_t address) override;
-  /**
-   * @brief Read output stream's starting address.
-   * @param stream_id Output stream ID.
-   * @return Pointer to the start of the stream's data in DDR.
-   */
-  auto GetOutputControllerStreamAddress(int stream_id)
-      -> volatile uintptr_t override;
-  /**
-   * @brief Set how many records does the output stream have.
-   *
-   * For output streams we can't know that so it's for setting the number to 0.
-   * @param stream_id Output stream ID.
-   * @param size Number of records in the output stream.
-   */
-  void SetOutputControllerStreamSize(int stream_id, int size) override;
-  /**
-   * Read how many records does the output stream have.
-   * @param stream_id Output stream ID.
-   * @return Number of records in the output stream.
-   */
-  auto GetOutputControllerStreamSize(int stream_id) -> volatile int override;
-  /**
-   * @brief Start the output controller to start pulling the streams through the
-   * modules and write the results back to the DDR.
-   *
-   * More specifically the outputcontroller will start sending requrests of the
-   * final results which will get propagated through the infrastructure.
-   * @param stream_active Array of booleans showing which streams should start
-   * getting pulled through the accelerators.
-   */
-  void StartOutputController(
-      std::bitset<query_acceleration_constants::kMaxIOStreamCount>
-          stream_active) override;
-  /**
-   * @brief Find out if output controller has fully streamed all output streams.
-   * @return Boolean which says if all streams have been processed.
-   */
-  auto IsOutputControllerFinished() -> bool override;
 
   /**
    * @brief Method to configure the input crossbar chunks.
