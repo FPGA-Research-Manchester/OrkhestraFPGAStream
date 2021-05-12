@@ -33,6 +33,8 @@ using namespace dbmstodspi::fpga_managing;
 
 void FPGAManager::SetupQueryAcceleration(
     const std::vector<AcceleratedQueryNode>& query_nodes) {
+  // Doesn't reset configuration. Unused modules should be configured to be
+  // unused.
   dma_engine_.GlobalReset();
   read_back_modules_.clear();
   read_back_parameters_.clear();
@@ -73,10 +75,7 @@ void FPGAManager::SetupQueryAcceleration(
     ila_module_.value().StartILAs();
   }
 
-  for (int node_index = 0; node_index < query_nodes.size(); node_index++) {
-    int module_location = node_index + 1;
-    const auto& query_node = query_nodes.at(node_index);
-
+  for (const auto& query_node : query_nodes) {
     // TODO: For each of the operations different properties have to be written
     // down to add classifications. The operation_parameters can be generalised
     // based on classifiactions
@@ -84,9 +83,12 @@ void FPGAManager::SetupQueryAcceleration(
     // Assumptions are taken that the input and output streams are defined
     // correctly and that the correct amount of streams have been given for each
     // operation.
-    switch (query_nodes.at(node_index).operation_type) {
+
+    // Make it possible to configure a module to be unused.
+    switch (query_node.operation_type) {
       case operation_types::QueryOperationType::kFilter: {
-        modules::Filter filter_module(memory_manager_, module_location);
+        modules::Filter filter_module(memory_manager_,
+                                      query_node.operation_module_location);
         FilterSetup::SetupFilterModule(filter_module,
                                        query_node.input_streams[0].stream_id,
                                        query_node.output_streams[0].stream_id,
@@ -94,7 +96,8 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperationType::kJoin: {
-        modules::Join join_module(memory_manager_, module_location);
+        modules::Join join_module(memory_manager_,
+                                  query_node.operation_module_location);
         JoinSetup::SetupJoinModule(
             join_module, query_node.input_streams[0].stream_id,
             GetStreamRecordSize(query_node.input_streams[0]),
@@ -106,30 +109,32 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperationType::kMergeSort: {
-        modules::MergeSort merge_sort_module(memory_manager_, module_location);
+        modules::MergeSort merge_sort_module(
+            memory_manager_, query_node.operation_module_location);
         MergeSortSetup::SetupMergeSortModule(
             merge_sort_module, query_node.input_streams[0].stream_id,
             GetStreamRecordSize(query_node.input_streams[0]), 0, true);
         break;
       }
       case operation_types::QueryOperationType::kLinearSort: {
-        modules::LinearSort linear_sort_module(memory_manager_,
-                                               module_location);
+        modules::LinearSort linear_sort_module(
+            memory_manager_, query_node.operation_module_location);
         LinearSortSetup::SetupLinearSortModule(
             linear_sort_module, query_node.input_streams[0].stream_id,
             GetStreamRecordSize(query_node.input_streams[0]));
         break;
       }
       case operation_types::QueryOperationType::kAddition: {
-        modules::Addition addition_module(memory_manager_, module_location);
+        modules::Addition addition_module(memory_manager_,
+                                          query_node.operation_module_location);
         AdditionSetup::SetupAdditionModule(
             addition_module, query_node.input_streams[0].stream_id,
             query_node.operation_parameters);
         break;
       }
       case operation_types::QueryOperationType::kMultiplication: {
-        modules::Multiplication multiplication_module(memory_manager_,
-                                                      module_location);
+        modules::Multiplication multiplication_module(
+            memory_manager_, query_node.operation_module_location);
         MultiplicationSetup::SetupMultiplicationModule(
             multiplication_module, {query_node.input_streams[0].stream_id},
             query_node.operation_parameters);
@@ -137,7 +142,7 @@ void FPGAManager::SetupQueryAcceleration(
       }
       case operation_types::QueryOperationType::kAggregationSum: {
         auto aggregation_module = std::make_unique<modules::AggregationSum>(
-            memory_manager_, module_location);
+            memory_manager_, query_node.operation_module_location);
         AggregationSumSetup::SetupAggregationSum(
             *aggregation_module, query_node.input_streams[0].stream_id,
             query_node.operation_parameters);

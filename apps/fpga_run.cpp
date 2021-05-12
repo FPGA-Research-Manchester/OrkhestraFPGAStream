@@ -467,7 +467,7 @@ auto main() -> int {
 
   // Pipelined tests
   MeasureOverallTime({first_lineitem_filter, first_part_filter});
-  MeasureOverallTime({first_lineitem_filter1, first_part_filter1});
+  // MeasureOverallTime({first_lineitem_filter1, first_part_filter1});
   // SF=0.3
   // MeasureOverallTime({first_lineitem_filter3});
 

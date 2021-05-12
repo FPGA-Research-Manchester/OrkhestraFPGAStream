@@ -24,13 +24,12 @@ class ElasticModuleChecker {
    * @param operation_type What operation is going to get used.
    * @param operation_parameters What are the given parameters for the given
    * operation.
-   * @param loaded_modules Which modules have been chosen currently.
    */
   static void CheckElasticityNeeds(
-      std::vector<fpga_managing::StreamDataParameters> input_stream_parameters,
+      const std::vector<fpga_managing::StreamDataParameters>&
+          input_stream_parameters,
       fpga_managing::operation_types::QueryOperationType operation_type,
-      std::vector<std::vector<int>> operation_parameters,
-      query_scheduling_data::ConfigurableModulesVector loaded_modules);
+      const std::vector<std::vector<int>>& operation_parameters);
 
  private:
   /**
@@ -42,8 +41,9 @@ class ElasticModuleChecker {
    * @return Is the merge sorter big enough.
    */
   static auto IsMergeSortBigEnough(
-      std::vector<fpga_managing::StreamDataParameters> input_stream_parameters,
-      std::vector<std::vector<int>> operation_parameters) -> bool;
+      const std::vector<fpga_managing::StreamDataParameters>&
+          input_stream_parameters,
+      const std::vector<std::vector<int>>& operation_parameters) -> bool;
 };
 
 }  // namespace query_managing

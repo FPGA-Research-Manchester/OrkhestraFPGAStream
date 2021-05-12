@@ -44,35 +44,6 @@ void QueryManager::CheckTableData(
   std::cout << std::endl;
 }
 
-// Possibly the whole pair isn't needed? Just use the ConfigurableModulesVector
-auto QueryManager::GetBitstreamFileFromQueryNode(
-    const std::pair<query_scheduling_data::ConfigurableModulesVector,
-                    std::vector<query_scheduling_data::QueryNode>>& query_node)
-    -> std::string {
-  auto bitstreams_iterator =
-      query_scheduling_data::supported_accelerator_bitstreams.find(
-          query_node.first);
-  if (bitstreams_iterator !=
-      query_scheduling_data::supported_accelerator_bitstreams.end()) {
-    return bitstreams_iterator->second;
-  } else {
-    throw std::runtime_error("Unsopported set of modules!");
-  }
-}
-
-// Possibly the whole pair isn't needed again? Then again, in the future each
-// node might not have just one module.
-auto QueryManager::GetModuleCountFromQueryNode(
-    const std::pair<query_scheduling_data::ConfigurableModulesVector,
-                    std::vector<query_scheduling_data::QueryNode>>& query_node)
-    -> int {
-  int module_count = 1;  // +1 for DMA module
-  for (const auto& operation_module : query_node.first) {
-    module_count++;
-  }
-  return module_count;
-}
-
 void QueryManager::RunQueries(
     std::vector<query_scheduling_data::QueryNode> starting_query_nodes) {
   std::cout << std::endl << "Starting up!" << std::endl;
@@ -85,17 +56,20 @@ void QueryManager::RunQueries(
       query_node_runs_queue;
 
   NodeScheduler::FindAcceleratedQueryNodeSets(
-      &query_node_runs_queue, std::move(starting_query_nodes),
+      &query_node_runs_queue, starting_query_nodes,
       query_scheduling_data::supported_accelerator_bitstreams,
       query_scheduling_data::existing_modules);
 
   while (!query_node_runs_queue.empty()) {
-    const auto executable_query_nodes = query_node_runs_queue.front();
+    const auto executable_query_nodes = query_node_runs_queue.front().second;
+    const auto bitstream_file_name =
+        query_scheduling_data::supported_accelerator_bitstreams.at(query_node_runs_queue.front().first);
+    query_node_runs_queue.pop();
 
     memory_manager.LoadBitstreamIfNew(
-        GetBitstreamFileFromQueryNode(executable_query_nodes),
-        GetModuleCountFromQueryNode(executable_query_nodes) *
-            fpga_managing::query_acceleration_constants::kModuleSize);
+        bitstream_file_name,
+        query_scheduling_data::required_bitstream_memory_space.at(
+            bitstream_file_name));
 
     IDManager id_manager;
     std::vector<std::vector<int>> output_ids;
@@ -110,12 +84,12 @@ void QueryManager::RunQueries(
         fpga_managing::query_acceleration_constants::kMaxIOStreamCount);
     std::vector<fpga_managing::AcceleratedQueryNode> query_nodes;
 
-    id_manager.AllocateStreamIDs(executable_query_nodes.second, input_ids,
+    id_manager.AllocateStreamIDs(executable_query_nodes, input_ids,
                                  output_ids);
 
-    for (int node_index = 0; node_index < executable_query_nodes.second.size();
+    for (int node_index = 0; node_index < executable_query_nodes.size();
          node_index++) {
-      auto current_node = executable_query_nodes.second.at(node_index);
+      auto current_node = executable_query_nodes.at(node_index);
 
       // Allocate memory blocks
       std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>
@@ -158,12 +132,12 @@ void QueryManager::RunQueries(
       // Check if the loaded modules are correct based on the input.
       ElasticModuleChecker::CheckElasticityNeeds(
           input_stream_parameters, current_node.operation_type,
-          current_node.operation_parameters.operation_parameters,
-          executable_query_nodes.first);
+          current_node.operation_parameters.operation_parameters);
 
       query_nodes.push_back(
           {std::move(input_stream_parameters),
            std::move(output_stream_parameters), current_node.operation_type,
+           current_node.module_location,
            current_node.operation_parameters.operation_parameters});
 
       // Keep memory blocks during the query execution
@@ -209,7 +183,5 @@ void QueryManager::RunQueries(
         }
       }
     }
-
-    query_node_runs_queue.pop();
   }
 }

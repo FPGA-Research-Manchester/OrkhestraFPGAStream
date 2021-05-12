@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "operation_types.hpp"
+#include "query_acceleration_constants.hpp"
 
 namespace dbmstodspi {
 namespace query_managing {
@@ -14,6 +15,8 @@ namespace query_managing {
  * @brief Namespace for types to help with scheduling the query nodes correctly.
  */
 namespace query_scheduling_data {
+
+using fpga_managing::query_acceleration_constants::kModuleSize;
 
 /**
  * @brief Struct for collecting all of the parameter vectors.
@@ -46,6 +49,8 @@ struct QueryNode {
   std::vector<query_scheduling_data::QueryNode *> previous_nodes;
   /// Operation parameters to configure the streams with modules.
   NodeOperationParameters operation_parameters;
+  /// Location of the module to be processing this node
+  int module_location = -1;
 
   auto operator==(const QueryNode &rhs) const -> bool {
     return input_data_definition_files == rhs.input_data_definition_files &&
@@ -53,7 +58,10 @@ struct QueryNode {
            operation_type == rhs.operation_type &&
            next_nodes == rhs.next_nodes &&
            previous_nodes == rhs.previous_nodes &&
-           operation_parameters == rhs.operation_parameters;
+           operation_parameters == rhs.operation_parameters /*&&
+           module_location == rhs.module_location*/
+        ;  // Last comparison should be included once scheduler has been fixed
+           // to work with smart pointers
   }
 };
 
@@ -121,6 +129,23 @@ const std::map<ConfigurableModulesVector, std::string>
         /*{{{fpga_managing::operation_types::QueryOperationType::kFilter,{16,2}},
           fpga_managing::operation_types::QueryOperationType::kLinearSort{1024}},
          "DSPI_filtering_linear_sort"}*/};
+
+const std::map<std::string, int> required_bitstream_memory_space = {
+    {"DSPI_filtering", kModuleSize * 2},
+    {"DSPI_joining", kModuleSize * 2},
+    {"DSPI_double_merge_sorting", kModuleSize * 3},
+    {"DSPI_merge_sorting", kModuleSize * 2},
+    {"DSPI_linear_sorting", kModuleSize * 2},
+    {"DSPI_addition", kModuleSize * 2},
+    {"DSPI_multiplication", kModuleSize * 2},
+    {"DSPI_aggregation_sum", kModuleSize * 2},
+    {"DSPI_empty", kModuleSize * 1},
+    {"DSPI_sort_join_filter", kModuleSize * 4},
+    {"DSPI_filter_join", kModuleSize * 3},
+    {"DSPI_filtering_linear_sort", kModuleSize * 3}
+    //{"bitstream containing ILA", kModuleSize * 146}
+};
+
 }  // namespace query_scheduling_data
 
 }  // namespace query_managing

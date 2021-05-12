@@ -11,7 +11,7 @@ void NodeScheduler::FindAcceleratedQueryNodeSets(
     std::queue<std::pair<query_scheduling_data::ConfigurableModulesVector,
                          std::vector<query_scheduling_data::QueryNode>>>*
         accelerated_query_node_runs,
-    std::vector<query_scheduling_data::QueryNode> starting_nodes,
+    std::vector<query_scheduling_data::QueryNode>& starting_nodes,
     const std::map<query_scheduling_data::ConfigurableModulesVector,
                    std::string>& supported_accelerator_bitstreams,
     const std::map<fpga_managing::operation_types::QueryOperationType,
@@ -20,18 +20,14 @@ void NodeScheduler::FindAcceleratedQueryNodeSets(
 
   // Not checking for cycles nor for unsupported opperations
   while (!starting_nodes.empty()) {
-    auto available_nodes_iterator =
-        FindNextAvailableNode(scheduled_queries, starting_nodes);
-    if (available_nodes_iterator == starting_nodes.end()) {
-      throw std::runtime_error("Failed to schedule!");
-    }
+    int node_index = 0;
 
     query_scheduling_data::ConfigurableModulesVector current_set;
     std::vector<query_scheduling_data::QueryNode> current_query_nodes;
 
-    CheckNodeForModuleSet(available_nodes_iterator, current_set,
-                          current_query_nodes, scheduled_queries,
-                          starting_nodes, supported_accelerator_bitstreams,
+    CheckNodeForModuleSet(node_index, current_set, current_query_nodes,
+                          scheduled_queries, starting_nodes,
+                          supported_accelerator_bitstreams,
                           existing_modules_library);
 
     if (current_query_nodes.empty()) {
@@ -51,7 +47,7 @@ void NodeScheduler::FindAcceleratedQueryNodeSets(
 // scheduled
 void NodeScheduler::RemoveLinkedNodes(
     std::vector<query_scheduling_data::QueryNode*>& linked_nodes,
-    std::vector<query_scheduling_data::QueryNode>& current_query_nodes) {
+    const std::vector<query_scheduling_data::QueryNode>& current_query_nodes) {
   for (int i = 0; i < linked_nodes.size(); i++) {
     auto* linked_node = linked_nodes[i];
     if (linked_node != nullptr &&
@@ -65,12 +61,13 @@ void NodeScheduler::RemoveLinkedNodes(
 // Function to find the minimum position for a node such that all the
 // prerequisites are met
 auto NodeScheduler::FindMinPosition(
-    query_scheduling_data::QueryNode& current_node,
-    std::vector<query_scheduling_data::QueryNode>& current_query_nodes,
-    query_scheduling_data::ConfigurableModulesVector& current_modules_vector)
-    -> int {
+    const query_scheduling_data::QueryNode* current_node,
+
+    const std::vector<query_scheduling_data::QueryNode>& current_query_nodes,
+    const query_scheduling_data::ConfigurableModulesVector&
+        current_modules_vector) -> int {
   int min_position_index = 0;
-  for (const auto& previous_node : current_node.previous_nodes) {
+  for (const auto& previous_node : current_node->previous_nodes) {
     if (previous_node != nullptr) {
       auto current_nodes_iterator =
           std::find(current_query_nodes.begin(), current_query_nodes.end(),
@@ -102,8 +99,7 @@ auto NodeScheduler::FindMinPosition(
 // Check recursively if the given node can be added to the set of nodes to be
 // scheduled
 void NodeScheduler::CheckNodeForModuleSet(
-    std::vector<query_scheduling_data::QueryNode>::iterator&
-        current_node_iterator,
+    int node_index,
     query_scheduling_data::ConfigurableModulesVector& current_modules_vector,
     std::vector<query_scheduling_data::QueryNode>& current_query_nodes,
     std::vector<query_scheduling_data::QueryNode>& scheduled_queries,
@@ -112,18 +108,18 @@ void NodeScheduler::CheckNodeForModuleSet(
                    std::string>& supported_accelerator_bitstreams,
     const std::map<fpga_managing::operation_types::QueryOperationType,
                    std::vector<std::vector<int>>>& existing_modules_library) {
-  auto current_node = *current_node_iterator;
+  auto current_node = starting_nodes[node_index];
 
   auto suitable_combination = FindSuitableModuleCombination(
-      current_node, current_query_nodes, current_modules_vector,
+      &current_node, current_query_nodes, current_modules_vector,
       supported_accelerator_bitstreams, existing_modules_library);
 
+  // The logic with pointers has to get cleaned up!
   if (!suitable_combination.empty()) {
+
+    scheduled_queries.push_back(current_node);
     current_query_nodes.push_back(current_node);
     current_modules_vector = suitable_combination;
-    scheduled_queries.push_back(current_node);
-
-    starting_nodes.erase(current_node_iterator);
 
     if (!current_node.next_nodes.empty()) {
       for (const auto& next_node : current_node.next_nodes) {
@@ -134,18 +130,17 @@ void NodeScheduler::CheckNodeForModuleSet(
       }
     }
 
-    auto new_iterator =
-        FindNextAvailableNode(scheduled_queries, starting_nodes);
-    if (new_iterator != starting_nodes.end()) {
-      CheckNodeForModuleSet(new_iterator, current_modules_vector,
-                            current_query_nodes, scheduled_queries,
-                            starting_nodes, supported_accelerator_bitstreams,
+    starting_nodes.erase(starting_nodes.begin() + node_index);
+
+    if (!starting_nodes.empty()) {
+      CheckNodeForModuleSet(0, current_modules_vector, current_query_nodes,
+                            scheduled_queries, starting_nodes,
+                            supported_accelerator_bitstreams,
                             existing_modules_library);
     }
   } else {
-    std::advance(current_node_iterator, 1);
-    if (current_node_iterator != starting_nodes.end()) {
-      CheckNodeForModuleSet(current_node_iterator, current_modules_vector,
+    if (node_index + 1 != starting_nodes.size()) {
+      CheckNodeForModuleSet(node_index + 1, current_modules_vector,
                             current_query_nodes, scheduled_queries,
                             starting_nodes, supported_accelerator_bitstreams,
                             existing_modules_library);
@@ -155,9 +150,10 @@ void NodeScheduler::CheckNodeForModuleSet(
 
 // Check if the desired module can be added to the existing combination
 auto NodeScheduler::FindSuitableModuleCombination(
-    query_scheduling_data::QueryNode& current_node,
-    std::vector<query_scheduling_data::QueryNode>& current_query_nodes,
-    query_scheduling_data::ConfigurableModulesVector& current_modules_vector,
+    query_scheduling_data::QueryNode* current_node,
+    const std::vector<query_scheduling_data::QueryNode>& current_query_nodes,
+    const query_scheduling_data::ConfigurableModulesVector&
+        current_modules_vector,
     const std::map<query_scheduling_data::ConfigurableModulesVector,
                    std::string>& supported_accelerator_bitstreams,
     const std::map<fpga_managing::operation_types::QueryOperationType,
@@ -167,7 +163,7 @@ auto NodeScheduler::FindSuitableModuleCombination(
                                          current_modules_vector);
 
   auto find_iterator =
-      existing_modules_library.find(current_node.operation_type);
+      existing_modules_library.find(current_node->operation_type);
   if (find_iterator == existing_modules_library.end()) {
     throw std::runtime_error("Operation parameters not found!");
   }
@@ -182,20 +178,25 @@ auto NodeScheduler::FindSuitableModuleCombination(
         module_parameters.push_back(parameter_options.at(0));
       }
     }
+    // Resource elastic requirements
     if (!module_parameters.empty()) {
       auto new_modules_vector = CheckModuleParameterSupport(
           module_parameters, current_modules_vector, module_position, 0,
-          current_node.operation_type, current_module_possible_parameters,
+          current_node->operation_type, current_module_possible_parameters,
           supported_accelerator_bitstreams);
       if (!new_modules_vector.empty()) {
+        current_node->module_location = module_position + 1;
         return new_modules_vector;
       }
+      // TODO: Make this nicer. A bit smelly
+      // No resource elastic requirements
     } else {
       auto new_modules_vector =
-          CreateNewModulesVector(current_node.operation_type, module_position,
+          CreateNewModulesVector(current_node->operation_type, module_position,
                                  current_modules_vector, module_parameters);
       if (IsModuleSetSupported(new_modules_vector,
                                supported_accelerator_bitstreams)) {
+        current_node->module_location = module_position + 1;
         return new_modules_vector;
       }
     }
@@ -207,7 +208,8 @@ auto NodeScheduler::FindSuitableModuleCombination(
 // supported one
 auto dbmstodspi::query_managing::NodeScheduler::CheckModuleParameterSupport(
     std::vector<int> module_parameters,
-    query_scheduling_data::ConfigurableModulesVector& current_modules_vector,
+    const query_scheduling_data::ConfigurableModulesVector&
+        current_modules_vector,
     int module_position, int parameter_option_index,
     fpga_managing::operation_types::QueryOperationType query_operation,
     std::vector<std::vector<int>> current_module_possible_parameters,
@@ -244,8 +246,9 @@ auto dbmstodspi::query_managing::NodeScheduler::CheckModuleParameterSupport(
 auto NodeScheduler::CreateNewModulesVector(
     fpga_managing::operation_types::QueryOperationType query_operation,
     int current_position,
-    query_scheduling_data::ConfigurableModulesVector current_modules_vector,
-    std::vector<int> module_parameters)
+    const query_scheduling_data::ConfigurableModulesVector&
+        current_modules_vector,
+    const std::vector<int>& module_parameters)
     -> query_scheduling_data::ConfigurableModulesVector {
   if (query_operation ==
       fpga_managing::operation_types::QueryOperationType::kPassThrough) {
@@ -305,14 +308,16 @@ auto NodeScheduler::IsNodeAvailable(
   return true;
 }
 
-// Find function for getting an iterator for a node which is available.
-auto NodeScheduler::FindNextAvailableNode(
-    std::vector<query_scheduling_data::QueryNode>& already_scheduled_nodes,
-    std::vector<query_scheduling_data::QueryNode>& starting_nodes)
-    -> std::vector<query_scheduling_data::QueryNode>::iterator {
-  return std::find_if(starting_nodes.begin(), starting_nodes.end(),
-                      [&](const query_scheduling_data::QueryNode& leaf_node) {
-                        return IsNodeAvailable(already_scheduled_nodes,
-                                               leaf_node);
-                      });
-}
+//// Find function for getting an iterator for a node which is available.
+// auto NodeScheduler::FindNextAvailableNode(
+//    const std::vector<query_scheduling_data::QueryNode>&
+//    already_scheduled_nodes, std::vector<query_scheduling_data::QueryNode>&
+//    starting_nodes)
+//    -> std::vector<query_scheduling_data::QueryNode>::iterator& {
+//  return std::find_if(starting_nodes.begin(), starting_nodes.end(),
+//                      [&](
+//                          const query_scheduling_data::QueryNode& leaf_node) {
+//                        return IsNodeAvailable(already_scheduled_nodes,
+//                                               leaf_node);
+//                      });
+//}
