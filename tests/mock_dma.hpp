@@ -20,7 +20,11 @@ class MockDMA : public dbmstodspi::fpga_managing::modules::DMAInterface {
               (override));
   MOCK_METHOD(volatile int, GetInputControllerStreamSize, (int stream_id),
               (override));
-  MOCK_METHOD(void, StartInputController, (bool stream_active[16]), (override));
+  MOCK_METHOD(void, StartInputController,
+              (std::bitset<dbmstodspi::fpga_managing::
+                               query_acceleration_constants::kMaxIOStreamCount>
+                   stream_active),
+              (override));
   MOCK_METHOD(bool, IsInputControllerFinished, (), (override));
 
   MOCK_METHOD(void, SetRecordSize, (int stream_id, int recordSize), (override));
@@ -41,7 +45,10 @@ class MockDMA : public dbmstodspi::fpga_managing::modules::DMAInterface {
               (override));
   MOCK_METHOD(volatile int, GetOutputControllerStreamSize, (int stream_id),
               (override));
-  MOCK_METHOD(void, StartOutputController, (bool stream_active[16]),
+  MOCK_METHOD(void, StartOutputController,
+              (std::bitset<dbmstodspi::fpga_managing::
+                               query_acceleration_constants::kMaxIOStreamCount>
+                   stream_active),
               (override));
   MOCK_METHOD(bool, IsOutputControllerFinished, (), (override));
 
