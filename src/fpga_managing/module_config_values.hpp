@@ -5,18 +5,18 @@
 namespace dbmstodspi::fpga_managing::module_config_values {
 /// Enum for selecting compare function type.
 enum class FilterCompareFunctions {
-  k32BitLessThan = 0,
-  k32BitLessThanOrEqual = 1,
-  k32BitEqual = 2,
-  k32BitGreaterThanOrEqual = 3,
-  k32BitGreaterThan = 4,
-  k32BitNotEqual = 5,
-  k64BitLessThan = 8,
-  k64BitLessThanOrEqual = 9,
-  k64BitEqual = 10,
-  k64BitGreaterThanOrEqual = 11,
-  k64BitGreaterThan = 12,
-  k64BitNotEqual = 13
+  kLessThan32Bit = 0,
+  kLessThanOrEqual32Bit = 1,
+  kEqual32Bit = 2,
+  kGreaterThanOrEqual32Bit = 3,
+  kGreaterThan32Bit = 4,
+  kNotEqual32Bit = 5,
+  kLessThan64Bit = 8,
+  kLessThanOrEqual64Bit = 9,
+  kEqual64Bit = 10,
+  kGreaterThanOrEqual64Bit = 11,
+  kGreaterThan64Bit = 12,
+  kNotEqual64Bit = 13
 };
 
 /// Enum for selecting the literal type.

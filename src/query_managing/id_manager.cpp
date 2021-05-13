@@ -4,11 +4,14 @@
 #include <stdexcept>
 
 #include "operation_types.hpp"
+#include "query_acceleration_constants.hpp"
 
 using namespace dbmstodspi::query_managing;
 
 IDManager::IDManager() {
-  for (int available_index = 15; available_index >= 0; available_index--) {
+  for (int available_index =
+           fpga_managing::query_acceleration_constants::kMaxIOStreamCount - 1;
+       available_index >= 0; available_index--) {
     available_ids_.push(available_index);
   }
 }
@@ -26,8 +29,8 @@ void IDManager::AllocateStreamIDs(
     std::vector<int> current_node_input_ids;
     std::vector<int> current_node_output_ids;
     AllocateInputIDs(all_nodes[current_node_index], all_nodes,
-                     current_node_input_ids,
-                     output_ids, current_node_output_ids);
+                     current_node_input_ids, output_ids,
+                     current_node_output_ids);
     AllocateLeftoverOutputIDs(all_nodes[current_node_index],
                               current_node_output_ids);
     input_ids.push_back(current_node_input_ids);

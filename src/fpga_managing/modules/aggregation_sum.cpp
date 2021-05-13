@@ -28,7 +28,7 @@ auto dbmstodspi::fpga_managing::modules::AggregationSum::ReadResult(
 
 auto dbmstodspi::fpga_managing::modules::AggregationSum::IsModuleActive()
     -> bool {
-  return (1 & AccelerationModule::ReadFromModule(4)) != 0u;
+  return (1 & AccelerationModule::ReadFromModule(4)) != 0U;
 }
 
 void dbmstodspi::fpga_managing::modules::AggregationSum::ResetSumRegisters() {
