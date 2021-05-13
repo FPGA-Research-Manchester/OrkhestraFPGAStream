@@ -42,16 +42,18 @@ enum class DMACrossbarDirectionSelection {
 };
 
 /**
- * @brief Matrix type for holding DNF clause states and types.
+ * @brief DNF clauses holding literal values for different positions, chunks and
+ * compare lanes.
  *
  * Which array is for what is explained in the Filter::FilterSetDNFClauseLiteral
  * function
  */
-typedef std::array<
-    std::pair<bool,
-              std::array<std::array<std::array<LiteralTypes, 32>, 32>, 4>>,
-    32>
-    DNFClauseStates;
+typedef std::array<std::array<std::array<LiteralTypes, 32>, 32>, 4> DNFClause;
+
+/**
+ * @brief Matrix type for holding DNF clause active states.
+ */
+typedef std::array<std::pair<bool, DNFClause>, 32> DNFClauseStates;
 }  // namespace module_config_values
 
 }  // namespace fpga_managing

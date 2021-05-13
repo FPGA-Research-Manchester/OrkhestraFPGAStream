@@ -26,8 +26,9 @@ auto DataManager::ParseDataFromCSV(const std::string& filename) -> TableData {
       throw std::runtime_error(value + "size is not supported!");
     }
 
-    table_column_label_vector.emplace_back(name, data_type_size);
-    size += static_cast<int> (data_type_size);
+    table_column_label_vector.emplace_back(name,
+                                           static_cast<int>(data_type_size));
+    size += static_cast<int>(data_type_size);
   }
 
   TableData table_data;

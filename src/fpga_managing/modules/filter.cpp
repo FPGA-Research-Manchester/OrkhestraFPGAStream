@@ -165,5 +165,8 @@ void Filter::WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
 }
 
 void Filter::ResetDNFStates() {
-  dnf_states_ = module_config_values::DNFClauseStates();
+  for (auto& dnf_state : dnf_states_) {
+    dnf_state.first = false;
+    dnf_state.second = module_config_values::DNFClause();
+  }
 }
