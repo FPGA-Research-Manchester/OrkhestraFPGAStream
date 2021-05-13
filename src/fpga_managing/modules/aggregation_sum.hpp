@@ -4,9 +4,7 @@
 #include "memory_manager_interface.hpp"
 #include "read_back_module_interface.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
-namespace modules {
+namespace dbmstodspi::fpga_managing::modules {
 
 /**
  * @brief Class which implements low level memory writes to the aggregating
@@ -74,6 +72,4 @@ class AggregationSum : public AccelerationModule,
   void ResetSumRegisters() override;
 };
 
-}  // namespace modules
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing::modules

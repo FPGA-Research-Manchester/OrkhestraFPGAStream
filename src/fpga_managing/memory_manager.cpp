@@ -1,11 +1,11 @@
 #include "memory_manager.hpp"
 
-#include <stdexcept>
 #include <iostream>
+#include <stdexcept>
 
 #ifdef _FPGA_AVAILABLE
-#include "udma_memory_block.hpp"
 #include "mmio.h"
+#include "udma_memory_block.hpp"
 #else
 #include "virtual_memory_block.hpp"
 #endif
@@ -62,7 +62,7 @@ auto MemoryManager::AllocateMemoryBlock()
   }
 #ifdef _FPGA_AVAILABLE
   return std::make_unique<UDMAMemoryBlock>(
-      udma_repo_.device(memory_block_count_-1));
+      udma_repo_.device(memory_block_count_ - 1));
 #else
   return std::make_unique<VirtualMemoryBlock>();
 #endif
@@ -73,7 +73,10 @@ void MemoryManager::FreeMemoryBlock(
   available_memory_blocks_.push(std::move(memory_block_pointer));
 }
 
-void MemoryManager::SetFPGATo300MHz() {
+void MemoryManager::SetFPGATo300MHz() { SetFPGAClockSpeed(0x10500); }
+void MemoryManager::SetFPGATo100MHz() { SetFPGAClockSpeed(0x10F00); }
+
+void MemoryManager::SetFPGAClockSpeed(int speed_value) {
 #ifdef _FPGA_AVAILABLE
   auto clock_memory_map = mmioGetMmap("/dev/mem", 0xFF5E0000, 1024);
   if (clock_memory_map.fd == -1)
@@ -85,7 +88,7 @@ void MemoryManager::SetFPGATo300MHz() {
   value = value & 0xFEFFFFFF;
   *pl_clk0 = value;
   value = value & 0xFFC0C0FF;
-  value = value | 0x10500;  // For 100MHz use 0x10F00
+  value = value | speed_value;
   *pl_clk0 = value;
   value = value | 0x01000000;
   *pl_clk0 = value;

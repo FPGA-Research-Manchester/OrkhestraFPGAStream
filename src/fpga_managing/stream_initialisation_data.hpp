@@ -4,8 +4,7 @@
 
 #include "memory_block_interface.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Struct to hold data from which the configuration data can be
@@ -20,5 +19,4 @@ struct StreamInitialisationData {
   std::unique_ptr<MemoryBlockInterface> memory_block;
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

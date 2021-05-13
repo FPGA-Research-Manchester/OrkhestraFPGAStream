@@ -2,9 +2,7 @@
 
 #include <cstdint>
 
-namespace dbmstodspi {
-namespace fpga_managing {
-namespace modules {
+namespace dbmstodspi::fpga_managing::modules {
 
 /**
  * @brief Interface class which is implemented in the #AggregationSum class.
@@ -21,6 +19,4 @@ class AggregationSumInterface {
   virtual void ResetSumRegisters() = 0;
 };
 
-}  // namespace modules
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing::modules

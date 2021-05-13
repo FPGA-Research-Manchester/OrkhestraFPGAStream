@@ -1,11 +1,12 @@
 #pragma once
 
-namespace dbmstodspi {
-namespace fpga_managing {
-namespace modules {
+#include <cstdint>
+
+namespace dbmstodspi::fpga_managing::modules {
 
 /**
- * @brief Interface class for modules which need to get it's result read from the configuration registers.
+ * @brief Interface class for modules which need to get it's result read from
+ * the configuration registers.
  */
 class ReadBackModuleInterface {
  public:
@@ -14,6 +15,4 @@ class ReadBackModuleInterface {
   virtual auto ReadResult(int data_position) -> uint32_t = 0;
 };
 
-}  // namespace modules
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing::modules

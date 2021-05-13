@@ -1,11 +1,9 @@
 #pragma once
 #include <cstdint>
 
-#include "filter_config_values.hpp"
+#include "module_config_values.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
-namespace modules {
+namespace dbmstodspi::fpga_managing::modules {
 
 /**
  * @brief Interface class to be implemented by #Filter
@@ -24,16 +22,16 @@ class FilterInterface {
                              bool last_module_in_resource_elastic_chain) = 0;
   virtual void FilterSetCompareTypes(
       int chunk_id, int data_position,
-      filter_config_values::CompareFunctions compare_1_type,
-      filter_config_values::CompareFunctions compare_2_type,
-      filter_config_values::CompareFunctions compare_3_type,
-      filter_config_values::CompareFunctions compare_4_type) = 0;
+      module_config_values::FilterCompareFunctions compare_1_type,
+      module_config_values::FilterCompareFunctions compare_2_type,
+      module_config_values::FilterCompareFunctions compare_3_type,
+      module_config_values::FilterCompareFunctions compare_4_type) = 0;
   virtual void FilterSetCompareReferenceValue(int chunk_id, int data_position,
                                               int compare_number,
                                               int compare_reference_value) = 0;
   virtual void FilterSetDNFClauseLiteral(
       int dnf_clause_id, int compare_number, int chunk_id, int data_position,
-      filter_config_values::LiteralTypes literal_type) = 0;
+      module_config_values::LiteralTypes literal_type) = 0;
 
   virtual void WriteDNFClauseLiteralsToFilter_1CMP_8DNF(int datapath_width) = 0;
   virtual void WriteDNFClauseLiteralsToFilter_2CMP_16DNF(
@@ -44,6 +42,4 @@ class FilterInterface {
   virtual void ResetDNFStates() = 0;
 };
 
-}  // namespace modules
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing::modules

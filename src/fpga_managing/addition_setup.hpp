@@ -4,8 +4,7 @@
 
 #include "addition_interface.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Class to calculate the Addition module setup.
@@ -36,5 +35,4 @@ class AdditionSetup {
       const std::vector<std::vector<int>>& operation_parameters);
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

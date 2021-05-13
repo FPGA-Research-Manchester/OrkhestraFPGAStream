@@ -43,8 +43,8 @@ TEST(FilterSetupTest, CompareTypesSetting) {
   MockFilter mock_filter;
   EXPECT_CALL(mock_filter, FilterSetCompareTypes(
                                kExpectedChunkId, kExpectedPosition,
-                               dbmstodspi::fpga_managing::filter_config_values::
-                                   CompareFunctions::kFilter32BitLessThan,
+                               dbmstodspi::fpga_managing::module_config_values::
+                                   FilterCompareFunctions::k32BitLessThan,
                                testing::_, testing::_, testing::_))
       .Times(1);
   dbmstodspi::fpga_managing::FilterSetup filter_configurer;
@@ -72,7 +72,7 @@ TEST(FilterSetupTest, DNFClauseSetting) {
               FilterSetDNFClauseLiteral(
                   expected_dnf_clause_id, expected_compare_unit_index,
                   kExpectedChunkId, kExpectedPosition,
-                  dbmstodspi::fpga_managing::filter_config_values::
+                  dbmstodspi::fpga_managing::module_config_values::
                       LiteralTypes::kLiteralPositive))
       .Times(1);
   dbmstodspi::fpga_managing::FilterSetup filter_configurer;

@@ -1,8 +1,6 @@
 #pragma once
 
-namespace dbmstodspi {
-namespace fpga_managing {
-namespace modules {
+namespace dbmstodspi::fpga_managing::modules {
 
 /**
  * @brief Interface class to be implemented by #Join
@@ -24,6 +22,4 @@ class JoinInterface {
   virtual void Reset() = 0;
 };
 
-}  // namespace modules
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing::modules

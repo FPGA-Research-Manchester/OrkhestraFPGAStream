@@ -7,8 +7,7 @@
 
 #include "table_data.hpp"
 
-namespace dbmstodspi {
-namespace data_managing {
+namespace dbmstodspi::data_managing {
 
 /**
  * @brief Class which uses rapidcsv to read a CSV file for input and output
@@ -31,5 +30,4 @@ class CSVReader {
                             std::vector<std::vector<std::string>>& read_rows);
 };
 
-}  // namespace data_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::data_managing

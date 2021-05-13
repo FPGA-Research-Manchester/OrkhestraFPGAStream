@@ -38,7 +38,7 @@ void TableManager::WriteInputDataToMemoryBlock(
 
 // Debug method
 void TableManager::PrintWrittenData(
-    std::string table_name,
+    const std::string& table_name,
     const std::unique_ptr<fpga_managing::MemoryBlockInterface>& input_device,
     const data_managing::TableData& input_table) {
   auto output_table = input_table;
@@ -64,7 +64,7 @@ void TableManager::ReadInputTables(
     const std::vector<int>& stream_id_vector,
     std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
         allocated_memory_blocks,
-    const std::vector<std::vector<int>> stream_specification) {
+    const std::vector<std::vector<int>>& stream_specification) {
   if (stream_data_file_names.size() != stream_id_vector.size()) {
     throw std::runtime_error("The amount of stream IDs given is not correct!");
   }
@@ -111,7 +111,7 @@ void TableManager::ReadExpectedTables(
     std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
         allocated_memory_blocks,
     std::vector<data_managing::TableData>& output_tables,
-    const std::vector<std::vector<int>> stream_specification) {
+    const std::vector<std::vector<int>>& stream_specification) {
   if (stream_data_file_names.size() != stream_id_vector.size()) {
     throw std::runtime_error("The amount of stream IDs given is not correct!");
   }
@@ -149,7 +149,9 @@ void TableManager::ReadResultTables(
     const std::vector<fpga_managing::StreamDataParameters>&
         output_stream_parameters,
     std::vector<data_managing::TableData>& output_tables,
-    const std::vector<int>& result_record_counts,
+    const std::array<
+        int, fpga_managing::query_acceleration_constants::kMaxIOStreamCount>&
+        result_record_counts,
     std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
         allocated_memory_blocks) {
   for (int stream_index = 0; stream_index < allocated_memory_blocks.size();

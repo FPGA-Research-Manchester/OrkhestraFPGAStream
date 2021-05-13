@@ -21,15 +21,17 @@ auto ILA::GetValues(int clock_cycle, int location, ILADataTypes data_type)
 }
 
 auto ILA::CalcAddress(int clock, int ila_id, int offset) -> int {
+  int base_address = 0;
   if (ila_id == 0) {
-    return (0x10000000 + (clock << 11) + (offset << 2));
+    base_address = 0x10000000;
   } else if (ila_id == 1) {
-    return (0x12000000 + (clock << 11) + (offset << 2));
+    base_address = 0x12000000;
   } else if (ila_id == 2) {
-    return (0x14000000 + (clock << 11) + (offset << 2));
+    base_address = 0x14000000;
   } else {
     throw std::runtime_error("Wrong ILA core ID given!");
   }
+  return (base_address + (clock << 11) + (offset << 2));
 }
 
 void ILA::WriteToModule(int module_internal_address, uint32_t write_data) {
@@ -108,57 +110,57 @@ void ILA::PrintDMAILAData(int max_clock) {
   for (int clock = 0; clock < max_clock; clock++) {
     std::cout
         << std::hex << "ILA " << 2 << " CLOCK " << clock << ":"
-        << "IC_S " << GetValues(clock, 2, ILADataTypes::IC_S) << "; "
-        << "IC_CH " << GetValues(clock, 2, ILADataTypes::IC_CH) << "; "
-        << "IC_I " << GetValues(clock, 2, ILADataTypes::IC_I) << "; "
-        << "IC_IP " << GetValues(clock, 2, ILADataTypes::IC_IP) << "; "
-        << "IC_V " << GetValues(clock, 2, ILADataTypes::IC_V) << "; "
-        << "IC_P " << GetValues(clock, 2, ILADataTypes::IC_P) << "; "
-        << "ICD_BUSY " << GetValues(clock, 2, ILADataTypes::ICD_BUSY) << "; "
-        << "ICD_S " << GetValues(clock, 2, ILADataTypes::ICD_S) << "; "
-        << "ICD_B " << GetValues(clock, 2, ILADataTypes::ICD_B) << "; "
-        << "ICD_E " << GetValues(clock, 2, ILADataTypes::ICD_E) << "; "
-        << "ICD_CH " << GetValues(clock, 2, ILADataTypes::ICD_CH) << "; "
-        << "ICD_BU " << GetValues(clock, 2, ILADataTypes::ICD_BU) << "; "
-        << "DR_A " << GetValues(clock, 2, ILADataTypes::DR_A) << "; "
-        << "DR_L " << GetValues(clock, 2, ILADataTypes::DR_L) << "; "
-        << "DR_S " << GetValues(clock, 2, ILADataTypes::DR_S) << "; "
-        << "DR_B " << GetValues(clock, 2, ILADataTypes::DR_B) << "; "
-        << "DR_E " << GetValues(clock, 2, ILADataTypes::DR_E) << "; "
-        << "DR_CH " << GetValues(clock, 2, ILADataTypes::DR_CH) << "; "
-        << "DR_BU " << GetValues(clock, 2, ILADataTypes::DR_BU) << "; "
-        << "DR_AR " << GetValues(clock, 2, ILADataTypes::DR_AR) << "; "
-        << "DR_AV " << GetValues(clock, 2, ILADataTypes::DR_AV) << "; "
-        << "DRC_ARV " << GetValues(clock, 2, ILADataTypes::DRC_ARV) << "; "
-        << "DRC_ARB " << GetValues(clock, 2, ILADataTypes::DRC_ARB) << "; "
-        << "DRC_ARA " << GetValues(clock, 2, ILADataTypes::DRC_ARA) << "; "
-        << "DRC_ARL " << GetValues(clock, 2, ILADataTypes::DRC_ARL) << "; "
-        << "DRC_RD " << GetValues(clock, 2, ILADataTypes::DRC_RD) << "; "
-        << "DRC_RV " << GetValues(clock, 2, ILADataTypes::DRC_RV) << "; "
-        << "DRC_RR " << GetValues(clock, 2, ILADataTypes::DRC_RR) << "; "
-        << "DRC_RL " << GetValues(clock, 2, ILADataTypes::DRC_RL) << "; "
-        << "IB_D " << GetValues(clock, 2, ILADataTypes::IB_D) << "; "
-        << "IB_V " << GetValues(clock, 2, ILADataTypes::IB_V) << "; "
-        << "IB_S " << GetValues(clock, 2, ILADataTypes::IB_S) << "; "
-        << "IB_B " << GetValues(clock, 2, ILADataTypes::IB_B) << "; "
-        << "IB_CH " << GetValues(clock, 2, ILADataTypes::IB_CH) << "; "
-        << "IB_CL " << GetValues(clock, 2, ILADataTypes::IB_CL) << "; "
-        << "IB_L " << GetValues(clock, 2, ILADataTypes::IB_L) << "; "
-        << "IB_SI " << GetValues(clock, 2, ILADataTypes::IB_SI) << "; "
-        << "IB_VS " << GetValues(clock, 2, ILADataTypes::IB_VS) << "; "
-        << "IB_BU " << GetValues(clock, 2, ILADataTypes::IB_BU) << "; "
-        << "U_NA_DIN " << GetValues(clock, 2, ILADataTypes::U_NA_DIN) << "; "
-        << "U_NA_DOUT " << GetValues(clock, 2, ILADataTypes::U_NA_DOUT) << "; "
-        << "U_NA_WADD " << GetValues(clock, 2, ILADataTypes::U_NA_WADD) << "; "
-        << "U_NA_RADD " << GetValues(clock, 2, ILADataTypes::U_NA_RADD) << "; "
-        << "U_NA_WEN " << GetValues(clock, 2, ILADataTypes::U_NA_WEN) << "; "
-        << "U_RR_DIN " << GetValues(clock, 2, ILADataTypes::U_RR_DIN) << "; "
-        << "U_RR_DOUT " << GetValues(clock, 2, ILADataTypes::U_RR_DOUT) << "; "
-        << "U_RR_WADD " << GetValues(clock, 2, ILADataTypes::U_RR_WADD) << "; "
-        << "U_RR_RADD " << GetValues(clock, 2, ILADataTypes::U_RR_RADD) << "; "
-        << "U_RR_WEN " << GetValues(clock, 2, ILADataTypes::U_RR_WEN) << "; "
-        << "U_RPB " << GetValues(clock, 2, ILADataTypes::U_RPB) << "; "
-        << "U_BS " << GetValues(clock, 2, ILADataTypes::U_BS) << "; "
+        << "IC_S " << GetValues(clock, 2, ILADataTypes::kIcS) << "; "
+        << "IC_CH " << GetValues(clock, 2, ILADataTypes::kIcCh) << "; "
+        << "IC_I " << GetValues(clock, 2, ILADataTypes::kIcI) << "; "
+        << "IC_IP " << GetValues(clock, 2, ILADataTypes::kIcIp) << "; "
+        << "IC_V " << GetValues(clock, 2, ILADataTypes::kIcV) << "; "
+        << "IC_P " << GetValues(clock, 2, ILADataTypes::kIcP) << "; "
+        << "ICD_BUSY " << GetValues(clock, 2, ILADataTypes::kIcdBusy) << "; "
+        << "ICD_S " << GetValues(clock, 2, ILADataTypes::kIcdS) << "; "
+        << "ICD_B " << GetValues(clock, 2, ILADataTypes::kIcdB) << "; "
+        << "ICD_E " << GetValues(clock, 2, ILADataTypes::kIcdE) << "; "
+        << "ICD_CH " << GetValues(clock, 2, ILADataTypes::kIcdCh) << "; "
+        << "ICD_BU " << GetValues(clock, 2, ILADataTypes::kIcdBu) << "; "
+        << "DR_A " << GetValues(clock, 2, ILADataTypes::kDrA) << "; "
+        << "DR_L " << GetValues(clock, 2, ILADataTypes::kDrL) << "; "
+        << "DR_S " << GetValues(clock, 2, ILADataTypes::kDrS) << "; "
+        << "DR_B " << GetValues(clock, 2, ILADataTypes::kDrB) << "; "
+        << "DR_E " << GetValues(clock, 2, ILADataTypes::kDrE) << "; "
+        << "DR_CH " << GetValues(clock, 2, ILADataTypes::kDrCh) << "; "
+        << "DR_BU " << GetValues(clock, 2, ILADataTypes::kDrBu) << "; "
+        << "DR_AR " << GetValues(clock, 2, ILADataTypes::kDrAr) << "; "
+        << "DR_AV " << GetValues(clock, 2, ILADataTypes::kDrAv) << "; "
+        << "DRC_ARV " << GetValues(clock, 2, ILADataTypes::kDrcArv) << "; "
+        << "DRC_ARB " << GetValues(clock, 2, ILADataTypes::kDrcArb) << "; "
+        << "DRC_ARA " << GetValues(clock, 2, ILADataTypes::kDrcAra) << "; "
+        << "DRC_ARL " << GetValues(clock, 2, ILADataTypes::kDrcArl) << "; "
+        << "DRC_RD " << GetValues(clock, 2, ILADataTypes::kDrcRd) << "; "
+        << "DRC_RV " << GetValues(clock, 2, ILADataTypes::kDrcRv) << "; "
+        << "DRC_RR " << GetValues(clock, 2, ILADataTypes::kDrcRr) << "; "
+        << "DRC_RL " << GetValues(clock, 2, ILADataTypes::kDrcRl) << "; "
+        << "IB_D " << GetValues(clock, 2, ILADataTypes::kIbD) << "; "
+        << "IB_V " << GetValues(clock, 2, ILADataTypes::kIbV) << "; "
+        << "IB_S " << GetValues(clock, 2, ILADataTypes::kIbS) << "; "
+        << "IB_B " << GetValues(clock, 2, ILADataTypes::kIbB) << "; "
+        << "IB_CH " << GetValues(clock, 2, ILADataTypes::kIbCh) << "; "
+        << "IB_CL " << GetValues(clock, 2, ILADataTypes::kIbCl) << "; "
+        << "IB_L " << GetValues(clock, 2, ILADataTypes::kIbL) << "; "
+        << "IB_SI " << GetValues(clock, 2, ILADataTypes::kIbSi) << "; "
+        << "IB_VS " << GetValues(clock, 2, ILADataTypes::kIbVs) << "; "
+        << "IB_BU " << GetValues(clock, 2, ILADataTypes::kIbBu) << "; "
+        << "U_NA_DIN " << GetValues(clock, 2, ILADataTypes::kUNaDin) << "; "
+        << "U_NA_DOUT " << GetValues(clock, 2, ILADataTypes::kUNaDout) << "; "
+        << "U_NA_WADD " << GetValues(clock, 2, ILADataTypes::kUNaWadd) << "; "
+        << "U_NA_RADD " << GetValues(clock, 2, ILADataTypes::kUNaRadd) << "; "
+        << "U_NA_WEN " << GetValues(clock, 2, ILADataTypes::kUNaWen) << "; "
+        << "U_RR_DIN " << GetValues(clock, 2, ILADataTypes::kURrDin) << "; "
+        << "U_RR_DOUT " << GetValues(clock, 2, ILADataTypes::kURrDout) << "; "
+        << "U_RR_WADD " << GetValues(clock, 2, ILADataTypes::kURrWadd) << "; "
+        << "U_RR_RADD " << GetValues(clock, 2, ILADataTypes::kURrRadd) << "; "
+        << "U_RR_WEN " << GetValues(clock, 2, ILADataTypes::kURrWen) << "; "
+        << "U_RPB " << GetValues(clock, 2, ILADataTypes::kURpb) << "; "
+        << "U_BS " << GetValues(clock, 2, ILADataTypes::kUBs) << "; "
         << std::endl;
   }
 }

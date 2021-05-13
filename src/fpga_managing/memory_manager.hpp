@@ -13,8 +13,7 @@
 #include <vector>
 #endif
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Memory manager class to setup the FPGA memory accesses and to
@@ -72,8 +71,9 @@ class MemoryManager : public MemoryManagerInterface {
 
  private:
   auto AllocateMemoryBlock() -> std::unique_ptr<MemoryBlockInterface> override;
+  static void SetFPGAClockSpeed(int speed_value);
   static void SetFPGATo300MHz();
+  static void SetFPGATo100MHz();
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

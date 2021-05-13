@@ -33,6 +33,8 @@ using namespace dbmstodspi::fpga_managing;
 
 void FPGAManager::SetupQueryAcceleration(
     const std::vector<AcceleratedQueryNode>& query_nodes) {
+  // Doesn't reset configuration. Unused modules should be configured to be
+  // unused.
   dma_engine_.GlobalReset();
   read_back_modules_.clear();
   read_back_parameters_.clear();
@@ -57,8 +59,9 @@ void FPGAManager::SetupQueryAcceleration(
   }
 
   // MISSING PIECE OF LOGIC HERE...
-  // TODO: Need to check for stream specification validity and intermediate
-  // stream specifications have to be merged with the IO stream specs.
+  // TODO(Kaspar): Need to check for stream specification validity and
+  // intermediate stream specifications have to be merged with the IO stream
+  // specs.
 
   if (input_streams.empty() || output_streams.empty()) {
     throw std::runtime_error("Input or output streams missing!");
@@ -66,27 +69,27 @@ void FPGAManager::SetupQueryAcceleration(
   DMASetup::SetupDMAModule(dma_engine_, input_streams, true);
   DMASetup::SetupDMAModule(dma_engine_, output_streams, false);
 
-  FPGAManager::dma_engine_.StartInputController(
-      FPGAManager::input_streams_active_status_);
+  FPGAManager::dma_engine_.StartController(
+      true, FPGAManager::input_streams_active_status_);
 
   if (ila_module_) {
     ila_module_.value().StartILAs();
   }
 
-  for (int node_index = 0; node_index < query_nodes.size(); node_index++) {
-    int module_location = node_index + 1;
-    const auto& query_node = query_nodes.at(node_index);
-
-    // TODO: For each of the operations different properties have to be written
-    // down to add classifications. The operation_parameters can be generalised
-    // based on classifiactions
+  for (const auto& query_node : query_nodes) {
+    // TODO(Kaspar): For each of the operations different properties have to be
+    // written down to add classifications. The operation_parameters can be
+    // generalised based on classifiactions
 
     // Assumptions are taken that the input and output streams are defined
     // correctly and that the correct amount of streams have been given for each
     // operation.
-    switch (query_nodes.at(node_index).operation_type) {
+
+    // Make it possible to configure a module to be unused.
+    switch (query_node.operation_type) {
       case operation_types::QueryOperationType::kFilter: {
-        modules::Filter filter_module(memory_manager_, module_location);
+        modules::Filter filter_module(memory_manager_,
+                                      query_node.operation_module_location);
         FilterSetup::SetupFilterModule(filter_module,
                                        query_node.input_streams[0].stream_id,
                                        query_node.output_streams[0].stream_id,
@@ -94,7 +97,8 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperationType::kJoin: {
-        modules::Join join_module(memory_manager_, module_location);
+        modules::Join join_module(memory_manager_,
+                                  query_node.operation_module_location);
         JoinSetup::SetupJoinModule(
             join_module, query_node.input_streams[0].stream_id,
             GetStreamRecordSize(query_node.input_streams[0]),
@@ -106,30 +110,32 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperationType::kMergeSort: {
-        modules::MergeSort merge_sort_module(memory_manager_, module_location);
+        modules::MergeSort merge_sort_module(
+            memory_manager_, query_node.operation_module_location);
         MergeSortSetup::SetupMergeSortModule(
             merge_sort_module, query_node.input_streams[0].stream_id,
             GetStreamRecordSize(query_node.input_streams[0]), 0, true);
         break;
       }
       case operation_types::QueryOperationType::kLinearSort: {
-        modules::LinearSort linear_sort_module(memory_manager_,
-                                               module_location);
+        modules::LinearSort linear_sort_module(
+            memory_manager_, query_node.operation_module_location);
         LinearSortSetup::SetupLinearSortModule(
             linear_sort_module, query_node.input_streams[0].stream_id,
             GetStreamRecordSize(query_node.input_streams[0]));
         break;
       }
       case operation_types::QueryOperationType::kAddition: {
-        modules::Addition addition_module(memory_manager_, module_location);
+        modules::Addition addition_module(memory_manager_,
+                                          query_node.operation_module_location);
         AdditionSetup::SetupAdditionModule(
             addition_module, query_node.input_streams[0].stream_id,
             query_node.operation_parameters);
         break;
       }
       case operation_types::QueryOperationType::kMultiplication: {
-        modules::Multiplication multiplication_module(memory_manager_,
-                                                      module_location);
+        modules::Multiplication multiplication_module(
+            memory_manager_, query_node.operation_module_location);
         MultiplicationSetup::SetupMultiplicationModule(
             multiplication_module, {query_node.input_streams[0].stream_id},
             query_node.operation_parameters);
@@ -137,7 +143,7 @@ void FPGAManager::SetupQueryAcceleration(
       }
       case operation_types::QueryOperationType::kAggregationSum: {
         auto aggregation_module = std::make_unique<modules::AggregationSum>(
-            memory_manager_, module_location);
+            memory_manager_, query_node.operation_module_location);
         AggregationSumSetup::SetupAggregationSum(
             *aggregation_module, query_node.input_streams[0].stream_id,
             query_node.operation_parameters);
@@ -153,7 +159,9 @@ void FPGAManager::FindIOStreams(
     const std::vector<StreamDataParameters>& all_streams,
     std::vector<StreamDataParameters>& found_streams,
     const std::vector<std::vector<int>>& operation_parameters,
-    const bool is_multichannel_stream, bool stream_status_array[]) {
+    const bool is_multichannel_stream,
+    std::bitset<query_acceleration_constants::kMaxIOStreamCount>&
+        stream_status_array) {
   for (const auto& current_stream : all_streams) {
     if (current_stream.physical_address) {
       if (is_multichannel_stream) {
@@ -174,10 +182,13 @@ void FPGAManager::FindIOStreams(
   }
 }
 
-auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
+auto FPGAManager::RunQueryAcceleration()
+    -> std::array<int, query_acceleration_constants::kMaxIOStreamCount> {
   std::vector<int> active_input_stream_ids;
   std::vector<int> active_output_stream_ids;
 
+  // This can be expanded on in the future with multi threaded processing where
+  // some streams are checked while others are being setup and fired.
   FindActiveStreams(active_input_stream_ids, active_output_stream_ids);
 
   if (active_input_stream_ids.empty() || active_output_stream_ids.empty()) {
@@ -203,7 +214,8 @@ auto FPGAManager::RunQueryAcceleration() -> std::vector<int> {
 void FPGAManager::FindActiveStreams(
     std::vector<int>& active_input_stream_ids,
     std::vector<int>& active_output_stream_ids) {
-  for (int stream_id = 0; stream_id < FPGAManager::kMaxStreamAmount;
+  for (int stream_id = 0;
+       stream_id < query_acceleration_constants::kMaxIOStreamCount;
        stream_id++) {
     if (input_streams_active_status_[stream_id]) {
       active_input_stream_ids.push_back(stream_id);
@@ -215,12 +227,12 @@ void FPGAManager::FindActiveStreams(
 }
 
 void FPGAManager::WaitForStreamsToFinish() {
-  FPGAManager::dma_engine_.StartOutputController(
-      FPGAManager::output_streams_active_status_);
+  FPGAManager::dma_engine_.StartController(
+      false, FPGAManager::output_streams_active_status_);
 
 #ifdef _FPGA_AVAILABLE
-  while (!(FPGAManager::dma_engine_.IsInputControllerFinished() &&
-           FPGAManager::dma_engine_.IsOutputControllerFinished())) {
+  while (!(FPGAManager::dma_engine_.IsControllerFinished(true) &&
+           FPGAManager::dma_engine_.IsControllerFinished(false))) {
     // sleep(3);
     // std::cout << "Processing..." << std::endl;
     // std::cout << "Input:"
@@ -255,15 +267,17 @@ void FPGAManager::ReadResultsFromRegisters() {
 
 auto FPGAManager::GetResultingStreamSizes(
     const std::vector<int>& active_input_stream_ids,
-    const std::vector<int>& active_output_stream_ids) -> std::vector<int> {
+    const std::vector<int>& active_output_stream_ids)
+    -> std::array<int, query_acceleration_constants::kMaxIOStreamCount> {
   for (auto stream_id : active_input_stream_ids) {
     FPGAManager::input_streams_active_status_[stream_id] = false;
   }
-  std::vector<int> result_sizes(16, 0);
+  std::array<int, query_acceleration_constants::kMaxIOStreamCount>
+      result_sizes{};
   for (auto stream_id : active_output_stream_ids) {
     FPGAManager::output_streams_active_status_[stream_id] = false;
     result_sizes[stream_id] =
-        dma_engine_.GetOutputControllerStreamSize(stream_id);
+        dma_engine_.GetControllerStreamSize(false, stream_id);
   }
   return result_sizes;
 }

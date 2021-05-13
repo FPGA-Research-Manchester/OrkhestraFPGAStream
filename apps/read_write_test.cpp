@@ -1,7 +1,7 @@
 #include "dma.hpp"
 
 auto main() -> int {
-  DMA dma_engine(reinterpret_cast<int*>(0xA0000000));
+  DMA dma_engine = 0(reinterpret_cast<int*>(0xA0000000));
   int expected_address = 10;
   int expected_stream_id = 0;
   dma_engine.SetInputControllerStreamAddress(expected_stream_id,

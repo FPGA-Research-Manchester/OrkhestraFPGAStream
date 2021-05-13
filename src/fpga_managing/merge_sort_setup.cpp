@@ -72,5 +72,7 @@ auto MergeSortSetup::PotentialRecordCountIsValid(int potential_record_count,
       return record_size % 2 == 0;
     case 0:
       return true;
+    default:
+      throw std::runtime_error("Something went wrong!");
   }
 }

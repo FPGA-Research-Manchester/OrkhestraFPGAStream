@@ -9,8 +9,7 @@
 #include "stream_data_parameters.hpp"
 #include "table_data.hpp"
 
-namespace dbmstodspi {
-namespace query_managing {
+namespace dbmstodspi::query_managing {
 
 /**
  * @brief Class which contains the pipeline shown in the main README file. This
@@ -29,30 +28,6 @@ class QueryManager {
   static void CheckTableData(const data_managing::TableData& expected_table,
                              const data_managing::TableData& resulting_table);
 
-  /**
-   * @brief Check the module library to see which bitstream should get loaded on
-   * the FPGA.
-   *
-   * @param query_node Information about the collection of nodes selected for
-   * the next run.
-   */
-  static auto GetBitstreamFileFromQueryNode(
-      const std::pair<query_scheduling_data::ConfigurableModulesVector,
-                      std::vector<query_scheduling_data::QueryNode>>&
-          query_node) -> std::string;
-
-  /**
-   * @brief Count how many modules will be loaded with the given collection of
-   * nodes to be accelerated.
-   *
-   * @param query_node Information about the collection of nodes selected for
-   * the next run.
-   */
-  static auto GetModuleCountFromQueryNode(
-      const std::pair<query_scheduling_data::ConfigurableModulesVector,
-                      std::vector<query_scheduling_data::QueryNode>>&
-          query_node) -> int;
-
  public:
   /**
    * @brief This is the main method which gets called to run the software to
@@ -66,5 +41,4 @@ class QueryManager {
       std::vector<query_scheduling_data::QueryNode> starting_query_nodes);
 };
 
-}  // namespace query_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::query_managing

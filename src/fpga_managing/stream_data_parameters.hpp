@@ -3,8 +3,7 @@
 #include <tuple>
 #include <vector>
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Struct for holding data about how to configure a stream in the DMA
@@ -54,5 +53,4 @@ struct StreamDataParameters {
   }
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

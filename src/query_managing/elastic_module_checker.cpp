@@ -5,10 +5,10 @@
 using namespace dbmstodspi::query_managing;
 
 void ElasticModuleChecker::CheckElasticityNeeds(
-    std::vector<fpga_managing::StreamDataParameters> input_stream_parameters,
+    const std::vector<fpga_managing::StreamDataParameters>&
+        input_stream_parameters,
     fpga_managing::operation_types::QueryOperationType operation_type,
-    std::vector<std::vector<int>> operation_parameters,
-    query_scheduling_data::ConfigurableModulesVector loaded_modules) {
+    const std::vector<std::vector<int>>& operation_parameters) {
   if (operation_type ==
           fpga_managing::operation_types::QueryOperationType::kMergeSort &&
       !IsMergeSortBigEnough(input_stream_parameters, operation_parameters)) {
@@ -18,8 +18,9 @@ void ElasticModuleChecker::CheckElasticityNeeds(
 }
 
 auto ElasticModuleChecker::IsMergeSortBigEnough(
-    std::vector<fpga_managing::StreamDataParameters> input_stream_parameters,
-    std::vector<std::vector<int>> operation_parameters) -> bool {
+    const std::vector<fpga_managing::StreamDataParameters>&
+        input_stream_parameters,
+    const std::vector<std::vector<int>>& operation_parameters) -> bool {
   return input_stream_parameters.at(0).stream_record_count <=
          operation_parameters.at(0).at(0) * operation_parameters.at(0).at(1);
 }

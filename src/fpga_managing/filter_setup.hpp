@@ -2,11 +2,9 @@
 #include <string>
 #include <vector>
 
-#include "filter_config_values.hpp"
 #include "filter_interface.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Filter setup class which calculates the correct configuration data to
@@ -33,15 +31,15 @@ class FilterSetup {
 
  private:
   struct FilterComparison {
-    filter_config_values::CompareFunctions compare_function;
+    module_config_values::FilterCompareFunctions compare_function;
     std::vector<int> compare_reference_values;
-    std::vector<filter_config_values::LiteralTypes> literal_types;
+    std::vector<module_config_values::LiteralTypes> literal_types;
     std::vector<int> dnf_clause_ids;
 
     FilterComparison(
-        filter_config_values::CompareFunctions compare_function,
+        module_config_values::FilterCompareFunctions compare_function,
         std::vector<int> compare_reference_values,
-        const std::vector<filter_config_values::LiteralTypes>& literal_types,
+        const std::vector<module_config_values::LiteralTypes>& literal_types,
         const std::vector<int>& dnf_clause_ids);
   };
 
@@ -74,5 +72,4 @@ class FilterSetup {
                                               int output_stream_id);
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

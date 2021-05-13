@@ -4,7 +4,7 @@ using namespace dbmstodspi::fpga_managing;
 
 void MultiplicationSetup::SetupMultiplicationModule(
     modules::MultiplicationInterface& multiplication_module,
-    std::vector<int> active_stream_ids,
+    const std::vector<int>& active_stream_ids,
     const std::vector<std::vector<int>>& operation_parameters) {
   std::bitset<16> active_streams;
   for (const auto& active_stream_id : active_stream_ids) {
@@ -17,7 +17,7 @@ void MultiplicationSetup::SetupMultiplicationModule(
     std::bitset<8> selected_positions;
     for (int position = 0; position < 8; position++) {
       selected_positions.set(position,
-                             multiplication_selections.at(8 - position));
+                             multiplication_selections.at(8 - position) != 0);
     }
     multiplication_module.ChooseMultiplicationResults(multiplication_selections.at(0),
                                                       selected_positions);

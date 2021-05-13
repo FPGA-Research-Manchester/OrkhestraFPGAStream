@@ -4,8 +4,7 @@
 
 #include "query_scheduling_data.hpp"
 
-namespace dbmstodspi {
-namespace query_managing {
+namespace dbmstodspi::query_managing {
 
 /**
  * @brief Class which assigns stream IDs to the input and output streams.
@@ -65,10 +64,9 @@ class IDManager {
    * @param output_ids Vector of all assigned output IDs.
    */
   void AllocateStreamIDs(
-      std::vector<query_scheduling_data::QueryNode> node_vector,
+      const std::vector<query_scheduling_data::QueryNode> &all_nodes,
       std::vector<std::vector<int>> &input_ids,
       std::vector<std::vector<int>> &output_ids);
 };
 
-}  // namespace query_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::query_managing
