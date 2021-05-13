@@ -51,9 +51,9 @@ void FilterSetup::SetupFilterModuleCars(modules::FilterInterface& filter_module,
 
   SetOneOutputSingleModuleMode(filter_module);
   SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitLessThan,
+                 {{module_config_values::FilterCompareFunctions::k32BitLessThan,
                    {12000},
-                   {filter_config_values::LiteralTypes::kLiteralPositive},
+                   {module_config_values::LiteralTypes::kLiteralPositive},
                    {0}}},
                  1, 14);
 
@@ -65,9 +65,8 @@ void FilterSetup::SetupFilterModuleCars(modules::FilterInterface& filter_module,
 // (p_brand = ‘Brand #23’ AND l_quantity between 10 and 20) OR
 // (p_brand = ‘Brand #34’ AND l_quantity between 20 and 30)
 void FilterSetup::SetupFilterModuleFinalQ19(
-    modules::FilterInterface& filter_module,
-                                            const int input_stream_id,
-                                            const int output_stream_id) {
+    modules::FilterInterface& filter_module, const int input_stream_id,
+    const int output_stream_id) {
   filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
                                    output_stream_id);
 
@@ -76,42 +75,42 @@ void FilterSetup::SetupFilterModuleFinalQ19(
   // l_quantity
   SetComparisons(
       filter_module,
-      {{filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+      {{module_config_values::FilterCompareFunctions::k32BitLessThanOrEqual,
         {11 * 100},
         {},
         {0}},
-       {filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+       {module_config_values::FilterCompareFunctions::k32BitLessThanOrEqual,
         {20 * 100},
         {},
         {1}},
-       {filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+       {module_config_values::FilterCompareFunctions::k32BitLessThanOrEqual,
         {30 * 100},
         {},
         {2}}},
       0, 14);
   SetComparisons(
       filter_module,
-      {{filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
+      {{module_config_values::FilterCompareFunctions::k32BitGreaterThanOrEqual,
         {1 * 100},
         {},
         {0}},
-       {filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
+       {module_config_values::FilterCompareFunctions::k32BitGreaterThanOrEqual,
         {10 * 100},
         {},
         {1}},
-       {filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
+       {module_config_values::FilterCompareFunctions::k32BitGreaterThanOrEqual,
         {20 * 100},
         {},
         {2}}},
       0, 5);
   SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                 {{module_config_values::FilterCompareFunctions::k32BitEqual,
                    {0},
                    {},
                    {0, 1, 2}}},
                  0, 15);
   SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                 {{module_config_values::FilterCompareFunctions::k32BitEqual,
                    {0},
                    {},
                    {0, 1, 2}}},
@@ -119,15 +118,15 @@ void FilterSetup::SetupFilterModuleFinalQ19(
 
   // p_brand
   SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                 {{module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("Brand#12  ", 3),
                    {},
                    {0}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("Brand#23  ", 3),
                    {},
                    {1}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("Brand#34  ", 3),
                    {},
                    {2}}},
@@ -148,42 +147,42 @@ void FilterSetup::SetupFilterModuleFinalDoubleQ19(
   // l_quantity
   SetComparisons(
       filter_module,
-      {{filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+      {{module_config_values::FilterCompareFunctions::k32BitLessThanOrEqual,
         {11 * 100},
         {},
         {0, 1, 2, 3}},
-       {filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+       {module_config_values::FilterCompareFunctions::k32BitLessThanOrEqual,
         {20 * 100},
         {},
         {4, 5, 6, 7}},
-       {filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+       {module_config_values::FilterCompareFunctions::k32BitLessThanOrEqual,
         {30 * 100},
         {},
         {8, 9, 10, 11}}},
       0, 13);
   SetComparisons(
       filter_module,
-      {{filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
+      {{module_config_values::FilterCompareFunctions::k32BitGreaterThanOrEqual,
         {1 * 100},
         {},
         {0, 1, 2, 3}},
-       {filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
+       {module_config_values::FilterCompareFunctions::k32BitGreaterThanOrEqual,
         {10 * 100},
         {},
         {4, 5, 6, 7}},
-       {filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
+       {module_config_values::FilterCompareFunctions::k32BitGreaterThanOrEqual,
         {20 * 100},
         {},
         {8, 9, 10, 11}}},
       0, 11);
   SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                 {{module_config_values::FilterCompareFunctions::k32BitEqual,
                    {0},
                    {},
                    {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}}},
                  0, 14);
   SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                 {{module_config_values::FilterCompareFunctions::k32BitEqual,
                    {0},
                    {},
                    {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}}},
@@ -191,15 +190,15 @@ void FilterSetup::SetupFilterModuleFinalDoubleQ19(
 
   // p_brand
   SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                 {{module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("Brand#12  ", 3),
                    {},
                    {0, 1, 2, 3}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("Brand#23  ", 3),
                    {},
                    {4, 5, 6, 7}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("Brand#34  ", 3),
                    {},
                    {8, 9, 10, 11}}},
@@ -208,19 +207,19 @@ void FilterSetup::SetupFilterModuleFinalDoubleQ19(
   // p_size
   SetComparisons(
       filter_module,
-      {{filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+      {{module_config_values::FilterCompareFunctions::k32BitLessThanOrEqual,
         {5},
         {},
         {0, 1, 2, 3}},
-       {filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+       {module_config_values::FilterCompareFunctions::k32BitLessThanOrEqual,
         {10},
         {},
         {4, 5, 6, 7}},
-       {filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+       {module_config_values::FilterCompareFunctions::k32BitLessThanOrEqual,
         {15},
         {},
         {8, 9, 10, 11}},
-       {filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
+       {module_config_values::FilterCompareFunctions::k32BitGreaterThanOrEqual,
         {1},
         {},
         {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}}},
@@ -228,57 +227,57 @@ void FilterSetup::SetupFilterModuleFinalDoubleQ19(
 
   // p_container
   SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                 {{module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("SM CASE   ", 3),
                    {},
                    {0}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("SM BOX    ", 3),
                    {},
                    {1}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("SM PACK   ", 3),
                    {},
                    {2}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("SM PKG    ", 3),
                    {},
                    {3}}},
                  1, 14);
 
   SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                 {{module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("MED BAG   ", 3),
                    {},
                    {4}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("MED BOX   ", 3),
                    {},
                    {5}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("MED PKG   ", 3),
                    {},
                    {6}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("MED PACK  ", 3),
                    {},
                    {7}}},
                  1, 11);
 
   SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                 {{module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("LG CASE   ", 3),
                    {},
                    {8}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("LG BOX    ", 3),
                    {},
                    {9}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("LG PACK   ", 3),
                    {},
                    {10}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("LG PKG    ", 3),
                    {},
                    {11}}},
@@ -297,9 +296,8 @@ void FilterSetup::SetupFilterModuleFinalDoubleQ19(
 // BOX","LG PACK","LG PKG"}'::bpchar[])) AND (p_size <= 15)))))
 // p_container is originally at 2, 14. Will be duplicated to 2, 4 and to 2, 1
 void FilterSetup::SetupFilterModulePartQ19(
-    modules::FilterInterface& filter_module,
-                                           const int input_stream_id,
-                                           const int output_stream_id) {
+    modules::FilterInterface& filter_module, const int input_stream_id,
+    const int output_stream_id) {
   filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
                                    output_stream_id);
 
@@ -308,19 +306,19 @@ void FilterSetup::SetupFilterModulePartQ19(
   // p_size
   SetComparisons(
       filter_module,
-      {{filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+      {{module_config_values::FilterCompareFunctions::k32BitLessThanOrEqual,
         {5},
         {},
         {0, 1, 2, 3}},
-       {filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+       {module_config_values::FilterCompareFunctions::k32BitLessThanOrEqual,
         {10},
         {},
         {4, 5, 6, 7}},
-       {filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+       {module_config_values::FilterCompareFunctions::k32BitLessThanOrEqual,
         {15},
         {},
         {8, 9, 10, 11}},
-       {filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
+       {module_config_values::FilterCompareFunctions::k32BitGreaterThanOrEqual,
         {1},
         {},
         {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}}},
@@ -328,15 +326,15 @@ void FilterSetup::SetupFilterModulePartQ19(
 
   // p_brand
   SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                 {{module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("Brand#12  ", 3),
                    {},
                    {0, 1, 2, 3}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("Brand#23  ", 3),
                    {},
                    {4, 5, 6, 7}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("Brand#34  ", 3),
                    {},
                    {8, 9, 10, 11}}},
@@ -344,57 +342,57 @@ void FilterSetup::SetupFilterModulePartQ19(
 
   // p_container
   SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                 {{module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("SM CASE   ", 3),
                    {},
                    {0}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("SM BOX    ", 3),
                    {},
                    {1}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("SM PACK   ", 3),
                    {},
                    {2}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("SM PKG    ", 3),
                    {},
                    {3}}},
                  1, 14);
 
   SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                 {{module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("MED BAG   ", 3),
                    {},
                    {4}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("MED BOX   ", 3),
                    {},
                    {5}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("MED PKG   ", 3),
                    {},
                    {6}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("MED PACK   ", 3),
                    {},
                    {7}}},
                  1, 11);
 
   SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                 {{module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("LG CASE   ", 3),
                    {},
                    {8}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("LG BOX    ", 3),
                    {},
                    {9}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("LG PACK   ", 3),
                    {},
                    {10}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("LG PKG    ", 3),
                    {},
                    {11}}},
@@ -410,9 +408,8 @@ void FilterSetup::SetupFilterModulePartQ19(
 // '10'::numeric) AND (l_quantity <= '20'::numeric)) OR ((l_quantity >=
 // '20'::numeric) AND (l_quantity <= '30'::numeric)))
 void FilterSetup::SetupFilterModuleLineitemQ19(
-    modules::FilterInterface& filter_module,
-                                               const int input_stream_id,
-                                               const int output_stream_id) {
+    modules::FilterInterface& filter_module, const int input_stream_id,
+    const int output_stream_id) {
   filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
                                    output_stream_id);
 
@@ -428,55 +425,55 @@ void FilterSetup::SetupFilterModuleLineitemQ19(
   // l_quantity comparisons
   SetComparisons(
       filter_module,
-      {{filter_config_values::CompareFunctions::kFilter32BitLessThanOrEqual,
+      {{module_config_values::FilterCompareFunctions::k32BitLessThanOrEqual,
         {30 * 100},
         {},
         {0, 1, 2, 3}},
-       {filter_config_values::CompareFunctions::kFilter32BitGreaterThanOrEqual,
+       {module_config_values::FilterCompareFunctions::k32BitGreaterThanOrEqual,
         {1 * 100},
-        {filter_config_values::LiteralTypes::kLiteralPositive,
-         filter_config_values::LiteralTypes::kLiteralDontCare,
-         filter_config_values::LiteralTypes::kLiteralPositive,
-         filter_config_values::LiteralTypes::kLiteralDontCare},
+        {module_config_values::LiteralTypes::kLiteralPositive,
+         module_config_values::LiteralTypes::kLiteralDontCare,
+         module_config_values::LiteralTypes::kLiteralPositive,
+         module_config_values::LiteralTypes::kLiteralDontCare},
         {0, 1, 2, 3}}},
       0, 13);
   SetComparisons(
       filter_module,
-      {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+      {{module_config_values::FilterCompareFunctions::k32BitEqual,
         {0},
         {},
         {0, 1, 2, 3}},
-       {filter_config_values::CompareFunctions::kFilter32BitGreaterThan,
+       {module_config_values::FilterCompareFunctions::k32BitGreaterThan,
         {1},
-        {filter_config_values::LiteralTypes::kLiteralDontCare,
-         filter_config_values::LiteralTypes::kLiteralPositive,
-         filter_config_values::LiteralTypes::kLiteralDontCare,
-         filter_config_values::LiteralTypes::kLiteralPositive},
+        {module_config_values::LiteralTypes::kLiteralDontCare,
+         module_config_values::LiteralTypes::kLiteralPositive,
+         module_config_values::LiteralTypes::kLiteralDontCare,
+         module_config_values::LiteralTypes::kLiteralPositive},
         {0, 1, 2, 3}}},
       0, 14);
 
   // l_shipmode
   // The table only has REG AIR but we still keep the orignally generated query
   SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                 {{module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("AIR REG   ", 3),
-                   {filter_config_values::LiteralTypes::kLiteralPositive,
-                    filter_config_values::LiteralTypes::kLiteralPositive,
-                    filter_config_values::LiteralTypes::kLiteralDontCare,
-                    filter_config_values::LiteralTypes::kLiteralDontCare},
+                   {module_config_values::LiteralTypes::kLiteralPositive,
+                    module_config_values::LiteralTypes::kLiteralPositive,
+                    module_config_values::LiteralTypes::kLiteralDontCare,
+                    module_config_values::LiteralTypes::kLiteralDontCare},
                    {0, 1, 2, 3}},
-                  {filter_config_values::CompareFunctions::kFilter32BitEqual,
+                  {module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("AIR       ", 3),
-                   {filter_config_values::LiteralTypes::kLiteralDontCare,
-                    filter_config_values::LiteralTypes::kLiteralDontCare,
-                    filter_config_values::LiteralTypes::kLiteralPositive,
-                    filter_config_values::LiteralTypes::kLiteralPositive},
+                   {module_config_values::LiteralTypes::kLiteralDontCare,
+                    module_config_values::LiteralTypes::kLiteralDontCare,
+                    module_config_values::LiteralTypes::kLiteralPositive,
+                    module_config_values::LiteralTypes::kLiteralPositive},
                    {0, 1, 2, 3}}},
                  1, 8);
 
   // l_shipinstruct
   SetComparisons(filter_module,
-                 {{filter_config_values::CompareFunctions::kFilter32BitEqual,
+                 {{module_config_values::FilterCompareFunctions::k32BitEqual,
                    ConvertCharStringToAscii("DELIVER IN PERSON        ", 7),
                    {},
                    {0, 1, 2, 3}}},
@@ -504,7 +501,7 @@ void FilterSetup::SetOneOutputSingleModuleMode(
 void FilterSetup::SetComparisons(modules::FilterInterface& filter_module,
                                  std::vector<FilterComparison> comparisons,
                                  int chunk_id, int data_position) {
-  std::vector<filter_config_values::CompareFunctions> compare_functions;
+  std::vector<module_config_values::FilterCompareFunctions> compare_functions;
   for (int compare_lane_index = 0; compare_lane_index < comparisons.size();
        compare_lane_index++) {
     for (int compare_value_index = 0;
@@ -535,7 +532,7 @@ void FilterSetup::SetComparisons(modules::FilterInterface& filter_module,
        leftover_compare_lane_id < 4; leftover_compare_lane_id++) {
     // Set random comparisons for unused lanes.
     compare_functions.push_back(
-        filter_config_values::CompareFunctions::kFilter32BitEqual);
+        module_config_values::FilterCompareFunctions::k32BitEqual);
   }
 
   for (int compare_value_index = 0;
@@ -567,19 +564,19 @@ auto FilterSetup::ConvertCharStringToAscii(const std::string& input_string,
 }
 
 FilterSetup::FilterComparison::FilterComparison(
-    filter_config_values::CompareFunctions compare_function,
+    module_config_values::FilterCompareFunctions compare_function,
     std::vector<int> compare_reference_values,
-    const std::vector<filter_config_values::LiteralTypes>& literal_types,
+    const std::vector<module_config_values::LiteralTypes>& literal_types,
     const std::vector<int>& dnf_clause_ids) {
   if (literal_types.empty()) {
     if (dnf_clause_ids.empty()) {
       throw std::runtime_error("No DNF IDs given!");
     }
-    std::vector<filter_config_values::LiteralTypes> default_literal_types;
+    std::vector<module_config_values::LiteralTypes> default_literal_types;
     default_literal_types.reserve(dnf_clause_ids.size());
     for (const auto& dnf_id : dnf_clause_ids) {
       default_literal_types.push_back(
-          filter_config_values::LiteralTypes::kLiteralPositive);
+          module_config_values::LiteralTypes::kLiteralPositive);
     }
     this->literal_types = default_literal_types;
   } else {

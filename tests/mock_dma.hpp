@@ -5,6 +5,8 @@
 #include "gmock/gmock.h"
 
 class MockDMA : public dbmstodspi::fpga_managing::modules::DMAInterface {
+  typedef std::array<int, 4> crossbar_value_array;
+
  public:
   MOCK_METHOD(void, SetControllerParams,
               (bool is_input, int stream_id, int ddr_burst_size,
@@ -32,24 +34,11 @@ class MockDMA : public dbmstodspi::fpga_managing::modules::DMAInterface {
   MOCK_METHOD(void, SetRecordChunkIDs,
               (int stream_id, int interfaceCycle, int chunkID), (override));
 
-  MOCK_METHOD(void, SetBufferToInterfaceChunk,
-              (int stream_id, int clockCycle, int offset, int sourceChunk4,
-               int sourceChunk3, int sourceChunk2, int sourceChunk1),
-              (override));
-  MOCK_METHOD(void, SetBufferToInterfaceSourcePosition,
-              (int stream_id, int clockCycle, int offset, int source_position4,
-               int source_position3, int source_position2,
-               int source_position1),
-              (override));
-
-  MOCK_METHOD(void, SetInterfaceToBufferChunk,
-              (int stream_id, int clockCycle, int offset, int target_chunk4,
-               int target_chunk3, int target_chunk2, int target_chunk1),
-              (override));
-  MOCK_METHOD(void, SetInterfaceToBufferSourcePosition,
-              (int stream_id, int clockCycle, int offset, int source_position4,
-               int source_position3, int source_position2,
-               int source_position1),
+  MOCK_METHOD(void, SetCrossbarValues,
+              (dbmstodspi::fpga_managing::module_config_values::
+                   DMACrossbarDirectionSelection crossbar_selection,
+               int stream_id, int clock_cycle, int offset,
+               crossbar_value_array configuration_values),
               (override));
 
   MOCK_METHOD(void, SetNumberOfInputStreamsWithMultipleChannels, (int number),

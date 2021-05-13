@@ -88,65 +88,37 @@ void DMA::SetRecordChunkIDs(int stream_id, int interface_cycle, int chunk_id) {
       chunk_id);
 }
 
-void DMA::SetBufferToInterfaceChunk(int stream_id, int clock_cycle, int offset,
-                                    int source_chunk4, int source_chunk3,
-                                    int source_chunk2, int source_chunk1) {
-  /*When 32-bit data packets inside the {clockCycle} clock cycle of a record
-  sent to PR Interface of stream with ID {stream_id} is read from the BRAM
-  buffers in positions  {offset*4}-{offset*4+3}, they can read from any source
-  chunk to enable data reordering and duplication. sourceChunk1 represents
-  position {offset*4} etc.*/
+void DMA::SetCrossbarValues(
+    module_config_values::DMACrossbarDirectionSelection crossbar_selection,
+    int stream_id, int clock_cycle, int offset,
+    std::array<int, 4> configuration_values) {
+  int base_address = 0;
+  switch (crossbar_selection) {
+    case module_config_values::DMACrossbarDirectionSelection::
+    kBufferToInterfaceChunk:
+      base_address = (2 << 17) + (1 << 16);
+      break;
+    case module_config_values::DMACrossbarDirectionSelection::
+        kBufferToInterfacePosition:
+      base_address = (2 << 17);
+      break;
+    case module_config_values::DMACrossbarDirectionSelection::
+        kInterfaceToBufferChunk:
+      base_address = (3 << 17) + (1 << 16);
+      break;
+    case module_config_values::DMACrossbarDirectionSelection::
+        kInterfaceToBufferPosition:
+      base_address = (3 << 17);
+      break;
+    default:
+      throw std::runtime_error("Incorrect input!");
+      break;
+  }
   AccelerationModule::WriteToModule(
-      ((2 << 17) + (1 << 16) + (stream_id << 12) + (clock_cycle << 5) +
+      (base_address + (stream_id << 12) + (clock_cycle << 5) +
        (offset << 2)),
-      ((source_chunk4 << 24) + (source_chunk3 << 16) + (source_chunk2 << 8) +
-       source_chunk1));
-}
-void DMA::SetBufferToInterfaceSourcePosition(int stream_id, int clock_cycle,
-                                             int offset, int source_position4,
-                                             int source_position3,
-                                             int source_position2,
-                                             int source_position1) {
-  /*When 32-bit data packets inside the {clockCycle} clock cycle of a record
-  sent to PR Interface of stream with ID {stream_id} is sent to PR at 32-bit
-  data positions {offset*4}-{offset*4+3}, they can originate from from any
-  source 32-bit BRAM to enable data reordering and duplication. sourceChunk1
-  represents position {offset*4} etc..*/
-  AccelerationModule::WriteToModule(
-      ((2 << 17) + (stream_id << 12) + (clock_cycle << 5) + (offset << 2)),
-      ((source_position4 << 24) + (source_position3 << 16) +
-       (source_position2 << 8) + source_position1));
-}
-
-// Output Crossbar from Interface to Buffers
-void DMA::SetInterfaceToBufferChunk(int stream_id, int clock_cycle, int offset,
-                                    int target_chunk4, int target_chunk3,
-                                    int target_chunk2, int target_chunk1) {
-  /*When 32-bit data packets inside the {clockCycle} clock cycle of a record
-  coming from the end of the PR Interface of stream with ID {stream_id} is
-  written to the BRAM buffers in positions  {offset*4}-{offset*4+3}, they can be
-  written to any target chunk to enable data reordering/removal of duplication
-  before writing back to DDR. sourceChunk1 represents position {offset*4} etc.*/
-  AccelerationModule::WriteToModule(
-      ((3 << 17) + (1 << 16) + (stream_id << 12) + (clock_cycle << 5) +
-       (offset << 2)),
-      ((target_chunk4 << 24) + (target_chunk3 << 16) + (target_chunk2 << 8) +
-       target_chunk1));
-}
-void DMA::SetInterfaceToBufferSourcePosition(int stream_id, int clock_cycle,
-                                             int offset, int source_position4,
-                                             int source_position3,
-                                             int source_position2,
-                                             int source_position1) {
-  /*When 32-bit data packets inside the {clockCycle} clock cycle of a record
-  coming from PR Interface of stream with ID {stream_id} is written to BRAM
-  buffers at 32-bit data positions {offset*4}-{offset*4+3}, they can originate
-  from from any source 32-bit word from the interface to enable data reordering
-  and duplication. sourceChunk1 represents position {offset*4} etc..*/
-  AccelerationModule::WriteToModule(
-      ((3 << 17) + (stream_id << 12) + (clock_cycle << 5) + (offset << 2)),
-      ((source_position4 << 24) + (source_position3 << 16) +
-       (source_position2 << 8) + source_position1));
+      ((configuration_values[0] << 24) + (configuration_values[1] << 16) +
+       (configuration_values[2] << 8) + configuration_values[3]));
 }
 
 // MultiChannel

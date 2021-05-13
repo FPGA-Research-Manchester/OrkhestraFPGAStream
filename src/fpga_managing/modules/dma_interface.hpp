@@ -1,7 +1,9 @@
 #pragma once
+#include <array>
 #include <bitset>
 #include <cstdint>
 
+#include "module_config_values.hpp"
 #include "query_acceleration_constants.hpp"
 
 namespace dbmstodspi {
@@ -39,21 +41,10 @@ class DMAInterface {
   virtual void SetRecordChunkIDs(int stream_id, int interface_cycle,
                                  int chunk_id) = 0;
 
-  virtual void SetBufferToInterfaceChunk(int stream_id, int clock_cycle,
-                                         int offset, int source_chunk4,
-                                         int source_chunk3, int source_chunk2,
-                                         int source_chunk1) = 0;
-  virtual void SetBufferToInterfaceSourcePosition(
-      int stream_id, int clock_cycle, int offset, int source_position4,
-      int source_position3, int source_position2, int source_position1) = 0;
-
-  virtual void SetInterfaceToBufferChunk(int stream_id, int clock_cycle,
-                                         int offset, int target_chunk4,
-                                         int target_chunk3, int target_chunk2,
-                                         int target_chunk1) = 0;
-  virtual void SetInterfaceToBufferSourcePosition(
-      int stream_id, int clock_cycle, int offset, int source_position4,
-      int source_position3, int source_position2, int source_position1) = 0;
+  virtual void SetCrossbarValues(
+      module_config_values::DMACrossbarDirectionSelection crossbar_selection,
+      int stream_id, int clock_cycle, int offset,
+      std::array<int, 4> configuration_values) = 0;
 
   virtual void SetNumberOfInputStreamsWithMultipleChannels(int number) = 0;
   virtual void SetRecordsPerBurstForMultiChannelStreams(

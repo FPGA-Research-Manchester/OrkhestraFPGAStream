@@ -53,15 +53,15 @@ void Filter::FilterSetCompareTypes(
     int chunk_id,       // for which chunkID are the following compare types
     int data_position,  // which 32-bit integer are the following compare
                         // types for
-    filter_config_values::CompareFunctions
+    module_config_values::FilterCompareFunctions
         compare_1_type,  // The type of comparison for each of up to 4 different
-    filter_config_values::CompareFunctions
+    module_config_values::FilterCompareFunctions
         compare_2_type,  // compares (depending on module type, e.g. for
                          // 1-Compare module, only Compare_1_Type will be used)
-    filter_config_values::CompareFunctions
+    module_config_values::FilterCompareFunctions
         compare_3_type,  // Compare types are defined above (e.g.
                          // FILTER_32BIT_LESS_THAN)
-    filter_config_values::CompareFunctions
+    module_config_values::FilterCompareFunctions
         compare_4_type) {  // In 64-bit compares, the current 32-bit integer
                            // holds the MSBits, while (DataPosition-1) holds the
                            // Least significant bits (reference value)
@@ -93,7 +93,7 @@ void Filter::FilterSetCompareReferenceValue(
 void Filter::FilterSetDNFClauseLiteral(
     int dnf_clause_id /*0-31*/, int compare_number /*0-3*/,
     int chunk_id /*0-31*/, int data_position /*0-15 for 512-bit datapath etc*/,
-    filter_config_values::LiteralTypes literal_type) {
+    module_config_values::LiteralTypes literal_type) {
   dnf_states_[dnf_clause_id].first = true; // DNF clause is used
   dnf_states_[dnf_clause_id].second[compare_number][chunk_id][data_position] =
       literal_type;
@@ -120,17 +120,17 @@ void Filter::FilterWriteDNFClauseLiteralsToModule(int datapath_width,
             if (dnf_states_[dnf_clause_index]
                     .second[compare_lane][chunk_id]
                            [data_position] ==
-                filter_config_values::LiteralTypes::kLiteralDontCare) {
+                module_config_values::LiteralTypes::kLiteralDontCare) {
               clauses_packed_positive_result |= 1;
               clauses_packed_negative_result |= 1;
             } else if (dnf_states_[dnf_clause_index]
                            .second[compare_lane][chunk_id][data_position] ==
-                       filter_config_values::LiteralTypes::kLiteralPositive) {
+                       module_config_values::LiteralTypes::kLiteralPositive) {
               clauses_packed_positive_result |= 1;
               clauses_packed_negative_result |= 0;
             } else if (dnf_states_[dnf_clause_index]
                            .second[compare_lane][chunk_id][data_position] ==
-                       filter_config_values::LiteralTypes::kLiteralNegative) {
+                       module_config_values::LiteralTypes::kLiteralNegative) {
               clauses_packed_positive_result |= 0;
               clauses_packed_negative_result |= 1;
             }
@@ -165,5 +165,5 @@ void Filter::WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
 }
 
 void Filter::ResetDNFStates() {
-  dnf_states_ = filter_config_values::DNFClauseStates();
+  dnf_states_ = module_config_values::DNFClauseStates();
 }

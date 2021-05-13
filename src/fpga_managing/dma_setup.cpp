@@ -176,51 +176,60 @@ void DMASetup::SetUpDMACrossbarsForStream(const DMASetupData& stream_setup_data,
   for (size_t current_chunk_index = 0;
        current_chunk_index < stream_setup_data.crossbar_setup_data.size();
        ++current_chunk_index) {
+    // Order is reversed
     if (stream_setup_data.is_input_stream) {
       for (int current_offset = 0; current_offset < 4; current_offset++) {
-        dma_engine.SetBufferToInterfaceChunk(
+        dma_engine.SetCrossbarValues(
+            module_config_values::DMACrossbarDirectionSelection::
+                kBufferToInterfaceChunk,
             stream_setup_data.stream_id, current_chunk_index, current_offset,
-            stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .chunk_selection[3 + current_offset * 4],
-            stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .chunk_selection[2 + current_offset * 4],
-            stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .chunk_selection[1 + current_offset * 4],
-            stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .chunk_selection[0 + current_offset * 4]);
-        dma_engine.SetBufferToInterfaceSourcePosition(
+            {stream_setup_data.crossbar_setup_data[current_chunk_index]
+                 .chunk_selection[3 + current_offset * 4],
+             stream_setup_data.crossbar_setup_data[current_chunk_index]
+                 .chunk_selection[2 + current_offset * 4],
+             stream_setup_data.crossbar_setup_data[current_chunk_index]
+                 .chunk_selection[1 + current_offset * 4],
+             stream_setup_data.crossbar_setup_data[current_chunk_index]
+                 .chunk_selection[current_offset * 4]});
+        dma_engine.SetCrossbarValues(
+            module_config_values::DMACrossbarDirectionSelection::
+                kBufferToInterfacePosition,
             stream_setup_data.stream_id, current_chunk_index, current_offset,
-            stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .position_selection[3 + current_offset * 4],
-            stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .position_selection[2 + current_offset * 4],
-            stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .position_selection[1 + current_offset * 4],
-            stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .position_selection[0 + current_offset * 4]);
+            {stream_setup_data.crossbar_setup_data[current_chunk_index]
+                 .position_selection[3 + current_offset * 4],
+             stream_setup_data.crossbar_setup_data[current_chunk_index]
+                 .position_selection[2 + current_offset * 4],
+             stream_setup_data.crossbar_setup_data[current_chunk_index]
+                 .position_selection[1 + current_offset * 4],
+             stream_setup_data.crossbar_setup_data[current_chunk_index]
+                 .position_selection[current_offset * 4]});
       }
     } else {
       for (int current_offset = 0; current_offset < 4; current_offset++) {
-        dma_engine.SetInterfaceToBufferChunk(
+        dma_engine.SetCrossbarValues(
+            module_config_values::DMACrossbarDirectionSelection::
+                kInterfaceToBufferChunk,
             stream_setup_data.stream_id, current_chunk_index, current_offset,
-            stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .chunk_selection[3 + current_offset * 4],
-            stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .chunk_selection[2 + current_offset * 4],
-            stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .chunk_selection[1 + current_offset * 4],
-            stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .chunk_selection[0 + current_offset * 4]);
-        dma_engine.SetInterfaceToBufferSourcePosition(
+            {stream_setup_data.crossbar_setup_data[current_chunk_index]
+                 .chunk_selection[3 + current_offset * 4],
+             stream_setup_data.crossbar_setup_data[current_chunk_index]
+                 .chunk_selection[2 + current_offset * 4],
+             stream_setup_data.crossbar_setup_data[current_chunk_index]
+                 .chunk_selection[1 + current_offset * 4],
+             stream_setup_data.crossbar_setup_data[current_chunk_index]
+                 .chunk_selection[current_offset * 4]});
+        dma_engine.SetCrossbarValues(
+            module_config_values::DMACrossbarDirectionSelection::
+                kInterfaceToBufferPosition,
             stream_setup_data.stream_id, current_chunk_index, current_offset,
-            stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .position_selection[3 + current_offset * 4],
-            stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .position_selection[2 + current_offset * 4],
-            stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .position_selection[1 + current_offset * 4],
-            stream_setup_data.crossbar_setup_data[current_chunk_index]
-                .position_selection[0 + current_offset * 4]);
+            {stream_setup_data.crossbar_setup_data[current_chunk_index]
+                 .position_selection[3 + current_offset * 4],
+             stream_setup_data.crossbar_setup_data[current_chunk_index]
+                 .position_selection[2 + current_offset * 4],
+             stream_setup_data.crossbar_setup_data[current_chunk_index]
+                 .position_selection[1 + current_offset * 4],
+             stream_setup_data.crossbar_setup_data[current_chunk_index]
+                 .position_selection[current_offset * 4]});
       }
     }
   }
@@ -228,6 +237,11 @@ void DMASetup::SetUpDMACrossbarsForStream(const DMASetupData& stream_setup_data,
 
 void DMASetup::SetUpDMAIOStream(const DMASetupData& stream_setup_data,
                                 modules::DMAInterface& dma_engine) {
+  dma_engine.SetControllerParams(
+      stream_setup_data.is_input_stream, stream_setup_data.stream_id,
+      stream_setup_data.ddr_burst_length,
+      stream_setup_data.records_per_ddr_burst, stream_setup_data.buffer_start,
+      stream_setup_data.buffer_end);
   if (stream_setup_data.is_input_stream) {
     dma_engine.SetRecordSize(stream_setup_data.stream_id,
                              stream_setup_data.chunks_per_record);
@@ -270,9 +284,4 @@ void DMASetup::SetUpDMAIOStream(const DMASetupData& stream_setup_data,
         false, stream_setup_data.stream_id,
         stream_setup_data.channel_setup_data[0].record_count);
   }
-  dma_engine.SetControllerParams(
-      stream_setup_data.is_input_stream, stream_setup_data.stream_id,
-      stream_setup_data.ddr_burst_length,
-      stream_setup_data.records_per_ddr_burst, stream_setup_data.buffer_start,
-      stream_setup_data.buffer_end);
 }

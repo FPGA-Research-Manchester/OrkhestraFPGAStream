@@ -2,7 +2,7 @@
 #include <cstdint>
 
 #include "acceleration_module.hpp"
-#include "filter_config_values.hpp"
+#include "module_config_values.hpp"
 #include "filter_interface.hpp"
 #include "memory_manager_interface.hpp"
 
@@ -15,7 +15,7 @@ namespace modules {
  */
 class Filter : public AccelerationModule, public FilterInterface {
  private:
-  filter_config_values::DNFClauseStates dnf_states_;
+  module_config_values::DNFClauseStates dnf_states_;
   void FilterWriteDNFClauseLiteralsToModule(int datapath_width,
                                             int module_compares_per_field,
                                             int module_dnf_clauses);
@@ -68,10 +68,10 @@ class Filter : public AccelerationModule, public FilterInterface {
    */
   void FilterSetCompareTypes(
       int chunk_id, int data_position,
-      filter_config_values::CompareFunctions compare_1_type,
-      filter_config_values::CompareFunctions compare_2_type,
-      filter_config_values::CompareFunctions compare_3_type,
-      filter_config_values::CompareFunctions compare_4_type) override;
+      module_config_values::FilterCompareFunctions compare_1_type,
+      module_config_values::FilterCompareFunctions compare_2_type,
+      module_config_values::FilterCompareFunctions compare_3_type,
+      module_config_values::FilterCompareFunctions compare_4_type) override;
   /**
    * @brief Set comparison reference values for specific comparitors.
    * @param chunk_id Which chunk compariosn is being configured.
@@ -92,7 +92,7 @@ class Filter : public AccelerationModule, public FilterInterface {
    */
   void FilterSetDNFClauseLiteral(
       int dnf_clause_id, int compare_number, int chunk_id, int data_position,
-      filter_config_values::LiteralTypes literal_type) override;
+      module_config_values::LiteralTypes literal_type) override;
 
   /**
    * @brief Write the set DNF clause literal types to the module which has 1

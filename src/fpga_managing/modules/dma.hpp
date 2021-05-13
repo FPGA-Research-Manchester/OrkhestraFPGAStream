@@ -115,70 +115,19 @@ class DMA : public AccelerationModule, public DMAInterface {
                          int chunk_id) override;
 
   /**
-   * @brief Method to configure the input crossbar chunks.
+   * @brief Method to configure the input/output crossbar chunks/position selection.
    *
    * In-depth explanation is in the README.
+   * @param crossbar_selection Which crossbar is being configured.
    * @param stream_id Which input stream is being configured.
-   * @param clock_cycle Which clock cycle is having its chunks set.
-   * @param offset Which 4 chunks are being set.
-   * @param source_chunk4 4th chunk
-   * @param source_chunk3 3rd chunk
-   * @param source_chunk2 2nd chunk
-   * @param source_chunk1 1st chunk
+   * @param clock_cycle Which clock cycle is having its positions/chunks set.
+   * @param offset Which 4 positions/chunks are being set.
+   * @param configuration_values Values of 4 selections in reverse order.
    */
-  void SetBufferToInterfaceChunk(int stream_id, int clock_cycle, int offset,
-                                 int source_chunk4, int source_chunk3,
-                                 int source_chunk2, int source_chunk1) override;
-  /**
-   * @brief Method to configure the input crossbar positions.
-   *
-   * In-depth explanation is in the README.
-   * @param stream_id Input stream ID.
-   * @param clock_cycle Clock cycle selection.
-   * @param offset Configuration 4 position offset selection.
-   * @param source_position4 4th position
-   * @param source_position3 3rd position
-   * @param source_position2 2nd position
-   * @param source_position1 1st position
-   */
-  void SetBufferToInterfaceSourcePosition(int stream_id, int clock_cycle,
-                                          int offset, int source_position4,
-                                          int source_position3,
-                                          int source_position2,
-                                          int source_position1) override;
-
-  /**
-   * @brief Method to configure the output crossbar chunks.
-   *
-   * In-depth explanation is in the README.
-   * @param stream_id Which output stream is being configured.
-   * @param clock_cycle Which clock cycle is having its chunks set.
-   * @param offset Which 4 chunks are being set.
-   * @param target_chunk4 4th chunk
-   * @param target_chunk3 3rd chunk
-   * @param target_chunk2 2nd chunk
-   * @param target_chunk1 1st chunk
-   */
-  void SetInterfaceToBufferChunk(int stream_id, int clock_cycle, int offset,
-                                 int target_chunk4, int target_chunk3,
-                                 int target_chunk2, int target_chunk1) override;
-  /**
-   * @brief Method to configure the output crossbar positions.
-   *
-   * In-depth explanation is in the README.
-   * @param stream_id Output stream ID.
-   * @param clock_cycle Clock cycle selection.
-   * @param offset Configuration 4 position offset selection.
-   * @param source_position4 4th position
-   * @param source_position3 3rd position
-   * @param source_position2 2nd position
-   * @param source_position1 1st position
-   */
-  void SetInterfaceToBufferSourcePosition(int stream_id, int clock_cycle,
-                                          int offset, int source_position4,
-                                          int source_position3,
-                                          int source_position2,
-                                          int source_position1) override;
+  void SetCrossbarValues(
+      module_config_values::DMACrossbarDirectionSelection crossbar_selection,
+      int stream_id, int clock_cycle, int offset,
+      std::array<int, 4> configuration_values) override;
 
   /**
    * @brief Set the number of input streams which are going to have multiple

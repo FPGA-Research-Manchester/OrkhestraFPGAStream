@@ -29,7 +29,7 @@ add_library(fpga_managing
 			"modules/filter.hpp"  
 			"filter_setup.cpp"
 			"filter_setup.hpp"
-			"filter_config_values.hpp"
+			"module_config_values.hpp"
 			"fpga_manager.cpp"
 			"fpga_manager.hpp"
 			"stream_parameter_calculator.cpp"
