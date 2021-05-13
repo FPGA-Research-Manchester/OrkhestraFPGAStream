@@ -6,8 +6,7 @@
 #include "dma_setup_data.hpp"
 #include "stream_data_parameters.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Class to setup DMA configuration data and write the data into the DMA
@@ -47,5 +46,4 @@ class DMASetup {
                                     int current_stream_count);
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

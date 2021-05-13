@@ -7,8 +7,7 @@
 #include "operation_types.hpp"
 #include "query_scheduling_data.hpp"
 
-namespace dbmstodspi {
-namespace query_managing {
+namespace dbmstodspi::query_managing {
 
 /**
  * @brief Class to schedule nodes to groups of different FPGA runs.
@@ -18,7 +17,7 @@ class NodeScheduler {
   /**
    * @brief Find groups of accelerated query nodes which can be run in the same
    * FPGA run.
-   * @param accelerated_query_node_sets Queue of groups of accelerated query
+   * @param accelerated_query_node_runs Queue of groups of accelerated query
    * nodes to be accelerated next.
    * @param starting_nodes Input vector of leaf nodes from which the parsing can
    * begin.
@@ -30,7 +29,7 @@ class NodeScheduler {
   static void FindAcceleratedQueryNodeSets(
       std::queue<std::pair<query_scheduling_data::ConfigurableModulesVector,
                            std::vector<query_scheduling_data::QueryNode>>>
-          *accelerated_query_node_sets,
+          *accelerated_query_node_runs,
       std::vector<query_scheduling_data::QueryNode> &starting_nodes,
       const std::map<query_scheduling_data::ConfigurableModulesVector,
                      std::string> &supported_accelerator_bitstreams,
@@ -63,7 +62,7 @@ class NodeScheduler {
           &current_modules_vector) -> int;
   static void CheckNodeForModuleSet(
       int node_index,
-      query_scheduling_data::ConfigurableModulesVector &current_set,
+      query_scheduling_data::ConfigurableModulesVector &current_modules_vector,
       std::vector<query_scheduling_data::QueryNode> &current_query_nodes,
       std::vector<query_scheduling_data::QueryNode> &scheduled_queries,
       std::vector<query_scheduling_data::QueryNode> &starting_nodes,
@@ -100,5 +99,4 @@ class NodeScheduler {
       -> query_scheduling_data::ConfigurableModulesVector;
 };
 
-}  // namespace query_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::query_managing

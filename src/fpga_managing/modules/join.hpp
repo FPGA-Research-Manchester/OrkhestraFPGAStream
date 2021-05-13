@@ -3,9 +3,7 @@
 #include "join_interface.hpp"
 #include "memory_manager_interface.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
-namespace modules {
+namespace dbmstodspi::fpga_managing::modules {
 
 /**
  * @brief Class to write in the join operation acceleration module settings.
@@ -69,6 +67,4 @@ class Join : public AccelerationModule, public JoinInterface {
   void Reset() override;
 };
 
-}  // namespace modules
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing::modules

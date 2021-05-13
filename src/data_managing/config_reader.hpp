@@ -2,8 +2,7 @@
 #include <map>
 #include <string>
 
-namespace dbmstodspi {
-namespace data_managing {
+namespace dbmstodspi::data_managing {
 
 /**
  * @brief Class to read the config of available data types and their sizes.
@@ -22,5 +21,4 @@ class ConfigReader {
       -> std::map<std::string, double>;
 };
 
-}  // namespace data_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::data_managing

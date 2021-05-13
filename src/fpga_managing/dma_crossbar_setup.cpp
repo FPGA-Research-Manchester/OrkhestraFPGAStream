@@ -47,10 +47,8 @@ void DMACrossbarSetup::SetUpEmptyCrossbarSetupData(
 void DMACrossbarSetup::FillSetupDataWithNegativePositions(
     DMASetupData& stream_setup_data) {
   for (auto& chunk_index : stream_setup_data.crossbar_setup_data) {
-    for (int position_index = 0;
-         position_index < chunk_index.chunk_selection.size();
-         position_index++) {
-      chunk_index.chunk_selection[position_index] = -1;
+    for (int& position_index : chunk_index.chunk_selection) {
+      position_index = -1;
     }
   }
 }

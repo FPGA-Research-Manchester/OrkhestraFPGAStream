@@ -3604,9 +3604,9 @@ int main() {
   volatile uint32_t* input_data2 = (uint32_t*) 0x50000000;
   volatile uint32_t* output_data = (uint32_t*) 0x60000000;
 
-  uintptr_t inputTable1Address = (uintptr_t)input_data1 >> 4;
-  uintptr_t inputTable2Address = (uintptr_t)input_data2 >> 4;
-  uintptr_t outputTableAddress = (uintptr_t)output_data >> 4;
+  uintptr_t input_table1_address = (uintptr_t)input_data1 >> 4;
+  uintptr_t input_table2_address = (uintptr_t)input_data2 >> 4;
+  uintptr_t output_table_address = (uintptr_t)output_data >> 4;
 
   for (int i = 0; i < 72000; i++) {
     input_data1[i] = input_memory_area1[i];
@@ -3621,7 +3621,7 @@ int main() {
   }
 
   writeRegisterRaw(0x40, 0x47040007);
-  writeRegisterRaw(0x80, inputTable1Address);
+  writeRegisterRaw(0x80, input_table1_address);
   writeRegisterRaw(0xc0, 0x3e8);
   writeRegisterRaw(0x20100, 0x1);
   writeRegisterRaw(0x22000, 0x0);
@@ -3913,7 +3913,7 @@ int main() {
   writeRegisterRaw(0x503ec, 0x1f1f1f1f);
   writeRegisterRaw(0x403ec, 0x1000000);
   writeRegisterRaw(0x44, 0x3705080f);
-  writeRegisterRaw(0x84, inputTable2Address);
+  writeRegisterRaw(0x84, input_table2_address);
   writeRegisterRaw(0xc4, 0x1f4);
   writeRegisterRaw(0x20104, 0x0);
   writeRegisterRaw(0x22100, 0x0);
@@ -4205,7 +4205,7 @@ int main() {
   writeRegisterRaw(0x513ec, 0x1f1f1f1f);
   writeRegisterRaw(0x413ec, 0x6050403);
   writeRegisterRaw(0x10000, 0x5f04000f);
-  writeRegisterRaw(0x10040, outputTableAddress);
+  writeRegisterRaw(0x10040, output_table_address);
   writeRegisterRaw(0x10080, 0x0);
   writeRegisterRaw(0x70000, 0x0);
   writeRegisterRaw(0x60000, 0x3020100);

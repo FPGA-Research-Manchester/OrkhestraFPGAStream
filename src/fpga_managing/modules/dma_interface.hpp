@@ -6,9 +6,7 @@
 #include "module_config_values.hpp"
 #include "query_acceleration_constants.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
-namespace modules {
+namespace dbmstodspi::fpga_managing::modules {
 
 /**
  * @brief Interface class whose implementation can be seen at #DMA.
@@ -65,6 +63,4 @@ class DMAInterface {
   virtual void GlobalReset() = 0;
 };
 
-}  // namespace modules
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing::modules

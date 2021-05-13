@@ -7,8 +7,7 @@
 
 #include "table_data.hpp"
 
-namespace dbmstodspi {
-namespace data_managing {
+namespace dbmstodspi::data_managing {
 
 /**
  * @brief Class to manage the data types and reading and writing of data to and
@@ -66,5 +65,4 @@ class DataManager {
       const std::vector<std::vector<std::string>>& string_data);
 };
 
-}  // namespace data_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::data_managing

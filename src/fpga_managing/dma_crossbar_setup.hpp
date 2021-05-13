@@ -4,8 +4,7 @@
 
 #include "dma_setup_data.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Class to write the correct setup data to the DMASetupData struct
@@ -65,5 +64,4 @@ class DMACrossbarSetup {
       DMASetupData& stream_setup_data);
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

@@ -3,8 +3,7 @@
 
 #include "dma_setup_data.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Helper class to calculate the DMA configuration parameters based on
@@ -52,5 +51,4 @@ class StreamParameterCalculator {
   static auto FindNextPowerOfTwo(const int& value) -> int;
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

@@ -8,13 +8,7 @@
 #include "operation_types.hpp"
 #include "query_acceleration_constants.hpp"
 
-namespace dbmstodspi {
-namespace query_managing {
-
-/**
- * @brief Namespace for types to help with scheduling the query nodes correctly.
- */
-namespace query_scheduling_data {
+namespace dbmstodspi::query_managing::query_scheduling_data {
 
 using fpga_managing::query_acceleration_constants::kModuleSize;
 
@@ -66,12 +60,12 @@ struct QueryNode {
 };
 
 /// Type definition of a collection of operation types for selecting bitstreams.
-typedef std::vector<fpga_managing::operation_types::QueryOperation>
-    ConfigurableModulesVector;
+using ConfigurableModulesVector =
+    std::vector<fpga_managing::operation_types::QueryOperation>;
 
 const std::map<fpga_managing::operation_types::QueryOperationType,
                std::vector<std::vector<int>>>
-    existing_modules = {
+    kExistingModules = {
         {fpga_managing::operation_types::QueryOperationType::kFilter,
          {{8, 16, 32}, {1, 2, 4}}},
         {fpga_managing::operation_types::QueryOperationType::kJoin, {}},
@@ -87,7 +81,7 @@ const std::map<fpga_managing::operation_types::QueryOperationType,
 
 /// Map of supported collections of operations.
 const std::map<ConfigurableModulesVector, std::string>
-    supported_accelerator_bitstreams = {
+    kSupportedAcceleratorBitstreams = {
         {{{fpga_managing::operation_types::QueryOperationType::kFilter, {32, 4}}}, "DSPI_filtering"},
 
         {{{fpga_managing::operation_types::QueryOperationType::kJoin, {}}},
@@ -130,7 +124,7 @@ const std::map<ConfigurableModulesVector, std::string>
           fpga_managing::operation_types::QueryOperationType::kLinearSort{1024}},
          "DSPI_filtering_linear_sort"}*/};
 
-const std::map<std::string, int> required_bitstream_memory_space = {
+const std::map<std::string, int> kRequiredBitstreamMemorySpace = {
     {"DSPI_filtering", kModuleSize * 2},
     {"DSPI_joining", kModuleSize * 2},
     {"DSPI_double_merge_sorting", kModuleSize * 3},
@@ -146,7 +140,4 @@ const std::map<std::string, int> required_bitstream_memory_space = {
     //{"bitstream containing ILA", kModuleSize * 146}
 };
 
-}  // namespace query_scheduling_data
-
-}  // namespace query_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::query_managing::query_scheduling_data

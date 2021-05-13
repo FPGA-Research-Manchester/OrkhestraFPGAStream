@@ -2,14 +2,7 @@
 #include <array>
 #include <utility>
 
-namespace dbmstodspi {
-namespace fpga_managing {
-
-/**
- * @brief Namespace for configuration data used to configure the filtering
- * module.
- */
-namespace module_config_values {
+namespace dbmstodspi::fpga_managing::module_config_values {
 /// Enum for selecting compare function type.
 enum class FilterCompareFunctions {
   k32BitLessThan = 0,
@@ -48,13 +41,10 @@ enum class DMACrossbarDirectionSelection {
  * Which array is for what is explained in the Filter::FilterSetDNFClauseLiteral
  * function
  */
-typedef std::array<std::array<std::array<LiteralTypes, 32>, 32>, 4> DNFClause;
+using DNFClause = std::array<std::array<std::array<LiteralTypes, 32>, 32>, 4>;
 
 /**
  * @brief Matrix type for holding DNF clause active states.
  */
-typedef std::array<std::pair<bool, DNFClause>, 32> DNFClauseStates;
-}  // namespace module_config_values
-
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+using DNFClauseStates = std::array<std::pair<bool, DNFClause>, 32>;
+}  // namespace dbmstodspi::fpga_managing::module_config_values

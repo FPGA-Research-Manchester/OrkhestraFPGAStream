@@ -1,15 +1,10 @@
 #pragma once
 
 #include <tuple>
+#include <utility>
 #include <vector>
 
-namespace dbmstodspi {
-namespace fpga_managing {
-
-/**
- * @brief Accelerated operation types are listed here.
- */
-namespace operation_types {
+namespace dbmstodspi::fpga_managing::operation_types {
 
 /**
  * @brief Enumeration for supported accelerated operation types.
@@ -49,10 +44,7 @@ struct QueryOperation {
   QueryOperation(QueryOperationType operation_type,
                  std::vector<int> resource_elasticity_data)
       : operation_type{operation_type},
-        resource_elasticity_data{resource_elasticity_data} {}
+        resource_elasticity_data{std::move(resource_elasticity_data)} {}
 };
 
-}  // namespace operation_types
-
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing::operation_types

@@ -27,7 +27,7 @@ auto dbmstodspi::fpga_managing::AdditionSetup::ReverseNegationSpecification(
     std::vector<int> negation_specification) -> std::bitset<8> {
   std::bitset<8> negation_required;
   for (int i = negation_required.size() - 1; i >= 0; i--) {
-    negation_required.set(7 - i, negation_specification.at(i));
+    negation_required.set(7 - i, negation_specification.at(i) != 0);
   }
   return negation_required;
 }

@@ -1,8 +1,7 @@
 #pragma once
 #include "merge_sort_interface.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Class to calculate the configuration data and setup the merge sorting
@@ -47,5 +46,4 @@ class MergeSortSetup {
                                           int record_size) -> bool;
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

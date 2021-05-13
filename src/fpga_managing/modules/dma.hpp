@@ -5,9 +5,7 @@
 #include "dma_interface.hpp"
 #include "memory_manager_interface.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
-namespace modules {
+namespace dbmstodspi::fpga_managing::modules {
 
 /**
  * @brief DMA module which handles AXI bursts and sends data to the acceleration
@@ -205,6 +203,4 @@ class DMA : public AccelerationModule, public DMAInterface {
   const int kResetDuration_ = 8;
 };
 
-}  // namespace modules
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing::modules

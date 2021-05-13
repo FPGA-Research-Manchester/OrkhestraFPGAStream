@@ -16,8 +16,7 @@
 #include "read_back_module_interface.hpp"
 #include "stream_data_parameters.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Class to configure all of the modules loaded in with the bitstream.
@@ -85,5 +84,4 @@ class FPGAManager {
       int position) -> double;
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

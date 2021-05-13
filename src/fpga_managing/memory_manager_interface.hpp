@@ -5,8 +5,7 @@
 
 #include "memory_block_interface.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Interface class implemented in #MemoryManager
@@ -30,5 +29,4 @@ class MemoryManagerInterface {
       -> std::unique_ptr<MemoryBlockInterface> = 0;
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

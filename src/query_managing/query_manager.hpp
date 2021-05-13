@@ -9,8 +9,7 @@
 #include "stream_data_parameters.hpp"
 #include "table_data.hpp"
 
-namespace dbmstodspi {
-namespace query_managing {
+namespace dbmstodspi::query_managing {
 
 /**
  * @brief Class which contains the pipeline shown in the main README file. This
@@ -42,5 +41,4 @@ class QueryManager {
       std::vector<query_scheduling_data::QueryNode> starting_query_nodes);
 };
 
-}  // namespace query_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::query_managing

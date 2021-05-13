@@ -1,8 +1,6 @@
 #pragma once
 
-namespace dbmstodspi {
-namespace fpga_managing {
-namespace modules {
+namespace dbmstodspi::fpga_managing::modules {
 
 /**
  * @brief Interface class for the merge sorting implemented by #MergeSort
@@ -17,9 +15,7 @@ class MergeSortInterface {
   virtual void SetBufferSize(int record_count) = 0;
   virtual void SetRecordCountPerFetch(int record_count) = 0;
   virtual void SetFetchCount(int fetch_count) = 0;
-  virtual void SetFetchOffset(int padded_fetch_count) = 0;
+  virtual void SetFetchOffset(int offset_record_count) = 0;
 };
 
-}  // namespace modules
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing::modules

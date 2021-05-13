@@ -3,8 +3,7 @@
 
 #include "multiplication_interface.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Class to calculate the Multiplication module setup.
@@ -26,9 +25,8 @@ class MultiplicationSetup {
    */
   static void SetupMultiplicationModule(
       modules::MultiplicationInterface& multiplication_module,
-      std::vector<int> active_stream_ids,
+      const std::vector<int>& active_stream_ids,
       const std::vector<std::vector<int>>& operation_parameters);
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

@@ -1,8 +1,7 @@
 #pragma once
 #include <vector>
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Class to create an extended specification based on the original
@@ -158,5 +157,4 @@ class DMACrossbarSpecifier {
       -> bool;
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

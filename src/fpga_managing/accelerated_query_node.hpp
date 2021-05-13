@@ -5,8 +5,7 @@
 #include "operation_types.hpp"
 #include "stream_data_parameters.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Struct to hold all of the important information about a query node to
@@ -27,5 +26,4 @@ struct AcceleratedQueryNode {
   //}
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

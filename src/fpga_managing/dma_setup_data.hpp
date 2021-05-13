@@ -5,8 +5,7 @@
 
 #include "dma_crossbar_setup_data.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Struct to hold channel setup data for an individual stream.
@@ -38,5 +37,4 @@ struct DMASetupData {
   std::vector<DMAChannelSetupData> channel_setup_data;
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

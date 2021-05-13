@@ -57,18 +57,19 @@ void QueryManager::RunQueries(
 
   NodeScheduler::FindAcceleratedQueryNodeSets(
       &query_node_runs_queue, starting_query_nodes,
-      query_scheduling_data::supported_accelerator_bitstreams,
-      query_scheduling_data::existing_modules);
+      query_scheduling_data::kSupportedAcceleratorBitstreams,
+      query_scheduling_data::kExistingModules);
 
   while (!query_node_runs_queue.empty()) {
     const auto executable_query_nodes = query_node_runs_queue.front().second;
-    const auto bitstream_file_name =
-        query_scheduling_data::supported_accelerator_bitstreams.at(query_node_runs_queue.front().first);
+    const auto& bitstream_file_name =
+        query_scheduling_data::kSupportedAcceleratorBitstreams.at(
+            query_node_runs_queue.front().first);
     query_node_runs_queue.pop();
 
     memory_manager.LoadBitstreamIfNew(
         bitstream_file_name,
-        query_scheduling_data::required_bitstream_memory_space.at(
+        query_scheduling_data::kRequiredBitstreamMemorySpace.at(
             bitstream_file_name));
 
     IDManager id_manager;

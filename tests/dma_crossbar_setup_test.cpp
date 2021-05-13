@@ -10,7 +10,8 @@
 #include "dma_setup_data.hpp"
 #include "query_acceleration_constants.hpp"
 namespace {
-const int kDatapathLength = dbmstodspi::fpga_managing::query_acceleration_constants::kDatapathLength;
+const int kDatapathLength =
+    dbmstodspi::fpga_managing::query_acceleration_constants::kDatapathLength;
 const int kDatapathWidth =
     dbmstodspi::fpga_managing::query_acceleration_constants::kDatapathWidth;
 
@@ -49,8 +50,7 @@ void ExpectConfigurationDataIsUnconfigured(
 
 void ExpectConfigurationDataIsConfigured(
     dbmstodspi::fpga_managing::DMASetupData configuration_data,
-    std::string golden_chunk_data_file,
-    std::string golden_position_data_file) {
+    std::string golden_chunk_data_file, std::string golden_position_data_file) {
   std::vector<std::vector<int>> golden_chunk_config;
   GetGoldenConfigFromFile(golden_chunk_config, golden_chunk_data_file);
   std::vector<std::vector<int>> golden_position_config;

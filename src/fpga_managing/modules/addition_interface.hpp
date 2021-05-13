@@ -5,9 +5,7 @@
 #include <utility>
 #include <bitset>
 
-namespace dbmstodspi {
-namespace fpga_managing {
-namespace modules {
+namespace dbmstodspi::fpga_managing::modules {
 
 /**
  * @brief Interface class which is implemented in the #Addition class.
@@ -22,6 +20,4 @@ class AdditionInterface {
       std::array<std::pair<uint32_t, uint32_t>, 8> literal_values) = 0;
 };
 
-}  // namespace modules
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing::modules

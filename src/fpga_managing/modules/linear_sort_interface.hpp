@@ -1,8 +1,6 @@
 #pragma once
 
-namespace dbmstodspi {
-namespace fpga_managing {
-namespace modules {
+namespace dbmstodspi::fpga_managing::modules {
 
 /**
  * @brief Interface class to be implemented in #LinearSort
@@ -15,6 +13,4 @@ class LinearSortInterface {
   virtual void StartPrefetchingData() = 0;
 };
 
-}  // namespace modules
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing::modules

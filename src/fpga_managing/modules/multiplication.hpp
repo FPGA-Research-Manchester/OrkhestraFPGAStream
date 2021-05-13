@@ -3,9 +3,7 @@
 #include "memory_manager_interface.hpp"
 #include "multiplication_interface.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
-namespace modules {
+namespace dbmstodspi::fpga_managing::modules {
 
 /**
  * @brief Class which implements low level memory writes to the multiplication
@@ -45,6 +43,4 @@ class Multiplication : public AccelerationModule,
                                    std::bitset<8> active_positions) override;
 };
 
-}  // namespace modules
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing::modules

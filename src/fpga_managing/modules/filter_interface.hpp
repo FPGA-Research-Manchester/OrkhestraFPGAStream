@@ -3,9 +3,7 @@
 
 #include "module_config_values.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
-namespace modules {
+namespace dbmstodspi::fpga_managing::modules {
 
 /**
  * @brief Interface class to be implemented by #Filter
@@ -44,6 +42,4 @@ class FilterInterface {
   virtual void ResetDNFStates() = 0;
 };
 
-}  // namespace modules
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing::modules

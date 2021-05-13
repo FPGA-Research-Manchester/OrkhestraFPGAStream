@@ -5,8 +5,7 @@
 #include <utility>
 #include <vector>
 
-namespace dbmstodspi {
-namespace data_managing {
+namespace dbmstodspi::data_managing {
 
 /**
  * @brief Class to convert different types of data to string and integer
@@ -143,5 +142,4 @@ class TypesConverter {
                                        int output_size) -> std::vector<int>;
 };
 
-}  // namespace data_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::data_managing

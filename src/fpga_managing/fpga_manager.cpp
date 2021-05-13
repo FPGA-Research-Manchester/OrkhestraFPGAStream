@@ -59,8 +59,9 @@ void FPGAManager::SetupQueryAcceleration(
   }
 
   // MISSING PIECE OF LOGIC HERE...
-  // TODO: Need to check for stream specification validity and intermediate
-  // stream specifications have to be merged with the IO stream specs.
+  // TODO(Kaspar): Need to check for stream specification validity and
+  // intermediate stream specifications have to be merged with the IO stream
+  // specs.
 
   if (input_streams.empty() || output_streams.empty()) {
     throw std::runtime_error("Input or output streams missing!");
@@ -76,9 +77,9 @@ void FPGAManager::SetupQueryAcceleration(
   }
 
   for (const auto& query_node : query_nodes) {
-    // TODO: For each of the operations different properties have to be written
-    // down to add classifications. The operation_parameters can be generalised
-    // based on classifiactions
+    // TODO(Kaspar): For each of the operations different properties have to be
+    // written down to add classifications. The operation_parameters can be
+    // generalised based on classifiactions
 
     // Assumptions are taken that the input and output streams are defined
     // correctly and that the correct amount of streams have been given for each
@@ -271,7 +272,8 @@ auto FPGAManager::GetResultingStreamSizes(
   for (auto stream_id : active_input_stream_ids) {
     FPGAManager::input_streams_active_status_[stream_id] = false;
   }
-  std::array<int, query_acceleration_constants::kMaxIOStreamCount> result_sizes;
+  std::array<int, query_acceleration_constants::kMaxIOStreamCount>
+      result_sizes{};
   for (auto stream_id : active_output_stream_ids) {
     FPGAManager::output_streams_active_status_[stream_id] = false;
     result_sizes[stream_id] =

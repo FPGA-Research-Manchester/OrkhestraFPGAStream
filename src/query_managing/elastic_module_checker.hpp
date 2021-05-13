@@ -6,8 +6,7 @@
 #include "query_scheduling_data.hpp"
 #include "stream_data_parameters.hpp"
 
-namespace dbmstodspi {
-namespace query_managing {
+namespace dbmstodspi::query_managing {
 
 /**
  * @brief For checking the resource elastic options to better accomodate the
@@ -46,5 +45,4 @@ class ElasticModuleChecker {
       const std::vector<std::vector<int>>& operation_parameters) -> bool;
 };
 
-}  // namespace query_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::query_managing

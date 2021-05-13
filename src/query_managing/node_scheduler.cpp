@@ -48,12 +48,12 @@ void NodeScheduler::FindAcceleratedQueryNodeSets(
 void NodeScheduler::RemoveLinkedNodes(
     std::vector<query_scheduling_data::QueryNode*>& linked_nodes,
     const std::vector<query_scheduling_data::QueryNode>& current_query_nodes) {
-  for (int i = 0; i < linked_nodes.size(); i++) {
-    auto* linked_node = linked_nodes[i];
+  for (auto& i : linked_nodes) {
+    auto* linked_node = i;
     if (linked_node != nullptr &&
         std::find(current_query_nodes.begin(), current_query_nodes.end(),
                   *linked_node) == current_query_nodes.end()) {
-      linked_nodes[i] = nullptr;
+      i = nullptr;
     }
   }
 }
@@ -188,7 +188,7 @@ auto NodeScheduler::FindSuitableModuleCombination(
         current_node->module_location = module_position + 1;
         return new_modules_vector;
       }
-      // TODO: Make this nicer. A bit smelly
+      // TODO(Kaspar): Make this nicer. A bit smelly
       // No resource elastic requirements
     } else {
       auto new_modules_vector =

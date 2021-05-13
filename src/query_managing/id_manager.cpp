@@ -18,7 +18,7 @@ void IDManager::MakeIDAvailable(int available_id) {
 }
 
 void IDManager::AllocateStreamIDs(
-    const std::vector<query_scheduling_data::QueryNode> all_nodes,
+    const std::vector<query_scheduling_data::QueryNode> &all_nodes,
     std::vector<std::vector<int>> &input_ids,
     std::vector<std::vector<int>> &output_ids) {
   for (int current_node_index = 0; current_node_index < all_nodes.size();

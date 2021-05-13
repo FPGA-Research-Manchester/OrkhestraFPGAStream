@@ -4,8 +4,7 @@
 #include "ila_types.hpp"
 #include "memory_manager_interface.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Debug class to access ILA values if is in the used bitstream.
@@ -60,5 +59,4 @@ class ILA {
   auto ReadFromModule(int module_internal_address) -> uint32_t;
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

@@ -3,9 +3,7 @@
 #include "addition_interface.hpp"
 #include "memory_manager_interface.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
-namespace modules {
+namespace dbmstodspi::fpga_managing::modules {
 
 /**
  * @brief Class which implements low level memory writes to the addition and
@@ -44,6 +42,4 @@ class Addition : public AccelerationModule, public AdditionInterface {
       std::array<std::pair<uint32_t, uint32_t>, 8> literal_values) override;
 };
 
-}  // namespace modules
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing::modules

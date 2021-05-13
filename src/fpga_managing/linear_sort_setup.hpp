@@ -1,8 +1,7 @@
 #pragma once
 #include "linear_sort_interface.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Linear sort setup class which will calculate the configuration data to
@@ -23,5 +22,4 @@ class LinearSortSetup {
                                     int stream_id, int record_size);
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

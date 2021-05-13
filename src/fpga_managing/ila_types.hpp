@@ -1,7 +1,6 @@
 #pragma once
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Enumeration of all of the different types of data ILAs can collect.
@@ -106,5 +105,4 @@ enum class ILADataTypes {
   U_BS = 51
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

@@ -3,12 +3,19 @@
 
 projectFiles=()
 
-for entry in ./apps/*
+for entry in ./apps/fpga_run.cpp
 do
   projectFiles+=($entry)
 done
 
 for entry in ./src/fpga_managing/*
+do
+  if [ ! -d "$entry" ]; then
+      projectFiles+=($entry)
+  fi
+done
+
+for entry in ./src/fpga_managing/modules/*
 do
   projectFiles+=($entry)
 done
@@ -54,11 +61,14 @@ portability-*
 
 for file in ${projectFiles[@]}
 do
+    echo $file
     for check in ${checks[@]}
     do
-        echo $file $check
-        clang-tidy --checks="-*,$check" --fix-errors --quiet -p=C://Users//Kaspar//source//repos//DBMStoDSPI//out//build//x64-Debug $file | grep "clang-tidy applied"
+        echo $check
+        clang-tidy --checks="-*,$check" --fix-errors --quiet -p=C://Users//Kaspar//source//repos//DBMStoDSPI//out//build//Local\ PC $file
+        echo
     done
+    echo
 done
 
 clang-format -i -style=google **/*.cpp **/*.hpp

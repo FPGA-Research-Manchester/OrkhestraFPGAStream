@@ -4,8 +4,7 @@
 
 #include "memory_block_interface.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Virtual memory block where there is no physical counterpart.
@@ -25,5 +24,4 @@ class VirtualMemoryBlock : public MemoryBlockInterface {
   auto GetSize() -> const uint32_t override;
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing

@@ -4,8 +4,7 @@
 
 #include "filter_interface.hpp"
 
-namespace dbmstodspi {
-namespace fpga_managing {
+namespace dbmstodspi::fpga_managing {
 
 /**
  * @brief Filter setup class which calculates the correct configuration data to
@@ -73,5 +72,4 @@ class FilterSetup {
                                               int output_stream_id);
 };
 
-}  // namespace fpga_managing
-}  // namespace dbmstodspi
+}  // namespace dbmstodspi::fpga_managing
