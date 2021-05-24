@@ -1,0 +1,14 @@
+﻿#pragma once
+
+#include <memory>
+
+#include "input_manager_interface.hpp"
+
+using easydspi::core_interfaces::InputManagerInterface;
+
+namespace easydspi::core::core_input {
+class InputManagerFactory {
+ public:
+  static std::unique_ptr<InputManagerInterface> getManager();
+};
+}  // namespace easydspi::core::core_input
