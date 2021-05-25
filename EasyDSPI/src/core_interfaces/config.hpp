@@ -10,7 +10,7 @@
 namespace easydspi::core_interfaces {
 struct Config {
   // Constructed run time for now. So doesn't even really need to be here.
-  std::map<std::string, std::vector<std::vector<std::string>>> module_library;
+  std::map<std::string, std::vector<std::vector<int>>> module_library;
 
   std::map<std::vector<std::pair<std::string, std::vector<int>>>, std::string>
       accelerator_library;

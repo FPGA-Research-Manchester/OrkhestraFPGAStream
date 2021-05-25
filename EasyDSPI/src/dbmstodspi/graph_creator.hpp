@@ -1,13 +1,13 @@
 ﻿#pragma once
 
-#include "execution_plan_graph_interface.hpp"
-#include <memory>
+#include "graph_creator_interface.hpp"
 
 using easydspi::core_interfaces::ExecutionPlanGraphInterface;
 
 namespace easydspi::dbmstodspi {
-class GraphCreator {
+class GraphCreator : public GraphCreatorInterface {
  public:
-  std::unique_ptr<ExecutionPlanGraphInterface> makeGraph();
+  ~GraphCreator() override = default;
+  std::unique_ptr<ExecutionPlanGraphInterface> makeGraph() override;
 };
 }  // namespace easydspi::dbmstodspi
