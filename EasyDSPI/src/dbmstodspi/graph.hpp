@@ -12,6 +12,6 @@ class Graph : public ExecutionPlanGraphInterface {
  public:
   ~Graph() override = default;
   void insertData(std::string given_data) override;
-  std::string exportData() override;
+  std::string exportData() const override;
 };
 }  // namespace easydspi::dbmstodspi

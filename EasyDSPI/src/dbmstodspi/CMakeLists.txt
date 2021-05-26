@@ -12,7 +12,15 @@ add_library(dbmstodspi
             rapidjson_reader.hpp
             input_config_reader_interface.hpp
             input_config_reader.hpp
-            input_config_reader.cpp)
+            input_config_reader.cpp
+            execute_state.hpp
+            execute_state.cpp
+            read_state.hpp
+            read_state.cpp
+            init_state.hpp
+            init_state.cpp
+            state_interface.hpp
+            graph_processing_fsm_interface.hpp)
 
 FetchContent_Declare(
   rapidjson
@@ -25,15 +33,7 @@ if(NOT rapidjson_POPULATED)
   FetchContent_Populate(rapidjson)
 endif()
 
-#add_library(rapidjson INTERFACE)
-#target_include_directories(rapidjson INTERFACE ${rapidjson_SOURCE_DIR}/include)
-
-#target_include_directories(dbmstodspi PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
 target_include_directories(dbmstodspi PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
                                       PUBLIC "${rapidjson_SOURCE_DIR}/include")
 
 target_link_libraries(dbmstodspi PRIVATE core_interfaces)
-
-#target_link_libraries(dbmstodspi PRIVATE core_interfaces
-#                                 PRIVATE rapidjson)
