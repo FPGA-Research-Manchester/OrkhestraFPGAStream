@@ -3,7 +3,7 @@
 #include <string>
 
 #include "execution_manager_interface.hpp"
-#include "fsm_runner_interface.hpp"
+#include "graph_processing_fsm_interface.hpp"
 #include "state_interface.hpp"
 
 using easydspi::core_interfaces::Config;

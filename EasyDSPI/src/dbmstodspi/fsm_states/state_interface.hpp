@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "fsm_runner_interface.hpp"
+#include "graph_processing_fsm_interface.hpp"
 
 using easydspi::dbmstodspi::GraphProcessingFSMInterface;
 
