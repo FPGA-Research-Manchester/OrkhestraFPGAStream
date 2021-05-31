@@ -9,6 +9,11 @@ using rapidjson::Document;
 
 namespace easydspi::dbmstodspi {
 class RapidJSONReader : public JSONReaderInterface {
+  using InputNodeParameters = std::map<
+      std::string,
+      std::variant<std::string,
+                   std::map<std::string, std::vector<std::vector<int>>>>>;
+
  private:
   std::unique_ptr<Document> read(std::string json_filename);
 
@@ -22,5 +27,7 @@ class RapidJSONReader : public JSONReaderInterface {
       std::string json_filename) override;
   std::map<std::vector<std::pair<std::string, std::vector<int>>>, std::string>
   readAcceleratorLibrary(std::string json_filename) override;
+  std::map<std::string, InputNodeParameters> readInputDefinition(
+      std::string json_filename) override;
 };
 }  // namespace easydspi::dbmstodspi

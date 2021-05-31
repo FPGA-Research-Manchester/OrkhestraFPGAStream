@@ -18,26 +18,27 @@ std::unique_ptr<InputManagerInterface> InputManagerFactory::getManager(
     InputManagerValidationEnum manager_type) {
   // Different options will be filled in later
   switch (manager_type) {
-     case InputManagerValidationEnum::kCustomValidation:
+    case InputManagerValidationEnum::kCustomValidation:
       return std::make_unique<InputManager>(
-          std::make_unique<GraphCreator>(), std::make_unique<RapidJSONReader>(),
+          std::make_unique<GraphCreator>(std::make_unique<RapidJSONReader>()),
+          std::make_unique<RapidJSONReader>(),
           std::make_unique<InputConfigReader>(), nullptr, nullptr);
-     case InputManagerValidationEnum::kNoValidation:
-       return std::make_unique<InputManager>(
-           std::make_unique<GraphCreator>(),
-           std::make_unique<RapidJSONReader>(),
-           std::make_unique<InputConfigReader>(), nullptr, nullptr);
-     case InputManagerValidationEnum::kSchemaAndValueValidation:
-       return std::make_unique<InputManager>(
-           std::make_unique<GraphCreator>(),
-           std::make_unique<RapidJSONReader>(),
-           std::make_unique<InputConfigReader>(), nullptr, nullptr);
-     case InputManagerValidationEnum::kSchemaOnlyValidation:
-       return std::make_unique<InputManager>(
-           std::make_unique<GraphCreator>(),
-           std::make_unique<RapidJSONReader>(),
-           std::make_unique<InputConfigReader>(), nullptr, nullptr);
-     default:
+    case InputManagerValidationEnum::kNoValidation:
+      return std::make_unique<InputManager>(
+          std::make_unique<GraphCreator>(std::make_unique<RapidJSONReader>()),
+          std::make_unique<RapidJSONReader>(),
+          std::make_unique<InputConfigReader>(), nullptr, nullptr);
+    case InputManagerValidationEnum::kSchemaAndValueValidation:
+      return std::make_unique<InputManager>(
+          std::make_unique<GraphCreator>(std::make_unique<RapidJSONReader>()),
+          std::make_unique<RapidJSONReader>(),
+          std::make_unique<InputConfigReader>(), nullptr, nullptr);
+    case InputManagerValidationEnum::kSchemaOnlyValidation:
+      return std::make_unique<InputManager>(
+          std::make_unique<GraphCreator>(std::make_unique<RapidJSONReader>()),
+          std::make_unique<RapidJSONReader>(),
+          std::make_unique<InputConfigReader>(), nullptr, nullptr);
+    default:
       throw std::runtime_error(
           "Something went wrong with the input manager selection!");
   }

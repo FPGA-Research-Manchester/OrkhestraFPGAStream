@@ -19,6 +19,7 @@ InputManager::parse(std::string input_filename, std::string config_filename) {
     for (const auto& [key, value] : json_file_names) {
       json_validator_->check(value);
     }
+    json_validator_->check(input_filename);
   }
 
   Config config;
@@ -35,8 +36,7 @@ InputManager::parse(std::string input_filename, std::string config_filename) {
     config_validator_->check(config);
   }
 
-  auto graph = graph_creator_->makeGraph();
-  graph->insertData(input_filename);
+  auto graph = graph_creator_->makeGraph(input_filename);
 
   return std::make_pair(std::move(graph), config);
 }
