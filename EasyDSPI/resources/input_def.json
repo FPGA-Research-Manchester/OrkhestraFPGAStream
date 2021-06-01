@@ -1,0 +1,38 @@
+{
+	"first_reverse_node": {
+		"input": "first_input_table.csv",
+		"output": "expected_reversed_table.csv",
+		"operation": "Reverse",
+		"previous_node": null,
+		"next_node": "second_reverse_node",
+		"operation_parameters": {
+			"input_stream_params": [
+				[]
+			],
+			"output_stream_params": [
+				[]
+			],
+			"operation_params": [
+				[]
+			]
+		}
+	},
+	"second_reverse_node": {
+		"input": "expected_reversed_table.csv",
+		"output": "first_input_table.csv",
+		"operation": "Reverse",
+		"previous_node": "first_reverse_node",
+		"next_node": null,
+		"operation_parameters": {
+			"input_stream_params": [
+				[]
+			],
+			"output_stream_params": [
+				[]
+			],
+			"operation_params": [
+				[]
+			]
+		}
+	}
+}
