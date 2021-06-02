@@ -44,7 +44,7 @@ TEST(FilterSetupTest, CompareTypesSetting) {
   EXPECT_CALL(mock_filter, FilterSetCompareTypes(
                                kExpectedChunkId, kExpectedPosition,
                                dbmstodspi::fpga_managing::module_config_values::
-                                   FilterCompareFunctions::k32BitLessThan,
+                                   FilterCompareFunctions::kLessThan32Bit,
                                testing::_, testing::_, testing::_))
       .Times(1);
   dbmstodspi::fpga_managing::FilterSetup filter_configurer;

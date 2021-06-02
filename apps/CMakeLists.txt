@@ -74,4 +74,7 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_part_sf0_01_multiplie
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/repo.json repo.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data_config.ini data_config.ini COPYONLY)
 
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/filter_def.json filter_def.json COPYONLY)
+
 target_link_libraries(app PRIVATE query_managing)
+target_link_libraries(app PRIVATE input_managing)

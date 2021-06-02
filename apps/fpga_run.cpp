@@ -9,9 +9,15 @@
 #include "query_manager.hpp"
 #include "query_scheduling_data.hpp"
 
+#include "graph_creator.hpp"
+#include "rapidjson_reader.hpp"
+
 using dbmstodspi::fpga_managing::operation_types::QueryOperationType;
 using dbmstodspi::query_managing::QueryManager;
 using dbmstodspi::query_managing::query_scheduling_data::QueryNode;
+
+using dbmstodspi::input_managing::RapidJSONReader;
+using dbmstodspi::input_managing::GraphCreator;
 
 /**
  * @brief Helper method to run the given query nodes and their subsequent nodes
@@ -44,6 +50,21 @@ auto ConvertDoubleValuesToIntegers(const std::vector<double>& input_values)
   return converted_integers;
 }
 
+// Make another main
+auto main() -> int {
+  QueryNode filtering_query_once = {{"CAR_DATA.csv"},
+                                    {"CAR_FILTER_DATA.csv"},
+                                    QueryOperationType::kFilter,
+                                    {nullptr},
+                                    {nullptr},
+                                    {{{}}, {{}, {2}}, {{0}}}};
+
+  auto graph_maker = GraphCreator(std::make_unique<RapidJSONReader>());
+  
+
+  MeasureOverallTime({ graph_maker.makeGraph("filter_def.json")});
+}
+
 /**
  * @brief Main method of the program.
  *
@@ -51,7 +72,7 @@ auto ConvertDoubleValuesToIntegers(const std::vector<double>& input_values)
  * query nodes in different runs meant to test different things like the module
  * correctness and TPC-H support.
  */
-auto main() -> int {
+auto main_other() -> int {
   // CAR DATA
   QueryNode pass_through_1k_data = {
       {"CAR_DATA.csv"}, {"CAR_DATA.csv"}, QueryOperationType::kPassThrough,

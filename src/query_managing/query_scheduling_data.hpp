@@ -63,6 +63,7 @@ struct QueryNode {
 using ConfigurableModulesVector =
     std::vector<fpga_managing::operation_types::QueryOperation>;
 
+/// Map of available modules. Will be created dynamically later
 const std::map<fpga_managing::operation_types::QueryOperationType,
                std::vector<std::vector<int>>>
     kExistingModules = {
@@ -78,6 +79,25 @@ const std::map<fpga_managing::operation_types::QueryOperationType,
          {}},
         {fpga_managing::operation_types::QueryOperationType::kAggregationSum,
          {}}};
+
+/// Map of available functions.
+const std::map<std::string, fpga_managing::operation_types::QueryOperationType>
+    kSupportedFunctions = {
+        {"kFilter",
+         fpga_managing::operation_types::QueryOperationType::kFilter},
+        {"kJoin", fpga_managing::operation_types::QueryOperationType::kJoin},
+        {"kMergeSort",
+         fpga_managing::operation_types::QueryOperationType::kMergeSort},
+        {"kLinearSort",
+         fpga_managing::operation_types::QueryOperationType::kLinearSort},
+        {"kAddition",
+         fpga_managing::operation_types::QueryOperationType::kAddition},
+        {"kMultiplication",
+         fpga_managing::operation_types::QueryOperationType::kMultiplication},
+        {"kAggregationSum",
+         fpga_managing::operation_types::QueryOperationType::kAggregationSum},
+        {"kPassThrough",
+         fpga_managing::operation_types::QueryOperationType::kPassThrough}};
 
 /// Map of supported collections of operations.
 const std::map<ConfigurableModulesVector, std::string>
