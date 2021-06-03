@@ -51,29 +51,8 @@ auto ConvertDoubleValuesToIntegers(const std::vector<double>& input_values)
 
 // Make another main
 auto main() -> int {
-  QueryNode filtering_query_once = {
-      {"CAR_DATA.csv"},
-      {"CAR_FILTER_DATA.csv"},
-      QueryOperationType::kFilter,
-      {nullptr},
-      {nullptr},
-      {{{}}, {{}, {2}}, {{1, 14, 1}, {0}, {12000}, {1}, {0}}}};
-
-  MeasureOverallTime({filtering_query_once});
-
-  //   *The first vector contains the chunk_id, position_id,
-  //    comparison_count **For each comparison there are 4 vectors
-  //    : *Compare function *Reference values *Literal types *DNF clause IDs
-
-  //{{module_config_values::FilterCompareFunctions::kLessThan32Bit,
-  //  {12000},
-  //  {module_config_values::LiteralTypes::kLiteralPositive},
-  //  {0}}},
-  //    1,
-  //    14
-
-  // auto graph_maker = GraphCreator(std::make_unique<RapidJSONReader>());
-  // MeasureOverallTime({ graph_maker.makeGraph("filter_def.json")});
+  auto graph_maker = GraphCreator(std::make_unique<RapidJSONReader>());
+  MeasureOverallTime(graph_maker.makeGraph("filter_def.json"));
 
   return 0;
 }

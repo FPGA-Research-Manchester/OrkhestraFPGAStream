@@ -1,3 +1,5 @@
+/// This file is for demonstrating how the data is sent to and from the FPGA
+
 #include "stdint.h"
 #include "unistd.h"
 #include "xil_cache.h"

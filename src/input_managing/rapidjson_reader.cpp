@@ -12,7 +12,7 @@ using rapidjson::FileReadStream;
 
 std::unique_ptr<Document> RapidJSONReader::read(std::string json_filename) {
   FILE* file_pointer =
-      fopen(json_filename.c_str(), "rb");  // non-Windows use "r"
+      fopen(json_filename.c_str(), "r");
 
   if (!file_pointer) {
     throw std::runtime_error("Couldn't find: " + json_filename);
