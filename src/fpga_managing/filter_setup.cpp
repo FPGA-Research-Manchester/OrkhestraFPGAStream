@@ -17,28 +17,83 @@ void FilterSetup::SetupFilterModule(
     throw std::runtime_error("No parameters given!");
   }
   filter_module.ResetDNFStates();
-  switch (operation_parameters.at(0).at(0)) {
-    case 0:
-      SetupFilterModuleCars(filter_module, input_stream_id, output_stream_id);
-      break;
-    case 1:
-      SetupFilterModuleLineitemQ19(filter_module, input_stream_id,
+  filter_module.FilterSetStreamIDs(input_stream_id, output_stream_id,
                                    output_stream_id);
-      break;
-    case 2:
-      SetupFilterModulePartQ19(filter_module, input_stream_id,
-                               output_stream_id);
-      break;
-    case 3:
-      SetupFilterModuleFinalQ19(filter_module, input_stream_id,
-                                output_stream_id);
-      break;
-    case 4:
-      SetupFilterModuleFinalDoubleQ19(filter_module, input_stream_id,
-                                      output_stream_id);
-      break;
-    default:
-      throw std::runtime_error("Wrong parameters given!");
+
+  SetOneOutputSingleModuleMode(filter_module);
+
+  SetAllComparisons(filter_module, operation_parameters);
+
+  filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
+      query_acceleration_constants::kDatapathWidth);
+
+  // switch (operation_parameters.at(0).at(0)) {
+  //  case 0:
+  //    SetupFilterModuleCars(filter_module, input_stream_id, output_stream_id);
+  //    break;
+  //  case 1:
+  //    SetupFilterModuleLineitemQ19(filter_module, input_stream_id,
+  //                                 output_stream_id);
+  //    break;
+  //  case 2:
+  //    SetupFilterModulePartQ19(filter_module, input_stream_id,
+  //                             output_stream_id);
+  //    break;
+  //  case 3:
+  //    SetupFilterModuleFinalQ19(filter_module, input_stream_id,
+  //                              output_stream_id);
+  //    break;
+  //  case 4:
+  //    SetupFilterModuleFinalDoubleQ19(filter_module, input_stream_id,
+  //                                    output_stream_id);
+  //    break;
+  //  default:
+  //    throw std::runtime_error("Wrong parameters given!");
+  //}
+}
+
+void FilterSetup::SetAllComparisons(
+    modules::FilterInterface& filter_module,
+    const std::vector<std::vector<int>>& operation_parameters) {
+  int chunk_id_index = 0;
+  int data_position_index = 1;
+  int comparison_count_index = 2;
+  int number_of_parameter_vectors = 4;
+
+  int current_vector_id = 0;
+  while (current_vector_id != operation_parameters.size()) {
+    int current_chunk_id =
+        operation_parameters.at(current_vector_id).at(chunk_id_index);
+    int current_data_position =
+        operation_parameters.at(current_vector_id).at(data_position_index);
+    int comparison_count =
+        operation_parameters.at(current_vector_id).at(comparison_count_index);
+    std::vector<FilterComparison> current_comparison_parameters;
+    for (int i = 0; i < comparison_count * number_of_parameter_vectors;
+         i += number_of_parameter_vectors) {
+      current_vector_id += i;
+
+      auto compare_function =
+          static_cast<module_config_values::FilterCompareFunctions>(
+              operation_parameters.at(current_vector_id + 1).at(0));
+      std::vector<int> compare_reference_values =
+          operation_parameters.at(current_vector_id + 2);
+      std::vector<module_config_values::LiteralTypes> literal_types;
+      for (const auto& literal_type :
+           operation_parameters.at(current_vector_id + 3)) {
+        literal_types.push_back(
+            static_cast<module_config_values::LiteralTypes>(literal_type));
+      }
+      std::vector<int> dnf_clause_ids =
+          operation_parameters.at(current_vector_id + 4);
+
+      current_comparison_parameters.emplace_back(compare_function,
+                                                 compare_reference_values,
+                                                 literal_types, dnf_clause_ids);
+    }
+    SetComparisons(filter_module, current_comparison_parameters,
+                   current_chunk_id, current_data_position);
+    current_vector_id += number_of_parameter_vectors + 1;
   }
 }
 
