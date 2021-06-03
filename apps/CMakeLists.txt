@@ -74,7 +74,13 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/lineitem_part_sf0_01_multiplie
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/repo.json repo.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data_config.ini data_config.ini COPYONLY)
 
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/filter_def.json filter_def.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/concurrency_testing.json concurrency_testing.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/double_run_testing.json double_run_testing.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/filter_join_testing.json filter_join_testing.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/filter_testing.json filter_testing.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/single_run_testing.json single_run_testing.json COPYONLY)
+#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF001.json TPCH_Q19_SF001.json COPYONLY)
+#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF01.json TPCH_Q19_SF01.json COPYONLY)
 
 target_link_libraries(app PRIVATE query_managing)
 target_link_libraries(app PRIVATE input_managing)

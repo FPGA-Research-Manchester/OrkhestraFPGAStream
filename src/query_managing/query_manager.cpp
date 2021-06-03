@@ -45,7 +45,7 @@ void QueryManager::CheckTableData(
 }
 
 void QueryManager::RunQueries(
-    std::vector<query_scheduling_data::QueryNode> starting_query_nodes) {
+    std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> starting_query_nodes) {
   std::cout << std::endl << "Starting up!" << std::endl;
   data_managing::DataManager data_manager("data_config.ini");
   fpga_managing::MemoryManager memory_manager;
@@ -55,8 +55,13 @@ void QueryManager::RunQueries(
                        std::vector<query_scheduling_data::QueryNode>>>
       query_node_runs_queue;
 
+  std::vector<query_scheduling_data::QueryNode> starting_node_references;
+  for (const auto& ptr : starting_query_nodes) {
+    starting_node_references.push_back(*ptr);
+  }
+
   NodeScheduler::FindAcceleratedQueryNodeSets(
-      &query_node_runs_queue, starting_query_nodes,
+      &query_node_runs_queue, starting_node_references,
       query_scheduling_data::kSupportedAcceleratorBitstreams,
       query_scheduling_data::kExistingModules);
 

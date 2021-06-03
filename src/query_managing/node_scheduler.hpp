@@ -38,7 +38,8 @@ class NodeScheduler {
 
  private:
   static void RemoveLinkedNodes(
-      std::vector<query_scheduling_data::QueryNode *> &linked_nodes,
+      std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+          &linked_nodes,
       const std::vector<query_scheduling_data::QueryNode> &current_query_nodes);
   static auto IsModuleSetSupported(
       const query_scheduling_data::ConfigurableModulesVector &module_set,

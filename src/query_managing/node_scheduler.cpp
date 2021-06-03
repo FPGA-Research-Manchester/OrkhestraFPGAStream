@@ -46,10 +46,11 @@ void NodeScheduler::FindAcceleratedQueryNodeSets(
 // Method to remove next or previous nodes from a node once it has been
 // scheduled
 void NodeScheduler::RemoveLinkedNodes(
-    std::vector<query_scheduling_data::QueryNode*>& linked_nodes,
+    std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>&
+        linked_nodes,
     const std::vector<query_scheduling_data::QueryNode>& current_query_nodes) {
   for (auto& i : linked_nodes) {
-    auto* linked_node = i;
+    auto linked_node = i;
     if (linked_node != nullptr &&
         std::find(current_query_nodes.begin(), current_query_nodes.end(),
                   *linked_node) == current_query_nodes.end()) {
@@ -116,7 +117,6 @@ void NodeScheduler::CheckNodeForModuleSet(
 
   // The logic with pointers has to get cleaned up!
   if (!suitable_combination.empty()) {
-
     scheduled_queries.push_back(current_node);
     current_query_nodes.push_back(current_node);
     current_modules_vector = suitable_combination;
@@ -159,6 +159,11 @@ auto NodeScheduler::FindSuitableModuleCombination(
     const std::map<fpga_managing::operation_types::QueryOperationType,
                    std::vector<std::vector<int>>>& existing_modules_library)
     -> query_scheduling_data::ConfigurableModulesVector {
+  if (current_node->operation_type ==
+      fpga_managing::operation_types::QueryOperationType::kPassThrough) {
+    return current_modules_vector;
+  }
+
   int current_position = FindMinPosition(current_node, current_query_nodes,
                                          current_modules_vector);
 

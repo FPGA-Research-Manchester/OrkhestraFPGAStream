@@ -1,5 +1,6 @@
 #pragma once
 #include <map>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -38,9 +39,9 @@ struct QueryNode {
   /// Query operation.
   fpga_managing::operation_types::QueryOperationType operation_type;
   /// Pointers to the next query nodes.
-  std::vector<query_scheduling_data::QueryNode *> next_nodes;
+  std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> next_nodes;
   /// Pointers to the prerequisite query nodes
-  std::vector<query_scheduling_data::QueryNode *> previous_nodes;
+  std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> previous_nodes;
   /// Operation parameters to configure the streams with modules.
   NodeOperationParameters operation_parameters;
   /// Location of the module to be processing this node
@@ -57,6 +58,20 @@ struct QueryNode {
         ;  // Last comparison should be included once scheduler has been fixed
            // to work with smart pointers
   }
+
+  QueryNode(
+      std::vector<std::string> input, std::vector<std::string> output,
+      fpga_managing::operation_types::QueryOperationType operation,
+      std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> next_nodes,
+      std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+          previous_nodes,
+      NodeOperationParameters parameters)
+      : input_data_definition_files{input},
+        output_data_definition_files{output},
+        operation_type{operation},
+        next_nodes{next_nodes},
+        previous_nodes{previous_nodes},
+        operation_parameters{parameters} {};
 };
 
 /// Type definition of a collection of operation types for selecting bitstreams.

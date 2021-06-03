@@ -2,6 +2,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <memory>
 
 #include "memory_manager.hpp"
 #include "operation_types.hpp"
@@ -38,7 +39,7 @@ class QueryManager {
    * @param starting_query_nodes Vector of nodes from which the parsing starts.
    */
   static void RunQueries(
-      std::vector<query_scheduling_data::QueryNode> starting_query_nodes);
+      std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> starting_query_nodes);
 };
 
 }  // namespace dbmstodspi::query_managing
