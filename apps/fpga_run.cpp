@@ -52,11 +52,12 @@ auto ConvertDoubleValuesToIntegers(const std::vector<double>& input_values)
 // Make another main
 auto main() -> int {
   auto graph_maker = GraphCreator(std::make_unique<RapidJSONReader>());
-  MeasureOverallTime(graph_maker.makeGraph("filter_testing.json"));
-  MeasureOverallTime(graph_maker.makeGraph("filter_join_testing.json"));
-  MeasureOverallTime(graph_maker.makeGraph("concurrency_testing.json"));
-  MeasureOverallTime(graph_maker.makeGraph("single_run_testing.json"));
-  MeasureOverallTime(graph_maker.makeGraph("double_run_testing.json"));
+  //MeasureOverallTime(graph_maker.MakeGraph("filter_testing.json"));
+  //MeasureOverallTime(graph_maker.MakeGraph("filter_join_testing.json"));
+  //MeasureOverallTime(graph_maker.MakeGraph("concurrency_testing.json"));
+  //MeasureOverallTime(graph_maker.MakeGraph("single_run_testing.json"));
+  //MeasureOverallTime(graph_maker.MakeGraph("double_run_testing.json"));
+  MeasureOverallTime(graph_maker.MakeGraph("TPCH_Q19_SF001.json"));
 
   return 0;
 }

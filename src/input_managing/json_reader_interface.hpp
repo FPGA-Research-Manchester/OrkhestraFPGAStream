@@ -16,7 +16,7 @@ class JSONReaderInterface {
 
  public:
   virtual ~JSONReaderInterface() = default;
-  virtual std::map<std::string, InputNodeParameters> readInputDefinition(
+  virtual std::map<std::string, InputNodeParameters> ReadInputDefinition(
       std::string json_filename) = 0;
 };
 }  // namespace dbmstodspi::input_managing

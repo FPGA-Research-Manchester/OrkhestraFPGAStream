@@ -29,7 +29,7 @@ std::unique_ptr<Document> RapidJSONReader::read(std::string json_filename) {
 }
 
 std::map<std::string, RapidJSONReader::InputNodeParameters>
-RapidJSONReader::readInputDefinition(std::string json_filename) {
+RapidJSONReader::ReadInputDefinition(std::string json_filename) {
   const auto document = read(json_filename);
   std::map<std::string, RapidJSONReader::InputNodeParameters> input_node_map;
   for (const auto& node : document->GetObject()) {
@@ -60,8 +60,16 @@ RapidJSONReader::readInputDefinition(std::string json_filename) {
             for (const auto& given_parameter_vectors :
                  operation_parameter.value.GetArray()) {
               std::vector<int> parameters;
-              for (const auto& parameter : given_parameter_vectors.GetArray()) {
-                parameters.push_back(parameter.GetInt());
+              if (given_parameter_vectors.Size() != 0 && given_parameter_vectors[0]
+                      .IsString()) {
+                parameters = ConvertCharStringToAscii(
+                    given_parameter_vectors[0].GetString(),
+                    given_parameter_vectors[1].GetInt());
+              } else {
+                for (const auto& parameter :
+                     given_parameter_vectors.GetArray()) {
+                  parameters.push_back(parameter.GetInt());
+                }
               }
               parameter_vectors.push_back(parameters);
             }
@@ -79,4 +87,20 @@ RapidJSONReader::readInputDefinition(std::string json_filename) {
     input_node_map.insert({node.name.GetString(), node_parameters_map});
   }
   return input_node_map;
+}
+
+
+auto RapidJSONReader::ConvertCharStringToAscii(const std::string& input_string,
+                                           int output_size)
+    -> std::vector<int> {
+  if (input_string.length() > output_size * 4) {
+    throw std::runtime_error(
+        (input_string + " is longer than " + std::to_string(output_size * 4))
+            .c_str());
+  }
+  std::vector<int> integer_values(output_size, 0);
+  for (int i = 0; i < input_string.length(); i++) {
+    integer_values[i / 4] += int(input_string[i]) << (3 - (i % 4)) * 8;
+  }
+  return integer_values;
 }

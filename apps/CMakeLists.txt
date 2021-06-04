@@ -79,7 +79,7 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/double_run_testing.
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/filter_join_testing.json filter_join_testing.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/filter_testing.json filter_testing.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/single_run_testing.json single_run_testing.json COPYONLY)
-#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF001.json TPCH_Q19_SF001.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF001.json TPCH_Q19_SF001.json COPYONLY)
 #configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF01.json TPCH_Q19_SF01.json COPYONLY)
 
 target_link_libraries(app PRIVATE query_managing)

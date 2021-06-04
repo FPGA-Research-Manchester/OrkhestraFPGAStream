@@ -11,10 +11,12 @@ namespace dbmstodspi::input_managing {
 class RapidJSONReader : public JSONReaderInterface {
  private:
   std::unique_ptr<Document> read(std::string json_filename);
+  static auto ConvertCharStringToAscii(const std::string& input_string,
+                                       int output_size) -> std::vector<int>;
 
  public:
   ~RapidJSONReader() override = default;
   std::map<std::string, JSONReaderInterface::InputNodeParameters>
-  readInputDefinition(std::string json_filename) override;
+  ReadInputDefinition(std::string json_filename) override;
 };
 }  // namespace dbmstodspi::input_managing

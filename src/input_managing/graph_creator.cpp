@@ -9,9 +9,9 @@ using dbmstodspi::query_managing::query_scheduling_data::
 
 // Using vector of references now but it will be replaced with shared pointers
 // in the future.
-std::vector<std::shared_ptr<QueryNode>> GraphCreator::makeGraph(
+std::vector<std::shared_ptr<QueryNode>> GraphCreator::MakeGraph(
     std::string input_def_filename) {
-  auto data = json_reader_->readInputDefinition(input_def_filename);
+  auto data = json_reader_->ReadInputDefinition(input_def_filename);
 
   using ParamsMap = std::map<std::string, std::vector<std::vector<int>>>;
 
