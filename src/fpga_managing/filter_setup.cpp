@@ -69,10 +69,7 @@ void FilterSetup::SetAllComparisons(
     int comparison_count =
         operation_parameters.at(current_vector_id).at(comparison_count_index);
     std::vector<FilterComparison> current_comparison_parameters;
-    for (int i = 0; i < comparison_count * number_of_parameter_vectors;
-         i += number_of_parameter_vectors) {
-      current_vector_id += i;
-
+    for (int i = 0; i < comparison_count; i++) {
       auto compare_function =
           static_cast<module_config_values::FilterCompareFunctions>(
               operation_parameters.at(current_vector_id + 1).at(0));
@@ -90,10 +87,11 @@ void FilterSetup::SetAllComparisons(
       current_comparison_parameters.emplace_back(compare_function,
                                                  compare_reference_values,
                                                  literal_types, dnf_clause_ids);
+      current_vector_id += number_of_parameter_vectors;
     }
     SetComparisons(filter_module, current_comparison_parameters,
                    current_chunk_id, current_data_position);
-    current_vector_id += number_of_parameter_vectors + 1;
+    current_vector_id ++;
   }
 }
 
