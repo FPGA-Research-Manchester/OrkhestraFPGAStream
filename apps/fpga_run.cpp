@@ -7,10 +7,12 @@
 
 #include "config.hpp"
 #include "graph_creator.hpp"
+#include "input_config_reader.hpp"
 #include "operation_types.hpp"
 #include "query_manager.hpp"
 #include "query_scheduling_data.hpp"
 #include "rapidjson_reader.hpp"
+#include "config_creator.hpp"
 
 using dbmstodspi::fpga_managing::operation_types::QueryOperationType;
 using dbmstodspi::query_managing::QueryManager;
@@ -18,7 +20,9 @@ using dbmstodspi::query_managing::query_scheduling_data::QueryNode;
 
 using dbmstodspi::input_managing::Config;
 using dbmstodspi::input_managing::GraphCreator;
+using dbmstodspi::input_managing::InputConfigReader;
 using dbmstodspi::input_managing::RapidJSONReader;
+using dbmstodspi::input_managing::ConfigCreator;
 
 /**
  * @brief Helper method to run the given query nodes and their subsequent nodes
@@ -54,30 +58,20 @@ auto ConvertDoubleValuesToIntegers(const std::vector<double>& input_values)
 
 // Make another main
 auto main() -> int {
-  std::map<std::string, double> data_sizes;
-  data_sizes.insert({"integer", 1});
-  data_sizes.insert({"varchar", 0.25});
-  data_sizes.insert({"null", 1});
-  data_sizes.insert({"decimal", 2});
-  data_sizes.insert({"date", 1});
 
-  Config config = {
-      dbmstodspi::query_managing::query_scheduling_data::kExistingModules,
-      dbmstodspi::query_managing::query_scheduling_data::
-          kSupportedAcceleratorBitstreams,
-      dbmstodspi::query_managing::query_scheduling_data::
-          kRequiredBitstreamMemorySpace,
-      data_sizes};
-
+  auto config_creator = ConfigCreator(std::make_unique<RapidJSONReader>(), std::make_unique<InputConfigReader>());
   auto graph_maker = GraphCreator(std::make_unique<RapidJSONReader>());
-  //MeasureOverallTime(graph_maker.MakeGraph("filter_testing.json"), config);
-  //MeasureOverallTime(graph_maker.MakeGraph("filter_join_testing.json"), config);
-  //MeasureOverallTime(graph_maker.MakeGraph("concurrency_testing.json"), config);
-  //MeasureOverallTime(graph_maker.MakeGraph("single_run_testing.json"), config);
-  //MeasureOverallTime(graph_maker.MakeGraph("double_run_testing.json"), config);
-  //MeasureOverallTime(
+  // MeasureOverallTime(graph_maker.MakeGraph("filter_testing.json"), config);
+  // MeasureOverallTime(graph_maker.MakeGraph("filter_join_testing.json"),
+  // config);
+  // MeasureOverallTime(graph_maker.MakeGraph("concurrency_testing.json"),
+  // config);
+  // MeasureOverallTime(graph_maker.MakeGraph("single_run_testing.json"),
+  // config);
+  // MeasureOverallTime(graph_maker.MakeGraph("double_run_testing.json"),
+  // config); MeasureOverallTime(
   //    graph_maker.MakeGraph("TPCH_Q19_SF001.json"), config);
-  MeasureOverallTime(graph_maker.MakeGraph("TPCH_Q19_SF01.json"), config);
+  MeasureOverallTime(graph_maker.MakeGraph("TPCH_Q19_SF01.json"), config_creator.GetConfig("config.ini"));
 
   return 0;
 }

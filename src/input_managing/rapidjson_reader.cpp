@@ -89,6 +89,62 @@ RapidJSONReader::ReadInputDefinition(std::string json_filename) {
   return input_node_map;
 }
 
+std::map<std::string, double>
+RapidJSONReader::readDataSizes(
+    std::string json_filename) {
+  const auto document = read(json_filename);
+  std::map<std::string, double> value_map;
+  for (const auto& element : document->GetObject()) {
+    value_map.insert({element.name.GetString(), element.value.GetDouble()});
+  }
+  return value_map;
+}
+
+std::map<std::string, int>
+RapidJSONReader::readReqMemorySpace(
+    std::string json_filename) {
+  const auto document = read(json_filename);
+  std::map<std::string, int> value_map;
+  for (const auto& element : document->GetObject()) {
+    value_map.insert({element.name.GetString(), element.value.GetInt()});
+  }
+  return value_map;
+}
+
+std::map<std::vector<std::pair<std::string, std::vector<int>>>, std::string>
+RapidJSONReader::readAcceleratorLibrary(
+    std::string json_filename) {
+  std::string module_combination_names_field = "module_combinations";
+  std::string accelerator_name_field = "accelerators";
+  std::string module_name_field = "name";
+  std::string module_capacity_field = "capacity";
+  const auto document = read(json_filename);
+  auto document_ptr = document.get();
+  auto module_combination_names =
+      (*document_ptr)[module_combination_names_field.c_str()].GetArray();
+
+  std::map<std::vector<std::pair<std::string, std::vector<int>>>, std::string>
+      value_map;
+  for (const auto& combination_name : module_combination_names) {
+    std::vector<std::pair<std::string, std::vector<int>>> key;
+    for (const auto& accelerator_module :
+         (*document_ptr)[combination_name.GetString()].GetArray()) {
+      const auto combination_object = accelerator_module.GetObject();
+      std::string module_name =
+          combination_object[module_name_field.c_str()].GetString();
+      std::vector<int> module_capacity;
+      for (const auto& capacity_value :
+           combination_object[module_capacity_field.c_str()].GetArray()) {
+        module_capacity.push_back(capacity_value.GetInt());
+      }
+      key.emplace_back(module_name, module_capacity);
+    }
+    value_map.insert({key, (*document_ptr)[accelerator_name_field.c_str()]
+                               .GetObject()[combination_name.GetString()]
+                               .GetString()});
+  }
+  return value_map;
+}
 
 auto RapidJSONReader::ConvertCharStringToAscii(const std::string& input_string,
                                            int output_size)

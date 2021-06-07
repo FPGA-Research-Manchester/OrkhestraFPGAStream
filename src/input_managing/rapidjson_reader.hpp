@@ -16,6 +16,12 @@ class RapidJSONReader : public JSONReaderInterface {
 
  public:
   ~RapidJSONReader() override = default;
+  std::map<std::string, double> readDataSizes(
+      std::string json_filename) override;
+  std::map<std::string, int> readReqMemorySpace(
+      std::string json_filename) override;
+  std::map<std::vector<std::pair<std::string, std::vector<int>>>, std::string>
+  readAcceleratorLibrary(std::string json_filename) override;
   std::map<std::string, JSONReaderInterface::InputNodeParameters>
   ReadInputDefinition(std::string json_filename) override;
 };

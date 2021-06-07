@@ -7,7 +7,9 @@ add_library(input_managing
             config.hpp
             input_config_reader.cpp
             input_config_reader.hpp
-            input_config_reader_interface.hpp)
+            input_config_reader_interface.hpp
+            config_creator.hpp
+            config_creator.cpp)
 
 FetchContent_Declare(
   rapidjson

@@ -16,6 +16,13 @@ class JSONReaderInterface {
 
  public:
   virtual ~JSONReaderInterface() = default;
+  virtual std::map<std::string, double> readDataSizes(
+      std::string json_filename) = 0;
+  virtual std::map<std::string, int> readReqMemorySpace(
+      std::string json_filename) = 0;
+  virtual std::map<std::vector<std::pair<std::string, std::vector<int>>>,
+                   std::string>
+  readAcceleratorLibrary(std::string json_filename) = 0;
   virtual std::map<std::string, InputNodeParameters> ReadInputDefinition(
       std::string json_filename) = 0;
 };

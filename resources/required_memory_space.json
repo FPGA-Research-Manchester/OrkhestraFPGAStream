@@ -1,7 +1,15 @@
 {
-	"bitstream1": 100,
-	"bitstream2": 400,
-	"bitstream3": 1000,
-	"bitstream4": 50,
-	"bitstream5": 1
+	"DSPI_filtering": 2097152,
+	"DSPI_joining": 2097152,
+	"DSPI_double_merge_sorting": 3145728,
+	"DSPI_merge_sorting": 2097152,
+	"DSPI_linear_sorting": 2097152,
+    "DSPI_addition": 2097152,
+    "DSPI_multiplication": 2097152,
+    "DSPI_aggregation_sum": 2097152,
+    "DSPI_empty": 1048576,
+    "DSPI_sort_join_filter": 4194304,
+    "DSPI_filter_join": 3145728,
+    "DSPI_filtering_linear_sort": 3145728,
+    "ILA_thing":153092096
 }
