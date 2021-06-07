@@ -1,0 +1,7 @@
+{
+	"integer": 1,
+	"varchar": 0.25,
+	"null": 1,
+	"decimal": 2,
+	"date": 1
+}

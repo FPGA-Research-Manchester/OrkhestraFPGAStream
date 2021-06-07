@@ -19,8 +19,8 @@ class DataManager {
    * @brief Constructor which need the config to setup the data types.
    * @param config_filename Path to the data types config file.
    */
-  explicit DataManager(const std::string& config_filename)
-      : data_type_sizes_(DataManager::GetDataConfiguration(config_filename)){};
+  explicit DataManager(const std::map<std::string, double>& data_sizes)
+      : data_type_sizes_(data_sizes){};
   /**
    * @brief Write data from the given CSV file to the TableData structure.
    * @param filename Path to the DBMS CSV data.

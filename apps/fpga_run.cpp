@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 
+#include "config.hpp"
 #include "graph_creator.hpp"
 #include "operation_types.hpp"
 #include "query_manager.hpp"
@@ -15,6 +16,7 @@ using dbmstodspi::fpga_managing::operation_types::QueryOperationType;
 using dbmstodspi::query_managing::QueryManager;
 using dbmstodspi::query_managing::query_scheduling_data::QueryNode;
 
+using dbmstodspi::input_managing::Config;
 using dbmstodspi::input_managing::GraphCreator;
 using dbmstodspi::input_managing::RapidJSONReader;
 
@@ -25,10 +27,11 @@ using dbmstodspi::input_managing::RapidJSONReader;
  * This includes data writing and reading from and to the DDR.
  * @param leaf_nodes Vector of nodes from which the parsing starts.
  */
-void MeasureOverallTime(std::vector<std::shared_ptr<QueryNode>> leaf_nodes) {
+void MeasureOverallTime(std::vector<std::shared_ptr<QueryNode>> leaf_nodes,
+                        const Config& config) {
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
-  QueryManager::RunQueries(std::move(leaf_nodes));
+  QueryManager::RunQueries(std::move(leaf_nodes), config);
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
   std::cout
@@ -51,13 +54,30 @@ auto ConvertDoubleValuesToIntegers(const std::vector<double>& input_values)
 
 // Make another main
 auto main() -> int {
+  std::map<std::string, double> data_sizes;
+  data_sizes.insert({"integer", 1});
+  data_sizes.insert({"varchar", 0.25});
+  data_sizes.insert({"null", 1});
+  data_sizes.insert({"decimal", 2});
+  data_sizes.insert({"date", 1});
+
+  Config config = {
+      dbmstodspi::query_managing::query_scheduling_data::kExistingModules,
+      dbmstodspi::query_managing::query_scheduling_data::
+          kSupportedAcceleratorBitstreams,
+      dbmstodspi::query_managing::query_scheduling_data::
+          kRequiredBitstreamMemorySpace,
+      data_sizes};
+
   auto graph_maker = GraphCreator(std::make_unique<RapidJSONReader>());
-  //MeasureOverallTime(graph_maker.MakeGraph("filter_testing.json"));
-  //MeasureOverallTime(graph_maker.MakeGraph("filter_join_testing.json"));
-  //MeasureOverallTime(graph_maker.MakeGraph("concurrency_testing.json"));
-  //MeasureOverallTime(graph_maker.MakeGraph("single_run_testing.json"));
-  //MeasureOverallTime(graph_maker.MakeGraph("double_run_testing.json"));
-  MeasureOverallTime(graph_maker.MakeGraph("TPCH_Q19_SF001.json"));
+  //MeasureOverallTime(graph_maker.MakeGraph("filter_testing.json"), config);
+  //MeasureOverallTime(graph_maker.MakeGraph("filter_join_testing.json"), config);
+  //MeasureOverallTime(graph_maker.MakeGraph("concurrency_testing.json"), config);
+  //MeasureOverallTime(graph_maker.MakeGraph("single_run_testing.json"), config);
+  //MeasureOverallTime(graph_maker.MakeGraph("double_run_testing.json"), config);
+  //MeasureOverallTime(
+  //    graph_maker.MakeGraph("TPCH_Q19_SF001.json"), config);
+  MeasureOverallTime(graph_maker.MakeGraph("TPCH_Q19_SF01.json"), config);
 
   return 0;
 }
@@ -69,7 +89,7 @@ auto main() -> int {
  * query nodes in different runs meant to test different things like the module
  * correctness and TPC-H support.
  */
-//auto main_old() -> int {
+// auto main_old() -> int {
 //  // CAR DATA
 //  QueryNode pass_through_1k_data = {
 //      {"CAR_DATA.csv"}, {"CAR_DATA.csv"}, QueryOperationType::kPassThrough,
@@ -99,7 +119,8 @@ auto main() -> int {
 //                                        {nullptr},
 //                                        {nullptr},
 //                                        {{{}}, {{}, {2}}, {{64, 16}}}};
-//  QueryNode merge_sort_query_8k_once = {{"CAR_DATA_HALF_SORTED_8K_128WAY.csv"},
+//  QueryNode merge_sort_query_8k_once =
+//  {{"CAR_DATA_HALF_SORTED_8K_128WAY.csv"},
 //                                        {"CAR_DATA_SORTED_8K.csv"},
 //                                        QueryOperationType::kMergeSort,
 //                                        {nullptr},
@@ -118,11 +139,12 @@ auto main() -> int {
 //  QueryNode pass_through_and_filter_query;
 //  QueryNode filter_after_pass_through_query;
 //
-//  pass_through_and_filter_query.input_data_definition_files = {"CAR_DATA.csv"};
-//  pass_through_and_filter_query.output_data_definition_files = {"CAR_DATA.csv"};
-//  pass_through_and_filter_query.operation_type =
+//  pass_through_and_filter_query.input_data_definition_files =
+//  {"CAR_DATA.csv"}; pass_through_and_filter_query.output_data_definition_files
+//  = {"CAR_DATA.csv"}; pass_through_and_filter_query.operation_type =
 //      QueryOperationType::kPassThrough;
-//  pass_through_and_filter_query.next_nodes = {&filter_after_pass_through_query};
+//  pass_through_and_filter_query.next_nodes =
+//  {&filter_after_pass_through_query};
 //  pass_through_and_filter_query.previous_nodes = {nullptr};
 //  pass_through_and_filter_query.operation_parameters = {{{}}, {{}, {2}}, {}};
 //
@@ -130,8 +152,9 @@ auto main() -> int {
 //      "CAR_DATA.csv"};
 //  filter_after_pass_through_query.output_data_definition_files = {
 //      "CAR_FILTER_DATA.csv"};
-//  filter_after_pass_through_query.operation_type = QueryOperationType::kFilter;
-//  filter_after_pass_through_query.previous_nodes = {
+//  filter_after_pass_through_query.operation_type =
+//  QueryOperationType::kFilter; filter_after_pass_through_query.previous_nodes
+//  = {
 //      &pass_through_and_filter_query};
 //  filter_after_pass_through_query.next_nodes = {nullptr};
 //  filter_after_pass_through_query.operation_parameters = {
@@ -141,13 +164,15 @@ auto main() -> int {
 //  QueryNode join_after_filter_query;
 //
 //  filter_and_join_query.input_data_definition_files = {"CAR_DATA.csv"};
-//  filter_and_join_query.output_data_definition_files = {"CAR_FILTER_DATA.csv"};
-//  filter_and_join_query.operation_type = QueryOperationType::kFilter;
-//  filter_and_join_query.next_nodes = {&join_after_filter_query};
-//  filter_and_join_query.previous_nodes = {nullptr};
-//  filter_and_join_query.operation_parameters = {{{}}, {{}, {2}}, {{0}}};
+//  filter_and_join_query.output_data_definition_files =
+//  {"CAR_FILTER_DATA.csv"}; filter_and_join_query.operation_type =
+//  QueryOperationType::kFilter; filter_and_join_query.next_nodes =
+//  {&join_after_filter_query}; filter_and_join_query.previous_nodes =
+//  {nullptr}; filter_and_join_query.operation_parameters = {{{}}, {{}, {2}},
+//  {{0}}};
 //
-//  join_after_filter_query.input_data_definition_files = {"CAR_FILTER_DATA.csv",
+//  join_after_filter_query.input_data_definition_files =
+//  {"CAR_FILTER_DATA.csv",
 //                                                         "CUSTOMER_DATA.csv"};
 //  join_after_filter_query.output_data_definition_files = {
 //      "FILTERED_JOIN_DATA.csv"};
@@ -202,7 +227,8 @@ auto main() -> int {
 //  //    {nullptr}};
 //
 //  // Q19
-//  // Input: l_partkey, l_quantity, l_extendedprice, l_discount, l_shipinstruct,
+//  // Input: l_partkey, l_quantity, l_extendedprice, l_discount,
+//  l_shipinstruct,
 //  // l_shipmode Output: l_partkey, l_quantity, l_extendedprice, l_discount
 //  QueryNode first_lineitem_filter = {
 //      {"lineitem_sf0_01.csv"},
@@ -336,13 +362,15 @@ auto main() -> int {
 //      {nullptr},
 //      {nullptr},
 //      {{{}}, {{0, 1}, {1}}, {{0, 1, 0, 0, 0, 0, 0, 0, 0}}}};
-//  QueryNode lineitem_part_aggregate = {{"lineitem_part_sf0_01_multiplied.csv"},
+//  QueryNode lineitem_part_aggregate =
+//  {{"lineitem_part_sf0_01_multiplied.csv"},
 //                                       {"lineitem_part_sf0_01_multiplied.csv"},
 //                                       QueryOperationType::kAggregationSum,
 //                                       {nullptr},
 //                                       {nullptr},
 //                                       {{{}}, {{}, {1}}, {{0}, {0}}}};
-//  QueryNode lineitem_part_aggregate1 = {{"lineitem_part_sf0_1_multiplied.csv"},
+//  QueryNode lineitem_part_aggregate1 =
+//  {{"lineitem_part_sf0_1_multiplied.csv"},
 //                                        {"lineitem_part_sf0_1_multiplied.csv"},
 //                                        QueryOperationType::kAggregationSum,
 //                                        {nullptr},
@@ -400,8 +428,8 @@ auto main() -> int {
 //  lineitem_linear_sort3.previous_nodes = {&first_lineitem_filter3};
 //  lineitem_linear_sort3.next_nodes = {&lineitem_linear_merge_sort3};
 //  lineitem_linear_merge_sort3.next_nodes = {&lineitem_part_join3};
-//  lineitem_part_join3.previous_nodes = {&lineitem_linear_merge_sort3, nullptr};
-//  lineitem_part_join3.next_nodes = {&lineitem_part_second_filter3};
+//  lineitem_part_join3.previous_nodes = {&lineitem_linear_merge_sort3,
+//  nullptr}; lineitem_part_join3.next_nodes = {&lineitem_part_second_filter3};
 //  lineitem_part_second_filter3.previous_nodes = {&lineitem_part_join3};
 //
 //  first_lineitem_filter.next_nodes = {&lineitem_linear_sort};
@@ -450,7 +478,8 @@ auto main() -> int {
 //   ///*pass_through_1k_data,
 //   //                         pass_through_1k_data, pass_through_1k_data,*/
 //   //                         /*join_query_once,*/
-//   //                         merge_sort_query_8k_once, pass_through_1k_data/*,
+//   //                         merge_sort_query_8k_once,
+//   pass_through_1k_data/*,
 //   //                         linear_sort_query_8k_once,
 //   //                         filtering_query_once*/});
 //

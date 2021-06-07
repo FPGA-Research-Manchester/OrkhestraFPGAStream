@@ -45,9 +45,11 @@ void QueryManager::CheckTableData(
 }
 
 void QueryManager::RunQueries(
-    std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> starting_query_nodes) {
+    std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+        starting_query_nodes,
+    const Config& config) {
   std::cout << std::endl << "Starting up!" << std::endl;
-  data_managing::DataManager data_manager("data_config.ini");
+  data_managing::DataManager data_manager(config.data_sizes);
   fpga_managing::MemoryManager memory_manager;
   fpga_managing::FPGAManager fpga_manager(&memory_manager);
 
@@ -62,19 +64,18 @@ void QueryManager::RunQueries(
 
   NodeScheduler::FindAcceleratedQueryNodeSets(
       &query_node_runs_queue, starting_node_references,
-      query_scheduling_data::kSupportedAcceleratorBitstreams,
-      query_scheduling_data::kExistingModules);
+      config.accelerator_library, config.module_library);
 
   while (!query_node_runs_queue.empty()) {
     const auto executable_query_nodes = query_node_runs_queue.front().second;
     const auto& bitstream_file_name =
-        query_scheduling_data::kSupportedAcceleratorBitstreams.at(
+        config.accelerator_library.at(
             query_node_runs_queue.front().first);
     query_node_runs_queue.pop();
 
     memory_manager.LoadBitstreamIfNew(
         bitstream_file_name,
-        query_scheduling_data::kRequiredBitstreamMemorySpace.at(
+        config.required_memory_space.at(
             bitstream_file_name));
 
     IDManager id_manager;
@@ -90,8 +91,7 @@ void QueryManager::RunQueries(
         fpga_managing::query_acceleration_constants::kMaxIOStreamCount);
     std::vector<fpga_managing::AcceleratedQueryNode> query_nodes;
 
-    id_manager.AllocateStreamIDs(executable_query_nodes, input_ids,
-                                 output_ids);
+    id_manager.AllocateStreamIDs(executable_query_nodes, input_ids, output_ids);
 
     for (int node_index = 0; node_index < executable_query_nodes.size();
          node_index++) {

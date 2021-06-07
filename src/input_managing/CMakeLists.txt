@@ -3,7 +3,11 @@ add_library(input_managing
             graph_creator.hpp
             rapidjson_reader.cpp
             rapidjson_reader.hpp
-            json_reader_interface.hpp)
+            json_reader_interface.hpp
+            config.hpp
+            input_config_reader.cpp
+            input_config_reader.hpp
+            input_config_reader_interface.hpp)
 
 FetchContent_Declare(
   rapidjson
