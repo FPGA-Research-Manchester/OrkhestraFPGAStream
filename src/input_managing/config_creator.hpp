@@ -9,6 +9,7 @@
 #include "operation_types.hpp"
 
 using dbmstodspi::fpga_managing::operation_types::QueryOperation;
+using dbmstodspi::fpga_managing::operation_types::QueryOperationType;
 
 namespace dbmstodspi::input_managing {
 class ConfigCreator {
@@ -16,10 +17,17 @@ class ConfigCreator {
   std::unique_ptr<JSONReaderInterface> json_reader_;
   std::unique_ptr<InputConfigReaderInterface> config_reader_;
 
-  auto ConvertStringMapToQueryOperations(
+  static auto ConvertStringMapToQueryOperations(
       const std::map<std::vector<std::pair<std::string, std::vector<int>>>,
                      std::string>& string_map)
       -> std::map<std::vector<QueryOperation>, std::string>;
+
+  static auto ConvertAcceleratorLibraryToModuleLibrary(
+      std::map<std::vector<std::pair<std::string, std::vector<int>>>,
+               std::string>
+          accelerator_library_data)
+      -> std::map<fpga_managing::operation_types::QueryOperationType,
+                  std::vector<std::vector<int>>>;
 
  public:
   ConfigCreator(std::unique_ptr<JSONReaderInterface> json_reader,
