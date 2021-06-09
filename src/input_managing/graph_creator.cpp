@@ -45,7 +45,7 @@ std::vector<std::shared_ptr<QueryNode>> GraphCreator::MakeGraph(
                         kSupportedFunctions.at(std::get<std::string>(
                             node_parameters.at(operation_field))),
                         std::vector<std::shared_ptr<QueryNode>>(),
-                        std::vector<std::shared_ptr<QueryNode>>(),
+                        std::vector<std::weak_ptr<QueryNode>>(),
                         all_operation_parameters)});
 
     auto search_previous = node_parameters.find(previous_nodes_field);
@@ -68,7 +68,7 @@ std::vector<std::shared_ptr<QueryNode>> GraphCreator::MakeGraph(
           node->previous_nodes.push_back(
               graph_nodes_map.at(previous_node_name));
         } else {
-          node->previous_nodes.push_back(nullptr);
+          node->previous_nodes.push_back(std::weak_ptr<QueryNode>());
         }
       }
     }
@@ -76,7 +76,8 @@ std::vector<std::shared_ptr<QueryNode>> GraphCreator::MakeGraph(
     if (search_next != next_nodes.end()) {
       for (auto const& next_node_name : search_next->second) {
         if (!next_node_name.empty()) {
-          node->next_nodes.push_back(graph_nodes_map.at(next_node_name));
+          node->next_nodes.push_back(
+              graph_nodes_map.at(next_node_name));
         } else {
           node->next_nodes.push_back(nullptr);
         }
@@ -84,14 +85,14 @@ std::vector<std::shared_ptr<QueryNode>> GraphCreator::MakeGraph(
     }
   }
 
-  std::vector<std::shared_ptr<QueryNode>> graph_nodes;
+  std::vector<std::shared_ptr<QueryNode>> leaf_nodes;
   for (auto const& [node_name, node] : graph_nodes_map) {
     if (std::none_of(
             node->previous_nodes.begin(), node->previous_nodes.end(),
-            [](std::shared_ptr<QueryNode> ptr) { return ptr; })) {
-      graph_nodes.push_back(node);
+            [](std::weak_ptr<QueryNode> ptr) { return ptr.lock(); })) {
+      leaf_nodes.push_back(node);
     }
   }
 
-  return graph_nodes;
+  return leaf_nodes;
 }

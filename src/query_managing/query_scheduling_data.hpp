@@ -41,29 +41,34 @@ struct QueryNode {
   /// Pointers to the next query nodes.
   std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> next_nodes;
   /// Pointers to the prerequisite query nodes
-  std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> previous_nodes;
+  std::vector<std::weak_ptr<query_scheduling_data::QueryNode>> previous_nodes;
   /// Operation parameters to configure the streams with modules.
   NodeOperationParameters operation_parameters;
   /// Location of the module to be processing this node
   int module_location = -1;
 
   auto operator==(const QueryNode &rhs) const -> bool {
+
+    bool are_prev_nodes_equal = std::equal(previous_nodes.begin(), previous_nodes.end(),
+                   rhs.previous_nodes.begin(),
+                   [](const std::weak_ptr<query_scheduling_data::QueryNode> l,
+                      const std::weak_ptr<query_scheduling_data::QueryNode> r) {
+                     return l.lock() == r.lock();
+                   });
+
     return input_data_definition_files == rhs.input_data_definition_files &&
            output_data_definition_files == rhs.output_data_definition_files &&
-           operation_type == rhs.operation_type &&
+           operation_type == rhs.operation_type && are_prev_nodes_equal &&
            next_nodes == rhs.next_nodes &&
-           previous_nodes == rhs.previous_nodes &&
-           operation_parameters == rhs.operation_parameters /*&&
-           module_location == rhs.module_location*/
-        ;  // Last comparison should be included once scheduler has been fixed
-           // to work with smart pointers
+           operation_parameters == rhs.operation_parameters &&
+           module_location == rhs.module_location;
   }
 
   QueryNode(
       std::vector<std::string> input, std::vector<std::string> output,
       fpga_managing::operation_types::QueryOperationType operation,
       std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> next_nodes,
-      std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+      std::vector<std::weak_ptr<query_scheduling_data::QueryNode>>
           previous_nodes,
       NodeOperationParameters parameters)
       : input_data_definition_files{input},

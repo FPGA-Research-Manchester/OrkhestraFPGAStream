@@ -61,20 +61,22 @@ auto main() -> int {
   auto config_creator = ConfigCreator(std::make_unique<RapidJSONReader>(),
                                       std::make_unique<InputConfigReader>());
   auto graph_maker = GraphCreator(std::make_unique<RapidJSONReader>());
-  MeasureOverallTime(graph_maker.MakeGraph("filter_testing.json"),
+  MeasureOverallTime(std::move(graph_maker.MakeGraph("filter_testing.json")),
                      config_creator.GetConfig("config.ini"));
-  MeasureOverallTime(graph_maker.MakeGraph("filter_join_testing.json"),
+  MeasureOverallTime(std::move(graph_maker.MakeGraph("filter_join_testing.json")),
                      config_creator.GetConfig("config.ini"));
-  MeasureOverallTime(graph_maker.MakeGraph("concurrency_testing.json"),
+  MeasureOverallTime(std::move(graph_maker.MakeGraph("concurrency_testing.json")),
                      config_creator.GetConfig("config.ini"));
-  MeasureOverallTime(graph_maker.MakeGraph("single_run_testing.json"),
+  MeasureOverallTime(std::move(graph_maker.MakeGraph("single_run_testing.json")),
                      config_creator.GetConfig("config.ini"));
-  MeasureOverallTime(graph_maker.MakeGraph("double_run_testing.json"),
+  MeasureOverallTime(std::move(graph_maker.MakeGraph("double_run_testing.json")),
                      config_creator.GetConfig("config.ini"));
-  MeasureOverallTime(graph_maker.MakeGraph("TPCH_Q19_SF001.json"),
+  MeasureOverallTime(std::move(graph_maker.MakeGraph("TPCH_Q19_SF001.json")),
                      config_creator.GetConfig("config.ini"));
-  MeasureOverallTime(graph_maker.MakeGraph("TPCH_Q19_SF01.json"),
+  MeasureOverallTime(std::move(graph_maker.MakeGraph("TPCH_Q19_SF01.json")),
                      config_creator.GetConfig("config.ini"));
+  /*MeasureOverallTime(std::move(graph_maker.MakeGraph("TPCH_Q19_SF03.json")),
+                     config_creator.GetConfig("extended_config.ini"));*/
 
   return 0;
 }
