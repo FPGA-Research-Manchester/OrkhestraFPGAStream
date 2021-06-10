@@ -34,7 +34,18 @@ The interface specification documentation will be available later.
 
 ## How does it work?
 
-More info on the how the data is mapped to the interface can be found [here](./docs/README.md).
+To run the program use the following command:
+
+```
+dbmstodspi INPUT_DEF.json CONFIG.ini
+```
+
+The first file defines the query plan. The second file contains json filepaths to define which bitstreams are available with their respective constraints. Examples can be found here:
+
+* [INPUT_DEF.json](./resources/input_defs/TPCH_Q19_SF01.json)
+* [CONFIG.ini](./resources/config.ini)
+
+More info on the how the data is mapped to the interface and how the data is processed can be found [here](./docs/README.md).
 
 ## How to use the source?
 

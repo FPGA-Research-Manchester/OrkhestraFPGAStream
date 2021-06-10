@@ -11,9 +11,10 @@ using dbmstodspi::query_managing::query_scheduling_data::kSupportedFunctions;
 
 auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string configurations_library = "CONFIGURATIONS_LIBRARY";
-  std::string driver_selection = "DRIVER_SELECTION";
   std::string memory_requirements = "BITSTREAMS_MEM_REQ";
   std::string data_type_sizes = "DATA_SIZE_CONFIG";
+
+  // repo.json is hardcoded for now.
 
   auto json_file_names = config_reader_->ParseInputConfig(config_filename);
 

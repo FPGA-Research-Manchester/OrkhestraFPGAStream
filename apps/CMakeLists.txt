@@ -1,5 +1,5 @@
 # Apps
-add_executable(app fpga_run.cpp)
+add_executable(dbmstodspi main.cpp)
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/CAR_DATA.csv CAR_DATA.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/CAR_DATA_HALF_SORTED.csv CAR_DATA_HALF_SORTED.csv COPYONLY)
@@ -92,5 +92,5 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF001.json
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF01.json TPCH_Q19_SF01.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF03.json TPCH_Q19_SF03.json COPYONLY)
 
-target_link_libraries(app PRIVATE query_managing)
-target_link_libraries(app PRIVATE input_managing)
+target_link_libraries(dbmstodspi PRIVATE query_managing)
+target_link_libraries(dbmstodspi PRIVATE input_managing)

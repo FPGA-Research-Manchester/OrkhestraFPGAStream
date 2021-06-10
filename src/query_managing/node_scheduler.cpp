@@ -347,17 +347,3 @@ auto NodeScheduler::CreateReferenceVector(
   }
   return ref_vector;
 }
-
-//// Find function for getting an iterator for a node which is available.
-// auto NodeScheduler::FindNextAvailableNode(
-//    const std::vector<query_scheduling_data::QueryNode>&
-//    already_scheduled_nodes, std::vector<query_scheduling_data::QueryNode>&
-//    starting_nodes)
-//    -> std::vector<query_scheduling_data::QueryNode>::iterator& {
-//  return std::find_if(starting_nodes.begin(), starting_nodes.end(),
-//                      [&](
-//                          const query_scheduling_data::QueryNode& leaf_node) {
-//                        return IsNodeAvailable(already_scheduled_nodes,
-//                                               leaf_node);
-//                      });
-//}
