@@ -99,8 +99,7 @@
 		"operation_parameters": {
 			"input_stream_params": [
 				[],
-				[0, -1, -1, -1, -1, -1, -1, -1, -1, 22, 23, 24, -1, -1, -1, -1, 32, 33, 34, 35, 33, 34, 35, 33, 34, 35
-				]
+				[0, -1, -1, -1, -1, -1, -1, -1, -1, 22, 23, 24, -1, -1, -1, -1, 32, 33, 34, 35, 33, 34, 35, 33, 34, 35]
 			],
 			"output_stream_params": [
 				[],
@@ -116,7 +115,7 @@
 		"output": ["lineitem_part_sf0_3_2nd_filter.csv"],
 		"operation": "kFilter",
 		"previous_nodes": ["lineitem_part_join"],
-		"next_nodes": [null],
+		"next_nodes": ["lineitem_part_addition"],
 		"operation_parameters": {
 			"input_stream_params": [
 				[]
@@ -251,6 +250,66 @@
 				["LG PKG    ", 3],
 				[],
 				[11]
+			]
+		}
+	},
+	"lineitem_part_addition": {
+		"input": ["lineitem_part_sf0_3_2nd_filter.csv"],
+		"output": ["lineitem_part_sf0_3_inverted.csv"],
+		"operation": "kAddition",
+		"previous_nodes": ["lineitem_part_second_filter"],
+		"next_nodes": ["lineitem_part_multiplication"],
+		"operation_parameters": {
+			"input_stream_params": [
+				[]
+			],
+			"output_stream_params": [
+				[],
+				[1]
+			],
+			"operation_params": [
+				[0],
+				[0, 1, 0, 0, 0, 0, 0, 0],
+				[0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+			]
+		}
+	},
+	"lineitem_part_multiplication": {
+		"input": ["lineitem_part_sf0_3_inverted.csv"],
+		"output": ["lineitem_part_sf0_3_multiplied.csv"],
+		"operation": "kMultiplication",
+		"previous_nodes": ["lineitem_part_addition"],
+		"next_nodes": ["lineitem_part_aggregate"],
+		"operation_parameters": {
+			"input_stream_params": [
+				[]
+			],
+			"output_stream_params": [
+				[0, 1],
+				[1]
+			],
+			"operation_params": [
+				[0, 1, 0, 0, 0, 0, 0, 0, 0]
+			]
+		}
+	},
+	"lineitem_part_aggregate": {
+		"input": ["lineitem_part_sf0_3_multiplied.csv"],
+		"output": ["lineitem_part_sf0_3_multiplied.csv"],
+		"operation": "kAggregationSum",
+		"previous_nodes": ["lineitem_part_multiplication"],
+		"next_nodes": [null],
+		"operation_parameters": {
+			"input_stream_params": [
+				[]
+			],
+			"output_stream_params": [
+				[],
+				[1]
+			],
+			"operation_params": [
+				[0],
+				[0]
 			]
 		}
 	}

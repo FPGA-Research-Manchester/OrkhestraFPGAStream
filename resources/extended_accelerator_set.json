@@ -1,5 +1,5 @@
 {
-	"module_combinations": ["filter", "join", "single_merge", "linear_sort", "add", "mul", "sum", "empty", "double_merge", "sort_join_filter", "sort_join", "filter_join", "filter_sort"],
+	"module_combinations": ["filter", "join", "single_merge", "linear_sort", "add", "mul", "sum", "empty", "double_merge", "sort_join_filter", "sort_join", "filter_join", "filter_sort", "add_mul", "add_mul_sum"],
 	"filter": [{
 		"name": "kFilter",
 		"capacity": [32, 4]
@@ -69,6 +69,23 @@
 		"name": "kLinearSort",
 		"capacity": [1024]
 	}],
+	"add_mul_sum": [{
+		"name": "kAddition",
+		"capacity": []
+	}, {
+		"name": "kMultiplication",
+		"capacity": []
+	}, {
+		"name": "kAggregationSum",
+		"capacity": []
+	}],
+	"add_mul": [{
+		"name": "kAddition",
+		"capacity": []
+	}, {
+		"name": "kMultiplication",
+		"capacity": []
+	}],
 	"accelerators": {
 		"filter": "DSPI_filtering",
 		"join": "DSPI_joining",
@@ -82,6 +99,8 @@
 		"sort_join_filter": "DSPI_sort_join_filter",
 		"sort_join": "missing",
 		"filter_join": "DSPI_filter_join",
-		"filter_sort": "DSPI_filtering_linear_sort"
+		"filter_sort": "DSPI_filtering_linear_sort",
+		"add_mul_sum": "DSPI_add_mul_sum",
+		"add_mul": "missing"
 	}
 }

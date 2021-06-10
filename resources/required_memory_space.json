@@ -11,5 +11,6 @@
     "DSPI_sort_join_filter": 4194304,
     "DSPI_filter_join": 3145728,
     "DSPI_filtering_linear_sort": 3145728,
-    "ILA_thing":153092096
+    "ILA_thing": 153092096,
+    "DSPI_add_mul_sum": 4194304
 }
