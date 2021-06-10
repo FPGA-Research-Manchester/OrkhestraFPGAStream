@@ -23,9 +23,8 @@ class ConfigCreator {
       -> std::map<std::vector<QueryOperation>, std::string>;
 
   static auto ConvertAcceleratorLibraryToModuleLibrary(
-      std::map<std::vector<std::pair<std::string, std::vector<int>>>,
-               std::string>
-          accelerator_library_data)
+      const std::map<std::vector<std::pair<std::string, std::vector<int>>>,
+                     std::string>& accelerator_library_data)
       -> std::map<fpga_managing::operation_types::QueryOperationType,
                   std::vector<std::vector<int>>>;
 
@@ -34,6 +33,6 @@ class ConfigCreator {
                 std::unique_ptr<InputConfigReaderInterface> config_reader)
       : json_reader_{std::move(json_reader)},
         config_reader_{std::move(config_reader)} {};
-  auto GetConfig(std::string config_filename) -> Config;
+  auto GetConfig(const std::string& config_filename) -> Config;
 };
 }  // namespace dbmstodspi::input_managing

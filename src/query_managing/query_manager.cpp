@@ -84,6 +84,7 @@ void QueryManager::RunQueries(
     std::vector<fpga_managing::AcceleratedQueryNode> query_nodes;
 
     std::vector<query_scheduling_data::QueryNode> ref_vector;
+    ref_vector.reserve(executable_query_nodes.size());
     for (const auto& ptr : executable_query_nodes) {
       ref_vector.push_back(*ptr);
     }

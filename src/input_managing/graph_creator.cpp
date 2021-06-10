@@ -1,6 +1,7 @@
 ﻿#include "graph_creator.hpp"
 
 #include <algorithm>
+#include <utility>
 
 using dbmstodspi::input_managing::GraphCreator;
 using dbmstodspi::query_managing::query_scheduling_data::kSupportedFunctions;
@@ -9,9 +10,9 @@ using dbmstodspi::query_managing::query_scheduling_data::
 
 // Using vector of references now but it will be replaced with shared pointers
 // in the future.
-std::vector<std::shared_ptr<QueryNode>> GraphCreator::MakeGraph(
-    std::string input_def_filename) {
-  auto data = json_reader_->ReadInputDefinition(input_def_filename);
+auto GraphCreator::MakeGraph(std::string input_def_filename)
+    -> std::vector<std::shared_ptr<QueryNode>> {
+  auto data = json_reader_->ReadInputDefinition(std::move(input_def_filename));
 
   using ParamsMap = std::map<std::string, std::vector<std::vector<int>>>;
 
@@ -89,7 +90,7 @@ std::vector<std::shared_ptr<QueryNode>> GraphCreator::MakeGraph(
   for (auto const& [node_name, node] : graph_nodes_map) {
     if (std::none_of(
             node->previous_nodes.begin(), node->previous_nodes.end(),
-            [](std::weak_ptr<QueryNode> ptr) { return ptr.lock(); })) {
+            [](const std::weak_ptr<QueryNode>& ptr) { return ptr.lock(); })) {
       leaf_nodes.push_back(node);
     }
   }

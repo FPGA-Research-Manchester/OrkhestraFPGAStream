@@ -21,7 +21,7 @@ struct NodeOperationParameters {
   std::vector<std::vector<int>> output_stream_parameters;
   std::vector<std::vector<int>> operation_parameters;
 
-  auto operator==(const NodeOperationParameters &rhs) const -> bool {
+  auto operator==(const NodeOperationParameters& rhs) const -> bool {
     return input_stream_parameters == rhs.input_stream_parameters &&
            output_stream_parameters == rhs.output_stream_parameters &&
            operation_parameters == rhs.operation_parameters;
@@ -47,14 +47,16 @@ struct QueryNode {
   /// Location of the module to be processing this node
   int module_location = -1;
 
-  auto operator==(const QueryNode &rhs) const -> bool {
-
-    bool are_prev_nodes_equal = std::equal(previous_nodes.begin(), previous_nodes.end(),
-                   rhs.previous_nodes.begin(),
-                   [](const std::weak_ptr<query_scheduling_data::QueryNode> l,
-                      const std::weak_ptr<query_scheduling_data::QueryNode> r) {
-                     return l.lock() == r.lock();
-                   });
+  auto operator==(const QueryNode& rhs) const -> bool {
+    bool are_prev_nodes_equal =
+        previous_nodes.size() == rhs.previous_nodes.size() &&
+        std::equal(
+            previous_nodes.begin(), previous_nodes.end(),
+            rhs.previous_nodes.begin(),
+            [](const std::weak_ptr<query_scheduling_data::QueryNode>& l,
+               const std::weak_ptr<query_scheduling_data::QueryNode>& r) {
+              return l.lock() == r.lock();
+            });
 
     return input_data_definition_files == rhs.input_data_definition_files &&
            output_data_definition_files == rhs.output_data_definition_files &&
@@ -71,12 +73,12 @@ struct QueryNode {
       std::vector<std::weak_ptr<query_scheduling_data::QueryNode>>
           previous_nodes,
       NodeOperationParameters parameters)
-      : input_data_definition_files{input},
-        output_data_definition_files{output},
+      : input_data_definition_files{std::move(input)},
+        output_data_definition_files{std::move(output)},
         operation_type{operation},
-        next_nodes{next_nodes},
-        previous_nodes{previous_nodes},
-        operation_parameters{parameters} {};
+        next_nodes{std::move(next_nodes)},
+        previous_nodes{std::move(previous_nodes)},
+        operation_parameters{std::move(parameters)} {};
 };
 
 /// Type definition of a collection of operation types for selecting bitstreams.

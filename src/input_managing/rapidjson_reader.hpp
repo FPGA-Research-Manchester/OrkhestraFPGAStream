@@ -10,19 +10,22 @@ using rapidjson::Document;
 namespace dbmstodspi::input_managing {
 class RapidJSONReader : public JSONReaderInterface {
  private:
-  std::unique_ptr<Document> read(std::string json_filename);
+  static auto read(const std::string& json_filename)
+      -> std::unique_ptr<Document>;
   static auto ConvertCharStringToAscii(const std::string& input_string,
                                        int output_size) -> std::vector<int>;
 
  public:
   ~RapidJSONReader() override = default;
-  std::map<std::string, double> readDataSizes(
-      std::string json_filename) override;
-  std::map<std::string, int> readReqMemorySpace(
-      std::string json_filename) override;
-  std::map<std::vector<std::pair<std::string, std::vector<int>>>, std::string>
-  readAcceleratorLibrary(std::string json_filename) override;
-  std::map<std::string, JSONReaderInterface::InputNodeParameters>
-  ReadInputDefinition(std::string json_filename) override;
+  auto readDataSizes(std::string json_filename)
+      -> std::map<std::string, double> override;
+  auto readReqMemorySpace(std::string json_filename)
+      -> std::map<std::string, int> override;
+  auto readAcceleratorLibrary(std::string json_filename)
+      -> std::map<std::vector<std::pair<std::string, std::vector<int>>>,
+                  std::string> override;
+  auto ReadInputDefinition(std::string json_filename)
+      -> std::map<std::string,
+                  JSONReaderInterface::InputNodeParameters> override;
 };
 }  // namespace dbmstodspi::input_managing

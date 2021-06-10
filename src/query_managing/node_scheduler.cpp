@@ -341,6 +341,7 @@ auto NodeScheduler::CreateReferenceVector(
     const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>&
         pointer_vector) -> std::vector<query_scheduling_data::QueryNode> {
   std::vector<query_scheduling_data::QueryNode> ref_vector;
+  ref_vector.reserve(pointer_vector.size());
   for (const auto& ptr : pointer_vector) {
     ref_vector.push_back(*ptr);
   }

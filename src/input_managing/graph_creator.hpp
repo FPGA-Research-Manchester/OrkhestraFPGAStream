@@ -13,9 +13,9 @@ class GraphCreator {
   std::unique_ptr<JSONReaderInterface> json_reader_;
 
  public:
-  GraphCreator(std::unique_ptr<JSONReaderInterface> json_reader)
+  explicit GraphCreator(std::unique_ptr<JSONReaderInterface> json_reader)
       : json_reader_{std::move(json_reader)} {};
-  std::vector<std::shared_ptr<QueryNode>> MakeGraph(
-      std::string graph_def_filename);
+  auto MakeGraph(std::string input_def_filename)
+      -> std::vector<std::shared_ptr<QueryNode>>;
 };
-}  // namespace easydspi::dbmstodspi
+}  // namespace dbmstodspi::input_managing

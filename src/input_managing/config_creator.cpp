@@ -9,7 +9,7 @@ using dbmstodspi::fpga_managing::operation_types::QueryOperation;
 using dbmstodspi::input_managing::ConfigCreator;
 using dbmstodspi::query_managing::query_scheduling_data::kSupportedFunctions;
 
-auto ConfigCreator::GetConfig(std::string config_filename) -> Config {
+auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string configurations_library = "CONFIGURATIONS_LIBRARY";
   std::string driver_selection = "DRIVER_SELECTION";
   std::string memory_requirements = "BITSTREAMS_MEM_REQ";
@@ -50,8 +50,8 @@ auto ConfigCreator::ConvertStringMapToQueryOperations(
 }
 
 auto ConfigCreator::ConvertAcceleratorLibraryToModuleLibrary(
-    std::map<std::vector<std::pair<std::string, std::vector<int>>>, std::string>
-        accelerator_library_data)
+    const std::map<std::vector<std::pair<std::string, std::vector<int>>>,
+                   std::string>& accelerator_library_data)
     -> std::map<fpga_managing::operation_types::QueryOperationType,
                 std::vector<std::vector<int>>> {
   std::map<fpga_managing::operation_types::QueryOperationType,
@@ -68,9 +68,8 @@ auto ConfigCreator::ConvertAcceleratorLibraryToModuleLibrary(
         }
       } else {
         std::vector<std::vector<int>> operation_params;
-        for (int param_index = 0; param_index < operation.second.size();
-             param_index++) {
-          operation_params.push_back({operation.second[param_index]});
+        for (int param_index : operation.second) {
+          operation_params.push_back({param_index});
         }
         resulting_map.insert(
             {kSupportedFunctions.at(operation.first), operation_params});
