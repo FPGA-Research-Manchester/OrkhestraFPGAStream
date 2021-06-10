@@ -37,7 +37,7 @@ The interface specification documentation will be available later.
 To run the program use the following command:
 
 ```
-dbmstodspi INPUT_DEF.json CONFIG.ini
+dbmstodspi -i INPUT_DEF.json -c CONFIG.ini
 ```
 
 The first file defines the query plan. The second file contains json filepaths to define which bitstreams are available with their respective constraints. Examples can be found here:

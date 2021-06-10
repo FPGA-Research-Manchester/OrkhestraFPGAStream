@@ -7,6 +7,7 @@
 
 #include "config.hpp"
 #include "config_creator.hpp"
+#include "cxxopts.hpp"
 #include "graph_creator.hpp"
 #include "input_config_reader.hpp"
 #include "operation_types.hpp"
@@ -51,17 +52,28 @@ void MeasureOverallTime(std::vector<std::shared_ptr<QueryNode>> leaf_nodes,
  * query nodes according to the given config.
  */
 auto main(int argc, char* argv[]) -> int {
-  if (argc != 3) {
-    std::cerr << "Usage: " << argv[0] << " INPUT_DEF.json CONFIG.ini"
-              << std::endl;
-    return 1;
+  cxxopts::Options options(
+      "DBMStoDSPI",
+      "Accelerate the given query operations with an available FPGA!");
+
+  options.add_options()("i,input", "Input definition",
+                        cxxopts::value<std::string>())(
+      "c,config", "Config file for used hardware",
+      cxxopts::value<std::string>())("h,help", "Print usage");
+
+  auto result = options.parse(argc, argv);
+
+  if (result.count("help")) {
+    std::cout << options.help() << std::endl;
+    exit(0);
   }
 
   auto config_creator = ConfigCreator(std::make_unique<RapidJSONReader>(),
                                       std::make_unique<InputConfigReader>());
   auto graph_maker = GraphCreator(std::make_unique<RapidJSONReader>());
-  MeasureOverallTime(std::move(graph_maker.MakeGraph(argv[1])),
-                     config_creator.GetConfig(argv[2]));
+  MeasureOverallTime(
+      std::move(graph_maker.MakeGraph(result["input"].as<std::string>())),
+      config_creator.GetConfig(result["config"].as<std::string>()));
 
   // Hardcoded tests
   // MeasureOverallTime(std::move(graph_maker.MakeGraph("filter_testing.json")),
