@@ -102,9 +102,6 @@ class NodeScheduler {
       const std::map<query_scheduling_data::ConfigurableModulesVector,
                      std::string> &supported_accelerator_bitstreams)
       -> query_scheduling_data::ConfigurableModulesVector;
-  static auto CreateReferenceVector(
-      const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
-          &pointer_vector) -> std::vector<query_scheduling_data::QueryNode>;
 };
 
 }  // namespace dbmstodspi::query_managing

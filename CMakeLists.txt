@@ -20,6 +20,7 @@ if (NOT WIN32)
     # Assuming that dev work isn't done on a unix machine
     add_definitions (-D_FPGA_AVAILABLE)
 endif()
+add_subdirectory(src/util)
 add_subdirectory(src/fpga_managing)
 add_subdirectory(src/data_managing)
 add_subdirectory(src/query_managing)

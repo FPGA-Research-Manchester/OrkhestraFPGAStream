@@ -20,8 +20,10 @@
 #include "query_scheduling_data.hpp"
 #include "stream_parameter_calculator.hpp"
 #include "table_manager.hpp"
+#include "util.hpp"
 
 using namespace dbmstodspi::query_managing;
+using dbmstodspi::util::CreateReferenceVector;
 
 void QueryManager::CheckTableData(
     const data_managing::TableData& expected_table,
@@ -58,8 +60,6 @@ void QueryManager::RunQueries(
       config.module_library);
 
   while (!query_node_runs_queue.empty()) {
-
-
     const auto executable_query_nodes = query_node_runs_queue.front().second;
 
     const auto& bitstream_file_name =
@@ -83,12 +83,8 @@ void QueryManager::RunQueries(
         fpga_managing::query_acceleration_constants::kMaxIOStreamCount);
     std::vector<fpga_managing::AcceleratedQueryNode> query_nodes;
 
-    std::vector<query_scheduling_data::QueryNode> ref_vector;
-    ref_vector.reserve(executable_query_nodes.size());
-    for (const auto& ptr : executable_query_nodes) {
-      ref_vector.push_back(*ptr);
-    }
-    id_manager.AllocateStreamIDs(ref_vector, input_ids, output_ids);
+    id_manager.AllocateStreamIDs(CreateReferenceVector(executable_query_nodes),
+                                 input_ids, output_ids);
 
     for (int node_index = 0; node_index < executable_query_nodes.size();
          node_index++) {
