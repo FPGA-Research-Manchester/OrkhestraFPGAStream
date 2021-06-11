@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <queue>
 #include <set>
 #include <utility>
@@ -17,29 +18,30 @@ class NodeScheduler {
   /**
    * @brief Find groups of accelerated query nodes which can be run in the same
    * FPGA run.
-   * @param accelerated_query_node_runs Queue of groups of accelerated query
-   * nodes to be accelerated next.
    * @param starting_nodes Input vector of leaf nodes from which the parsing can
    * begin.
    * @param supported_accelerator_bitstreams Map of hardware module combinations
    * which have a corresponding bitstream.
    * @param existing_modules_library Map of hardware modules and the available
    * variations with different computational capacity values.
+   * @return Queue of groups of accelerated query
+   * nodes to be accelerated next.
    */
-  static void FindAcceleratedQueryNodeSets(
-      std::queue<std::pair<query_scheduling_data::ConfigurableModulesVector,
-                           std::vector<query_scheduling_data::QueryNode>>>
-          *accelerated_query_node_runs,
-      std::vector<query_scheduling_data::QueryNode> &starting_nodes,
+  static auto FindAcceleratedQueryNodeSets(
+      std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+          starting_nodes,
       const std::map<query_scheduling_data::ConfigurableModulesVector,
                      std::string> &supported_accelerator_bitstreams,
       const std::map<fpga_managing::operation_types::QueryOperationType,
-                     std::vector<std::vector<int>>> &existing_modules_library);
+                     std::vector<std::vector<int>>> &existing_modules_library)
+      -> std::queue<std::pair<
+          query_scheduling_data::ConfigurableModulesVector,
+          std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>>>;
 
  private:
-  static void RemoveLinkedNodes(
-      std::vector<query_scheduling_data::QueryNode *> &linked_nodes,
-      const std::vector<query_scheduling_data::QueryNode> &current_query_nodes);
+  static void RemoveExternalLinks(
+      const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+          &current_query_nodes);
   static auto IsModuleSetSupported(
       const query_scheduling_data::ConfigurableModulesVector &module_set,
       const std::map<query_scheduling_data::ConfigurableModulesVector,
@@ -63,9 +65,12 @@ class NodeScheduler {
   static void CheckNodeForModuleSet(
       int node_index,
       query_scheduling_data::ConfigurableModulesVector &current_modules_vector,
-      std::vector<query_scheduling_data::QueryNode> &current_query_nodes,
-      std::vector<query_scheduling_data::QueryNode> &scheduled_queries,
-      std::vector<query_scheduling_data::QueryNode> &starting_nodes,
+      std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+          &current_query_nodes,
+      std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+          &scheduled_queries,
+      std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+          &starting_nodes,
       const std::map<query_scheduling_data::ConfigurableModulesVector,
                      std::string> &supported_accelerator_bitstreams,
       const std::map<fpga_managing::operation_types::QueryOperationType,
@@ -97,6 +102,9 @@ class NodeScheduler {
       const std::map<query_scheduling_data::ConfigurableModulesVector,
                      std::string> &supported_accelerator_bitstreams)
       -> query_scheduling_data::ConfigurableModulesVector;
+  static auto CreateReferenceVector(
+      const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+          &pointer_vector) -> std::vector<query_scheduling_data::QueryNode>;
 };
 
 }  // namespace dbmstodspi::query_managing

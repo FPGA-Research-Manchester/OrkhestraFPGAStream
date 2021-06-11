@@ -1,0 +1,164 @@
+{
+	"filter_node": {
+		"input": ["CAR_DATA.csv"],
+		"output": ["CAR_FILTER_DATA.csv"],
+		"operation": "kFilter",
+		"previous_nodes": [null],
+		"next_nodes": [null],
+		"operation_parameters": {
+			"input_stream_params": [
+				[]
+			],
+			"output_stream_params": [
+				[],
+				[2]
+			],
+			"operation_params": [
+				[1, 14, 1],
+				[0],
+				[12000],
+				[1],
+				[0]
+			]
+		}
+	},
+	"filter_node2": {
+		"input": ["CAR_DATA.csv"],
+		"output": ["CAR_FILTER_DATA.csv"],
+		"operation": "kFilter",
+		"previous_nodes": [null],
+		"next_nodes": [null],
+		"operation_parameters": {
+			"input_stream_params": [
+				[]
+			],
+			"output_stream_params": [
+				[],
+				[2]
+			],
+			"operation_params": [
+				[1, 14, 1],
+				[0],
+				[12000],
+				[1],
+				[0]
+			]
+		}
+	},
+	"merge_sort_node": {
+		"input": ["CAR_DATA_HALF_SORTED.csv"],
+		"output": ["CAR_DATA_SORTED.csv"],
+		"operation": "kMergeSort",
+		"previous_nodes": [null],
+		"next_nodes": [null],
+		"operation_parameters": {
+			"input_stream_params": [
+				[]
+			],
+			"output_stream_params": [
+				[],
+				[2]
+			],
+			"operation_params": [
+				[64, 16]
+			]
+		}
+	},
+	"merge_sort_node2": {
+		"input": ["CAR_DATA_HALF_SORTED.csv"],
+		"output": ["CAR_DATA_SORTED.csv"],
+		"operation": "kMergeSort",
+		"previous_nodes": [null],
+		"next_nodes": [null],
+		"operation_parameters": {
+			"input_stream_params": [
+				[]
+			],
+			"output_stream_params": [
+				[],
+				[2]
+			],
+			"operation_params": [
+				[64, 16]
+			]
+		}
+	},
+	"join_node": {
+		"input": ["CAR_DATA.csv", "CUSTOMER_DATA.csv"],
+		"output": ["JOIN_DATA.csv"],
+		"operation": "kJoin",
+		"previous_nodes": [null, null],
+		"next_nodes": [null],
+		"operation_parameters": {
+			"input_stream_params": [
+				[],
+				[0, -1, 1, 2, 3, 4, 5, 6]
+			],
+			"output_stream_params": [
+				[],
+				[2]
+			],
+			"operation_params": [
+				[2]
+			]
+		}
+	},
+	"join_node2": {
+		"input": ["CAR_DATA.csv", "CUSTOMER_DATA.csv"],
+		"output": ["JOIN_DATA.csv"],
+		"operation": "kJoin",
+		"previous_nodes": [null, null],
+		"next_nodes": [null],
+		"operation_parameters": {
+			"input_stream_params": [
+				[],
+				[0, -1, 1, 2, 3, 4, 5, 6]
+			],
+			"output_stream_params": [
+				[],
+				[2]
+			],
+			"operation_params": [
+				[2]
+			]
+		}
+	},
+	"linear_sort_node": {
+		"input": ["CAR_DATA_8K.csv"],
+		"output": ["CAR_DATA_HALF_SORTED_8K_512WAY.csv"],
+		"operation": "kLinearSort",
+		"previous_nodes": [null],
+		"next_nodes": [null],
+		"operation_parameters": {
+			"input_stream_params": [
+				[]
+			],
+			"output_stream_params": [
+				[],
+				[2]
+			],
+			"operation_params": [
+				[]
+			]
+		}
+	},
+	"linear_sort_node2": {
+		"input": ["CAR_DATA_8K.csv"],
+		"output": ["CAR_DATA_HALF_SORTED_8K_512WAY.csv"],
+		"operation": "kLinearSort",
+		"previous_nodes": [null],
+		"next_nodes": [null],
+		"operation_parameters": {
+			"input_stream_params": [
+				[]
+			],
+			"output_stream_params": [
+				[],
+				[2]
+			],
+			"operation_params": [
+				[]
+			]
+		}
+	}
+}

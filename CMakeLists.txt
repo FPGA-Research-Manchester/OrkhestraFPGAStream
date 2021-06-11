@@ -23,6 +23,7 @@ endif()
 add_subdirectory(src/fpga_managing)
 add_subdirectory(src/data_managing)
 add_subdirectory(src/query_managing)
+add_subdirectory(src/input_managing)
 
 add_subdirectory(apps)
 

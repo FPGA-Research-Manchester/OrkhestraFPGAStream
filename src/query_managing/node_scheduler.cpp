@@ -6,24 +6,33 @@
 #include "operation_types.hpp"
 
 using namespace dbmstodspi::query_managing;
+using namespace dbmstodspi::fpga_managing;
 
-void NodeScheduler::FindAcceleratedQueryNodeSets(
-    std::queue<std::pair<query_scheduling_data::ConfigurableModulesVector,
-                         std::vector<query_scheduling_data::QueryNode>>>*
-        accelerated_query_node_runs,
-    std::vector<query_scheduling_data::QueryNode>& starting_nodes,
+auto NodeScheduler::FindAcceleratedQueryNodeSets(
+    std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+        starting_nodes,
     const std::map<query_scheduling_data::ConfigurableModulesVector,
                    std::string>& supported_accelerator_bitstreams,
-    const std::map<fpga_managing::operation_types::QueryOperationType,
-                   std::vector<std::vector<int>>>& existing_modules_library) {
-  std::vector<query_scheduling_data::QueryNode> scheduled_queries;
+    const std::map<operation_types::QueryOperationType,
+                   std::vector<std::vector<int>>>& existing_modules_library)
+    -> std::queue<std::pair<
+        query_scheduling_data::ConfigurableModulesVector,
+        std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>>> {
+  std::queue<
+      std::pair<query_scheduling_data::ConfigurableModulesVector,
+                std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>>>
+      query_node_runs_queue;
+
+  std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+      scheduled_queries;
 
   // Not checking for cycles nor for unsupported opperations
   while (!starting_nodes.empty()) {
     int node_index = 0;
 
     query_scheduling_data::ConfigurableModulesVector current_set;
-    std::vector<query_scheduling_data::QueryNode> current_query_nodes;
+    std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+        current_query_nodes;
 
     CheckNodeForModuleSet(node_index, current_set, current_query_nodes,
                           scheduled_queries, starting_nodes,
@@ -34,26 +43,33 @@ void NodeScheduler::FindAcceleratedQueryNodeSets(
       throw std::runtime_error("Failed to schedule!");
     }
 
-    for (auto& node : current_query_nodes) {
-      RemoveLinkedNodes(node.next_nodes, current_query_nodes);
-      RemoveLinkedNodes(node.previous_nodes, current_query_nodes);
-    }
+    RemoveExternalLinks(current_query_nodes);
 
-    accelerated_query_node_runs->push({current_set, current_query_nodes});
+    query_node_runs_queue.push({current_set, current_query_nodes});
   }
+  return query_node_runs_queue;
 }
 
 // Method to remove next or previous nodes from a node once it has been
 // scheduled
-void NodeScheduler::RemoveLinkedNodes(
-    std::vector<query_scheduling_data::QueryNode*>& linked_nodes,
-    const std::vector<query_scheduling_data::QueryNode>& current_query_nodes) {
-  for (auto& i : linked_nodes) {
-    auto* linked_node = i;
-    if (linked_node != nullptr &&
-        std::find(current_query_nodes.begin(), current_query_nodes.end(),
-                  *linked_node) == current_query_nodes.end()) {
-      i = nullptr;
+void NodeScheduler::RemoveExternalLinks(
+    const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>&
+        current_query_nodes) {
+  for (const auto& node : current_query_nodes) {
+    for (auto& linked_node : node->next_nodes) {
+      if (linked_node &&
+          std::find(current_query_nodes.begin(), current_query_nodes.end(),
+                    linked_node) == current_query_nodes.end()) {
+        linked_node = nullptr;
+      }
+    }
+    for (auto& linked_node : node->previous_nodes) {
+      auto observed_node = linked_node.lock();
+      if (observed_node &&
+          std::find(current_query_nodes.begin(), current_query_nodes.end(),
+                    observed_node) == current_query_nodes.end()) {
+        linked_node = std::weak_ptr<query_scheduling_data::QueryNode>();
+      }
     }
   }
 }
@@ -68,19 +84,20 @@ auto NodeScheduler::FindMinPosition(
         current_modules_vector) -> int {
   int min_position_index = 0;
   for (const auto& previous_node : current_node->previous_nodes) {
-    if (previous_node != nullptr) {
+    auto observed_node = previous_node.lock();
+    if (observed_node) {
       auto current_nodes_iterator =
           std::find(current_query_nodes.begin(), current_query_nodes.end(),
-                    *previous_node);
+                    *observed_node);
       if (current_nodes_iterator != current_query_nodes.end() &&
-          previous_node->operation_type !=
+          observed_node->operation_type !=
               fpga_managing::operation_types::QueryOperationType::
                   kPassThrough) {
         auto current_modules_iterator = std::find_if(
             current_modules_vector.begin(), current_modules_vector.end(),
             [&](const fpga_managing::operation_types::QueryOperation&
                     operation) {
-              return operation.operation_type == previous_node->operation_type;
+              return operation.operation_type == observed_node->operation_type;
             });
         if (current_modules_iterator == current_modules_vector.end()) {
           throw std::runtime_error("Something went wrong with scheduling!");
@@ -101,9 +118,12 @@ auto NodeScheduler::FindMinPosition(
 void NodeScheduler::CheckNodeForModuleSet(
     int node_index,
     query_scheduling_data::ConfigurableModulesVector& current_modules_vector,
-    std::vector<query_scheduling_data::QueryNode>& current_query_nodes,
-    std::vector<query_scheduling_data::QueryNode>& scheduled_queries,
-    std::vector<query_scheduling_data::QueryNode>& starting_nodes,
+    std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>&
+        current_query_nodes,
+    std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>&
+        scheduled_queries,
+    std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>&
+        starting_nodes,
     const std::map<query_scheduling_data::ConfigurableModulesVector,
                    std::string>& supported_accelerator_bitstreams,
     const std::map<fpga_managing::operation_types::QueryOperationType,
@@ -111,21 +131,24 @@ void NodeScheduler::CheckNodeForModuleSet(
   auto current_node = starting_nodes[node_index];
 
   auto suitable_combination = FindSuitableModuleCombination(
-      &current_node, current_query_nodes, current_modules_vector,
-      supported_accelerator_bitstreams, existing_modules_library);
+      current_node.get(), CreateReferenceVector(current_query_nodes),
+      current_modules_vector, supported_accelerator_bitstreams,
+      existing_modules_library);
 
   // The logic with pointers has to get cleaned up!
   if (!suitable_combination.empty()) {
-
     scheduled_queries.push_back(current_node);
     current_query_nodes.push_back(current_node);
     current_modules_vector = suitable_combination;
 
-    if (!current_node.next_nodes.empty()) {
-      for (const auto& next_node : current_node.next_nodes) {
-        if (next_node && !IsNodeIncluded(starting_nodes, *next_node) &&
-            IsNodeAvailable(scheduled_queries, *next_node)) {
-          starting_nodes.push_back(*next_node);
+    if (!current_node->next_nodes.empty()) {
+      for (const auto& next_node : current_node->next_nodes) {
+        if (next_node &&
+            !IsNodeIncluded(CreateReferenceVector(starting_nodes),
+                            *next_node) &&
+            IsNodeAvailable(CreateReferenceVector(scheduled_queries),
+                            *next_node)) {
+          starting_nodes.push_back(next_node);
         }
       }
     }
@@ -159,6 +182,11 @@ auto NodeScheduler::FindSuitableModuleCombination(
     const std::map<fpga_managing::operation_types::QueryOperationType,
                    std::vector<std::vector<int>>>& existing_modules_library)
     -> query_scheduling_data::ConfigurableModulesVector {
+  if (current_node->operation_type ==
+      fpga_managing::operation_types::QueryOperationType::kPassThrough) {
+    return current_modules_vector;
+  }
+
   int current_position = FindMinPosition(current_node, current_query_nodes,
                                          current_modules_vector);
 
@@ -301,23 +329,21 @@ auto NodeScheduler::IsNodeAvailable(
     const std::vector<query_scheduling_data::QueryNode>& scheduled_nodes,
     const query_scheduling_data::QueryNode& current_node) -> bool {
   for (const auto& required_node : current_node.previous_nodes) {
-    if (required_node && !IsNodeIncluded(scheduled_nodes, *required_node)) {
+    auto observed_node = required_node.lock();
+    if (observed_node && !IsNodeIncluded(scheduled_nodes, *observed_node)) {
       return false;
     }
   }
   return true;
 }
 
-//// Find function for getting an iterator for a node which is available.
-// auto NodeScheduler::FindNextAvailableNode(
-//    const std::vector<query_scheduling_data::QueryNode>&
-//    already_scheduled_nodes, std::vector<query_scheduling_data::QueryNode>&
-//    starting_nodes)
-//    -> std::vector<query_scheduling_data::QueryNode>::iterator& {
-//  return std::find_if(starting_nodes.begin(), starting_nodes.end(),
-//                      [&](
-//                          const query_scheduling_data::QueryNode& leaf_node) {
-//                        return IsNodeAvailable(already_scheduled_nodes,
-//                                               leaf_node);
-//                      });
-//}
+auto NodeScheduler::CreateReferenceVector(
+    const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>&
+        pointer_vector) -> std::vector<query_scheduling_data::QueryNode> {
+  std::vector<query_scheduling_data::QueryNode> ref_vector;
+  ref_vector.reserve(pointer_vector.size());
+  for (const auto& ptr : pointer_vector) {
+    ref_vector.push_back(*ptr);
+  }
+  return ref_vector;
+}

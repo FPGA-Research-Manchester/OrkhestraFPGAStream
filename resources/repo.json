@@ -11,6 +11,7 @@
     "DSPI_filtering_linear_sort",
     "DSPI_addition",
     "DSPI_multiplication",
-    "DSPI_aggregation_sum"
+    "DSPI_aggregation_sum",
+    "DSPI_add_mul_sum"
   ]
 }

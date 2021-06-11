@@ -47,9 +47,10 @@ void IDManager::AllocateInputIDs(
   for (int current_stream_index = 0;
        current_stream_index < current_node.input_data_definition_files.size();
        current_stream_index++) {
-    if (current_node.previous_nodes[current_stream_index]) {
-      int previous_node_index = FindElementIndex(
-          all_nodes, *current_node.previous_nodes[current_stream_index]);
+    auto previous_node =
+        current_node.previous_nodes[current_stream_index].lock();
+    if (previous_node) {
+      int previous_node_index = FindElementIndex(all_nodes, *previous_node);
 
       int previous_stream_index = FindElementIndex(
           all_nodes[previous_node_index].output_data_definition_files,

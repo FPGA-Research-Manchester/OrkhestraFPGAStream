@@ -1,13 +1,17 @@
 #pragma once
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "config.hpp"
 #include "memory_manager.hpp"
 #include "operation_types.hpp"
 #include "query_scheduling_data.hpp"
 #include "stream_data_parameters.hpp"
 #include "table_data.hpp"
+
+using dbmstodspi::input_managing::Config;
 
 namespace dbmstodspi::query_managing {
 
@@ -36,9 +40,13 @@ class QueryManager {
    * This method will call the scheduler and data manager to eventually call the
    * fpga manager to accelerate the desired query nodes.
    * @param starting_query_nodes Vector of nodes from which the parsing starts.
+   * @param config Config struct which holds all of the corresponding hardware
+   * modules and drivers and configuration settings.
    */
   static void RunQueries(
-      std::vector<query_scheduling_data::QueryNode> starting_query_nodes);
+      std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+          starting_query_nodes,
+      const Config& config);
 };
 
 }  // namespace dbmstodspi::query_managing
