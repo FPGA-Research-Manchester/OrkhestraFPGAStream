@@ -15,6 +15,8 @@
 #include "query_scheduling_data.hpp"
 #include "rapidjson_reader.hpp"
 
+#include "logger.hpp"
+
 using dbmstodspi::fpga_managing::operation_types::QueryOperationType;
 using dbmstodspi::query_managing::QueryManager;
 using dbmstodspi::query_managing::query_scheduling_data::QueryNode;
@@ -24,6 +26,10 @@ using dbmstodspi::input_managing::ConfigCreator;
 using dbmstodspi::input_managing::GraphCreator;
 using dbmstodspi::input_managing::InputConfigReader;
 using dbmstodspi::input_managing::RapidJSONReader;
+
+using dbmstodspi::logger::LogLevel;
+using dbmstodspi::logger::SetLoggingLevel;
+using dbmstodspi::logger::Log;
 
 /**
  * @brief Helper method to run the given query nodes and their subsequent nodes
@@ -75,7 +81,12 @@ auto main(int argc, char* argv[]) -> int {
       std::move(graph_maker.MakeGraph(result["input"].as<std::string>())),
       config_creator.GetConfig(result["config"].as<std::string>()));
 
-  // Hardcoded tests
+  SetLoggingLevel(LogLevel::kDebug);  // Set global log level to debug
+  Log(LogLevel::kTrace, "We done! 42");
+  Log(LogLevel::kDebug, "We done! 42");
+  Log(LogLevel::kInfo, "We done! 42");
+
+  // Tests
   // MeasureOverallTime(std::move(graph_maker.MakeGraph("filter_testing.json")),
   //                   config_creator.GetConfig("config.ini"));
   // MeasureOverallTime(std::move(graph_maker.MakeGraph("filter_join_testing.json")),

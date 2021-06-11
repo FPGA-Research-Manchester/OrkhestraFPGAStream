@@ -106,3 +106,4 @@ endif()
 
 target_link_libraries(dbmstodspi PRIVATE query_managing)
 target_link_libraries(dbmstodspi PRIVATE input_managing)
+target_link_libraries(dbmstodspi PRIVATE util)
