@@ -45,10 +45,11 @@ void MeasureOverallTime(std::vector<std::shared_ptr<QueryNode>> leaf_nodes,
   QueryManager::RunQueries(std::move(leaf_nodes), config);
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-  std::cout
-      << "Overall time = "
-      << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count()
-      << "[s]" << std::endl;
+  Log(LogLevel::kInfo,
+      "Overall time = " +
+          std::to_string(std::chrono::duration_cast<std::chrono::seconds>(end - begin)
+              .count()) +
+          "[s]");
 }
 
 /**
@@ -65,7 +66,9 @@ auto main(int argc, char* argv[]) -> int {
   options.add_options()("i,input", "Input definition",
                         cxxopts::value<std::string>())(
       "c,config", "Config file for used hardware",
-      cxxopts::value<std::string>())("h,help", "Print usage");
+      cxxopts::value<std::string>())("v,verbose", "Additional debug messages")(
+      "t,trace", "Enable all trace signals")("h,help",
+                                                              "Print usage");
 
   auto result = options.parse(argc, argv);
 
@@ -74,17 +77,20 @@ auto main(int argc, char* argv[]) -> int {
     exit(0);
   }
 
+  if (result.count("trace")) {
+    SetLoggingLevel(LogLevel::kTrace);
+  } else if (result.count("verbose")) {
+    SetLoggingLevel(LogLevel::kDebug);
+  } else {
+    SetLoggingLevel(LogLevel::kInfo);
+  }
+
   auto config_creator = ConfigCreator(std::make_unique<RapidJSONReader>(),
                                       std::make_unique<InputConfigReader>());
   auto graph_maker = GraphCreator(std::make_unique<RapidJSONReader>());
   MeasureOverallTime(
       std::move(graph_maker.MakeGraph(result["input"].as<std::string>())),
       config_creator.GetConfig(result["config"].as<std::string>()));
-
-  SetLoggingLevel(LogLevel::kDebug);  // Set global log level to debug
-  Log(LogLevel::kTrace, "We done! 42");
-  Log(LogLevel::kDebug, "We done! 42");
-  Log(LogLevel::kInfo, "We done! 42");
 
   // Tests
   // MeasureOverallTime(std::move(graph_maker.MakeGraph("filter_testing.json")),

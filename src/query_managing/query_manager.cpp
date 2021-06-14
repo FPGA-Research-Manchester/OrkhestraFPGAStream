@@ -6,6 +6,7 @@
 #include <map>
 #include <queue>
 #include <set>
+#include <sstream>
 #include <stdexcept>
 
 #include "accelerated_query_node.hpp"
@@ -13,6 +14,7 @@
 #include "elastic_module_checker.hpp"
 #include "fpga_manager.hpp"
 #include "id_manager.hpp"
+#include "logger.hpp"
 #include "memory_block_interface.hpp"
 #include "node_scheduler.hpp"
 #include "operation_types.hpp"
@@ -23,34 +25,42 @@
 #include "util.hpp"
 
 using namespace dbmstodspi::query_managing;
+using dbmstodspi::logger::Log;
+using dbmstodspi::logger::LogLevel;
+using dbmstodspi::logger::ShouldLog;
 using dbmstodspi::util::CreateReferenceVector;
 
 void QueryManager::CheckTableData(
     const data_managing::TableData& expected_table,
     const data_managing::TableData& resulting_table) {
-  std::cout << std::endl;
-  if (expected_table == resulting_table) {
-    std::cout << "Query results are correct!" << std::endl;
-  } else {
-    std::cout << "Incorrect query results:" << std::endl;
-    std::cout << expected_table.table_data_vector.size() /
-                     TableManager::GetRecordSizeFromTable(expected_table)
-              << std::endl;
-    // data_managing::DataManager::PrintTableData(expected_table);
-    std::cout << "vs:" << std::endl;
-    std::cout << resulting_table.table_data_vector.size() /
-                     TableManager::GetRecordSizeFromTable(resulting_table)
-              << std::endl;
-    data_managing::DataManager::PrintTableData(resulting_table);
+  auto log_level = LogLevel::kInfo;
+  if (ShouldLog(log_level)) {
+    std::stringstream ss;
+    ss << std::endl;
+    if (expected_table == resulting_table) {
+      ss << "Query results are correct!" << std::endl;
+    } else {
+      ss << "Incorrect query results:" << std::endl;
+      ss << expected_table.table_data_vector.size() /
+                TableManager::GetRecordSizeFromTable(expected_table)
+         << std::endl;
+      data_managing::DataManager::PrintTableData(expected_table);
+      ss << "vs:" << std::endl;
+      ss << resulting_table.table_data_vector.size() /
+                TableManager::GetRecordSizeFromTable(resulting_table)
+         << std::endl;
+      data_managing::DataManager::PrintTableData(resulting_table);
+    }
+    ss << std::endl;
+    Log(log_level, ss.str());
   }
-  std::cout << std::endl;
 }
 
 void QueryManager::RunQueries(
     std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
         starting_query_nodes,
     const Config& config) {
-  std::cout << std::endl << "Starting up!" << std::endl;
+  Log(LogLevel::kInfo, "Starting up!");
   data_managing::DataManager data_manager(config.data_sizes);
   fpga_managing::MemoryManager memory_manager;
   fpga_managing::FPGAManager fpga_manager(&memory_manager);
@@ -146,10 +156,11 @@ void QueryManager::RunQueries(
     }
 
     // Run query
+    Log(LogLevel::kTrace, "Setup query!");
     fpga_manager.SetupQueryAcceleration(query_nodes);
-    /*std::cout << "Running query!" << std::endl;*/
+    Log(LogLevel::kTrace, "Running query!");
     auto result_sizes = fpga_manager.RunQueryAcceleration();
-    /*std::cout << "Query done!" << std::endl;*/
+    Log(LogLevel::kTrace, "Query done!");
 
     // Check results & free memory
     std::vector<data_managing::TableData> output_tables =
@@ -161,9 +172,11 @@ void QueryManager::RunQueries(
       for (int stream_index = 0; stream_index < output_ids[node_index].size();
            stream_index++) {
         if (output_memory_blocks[node_index][stream_index]) {
-          std::cout << "Result has "
-                    << result_sizes[output_ids[node_index][stream_index]]
-                    << " rows!" << std::endl;
+          Log(LogLevel::kDebug,
+              "Result has " +
+                  std::to_string(
+                      result_sizes[output_ids[node_index][stream_index]]) +
+                  " rows!");
 
           CheckTableData(
               expected_output_tables[output_ids[node_index][stream_index]],

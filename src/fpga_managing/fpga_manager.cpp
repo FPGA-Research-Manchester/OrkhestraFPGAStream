@@ -204,7 +204,7 @@ auto FPGAManager::RunQueryAcceleration()
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      begin)
                    .count()
-            << "[µs]" << std::endl;
+            << "[microseconds]" << std::endl;
 
   // PrintDebuggingData();
   return GetResultingStreamSizes(active_input_stream_ids,

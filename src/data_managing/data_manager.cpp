@@ -1,10 +1,12 @@
 #include "data_manager.hpp"
 
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 
 #include "config_reader.hpp"
 #include "csv_reader.hpp"
+#include "logger.hpp"
 #include "types_converter.hpp"
 
 using namespace dbmstodspi::data_managing;
@@ -54,14 +56,20 @@ void DataManager::AddStringDataFromIntegerData(
 
 void DataManager::PrintStringData(
     const std::vector<std::vector<std::string>>& string_data) {
-  for (const auto& row : string_data) {
-    for (const auto& element : row) {
-      if (&element != &row.back()) {
-        std::cout << element << ",";
-      } else {
-        std::cout << element << std::endl;
+  auto log_level = dbmstodspi::logger::LogLevel::kDebug;
+  if (dbmstodspi::logger::ShouldLog(log_level)) {
+    std::stringstream ss;
+    for (const auto& row : string_data) {
+      for (const auto& element : row) {
+        if (&element != &row.back()) {
+          ss << element << ",";
+        } else {
+          ss << element << std::endl;
+        }
       }
     }
+    ss << std::endl;
+    dbmstodspi::logger::Log(log_level, ss.str());
   }
 }
 
@@ -71,5 +79,4 @@ void DataManager::PrintTableData(const TableData& table_data) {
       table_data.table_data_vector, string_data_vector,
       table_data.table_column_label_vector);
   DataManager::PrintStringData(string_data_vector);
-  std::cout << std::endl;
 }

@@ -1,9 +1,16 @@
 #include "table_manager.hpp"
 
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 
+#include "logger.hpp"
+
 using namespace dbmstodspi::query_managing;
+
+using dbmstodspi::logger::Log;
+using dbmstodspi::logger::LogLevel;
+using dbmstodspi::logger::ShouldLog;
 
 auto TableManager::GetRecordSizeFromTable(
     const data_managing::TableData& input_table) -> int {
@@ -41,20 +48,26 @@ void TableManager::PrintWrittenData(
     const std::string& table_name,
     const std::unique_ptr<fpga_managing::MemoryBlockInterface>& input_device,
     const data_managing::TableData& input_table) {
-  auto output_table = input_table;
-  const int table_size = static_cast<int>(input_table.table_data_vector.size() /
-                                          GetRecordSizeFromTable(input_table));
+  auto log_level = dbmstodspi::logger::LogLevel::kTrace;
+  if (dbmstodspi::logger::ShouldLog(log_level)) {
+    std::stringstream ss;
+    auto output_table = input_table;
+    const int table_size =
+        static_cast<int>(input_table.table_data_vector.size() /
+                         GetRecordSizeFromTable(input_table));
 
-  TableManager::ReadOutputDataFromMemoryBlock(input_device, output_table,
-                                              table_size);
+    TableManager::ReadOutputDataFromMemoryBlock(input_device, output_table,
+                                                table_size);
 
-  std::cout << std::endl
-            << "Table " << table_name << " with " << table_size << " rows"
-            << std::endl;
-  std::cout << std::hex << "Address: "
-            << reinterpret_cast<uintptr_t>(input_device->GetPhysicalAddress())
-            << std::dec << std::endl;
-  data_managing::DataManager::PrintTableData(output_table);
+    ss << std::endl
+       << "Table " << table_name << " with " << table_size << " rows"
+       << std::endl;
+    ss << std::hex << "Address: "
+       << reinterpret_cast<uintptr_t>(input_device->GetPhysicalAddress())
+       << std::dec << std::endl;
+    dbmstodspi::logger::Log(log_level, ss.str());
+    data_managing::DataManager::PrintTableData(output_table);
+  }
 }
 
 void TableManager::ReadInputTables(
@@ -70,8 +83,8 @@ void TableManager::ReadInputTables(
   }
   for (int stream_index = 0; stream_index < stream_data_file_names.size();
        stream_index++) {
-    std::cout << "Reading input: " << stream_data_file_names[stream_index]
-              << std::endl;
+    Log(LogLevel::kDebug,
+        "Reading input: " + stream_data_file_names[stream_index]);
     auto current_table =
         data_manager.ParseDataFromCSV(stream_data_file_names[stream_index]);
 
@@ -79,9 +92,8 @@ void TableManager::ReadInputTables(
     if (allocated_memory_blocks[stream_index]) {
       WriteInputDataToMemoryBlock(allocated_memory_blocks[stream_index],
                                   current_table);
-      /*PrintWrittenData(stream_data_file_names[stream_index],
-                         allocated_memory_blocks[stream_index],
-         current_table);*/
+      PrintWrittenData(stream_data_file_names[stream_index],
+                       allocated_memory_blocks[stream_index], current_table);
       physical_address_ptr =
           allocated_memory_blocks[stream_index]->GetPhysicalAddress();
     }
@@ -95,9 +107,10 @@ void TableManager::ReadInputTables(
         record_count, physical_address_ptr,
         stream_specification.at(stream_index)};
 
-    // std::cout << "RECORD_SIZE = " << GetRecordSizeFromTable(current_table)
-    //          << std::endl;
-    std::cout << "RECORD_COUNT = " << record_count << std::endl;
+    Log(LogLevel::kTrace,
+        "RECORD_SIZE = " +
+            std::to_string(GetRecordSizeFromTable(current_table)));
+    Log(LogLevel::kDebug, "RECORD_COUNT = " + std::to_string(record_count));
 
     input_stream_parameters.push_back(current_stream_parameters);
   }
@@ -117,8 +130,8 @@ void TableManager::ReadExpectedTables(
   }
   for (int stream_index = 0; stream_index < stream_data_file_names.size();
        stream_index++) {
-    // std::cout << "Reading output: " << stream_data_file_names[stream_index]
-    //          << std::endl;
+    Log(LogLevel::kDebug,
+        "Reading output: " + stream_data_file_names[stream_index]);
     auto current_table =
         data_manager.ParseDataFromCSV(stream_data_file_names[stream_index]);
 
@@ -135,9 +148,10 @@ void TableManager::ReadExpectedTables(
         stream_specification.at(stream_index),
         stream_specification.back().at(stream_index)};
 
-    // PrintDataSize(current_table);
-    // std::cout << "RECORD_SIZE = " << GetRecordSizeFromTable(current_table)
-    //          << std::endl;
+    PrintDataSize(current_table);
+    Log(LogLevel::kTrace,
+        "RECORD_SIZE = " +
+            std::to_string(GetRecordSizeFromTable(current_table)));
 
     output_stream_parameters.push_back(current_stream_parameters);
 
@@ -167,6 +181,8 @@ void TableManager::ReadResultTables(
 }
 
 void TableManager::PrintDataSize(const data_managing::TableData& data_table) {
-  std::cout << "Table size: " << data_table.table_data_vector.size() * 4 / 1000
-            << "[KB]" << std::endl;
+  Log(LogLevel::kDebug,
+      "Table size: " +
+          std::to_string(data_table.table_data_vector.size() * 4 / 1000) +
+          "[KB]");
 }

@@ -23,3 +23,5 @@ if(NOT rapidcsv_POPULATED)
 endif()
 
 target_include_directories(data_managing PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+
+target_link_libraries(data_managing PUBLIC util)

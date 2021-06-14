@@ -8,6 +8,7 @@
 
 #include "dma_crossbar_setup_data.hpp"
 #include "dma_crossbar_specifier.hpp"
+#include "logger.hpp"
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
 
@@ -27,7 +28,7 @@ void DMACrossbarSetup::CalculateCrossbarSetupData(
         selected_columns, expanded_column_selection, stream_setup_data);
   }
 
-  //PrintCrossbarConfigData(expanded_column_selection, stream_setup_data);
+  // PrintCrossbarConfigData(expanded_column_selection, stream_setup_data);
 }
 
 auto DMACrossbarSetup::GetReverseIndex(int index, int row_size) -> int {
@@ -230,27 +231,33 @@ void DMACrossbarSetup::ConfigureOutputCrossbarSetupData(
 void DMACrossbarSetup::PrintCrossbarConfigData(
     const std::vector<int>& expanded_column_selection,
     const DMASetupData& stream_setup_data) {
-  std::cout << std::endl << "Specification:" << std::endl;
-  for (int i = 0; i < expanded_column_selection.size(); i++) {
-    if (i % query_acceleration_constants::kDatapathWidth == 0) {
-      std::cout << std::endl;
+  auto log_level = dbmstodspi::logger::LogLevel::kTrace;
+  if (dbmstodspi::logger::ShouldLog(log_level)) {
+    std::stringstream ss;
+    ss << std::endl << "Specification:" << std::endl;
+    for (int i = 0; i < expanded_column_selection.size(); i++) {
+      if (i % query_acceleration_constants::kDatapathWidth == 0) {
+        ss << std::endl;
+      }
+      ss << expanded_column_selection.at(i) << " ";
     }
-    std::cout << expanded_column_selection.at(i) << " ";
-  }
 
-  std::cout << std::endl << "Position selection:" << std::endl;
-  for (const auto& chunk_setup : stream_setup_data.crossbar_setup_data) {
-    std::cout << std::endl;
-    for (const auto& position_select_data : chunk_setup.position_selection) {
-      std::cout << position_select_data << " ";
+    ss << std::endl << "Position selection:" << std::endl;
+    for (const auto& chunk_setup : stream_setup_data.crossbar_setup_data) {
+      ss << std::endl;
+      for (const auto& position_select_data : chunk_setup.position_selection) {
+        ss << position_select_data << " ";
+      }
     }
-  }
 
-  std::cout << std::endl << "Chunk selection:" << std::endl;
-  for (const auto& chunk_setup : stream_setup_data.crossbar_setup_data) {
-    std::cout << std::endl;
-    for (const auto& chunk_select_data : chunk_setup.chunk_selection) {
-      std::cout << chunk_select_data << " ";
+    ss << std::endl << "Chunk selection:" << std::endl;
+    for (const auto& chunk_setup : stream_setup_data.crossbar_setup_data) {
+      ss << std::endl;
+      for (const auto& chunk_select_data : chunk_setup.chunk_selection) {
+        ss << chunk_select_data << " ";
+      }
     }
+    ss << std::endl;
+    dbmstodspi::logger::Log(log_level, ss.str());
   }
 }
