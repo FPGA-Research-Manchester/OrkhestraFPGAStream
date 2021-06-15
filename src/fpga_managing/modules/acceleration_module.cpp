@@ -1,6 +1,6 @@
 #include "acceleration_module.hpp"
 
-#include <iostream>
+#include <sstream>
 
 #include "logger.hpp"
 
@@ -26,8 +26,7 @@ void AccelerationModule::WriteToModule(
   if (dbmstodspi::logger::ShouldLog(log_level)) {
     std::stringstream ss;
     ss << std::hex << "Module: " << module_position_
-       << " Address: " << module_internal_address << " Data: " << write_data
-       << std::endl;
+       << " Address: " << module_internal_address << " Data: " << write_data;
     dbmstodspi::logger::Log(log_level, ss.str());
   }
   *register_address = write_data;

@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <iostream>
 #include <numeric>
+#include <sstream>
 
 #include "dma_crossbar_setup_data.hpp"
 #include "dma_crossbar_specifier.hpp"
@@ -28,7 +28,7 @@ void DMACrossbarSetup::CalculateCrossbarSetupData(
         selected_columns, expanded_column_selection, stream_setup_data);
   }
 
-  // PrintCrossbarConfigData(expanded_column_selection, stream_setup_data);
+  PrintCrossbarConfigData(expanded_column_selection, stream_setup_data);
 }
 
 auto DMACrossbarSetup::GetReverseIndex(int index, int row_size) -> int {
@@ -234,7 +234,7 @@ void DMACrossbarSetup::PrintCrossbarConfigData(
   auto log_level = dbmstodspi::logger::LogLevel::kTrace;
   if (dbmstodspi::logger::ShouldLog(log_level)) {
     std::stringstream ss;
-    ss << std::endl << "Specification:" << std::endl;
+    ss << "Specification:";
     for (int i = 0; i < expanded_column_selection.size(); i++) {
       if (i % query_acceleration_constants::kDatapathWidth == 0) {
         ss << std::endl;
@@ -242,7 +242,8 @@ void DMACrossbarSetup::PrintCrossbarConfigData(
       ss << expanded_column_selection.at(i) << " ";
     }
 
-    ss << std::endl << "Position selection:" << std::endl;
+    ss << std::endl << std::endl <<
+    "Position selection:";
     for (const auto& chunk_setup : stream_setup_data.crossbar_setup_data) {
       ss << std::endl;
       for (const auto& position_select_data : chunk_setup.position_selection) {
@@ -250,14 +251,13 @@ void DMACrossbarSetup::PrintCrossbarConfigData(
       }
     }
 
-    ss << std::endl << "Chunk selection:" << std::endl;
+    ss << std::endl << std::endl <<"Chunk selection:" ;
     for (const auto& chunk_setup : stream_setup_data.crossbar_setup_data) {
       ss << std::endl;
       for (const auto& chunk_select_data : chunk_setup.chunk_selection) {
         ss << chunk_select_data << " ";
       }
     }
-    ss << std::endl;
     dbmstodspi::logger::Log(log_level, ss.str());
   }
 }

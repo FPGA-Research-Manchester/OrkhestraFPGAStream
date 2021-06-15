@@ -1,6 +1,5 @@
 #include "table_manager.hpp"
 
-#include <iostream>
 #include <sstream>
 #include <stdexcept>
 
@@ -59,12 +58,9 @@ void TableManager::PrintWrittenData(
     TableManager::ReadOutputDataFromMemoryBlock(input_device, output_table,
                                                 table_size);
 
-    ss << std::endl
-       << "Table " << table_name << " with " << table_size << " rows"
-       << std::endl;
-    ss << std::hex << "Address: "
+    ss << "Table " << table_name << std::hex << "Address: "
        << reinterpret_cast<uintptr_t>(input_device->GetPhysicalAddress())
-       << std::dec << std::endl;
+       << std::dec;
     dbmstodspi::logger::Log(log_level, ss.str());
     data_managing::DataManager::PrintTableData(output_table);
   }
@@ -109,7 +105,8 @@ void TableManager::ReadInputTables(
 
     Log(LogLevel::kTrace,
         "RECORD_SIZE = " +
-            std::to_string(GetRecordSizeFromTable(current_table)));
+            std::to_string(GetRecordSizeFromTable(current_table)) +
+            "[integers]");
     Log(LogLevel::kDebug, "RECORD_COUNT = " + std::to_string(record_count));
 
     input_stream_parameters.push_back(current_stream_parameters);
@@ -151,7 +148,8 @@ void TableManager::ReadExpectedTables(
     PrintDataSize(current_table);
     Log(LogLevel::kTrace,
         "RECORD_SIZE = " +
-            std::to_string(GetRecordSizeFromTable(current_table)));
+            std::to_string(GetRecordSizeFromTable(current_table)) +
+            "[integers]");
 
     output_stream_parameters.push_back(current_stream_parameters);
 

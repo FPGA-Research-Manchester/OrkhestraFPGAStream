@@ -59,6 +59,7 @@ void DataManager::PrintStringData(
   auto log_level = dbmstodspi::logger::LogLevel::kDebug;
   if (dbmstodspi::logger::ShouldLog(log_level)) {
     std::stringstream ss;
+    ss << "data: " << std::endl;
     for (const auto& row : string_data) {
       for (const auto& element : row) {
         if (&element != &row.back()) {
@@ -68,7 +69,6 @@ void DataManager::PrintStringData(
         }
       }
     }
-    ss << std::endl;
     dbmstodspi::logger::Log(log_level, ss.str());
   }
 }

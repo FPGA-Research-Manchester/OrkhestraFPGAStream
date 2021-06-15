@@ -10,12 +10,11 @@
 #include "cxxopts.hpp"
 #include "graph_creator.hpp"
 #include "input_config_reader.hpp"
+#include "logger.hpp"
 #include "operation_types.hpp"
 #include "query_manager.hpp"
 #include "query_scheduling_data.hpp"
 #include "rapidjson_reader.hpp"
-
-#include "logger.hpp"
 
 using dbmstodspi::fpga_managing::operation_types::QueryOperationType;
 using dbmstodspi::query_managing::QueryManager;
@@ -27,9 +26,9 @@ using dbmstodspi::input_managing::GraphCreator;
 using dbmstodspi::input_managing::InputConfigReader;
 using dbmstodspi::input_managing::RapidJSONReader;
 
+using dbmstodspi::logger::Log;
 using dbmstodspi::logger::LogLevel;
 using dbmstodspi::logger::SetLoggingLevel;
-using dbmstodspi::logger::Log;
 
 /**
  * @brief Helper method to run the given query nodes and their subsequent nodes
@@ -47,8 +46,9 @@ void MeasureOverallTime(std::vector<std::shared_ptr<QueryNode>> leaf_nodes,
 
   Log(LogLevel::kInfo,
       "Overall time = " +
-          std::to_string(std::chrono::duration_cast<std::chrono::seconds>(end - begin)
-              .count()) +
+          std::to_string(
+              std::chrono::duration_cast<std::chrono::seconds>(end - begin)
+                  .count()) +
           "[s]");
 }
 
@@ -67,8 +67,8 @@ auto main(int argc, char* argv[]) -> int {
                         cxxopts::value<std::string>())(
       "c,config", "Config file for used hardware",
       cxxopts::value<std::string>())("v,verbose", "Additional debug messages")(
-      "t,trace", "Enable all trace signals")("h,help",
-                                                              "Print usage");
+      "t,trace", "Enable all trace signals")("q,quiet", "Disable all logging")(
+      "h,help", "Print usage");
 
   auto result = options.parse(argc, argv);
 
@@ -77,7 +77,9 @@ auto main(int argc, char* argv[]) -> int {
     exit(0);
   }
 
-  if (result.count("trace")) {
+  if (result.count("quiet")) {
+    SetLoggingLevel(LogLevel::kOff);
+  } else if (result.count("trace")) {
     SetLoggingLevel(LogLevel::kTrace);
   } else if (result.count("verbose")) {
     SetLoggingLevel(LogLevel::kDebug);

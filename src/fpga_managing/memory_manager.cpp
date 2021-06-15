@@ -21,12 +21,14 @@ void MemoryManager::LoadBitstreamIfNew(const std::string& bitstream_name,
   if (bitstream_name != loaded_bitstream_ ||
       register_space_size != loaded_register_space_size_) {
 #ifdef _FPGA_AVAILABLE
-    dbmstodspi::logger::Log(dbmstodspi::logger::LogLevel::kInfo,
-                            bitstream_name + " loaded!");
+    dbmstodspi::logger::Log(dbmstodspi::logger::LogLevel::kDebug,
+                            "Loading " + bitstream_name);
     acceleration_instance_ =
         pr_manager_.fpgaLoadStatic(bitstream_name, register_space_size);
     register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
     SetFPGATo300MHz();
+    dbmstodspi::logger::Log(dbmstodspi::logger::LogLevel::kTrace,
+                            bitstream_name + " loaded!");
 #else
     register_space_ = std::vector<uint32_t>(register_space_size, -1);
 #endif

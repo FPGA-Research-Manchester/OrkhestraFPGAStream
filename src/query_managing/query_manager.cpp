@@ -6,7 +6,6 @@
 #include <map>
 #include <queue>
 #include <set>
-#include <sstream>
 #include <stdexcept>
 
 #include "accelerated_query_node.hpp"
@@ -33,26 +32,19 @@ using dbmstodspi::util::CreateReferenceVector;
 void QueryManager::CheckTableData(
     const data_managing::TableData& expected_table,
     const data_managing::TableData& resulting_table) {
-  auto log_level = LogLevel::kInfo;
-  if (ShouldLog(log_level)) {
-    std::stringstream ss;
-    ss << std::endl;
-    if (expected_table == resulting_table) {
-      ss << "Query results are correct!" << std::endl;
-    } else {
-      ss << "Incorrect query results:" << std::endl;
-      ss << expected_table.table_data_vector.size() /
-                TableManager::GetRecordSizeFromTable(expected_table)
-         << std::endl;
-      data_managing::DataManager::PrintTableData(expected_table);
-      ss << "vs:" << std::endl;
-      ss << resulting_table.table_data_vector.size() /
-                TableManager::GetRecordSizeFromTable(resulting_table)
-         << std::endl;
-      data_managing::DataManager::PrintTableData(resulting_table);
-    }
-    ss << std::endl;
-    Log(log_level, ss.str());
+  if (expected_table == resulting_table) {
+    Log(LogLevel::kDebug, "Query results are correct!");
+  } else {
+    Log(LogLevel::kError,
+        "Incorrect query results: " +
+            std::to_string(
+                expected_table.table_data_vector.size() /
+                TableManager::GetRecordSizeFromTable(expected_table)) +
+            " vs " +
+            std::to_string(
+                resulting_table.table_data_vector.size() /
+                TableManager::GetRecordSizeFromTable(resulting_table)) + " rows!");
+    data_managing::DataManager::PrintTableData(resulting_table);
   }
 }
 
@@ -60,7 +52,7 @@ void QueryManager::RunQueries(
     std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
         starting_query_nodes,
     const Config& config) {
-  Log(LogLevel::kInfo, "Starting up!");
+  Log(LogLevel::kTrace, "Starting up!");
   data_managing::DataManager data_manager(config.data_sizes);
   fpga_managing::MemoryManager memory_manager;
   fpga_managing::FPGAManager fpga_manager(&memory_manager);
@@ -68,6 +60,7 @@ void QueryManager::RunQueries(
   auto query_node_runs_queue = NodeScheduler::FindAcceleratedQueryNodeSets(
       std::move(starting_query_nodes), config.accelerator_library,
       config.module_library);
+  Log(LogLevel::kTrace, "Scheduling done!");
 
   while (!query_node_runs_queue.empty()) {
     const auto executable_query_nodes = query_node_runs_queue.front().second;
