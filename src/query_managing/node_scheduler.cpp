@@ -1,10 +1,10 @@
 #include "node_scheduler.hpp"
-#include "util.hpp"
 
 #include <algorithm>
 #include <stdexcept>
 
 #include "operation_types.hpp"
+#include "util.hpp"
 
 using namespace dbmstodspi::query_managing;
 using namespace dbmstodspi::fpga_managing;
@@ -95,6 +95,15 @@ auto NodeScheduler::FindMinPosition(
           observed_node->operation_type !=
               fpga_managing::operation_types::QueryOperationType::
                   kPassThrough) {
+
+          // Assuming that the projection vector exists.
+        if (!observed_node->operation_parameters.output_stream_parameters[0]
+                 .empty() ||
+            !current_node->operation_parameters.input_stream_parameters[0]
+                 .empty()) {
+          return -1;
+        }
+
         auto current_modules_iterator = std::find_if(
             current_modules_vector.begin(), current_modules_vector.end(),
             [&](const fpga_managing::operation_types::QueryOperation&
@@ -191,6 +200,9 @@ auto NodeScheduler::FindSuitableModuleCombination(
 
   int current_position = FindMinPosition(current_node, current_query_nodes,
                                          current_modules_vector);
+  if (current_position == -1) {
+    return {};
+  }
 
   auto find_iterator =
       existing_modules_library.find(current_node->operation_type);

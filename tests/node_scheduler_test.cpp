@@ -16,11 +16,12 @@ using OpType = dbmstodspi::fpga_managing::operation_types::QueryOperationType;
 const std::vector<std::string> kDefaultFileNames;
 const std::vector<std::shared_ptr<Node>> kDefaultNextNodes;
 const std::vector<std::weak_ptr<Node>> kDefaultPreviousNodes;
-const NodeOperationParameters kDefaultParameters;
 
 class NodeSchedulerTest : public ::testing::Test {
  protected:
   void SetUp() override {
+    base_parameters_ = {{{}}, {{}}, {{}}};
+
     base_supported_bitstreams_ = {
         {{{OpType::kMergeSort, {}}}, "Some_bitstream"},
         {{{OpType::kJoin, {}}}, "Some_bitstream"},
@@ -34,13 +35,13 @@ class NodeSchedulerTest : public ::testing::Test {
                               {OpType::kPassThrough, {}}};
     query_node_a_ = std::make_shared<Node>(
         kDefaultFileNames, kDefaultFileNames, OpType::kFilter,
-        kDefaultNextNodes, kDefaultPreviousNodes, kDefaultParameters);
+        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_);
     query_node_b_ = std::make_shared<Node>(
         kDefaultFileNames, kDefaultFileNames, OpType::kLinearSort,
-        kDefaultNextNodes, kDefaultPreviousNodes, kDefaultParameters);
+        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_);
     passthrough_node_ = std::make_shared<Node>(
         kDefaultFileNames, kDefaultFileNames, OpType::kPassThrough,
-        kDefaultNextNodes, kDefaultPreviousNodes, kDefaultParameters);
+        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_);
   }
 
   std::map<ModulesCombo, std::string> base_supported_bitstreams_;
@@ -50,6 +51,8 @@ class NodeSchedulerTest : public ::testing::Test {
   // Two base nodes with a different operation
   std::shared_ptr<Node> query_node_a_;
   std::shared_ptr<Node> query_node_b_;
+
+  NodeOperationParameters base_parameters_;
 };
 
 void CheckNodeFields(
@@ -111,10 +114,10 @@ TEST_F(NodeSchedulerTest, MultipleAvailableNodesFindsCorrectNode) {
 TEST_F(NodeSchedulerTest, TwoNodesWereFoundWithDifferentRuns) {
   auto first_query = std::make_shared<Node>(
       kDefaultFileNames, kDefaultFileNames, OpType::kLinearSort,
-      kDefaultNextNodes, kDefaultPreviousNodes, kDefaultParameters);
+      kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_);
   auto second_query = std::make_shared<Node>(
       kDefaultFileNames, kDefaultFileNames, OpType::kLinearSort,
-      kDefaultNextNodes, kDefaultPreviousNodes, kDefaultParameters);
+      kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_);
 
   auto expected_first_node = *first_query;
   auto expected_second_node = *second_query;
