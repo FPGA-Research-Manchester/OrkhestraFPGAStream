@@ -92,7 +92,7 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF001.json
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF01.json TPCH_Q19_SF01.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF03.json TPCH_Q19_SF03.json COPYONLY)
 
-configure_file(${DBMStoDSPI_SOURCE_DIR}/benchmark.sh benchmark.sh COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/benchmark.pl benchmark.pl COPYONLY)
 
 FetchContent_Declare(
   cxxopts
