@@ -10,6 +10,7 @@
 #include "cxxopts.hpp"
 #include "graph_creator.hpp"
 #include "input_config_reader.hpp"
+#include "logger.hpp"
 #include "operation_types.hpp"
 #include "query_manager.hpp"
 #include "query_scheduling_data.hpp"
@@ -25,6 +26,10 @@ using dbmstodspi::input_managing::GraphCreator;
 using dbmstodspi::input_managing::InputConfigReader;
 using dbmstodspi::input_managing::RapidJSONReader;
 
+using dbmstodspi::logger::Log;
+using dbmstodspi::logger::LogLevel;
+using dbmstodspi::logger::SetLoggingLevel;
+
 /**
  * @brief Helper method to run the given query nodes and their subsequent nodes
  * while measuring and printing the overall time it took to process the queries.
@@ -39,10 +44,12 @@ void MeasureOverallTime(std::vector<std::shared_ptr<QueryNode>> leaf_nodes,
   QueryManager::RunQueries(std::move(leaf_nodes), config);
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-  std::cout
-      << "Overall time = "
-      << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count()
-      << "[s]" << std::endl;
+  Log(LogLevel::kInfo,
+      "Overall time = " +
+          std::to_string(
+              std::chrono::duration_cast<std::chrono::seconds>(end - begin)
+                  .count()) +
+          "[s]");
 }
 
 /**
@@ -59,13 +66,25 @@ auto main(int argc, char* argv[]) -> int {
   options.add_options()("i,input", "Input definition",
                         cxxopts::value<std::string>())(
       "c,config", "Config file for used hardware",
-      cxxopts::value<std::string>())("h,help", "Print usage");
+      cxxopts::value<std::string>())("v,verbose", "Additional debug messages")(
+      "t,trace", "Enable all trace signals")("q,quiet", "Disable all logging")(
+      "h,help", "Print usage");
 
   auto result = options.parse(argc, argv);
 
   if (result.count("help")) {
     std::cout << options.help() << std::endl;
     exit(0);
+  }
+
+  if (result.count("quiet")) {
+    SetLoggingLevel(LogLevel::kOff);
+  } else if (result.count("trace")) {
+    SetLoggingLevel(LogLevel::kTrace);
+  } else if (result.count("verbose")) {
+    SetLoggingLevel(LogLevel::kDebug);
+  } else {
+    SetLoggingLevel(LogLevel::kInfo);
   }
 
   auto config_creator = ConfigCreator(std::make_unique<RapidJSONReader>(),
@@ -75,7 +94,7 @@ auto main(int argc, char* argv[]) -> int {
       std::move(graph_maker.MakeGraph(result["input"].as<std::string>())),
       config_creator.GetConfig(result["config"].as<std::string>()));
 
-  // Hardcoded tests
+  // Tests
   // MeasureOverallTime(std::move(graph_maker.MakeGraph("filter_testing.json")),
   //                   config_creator.GetConfig("config.ini"));
   // MeasureOverallTime(std::move(graph_maker.MakeGraph("filter_join_testing.json")),

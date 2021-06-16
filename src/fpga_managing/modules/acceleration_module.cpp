@@ -1,6 +1,8 @@
 #include "acceleration_module.hpp"
 
-#include <iostream>
+#include <sstream>
+
+#include "logger.hpp"
 
 using namespace dbmstodspi::fpga_managing::modules;
 
@@ -20,9 +22,13 @@ void AccelerationModule::WriteToModule(
 ) {
   volatile uint32_t* register_address =
       CalculateMemoryMappedAddress(module_internal_address);
-  /*std::cout << std::hex << "Module: " << module_position_ << " Address: "
-            << module_internal_address << " Data: " << write_data
-            << std::endl;*/
+  auto log_level = dbmstodspi::logger::LogLevel::kTrace;
+  if (dbmstodspi::logger::ShouldLog(log_level)) {
+    std::stringstream ss;
+    ss << std::hex << "Module: " << module_position_
+       << " Address: " << module_internal_address << " Data: " << write_data;
+    dbmstodspi::logger::Log(log_level, ss.str());
+  }
   *register_address = write_data;
 }
 

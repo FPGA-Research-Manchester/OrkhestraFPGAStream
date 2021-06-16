@@ -92,6 +92,8 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF001.json
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF01.json TPCH_Q19_SF01.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF03.json TPCH_Q19_SF03.json COPYONLY)
 
+configure_file(${DBMStoDSPI_SOURCE_DIR}/benchmark.pl benchmark.pl COPYONLY)
+
 FetchContent_Declare(
   cxxopts
   GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
@@ -106,3 +108,4 @@ endif()
 
 target_link_libraries(dbmstodspi PRIVATE query_managing)
 target_link_libraries(dbmstodspi PRIVATE input_managing)
+target_link_libraries(dbmstodspi PRIVATE util)

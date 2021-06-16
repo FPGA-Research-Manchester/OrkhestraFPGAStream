@@ -22,6 +22,7 @@
 #include "join_setup.hpp"
 #include "linear_sort.hpp"
 #include "linear_sort_setup.hpp"
+#include "logger.hpp"
 #include "merge_sort.hpp"
 #include "merge_sort_setup.hpp"
 #include "multiplication.hpp"
@@ -30,6 +31,9 @@
 #include "query_acceleration_constants.hpp"
 
 using namespace dbmstodspi::fpga_managing;
+
+using dbmstodspi::logger::Log;
+using dbmstodspi::logger::LogLevel;
 
 void FPGAManager::SetupQueryAcceleration(
     const std::vector<AcceleratedQueryNode>& query_nodes) {
@@ -86,8 +90,12 @@ void FPGAManager::SetupQueryAcceleration(
     // operation.
 
     // Make it possible to configure a module to be unused.
+    auto log_level = LogLevel::kInfo;
     switch (query_node.operation_type) {
       case operation_types::QueryOperationType::kFilter: {
+        Log(log_level,
+            "Configuring filter on pos " +
+                std::to_string(query_node.operation_module_location));
         modules::Filter filter_module(memory_manager_,
                                       query_node.operation_module_location);
         FilterSetup::SetupFilterModule(filter_module,
@@ -97,6 +105,9 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperationType::kJoin: {
+        Log(log_level,
+            "Configuring join on pos " +
+                std::to_string(query_node.operation_module_location));
         modules::Join join_module(memory_manager_,
                                   query_node.operation_module_location);
         JoinSetup::SetupJoinModule(
@@ -110,6 +121,9 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperationType::kMergeSort: {
+        Log(log_level,
+            "Configuring merge sort on pos " +
+                std::to_string(query_node.operation_module_location));
         modules::MergeSort merge_sort_module(
             memory_manager_, query_node.operation_module_location);
         MergeSortSetup::SetupMergeSortModule(
@@ -118,6 +132,9 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperationType::kLinearSort: {
+        Log(log_level,
+            "Configuring linear sort on pos " +
+                std::to_string(query_node.operation_module_location));
         modules::LinearSort linear_sort_module(
             memory_manager_, query_node.operation_module_location);
         LinearSortSetup::SetupLinearSortModule(
@@ -126,6 +143,9 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperationType::kAddition: {
+        Log(log_level,
+            "Configuring addition on pos " +
+                std::to_string(query_node.operation_module_location));
         modules::Addition addition_module(memory_manager_,
                                           query_node.operation_module_location);
         AdditionSetup::SetupAdditionModule(
@@ -134,6 +154,9 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperationType::kMultiplication: {
+        Log(log_level,
+            "Configuring multiplication on pos " +
+                std::to_string(query_node.operation_module_location));
         modules::Multiplication multiplication_module(
             memory_manager_, query_node.operation_module_location);
         MultiplicationSetup::SetupMultiplicationModule(
@@ -142,6 +165,9 @@ void FPGAManager::SetupQueryAcceleration(
         break;
       }
       case operation_types::QueryOperationType::kAggregationSum: {
+        Log(log_level,
+            "Configuring sum on pos " +
+                std::to_string(query_node.operation_module_location));
         auto aggregation_module = std::make_unique<modules::AggregationSum>(
             memory_manager_, query_node.operation_module_location);
         AggregationSumSetup::SetupAggregationSum(
@@ -200,13 +226,19 @@ auto FPGAManager::RunQueryAcceleration()
   WaitForStreamsToFinish();
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-  std::cout << "Execution time = "
+  Log(LogLevel::kInfo,
+      "Execution time = " +
+          std::to_string(
+              std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+                  .count()) +
+          "[microseconds]");
+  /*std::cout << "Execution time = "
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      begin)
                    .count()
-            << "[µs]" << std::endl;
+            << "[microseconds]" << std::endl;*/
 
-  // PrintDebuggingData();
+  PrintDebuggingData();
   return GetResultingStreamSizes(active_input_stream_ids,
                                  active_output_stream_ids);
 }
@@ -284,12 +316,15 @@ auto FPGAManager::GetResultingStreamSizes(
 
 void FPGAManager::PrintDebuggingData() {
 #ifdef _FPGA_AVAILABLE
-  std::cout << "Runtime: " << std::dec << FPGAManager::dma_engine_.GetRuntime()
-            << std::endl;
-  std::cout << "ValidReadCount:" << FPGAManager::dma_engine_.GetRuntime()
-            << std::endl;
-  std::cout << "ValidWriteCount:" << FPGAManager::dma_engine_.GetRuntime()
-            << std::endl;
+  auto log_level = LogLevel::kDebug;
+  Log(log_level,
+      "Runtime: " + std::to_string(FPGAManager::dma_engine_.GetRuntime()));
+  Log(log_level,
+      "ValidReadCount: " +
+          std::to_string(FPGAManager::dma_engine_.GetValidReadCyclesCount()));
+  Log(log_level,
+      "ValidWriteCount: " +
+          std::to_string(FPGAManager::dma_engine_.GetValidWriteCyclesCount()));
   if (FPGAManager::ila_module_) {
     std::cout << "======================================================ILA 0 "
                  "DATA ======================================================="

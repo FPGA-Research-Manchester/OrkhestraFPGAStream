@@ -1,4 +1,5 @@
 #include "node_scheduler.hpp"
+#include "util.hpp"
 
 #include <algorithm>
 #include <stdexcept>
@@ -7,6 +8,7 @@
 
 using namespace dbmstodspi::query_managing;
 using namespace dbmstodspi::fpga_managing;
+using dbmstodspi::util::CreateReferenceVector;
 
 auto NodeScheduler::FindAcceleratedQueryNodeSets(
     std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
@@ -335,15 +337,4 @@ auto NodeScheduler::IsNodeAvailable(
     }
   }
   return true;
-}
-
-auto NodeScheduler::CreateReferenceVector(
-    const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>&
-        pointer_vector) -> std::vector<query_scheduling_data::QueryNode> {
-  std::vector<query_scheduling_data::QueryNode> ref_vector;
-  ref_vector.reserve(pointer_vector.size());
-  for (const auto& ptr : pointer_vector) {
-    ref_vector.push_back(*ptr);
-  }
-  return ref_vector;
 }

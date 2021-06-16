@@ -80,3 +80,5 @@ target_include_directories(fpga_managing PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "$
 if (NOT WIN32)
 	target_link_libraries(fpga_managing PUBLIC fos)
 endif()
+
+target_link_libraries(fpga_managing PUBLIC util)
