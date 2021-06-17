@@ -14,27 +14,10 @@ void TypesConverter::AddIntegerDataFromStringData(
     const std::vector<std::vector<std::string>>& string_data,
     std::vector<uint32_t>& integer_data,
     std::vector<std::pair<ColumnDataType, int>> data_types_vector) {
-  std::map<ColumnDataType,
-           void (*)(const std::string&, std::vector<uint32_t>&, int)>
-      conversion_functions;
-  conversion_functions.insert(
-      std::make_pair(ColumnDataType::kInteger,
-                     TypesConverter::ConvertIntegerValuesToIntegerData));
-  conversion_functions.insert(
-      std::make_pair(ColumnDataType::kVarchar,
-                     TypesConverter::ConvertStringValuesToIntegerData));
-  conversion_functions.insert(std::make_pair(
-      ColumnDataType::kNull, TypesConverter::ConvertNullValuesToIntegerData));
-  conversion_functions.insert(
-      std::make_pair(ColumnDataType::kDecimal,
-                     TypesConverter::ConvertDecimalValuesToIntegerData));
-  conversion_functions.insert(std::make_pair(
-      ColumnDataType::kDate, TypesConverter::ConvertDateValuesToIntegerData));
-
   for (const auto& row : string_data) {
     for (int column = 0; column < row.size(); column++) {
-      conversion_functions[data_types_vector[column].first](
-          row[column], integer_data, data_types_vector[column].second);
+      ConvertDataToIntegers(data_types_vector[column].first, row[column],
+                            integer_data, data_types_vector[column].second);
     }
   }
 }
@@ -43,20 +26,6 @@ void TypesConverter::AddStringDataFromIntegerData(
     const std::vector<uint32_t>& integer_data,
     std::vector<std::vector<std::string>>& resulting_string_data,
     const std::vector<std::pair<ColumnDataType, int>>& data_types_vector) {
-  std::map<ColumnDataType,
-           void (*)(const std::vector<uint32_t>&, std::vector<std::string>&)>
-      conversion_functions;
-  conversion_functions.insert(std::make_pair(
-      ColumnDataType::kInteger, TypesConverter::ConvertIntegerValuesToString));
-  conversion_functions.insert(std::make_pair(
-      ColumnDataType::kVarchar, TypesConverter::ConvertStringValuesToString));
-  conversion_functions.insert(std::make_pair(
-      ColumnDataType::kNull, TypesConverter::ConvertNullValuesToString));
-  conversion_functions.insert(std::make_pair(
-      ColumnDataType::kDecimal, TypesConverter::ConvertDecimalValuesToString));
-  conversion_functions.insert(std::make_pair(
-      ColumnDataType::kDate, TypesConverter::ConvertDateValuesToString));
-
   std::vector<uint32_t> current_element;
   std::vector<std::string> current_output_row;
   int current_column_index = 0;
@@ -64,8 +33,8 @@ void TypesConverter::AddStringDataFromIntegerData(
     current_element.push_back(element_id);
     if (current_element.size() ==
         data_types_vector[current_column_index].second) {
-      conversion_functions[data_types_vector[current_column_index].first](
-          current_element, current_output_row);
+      ConvertDataToString(data_types_vector[current_column_index].first,
+                          current_element, current_output_row);
       current_element.clear();
       if ((current_column_index + 1) == data_types_vector.size()) {
         resulting_string_data.push_back(current_output_row);
@@ -74,6 +43,58 @@ void TypesConverter::AddStringDataFromIntegerData(
       current_column_index =
           (current_column_index + 1) % data_types_vector.size();
     }
+  }
+}
+
+void TypesConverter::ConvertDataToIntegers(
+    ColumnDataType data_type, const std::string& input_string,
+    std::vector<uint32_t>& converted_data_vector, int string_size) {
+  switch (data_type) {
+    case ColumnDataType::kInteger:
+      ConvertIntegerValuesToIntegerData(input_string, converted_data_vector,
+                                        string_size);
+      break;
+    case ColumnDataType::kVarchar:
+      ConvertStringValuesToIntegerData(input_string, converted_data_vector,
+                                       string_size);
+      break;
+    case ColumnDataType::kNull:
+      ConvertNullValuesToIntegerData(input_string, converted_data_vector,
+                                     string_size);
+      break;
+    case ColumnDataType::kDecimal:
+      ConvertDecimalValuesToIntegerData(input_string, converted_data_vector,
+                                        string_size);
+      break;
+    case ColumnDataType::kDate:
+      ConvertDateValuesToIntegerData(input_string, converted_data_vector,
+                                     string_size);
+      break;
+    default:
+      throw std::runtime_error("Incorrect data type given!");
+  }
+}
+void TypesConverter::ConvertDataToString(
+    ColumnDataType data_type, const std::vector<uint32_t>& input_integer_data,
+    std::vector<std::string>& converted_data_vector) {
+  switch (data_type) {
+    case ColumnDataType::kInteger:
+      ConvertIntegerValuesToString(input_integer_data, converted_data_vector);
+      break;
+    case ColumnDataType::kVarchar:
+      ConvertIntegerValuesToString(input_integer_data, converted_data_vector);
+      break;
+    case ColumnDataType::kNull:
+      ConvertIntegerValuesToString(input_integer_data, converted_data_vector);
+      break;
+    case ColumnDataType::kDecimal:
+      ConvertIntegerValuesToString(input_integer_data, converted_data_vector);
+      break;
+    case ColumnDataType::kDate:
+      ConvertIntegerValuesToString(input_integer_data, converted_data_vector);
+      break;
+    default:
+      throw std::runtime_error("Incorrect data type given!");
   }
 }
 

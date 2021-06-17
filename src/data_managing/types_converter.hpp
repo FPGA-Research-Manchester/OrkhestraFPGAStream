@@ -126,6 +126,13 @@ class TypesConverter {
       std::vector<std::string>& string_vector);
 
  private:
+  static void ConvertDataToIntegers(ColumnDataType data_type, const std::string& input_string,
+                                    std::vector<uint32_t>& converted_data_vector,
+                                    int string_size);
+  static void ConvertDataToString(ColumnDataType data_type,
+                                  const std::vector<uint32_t>& input_integer_data,
+                                  std::vector<std::string>& converted_data_vector);
+
   /**
    * @brief Helper method to convert strings with hexadecimal values to strings.
    * @param hex Input string with hex values which can be converted to a string
