@@ -349,13 +349,13 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfIOProjection) {
                     expected_second_node);
 }
 
-TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfSecondInputProjection) {
+TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfSecondOutputProjection) {
   query_node_a_->next_nodes = {nullptr, query_node_b_};
   query_node_b_->previous_nodes = {query_node_a_};
 
   std::vector<int> some_data = {0, 1, 2, 3, 3};
 
-  query_node_b_->operation_parameters.input_stream_parameters = {{}, some_data};
+  query_node_a_->operation_parameters.output_stream_parameters = {{}, some_data};
 
   base_supported_bitstreams_.insert({{{query_node_a_->operation_type, {}},
                                       {query_node_b_->operation_type, {}}},
@@ -364,7 +364,7 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfSecondInputProjection) {
   auto expected_first_node = *query_node_a_;
   auto expected_second_node = *query_node_b_;
   expected_first_node.module_location = 1;
-  expected_first_node.next_nodes = {nullptr};
+  expected_first_node.next_nodes = {nullptr, nullptr};
   expected_second_node.module_location = 1;
   expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
 
@@ -393,7 +393,6 @@ TEST_F(NodeSchedulerTest, SameRunsDespiteIOProjection) {
   std::vector<int> some_data = {0, 1, 2, 3, 3};
 
   query_node_a_->operation_parameters.output_stream_parameters = {
-      some_data,
       some_data,
       {},
       some_data,

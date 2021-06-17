@@ -85,8 +85,11 @@ auto NodeScheduler::FindMinPosition(
     const query_scheduling_data::ConfigurableModulesVector&
         current_modules_vector) -> int {
   int min_position_index = 0;
-  for (const auto& previous_node : current_node->previous_nodes) {
-    auto observed_node = previous_node.lock();
+  for (int previous_node_index = 0;
+       previous_node_index < current_node->previous_nodes.size();
+       previous_node_index++) {
+    auto observed_node =
+        current_node->previous_nodes[previous_node_index].lock();
     if (observed_node) {
       auto current_nodes_iterator =
           std::find(current_query_nodes.begin(), current_query_nodes.end(),
@@ -95,11 +98,13 @@ auto NodeScheduler::FindMinPosition(
           observed_node->operation_type !=
               fpga_managing::operation_types::QueryOperationType::
                   kPassThrough) {
-
-          // Assuming that the projection vector exists.
-        if (!observed_node->operation_parameters.output_stream_parameters[0]
+        // Assuming that the projection vector exists.
+        if (!observed_node->operation_parameters
+                 .output_stream_parameters[FindNextNodeLocation(
+                     observed_node->next_nodes, current_node)]
                  .empty() ||
-            !current_node->operation_parameters.input_stream_parameters[0]
+            !current_node->operation_parameters
+                 .input_stream_parameters[previous_node_index]
                  .empty()) {
           return -1;
         }
@@ -349,4 +354,26 @@ auto NodeScheduler::IsNodeAvailable(
     }
   }
   return true;
+}
+
+auto NodeScheduler::FindNextNodeLocation(
+    const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>&
+    next_nodes,
+    const query_scheduling_data::QueryNode* next_node) -> int {
+  std::vector<query_scheduling_data::QueryNode*> next_node_list;
+  next_node_list.reserve(next_nodes.size());
+  for (const auto& node : next_nodes) {
+    if (node) {
+      next_node_list.push_back(node.get());
+    } else {
+      next_node_list.push_back(nullptr);
+    }
+  }
+  auto it = find(next_node_list.begin(), next_node_list.end(), next_node);
+  if (it != next_node_list.end()) {
+    auto thing = it - next_node_list.begin();
+    return it - next_node_list.begin();
+  } else {
+    throw std::runtime_error("No node found!");
+  }
 }
