@@ -349,11 +349,55 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfIOProjection) {
                     expected_second_node);
 }
 
-TEST_F(NodeSchedulerTest, SameRunsDespiteIOProjection) {
-  query_node_a_->next_nodes = {query_node_b_};
+TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfSecondInputProjection) {
+  query_node_a_->next_nodes = {nullptr, query_node_b_};
   query_node_b_->previous_nodes = {query_node_a_};
 
-  query_node_a_->operation_parameters.output_stream_parameters = {{}, {2}};
+  std::vector<int> some_data = {0, 1, 2, 3, 3};
+
+  query_node_b_->operation_parameters.input_stream_parameters = {{}, some_data};
+
+  base_supported_bitstreams_.insert({{{query_node_a_->operation_type, {}},
+                                      {query_node_b_->operation_type, {}}},
+                                     "Some_bitstream"});
+
+  auto expected_first_node = *query_node_a_;
+  auto expected_second_node = *query_node_b_;
+  expected_first_node.module_location = 1;
+  expected_first_node.next_nodes = {nullptr};
+  expected_second_node.module_location = 1;
+  expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
+
+  ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}}};
+  ModulesCombo expected_second_module_vector = {
+      {query_node_b_->operation_type, {}}};
+
+  std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
+
+  auto scheduling_results =
+      dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
+          starting_nodes, base_supported_bitstreams_, base_existing_modules_);
+
+  ASSERT_EQ(scheduling_results.front().first, expected_module_vector);
+  CheckNodeEquality(*scheduling_results.front().second[0], expected_first_node);
+  scheduling_results.pop();
+  ASSERT_EQ(scheduling_results.front().first, expected_second_module_vector);
+  CheckNodeEquality(*scheduling_results.front().second[0],
+                    expected_second_node);
+}
+
+TEST_F(NodeSchedulerTest, SameRunsDespiteIOProjection) {
+  query_node_a_->next_nodes = {nullptr, query_node_b_};
+  query_node_b_->previous_nodes = {query_node_a_};
+
+  std::vector<int> some_data = {0, 1, 2, 3, 3};
+
+  query_node_a_->operation_parameters.output_stream_parameters = {
+      some_data,
+      some_data,
+      {},
+      some_data,
+  };
   query_node_a_->operation_parameters.input_stream_parameters = {
       {0, 1, 2, 3, 3}};
   query_node_b_->operation_parameters.output_stream_parameters = {
