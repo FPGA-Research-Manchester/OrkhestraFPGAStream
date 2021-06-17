@@ -28,6 +28,12 @@ struct NodeOperationParameters {
   }
 };
 
+const struct StreamParamDefinition {
+  int kStreamParamCount = 2;
+  int kProjectionOffset = 0;
+  int kChunkCountOffset = 1;
+} kIOStreamParamDefs;
+
 /**
  * @brief Struct for defining a query node.
  */
@@ -104,3 +110,4 @@ const std::map<std::string, fpga_managing::operation_types::QueryOperationType>
         {"kPassThrough",
          fpga_managing::operation_types::QueryOperationType::kPassThrough}};
 }  // namespace dbmstodspi::query_managing::query_scheduling_data
+

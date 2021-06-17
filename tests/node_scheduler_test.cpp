@@ -355,7 +355,8 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfSecondOutputProjection) {
 
   std::vector<int> some_data = {0, 1, 2, 3, 3};
 
-  query_node_a_->operation_parameters.output_stream_parameters = {{}, some_data};
+  query_node_a_->operation_parameters.output_stream_parameters = {
+      {}, some_data, some_data, some_data};
 
   base_supported_bitstreams_.insert({{{query_node_a_->operation_type, {}},
                                       {query_node_b_->operation_type, {}}},
@@ -393,6 +394,7 @@ TEST_F(NodeSchedulerTest, SameRunsDespiteIOProjection) {
   std::vector<int> some_data = {0, 1, 2, 3, 3};
 
   query_node_a_->operation_parameters.output_stream_parameters = {
+      some_data,
       some_data,
       {},
       some_data,

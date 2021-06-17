@@ -4,10 +4,12 @@
 #include <stdexcept>
 
 #include "operation_types.hpp"
+#include "query_scheduling_data.hpp"
 #include "util.hpp"
 
 using namespace dbmstodspi::query_managing;
 using namespace dbmstodspi::fpga_managing;
+using dbmstodspi::query_managing::query_scheduling_data::kIOStreamParamDefs;
 using dbmstodspi::util::CreateReferenceVector;
 
 auto NodeScheduler::FindAcceleratedQueryNodeSets(
@@ -100,11 +102,17 @@ auto NodeScheduler::FindMinPosition(
                   kPassThrough) {
         // Assuming that the projection vector exists.
         if (!observed_node->operation_parameters
-                 .output_stream_parameters[FindNextNodeLocation(
-                     observed_node->next_nodes, current_node)]
+                 .output_stream_parameters
+                     [FindNextNodeLocation(observed_node->next_nodes,
+                                           current_node) *
+                          kIOStreamParamDefs.kStreamParamCount +
+                      kIOStreamParamDefs.kProjectionOffset]
                  .empty() ||
             !current_node->operation_parameters
-                 .input_stream_parameters[previous_node_index]
+                 .input_stream_parameters[previous_node_index *
+                                              kIOStreamParamDefs
+                                                  .kStreamParamCount +
+                                          kIOStreamParamDefs.kProjectionOffset]
                  .empty()) {
           return -1;
         }
@@ -358,7 +366,7 @@ auto NodeScheduler::IsNodeAvailable(
 
 auto NodeScheduler::FindNextNodeLocation(
     const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>&
-    next_nodes,
+        next_nodes,
     const query_scheduling_data::QueryNode* next_node) -> int {
   std::vector<query_scheduling_data::QueryNode*> next_node_list;
   next_node_list.reserve(next_nodes.size());

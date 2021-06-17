@@ -4,12 +4,14 @@
 #include <stdexcept>
 
 #include "logger.hpp"
+#include "query_scheduling_data.hpp"
 
 using namespace dbmstodspi::query_managing;
 
 using dbmstodspi::logger::Log;
 using dbmstodspi::logger::LogLevel;
 using dbmstodspi::logger::ShouldLog;
+using dbmstodspi::query_managing::query_scheduling_data::kIOStreamParamDefs;
 
 auto TableManager::GetRecordSizeFromTable(
     const data_managing::TableData& input_table) -> int {
@@ -101,7 +103,9 @@ void TableManager::ReadInputTables(
     fpga_managing::StreamDataParameters current_stream_parameters = {
         stream_id_vector[stream_index], GetRecordSizeFromTable(current_table),
         record_count, physical_address_ptr,
-        stream_specification.at(stream_index)};
+        stream_specification.at(stream_index *
+                                    kIOStreamParamDefs.kStreamParamCount +
+                                kIOStreamParamDefs.kProjectionOffset)};
 
     Log(LogLevel::kTrace,
         "RECORD_SIZE = " +
@@ -142,8 +146,12 @@ void TableManager::ReadExpectedTables(
         GetRecordSizeFromTable(current_table),
         0,
         physical_address_ptr,
-        stream_specification.at(stream_index),
-        stream_specification.back().at(stream_index)};
+        stream_specification.at(stream_index *
+                                    kIOStreamParamDefs.kStreamParamCount +
+                                kIOStreamParamDefs.kProjectionOffset),
+        stream_specification.at(stream_index *
+                                    kIOStreamParamDefs.kStreamParamCount +
+                                kIOStreamParamDefs.kChunkCountOffset).at(0)};
 
     PrintDataSize(current_table);
     Log(LogLevel::kTrace,
