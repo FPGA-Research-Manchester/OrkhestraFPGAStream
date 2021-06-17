@@ -4,7 +4,6 @@
 #include <sstream>
 #include <stdexcept>
 
-#include "config_reader.hpp"
 #include "csv_reader.hpp"
 #include "logger.hpp"
 #include "types_converter.hpp"
@@ -16,7 +15,7 @@ auto DataManager::ParseDataFromCSV(const std::string& filename) -> TableData {
   std::vector<std::string> header_row;
   CSVReader::ReadTableData(filename, header_row, data_rows);
   int size = 0;
-  std::vector<std::pair<std::string, int>> table_column_label_vector;
+  std::vector<std::pair<ColumnDataType, int>> table_column_label_vector;
   for (const auto& column_data : header_row) {
     auto delimiter_position = column_data.find('-');
     auto name = column_data.substr(0, delimiter_position);
@@ -28,7 +27,7 @@ auto DataManager::ParseDataFromCSV(const std::string& filename) -> TableData {
       throw std::runtime_error(value + "size is not supported!");
     }
 
-    table_column_label_vector.emplace_back(name,
+    table_column_label_vector.emplace_back(data_type_names.at(name),
                                            static_cast<int>(data_type_size));
     size += static_cast<int>(data_type_size);
   }
@@ -41,15 +40,10 @@ auto DataManager::ParseDataFromCSV(const std::string& filename) -> TableData {
   return table_data;
 }
 
-auto DataManager::GetDataConfiguration(const std::string& config_filename)
-    -> std::map<std::string, double> {
-  return ConfigReader::ParseDataTypeSizesConfig(config_filename);
-}
-
 void DataManager::AddStringDataFromIntegerData(
     const std::vector<uint32_t>& integer_data,
     std::vector<std::vector<std::string>>& string_data,
-    const std::vector<std::pair<std::string, int>>& data_types_vector) {
+    const std::vector<std::pair<ColumnDataType, int>>& data_types_vector) {
   TypesConverter::AddStringDataFromIntegerData(integer_data, string_data,
                                                data_types_vector);
 }

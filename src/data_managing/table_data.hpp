@@ -3,15 +3,25 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
 
 namespace dbmstodspi::data_managing {
+
+enum class ColumnDataType { kInteger, kVarchar, kNull, kDecimal, kDate };
+
+const std::map<std::string, ColumnDataType> data_type_names = {
+    {"integer", ColumnDataType::kInteger},
+    {"varchar", ColumnDataType::kVarchar},
+    {"null", ColumnDataType::kNull},
+    {"decimal", ColumnDataType::kDecimal},
+    {"date", ColumnDataType::kDate}};
 
 /**
  * @brief Struct to hold the information about the table data.
  */
 struct TableData {
   /// Vector to hold data about column data types and sizes.
-  std::vector<std::pair<std::string, int>> table_column_label_vector;
+  std::vector<std::pair<ColumnDataType, int>> table_column_label_vector;
   /// Vector to hold the table data in integer format.
   std::vector<uint32_t> table_data_vector;
 

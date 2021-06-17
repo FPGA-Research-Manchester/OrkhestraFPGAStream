@@ -13,20 +13,23 @@ using namespace dbmstodspi::data_managing;
 void TypesConverter::AddIntegerDataFromStringData(
     const std::vector<std::vector<std::string>>& string_data,
     std::vector<uint32_t>& integer_data,
-    std::vector<std::pair<std::string, int>> data_types_vector) {
-  std::map<std::string,
+    std::vector<std::pair<ColumnDataType, int>> data_types_vector) {
+  std::map<ColumnDataType,
            void (*)(const std::string&, std::vector<uint32_t>&, int)>
       conversion_functions;
-  conversion_functions.insert(std::make_pair(
-      "integer", TypesConverter::ConvertIntegerValuesToIntegerData));
-  conversion_functions.insert(std::make_pair(
-      "varchar", TypesConverter::ConvertStringValuesToIntegerData));
   conversion_functions.insert(
-      std::make_pair("null", TypesConverter::ConvertNullValuesToIntegerData));
-  conversion_functions.insert(std::make_pair(
-      "decimal", TypesConverter::ConvertDecimalValuesToIntegerData));
+      std::make_pair(ColumnDataType::kInteger,
+                     TypesConverter::ConvertIntegerValuesToIntegerData));
   conversion_functions.insert(
-      std::make_pair("date", TypesConverter::ConvertDateValuesToIntegerData));
+      std::make_pair(ColumnDataType::kVarchar,
+                     TypesConverter::ConvertStringValuesToIntegerData));
+  conversion_functions.insert(std::make_pair(
+      ColumnDataType::kNull, TypesConverter::ConvertNullValuesToIntegerData));
+  conversion_functions.insert(
+      std::make_pair(ColumnDataType::kDecimal,
+                     TypesConverter::ConvertDecimalValuesToIntegerData));
+  conversion_functions.insert(std::make_pair(
+      ColumnDataType::kDate, TypesConverter::ConvertDateValuesToIntegerData));
 
   for (const auto& row : string_data) {
     for (int column = 0; column < row.size(); column++) {
@@ -39,20 +42,20 @@ void TypesConverter::AddIntegerDataFromStringData(
 void TypesConverter::AddStringDataFromIntegerData(
     const std::vector<uint32_t>& integer_data,
     std::vector<std::vector<std::string>>& resulting_string_data,
-    const std::vector<std::pair<std::string, int>>& data_types_vector) {
-  std::map<std::string,
+    const std::vector<std::pair<ColumnDataType, int>>& data_types_vector) {
+  std::map<ColumnDataType,
            void (*)(const std::vector<uint32_t>&, std::vector<std::string>&)>
       conversion_functions;
-  conversion_functions.insert(
-      std::make_pair("integer", TypesConverter::ConvertIntegerValuesToString));
-  conversion_functions.insert(
-      std::make_pair("varchar", TypesConverter::ConvertStringValuesToString));
-  conversion_functions.insert(
-      std::make_pair("null", TypesConverter::ConvertNullValuesToString));
-  conversion_functions.insert(
-      std::make_pair("decimal", TypesConverter::ConvertDecimalValuesToString));
-  conversion_functions.insert(
-      std::make_pair("date", TypesConverter::ConvertDateValuesToString));
+  conversion_functions.insert(std::make_pair(
+      ColumnDataType::kInteger, TypesConverter::ConvertIntegerValuesToString));
+  conversion_functions.insert(std::make_pair(
+      ColumnDataType::kVarchar, TypesConverter::ConvertStringValuesToString));
+  conversion_functions.insert(std::make_pair(
+      ColumnDataType::kNull, TypesConverter::ConvertNullValuesToString));
+  conversion_functions.insert(std::make_pair(
+      ColumnDataType::kDecimal, TypesConverter::ConvertDecimalValuesToString));
+  conversion_functions.insert(std::make_pair(
+      ColumnDataType::kDate, TypesConverter::ConvertDateValuesToString));
 
   std::vector<uint32_t> current_element;
   std::vector<std::string> current_output_row;

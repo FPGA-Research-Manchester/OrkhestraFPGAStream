@@ -5,6 +5,8 @@
 #include <utility>
 #include <vector>
 
+#include "table_data.hpp"
+
 namespace dbmstodspi::data_managing {
 
 /**
@@ -23,7 +25,7 @@ class TypesConverter {
   static void AddIntegerDataFromStringData(
       const std::vector<std::vector<std::string>>& string_data,
       std::vector<uint32_t>& integer_data,
-      std::vector<std::pair<std::string, int>> data_types_vector);
+      std::vector<std::pair<ColumnDataType, int>> data_types_vector);
   /**
    * @brief Add string typed data to the output vector given input data in
    * integer format.
@@ -34,7 +36,7 @@ class TypesConverter {
   static void AddStringDataFromIntegerData(
       const std::vector<uint32_t>& integer_data,
       std::vector<std::vector<std::string>>& resulting_string_data,
-      const std::vector<std::pair<std::string, int>>& data_types_vector);
+      const std::vector<std::pair<ColumnDataType, int>>& data_types_vector);
 
   /**
    * @brief Convert string table element to integers.

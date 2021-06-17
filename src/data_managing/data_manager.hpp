@@ -38,14 +38,6 @@ class DataManager {
   /// Map to hold information about data type sizes from the given config file.
   std::map<std::string, double> data_type_sizes_;
   /**
-   * @brief Read the data type configuration file to fill the #data_type_sizes
-   * map.
-   * @param config_filename Path to the data types configuration file.
-   * @return A map which maps each datatype to its size modifier.
-   */
-  static auto GetDataConfiguration(const std::string& config_filename)
-      -> std::map<std::string, double>;
-  /**
    * @brief Helper method for printing out table data.
    *
    * Convert the integers in the table data to printable strings using
@@ -57,7 +49,7 @@ class DataManager {
   static void AddStringDataFromIntegerData(
       const std::vector<uint32_t>& integer_data,
       std::vector<std::vector<std::string>>& string_data,
-      const std::vector<std::pair<std::string, int>>& data_types_vector);
+      const std::vector<std::pair<ColumnDataType, int>>& data_types_vector);
   /**
    * @brief Helper method to print the string data from tables.
    * @param string_data Rows of different elements in string format.
