@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <fstream>
 
 #include "csv_reader.hpp"
 #include "logger.hpp"
@@ -75,4 +76,25 @@ void DataManager::PrintTableData(const TableData& table_data) {
       table_data.table_data_vector, string_data_vector,
       table_data.table_column_label_vector);
   DataManager::PrintStringData(string_data_vector);
+}
+
+void DataManager::WriteTableData(const TableData& table_data,
+    std::string filename) {
+  std::vector<std::vector<std::string>> string_data_vector;
+  DataManager::AddStringDataFromIntegerData(
+      table_data.table_data_vector, string_data_vector,
+      table_data.table_column_label_vector);
+  std::ofstream output_file (filename);
+  if (output_file.is_open()) {
+    for (const auto& line : string_data_vector) {
+      for (auto iter = line.begin(); iter != line.end(); iter++) {
+        if (iter != line.begin()) output_file << ",";
+        output_file << *iter;
+      }
+      output_file << std::endl;
+    }
+    output_file.close();
+  } else {
+    throw std::runtime_error("Can't open " + filename);
+  }
 }

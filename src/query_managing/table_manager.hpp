@@ -88,6 +88,12 @@ class TableManager {
       std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
           allocated_memory_blocks);
 
+  /**
+   * @brief Write the table to a CSV file with a timestamp
+   * @param data_table Resulting data to be written to the file.
+  */
+  static void WriteResultTableFile(const TableData& data_table);
+
  private:
   static void ReadOutputDataFromMemoryBlock(
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>& output_device,

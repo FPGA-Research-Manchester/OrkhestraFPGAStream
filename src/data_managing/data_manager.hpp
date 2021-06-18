@@ -41,6 +41,13 @@ class DataManager {
    */
   static void PrintTableData(const TableData& table_data);
 
+  /**
+   * @brief Method to write the table into a file with the given filename.
+   * @param table_data Data to be written to the file.
+   * @param filename Name of the file to be written to.
+  */
+  static void WriteTableData(const TableData& table_data, std::string filename);
+
  private:
   /// Map to hold information about data type sizes from the given config file.
   std::map<ColumnDataType, double> data_type_sizes_;

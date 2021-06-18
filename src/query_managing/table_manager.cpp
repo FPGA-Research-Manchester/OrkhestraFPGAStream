@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <stdexcept>
+#include <chrono>
 
 #include "logger.hpp"
 #include "query_scheduling_data.hpp"
@@ -216,4 +217,9 @@ void TableManager::PrintDataSize(const TableData& data_table) {
       "Table size: " +
           std::to_string(data_table.table_data_vector.size() * 4 / 1000) +
           "[KB]");
+}
+
+void TableManager::WriteResultTableFile(const TableData& data_table) {
+  std::time_t ct = std::time(0);
+  data_managing::DataManager::WriteTableData(data_table, ctime(&ct));
 }

@@ -172,9 +172,16 @@ void QueryManager::RunQueries(
                       result_sizes[output_ids[node_index][stream_index]]) +
                   " rows!");
 
-          CheckTableData(
-              expected_output_tables[output_ids[node_index][stream_index]],
-              output_tables[output_ids[node_index][stream_index]]);
+          if (expected_output_tables[output_ids[node_index][stream_index]]
+                  .table_data_vector.empty() &&
+              result_sizes[output_ids[node_index][stream_index]] != 0) {
+            TableManager::WriteResultTableFile(
+                output_tables[output_ids[node_index][stream_index]]);
+          } else {
+            CheckTableData(
+                expected_output_tables[output_ids[node_index][stream_index]],
+                output_tables[output_ids[node_index][stream_index]]);
+          }
         }
       }
 
