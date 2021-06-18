@@ -8,6 +8,9 @@
 
 #include "table_data.hpp"
 
+using dbmstodspi::data_managing::table_data::ColumnDataType;
+using dbmstodspi::data_managing::table_data::TableData;
+
 namespace dbmstodspi::data_managing {
 
 /**
@@ -17,17 +20,21 @@ namespace dbmstodspi::data_managing {
 class DataManager {
  public:
   /**
-   * @brief Constructor which need the config to setup the data types.
-   * @param config_filename Path to the data types config file.
+   * @brief Constructor to setup data types size scale values.
+   * @param data_sizes Data type size scaling values.
    */
-  explicit DataManager(std::map<std::string, double> data_sizes)
+  explicit DataManager(std::map<ColumnDataType, double> data_sizes)
       : data_type_sizes_(std::move(data_sizes)){};
   /**
    * @brief Write data from the given CSV file to the TableData structure.
    * @param filename Path to the DBMS CSV data.
+   * @param column_data_types Vector of data type enums for each column of data in the table.
+   * @param column_sizes Vector of column sizes.
    * @return Information about the size and datatypes and also the data itself.
    */
-  auto ParseDataFromCSV(const std::string& filename) -> TableData;
+  auto ParseDataFromCSV(const std::string& filename,
+                        const std::vector<ColumnDataType>& column_data_types,
+                        const std::vector<int>& column_sizes) -> TableData;
   /**
    * @brief Helper method to print table data for debugging.
    * @param table_data Data to be printed out.
@@ -36,7 +43,7 @@ class DataManager {
 
  private:
   /// Map to hold information about data type sizes from the given config file.
-  std::map<std::string, double> data_type_sizes_;
+  std::map<ColumnDataType, double> data_type_sizes_;
   /**
    * @brief Helper method for printing out table data.
    *

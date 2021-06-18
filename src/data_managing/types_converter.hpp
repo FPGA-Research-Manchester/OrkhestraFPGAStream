@@ -7,6 +7,8 @@
 
 #include "table_data.hpp"
 
+using dbmstodspi::data_managing::table_data::ColumnDataType;
+
 namespace dbmstodspi::data_managing {
 
 /**

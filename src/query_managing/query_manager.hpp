@@ -12,6 +12,7 @@
 #include "table_data.hpp"
 
 using dbmstodspi::input_managing::Config;
+using dbmstodspi::data_managing::table_data::TableData;
 
 namespace dbmstodspi::query_managing {
 
@@ -29,8 +30,8 @@ class QueryManager {
    * @param expected_table Given expected data
    * @param expected_table Data which was output by the FPGA.
    */
-  static void CheckTableData(const data_managing::TableData& expected_table,
-                             const data_managing::TableData& resulting_table);
+  static void CheckTableData(const TableData& expected_table,
+                             const TableData& resulting_table);
 
  public:
   /**

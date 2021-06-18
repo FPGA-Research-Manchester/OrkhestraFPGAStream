@@ -29,9 +29,11 @@ struct NodeOperationParameters {
 };
 
 const struct StreamParamDefinition {
-  int kStreamParamCount = 2;
+  int kStreamParamCount = 4;
   int kProjectionOffset = 0;
-  int kChunkCountOffset = 1;
+  int kDataTypesOffset = 1;
+  int kDataSizesOffset = 2;
+  int kChunkCountOffset = 3;
 } kIOStreamParamDefs;
 
 /**

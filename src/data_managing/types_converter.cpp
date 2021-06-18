@@ -10,6 +10,8 @@
 
 using namespace dbmstodspi::data_managing;
 
+using dbmstodspi::data_managing::table_data::ColumnDataType;
+
 void TypesConverter::AddIntegerDataFromStringData(
     const std::vector<std::vector<std::string>>& string_data,
     std::vector<uint32_t>& integer_data,
@@ -82,16 +84,16 @@ void TypesConverter::ConvertDataToString(
       ConvertIntegerValuesToString(input_integer_data, converted_data_vector);
       break;
     case ColumnDataType::kVarchar:
-      ConvertIntegerValuesToString(input_integer_data, converted_data_vector);
+      ConvertStringValuesToString(input_integer_data, converted_data_vector);
       break;
     case ColumnDataType::kNull:
-      ConvertIntegerValuesToString(input_integer_data, converted_data_vector);
+      ConvertNullValuesToString(input_integer_data, converted_data_vector);
       break;
     case ColumnDataType::kDecimal:
-      ConvertIntegerValuesToString(input_integer_data, converted_data_vector);
+      ConvertDecimalValuesToString(input_integer_data, converted_data_vector);
       break;
     case ColumnDataType::kDate:
-      ConvertIntegerValuesToString(input_integer_data, converted_data_vector);
+      ConvertDateValuesToString(input_integer_data, converted_data_vector);
       break;
     default:
       throw std::runtime_error("Incorrect data type given!");

@@ -10,25 +10,27 @@
 
 using namespace dbmstodspi::data_managing;
 
-auto DataManager::ParseDataFromCSV(const std::string& filename) -> TableData {
-  std::vector<std::vector<std::string>> data_rows;
-  std::vector<std::string> header_row;
-  CSVReader::ReadTableData(filename, header_row, data_rows);
+using dbmstodspi::data_managing::table_data::ColumnDataType;
+using dbmstodspi::data_managing::table_data::TableData;
+
+auto DataManager::ParseDataFromCSV(
+    const std::string& filename,
+    const std::vector<ColumnDataType>& column_data_types,
+    const std::vector<int>& column_sizes) -> TableData {
+  auto data_rows = CSVReader::ReadTableData(filename);
   int size = 0;
   std::vector<std::pair<ColumnDataType, int>> table_column_label_vector;
-  for (const auto& column_data : header_row) {
-    auto delimiter_position = column_data.find('-');
-    auto name = column_data.substr(0, delimiter_position);
-    auto value = column_data.substr(delimiter_position + 1);
-
-    double data_type_size = data_type_sizes_[name] * std::stoi(value);
-
+  // Assuming data type vector and column size vectors are the same length
+  for (int i = 0; i < column_data_types.size(); i++) {
+    double data_type_size =
+        data_type_sizes_[column_data_types.at(i)] * column_sizes.at(i);
     if (data_type_size != static_cast<int>(data_type_size)) {
-      throw std::runtime_error(value + "size is not supported!");
+      throw std::runtime_error(column_sizes.at(i) + "size is not supported!");
     }
 
-    table_column_label_vector.emplace_back(data_type_names.at(name),
-                                           static_cast<int>(data_type_size));
+    table_column_label_vector.emplace_back(
+        column_data_types.at(i),
+        static_cast<int>(data_type_size));
     size += static_cast<int>(data_type_size);
   }
 

@@ -18,16 +18,12 @@ namespace dbmstodspi::data_managing {
 class CSVReader {
  public:
   /**
-   * @brief Read the given CSV file and write the header and row data into the
-   * given string vectors.
+   * @brief Read the given CSV file and return row data.
    * @param filename Path to the CSV file
-   * @param header_row First row of the CSV file which tells the data types and
-   * sizes of the columns.
-   * @param read_rows Main data of the CSV file.
+   * @return read_rows Main data of the CSV file.
    */
-  static void ReadTableData(const std::string& filename,
-                            std::vector<std::string>& header_row,
-                            std::vector<std::vector<std::string>>& read_rows);
+  static auto ReadTableData(const std::string& filename)
+      -> std::vector<std::vector<std::string>>;
 };
 
 }  // namespace dbmstodspi::data_managing

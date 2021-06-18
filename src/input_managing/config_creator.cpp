@@ -4,7 +4,9 @@
 #include <vector>
 
 #include "query_scheduling_data.hpp"
+#include "table_data.hpp"
 
+using dbmstodspi::data_managing::table_data::kDataTypeNames;
 using dbmstodspi::fpga_managing::operation_types::QueryOperation;
 using dbmstodspi::input_managing::ConfigCreator;
 using dbmstodspi::query_managing::query_scheduling_data::kSupportedFunctions;
@@ -27,8 +29,12 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   config.module_library =
       ConvertAcceleratorLibraryToModuleLibrary(accelerator_library_data);
 
-  config.data_sizes =
+  auto string_key_data_sizes =
       json_reader_->readDataSizes(json_file_names[data_type_sizes]);
+  for (const auto& [string_key, size_scale] : string_key_data_sizes) {
+    config.data_sizes.insert({kDataTypeNames.at(string_key), size_scale});
+  }
+
   config.required_memory_space =
       json_reader_->readReqMemorySpace(json_file_names[memory_requirements]);
   return config;

@@ -5,6 +5,7 @@
 
 #include "logger.hpp"
 #include "query_scheduling_data.hpp"
+#include "table_data.hpp"
 
 using namespace dbmstodspi::query_managing;
 
@@ -13,8 +14,10 @@ using dbmstodspi::logger::LogLevel;
 using dbmstodspi::logger::ShouldLog;
 using dbmstodspi::query_managing::query_scheduling_data::kIOStreamParamDefs;
 
-auto TableManager::GetRecordSizeFromTable(
-    const data_managing::TableData& input_table) -> int {
+using dbmstodspi::data_managing::table_data::ColumnDataType;
+using dbmstodspi::data_managing::table_data::TableData;
+
+auto TableManager::GetRecordSizeFromTable(const TableData& input_table) -> int {
   int record_size = 0;
   for (const auto& column_type : input_table.table_column_label_vector) {
     record_size += column_type.second;
@@ -24,7 +27,7 @@ auto TableManager::GetRecordSizeFromTable(
 
 void TableManager::ReadOutputDataFromMemoryBlock(
     const std::unique_ptr<fpga_managing::MemoryBlockInterface>& output_device,
-    data_managing::TableData& resulting_table, const int& result_size) {
+    TableData& resulting_table, const int& result_size) {
   volatile uint32_t* output = output_device->GetVirtualAddress();
   resulting_table.table_data_vector = std::vector<uint32_t>(
       output, output + (result_size * GetRecordSizeFromTable(resulting_table)));
@@ -32,7 +35,7 @@ void TableManager::ReadOutputDataFromMemoryBlock(
 
 void TableManager::WriteInputDataToMemoryBlock(
     const std::unique_ptr<fpga_managing::MemoryBlockInterface>& input_device,
-    const data_managing::TableData& input_table) {
+    const TableData& input_table) {
   PrintDataSize(input_table);
   if (input_table.table_data_vector.size() * 4 > input_device->GetSize()) {
     throw std::runtime_error(
@@ -48,7 +51,7 @@ void TableManager::WriteInputDataToMemoryBlock(
 void TableManager::PrintWrittenData(
     const std::string& table_name,
     const std::unique_ptr<fpga_managing::MemoryBlockInterface>& input_device,
-    const data_managing::TableData& input_table) {
+    const TableData& input_table) {
   auto log_level = dbmstodspi::logger::LogLevel::kTrace;
   if (dbmstodspi::logger::ShouldLog(log_level)) {
     std::stringstream ss;
@@ -83,8 +86,20 @@ void TableManager::ReadInputTables(
        stream_index++) {
     Log(LogLevel::kDebug,
         "Reading input: " + stream_data_file_names[stream_index]);
-    auto current_table =
-        data_manager.ParseDataFromCSV(stream_data_file_names[stream_index]);
+
+    std::vector<ColumnDataType> column_data_types; 
+    for (const auto& type_int_value : stream_specification.at(
+             stream_index * kIOStreamParamDefs.kStreamParamCount +
+             kIOStreamParamDefs.kDataTypesOffset)) {
+      column_data_types.push_back(static_cast<ColumnDataType>(type_int_value));
+    }
+
+    auto current_table = data_manager.ParseDataFromCSV(
+        stream_data_file_names[stream_index],
+        column_data_types,
+        stream_specification.at(stream_index *
+                                    kIOStreamParamDefs.kStreamParamCount +
+                                kIOStreamParamDefs.kDataSizesOffset));
 
     volatile uint32_t* physical_address_ptr = nullptr;
     if (allocated_memory_blocks[stream_index]) {
@@ -124,7 +139,7 @@ void TableManager::ReadExpectedTables(
     const std::vector<int>& stream_id_vector,
     std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
         allocated_memory_blocks,
-    std::vector<data_managing::TableData>& output_tables,
+    std::vector<TableData>& output_tables,
     const std::vector<std::vector<int>>& stream_specification) {
   if (stream_data_file_names.size() != stream_id_vector.size()) {
     throw std::runtime_error("The amount of stream IDs given is not correct!");
@@ -133,8 +148,18 @@ void TableManager::ReadExpectedTables(
        stream_index++) {
     Log(LogLevel::kDebug,
         "Reading output: " + stream_data_file_names[stream_index]);
-    auto current_table =
-        data_manager.ParseDataFromCSV(stream_data_file_names[stream_index]);
+    std::vector<ColumnDataType> column_data_types;
+    for (const auto& type_int_value : stream_specification.at(
+             stream_index * kIOStreamParamDefs.kStreamParamCount +
+             kIOStreamParamDefs.kDataTypesOffset)) {
+      column_data_types.push_back(static_cast<ColumnDataType>(type_int_value));
+    }
+
+    auto current_table = data_manager.ParseDataFromCSV(
+        stream_data_file_names[stream_index], column_data_types,
+        stream_specification.at(stream_index *
+                                    kIOStreamParamDefs.kStreamParamCount +
+                                kIOStreamParamDefs.kDataSizesOffset));
 
     volatile uint32_t* physical_address_ptr = nullptr;
     if (allocated_memory_blocks[stream_index]) {
@@ -168,7 +193,7 @@ void TableManager::ReadExpectedTables(
 void TableManager::ReadResultTables(
     const std::vector<fpga_managing::StreamDataParameters>&
         output_stream_parameters,
-    std::vector<data_managing::TableData>& output_tables,
+    std::vector<TableData>& output_tables,
     const std::array<
         int, fpga_managing::query_acceleration_constants::kMaxIOStreamCount>&
         result_record_counts,
@@ -186,7 +211,7 @@ void TableManager::ReadResultTables(
   }
 }
 
-void TableManager::PrintDataSize(const data_managing::TableData& data_table) {
+void TableManager::PrintDataSize(const TableData& data_table) {
   Log(LogLevel::kDebug,
       "Table size: " +
           std::to_string(data_table.table_data_vector.size() * 4 / 1000) +

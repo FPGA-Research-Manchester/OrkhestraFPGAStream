@@ -52,6 +52,7 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_add_mul_sum.json
 #configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_2nd_filter.csv lineitem_part_sf0_3_2nd_filter.csv COPYONLY)
 #configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_inverted.csv lineitem_part_sf0_3_inverted.csv COPYONLY)
 #configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_multiplied.csv lineitem_part_sf0_3_multiplied.csv COPYONLY)
+#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_multiplied_reduced.csv lineitem_part_sf0_3_multiplied_reduced.csv COPYONLY)
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_sf0_1.csv lineitem_sf0_1.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_sf0_1_filter.csv lineitem_sf0_1_filter.csv COPYONLY)

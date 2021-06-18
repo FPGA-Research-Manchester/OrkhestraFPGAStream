@@ -12,6 +12,8 @@
 #include "stream_data_parameters.hpp"
 #include "table_data.hpp"
 
+using dbmstodspi::data_managing::table_data::TableData;
+
 namespace dbmstodspi::query_managing {
 
 /**
@@ -24,8 +26,7 @@ class TableManager {
    * @param input_table Information about a data table.
    * @return Size of a record in the given table in 32 bit integers.
    */
-  static auto GetRecordSizeFromTable(
-      const data_managing::TableData& input_table) -> int;
+  static auto GetRecordSizeFromTable(const TableData& input_table) -> int;
   /**
    * @brief Read data from input fales into tables which will be in the DDR
    * memory connected to the FPGA.
@@ -67,7 +68,7 @@ class TableManager {
       const std::vector<int>& stream_id_vector,
       std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
           allocated_memory_blocks,
-      std::vector<data_managing::TableData>& output_tables,
+      std::vector<TableData>& output_tables,
       const std::vector<std::vector<int>>& stream_specifications);
   /**
    * @brief Read data from the memory mapped DDR after acceleration.
@@ -80,7 +81,7 @@ class TableManager {
   static void ReadResultTables(
       const std::vector<fpga_managing::StreamDataParameters>&
           output_stream_parameters,
-      std::vector<data_managing::TableData>& output_tables,
+      std::vector<TableData>& output_tables,
       const std::array<
           int, fpga_managing::query_acceleration_constants::kMaxIOStreamCount>&
           result_record_counts,
@@ -90,15 +91,15 @@ class TableManager {
  private:
   static void ReadOutputDataFromMemoryBlock(
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>& output_device,
-      data_managing::TableData& resulting_table, const int& result_size);
+      TableData& resulting_table, const int& result_size);
   static void WriteInputDataToMemoryBlock(
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>& input_device,
-      const data_managing::TableData& input_table);
+      const TableData& input_table);
   static void PrintWrittenData(
       const std::string& table_name,
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>& input_device,
-      const data_managing::TableData& input_table);
-  static void PrintDataSize(const data_managing::TableData& data_table);
+      const TableData& input_table);
+  static void PrintDataSize(const TableData& data_table);
 };
 
 }  // namespace dbmstodspi::query_managing

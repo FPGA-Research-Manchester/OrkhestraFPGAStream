@@ -28,10 +28,11 @@ using dbmstodspi::logger::Log;
 using dbmstodspi::logger::LogLevel;
 using dbmstodspi::logger::ShouldLog;
 using dbmstodspi::util::CreateReferenceVector;
+using dbmstodspi::data_managing::table_data::TableData;
 
 void QueryManager::CheckTableData(
-    const data_managing::TableData& expected_table,
-    const data_managing::TableData& resulting_table) {
+    const TableData& expected_table,
+    const TableData& resulting_table) {
   if (expected_table == resulting_table) {
     Log(LogLevel::kDebug, "Query results are correct!");
   } else {
@@ -82,7 +83,7 @@ void QueryManager::RunQueries(
     std::vector<
         std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>>
         output_memory_blocks;
-    std::vector<data_managing::TableData> expected_output_tables(
+    std::vector<TableData> expected_output_tables(
         fpga_managing::query_acceleration_constants::kMaxIOStreamCount);
     std::vector<fpga_managing::AcceleratedQueryNode> query_nodes;
 
@@ -156,7 +157,7 @@ void QueryManager::RunQueries(
     Log(LogLevel::kTrace, "Query done!");
 
     // Check results & free memory
-    std::vector<data_managing::TableData> output_tables =
+    std::vector<TableData> output_tables =
         expected_output_tables;
     for (int node_index = 0; node_index < query_nodes.size(); node_index++) {
       TableManager::ReadResultTables(query_nodes[node_index].output_streams,
