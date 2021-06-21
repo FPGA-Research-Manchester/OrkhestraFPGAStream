@@ -54,6 +54,8 @@ struct QueryNode {
   NodeOperationParameters operation_parameters;
   /// Location of the module to be processing this node
   int module_location = -1;
+  /// Name of the node for automatic file naming
+  std::string node_name;
 
   auto operator==(const QueryNode& rhs) const -> bool {
     bool are_prev_nodes_equal =
@@ -71,7 +73,7 @@ struct QueryNode {
            operation_type == rhs.operation_type && are_prev_nodes_equal &&
            next_nodes == rhs.next_nodes &&
            operation_parameters == rhs.operation_parameters &&
-           module_location == rhs.module_location;
+           module_location == rhs.module_location && node_name == rhs.node_name;
   }
 
   QueryNode(
@@ -80,13 +82,14 @@ struct QueryNode {
       std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> next_nodes,
       std::vector<std::weak_ptr<query_scheduling_data::QueryNode>>
           previous_nodes,
-      NodeOperationParameters parameters)
+      NodeOperationParameters parameters, std::string node_name)
       : input_data_definition_files{std::move(input)},
         output_data_definition_files{std::move(output)},
         operation_type{operation},
         next_nodes{std::move(next_nodes)},
         previous_nodes{std::move(previous_nodes)},
-        operation_parameters{std::move(parameters)} {};
+        operation_parameters{parameters},
+        node_name{node_name} {};
 };
 
 /// Type definition of a collection of operation types for selecting bitstreams.
@@ -112,4 +115,3 @@ const std::map<std::string, fpga_managing::operation_types::QueryOperationType>
         {"kPassThrough",
          fpga_managing::operation_types::QueryOperationType::kPassThrough}};
 }  // namespace dbmstodspi::query_managing::query_scheduling_data
-

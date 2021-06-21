@@ -35,13 +35,13 @@ class NodeSchedulerTest : public ::testing::Test {
                               {OpType::kPassThrough, {}}};
     query_node_a_ = std::make_shared<Node>(
         kDefaultFileNames, kDefaultFileNames, OpType::kFilter,
-        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_);
+        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "A");
     query_node_b_ = std::make_shared<Node>(
         kDefaultFileNames, kDefaultFileNames, OpType::kLinearSort,
-        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_);
+        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "B");
     passthrough_node_ = std::make_shared<Node>(
         kDefaultFileNames, kDefaultFileNames, OpType::kPassThrough,
-        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_);
+        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "PASS");
   }
 
   std::map<ModulesCombo, std::string> base_supported_bitstreams_;
@@ -114,10 +114,10 @@ TEST_F(NodeSchedulerTest, MultipleAvailableNodesFindsCorrectNode) {
 TEST_F(NodeSchedulerTest, TwoNodesWereFoundWithDifferentRuns) {
   auto first_query = std::make_shared<Node>(
       kDefaultFileNames, kDefaultFileNames, OpType::kLinearSort,
-      kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_);
+      kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "1");
   auto second_query = std::make_shared<Node>(
       kDefaultFileNames, kDefaultFileNames, OpType::kLinearSort,
-      kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_);
+      kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "2");
 
   auto expected_first_node = *first_query;
   auto expected_second_node = *second_query;

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <utility>
+#include <stdexcept>
 
 using dbmstodspi::input_managing::GraphCreator;
 using dbmstodspi::query_managing::query_scheduling_data::kSupportedFunctions;
@@ -47,7 +48,7 @@ auto GraphCreator::MakeGraph(std::string input_def_filename)
                             node_parameters.at(operation_field))),
                         std::vector<std::shared_ptr<QueryNode>>(),
                         std::vector<std::weak_ptr<QueryNode>>(),
-                        all_operation_parameters)});
+                        all_operation_parameters, node_name)});
 
     auto search_previous = node_parameters.find(previous_nodes_field);
     if (search_previous != node_parameters.end()) {
@@ -64,6 +65,25 @@ auto GraphCreator::MakeGraph(std::string input_def_filename)
   for (auto& [node_name, node] : graph_nodes_map) {
     auto search_previous = previous_nodes.find(node_name);
     if (search_previous != previous_nodes.end()) {
+      if (search_previous->second.size() !=
+          node->input_data_definition_files.size()) {
+        throw std::runtime_error("Incorrect number of input file definitions found!");
+      }
+      for (int i = 0; i < search_previous->second.size(); i++) {
+        if (!search_previous->second[i].empty()) {
+          //if (node->input_data_definition_files[i] != "") {
+          //  throw std::runtime_error("Input file not required!");
+          //}
+          node->previous_nodes.push_back(
+              graph_nodes_map.at(search_previous->second[i]));
+        } else {
+          //if (node->input_data_definition_files[i] == "") {
+          //  throw std::runtime_error(
+          //      "Input file required!");
+          //}
+          node->previous_nodes.push_back(std::weak_ptr<QueryNode>());
+        }
+      }
       for (const auto& previous_node_name : search_previous->second) {
         if (!previous_node_name.empty()) {
           node->previous_nodes.push_back(

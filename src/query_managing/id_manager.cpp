@@ -5,8 +5,11 @@
 
 #include "operation_types.hpp"
 #include "query_acceleration_constants.hpp"
+#include "util.hpp"
 
 using namespace dbmstodspi::query_managing;
+
+using dbmstodspi::util::FindPositionInVector;
 
 IDManager::IDManager() {
   for (int available_index =
@@ -50,11 +53,11 @@ void IDManager::AllocateInputIDs(
     auto previous_node =
         current_node.previous_nodes[current_stream_index].lock();
     if (previous_node) {
-      int previous_node_index = FindElementIndex(all_nodes, *previous_node);
+      int previous_node_index = FindPositionInVector(all_nodes, *previous_node);
 
-      int previous_stream_index = FindElementIndex(
-          all_nodes[previous_node_index].output_data_definition_files,
-          current_node.input_data_definition_files[current_stream_index]);
+      int previous_stream_index = FindStreamIndex(
+          all_nodes[previous_node_index].next_nodes,
+          current_node);
 
       current_node_input_ids.push_back(
           output_ids[previous_node_index][previous_stream_index]);
@@ -88,12 +91,15 @@ void IDManager::AllocateLeftoverOutputIDs(
   }
 }
 
-template <typename T>
-auto IDManager::FindElementIndex(const std::vector<T> &vector, const T &element)
+auto IDManager::FindStreamIndex(
+    const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+        &stream_vector,
+    const query_scheduling_data::QueryNode &node)
     -> int {
-  auto vector_iterator = std::find(vector.begin(), vector.end(), element);
-  if (vector_iterator == vector.end()) {
-    throw std::runtime_error("Something went wrong!");
+  for (int i = 0; i < stream_vector.size(); i++) {
+    if (*stream_vector[i] == node) {
+      return i;
+    }
   }
-  return vector_iterator - vector.begin();
+  throw std::runtime_error("Something went wrong!");
 }

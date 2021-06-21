@@ -1,7 +1,7 @@
 {
   "filter_node": {
     "input": [ "CAR_DATA.csv" ],
-    "output": [ "CAR_FILTER_DATA.csv" ],
+    "output": [ null ],
     "operation": "kFilter",
     "previous_nodes": [ null ],
     "next_nodes": [ "join_node" ],

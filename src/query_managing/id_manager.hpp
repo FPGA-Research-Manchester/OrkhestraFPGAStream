@@ -14,14 +14,15 @@ class IDManager {
   /// Keep track of available IDs
   std::stack<int> available_ids_{};
   /**
-   * @brief Generic method for finding the index of an element in a vector.
-   * @tparam T Type of the elements in the vector.
+   * @brief Method for finding the index of an element in a vector.
    * @param vector Vector where the element should be found from.
    * @param element Element whose location in the vector we want to know.
    * @return Integer showing the element's location.
    */
-  template <typename T>
-  auto FindElementIndex(const std::vector<T> &vector, const T &element) -> int;
+  auto FindStreamIndex(
+      const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+          &stream_vector,
+      const query_scheduling_data::QueryNode &node) -> int;
 
   /**
    * @brief Allocate IDs which the input and output streams share.
