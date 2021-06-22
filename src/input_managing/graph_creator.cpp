@@ -71,24 +71,16 @@ auto GraphCreator::MakeGraph(std::string input_def_filename)
       }
       for (int i = 0; i < search_previous->second.size(); i++) {
         if (!search_previous->second[i].empty()) {
-          //if (node->input_data_definition_files[i] != "") {
-          //  throw std::runtime_error("Input file not required!");
-          //}
+          if (node->input_data_definition_files[i] != "") {
+            throw std::runtime_error("Input file not required!");
+          }
           node->previous_nodes.push_back(
               graph_nodes_map.at(search_previous->second[i]));
         } else {
-          //if (node->input_data_definition_files[i] == "") {
-          //  throw std::runtime_error(
-          //      "Input file required!");
-          //}
-          node->previous_nodes.push_back(std::weak_ptr<QueryNode>());
-        }
-      }
-      for (const auto& previous_node_name : search_previous->second) {
-        if (!previous_node_name.empty()) {
-          node->previous_nodes.push_back(
-              graph_nodes_map.at(previous_node_name));
-        } else {
+          if (node->input_data_definition_files[i] == "") {
+            throw std::runtime_error(
+                "Input file required!");
+          }
           node->previous_nodes.push_back(std::weak_ptr<QueryNode>());
         }
       }

@@ -28,7 +28,7 @@
     }
   },
   "join_node": {
-    "input": [ "CAR_FILTER_DATA.csv", "CUSTOMER_DATA.csv" ],
+    "input": [ null, "CUSTOMER_DATA.csv" ],
     "output": [ "FILTERED_JOIN_DATA.csv" ],
     "operation": "kJoin",
     "previous_nodes": [ "filter_node", null ],

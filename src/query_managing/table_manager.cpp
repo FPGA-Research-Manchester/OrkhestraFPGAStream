@@ -2,7 +2,6 @@
 
 #include <sstream>
 #include <stdexcept>
-#include <chrono>
 
 #include "logger.hpp"
 #include "query_scheduling_data.hpp"
@@ -141,6 +140,7 @@ void TableManager::ReadExpectedTables(
     std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
         allocated_memory_blocks,
     std::vector<TableData>& output_tables,
+    std::vector<std::string>& output_files,
     const std::vector<std::vector<int>>& stream_specification) {
   if (stream_data_file_names.size() != stream_id_vector.size()) {
     throw std::runtime_error("The amount of stream IDs given is not correct!");
@@ -188,6 +188,8 @@ void TableManager::ReadExpectedTables(
     output_stream_parameters.push_back(current_stream_parameters);
 
     output_tables[stream_id_vector[stream_index]] = current_table;
+    output_files[stream_id_vector[stream_index]] =
+        stream_data_file_names[stream_index];
   }
 }
 
@@ -219,7 +221,6 @@ void TableManager::PrintDataSize(const TableData& data_table) {
           "[KB]");
 }
 
-void TableManager::WriteResultTableFile(const TableData& data_table) {
-  std::time_t ct = std::time(0);
-  data_managing::DataManager::WriteTableData(data_table, ctime(&ct));
+void TableManager::WriteResultTableFile(const TableData& data_table, std::string filename) {
+  data_managing::DataManager::WriteTableData(data_table, filename);
 }

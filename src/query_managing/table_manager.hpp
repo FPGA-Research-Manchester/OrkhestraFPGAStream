@@ -57,6 +57,7 @@ class TableManager {
    * @param stream_id_vector Vector of given output IDs.
    * @param allocated_memory_blocks Vector of memory mapped memory blocks.
    * @param output_tables Vector of expected output data.
+   * @param output_files Vector of output data files.
    * @param stream_specifications Query parameters to configure the output
    * streams.
    */
@@ -69,6 +70,7 @@ class TableManager {
       std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
           allocated_memory_blocks,
       std::vector<TableData>& output_tables,
+      std::vector<std::string>& output_files,
       const std::vector<std::vector<int>>& stream_specifications);
   /**
    * @brief Read data from the memory mapped DDR after acceleration.
@@ -91,8 +93,9 @@ class TableManager {
   /**
    * @brief Write the table to a CSV file with a timestamp
    * @param data_table Resulting data to be written to the file.
+   * @param filename String of the name of the file to be written to.
   */
-  static void WriteResultTableFile(const TableData& data_table);
+  static void WriteResultTableFile(const TableData& data_table, std::string filename);
 
  private:
   static void ReadOutputDataFromMemoryBlock(

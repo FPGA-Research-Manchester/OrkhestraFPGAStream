@@ -13,7 +13,8 @@ using ModulesCombo = dbmstodspi::query_managing::query_scheduling_data::
 using Node = dbmstodspi::query_managing::query_scheduling_data::QueryNode;
 using OpType = dbmstodspi::fpga_managing::operation_types::QueryOperationType;
 
-const std::vector<std::string> kDefaultFileNames;
+const std::vector<std::string> kDefaultEmptyFileNames = {""};
+const std::vector<std::string> kDefaultFileNames = {"some_name.csv"};
 const std::vector<std::shared_ptr<Node>> kDefaultNextNodes;
 const std::vector<std::weak_ptr<Node>> kDefaultPreviousNodes;
 
@@ -34,13 +35,13 @@ class NodeSchedulerTest : public ::testing::Test {
                               {OpType::kFilter, {}},
                               {OpType::kPassThrough, {}}};
     query_node_a_ = std::make_shared<Node>(
-        kDefaultFileNames, kDefaultFileNames, OpType::kFilter,
+        kDefaultEmptyFileNames, kDefaultEmptyFileNames, OpType::kFilter,
         kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "A");
     query_node_b_ = std::make_shared<Node>(
-        kDefaultFileNames, kDefaultFileNames, OpType::kLinearSort,
+        kDefaultEmptyFileNames, kDefaultEmptyFileNames, OpType::kLinearSort,
         kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "B");
     passthrough_node_ = std::make_shared<Node>(
-        kDefaultFileNames, kDefaultFileNames, OpType::kPassThrough,
+        kDefaultEmptyFileNames, kDefaultEmptyFileNames, OpType::kPassThrough,
         kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "PASS");
   }
 
@@ -61,7 +62,7 @@ void CheckNodeFields(
     std::vector<std::weak_ptr<Node>> previous,
     dbmstodspi::query_managing::query_scheduling_data::NodeOperationParameters
         parameters,
-    int location, Node comparable_node) {
+    int location, std::string name, Node comparable_node) {
   EXPECT_THAT(comparable_node,
               testing::Field("input_files", &Node::input_data_definition_files,
                              input_files));
@@ -77,6 +78,7 @@ void CheckNodeFields(
       testing::Field("parameters", &Node::operation_parameters, parameters));
   EXPECT_THAT(comparable_node,
               testing::Field("location", &Node::module_location, location));
+  EXPECT_THAT(comparable_node, testing::Field("name", &Node::node_name, name));
 
   // EXPECT_THAT(comparable_node,
   //            testing::Field("previous", &Node::previous_nodes, previous));
@@ -88,12 +90,12 @@ void CheckNodeFields(
 }
 
 void CheckNodeEquality(Node real_node, Node expected_node) {
-  CheckNodeFields(expected_node.input_data_definition_files,
-                  expected_node.output_data_definition_files,
-                  expected_node.operation_type, expected_node.next_nodes,
-                  expected_node.previous_nodes,
-                  expected_node.operation_parameters,
-                  expected_node.module_location, real_node);
+  CheckNodeFields(
+      expected_node.input_data_definition_files,
+      expected_node.output_data_definition_files, expected_node.operation_type,
+      expected_node.next_nodes, expected_node.previous_nodes,
+      expected_node.operation_parameters, expected_node.module_location,
+      expected_node.node_name, real_node);
 }
 
 TEST_F(NodeSchedulerTest, MultipleAvailableNodesFindsCorrectNode) {
@@ -113,10 +115,10 @@ TEST_F(NodeSchedulerTest, MultipleAvailableNodesFindsCorrectNode) {
 
 TEST_F(NodeSchedulerTest, TwoNodesWereFoundWithDifferentRuns) {
   auto first_query = std::make_shared<Node>(
-      kDefaultFileNames, kDefaultFileNames, OpType::kLinearSort,
+      kDefaultEmptyFileNames, kDefaultEmptyFileNames, OpType::kLinearSort,
       kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "1");
   auto second_query = std::make_shared<Node>(
-      kDefaultFileNames, kDefaultFileNames, OpType::kLinearSort,
+      kDefaultEmptyFileNames, kDefaultEmptyFileNames, OpType::kLinearSort,
       kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "2");
 
   auto expected_first_node = *first_query;
@@ -192,8 +194,13 @@ TEST_F(NodeSchedulerTest, TwoPipelinedNodesWereFoundWithDifferentRuns) {
   auto expected_second_node = *query_node_b_;
   expected_first_node.module_location = 1;
   expected_first_node.next_nodes = {nullptr};
+
   expected_second_node.module_location = 1;
   expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
+
+  auto expected_filename = query_node_a_->node_name + "_0.csv";
+  expected_first_node.output_data_definition_files = {expected_filename};
+  expected_second_node.input_data_definition_files = {expected_filename};
 
   ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}}};
   ModulesCombo expected_second_module_vector = {
@@ -257,6 +264,10 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfInputProjection) {
   expected_second_node.module_location = 1;
   expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
 
+  auto expected_filename = query_node_a_->node_name + "_0.csv";
+  expected_first_node.output_data_definition_files = {expected_filename};
+  expected_second_node.input_data_definition_files = {expected_filename};
+
   ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}}};
   ModulesCombo expected_second_module_vector = {
       {query_node_b_->operation_type, {}}};
@@ -292,6 +303,10 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfOutputProjection) {
   expected_first_node.next_nodes = {nullptr};
   expected_second_node.module_location = 1;
   expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
+
+  auto expected_filename = query_node_a_->node_name + "_0.csv";
+  expected_first_node.output_data_definition_files = {expected_filename};
+  expected_second_node.input_data_definition_files = {expected_filename};
 
   ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}}};
   ModulesCombo expected_second_module_vector = {
@@ -331,6 +346,10 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfIOProjection) {
   expected_second_node.module_location = 1;
   expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
 
+  auto expected_filename = query_node_a_->node_name + "_0.csv";
+  expected_first_node.output_data_definition_files = {expected_filename};
+  expected_second_node.input_data_definition_files = {expected_filename};
+
   ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}}};
   ModulesCombo expected_second_module_vector = {
       {query_node_b_->operation_type, {}}};
@@ -351,6 +370,7 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfIOProjection) {
 
 TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfSecondOutputProjection) {
   query_node_a_->next_nodes = {nullptr, query_node_b_};
+  query_node_a_->output_data_definition_files = {"", ""};
   query_node_b_->previous_nodes = {query_node_a_};
 
   std::vector<int> some_data = {0, 1, 2, 3, 3};
@@ -369,6 +389,10 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfSecondOutputProjection) {
   expected_first_node.next_nodes = {nullptr, nullptr};
   expected_second_node.module_location = 1;
   expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
+
+  auto expected_filename = query_node_a_->node_name + "_1.csv";
+  expected_first_node.output_data_definition_files = {query_node_a_->node_name + "_0.csv", expected_filename};
+  expected_second_node.input_data_definition_files = {expected_filename};
 
   ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}}};
   ModulesCombo expected_second_module_vector = {
@@ -390,6 +414,7 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfSecondOutputProjection) {
 
 TEST_F(NodeSchedulerTest, SameRunsDespiteIOProjection) {
   query_node_a_->next_nodes = {nullptr, query_node_b_};
+  query_node_a_->output_data_definition_files = {"", ""};
   query_node_b_->previous_nodes = {query_node_a_};
 
   std::vector<int> some_data = {0, 1, 2, 3, 3};
@@ -413,6 +438,8 @@ TEST_F(NodeSchedulerTest, SameRunsDespiteIOProjection) {
   auto expected_second_node = *query_node_b_;
   expected_first_node.module_location = 1;
   expected_second_node.module_location = 2;
+  expected_first_node.output_data_definition_files = {
+      query_node_a_->node_name + "_0.csv", ""};
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 

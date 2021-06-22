@@ -24,15 +24,14 @@
 #include "util.hpp"
 
 using namespace dbmstodspi::query_managing;
+using dbmstodspi::data_managing::table_data::TableData;
 using dbmstodspi::logger::Log;
 using dbmstodspi::logger::LogLevel;
 using dbmstodspi::logger::ShouldLog;
 using dbmstodspi::util::CreateReferenceVector;
-using dbmstodspi::data_managing::table_data::TableData;
 
-void QueryManager::CheckTableData(
-    const TableData& expected_table,
-    const TableData& resulting_table) {
+void QueryManager::CheckTableData(const TableData& expected_table,
+                                  const TableData& resulting_table) {
   if (expected_table == resulting_table) {
     Log(LogLevel::kDebug, "Query results are correct!");
   } else {
@@ -44,7 +43,8 @@ void QueryManager::CheckTableData(
             " vs " +
             std::to_string(
                 resulting_table.table_data_vector.size() /
-                TableManager::GetRecordSizeFromTable(resulting_table)) + " rows!");
+                TableManager::GetRecordSizeFromTable(resulting_table)) +
+            " rows!");
     data_managing::DataManager::PrintTableData(resulting_table);
   }
 }
@@ -84,6 +84,8 @@ void QueryManager::RunQueries(
         std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>>
         output_memory_blocks;
     std::vector<TableData> expected_output_tables(
+        fpga_managing::query_acceleration_constants::kMaxIOStreamCount);
+    std::vector<std::string> expected_output_files(
         fpga_managing::query_acceleration_constants::kMaxIOStreamCount);
     std::vector<fpga_managing::AcceleratedQueryNode> query_nodes;
 
@@ -131,6 +133,7 @@ void QueryManager::RunQueries(
           output_stream_parameters, data_manager,
           current_node.output_data_definition_files, output_ids[node_index],
           allocated_output_memory_blocks, expected_output_tables,
+          expected_output_files,
           current_node.operation_parameters.output_stream_parameters);
 
       // Check if the loaded modules are correct based on the input.
@@ -157,8 +160,7 @@ void QueryManager::RunQueries(
     Log(LogLevel::kTrace, "Query done!");
 
     // Check results & free memory
-    std::vector<TableData> output_tables =
-        expected_output_tables;
+    std::vector<TableData> output_tables = expected_output_tables;
     for (int node_index = 0; node_index < query_nodes.size(); node_index++) {
       TableManager::ReadResultTables(query_nodes[node_index].output_streams,
                                      output_tables, result_sizes,
@@ -176,7 +178,8 @@ void QueryManager::RunQueries(
                   .table_data_vector.empty() &&
               result_sizes[output_ids[node_index][stream_index]] != 0) {
             TableManager::WriteResultTableFile(
-                output_tables[output_ids[node_index][stream_index]]);
+                output_tables[output_ids[node_index][stream_index]],
+                expected_output_files[output_ids[node_index][stream_index]]);
           } else {
             CheckTableData(
                 expected_output_tables[output_ids[node_index][stream_index]],

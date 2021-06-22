@@ -58,7 +58,7 @@
 		}
 	},
 	"lineitem_linear_sort": {
-		"input": ["lineitem_sf0_01_filter.csv"],
+		"input": [null],
 		"output": ["lineitem_sf0_01_linear_sort.csv"],
 		"operation": "kLinearSort",
 		"previous_nodes": ["first_lineitem_filter"],
@@ -82,7 +82,7 @@
 		}
 	},
 	"lineitem_linear_merge_sort": {
-		"input": ["lineitem_sf0_01_linear_sort.csv"],
+		"input": [null],
 		"output": ["lineitem_sf0_01_sort.csv"],
 		"operation": "kMergeSort",
 		"previous_nodes": ["lineitem_linear_sort"],
@@ -214,7 +214,7 @@
 		}
 	},
 	"lineitem_part_join": {
-		"input": ["lineitem_sf0_01_sort.csv", "part_sf0_01_filter.csv"],
+		"input": [null, null],
 		"output": ["lineitem_part_sf0_01_1st_filter.csv"],
 		"operation": "kJoin",
 		"previous_nodes": ["lineitem_linear_merge_sort", "first_part_filter"],
@@ -242,7 +242,7 @@
 		}
 	},
 	"lineitem_part_second_filter": {
-		"input": ["lineitem_part_sf0_01_1st_filter.csv"],
+		"input": [null],
 		"output": ["lineitem_part_sf0_01_2nd_filter.csv"],
 		"operation": "kFilter",
 		"previous_nodes": ["lineitem_part_join"],
@@ -318,7 +318,7 @@
 		}
 	},
 	"lineitem_part_addition": {
-		"input": ["lineitem_part_sf0_01_2nd_filter.csv"],
+		"input": [null],
 		"output": ["lineitem_part_sf0_01_inverted.csv"],
 		"operation": "kAddition",
 		"previous_nodes": ["lineitem_part_second_filter"],
@@ -344,7 +344,7 @@
 		}
 	},
 	"lineitem_part_multiplication": {
-		"input": ["lineitem_part_sf0_01_inverted.csv"],
+		"input": [null],
 		"output": ["lineitem_part_sf0_01_multiplied.csv"],
 		"operation": "kMultiplication",
 		"previous_nodes": ["lineitem_part_addition"],
@@ -368,7 +368,7 @@
 		}
 	},
 	"lineitem_part_aggregate": {
-		"input": ["lineitem_part_sf0_01_multiplied.csv"],
+		"input": [null],
 		"output": ["lineitem_part_sf0_01_multiplied.csv"],
 		"operation": "kAggregationSum",
 		"previous_nodes": ["lineitem_part_multiplication"],

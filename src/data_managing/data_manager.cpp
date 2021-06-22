@@ -1,24 +1,25 @@
 #include "data_manager.hpp"
 
+#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include <fstream>
 
 #include "csv_reader.hpp"
 #include "logger.hpp"
 #include "types_converter.hpp"
+#include "util.hpp"
 
 using namespace dbmstodspi::data_managing;
 
 using dbmstodspi::data_managing::table_data::ColumnDataType;
 using dbmstodspi::data_managing::table_data::TableData;
+using dbmstodspi::util::IsValidFile;
 
 auto DataManager::ParseDataFromCSV(
     const std::string& filename,
     const std::vector<ColumnDataType>& column_data_types,
     const std::vector<int>& column_sizes) -> TableData {
-  auto data_rows = CSVReader::ReadTableData(filename);
   int size = 0;
   std::vector<std::pair<ColumnDataType, int>> table_column_label_vector;
   // Assuming data type vector and column size vectors are the same length
@@ -29,17 +30,21 @@ auto DataManager::ParseDataFromCSV(
       throw std::runtime_error(column_sizes.at(i) + "size is not supported!");
     }
 
-    table_column_label_vector.emplace_back(
-        column_data_types.at(i),
-        static_cast<int>(data_type_size));
+    table_column_label_vector.emplace_back(column_data_types.at(i),
+                                           static_cast<int>(data_type_size));
     size += static_cast<int>(data_type_size);
   }
 
   TableData table_data;
   table_data.table_column_label_vector = table_column_label_vector;
-  table_data.table_data_vector.reserve(size * data_rows.size());
-  TypesConverter::AddIntegerDataFromStringData(
-      data_rows, table_data.table_data_vector, table_column_label_vector);
+
+  if (IsValidFile(filename)) {
+    auto data_rows = CSVReader::ReadTableData(filename);
+    table_data.table_data_vector.reserve(size * data_rows.size());
+    TypesConverter::AddIntegerDataFromStringData(
+        data_rows, table_data.table_data_vector, table_column_label_vector);
+  }
+
   return table_data;
 }
 
@@ -79,12 +84,12 @@ void DataManager::PrintTableData(const TableData& table_data) {
 }
 
 void DataManager::WriteTableData(const TableData& table_data,
-    std::string filename) {
+                                 std::string filename) {
   std::vector<std::vector<std::string>> string_data_vector;
   DataManager::AddStringDataFromIntegerData(
       table_data.table_data_vector, string_data_vector,
       table_data.table_column_label_vector);
-  std::ofstream output_file (filename);
+  std::ofstream output_file(filename);
   if (output_file.is_open()) {
     for (const auto& line : string_data_vector) {
       for (auto iter = line.begin(); iter != line.end(); iter++) {

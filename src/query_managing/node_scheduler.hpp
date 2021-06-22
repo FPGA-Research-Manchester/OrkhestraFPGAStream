@@ -39,7 +39,7 @@ class NodeScheduler {
           std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>>>;
 
  private:
-  static void RemoveExternalLinks(
+  static void CheckExternalLinks(
       const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
           &current_query_nodes);
   static auto IsModuleSetSupported(
@@ -106,6 +106,22 @@ class NodeScheduler {
       const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
           &next_nodes,
       const query_scheduling_data::QueryNode *next_node) -> int;
+  static auto IsProjectionOperationDefined(
+      const query_scheduling_data::QueryNode *current_node,
+      const query_scheduling_data::QueryNode *previous_node,
+      int previous_node_index) -> bool;
+  static auto IsNodeMissingFromTheVector(
+      const std::shared_ptr<
+          dbmstodspi::query_managing::query_scheduling_data::QueryNode>
+          &linked_node,
+      const std::vector<std::shared_ptr<
+          dbmstodspi::query_managing::query_scheduling_data::QueryNode>>
+          &current_query_nodes) -> bool;
+  static auto FindPreviousNodeLocation(
+      const std::vector<std::weak_ptr<query_scheduling_data::QueryNode>>
+          &previous_nodes,
+      const std::shared_ptr<query_scheduling_data::QueryNode> previous_node)
+      -> int;
 };
 
 }  // namespace dbmstodspi::query_managing
