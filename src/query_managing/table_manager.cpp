@@ -63,7 +63,7 @@ void TableManager::PrintWrittenData(
     TableManager::ReadOutputDataFromMemoryBlock(input_device, output_table,
                                                 table_size);
 
-    ss << "Table " << table_name << std::hex << "Address: "
+    ss << "Table " << table_name << std::hex << " address: "
        << reinterpret_cast<uintptr_t>(input_device->GetPhysicalAddress())
        << std::dec;
     dbmstodspi::logger::Log(log_level, ss.str());

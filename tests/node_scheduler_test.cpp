@@ -286,6 +286,43 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfInputProjection) {
                     expected_second_node);
 }
 
+TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfOutputChecking) {
+  query_node_a_->next_nodes = {query_node_b_};
+  query_node_b_->previous_nodes = {query_node_a_};
+
+  query_node_a_->output_data_definition_files = kDefaultFileNames;
+
+  base_supported_bitstreams_.insert({{{query_node_a_->operation_type, {}},
+                                      {query_node_b_->operation_type, {}}},
+                                     "Some_bitstream"});
+
+  auto expected_first_node = *query_node_a_;
+  auto expected_second_node = *query_node_b_;
+  expected_first_node.module_location = 1;
+  expected_first_node.next_nodes = {nullptr};
+  expected_second_node.module_location = 1;
+  expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
+
+  expected_second_node.input_data_definition_files = kDefaultFileNames;
+
+  ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}}};
+  ModulesCombo expected_second_module_vector = {
+      {query_node_b_->operation_type, {}}};
+
+  std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
+
+  auto scheduling_results =
+      dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
+          starting_nodes, base_supported_bitstreams_, base_existing_modules_);
+
+  ASSERT_EQ(scheduling_results.front().first, expected_module_vector);
+  CheckNodeEquality(*scheduling_results.front().second[0], expected_first_node);
+  scheduling_results.pop();
+  ASSERT_EQ(scheduling_results.front().first, expected_second_module_vector);
+  CheckNodeEquality(*scheduling_results.front().second[0],
+                    expected_second_node);
+}
+
 TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfOutputProjection) {
   query_node_a_->next_nodes = {query_node_b_};
   query_node_b_->previous_nodes = {query_node_a_};

@@ -132,8 +132,13 @@ auto NodeScheduler::FindMinPosition(
               fpga_managing::operation_types::QueryOperationType::
                   kPassThrough) {
         // Assuming that the projection vector exists.
+        int current_node_index =
+            FindNextNodeLocation(observed_node->next_nodes, current_node);
         if (IsProjectionOperationDefined(current_node, observed_node.get(),
-                                         previous_node_index)) {
+                                         previous_node_index,
+                                         current_node_index) ||
+            IsOutputCheckDefined(current_node, observed_node.get(),
+                                 current_node_index)) {
           return -1;
         }
 
@@ -160,12 +165,10 @@ auto NodeScheduler::FindMinPosition(
 auto NodeScheduler::IsProjectionOperationDefined(
     const query_scheduling_data::QueryNode* current_node,
     const query_scheduling_data::QueryNode* previous_node,
-    int previous_node_index) -> bool {
+    int previous_node_index, int current_node_index) -> bool {
   return !previous_node->operation_parameters
               .output_stream_parameters
-                  [FindNextNodeLocation(previous_node->next_nodes,
-                                        current_node) *
-                       kIOStreamParamDefs.kStreamParamCount +
+                  [current_node_index * kIOStreamParamDefs.kStreamParamCount +
                    kIOStreamParamDefs.kProjectionOffset]
               .empty() ||
          !current_node->operation_parameters
@@ -173,6 +176,20 @@ auto NodeScheduler::IsProjectionOperationDefined(
                   [previous_node_index * kIOStreamParamDefs.kStreamParamCount +
                    kIOStreamParamDefs.kProjectionOffset]
               .empty();
+}
+
+auto NodeScheduler::IsOutputCheckDefined(
+    const query_scheduling_data::QueryNode* current_node,
+    const query_scheduling_data::QueryNode* previous_node,
+    int current_node_index) -> bool {
+  for (const auto& node : previous_node->next_nodes) {
+    if (node.get() == current_node &&
+        !previous_node->output_data_definition_files[current_node_index]
+             .empty()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // Check recursively if the given node can be added to the set of nodes to be

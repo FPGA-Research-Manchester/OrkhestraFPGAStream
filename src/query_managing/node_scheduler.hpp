@@ -109,7 +109,7 @@ class NodeScheduler {
   static auto IsProjectionOperationDefined(
       const query_scheduling_data::QueryNode *current_node,
       const query_scheduling_data::QueryNode *previous_node,
-      int previous_node_index) -> bool;
+      int previous_node_index, int current_node_index) -> bool;
   static auto IsNodeMissingFromTheVector(
       const std::shared_ptr<
           dbmstodspi::query_managing::query_scheduling_data::QueryNode>
@@ -122,6 +122,10 @@ class NodeScheduler {
           &previous_nodes,
       const std::shared_ptr<query_scheduling_data::QueryNode> previous_node)
       -> int;
+  static auto IsOutputCheckDefined(
+      const query_scheduling_data::QueryNode *current_node,
+      const query_scheduling_data::QueryNode *previous_node,
+      int current_node_index) -> bool;
 };
 
 }  // namespace dbmstodspi::query_managing
