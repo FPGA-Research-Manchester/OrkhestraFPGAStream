@@ -35,6 +35,15 @@ class DataManager {
   auto ParseDataFromCSV(const std::string& filename,
                         const std::vector<ColumnDataType>& column_data_types,
                         const std::vector<int>& column_sizes) -> TableData;
+
+  auto ReadIntegerDataFromCSV(const std::vector<std::pair<ColumnDataType, int>> table_column_defs,
+      const std::string& filename) -> std::vector<uint32_t>;
+
+  auto GetHeaderColumnVector(
+      const std::vector<ColumnDataType>& column_data_types,
+      const std::vector<int>& column_sizes) const
+      -> std::vector<std::pair<ColumnDataType, int>>;
+
   /**
    * @brief Helper method to print table data for debugging.
    * @param table_data Data to be printed out.

@@ -16,6 +16,40 @@ using dbmstodspi::data_managing::table_data::ColumnDataType;
 using dbmstodspi::data_managing::table_data::TableData;
 using dbmstodspi::util::IsValidFile;
 
+auto DataManager::ReadIntegerDataFromCSV(
+    const std::vector<std::pair<ColumnDataType, int>> table_column_defs,
+    const std::string& filename) -> std::vector<uint32_t> {
+  if (IsValidFile(filename)) {
+    auto data_rows = CSVReader::ReadTableData(filename);
+    std::vector<uint32_t> table_data_vector;
+    TypesConverter::AddIntegerDataFromStringData(data_rows, table_data_vector,
+                                                 table_column_defs);
+    return table_data_vector;
+  } else {
+    throw std::runtime_error("No file " + filename + " found!");
+  }
+}
+
+auto DataManager::GetHeaderColumnVector(
+    const std::vector<ColumnDataType>& column_data_types,
+    const std::vector<int>& column_sizes) const
+    -> std::vector<std::pair<ColumnDataType, int>> {
+  std::vector<std::pair<ColumnDataType, int>> table_column_label_vector;
+  // Assuming data type vector and column size vectors are the same length
+  for (int i = 0; i < column_data_types.size(); i++) {
+    double data_type_size =
+        data_type_sizes_.at(column_data_types.at(i)) * column_sizes.at(i);
+    if (data_type_size != static_cast<int>(data_type_size)) {
+      throw std::runtime_error(column_sizes.at(i) + "size is not supported!");
+    }
+
+    table_column_label_vector.emplace_back(column_data_types.at(i),
+                                           static_cast<int>(data_type_size));
+  }
+
+  return table_column_label_vector;
+}
+
 auto DataManager::ParseDataFromCSV(
     const std::string& filename,
     const std::vector<ColumnDataType>& column_data_types,
