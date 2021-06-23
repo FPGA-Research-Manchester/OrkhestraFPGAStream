@@ -56,6 +56,8 @@ struct QueryNode {
   int module_location = -1;
   /// Name of the node for automatic file naming
   std::string node_name;
+  /// Flag vector setting stream results to be checked
+  std::vector <bool> is_checked;
 
   auto operator==(const QueryNode& rhs) const -> bool {
     bool are_prev_nodes_equal =
@@ -68,12 +70,14 @@ struct QueryNode {
               return l.lock() == r.lock();
             });
 
-    return input_data_definition_files == rhs.input_data_definition_files &&
+    return are_prev_nodes_equal &&
+           input_data_definition_files == rhs.input_data_definition_files &&
            output_data_definition_files == rhs.output_data_definition_files &&
-           operation_type == rhs.operation_type && are_prev_nodes_equal &&
+           operation_type == rhs.operation_type &&
            next_nodes == rhs.next_nodes &&
            operation_parameters == rhs.operation_parameters &&
-           module_location == rhs.module_location && node_name == rhs.node_name;
+           module_location == rhs.module_location &&
+           node_name == rhs.node_name && is_checked == rhs.is_checked;
   }
 
   QueryNode(
@@ -82,14 +86,16 @@ struct QueryNode {
       std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> next_nodes,
       std::vector<std::weak_ptr<query_scheduling_data::QueryNode>>
           previous_nodes,
-      NodeOperationParameters parameters, std::string node_name)
+      NodeOperationParameters parameters, std::string node_name,
+      std::vector<bool> is_checked)
       : input_data_definition_files{std::move(input)},
         output_data_definition_files{std::move(output)},
         operation_type{operation},
         next_nodes{std::move(next_nodes)},
         previous_nodes{std::move(previous_nodes)},
         operation_parameters{parameters},
-        node_name{node_name} {};
+        node_name{node_name},
+        is_checked{is_checked} {};
 };
 
 /// Type definition of a collection of operation types for selecting bitstreams.

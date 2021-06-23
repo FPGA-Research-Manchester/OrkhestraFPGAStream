@@ -122,10 +122,6 @@ class NodeScheduler {
           &previous_nodes,
       const std::shared_ptr<query_scheduling_data::QueryNode> previous_node)
       -> int;
-  static auto IsOutputCheckDefined(
-      const query_scheduling_data::QueryNode *current_node,
-      const query_scheduling_data::QueryNode *previous_node,
-      int current_node_index) -> bool;
 };
 
 }  // namespace dbmstodspi::query_managing

@@ -17,6 +17,7 @@ const std::vector<std::string> kDefaultEmptyFileNames = {""};
 const std::vector<std::string> kDefaultFileNames = {"some_name.csv"};
 const std::vector<std::shared_ptr<Node>> kDefaultNextNodes;
 const std::vector<std::weak_ptr<Node>> kDefaultPreviousNodes;
+const std::vector<bool> kNoChecks = {false};
 
 class NodeSchedulerTest : public ::testing::Test {
  protected:
@@ -36,13 +37,16 @@ class NodeSchedulerTest : public ::testing::Test {
                               {OpType::kPassThrough, {}}};
     query_node_a_ = std::make_shared<Node>(
         kDefaultEmptyFileNames, kDefaultEmptyFileNames, OpType::kFilter,
-        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "A");
+        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "A",
+        kNoChecks);
     query_node_b_ = std::make_shared<Node>(
         kDefaultEmptyFileNames, kDefaultEmptyFileNames, OpType::kLinearSort,
-        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "B");
+        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "B",
+        kNoChecks);
     passthrough_node_ = std::make_shared<Node>(
         kDefaultEmptyFileNames, kDefaultEmptyFileNames, OpType::kPassThrough,
-        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "PASS");
+        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "PASS",
+        kNoChecks);
   }
 
   std::map<ModulesCombo, std::string> base_supported_bitstreams_;
@@ -62,7 +66,7 @@ void CheckNodeFields(
     std::vector<std::weak_ptr<Node>> previous,
     dbmstodspi::query_managing::query_scheduling_data::NodeOperationParameters
         parameters,
-    int location, std::string name, Node comparable_node) {
+    int location, std::string name, std::vector<bool> checks, Node comparable_node) {
   EXPECT_THAT(comparable_node,
               testing::Field("input_files", &Node::input_data_definition_files,
                              input_files));
@@ -79,6 +83,8 @@ void CheckNodeFields(
   EXPECT_THAT(comparable_node,
               testing::Field("location", &Node::module_location, location));
   EXPECT_THAT(comparable_node, testing::Field("name", &Node::node_name, name));
+  EXPECT_THAT(comparable_node,
+              testing::Field("checks", &Node::is_checked, checks));
 
   // EXPECT_THAT(comparable_node,
   //            testing::Field("previous", &Node::previous_nodes, previous));
@@ -95,7 +101,7 @@ void CheckNodeEquality(Node real_node, Node expected_node) {
       expected_node.output_data_definition_files, expected_node.operation_type,
       expected_node.next_nodes, expected_node.previous_nodes,
       expected_node.operation_parameters, expected_node.module_location,
-      expected_node.node_name, real_node);
+      expected_node.node_name, expected_node.is_checked, real_node);
 }
 
 TEST_F(NodeSchedulerTest, MultipleAvailableNodesFindsCorrectNode) {
@@ -116,10 +122,11 @@ TEST_F(NodeSchedulerTest, MultipleAvailableNodesFindsCorrectNode) {
 TEST_F(NodeSchedulerTest, TwoNodesWereFoundWithDifferentRuns) {
   auto first_query = std::make_shared<Node>(
       kDefaultEmptyFileNames, kDefaultEmptyFileNames, OpType::kLinearSort,
-      kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "1");
+      kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "1", kNoChecks);
   auto second_query = std::make_shared<Node>(
       kDefaultEmptyFileNames, kDefaultEmptyFileNames, OpType::kLinearSort,
-      kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "2");
+      kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "2",
+      kNoChecks);
 
   auto expected_first_node = *first_query;
   auto expected_second_node = *second_query;
@@ -291,6 +298,7 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfOutputChecking) {
   query_node_b_->previous_nodes = {query_node_a_};
 
   query_node_a_->output_data_definition_files = kDefaultFileNames;
+  query_node_a_->is_checked = {true};
 
   base_supported_bitstreams_.insert({{{query_node_a_->operation_type, {}},
                                       {query_node_b_->operation_type, {}}},

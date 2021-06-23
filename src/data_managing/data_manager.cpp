@@ -89,7 +89,7 @@ void DataManager::WriteTableData(const TableData& table_data,
   DataManager::AddStringDataFromIntegerData(
       table_data.table_data_vector, string_data_vector,
       table_data.table_column_label_vector);
-  std::ofstream output_file(filename);
+  std::ofstream output_file(filename, std::ios::trunc);
   if (output_file.is_open()) {
     for (const auto& line : string_data_vector) {
       for (auto iter = line.begin(); iter != line.end(); iter++) {

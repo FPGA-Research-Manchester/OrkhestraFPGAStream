@@ -38,17 +38,24 @@ auto GraphCreator::MakeGraph(std::string input_def_filename)
         all_operation_parameters_map.at(input_stream_params_field),
         all_operation_parameters_map.at(output_stream_params),
         all_operation_parameters_map.at(operation_params_field)};
+
+    auto output_filenames =
+        std::get<std::vector<std::string>>(node_parameters.at(output_field));
+    std::vector<bool> is_checked;
+    for (const auto& filename : output_filenames) {
+      is_checked.push_back(!filename.empty());
+    }
+
     graph_nodes_map.insert(
         {node_name, std::make_shared<QueryNode>(
                         std::get<std::vector<std::string>>(
                             node_parameters.at(input_field)),
-                        std::get<std::vector<std::string>>(
-                            node_parameters.at(output_field)),
+                        output_filenames,
                         kSupportedFunctions.at(std::get<std::string>(
                             node_parameters.at(operation_field))),
                         std::vector<std::shared_ptr<QueryNode>>(),
                         std::vector<std::weak_ptr<QueryNode>>(),
-                        all_operation_parameters, node_name)});
+                        all_operation_parameters, node_name, is_checked)});
 
     auto search_previous = node_parameters.find(previous_nodes_field);
     if (search_previous != node_parameters.end()) {

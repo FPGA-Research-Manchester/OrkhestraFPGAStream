@@ -137,8 +137,7 @@ auto NodeScheduler::FindMinPosition(
         if (IsProjectionOperationDefined(current_node, observed_node.get(),
                                          previous_node_index,
                                          current_node_index) ||
-            IsOutputCheckDefined(current_node, observed_node.get(),
-                                 current_node_index)) {
+            observed_node->is_checked[previous_node_index]) {
           return -1;
         }
 
@@ -176,20 +175,6 @@ auto NodeScheduler::IsProjectionOperationDefined(
                   [previous_node_index * kIOStreamParamDefs.kStreamParamCount +
                    kIOStreamParamDefs.kProjectionOffset]
               .empty();
-}
-
-auto NodeScheduler::IsOutputCheckDefined(
-    const query_scheduling_data::QueryNode* current_node,
-    const query_scheduling_data::QueryNode* previous_node,
-    int current_node_index) -> bool {
-  for (const auto& node : previous_node->next_nodes) {
-    if (node.get() == current_node &&
-        !previous_node->output_data_definition_files[current_node_index]
-             .empty()) {
-      return true;
-    }
-  }
-  return false;
 }
 
 // Check recursively if the given node can be added to the set of nodes to be
