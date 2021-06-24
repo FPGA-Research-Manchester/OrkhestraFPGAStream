@@ -3,6 +3,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "data_manager.hpp"
@@ -27,51 +28,53 @@ class TableManager {
    * @return Size of a record in the given table in 32 bit integers.
    */
   static auto GetRecordSizeFromTable(const TableData& input_table) -> int;
-  /**
-   * @brief Read data from input fales into tables which will be in the DDR
-   * memory connected to the FPGA.
-   * @param input_stream_parameters Data about the input streams which needs to
-   * get filled.
-   * @param data_manager Class to deal with data type conversions.
-   * @param stream_data_file_names Vector of input data files.
-   * @param stream_id_vector Given IDs for the streams.
-   * @param allocated_memory_blocks Vector of memory blocks mapped to DDR.
-   * @param stream_specifications Query operation parameters which are connected
-   * with the given data.
-   */
-  static void ReadInputTables(
-      std::vector<fpga_managing::StreamDataParameters>& input_stream_parameters,
-      data_managing::DataManager& data_manager,
-      const std::vector<std::string>& stream_data_file_names,
-      const std::vector<int>& stream_id_vector,
-      std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
-          allocated_memory_blocks,
-      const std::vector<std::vector<int>>& stream_specifications);
-  /**
-   * @brief Read data from the expected output tables for validity checks and
-   * output stream parameters.
-   * @param output_stream_parameters Vector where the output stream parameters
-   * will be written to.
-   * @param data_manager Class to deal with data type conversions.
-   * @param stream_data_file_names Vector of expected output data files.
-   * @param stream_id_vector Vector of given output IDs.
-   * @param allocated_memory_blocks Vector of memory mapped memory blocks.
-   * @param output_tables Vector of expected output data.
-   * @param output_files Vector of output data files.
-   * @param stream_specifications Query parameters to configure the output
-   * streams.
-   */
-  static void ReadExpectedTables(
-      std::vector<fpga_managing::StreamDataParameters>&
-          output_stream_parameters,
-      data_managing::DataManager& data_manager,
-      const std::vector<std::string>& stream_data_file_names,
-      const std::vector<int>& stream_id_vector,
-      std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
-          allocated_memory_blocks,
-      std::vector<TableData>& output_tables,
-      std::vector<std::string>& output_files,
-      const std::vector<std::vector<int>>& stream_specifications);
+  ///**
+  // * @brief Read data from input fales into tables which will be in the DDR
+  // * memory connected to the FPGA.
+  // * @param input_stream_parameters Data about the input streams which needs
+  // to
+  // * get filled.
+  // * @param data_manager Class to deal with data type conversions.
+  // * @param stream_data_file_names Vector of input data files.
+  // * @param stream_id_vector Given IDs for the streams.
+  // * @param allocated_memory_blocks Vector of memory blocks mapped to DDR.
+  // * @param stream_specifications Query operation parameters which are
+  // connected
+  // * with the given data.
+  // */
+  // static void ReadInputTables(
+  //    std::vector<fpga_managing::StreamDataParameters>&
+  //    input_stream_parameters, data_managing::DataManager& data_manager, const
+  //    std::vector<std::string>& stream_data_file_names, const
+  //    std::vector<int>& stream_id_vector,
+  //    std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
+  //        allocated_memory_blocks,
+  //    const std::vector<std::vector<int>>& stream_specifications);
+  ///**
+  // * @brief Read data from the expected output tables for validity checks and
+  // * output stream parameters.
+  // * @param output_stream_parameters Vector where the output stream parameters
+  // * will be written to.
+  // * @param data_manager Class to deal with data type conversions.
+  // * @param stream_data_file_names Vector of expected output data files.
+  // * @param stream_id_vector Vector of given output IDs.
+  // * @param allocated_memory_blocks Vector of memory mapped memory blocks.
+  // * @param output_tables Vector of expected output data.
+  // * @param output_files Vector of output data files.
+  // * @param stream_specifications Query parameters to configure the output
+  // * streams.
+  // */
+  // static void ReadExpectedTables(
+  //    std::vector<fpga_managing::StreamDataParameters>&
+  //        output_stream_parameters,
+  //    data_managing::DataManager& data_manager,
+  //    const std::vector<std::string>& stream_data_file_names,
+  //    const std::vector<int>& stream_id_vector,
+  //    std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
+  //        allocated_memory_blocks,
+  //    std::vector<TableData>& output_tables,
+  //    std::vector<std::string>& output_files,
+  //    const std::vector<std::vector<int>>& stream_specifications);
   /**
    * @brief Read data from the memory mapped DDR after acceleration.
    * @param output_stream_parameters Query operation parameters for the output
@@ -94,8 +97,31 @@ class TableManager {
    * @brief Write the table to a CSV file with a timestamp
    * @param data_table Resulting data to be written to the file.
    * @param filename String of the name of the file to be written to.
-  */
-  static void WriteResultTableFile(const TableData& data_table, std::string filename);
+   */
+  static void WriteResultTableFile(const TableData& data_table,
+                                   std::string filename);
+
+  static auto WriteDataToMemory(
+      const data_managing::DataManager& data_manager,
+      const std::vector<std::vector<int>>& stream_specification,
+      int stream_index,
+      const std::unique_ptr<fpga_managing::MemoryBlockInterface>& memory_device,
+      std::string filename) -> std::pair<int, int>;
+
+  static auto ReadTableFromMemory(
+      const data_managing::DataManager& data_manager,
+      const std::vector<std::vector<int>>& stream_specification,
+      int stream_index,
+      const std::unique_ptr<fpga_managing::MemoryBlockInterface>& memory_device,
+      int row_count) -> TableData;
+  static auto ReadTableFromFile(
+      const data_managing::DataManager& data_manager,
+      const std::vector<std::vector<int>>& stream_specification,
+      int stream_index, std::string filename) -> TableData;
+  static auto GetColumnDefsVector(
+      const data_managing::DataManager& data_manager,
+      std::vector<std::vector<int>> node_parameters, int stream_index)
+      -> std::vector<std::pair<ColumnDataType, int>>;
 
  private:
   static void ReadOutputDataFromMemoryBlock(
@@ -109,6 +135,9 @@ class TableManager {
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>& input_device,
       const TableData& input_table);
   static void PrintDataSize(const TableData& data_table);
+  static auto GetColumnDataTypesFromSpecification(
+      const std::vector<std::vector<int>>& stream_specification,
+      int stream_index) -> std::vector<ColumnDataType>;
 };
 
 }  // namespace dbmstodspi::query_managing

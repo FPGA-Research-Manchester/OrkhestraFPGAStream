@@ -53,13 +53,13 @@ auto DataManager::GetHeaderColumnVector(
 auto DataManager::ParseDataFromCSV(
     const std::string& filename,
     const std::vector<ColumnDataType>& column_data_types,
-    const std::vector<int>& column_sizes) -> TableData {
+    const std::vector<int>& column_sizes) const -> TableData {
   int size = 0;
   std::vector<std::pair<ColumnDataType, int>> table_column_label_vector;
   // Assuming data type vector and column size vectors are the same length
   for (int i = 0; i < column_data_types.size(); i++) {
     double data_type_size =
-        data_type_sizes_[column_data_types.at(i)] * column_sizes.at(i);
+        data_type_sizes_.at(column_data_types.at(i)) * column_sizes.at(i);
     if (data_type_size != static_cast<int>(data_type_size)) {
       throw std::runtime_error(column_sizes.at(i) + "size is not supported!");
     }

@@ -1,5 +1,6 @@
 #include "query_manager.hpp"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -52,6 +53,7 @@ void QueryManager::CheckTableData(const TableData& expected_table,
   }
 }
 
+// TODO change to template
 void dbmstodspi::query_managing::QueryManager::InitialiseMemoryBlockVector(
     std::map<std::string,
              std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>>&
@@ -63,19 +65,20 @@ void dbmstodspi::query_managing::QueryManager::InitialiseMemoryBlockVector(
   memory_blocks.insert({node_name, empty_vector});
 }
 
+void QueryManager::InitialiseStreamSizeVector(
+    std::map<std::string, std::vector<RecordSizeAndCount>>& stream_sizes,
+    int stream_count, std::string node_name) {
+  std::vector<RecordSizeAndCount> empty_vector(stream_count);
+  std::fill(empty_vector.begin(), empty_vector.end(), std::make_pair(0, 0));
+  stream_sizes.insert({node_name, empty_vector});
+}
+
 auto dbmstodspi::query_managing::QueryManager::GetRecordSizeFromParameters(
     const DataManager& data_manager,
-    std::vector<std::vector<int>> node_parameters, int stream_index) -> int {
-  std::vector<ColumnDataType> column_data_types;
-  for (const auto& type_int_value :
-       node_parameters.at(stream_index * kIOStreamParamDefs.kStreamParamCount +
-                          kIOStreamParamDefs.kDataTypesOffset)) {
-    column_data_types.push_back(static_cast<ColumnDataType>(type_int_value));
-  }
-  auto column_defs_vector = data_manager.GetHeaderColumnVector(
-      column_data_types,
-      node_parameters.at(stream_index * kIOStreamParamDefs.kStreamParamCount +
-                         kIOStreamParamDefs.kDataSizesOffset));
+    const std::vector<std::vector<int>>& node_parameters, int stream_index)
+    -> int {
+  auto column_defs_vector = TableManager::GetColumnDefsVector(
+      data_manager, node_parameters, stream_index);
 
   int record_size = 0;
   for (const auto& column_type : column_defs_vector) {
@@ -86,7 +89,7 @@ auto dbmstodspi::query_managing::QueryManager::GetRecordSizeFromParameters(
 
 // Create map with correct amount of elements locations and data reuse links
 void dbmstodspi::query_managing::QueryManager::FindOutputNodes(
-    std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+    const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>&
         scheduled_nodes,
     std::map<std::string,
              std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>>&
@@ -94,6 +97,8 @@ void dbmstodspi::query_managing::QueryManager::FindOutputNodes(
     std::map<std::string,
              std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>>&
         output_memory_blocks,
+    std::map<std::string, std::vector<RecordSizeAndCount>>& input_stream_sizes,
+    std::map<std::string, std::vector<RecordSizeAndCount>>& output_stream_sizes,
     std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links) {
   for (const auto& node : scheduled_nodes) {
     // Input could be defined from previous runs
@@ -101,12 +106,14 @@ void dbmstodspi::query_managing::QueryManager::FindOutputNodes(
         input_memory_blocks.end()) {
       InitialiseMemoryBlockVector(input_memory_blocks,
                                   node->previous_nodes.size(), node->node_name);
+      InitialiseStreamSizeVector(input_stream_sizes,
+                                 node->previous_nodes.size(), node->node_name);
     }
 
-    std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>
-        empty_vector(node->next_nodes.size());
-    std::fill(empty_vector.begin(), empty_vector.end(), nullptr);
-    output_memory_blocks.insert({node->node_name, empty_vector});
+    InitialiseMemoryBlockVector(output_memory_blocks, node->next_nodes.size(),
+                                node->node_name);
+    InitialiseStreamSizeVector(output_stream_sizes, node->previous_nodes.size(),
+                               node->node_name);
 
     for (const auto& output_node : node->next_nodes) {
       if (input_memory_blocks.find(output_node->node_name) ==
@@ -114,6 +121,8 @@ void dbmstodspi::query_managing::QueryManager::FindOutputNodes(
         InitialiseMemoryBlockVector(input_memory_blocks,
                                     output_node->previous_nodes.size(),
                                     output_node->node_name);
+        InitialiseStreamSizeVector(
+            input_stream_sizes, node->previous_nodes.size(), node->node_name);
       }
     }
 
@@ -129,19 +138,17 @@ void QueryManager::AllocateOutputMemoryBlocks(
     const DataManager& data_manager,
     std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
         output_memory_blocks,
-    const query_scheduling_data::QueryNode& node, std::vector<int>& row_count,
-    std::vector<int>& record_sizes) {
-  int stream_count = node.next_nodes.size();
-  record_sizes.reserve(stream_count);
-  row_count.reserve(stream_count);
-  std::fill(row_count.begin(), row_count.end(), 0);
-  for (int stream_index = 0; stream_index < stream_count; stream_index++) {
+    const query_scheduling_data::QueryNode& node,
+    std::vector<RecordSizeAndCount>& output_stream_sizes) {
+  for (int stream_index = 0; stream_index < node.next_nodes.size();
+       stream_index++) {
     if (!node.next_nodes[stream_index]) {
       output_memory_blocks[stream_index] =
           (std::move(memory_manager.GetAvailableMemoryBlock()));
     }
-    record_sizes.push_back(
-        GetRecordSizeFromParameters(data_manager, node.operation_parameters.output_stream_parameters, stream_index));
+    output_stream_sizes[stream_index].first = GetRecordSizeFromParameters(
+        data_manager, node.operation_parameters.output_stream_parameters,
+        stream_index);
   }
 }
 void QueryManager::AllocateInputMemoryBlocks(
@@ -149,26 +156,28 @@ void QueryManager::AllocateInputMemoryBlocks(
     const DataManager& data_manager,
     std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
         input_memory_blocks,
-    const query_scheduling_data::QueryNode& node, std::vector<int>& row_count,
-    std::vector<int>& record_sizes) {
+    const query_scheduling_data::QueryNode& node,
+    std::vector<RecordSizeAndCount>& input_stream_sizes) {
   for (int stream_index = 0; stream_index < node.previous_nodes.size();
        stream_index++) {
     auto observed_node = node.previous_nodes[stream_index].lock();
     if (!observed_node && !input_memory_blocks[stream_index]) {
       input_memory_blocks[stream_index] =
-          (std::move(memory_manager.GetAvailableMemoryBlock()));
-      // WRITE and get sizes!
-      assert(false);
+          std::move(memory_manager.GetAvailableMemoryBlock());
+      input_stream_sizes[stream_index] = TableManager::WriteDataToMemory(
+          data_manager, node.operation_parameters.input_stream_parameters,
+          stream_index, input_memory_blocks[stream_index],
+          node.input_data_definition_files[stream_index]);
     }
   }
 }
 
 auto dbmstodspi::query_managing::QueryManager::CreateStreamParams(
-    const DataManager& data_manager, const std::vector<int>& stream_ids,
+    const std::vector<int>& stream_ids,
     const std::vector<std::vector<int>>& node_parameters,
     const std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
         allocated_memory_blocks,
-    const std::vector<int>& row_counts, const std::vector<int>& record_sizes)
+    const std::vector<RecordSizeAndCount>& stream_sizes)
     -> std::vector<fpga_managing::StreamDataParameters> {
   std::vector<fpga_managing::StreamDataParameters> parameters_for_acceleration;
 
@@ -180,8 +189,8 @@ auto dbmstodspi::query_managing::QueryManager::CreateStreamParams(
     }
 
     fpga_managing::StreamDataParameters current_stream_parameters = {
-        stream_ids[stream_index], record_sizes[stream_index],
-        row_counts[stream_index], physical_address_ptr,
+        stream_ids[stream_index], stream_sizes[stream_index].first,
+        stream_sizes[stream_index].second, physical_address_ptr,
         node_parameters.at(stream_index * kIOStreamParamDefs.kStreamParamCount +
                            kIOStreamParamDefs.kProjectionOffset)};
 
@@ -194,15 +203,60 @@ auto dbmstodspi::query_managing::QueryManager::CreateStreamParams(
 void dbmstodspi::query_managing::QueryManager::StoreStreamResultPrameters(
     std::map<std::string, std::vector<StreamResultParameters>>&
         result_parameters,
-    const std::vector<int> stream_ids,
+    const std::vector<int>& stream_ids,
     const query_scheduling_data::QueryNode& node,
     const std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
-        allocated_memory_blocks) {}
+        allocated_memory_blocks) {
+  std::vector<StreamResultParameters> result_parameters_vector;
+  for (int stream_index = 0; stream_index < stream_ids.size(); stream_index++) {
+    if (allocated_memory_blocks[stream_index]) {
+      result_parameters_vector.emplace_back(
+          stream_index, stream_ids[stream_index],
+          node.output_data_definition_files[stream_index],
+          node.is_checked[stream_index],
+          node.operation_parameters.output_stream_parameters);
+    }
+  }
+  result_parameters.insert({node.node_name, result_parameters_vector});
+}
 
 void dbmstodspi::query_managing::QueryManager::ProcessResults(
-    std::array<int, kMaxIOStreamCount> result_sizes,
-    std::map<std::string, std::vector<StreamResultParameters>>&
-        result_parameters) {}
+    const DataManager& data_manager,
+    const std::array<int, dbmstodspi::fpga_managing::
+                              query_acceleration_constants::kMaxIOStreamCount>
+        result_sizes,
+    const std::map<std::string, std::vector<StreamResultParameters>>&
+        result_parameters,
+    const std::map<
+        std::string,
+        std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>>&
+        allocated_memory_blocks,
+    std::map<std::string, std::vector<RecordSizeAndCount>>&
+        output_stream_sizes) {
+  for (auto const& [node_name, result_parameter_vector] : result_parameters) {
+    for (auto const& result_params : result_parameter_vector) {
+      int record_count = result_sizes.at(result_params.output_id);
+      Log(LogLevel::kDebug,
+          node_name + "_" + std::to_string(result_params.stream_index) +
+              " has " + std::to_string(record_count) + " rows!");
+      output_stream_sizes[node_name][result_params.stream_index].second =
+          record_count;
+      if (result_params.check_results) {
+        CheckResults(
+            data_manager,
+            allocated_memory_blocks.at(node_name)[result_params.stream_index],
+            record_count, result_params.filename,
+            result_params.stream_specifications, result_params.stream_index);
+      } else {
+        WriteResults(
+            data_manager,
+            allocated_memory_blocks.at(node_name)[result_params.stream_index],
+            record_count, result_params.filename,
+            result_params.stream_specifications, result_params.stream_index);
+      }
+    }
+  }
+}
 
 void dbmstodspi::query_managing::QueryManager::FreeMemoryBlocks(
     fpga_managing::MemoryManager memory_manager,
@@ -212,7 +266,109 @@ void dbmstodspi::query_managing::QueryManager::FreeMemoryBlocks(
     std::map<std::string,
              std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>>&
         output_memory_blocks,
-    std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links) {}
+    std::map<std::string, std::vector<RecordSizeAndCount>>& input_stream_sizes,
+    std::map<std::string, std::vector<RecordSizeAndCount>>& output_stream_sizes,
+    std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links) {
+  std::vector<std::string> removable_vectors;
+  for (auto& [node_name, memory_block_vector] : input_memory_blocks) {
+    removable_vectors.push_back(node_name);
+    for (auto& memory_block : memory_block_vector) {
+      if (memory_block) {
+        memory_manager.FreeMemoryBlock(std::move(memory_block));
+      }
+      memory_block = nullptr;
+    }
+    for (auto& stream_sizes : input_stream_sizes[node_name]) {
+      stream_sizes = {0, 0};
+    }
+  }
+
+  for (const auto& [node_name, data_mapping] : reuse_links) {
+    for (const auto& [output_stream_index, targe_input_streams] :
+         data_mapping) {
+      if (targe_input_streams.size() == 1) {
+        auto target_node_name = targe_input_streams.at(0).first;
+        auto target_stream_index = targe_input_streams.at(0).second;
+        removable_vectors.erase(
+            std::remove(removable_vectors.begin(), removable_vectors.end(),
+                        target_node_name),
+            removable_vectors.end());
+        input_memory_blocks[target_node_name][target_stream_index] =
+            std::move(output_memory_blocks[node_name][output_stream_index]);
+        output_memory_blocks[node_name][output_stream_index] = nullptr;
+        input_stream_sizes[target_node_name][target_stream_index] =
+            output_stream_sizes[node_name][output_stream_index];
+      } else {
+        for (const auto& [target_node_name, target_stream_index] :
+             targe_input_streams) {
+          removable_vectors.erase(
+              std::remove(removable_vectors.begin(), removable_vectors.end(),
+                          target_node_name),
+              removable_vectors.end());
+          input_memory_blocks[target_node_name][target_stream_index] =
+              std::move(memory_manager.GetAvailableMemoryBlock());
+          CopyMemoryData(
+              output_stream_sizes[node_name][output_stream_index].first *
+                  output_stream_sizes[node_name][output_stream_index].second,
+              output_memory_blocks[node_name][output_stream_index],
+              input_memory_blocks[target_node_name][target_stream_index]);
+          input_stream_sizes[target_node_name][target_stream_index] =
+              output_stream_sizes[node_name][output_stream_index];
+        }
+      }
+    }
+  }
+
+  for (auto& [node_name, memory_block_vector] : output_memory_blocks) {
+    for (auto& memory_block : memory_block_vector) {
+      if (memory_block) {
+        memory_manager.FreeMemoryBlock(std::move(memory_block));
+      }
+    }
+  }
+
+  output_memory_blocks.clear();
+  output_stream_sizes.clear();
+  reuse_links.clear();
+
+  for (const auto& finished_node : removable_vectors) {
+    input_stream_sizes.erase(finished_node);
+    input_memory_blocks.erase(finished_node);
+  }
+}
+
+void QueryManager::CheckResults(
+    const DataManager& data_manager,
+    const std::unique_ptr<fpga_managing::MemoryBlockInterface>& memory_device,
+    int row_count, std::string filename,
+    const std::vector<std::vector<int>>& node_parameters, int stream_index) {
+  auto expected_table = TableManager::ReadTableFromFile(
+      data_manager, node_parameters, stream_index, std::move(filename));
+  auto resulting_table = TableManager::ReadTableFromMemory(
+      data_manager, node_parameters, stream_index, memory_device, row_count);
+  CheckTableData(expected_table, resulting_table);
+}
+void QueryManager::WriteResults(
+    const DataManager& data_manager,
+    const std::unique_ptr<fpga_managing::MemoryBlockInterface>& memory_device,
+    int row_count, std::string filename,
+    const std::vector<std::vector<int>>& node_parameters, int stream_index) {
+  auto resulting_table = TableManager::ReadTableFromMemory(
+      data_manager, node_parameters, stream_index, memory_device, row_count);
+  TableManager::WriteResultTableFile(resulting_table, std::move(filename));
+}
+void QueryManager::CopyMemoryData(
+    int table_size,
+    const std::unique_ptr<fpga_managing::MemoryBlockInterface>&
+        source_memory_device,
+    const std::unique_ptr<fpga_managing::MemoryBlockInterface>&
+        target_memory_device) {
+  volatile uint32_t* source = source_memory_device->GetVirtualAddress();
+  volatile uint32_t* target = target_memory_device->GetVirtualAddress();
+  for (int i = 0; i < table_size; i++) {
+    target[i] = source[i];
+  }
+}
 
 void QueryManager::RunQueries(
     std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
@@ -234,6 +390,8 @@ void QueryManager::RunQueries(
   std::map<std::string,
            std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>>
       output_memory_blocks;
+  std::map<std::string, std::vector<RecordSizeAndCount>> input_stream_sizes;
+  std::map<std::string, std::vector<RecordSizeAndCount>> output_stream_sizes;
   std::map<std::string, std::map<int, MemoryReuseTargets>> reuse_links;
 
   while (!query_node_runs_queue.empty()) {
@@ -253,34 +411,34 @@ void QueryManager::RunQueries(
         config.required_memory_space.at(bitstream_file_name));
 
     FindOutputNodes(executable_query_nodes, input_memory_blocks,
-                    output_memory_blocks, reuse_links);
+                    output_memory_blocks, input_stream_sizes,
+                    output_stream_sizes, reuse_links);
 
     IDManager::AllocateStreamIDs(CreateReferenceVector(executable_query_nodes),
                                  input_ids, output_ids);
 
     for (const auto& node : executable_query_nodes) {
-      std::vector<int> input_row_counts;
-      std::vector<int> output_row_counts;
-      std::vector<int> input_record_sizes;
-      std::vector<int> output_record_sizes;
       AllocateInputMemoryBlocks(memory_manager, data_manager,
                                 input_memory_blocks[node->node_name], *node,
-                                input_row_counts, input_record_sizes);
+                                input_stream_sizes[node->node_name]);
       AllocateOutputMemoryBlocks(memory_manager, data_manager,
                                  output_memory_blocks[node->node_name], *node,
-                                 output_row_counts, output_record_sizes);
+                                 output_stream_sizes[node->node_name]);
 
       auto input_params =
-          CreateStreamParams(data_manager, input_ids[node->node_name],
+          CreateStreamParams(input_ids[node->node_name],
                              node->operation_parameters.input_stream_parameters,
                              input_memory_blocks[node->node_name],
-                             input_row_counts, input_record_sizes);
+                             input_stream_sizes[node->node_name]);
       auto output_params = CreateStreamParams(
-          data_manager, output_ids[node->node_name],
+          output_ids[node->node_name],
           node->operation_parameters.output_stream_parameters,
-          output_memory_blocks[node->node_name], output_row_counts,
-          output_record_sizes);
+          output_memory_blocks[node->node_name],
+          output_stream_sizes[node->node_name]);
 
+      // If input stream sizes are not checked in the scheduler since previous
+      // node stream sizes are unknown. For futher scheduling improvements the
+      // scheduling should be redone after each run possibly?
       ElasticModuleChecker::CheckElasticityNeeds(
           input_params, node->operation_type,
           node->operation_parameters.operation_parameters);
@@ -297,10 +455,10 @@ void QueryManager::RunQueries(
     auto result_sizes = fpga_manager.RunQueryAcceleration();
     Log(LogLevel::kTrace, "Query done!");
 
-    // TODO needs data_manager for reading
-    ProcessResults(result_sizes, result_parameters);
+    ProcessResults(data_manager, result_sizes, result_parameters,
+                   output_memory_blocks, output_stream_sizes);
     FreeMemoryBlocks(memory_manager, input_memory_blocks, output_memory_blocks,
-                     reuse_links);
+                     input_stream_sizes, output_stream_sizes, reuse_links);
   }
 }
 
@@ -319,7 +477,8 @@ void QueryManager::RunQueries(
 //  Log(LogLevel::kTrace, "Scheduling done!");
 //
 //  while (!query_node_runs_queue.empty()) {
-//    const auto executable_query_nodes = query_node_runs_queue.front().second;
+//    const auto executable_query_nodes =
+//    query_node_runs_queue.front().second;
 //
 //    const auto& bitstream_file_name =
 //        config.accelerator_library.at(query_node_runs_queue.front().first);
@@ -416,11 +575,13 @@ void QueryManager::RunQueries(
 //
 //    // Check results & free memory
 //    std::vector<TableData> output_tables = expected_output_tables;
-//    for (int node_index = 0; node_index < query_nodes.size(); node_index++) {
+//    for (int node_index = 0; node_index < query_nodes.size(); node_index++)
+//    {
 //      TableManager::ReadResultTables(query_nodes[node_index].output_streams,
 //                                     output_tables, result_sizes,
 //                                     output_memory_blocks[node_index]);
-//      for (int stream_index = 0; stream_index < output_ids[node_index].size();
+//      for (int stream_index = 0; stream_index <
+//      output_ids[node_index].size();
 //           stream_index++) {
 //        if (output_memory_blocks[node_index][stream_index]) {
 //          Log(LogLevel::kDebug,

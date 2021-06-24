@@ -28,15 +28,18 @@ class DataManager {
   /**
    * @brief Write data from the given CSV file to the TableData structure.
    * @param filename Path to the DBMS CSV data.
-   * @param column_data_types Vector of data type enums for each column of data in the table.
+   * @param column_data_types Vector of data type enums for each column of data
+   * in the table.
    * @param column_sizes Vector of column sizes.
    * @return Information about the size and datatypes and also the data itself.
    */
   auto ParseDataFromCSV(const std::string& filename,
                         const std::vector<ColumnDataType>& column_data_types,
-                        const std::vector<int>& column_sizes) -> TableData;
+                        const std::vector<int>& column_sizes) const
+      -> TableData;
 
-  auto ReadIntegerDataFromCSV(const std::vector<std::pair<ColumnDataType, int>> table_column_defs,
+  auto ReadIntegerDataFromCSV(
+      const std::vector<std::pair<ColumnDataType, int>> table_column_defs,
       const std::string& filename) -> std::vector<uint32_t>;
 
   auto GetHeaderColumnVector(
@@ -54,7 +57,7 @@ class DataManager {
    * @brief Method to write the table into a file with the given filename.
    * @param table_data Data to be written to the file.
    * @param filename Name of the file to be written to.
-  */
+   */
   static void WriteTableData(const TableData& table_data, std::string filename);
 
  private:
