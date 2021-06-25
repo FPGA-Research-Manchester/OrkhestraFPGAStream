@@ -11,8 +11,6 @@ namespace dbmstodspi::query_managing {
  */
 class IDManager {
  private:
-  /// Keep track of available IDs
-  static std::stack<int> available_ids_;
   /**
    * @brief Method for finding the index of an element in a vector.
    * @param vector Vector where the element should be found from.
@@ -27,17 +25,15 @@ class IDManager {
   /**
    * @brief Allocate IDs which the input and output streams share.
    * @param current_node Current node which needs IDs.
-   * @param all_nodes Collection of all nodes to find already assigned IDs.
    * @param current_node_input_ids Current input IDs vector.
    * @param output_ids All output IDs map.
    * @param current_node_output_ids Current output IDs vector.
    */
   static void AllocateInputIDs(
       const query_scheduling_data::QueryNode &current_node,
-      const std::vector<query_scheduling_data::QueryNode> &all_nodes,
       std::vector<int> &current_node_input_ids,
       std::map<std::string, std::vector<int>> &output_ids,
-      std::vector<int> &current_node_output_ids);
+      std::vector<int> &current_node_output_ids, std::stack<int>& available_ids);
   /**
    * @brief Allocate IDs to output streams without IDs yet.
    * @param current_node Current node which needs to get more IDs
@@ -45,9 +41,9 @@ class IDManager {
    */
   static void AllocateLeftoverOutputIDs(
       const query_scheduling_data::QueryNode &current_node,
-      std::vector<int> &current_node_output_ids);
+      std::vector<int> &current_node_output_ids, std::stack<int>& available_ids);
 
-  static void SetUpAvailableIDs();
+  static auto SetUpAvailableIDs() -> std::stack<int>;
 
  public:
   /**

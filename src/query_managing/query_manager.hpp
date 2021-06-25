@@ -63,7 +63,7 @@ class QueryManager {
           std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>>&
           memory_blocks,
       int stream_count, std::string node_name);
-  static void QueryManager::InitialiseStreamSizeVector(
+  static void InitialiseStreamSizeVector(
       std::map<std::string, std::vector<RecordSizeAndCount>>& stream_sizes,
       int stream_count, std::string node_name);
   static auto GetRecordSizeFromParameters(
@@ -89,18 +89,20 @@ class QueryManager {
       std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links);
 
   static void AllocateOutputMemoryBlocks(
-      fpga_managing::MemoryManager memory_manager,
+      fpga_managing::MemoryManager& memory_manager,
       const DataManager& data_manager,
       std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
           output_memory_blocks,
       const query_scheduling_data::QueryNode& node,
       std::vector<RecordSizeAndCount>& output_stream_sizes);
   static void AllocateInputMemoryBlocks(
-      fpga_managing::MemoryManager memory_manager,
+      fpga_managing::MemoryManager& memory_manager,
       const DataManager& data_manager,
       std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
           input_memory_blocks,
       const query_scheduling_data::QueryNode& node,
+      const std::map<std::string, std::vector<RecordSizeAndCount>>&
+          output_stream_sizes,
       std::vector<RecordSizeAndCount>& input_stream_sizes);
 
   static auto CreateStreamParams(
@@ -131,7 +133,7 @@ class QueryManager {
       std::map<std::string, std::vector<RecordSizeAndCount>>&
           output_stream_sizes);
   static void FreeMemoryBlocks(
-      fpga_managing::MemoryManager memory_manager,
+      fpga_managing::MemoryManager& memory_manager,
       std::map<
           std::string,
           std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>>&

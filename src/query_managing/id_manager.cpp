@@ -15,33 +15,35 @@ void IDManager::AllocateStreamIDs(
     const std::vector<query_scheduling_data::QueryNode> &all_nodes,
     std::map<std::string, std::vector<int>> &input_ids,
     std::map<std::string, std::vector<int>> &output_ids) {
-  SetUpAvailableIDs();
+  auto available_ids = SetUpAvailableIDs();
 
   for (const auto &current_node : all_nodes) {
     std::vector<int> current_node_input_ids;
     std::vector<int> current_node_output_ids;
-    AllocateInputIDs(current_node, all_nodes, current_node_input_ids,
-                     output_ids, current_node_output_ids);
-    AllocateLeftoverOutputIDs(current_node, current_node_output_ids);
+    AllocateInputIDs(current_node, current_node_input_ids,
+                     output_ids, current_node_output_ids, available_ids);
+    AllocateLeftoverOutputIDs(current_node, current_node_output_ids,
+                              available_ids);
     input_ids.insert({current_node.node_name, current_node_input_ids});
     output_ids.insert({current_node.node_name, current_node_output_ids});
   }
 }
 
-void IDManager::SetUpAvailableIDs() {
+auto IDManager::SetUpAvailableIDs() -> std::stack<int> {
+  std::stack<int> available_ids;
   for (int available_index =
            fpga_managing::query_acceleration_constants::kMaxIOStreamCount - 1;
        available_index >= 0; available_index--) {
-    available_ids_.push(available_index);
+    available_ids.push(available_index);
   }
+  return available_ids;
 }
 
 void IDManager::AllocateInputIDs(
     const query_scheduling_data::QueryNode &current_node,
-    const std::vector<query_scheduling_data::QueryNode> &all_nodes,
     std::vector<int> &current_node_input_ids,
     std::map<std::string, std::vector<int>> &output_ids,
-    std::vector<int> &current_node_output_ids) {
+    std::vector<int> &current_node_output_ids, std::stack<int>& available_ids) {
   for (int current_stream_index = 0;
        current_stream_index < current_node.input_data_definition_files.size();
        current_stream_index++) {
@@ -54,11 +56,11 @@ void IDManager::AllocateInputIDs(
       current_node_input_ids.push_back(
           output_ids[previous_node->node_name][previous_stream_index]);
     } else {
-      if (available_ids_.empty()) {
+      if (available_ids.empty()) {
         throw std::runtime_error("Out of IDs!");
       }
-      current_node_input_ids.push_back(available_ids_.top());
-      available_ids_.pop();
+      current_node_input_ids.push_back(available_ids.top());
+      available_ids.pop();
     }
     if (current_stream_index <
         current_node.output_data_definition_files.size()) {
@@ -70,16 +72,16 @@ void IDManager::AllocateInputIDs(
 
 void IDManager::AllocateLeftoverOutputIDs(
     const query_scheduling_data::QueryNode &current_node,
-    std::vector<int> &current_node_output_ids) {
+    std::vector<int> &current_node_output_ids, std::stack<int>& available_ids) {
   for (int current_stream_index =
            current_node.input_data_definition_files.size();
        current_stream_index < current_node.output_data_definition_files.size();
        current_stream_index++) {
-    if (available_ids_.empty()) {
+    if (available_ids.empty()) {
       throw std::runtime_error("Out of IDs!");
     }
-    current_node_output_ids.push_back(available_ids_.top());
-    available_ids_.pop();
+    current_node_output_ids.push_back(available_ids.top());
+    available_ids.pop();
   }
 }
 
