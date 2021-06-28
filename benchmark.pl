@@ -55,7 +55,7 @@ foreach my $input_def ( @input_defs ) {
             }
             push @accumulated_times, $run_time;
         }
-        print "\nAccumulated module times:\n";
+        print "\nAccumulated times:\n";
         print_mean_and_dev(@accumulated_times);
 
         for(my $i = 0; $i < $module_count; $i++){
@@ -63,7 +63,7 @@ foreach my $input_def ( @input_defs ) {
             for(my $j = 0; $j <= $#accumulated_times; $j++){
                 push @current_module_times, @module_times[$i + $module_count * $j];
             }
-            print "\nModule $i:\n";
+            print "\nConfiguration $i:\n";
             print_mean_and_dev(@current_module_times);
         }
     }

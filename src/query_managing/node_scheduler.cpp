@@ -18,7 +18,10 @@ auto NodeScheduler::FindAcceleratedQueryNodeSets(
     const std::map<query_scheduling_data::ConfigurableModulesVector,
                    std::string>& supported_accelerator_bitstreams,
     const std::map<operation_types::QueryOperationType,
-                   std::vector<std::vector<int>>>& existing_modules_library)
+                   std::vector<std::vector<int>>>& existing_modules_library,
+    std::map<std::string,
+             std::map<int, std::vector<std::pair<std::string, int>>>>&
+        linked_nodes)
     -> std::queue<std::pair<
         query_scheduling_data::ConfigurableModulesVector,
         std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>>> {
@@ -47,7 +50,7 @@ auto NodeScheduler::FindAcceleratedQueryNodeSets(
       throw std::runtime_error("Failed to schedule!");
     }
 
-    CheckExternalLinks(current_query_nodes);
+    CheckExternalLinks(current_query_nodes, linked_nodes);
 
     query_node_runs_queue.push({current_set, current_query_nodes});
   }
@@ -58,10 +61,15 @@ auto NodeScheduler::FindAcceleratedQueryNodeSets(
 // scheduled
 void NodeScheduler::CheckExternalLinks(
     const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>&
-        current_query_nodes) {
+        current_query_nodes,
+    std::map<std::string,
+             std::map<int, std::vector<std::pair<std::string, int>>>>&
+        linked_nodes) {
   for (const auto& node : current_query_nodes) {
+    std::map<int, std::vector<std::pair<std::string, int>>> target_maps;
     for (int next_node_index = 0; next_node_index < node->next_nodes.size();
          next_node_index++) {
+      std::vector<std::pair<std::string, int>> targets;
       if (!node->next_nodes[next_node_index]) {
         if (node->output_data_definition_files[next_node_index].empty()) {
           node->output_data_definition_files[next_node_index] =
@@ -69,20 +77,29 @@ void NodeScheduler::CheckExternalLinks(
         }
       } else if (IsNodeMissingFromTheVector(node->next_nodes[next_node_index],
                                             current_query_nodes)) {
-        auto current_filename =
-            node->output_data_definition_files[next_node_index];
-        if (current_filename.empty()) {
-          current_filename =
-              node->node_name + "_" + std::to_string(next_node_index) + ".csv";
-          node->output_data_definition_files[next_node_index] =
-              current_filename;
-        }
         int current_node_location = FindPreviousNodeLocation(
             node->next_nodes[next_node_index]->previous_nodes, node);
-        node->next_nodes[next_node_index]
-            ->input_data_definition_files[current_node_location] =
-            current_filename;
-        node->next_nodes[next_node_index] = nullptr;
+        auto current_filename =
+            node->output_data_definition_files[next_node_index];
+        if (current_filename.empty() &&
+                ReuseMemory(*node, *node->next_nodes[next_node_index])) {
+          targets.emplace_back(node->next_nodes[next_node_index]->node_name,
+                               current_node_location);
+        } else {
+          if (current_filename.empty()) {
+            current_filename = node->node_name + "_" +
+                               std::to_string(next_node_index) + ".csv";
+            node->output_data_definition_files[next_node_index] =
+                current_filename;
+          }
+          node->next_nodes[next_node_index]
+              ->input_data_definition_files[current_node_location] =
+              current_filename;
+          node->next_nodes[next_node_index] = nullptr;
+        }
+      }
+      if (!targets.empty()) {
+        target_maps.insert({next_node_index, targets});
       }
     }
     for (int previous_node_index = 0;
@@ -94,7 +111,17 @@ void NodeScheduler::CheckExternalLinks(
             std::weak_ptr<query_scheduling_data::QueryNode>();
       }
     }
+    if (!target_maps.empty()) {
+      linked_nodes.insert({node->node_name, target_maps});
+    }
   }
+}
+
+auto NodeScheduler::ReuseMemory(
+    const query_scheduling_data::QueryNode& source_node,
+    const query_scheduling_data::QueryNode& target_node) -> bool {
+  // TODO needs to consider the memory capabilities
+  return true;
 }
 
 auto NodeScheduler::IsNodeMissingFromTheVector(

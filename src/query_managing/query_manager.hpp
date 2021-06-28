@@ -71,7 +71,7 @@ class QueryManager {
       const std::vector<std::vector<int>>& node_parameters, int stream_index)
       -> int;
 
-  static void FindOutputNodes(
+  static void InitialiseVectorSizes(
       const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>&
           scheduled_nodes,
       std::map<
@@ -85,8 +85,7 @@ class QueryManager {
       std::map<std::string, std::vector<RecordSizeAndCount>>&
           input_stream_sizes,
       std::map<std::string, std::vector<RecordSizeAndCount>>&
-          output_stream_sizes,
-      std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links);
+          output_stream_sizes);
 
   static void AllocateOutputMemoryBlocks(
       fpga_managing::MemoryManager& memory_manager,
@@ -116,9 +115,7 @@ class QueryManager {
       std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
       const std::vector<int>& stream_ids,
-      const query_scheduling_data::QueryNode& node,
-      const std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
-          allocated_memory_blocks);
+      const query_scheduling_data::QueryNode& node);
   static void ProcessResults(
       const DataManager& data_manager,
       const std::array<int, dbmstodspi::fpga_managing::
@@ -146,7 +143,9 @@ class QueryManager {
           input_stream_sizes,
       std::map<std::string, std::vector<RecordSizeAndCount>>&
           output_stream_sizes,
-      std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links);
+      std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links,
+      const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>&
+          scheduled_nodes);
   static void CheckResults(
       const DataManager& data_manager,
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>& memory_device,
@@ -163,6 +162,11 @@ class QueryManager {
           source_memory_device,
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>&
           target_memory_device);
+  static auto GetCurrentLinks(
+      const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>&
+          scheduled_nodes, 
+      const std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links)
+      -> std::map<std::string, std::map<int, MemoryReuseTargets>>;
 
  public:
   /**
