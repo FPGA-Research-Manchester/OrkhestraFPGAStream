@@ -20,9 +20,10 @@ class CSVReader {
   /**
    * @brief Read the given CSV file and return row data.
    * @param filename Path to the CSV file
+   * @param separator Separator character
    * @return read_rows Main data of the CSV file.
    */
-  static auto ReadTableData(const std::string& filename)
+  static auto ReadTableData(const std::string& filename, char separator)
       -> std::vector<std::vector<std::string>>;
 };
 

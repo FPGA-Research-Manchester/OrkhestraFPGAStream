@@ -415,7 +415,7 @@ void QueryManager::RunQueries(
         starting_query_nodes,
     const Config& config) {
   Log(LogLevel::kTrace, "Starting up!");
-  data_managing::DataManager data_manager(config.data_sizes);
+  data_managing::DataManager data_manager(config.data_sizes, config.separator);
   fpga_managing::MemoryManager memory_manager;
   fpga_managing::FPGAManager fpga_manager(&memory_manager);
 

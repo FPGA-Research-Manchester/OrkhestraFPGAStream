@@ -342,3 +342,5 @@ healthchecksdb
 # Custom added
 /out
 /run-clang-tidy.py
+/resources/benchmark/part.zip
+/resources/benchmark/lineitem.zip

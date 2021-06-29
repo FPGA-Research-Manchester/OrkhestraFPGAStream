@@ -15,13 +15,14 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string configurations_library = "CONFIGURATIONS_LIBRARY";
   std::string memory_requirements = "BITSTREAMS_MEM_REQ";
   std::string data_type_sizes = "DATA_SIZE_CONFIG";
+  std::string data_separator = "DATA_SEPARATOR";
 
   // repo.json is hardcoded for now.
 
-  auto json_file_names = config_reader_->ParseInputConfig(config_filename);
+  auto config_values = config_reader_->ParseInputConfig(config_filename);
 
   auto accelerator_library_data = json_reader_->readAcceleratorLibrary(
-      json_file_names[configurations_library]);
+      config_values[configurations_library]);
 
   Config config;
   config.accelerator_library =
@@ -30,13 +31,14 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
       ConvertAcceleratorLibraryToModuleLibrary(accelerator_library_data);
 
   auto string_key_data_sizes =
-      json_reader_->readDataSizes(json_file_names[data_type_sizes]);
+      json_reader_->readDataSizes(config_values[data_type_sizes]);
   for (const auto& [string_key, size_scale] : string_key_data_sizes) {
     config.data_sizes.insert({kDataTypeNames.at(string_key), size_scale});
   }
 
   config.required_memory_space =
-      json_reader_->readReqMemorySpace(json_file_names[memory_requirements]);
+      json_reader_->readReqMemorySpace(config_values[memory_requirements]);
+  config.separator = config_values[data_separator].c_str()[0];
   return config;
 }
 

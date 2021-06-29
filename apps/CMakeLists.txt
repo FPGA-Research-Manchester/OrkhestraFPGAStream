@@ -93,7 +93,11 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF001.json
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF01.json TPCH_Q19_SF01.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF03.json TPCH_Q19_SF03.json COPYONLY)
 
-configure_file(${DBMStoDSPI_SOURCE_DIR}/benchmark.pl benchmark.pl COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark.pl benchmark.pl COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark_defs.zip benchmark_defs.zip COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/lineitem.zip lineitem.zip COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/part.zip part.zip COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark_config.ini benchmark_config.ini COPYONLY)
 
 FetchContent_Declare(
   cxxopts

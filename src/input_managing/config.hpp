@@ -29,5 +29,6 @@ struct Config {
   std::map<std::string, int> required_memory_space;
   std::map<ColumnDataType, double> data_sizes;
   // std::map<std::string, std::string> driver_library;
+  char separator;
 };
 }  // namespace dbmstodspi::input_managing

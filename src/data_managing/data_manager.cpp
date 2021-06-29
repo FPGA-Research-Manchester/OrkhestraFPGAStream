@@ -20,7 +20,7 @@ auto DataManager::ReadIntegerDataFromCSV(
     const std::vector<std::pair<ColumnDataType, int>> table_column_defs,
     const std::string& filename) -> std::vector<uint32_t> {
   if (IsValidFile(filename)) {
-    auto data_rows = CSVReader::ReadTableData(filename);
+    auto data_rows = CSVReader::ReadTableData(filename, separator_);
     std::vector<uint32_t> table_data_vector;
     TypesConverter::AddIntegerDataFromStringData(data_rows, table_data_vector,
                                                  table_column_defs);
@@ -73,7 +73,7 @@ auto DataManager::ParseDataFromCSV(
   table_data.table_column_label_vector = table_column_label_vector;
 
   if (IsValidFile(filename)) {
-    auto data_rows = CSVReader::ReadTableData(filename);
+    auto data_rows = CSVReader::ReadTableData(filename, separator_);
     table_data.table_data_vector.reserve(size * data_rows.size());
     TypesConverter::AddIntegerDataFromStringData(
         data_rows, table_data.table_data_vector, table_column_label_vector);

@@ -2,9 +2,10 @@
 
 using namespace dbmstodspi::data_managing;
 
-auto CSVReader::ReadTableData(const std::string& filename)
+auto CSVReader::ReadTableData(const std::string& filename, char separator)
     -> std::vector<std::vector<std::string>> {
-  rapidcsv::Document doc(filename, rapidcsv::LabelParams(-1, -1));
+  rapidcsv::Document doc(filename, rapidcsv::LabelParams(-1, -1),
+                         rapidcsv::SeparatorParams(separator));
   std::vector<std::vector<std::string>> data_rows;
   data_rows.reserve(doc.GetRowCount());
   for (int row_number = 0; row_number < doc.GetRowCount(); row_number++) {

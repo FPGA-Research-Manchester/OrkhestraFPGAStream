@@ -20,11 +20,11 @@ sub print_mean_and_dev {
     print "Std Dev: $std_dev\n"
 }
 
-my @input_defs=("TPCH_Q19_SF001.json", "TPCH_Q19_SF01.json");
-my @input_configs=("config.ini");
+my @input_defs=("TPCH_Q19_SF001.json", "TPCH_Q19_SF002.json", "TPCH_Q19_SF003.json");
+my @input_configs=("benchmark_config.ini");
 
-my $warm_up_runs = 1;
-my $regular_runs = 3;
+my $warm_up_runs = 3;
+my $regular_runs = 20;
 
 foreach my $input_def ( @input_defs ) {
     foreach my $input_config ( @input_configs ) {

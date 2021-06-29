@@ -22,9 +22,10 @@ class DataManager {
   /**
    * @brief Constructor to setup data types size scale values.
    * @param data_sizes Data type size scaling values.
+   * @param spearator Which character is used for separating columns.
    */
-  explicit DataManager(std::map<ColumnDataType, double> data_sizes)
-      : data_type_sizes_(std::move(data_sizes)){};
+  explicit DataManager(std::map<ColumnDataType, double> data_sizes, char separator)
+      : data_type_sizes_(std::move(data_sizes)), separator_(separator) {};
   /**
    * @brief Write data from the given CSV file to the TableData structure.
    * @param filename Path to the DBMS CSV data.
@@ -61,6 +62,8 @@ class DataManager {
   static void WriteTableData(const TableData& table_data, std::string filename);
 
  private:
+     /// Which char is used to separate columns.
+  char separator_;
   /// Map to hold information about data type sizes from the given config file.
   std::map<ColumnDataType, double> data_type_sizes_;
   /**
