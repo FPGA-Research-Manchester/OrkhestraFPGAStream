@@ -230,10 +230,12 @@ void QueryManager::StoreStreamResultPrameters(
     std::map<std::string, std::vector<StreamResultParameters>>&
         result_parameters,
     const std::vector<int>& stream_ids,
-    const query_scheduling_data::QueryNode& node) {
+    const query_scheduling_data::QueryNode& node,
+    const std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
+        allocated_memory_blocks) {
   std::vector<StreamResultParameters> result_parameters_vector;
   for (int stream_index = 0; stream_index < stream_ids.size(); stream_index++) {
-    if (!node.output_data_definition_files.at(stream_index).empty()) {
+    if (allocated_memory_blocks[stream_index]) {
       result_parameters_vector.emplace_back(
           stream_index, stream_ids[stream_index],
           node.output_data_definition_files[stream_index],
@@ -265,18 +267,20 @@ void QueryManager::ProcessResults(
               " has " + std::to_string(record_count) + " rows!");
       output_stream_sizes[node_name][result_params.stream_index].second =
           record_count;
-      if (result_params.check_results) {
-        CheckResults(
-            data_manager,
-            allocated_memory_blocks.at(node_name)[result_params.stream_index],
-            record_count, result_params.filename,
-            result_params.stream_specifications, result_params.stream_index);
-      } else {
-        WriteResults(
-            data_manager,
-            allocated_memory_blocks.at(node_name)[result_params.stream_index],
-            record_count, result_params.filename,
-            result_params.stream_specifications, result_params.stream_index);
+      if (!result_params.filename.empty()) {
+        if (result_params.check_results) {
+          CheckResults(
+              data_manager,
+              allocated_memory_blocks.at(node_name)[result_params.stream_index],
+              record_count, result_params.filename,
+              result_params.stream_specifications, result_params.stream_index);
+        } else {
+          WriteResults(
+              data_manager,
+              allocated_memory_blocks.at(node_name)[result_params.stream_index],
+              record_count, result_params.filename,
+              result_params.stream_specifications, result_params.stream_index);
+        }
       }
     }
   }
@@ -486,7 +490,7 @@ void QueryManager::RunQueries(
                              node->operation_type, node->module_location,
                              node->operation_parameters.operation_parameters});
       StoreStreamResultPrameters(result_parameters, output_ids[node->node_name],
-                                 *node);
+                                 *node, output_memory_blocks[node->node_name]);
     }
 
     Log(LogLevel::kTrace, "Setup query!");

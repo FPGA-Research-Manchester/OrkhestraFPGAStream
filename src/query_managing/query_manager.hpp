@@ -115,7 +115,9 @@ class QueryManager {
       std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
       const std::vector<int>& stream_ids,
-      const query_scheduling_data::QueryNode& node);
+      const query_scheduling_data::QueryNode& node,
+      const std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>&
+          allocated_memory_blocks);
   static void ProcessResults(
       const DataManager& data_manager,
       const std::array<int, dbmstodspi::fpga_managing::
