@@ -3,6 +3,14 @@
 use warnings;
 use strict;
 
+sub getLoggingTime {
+
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime(time);
+    my $nice_timestamp = sprintf ( "%04d%02d%02d %02d:%02d:%02d",
+                                   $year+1900,$mon+1,$mday,$hour,$min,$sec);
+    return $nice_timestamp;
+}
+
 sub print_mean_and_dev {
     my @all_times = @_;
 
@@ -11,23 +19,31 @@ sub print_mean_and_dev {
         $mean += $time;
     }
     $mean = $mean / @all_times;
+    my $run_count = $#all_times + 1;
+    print "Run count: $run_count\n";
     print "Mean: $mean\n";
     my $std_dev = 0;
     foreach my $time (@all_times) {
         $std_dev += ($time - $mean)**2;
     }
+    print "Variance: $std_dev\n";
     $std_dev = sqrt($std_dev);
-    print "Std Dev: $std_dev\n"
+    print "Std Dev: $std_dev\n";
 }
 
-my @input_defs=("TPCH_Q19_SF001.json", "TPCH_Q19_SF002.json", "TPCH_Q19_SF003.json");
-my @input_configs=("benchmark_config.ini");
+my @input_defs=("benchmark_Q19_SF001.json", "benchmark_Q19_SF002.json", "benchmark_Q19_SF003.json", "benchmark_Q19_SF004.json", "benchmark_Q19_SF005.json", "benchmark_Q19_SF006.json", "benchmark_Q19_SF007.json", "benchmark_Q19_SF008.json","benchmark_Q19_SF009.json","benchmark_Q19_SF01.json", "benchmark_Q19_SF02.json", "benchmark_Q19_SF03.json");
+my @input_configs=("fast_benchmark_config.ini");
 
 my $warm_up_runs = 3;
-my $regular_runs = 20;
+my $regular_runs = 10;
+
+system ("unzip -o -qq benchmark_defs.zip");
+system ("unzip -o -qq lineitem.zip");
+system ("unzip -o -qq part.zip");
 
 foreach my $input_def ( @input_defs ) {
     foreach my $input_config ( @input_configs ) {
+        print getLoggingTime() . "\n";
         print "dbmstodspi -c $input_config -i $input_def\n";
         print "$warm_up_runs WARM UP RUNS\n";
         for (my $i = 0; $i < $warm_up_runs; $i++){
@@ -68,4 +84,6 @@ foreach my $input_def ( @input_defs ) {
         }
     }
 }
+
+print getLoggingTime() . "\n";
 
