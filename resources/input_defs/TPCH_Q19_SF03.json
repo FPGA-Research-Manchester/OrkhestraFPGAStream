@@ -1,16 +1,21 @@
 {
 	"first_lineitem_filter": {
 		"input": ["lineitem_sf0_3.csv"],
-		"output": ["lineitem_sf0_3_filter.csv"],
+		"output": [null],
 		"operation": "kFilter",
 		"previous_nodes": [null],
 		"next_nodes": ["lineitem_linear_sort"],
 		"operation_parameters": {
 			"input_stream_params": [
-				[1, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+				[1, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26],
+				[0, 0, 0, 0, 3, 3, 3, 3, 1, 1, 4, 4, 4, 1, 1, 1],
+				[1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 28, 12, 44],
+				[]
 			],
 			"output_stream_params": [
 				[],
+				[0, 3, 3, 3, 2, 1, 1],
+				[1, 1, 1, 1, 9, 28, 12],
 				[2]
 			],
 			"operation_params": [
@@ -53,17 +58,22 @@
 		}
 	},
 	"lineitem_linear_sort": {
-		"input": ["lineitem_sf0_3_filter.csv"],
-		"output": ["lineitem_sf0_3_linear_sort.csv"],
+		"input": [null],
+		"output": [null],
 		"operation": "kLinearSort",
 		"previous_nodes": ["first_lineitem_filter"],
 		"next_nodes": ["lineitem_linear_merge_sort"],
 		"operation_parameters": {
 			"input_stream_params": [
+				[],
+				[0, 3, 3, 3, 2, 1, 1],
+				[1, 1, 1, 1, 9, 28, 12],
 				[]
 			],
 			"output_stream_params": [
 				[0, 1, 2, 3, 4, 5, 6],
+				[0, 3, 3, 3],
+				[1, 1, 1, 1],
 				[2]
 			],
 			"operation_params": [
@@ -72,17 +82,22 @@
 		}
 	},
 	"lineitem_linear_merge_sort": {
-		"input": ["lineitem_sf0_3_linear_sort.csv"],
-		"output": ["lineitem_sf0_3_sort.csv"],
+		"input": [null],
+		"output": [null],
 		"operation": "kMergeSort",
 		"previous_nodes": ["lineitem_linear_sort"],
 		"next_nodes": ["lineitem_part_join"],
 		"operation_parameters": {
 			"input_stream_params": [
-				[0, 1, 2, 1, 2, 3, 4, 5, 6]
+				[0, 1, 2, 1, 2, 3, 4, 5, 6],
+				[0, 3, 3, 3],
+				[1, 1, 1, 1],
+				[]
 			],
 			"output_stream_params": [
 				[],
+				[0, 3, 3, 3, 3],
+				[1, 1, 1, 1, 1],
 				[1]
 			],
 			"operation_params": [
@@ -91,18 +106,26 @@
 		}
 	},
 	"lineitem_part_join": {
-		"input": ["lineitem_sf0_3_sort.csv", "part_sf0_3.csv"],
-		"output": ["lineitem_part_sf0_3_1st_filter.csv"],
+		"input": [null, "part_sf0_3.csv"],
+		"output": [null],
 		"operation": "kJoin",
 		"previous_nodes": ["lineitem_linear_merge_sort", null],
 		"next_nodes": ["lineitem_part_second_filter"],
 		"operation_parameters": {
 			"input_stream_params": [
 				[],
-				[0, -1, -1, -1, -1, -1, -1, -1, -1, 22, 23, 24, -1, -1, -1, -1, 32, 33, 34, 35, 33, 34, 35, 33, 34, 35]
+				[0, 3, 3, 3, 3],
+				[1, 1, 1, 1, 1],
+				[],
+				[0, -1, -1, -1, -1, -1, -1, -1, -1, 22, 23, 24, -1, -1, -1, -1, 32, 33, 34, 35, 33, 34, 35, 33, 34, 35],
+				[0, 1, 1, 1, 1, 0, 1, 3, 1],
+				[1, 56, 28, 12, 28, 1, 12, 1, 24],
+				[]
 			],
 			"output_stream_params": [
 				[],
+				[0, 3, 3, 3, 3, 1, 2, 0, 1, 1, 1],
+				[1, 1, 1, 1, 1, 12, 4, 1, 12, 12, 12],
 				[2]
 			],
 			"operation_params": [
@@ -111,17 +134,22 @@
 		}
 	},
 	"lineitem_part_second_filter": {
-		"input": ["lineitem_part_sf0_3_1st_filter.csv"],
-		"output": ["lineitem_part_sf0_3_2nd_filter.csv"],
+		"input": [null],
+		"output": [null],
 		"operation": "kFilter",
 		"previous_nodes": ["lineitem_part_join"],
 		"next_nodes": ["lineitem_part_addition"],
 		"operation_parameters": {
 			"input_stream_params": [
+				[],
+				[0, 3, 3, 3, 3, 1, 2, 0, 1, 1, 1],
+				[1, 1, 1, 1, 1, 12, 4, 1, 12, 12, 12],
 				[]
 			],
 			"output_stream_params": [
 				[5, 6, 7, 8],
+				[3, 3],
+				[1, 1],
 				[2]
 			],
 			"operation_params": [
@@ -254,17 +282,22 @@
 		}
 	},
 	"lineitem_part_addition": {
-		"input": ["lineitem_part_sf0_3_2nd_filter.csv"],
-		"output": ["lineitem_part_sf0_3_inverted.csv"],
+		"input": [null],
+		"output": [null],
 		"operation": "kAddition",
 		"previous_nodes": ["lineitem_part_second_filter"],
 		"next_nodes": ["lineitem_part_multiplication"],
 		"operation_parameters": {
 			"input_stream_params": [
+				[],
+				[3, 3],
+				[1, 1],
 				[]
 			],
 			"output_stream_params": [
 				[],
+				[3, 3],
+				[1, 1],
 				[1]
 			],
 			"operation_params": [
@@ -275,17 +308,22 @@
 		}
 	},
 	"lineitem_part_multiplication": {
-		"input": ["lineitem_part_sf0_3_inverted.csv"],
-		"output": ["lineitem_part_sf0_3_multiplied.csv"],
+		"input": [null],
+		"output": [null],
 		"operation": "kMultiplication",
 		"previous_nodes": ["lineitem_part_addition"],
 		"next_nodes": ["lineitem_part_aggregate"],
 		"operation_parameters": {
 			"input_stream_params": [
+				[],
+				[3, 3],
+				[1, 1],
 				[]
 			],
 			"output_stream_params": [
-				[0, 1],
+				[],
+				[3, 3],
+				[1, 1],
 				[1]
 			],
 			"operation_params": [
@@ -294,17 +332,22 @@
 		}
 	},
 	"lineitem_part_aggregate": {
-		"input": ["lineitem_part_sf0_3_multiplied.csv"],
-		"output": ["lineitem_part_sf0_3_multiplied.csv"],
+		"input": [null],
+		"output": ["lineitem_part_sf0_3_multiplied_reduced.csv"],
 		"operation": "kAggregationSum",
 		"previous_nodes": ["lineitem_part_multiplication"],
 		"next_nodes": [null],
 		"operation_parameters": {
 			"input_stream_params": [
+				[],
+				[3, 3],
+				[1, 1],
 				[]
 			],
 			"output_stream_params": [
-				[],
+				[0, 1],
+				[3],
+				[1],
 				[1]
 			],
 			"operation_params": [

@@ -57,7 +57,7 @@
 	}],
 	"filter_join": [{
 		"name": "kFilter",
-		"capacity": [8, 1]
+		"capacity": [32, 4]
 	}, {
 		"name": "kJoin",
 		"capacity": []

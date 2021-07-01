@@ -33,15 +33,21 @@ class NodeScheduler {
       const std::map<query_scheduling_data::ConfigurableModulesVector,
                      std::string> &supported_accelerator_bitstreams,
       const std::map<fpga_managing::operation_types::QueryOperationType,
-                     std::vector<std::vector<int>>> &existing_modules_library)
+                     std::vector<std::vector<int>>> &existing_modules_library,
+      std::map<std::string,
+               std::map<int, std::vector<std::pair<std::string, int>>>>
+          &linked_nodes)
       -> std::queue<std::pair<
           query_scheduling_data::ConfigurableModulesVector,
           std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>>>;
 
  private:
-  static void RemoveExternalLinks(
+  static void CheckExternalLinks(
       const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
-          &current_query_nodes);
+          &current_query_nodes,
+      std::map<std::string,
+               std::map<int, std::vector<std::pair<std::string, int>>>>
+          &linked_nodes);
   static auto IsModuleSetSupported(
       const query_scheduling_data::ConfigurableModulesVector &module_set,
       const std::map<query_scheduling_data::ConfigurableModulesVector,
@@ -102,6 +108,29 @@ class NodeScheduler {
       const std::map<query_scheduling_data::ConfigurableModulesVector,
                      std::string> &supported_accelerator_bitstreams)
       -> query_scheduling_data::ConfigurableModulesVector;
+  static auto FindNextNodeLocation(
+      const std::vector<std::shared_ptr<query_scheduling_data::QueryNode>>
+          &next_nodes,
+      const query_scheduling_data::QueryNode *next_node) -> int;
+  static auto IsProjectionOperationDefined(
+      const query_scheduling_data::QueryNode *current_node,
+      const query_scheduling_data::QueryNode *previous_node,
+      int previous_node_index, int current_node_index) -> bool;
+  static auto IsNodeMissingFromTheVector(
+      const std::shared_ptr<
+          dbmstodspi::query_managing::query_scheduling_data::QueryNode>
+          &linked_node,
+      const std::vector<std::shared_ptr<
+          dbmstodspi::query_managing::query_scheduling_data::QueryNode>>
+          &current_query_nodes) -> bool;
+  static auto FindPreviousNodeLocation(
+      const std::vector<std::weak_ptr<query_scheduling_data::QueryNode>>
+          &previous_nodes,
+      const std::shared_ptr<query_scheduling_data::QueryNode> previous_node)
+      -> int;
+  static auto ReuseMemory(const query_scheduling_data::QueryNode &source_node,
+                          const query_scheduling_data::QueryNode &target_node)
+      -> bool;
 };
 
 }  // namespace dbmstodspi::query_managing

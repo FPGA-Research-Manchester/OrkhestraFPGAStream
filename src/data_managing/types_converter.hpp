@@ -5,6 +5,10 @@
 #include <utility>
 #include <vector>
 
+#include "table_data.hpp"
+
+using dbmstodspi::data_managing::table_data::ColumnDataType;
+
 namespace dbmstodspi::data_managing {
 
 /**
@@ -23,7 +27,7 @@ class TypesConverter {
   static void AddIntegerDataFromStringData(
       const std::vector<std::vector<std::string>>& string_data,
       std::vector<uint32_t>& integer_data,
-      std::vector<std::pair<std::string, int>> data_types_vector);
+      std::vector<std::pair<ColumnDataType, int>> data_types_vector);
   /**
    * @brief Add string typed data to the output vector given input data in
    * integer format.
@@ -34,7 +38,7 @@ class TypesConverter {
   static void AddStringDataFromIntegerData(
       const std::vector<uint32_t>& integer_data,
       std::vector<std::vector<std::string>>& resulting_string_data,
-      const std::vector<std::pair<std::string, int>>& data_types_vector);
+      const std::vector<std::pair<ColumnDataType, int>>& data_types_vector);
 
   /**
    * @brief Convert string table element to integers.
@@ -124,6 +128,13 @@ class TypesConverter {
       std::vector<std::string>& string_vector);
 
  private:
+  static void ConvertDataToIntegers(ColumnDataType data_type, const std::string& input_string,
+                                    std::vector<uint32_t>& converted_data_vector,
+                                    int string_size);
+  static void ConvertDataToString(ColumnDataType data_type,
+                                  const std::vector<uint32_t>& input_integer_data,
+                                  std::vector<std::string>& converted_data_vector);
+
   /**
    * @brief Helper method to convert strings with hexadecimal values to strings.
    * @param hex Input string with hex values which can be converted to a string

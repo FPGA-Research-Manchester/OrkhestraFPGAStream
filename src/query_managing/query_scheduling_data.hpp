@@ -28,6 +28,14 @@ struct NodeOperationParameters {
   }
 };
 
+const struct StreamParamDefinition {
+  int kStreamParamCount = 4;
+  int kProjectionOffset = 0;
+  int kDataTypesOffset = 1;
+  int kDataSizesOffset = 2;
+  int kChunkCountOffset = 3;
+} kIOStreamParamDefs;
+
 /**
  * @brief Struct for defining a query node.
  */
@@ -46,6 +54,10 @@ struct QueryNode {
   NodeOperationParameters operation_parameters;
   /// Location of the module to be processing this node
   int module_location = -1;
+  /// Name of the node for automatic file naming
+  std::string node_name;
+  /// Flag vector setting stream results to be checked
+  std::vector <bool> is_checked;
 
   auto operator==(const QueryNode& rhs) const -> bool {
     bool are_prev_nodes_equal =
@@ -58,12 +70,14 @@ struct QueryNode {
               return l.lock() == r.lock();
             });
 
-    return input_data_definition_files == rhs.input_data_definition_files &&
+    return are_prev_nodes_equal &&
+           input_data_definition_files == rhs.input_data_definition_files &&
            output_data_definition_files == rhs.output_data_definition_files &&
-           operation_type == rhs.operation_type && are_prev_nodes_equal &&
+           operation_type == rhs.operation_type &&
            next_nodes == rhs.next_nodes &&
            operation_parameters == rhs.operation_parameters &&
-           module_location == rhs.module_location;
+           module_location == rhs.module_location &&
+           node_name == rhs.node_name && is_checked == rhs.is_checked;
   }
 
   QueryNode(
@@ -72,35 +86,21 @@ struct QueryNode {
       std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> next_nodes,
       std::vector<std::weak_ptr<query_scheduling_data::QueryNode>>
           previous_nodes,
-      NodeOperationParameters parameters)
+      NodeOperationParameters parameters, std::string node_name,
+      std::vector<bool> is_checked)
       : input_data_definition_files{std::move(input)},
         output_data_definition_files{std::move(output)},
         operation_type{operation},
         next_nodes{std::move(next_nodes)},
         previous_nodes{std::move(previous_nodes)},
-        operation_parameters{std::move(parameters)} {};
+        operation_parameters{parameters},
+        node_name{node_name},
+        is_checked{is_checked} {};
 };
 
 /// Type definition of a collection of operation types for selecting bitstreams.
 using ConfigurableModulesVector =
     std::vector<fpga_managing::operation_types::QueryOperation>;
-
-/// Map of available modules. Will be created dynamically later
-const std::map<fpga_managing::operation_types::QueryOperationType,
-               std::vector<std::vector<int>>>
-    kExistingModules = {
-        {fpga_managing::operation_types::QueryOperationType::kFilter,
-         {{8, 16, 32}, {1, 2, 4}}},
-        {fpga_managing::operation_types::QueryOperationType::kJoin, {}},
-        {fpga_managing::operation_types::QueryOperationType::kMergeSort,
-         {{64}}},
-        {fpga_managing::operation_types::QueryOperationType::kLinearSort,
-         {{512, 1024}}},
-        {fpga_managing::operation_types::QueryOperationType::kAddition, {}},
-        {fpga_managing::operation_types::QueryOperationType::kMultiplication,
-         {}},
-        {fpga_managing::operation_types::QueryOperationType::kAggregationSum,
-         {}}};
 
 /// Map of available functions.
 const std::map<std::string, fpga_managing::operation_types::QueryOperationType>
@@ -120,66 +120,4 @@ const std::map<std::string, fpga_managing::operation_types::QueryOperationType>
          fpga_managing::operation_types::QueryOperationType::kAggregationSum},
         {"kPassThrough",
          fpga_managing::operation_types::QueryOperationType::kPassThrough}};
-
-/// Map of supported collections of operations.
-const std::map<ConfigurableModulesVector, std::string>
-    kSupportedAcceleratorBitstreams = {
-        {{{fpga_managing::operation_types::QueryOperationType::kFilter, {32, 4}}}, "DSPI_filtering"},
-
-        {{{fpga_managing::operation_types::QueryOperationType::kJoin, {}}},
-         "DSPI_joining"},
-
-        /*{{{fpga_managing::operation_types::QueryOperationType::kMergeSort, {64}},{
-          fpga_managing::operation_types::QueryOperationType::kMergeSort, {64}}},
-         "DSPI_double_merge_sorting"},*/
-
-        {{{fpga_managing::operation_types::QueryOperationType::kMergeSort,
-           {64}}},
-         "DSPI_merge_sorting"},
-
-        {{{fpga_managing::operation_types::QueryOperationType::kLinearSort, {512}}}, "DSPI_linear_sorting"},
-
-        {{{fpga_managing::operation_types::QueryOperationType::kAddition, {}}}, "DSPI_addition"},
-
-        {{{fpga_managing::operation_types::QueryOperationType::kMultiplication, {}}}, "DSPI_multiplication"},
-
-        {{{fpga_managing::operation_types::QueryOperationType::kAggregationSum, {}}}, "DSPI_aggregation_sum"},
-
-        {{}, "DSPI_empty"},
-
-        //{{{fpga_managing::operation_types::QueryOperationType::kMergeSort,{64}},
-        //  {fpga_managing::operation_types::QueryOperationType::kJoin,{}}, 
-        //  {fpga_managing::operation_types::QueryOperationType::kFilter,{32, 4}}},
-        // "DSPI_sort_join_filter"},
-        // // Needed to find the triple bitstream
-        // {{{fpga_managing::operation_types::QueryOperationType::kMergeSort},{},
-        //  {fpga_managing::operation_types::QueryOperationType::kJoin},{}},
-        // "nonsense"},
-
-        // DNF 8 CMP 1 
-        /*{{{fpga_managing::operation_types::QueryOperationType::kFilter,{8,1}},
-          {fpga_managing::operation_types::QueryOperationType::kJoin,{}}},
-         "DSPI_filter_join"},*/
-
-        // DNF 16 CMP 2 + 1024 way sort
-        /*{{{fpga_managing::operation_types::QueryOperationType::kFilter,{16,2}},
-          fpga_managing::operation_types::QueryOperationType::kLinearSort{1024}},
-         "DSPI_filtering_linear_sort"}*/};
-
-const std::map<std::string, int> kRequiredBitstreamMemorySpace = {
-    {"DSPI_filtering", kModuleSize * 2},
-    {"DSPI_joining", kModuleSize * 2},
-    {"DSPI_double_merge_sorting", kModuleSize * 3},
-    {"DSPI_merge_sorting", kModuleSize * 2},
-    {"DSPI_linear_sorting", kModuleSize * 2},
-    {"DSPI_addition", kModuleSize * 2},
-    {"DSPI_multiplication", kModuleSize * 2},
-    {"DSPI_aggregation_sum", kModuleSize * 2},
-    {"DSPI_empty", kModuleSize * 1},
-    {"DSPI_sort_join_filter", kModuleSize * 4},
-    {"DSPI_filter_join", kModuleSize * 3},
-    {"DSPI_filtering_linear_sort", kModuleSize * 3}
-    //{"bitstream containing ILA", kModuleSize * 146}
-};
-
 }  // namespace dbmstodspi::query_managing::query_scheduling_data

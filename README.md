@@ -54,3 +54,10 @@ The documentation for this project is created using [CMake](https://cmake.org/cm
 Formatting is done according to the [clang-tidy](https://clang.llvm.org/extra/clang-tidy/) options you can find [here](./.clang-tidy).
 
 Testing for this code is done using [googletest](https://github.com/google/googletest) and is automatically downloaded when the code is built with testing options turned on.
+
+To run the benchmarks: 
+
+* Create the dataset 
+  * Get a [TPC-H data generator](https://github.com/databricks/tpch-dbgen) 
+  * Use [data generation script](./resources/benchmark/generate_data.sh)
+* Run [benchmark perl script](./resources/benchmark/benchmark.pl)

@@ -13,12 +13,55 @@ using ModulesCombo = dbmstodspi::query_managing::query_scheduling_data::
 using Node = dbmstodspi::query_managing::query_scheduling_data::QueryNode;
 using OpType = dbmstodspi::fpga_managing::operation_types::QueryOperationType;
 
-const std::vector<std::string> kDefaultFileNames;
+const std::vector<std::string> kDefaultEmptyFileNames = {""};
+const std::vector<std::string> kDefaultFileNames = {"some_name.csv"};
 const std::vector<std::shared_ptr<Node>> kDefaultNextNodes;
 const std::vector<std::weak_ptr<Node>> kDefaultPreviousNodes;
-const NodeOperationParameters kDefaultParameters;
+const std::vector<bool> kNoChecks = {false};
 
-const int kSomeInteger = 2;
+
+class NodeSchedulerTest : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    base_parameters_ = {{{}}, {{}}, {{}}};
+
+    base_supported_bitstreams_ = {
+        {{{OpType::kMergeSort, {}}}, "Some_bitstream"},
+        {{{OpType::kJoin, {}}}, "Some_bitstream"},
+        {{{OpType::kLinearSort, {}}}, "Some_bitstream"},
+        {{{OpType::kFilter, {}}}, "Some_bitstream"},
+        {{{OpType::kPassThrough, {}}}, "Some_bitstream"}};
+    base_existing_modules_ = {{OpType::kMergeSort, {}},
+                              {OpType::kJoin, {}},
+                              {OpType::kLinearSort, {}},
+                              {OpType::kFilter, {}},
+                              {OpType::kPassThrough, {}}};
+    query_node_a_ = std::make_shared<Node>(
+        kDefaultEmptyFileNames, kDefaultEmptyFileNames, OpType::kFilter,
+        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "A",
+        kNoChecks);
+    query_node_b_ = std::make_shared<Node>(
+        kDefaultEmptyFileNames, kDefaultEmptyFileNames, OpType::kLinearSort,
+        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "B",
+        kNoChecks);
+    passthrough_node_ = std::make_shared<Node>(
+        kDefaultEmptyFileNames, kDefaultEmptyFileNames, OpType::kPassThrough,
+        kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "PASS",
+        kNoChecks);
+  }
+
+  std::map<ModulesCombo, std::string> base_supported_bitstreams_;
+  std::map<OpType, std::vector<std::vector<int>>> base_existing_modules_;
+  std::map<std::string, std::map<int, std::vector<std::pair<std::string, int>>>>
+      reuse_map_;
+
+  std::shared_ptr<Node> passthrough_node_;
+  // Two base nodes with a different operation
+  std::shared_ptr<Node> query_node_a_;
+  std::shared_ptr<Node> query_node_b_;
+
+  NodeOperationParameters base_parameters_;
+};
 
 void CheckNodeFields(
     std::vector<std::string> input_files, std::vector<std::string> output_files,
@@ -26,7 +69,7 @@ void CheckNodeFields(
     std::vector<std::weak_ptr<Node>> previous,
     dbmstodspi::query_managing::query_scheduling_data::NodeOperationParameters
         parameters,
-    int location, Node comparable_node) {
+    int location, std::string name, std::vector<bool> checks, Node comparable_node) {
   EXPECT_THAT(comparable_node,
               testing::Field("input_files", &Node::input_data_definition_files,
                              input_files));
@@ -42,6 +85,9 @@ void CheckNodeFields(
       testing::Field("parameters", &Node::operation_parameters, parameters));
   EXPECT_THAT(comparable_node,
               testing::Field("location", &Node::module_location, location));
+  EXPECT_THAT(comparable_node, testing::Field("name", &Node::node_name, name));
+  EXPECT_THAT(comparable_node,
+              testing::Field("checks", &Node::is_checked, checks));
 
   // EXPECT_THAT(comparable_node,
   //            testing::Field("previous", &Node::previous_nodes, previous));
@@ -53,83 +99,52 @@ void CheckNodeFields(
 }
 
 void CheckNodeEquality(Node real_node, Node expected_node) {
-  CheckNodeFields(expected_node.input_data_definition_files,
-                  expected_node.output_data_definition_files,
-                  expected_node.operation_type, expected_node.next_nodes,
-                  expected_node.previous_nodes,
-                  expected_node.operation_parameters,
-                  expected_node.module_location, real_node);
+  CheckNodeFields(
+      expected_node.input_data_definition_files,
+      expected_node.output_data_definition_files, expected_node.operation_type,
+      expected_node.next_nodes, expected_node.previous_nodes,
+      expected_node.operation_parameters, expected_node.module_location,
+      expected_node.node_name, expected_node.is_checked, real_node);
 }
 
-TEST(NodeSchedulerTest, MultipleAvailableNodesFindsCorrectNode) {
-  auto filtering_query = std::make_shared<Node>(
-      kDefaultFileNames, kDefaultFileNames, OpType::kFilter, kDefaultNextNodes,
-      kDefaultPreviousNodes, kDefaultParameters);
+TEST_F(NodeSchedulerTest, MultipleAvailableNodesFindsCorrectNode) {
+  auto expected_node = *query_node_a_;
+  expected_node.module_location = 1;
+  ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}}};
 
-  const std::map<ModulesCombo, std::string> supported_bitstreams = {
-      {{{OpType::kMergeSort, {}}}, "Some_bitstream"},
-      {{{OpType::kJoin, {}}}, "Some_bitstream"},
-      {{{OpType::kLinearSort, {}}}, "Some_bitstream"},
-      {{{OpType::kFilter, {}}}, "Some_bitstream"},
-      {{{OpType::kPassThrough, {}}}, "Some_bitstream"}};
-
-  const std::map<OpType, std::vector<std::vector<int>>> existing_modules = {
-      {OpType::kMergeSort, {}},
-      {OpType::kJoin, {}},
-      {OpType::kLinearSort, {}},
-      {OpType::kFilter, {}},
-      {OpType::kPassThrough, {}}};
-
-  auto expected_node = *filtering_query;
-  std::vector<std::shared_ptr<Node>> starting_nodes = {filtering_query};
+  std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
   auto scheduling_results =
       dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
-          starting_nodes, supported_bitstreams, existing_modules);
-
-  expected_node.module_location = 1;
-
-  ModulesCombo expected_module_vector = {{OpType::kFilter, {}}};
+          starting_nodes, base_supported_bitstreams_, base_existing_modules_,
+          reuse_map_);
 
   ASSERT_EQ(scheduling_results.front().first, expected_module_vector);
   CheckNodeEquality(*scheduling_results.front().second[0], expected_node);
 }
 
-TEST(NodeSchedulerTest, TwoNodesWereFoundWithDifferentRuns) {
+TEST_F(NodeSchedulerTest, TwoNodesWereFoundWithDifferentRuns) {
   auto first_query = std::make_shared<Node>(
-      kDefaultFileNames, kDefaultFileNames, OpType::kLinearSort,
-      kDefaultNextNodes, kDefaultPreviousNodes, kDefaultParameters);
+      kDefaultEmptyFileNames, kDefaultEmptyFileNames, OpType::kLinearSort,
+      kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "1", kNoChecks);
   auto second_query = std::make_shared<Node>(
-      kDefaultFileNames, kDefaultFileNames, OpType::kLinearSort,
-      kDefaultNextNodes, kDefaultPreviousNodes, kDefaultParameters);
-
-  const std::map<ModulesCombo, std::string> supported_bitstreams = {
-      {{{OpType::kMergeSort, {}}}, "Some_bitstream"},
-      {{{OpType::kJoin, {}}}, "Some_bitstream"},
-      {{{OpType::kLinearSort, {}}}, "Some_bitstream"},
-      {{{OpType::kFilter, {}}}, "Some_bitstream"},
-      {{{OpType::kPassThrough, {}}}, "Some_bitstream"}};
-
-  const std::map<OpType, std::vector<std::vector<int>>> existing_modules = {
-      {OpType::kMergeSort, {}},
-      {OpType::kJoin, {}},
-      {OpType::kLinearSort, {}},
-      {OpType::kFilter, {}},
-      {OpType::kPassThrough, {}}};
+      kDefaultEmptyFileNames, kDefaultEmptyFileNames, OpType::kLinearSort,
+      kDefaultNextNodes, kDefaultPreviousNodes, base_parameters_, "2",
+      kNoChecks);
 
   auto expected_first_node = *first_query;
   auto expected_second_node = *second_query;
+  expected_first_node.module_location = 1;
+  expected_second_node.module_location = 1;
+  ModulesCombo expected_module_vector = {{first_query->operation_type, {}}};
+
   std::vector<std::shared_ptr<Node>> starting_nodes = {first_query,
                                                        second_query};
 
   auto scheduling_results =
       dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
-          starting_nodes, supported_bitstreams, existing_modules);
-
-  expected_first_node.module_location = 1;
-  expected_second_node.module_location = 1;
-
-  ModulesCombo expected_module_vector = {{OpType::kLinearSort, {}}};
+          starting_nodes, base_supported_bitstreams_, base_existing_modules_,
+          reuse_map_);
 
   ASSERT_EQ(scheduling_results.front().first, expected_module_vector);
   CheckNodeEquality(*scheduling_results.front().second[0], expected_first_node);
@@ -139,44 +154,23 @@ TEST(NodeSchedulerTest, TwoNodesWereFoundWithDifferentRuns) {
                     expected_second_node);
 }
 
-TEST(NodeSchedulerTest, TwoNodesWereFoundWithinTheSameRun) {
-  auto first_query = std::make_shared<Node>(
-      kDefaultFileNames, kDefaultFileNames, OpType::kLinearSort,
-      kDefaultNextNodes, kDefaultPreviousNodes, kDefaultParameters);
-  auto second_query = std::make_shared<Node>(
-      kDefaultFileNames, kDefaultFileNames, OpType::kMergeSort,
-      kDefaultNextNodes, kDefaultPreviousNodes, kDefaultParameters);
+TEST_F(NodeSchedulerTest, TwoNodesWereFoundWithinTheSameRun) {
+  ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}},
+                                         {query_node_b_->operation_type, {}}};
 
-  const std::map<ModulesCombo, std::string> supported_bitstreams = {
-      {{{OpType::kMergeSort, {}}}, "Some_bitstream"},
-      {{{OpType::kJoin, {}}}, "Some_bitstream"},
-      {{{OpType::kLinearSort, {}}}, "Some_bitstream"},
-      {{{OpType::kFilter, {}}}, "Some_bitstream"},
-      {{{OpType::kPassThrough, {}}}, "Some_bitstream"},
-      {{{OpType::kLinearSort, {}}, {OpType::kMergeSort, {}}},
-       "Some_bitstream"}};
+  base_supported_bitstreams_.insert({expected_module_vector, "Some_bitstream"});
 
-  const std::map<OpType, std::vector<std::vector<int>>> existing_modules = {
-      {OpType::kMergeSort, {}},
-      {OpType::kJoin, {}},
-      {OpType::kLinearSort, {}},
-      {OpType::kFilter, {}},
-      {OpType::kPassThrough, {}}};
-
-  auto expected_first_node = *first_query;
-  auto expected_second_node = *second_query;
-  std::vector<std::shared_ptr<Node>> starting_nodes = {first_query,
-                                                       second_query};
+  auto expected_first_node = *query_node_a_;
+  auto expected_second_node = *query_node_b_;
+  expected_first_node.module_location = 1;
+  expected_second_node.module_location = 2;
+  std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_,
+                                                       query_node_b_};
 
   auto scheduling_results =
       dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
-          starting_nodes, supported_bitstreams, existing_modules);
-
-  expected_first_node.module_location = 1;
-  expected_second_node.module_location = 2;
-
-  ModulesCombo expected_module_vector = {{OpType::kLinearSort, {}},
-                                         {OpType::kMergeSort, {}}};
+          starting_nodes, base_supported_bitstreams_, base_existing_modules_,
+          reuse_map_);
 
   ASSERT_EQ(scheduling_results.front().first, expected_module_vector);
   CheckNodeEquality(*scheduling_results.front().second[0], expected_first_node);
@@ -184,88 +178,53 @@ TEST(NodeSchedulerTest, TwoNodesWereFoundWithinTheSameRun) {
                     expected_second_node);
 }
 
-TEST(NodeSchedulerTest, PassthroughNodeIsUsedInTheSameRun) {
-  auto first_query = std::make_shared<Node>(
-      kDefaultFileNames, kDefaultFileNames, OpType::kPassThrough,
-      kDefaultNextNodes, kDefaultPreviousNodes, kDefaultParameters);
-  auto second_query = std::make_shared<Node>(
-      kDefaultFileNames, kDefaultFileNames, OpType::kMergeSort,
-      kDefaultNextNodes, kDefaultPreviousNodes, kDefaultParameters);
+TEST_F(NodeSchedulerTest, PassthroughNodeIsUsedInTheSameRun) {
+  auto expected_first_node = *query_node_a_;
+  auto expected_second_node = *passthrough_node_;
+  expected_first_node.module_location = 1;
+  expected_second_node.module_location = -1;
 
-  const std::map<ModulesCombo, std::string> supported_bitstreams = {
-      {{{OpType::kMergeSort, {}}}, "Some_bitstream"},
-      {{{OpType::kJoin, {}}}, "Some_bitstream"},
-      {{{OpType::kLinearSort, {}}}, "Some_bitstream"},
-      {{{OpType::kFilter, {}}}, "Some_bitstream"},
-      {{{OpType::kPassThrough, {}}}, "Some_bitstream"}};
+  ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}}};
 
-  const std::map<OpType, std::vector<std::vector<int>>> existing_modules = {
-      {OpType::kMergeSort, {}},
-      {OpType::kJoin, {}},
-      {OpType::kLinearSort, {}},
-      {OpType::kFilter, {}},
-      {OpType::kPassThrough, {}}};
-
-  auto expected_first_node = *first_query;
-  auto expected_second_node = *second_query;
-  std::vector<std::shared_ptr<Node>> starting_nodes = {first_query,
-                                                       second_query};
+  std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_,
+                                                       passthrough_node_};
 
   auto scheduling_results =
       dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
-          starting_nodes, supported_bitstreams, existing_modules);
-
-  expected_first_node.module_location = -1;
-  expected_second_node.module_location = 1;
-
-  ModulesCombo expected_module_vector = {{OpType::kMergeSort, {}}};
+          starting_nodes, base_supported_bitstreams_, base_existing_modules_,
+          reuse_map_);
 
   ASSERT_EQ(scheduling_results.front().first, expected_module_vector);
-  CheckNodeEquality(*scheduling_results.front().second[1], expected_first_node);
-  CheckNodeEquality(*scheduling_results.front().second[0],
+  CheckNodeEquality(*scheduling_results.front().second[0], expected_first_node);
+  CheckNodeEquality(*scheduling_results.front().second[1],
                     expected_second_node);
 }
 
-TEST(NodeSchedulerTest, TwoPipelinedNodesWereFoundWithDifferentRuns) {
-  auto first_query = std::make_shared<Node>(
-      kDefaultFileNames, kDefaultFileNames, OpType::kJoin, kDefaultNextNodes,
-      kDefaultPreviousNodes, kDefaultParameters);
-  auto second_query = std::make_shared<Node>(
-      kDefaultFileNames, kDefaultFileNames, OpType::kMergeSort,
-      kDefaultNextNodes, kDefaultPreviousNodes, kDefaultParameters);
-  first_query->next_nodes = {second_query};
-  second_query->previous_nodes = {first_query};
+TEST_F(NodeSchedulerTest, TwoPipelinedNodesWereFoundWithDifferentRuns) {
+  query_node_a_->next_nodes = {query_node_b_};
+  query_node_b_->previous_nodes = {query_node_a_};
 
-  const std::map<ModulesCombo, std::string> supported_bitstreams = {
-      {{{OpType::kMergeSort, {}}}, "Some_bitstream"},
-      {{{OpType::kJoin, {}}}, "Some_bitstream"},
-      {{{OpType::kLinearSort, {}}}, "Some_bitstream"},
-      {{{OpType::kFilter, {}}}, "Some_bitstream"},
-      {{{OpType::kPassThrough, {}}}, "Some_bitstream"}};
-
-  const std::map<OpType, std::vector<std::vector<int>>> existing_modules = {
-      {OpType::kMergeSort, {}},
-      {OpType::kJoin, {}},
-      {OpType::kLinearSort, {}},
-      {OpType::kFilter, {}},
-      {OpType::kPassThrough, {}}};
-
-  auto expected_first_node = *first_query;
-  auto expected_second_node = *second_query;
-  std::vector<std::shared_ptr<Node>> starting_nodes = {first_query,
-                                                       second_query};
-
-  auto scheduling_results =
-      dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
-          starting_nodes, supported_bitstreams, existing_modules);
-
+  auto expected_first_node = *query_node_a_;
+  auto expected_second_node = *query_node_b_;
   expected_first_node.module_location = 1;
-  expected_first_node.next_nodes = {nullptr};
+  //expected_first_node.next_nodes = {nullptr};
   expected_second_node.module_location = 1;
   expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
 
-  ModulesCombo expected_module_vector = {{OpType::kJoin, {}}};
-  ModulesCombo expected_second_module_vector = {{OpType::kMergeSort, {}}};
+  //auto expected_filename = query_node_a_->node_name + "_0.csv";
+  //expected_first_node.output_data_definition_files = {expected_filename};
+  //expected_second_node.input_data_definition_files = {expected_filename};
+
+  ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}}};
+  ModulesCombo expected_second_module_vector = {
+      {query_node_b_->operation_type, {}}};
+
+  std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
+
+  auto scheduling_results =
+      dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
+          starting_nodes, base_supported_bitstreams_, base_existing_modules_,
+          reuse_map_);
 
   ASSERT_EQ(scheduling_results.front().first, expected_module_vector);
   CheckNodeEquality(*scheduling_results.front().second[0], expected_first_node);
@@ -275,50 +234,329 @@ TEST(NodeSchedulerTest, TwoPipelinedNodesWereFoundWithDifferentRuns) {
                     expected_second_node);
 }
 
-TEST(NodeSchedulerTest, TwoPipelinedNodesWereFoundWithinTheSameRun) {
-  auto first_query = std::make_shared<Node>(
-      kDefaultFileNames, kDefaultFileNames, OpType::kJoin, kDefaultNextNodes,
-      kDefaultPreviousNodes, kDefaultParameters);
-  auto second_query = std::make_shared<Node>(
-      kDefaultFileNames, kDefaultFileNames, OpType::kMergeSort,
-      kDefaultNextNodes, kDefaultPreviousNodes, kDefaultParameters);
-  first_query->next_nodes = {second_query};
-  second_query->previous_nodes = {first_query};
+TEST_F(NodeSchedulerTest, TwoPipelinedNodesWereFoundWithinTheSameRun) {
+  query_node_a_->next_nodes = {query_node_b_};
+  query_node_b_->previous_nodes = {query_node_a_};
 
-  const std::map<ModulesCombo, std::string> supported_bitstreams = {
-      {{{OpType::kMergeSort, {}}}, "Some_bitstream"},
-      {{{OpType::kJoin, {}}}, "Some_bitstream"},
-      {{{OpType::kLinearSort, {}}}, "Some_bitstream"},
-      {{{OpType::kFilter, {}}}, "Some_bitstream"},
-      {{{OpType::kPassThrough, {}}}, "Some_bitstream"},
-      {{{OpType::kMergeSort, {}}, {OpType::kJoin, {}}}, "Some_bitstream"}};
+  ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}},
+                                         {query_node_b_->operation_type, {}}};
 
-  const std::map<OpType, std::vector<std::vector<int>>> existing_modules = {
-      {OpType::kMergeSort, {}},
-      {OpType::kJoin, {}},
-      {OpType::kLinearSort, {}},
-      {OpType::kFilter, {}},
-      {OpType::kPassThrough, {}}};
+  base_supported_bitstreams_.insert({expected_module_vector, "Some_bitstream"});
 
-  auto expected_first_node = *first_query;
-  auto expected_second_node = *second_query;
-  std::vector<std::shared_ptr<Node>> starting_nodes = {first_query,
-                                                       second_query};
+  auto expected_first_node = *query_node_a_;
+  auto expected_second_node = *query_node_b_;
+  expected_first_node.module_location = 1;
+  expected_second_node.module_location = 2;
+
+  std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
   auto scheduling_results =
       dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
-          starting_nodes, supported_bitstreams, existing_modules);
-
-  expected_first_node.module_location = 1;
-  expected_second_node.module_location = 1;
-
-  ModulesCombo expected_module_vector = {{OpType::kMergeSort, {}},
-                                         {OpType::kJoin, {}}};
+          starting_nodes, base_supported_bitstreams_, base_existing_modules_,
+          reuse_map_);
 
   ASSERT_EQ(scheduling_results.front().first, expected_module_vector);
   CheckNodeEquality(*scheduling_results.front().second[0], expected_first_node);
   CheckNodeEquality(*scheduling_results.front().second[1],
                     expected_second_node);
+}
+
+TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfInputProjection) {
+  query_node_a_->next_nodes = {query_node_b_};
+  query_node_b_->previous_nodes = {query_node_a_};
+
+  query_node_b_->operation_parameters.input_stream_parameters = {
+      {0, 1, 2, 3, 3}};
+
+  base_supported_bitstreams_.insert({{{query_node_a_->operation_type, {}},
+                                      {query_node_b_->operation_type, {}}},
+                                     "Some_bitstream"});
+
+  auto expected_first_node = *query_node_a_;
+  auto expected_second_node = *query_node_b_;
+  expected_first_node.module_location = 1;
+  //expected_first_node.next_nodes = {nullptr};
+  expected_second_node.module_location = 1;
+  expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
+
+  //auto expected_filename = query_node_a_->node_name + "_0.csv";
+  //expected_first_node.output_data_definition_files = {expected_filename};
+  //expected_second_node.input_data_definition_files = {expected_filename};
+
+  ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}}};
+  ModulesCombo expected_second_module_vector = {
+      {query_node_b_->operation_type, {}}};
+
+  std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
+
+  auto scheduling_results =
+      dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
+          starting_nodes, base_supported_bitstreams_, base_existing_modules_,
+          reuse_map_);
+
+  ASSERT_EQ(scheduling_results.front().first, expected_module_vector);
+  CheckNodeEquality(*scheduling_results.front().second[0], expected_first_node);
+  scheduling_results.pop();
+  ASSERT_EQ(scheduling_results.front().first, expected_second_module_vector);
+  CheckNodeEquality(*scheduling_results.front().second[0],
+                    expected_second_node);
+}
+
+TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfOutputChecking) {
+  query_node_a_->next_nodes = {query_node_b_};
+  query_node_b_->previous_nodes = {query_node_a_};
+
+  query_node_a_->output_data_definition_files = kDefaultFileNames;
+  query_node_a_->is_checked = {true};
+
+  base_supported_bitstreams_.insert({{{query_node_a_->operation_type, {}},
+                                      {query_node_b_->operation_type, {}}},
+                                     "Some_bitstream"});
+
+  auto expected_first_node = *query_node_a_;
+  auto expected_second_node = *query_node_b_;
+  expected_first_node.module_location = 1;
+  expected_first_node.next_nodes = {nullptr};
+  expected_second_node.module_location = 1;
+  expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
+
+  expected_second_node.input_data_definition_files = kDefaultFileNames;
+
+  ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}}};
+  ModulesCombo expected_second_module_vector = {
+      {query_node_b_->operation_type, {}}};
+
+  std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
+
+  auto scheduling_results =
+      dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
+          starting_nodes, base_supported_bitstreams_, base_existing_modules_,
+          reuse_map_);
+
+  ASSERT_EQ(scheduling_results.front().first, expected_module_vector);
+  CheckNodeEquality(*scheduling_results.front().second[0], expected_first_node);
+  scheduling_results.pop();
+  ASSERT_EQ(scheduling_results.front().first, expected_second_module_vector);
+  CheckNodeEquality(*scheduling_results.front().second[0],
+                    expected_second_node);
+}
+
+TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfOutputProjection) {
+  query_node_a_->next_nodes = {query_node_b_};
+  query_node_b_->previous_nodes = {query_node_a_};
+
+  query_node_a_->operation_parameters.output_stream_parameters = {
+      {0, 1, 2, 3, 3}};
+
+  base_supported_bitstreams_.insert({{{query_node_a_->operation_type, {}},
+                                      {query_node_b_->operation_type, {}}},
+                                     "Some_bitstream"});
+
+  auto expected_first_node = *query_node_a_;
+  auto expected_second_node = *query_node_b_;
+  expected_first_node.module_location = 1;
+  //expected_first_node.next_nodes = {nullptr};
+  expected_second_node.module_location = 1;
+  expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
+
+  //auto expected_filename = query_node_a_->node_name + "_0.csv";
+  //expected_first_node.output_data_definition_files = {expected_filename};
+  //expected_second_node.input_data_definition_files = {expected_filename};
+
+  ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}}};
+  ModulesCombo expected_second_module_vector = {
+      {query_node_b_->operation_type, {}}};
+
+  std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
+
+  auto scheduling_results =
+      dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
+          starting_nodes, base_supported_bitstreams_, base_existing_modules_,
+          reuse_map_);
+
+  ASSERT_EQ(scheduling_results.front().first, expected_module_vector);
+  CheckNodeEquality(*scheduling_results.front().second[0], expected_first_node);
+  scheduling_results.pop();
+  ASSERT_EQ(scheduling_results.front().first, expected_second_module_vector);
+  CheckNodeEquality(*scheduling_results.front().second[0],
+                    expected_second_node);
+}
+
+TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfIOProjection) {
+  query_node_a_->next_nodes = {query_node_b_};
+  query_node_b_->previous_nodes = {query_node_a_};
+
+  query_node_a_->operation_parameters.output_stream_parameters = {
+      {0, 1, 2, 3, 3}};
+  query_node_b_->operation_parameters.input_stream_parameters = {
+      {0, 1, 2, 3, 3}};
+
+  base_supported_bitstreams_.insert({{{query_node_a_->operation_type, {}},
+                                      {query_node_b_->operation_type, {}}},
+                                     "Some_bitstream"});
+
+  auto expected_first_node = *query_node_a_;
+  auto expected_second_node = *query_node_b_;
+  expected_first_node.module_location = 1;
+  //expected_first_node.next_nodes = {nullptr};
+  expected_second_node.module_location = 1;
+  expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
+
+  //auto expected_filename = query_node_a_->node_name + "_0.csv";
+  //expected_first_node.output_data_definition_files = {expected_filename};
+  //expected_second_node.input_data_definition_files = {expected_filename};
+
+  ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}}};
+  ModulesCombo expected_second_module_vector = {
+      {query_node_b_->operation_type, {}}};
+
+  std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
+
+  auto scheduling_results =
+      dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
+          starting_nodes, base_supported_bitstreams_, base_existing_modules_,
+          reuse_map_);
+
+  ASSERT_EQ(scheduling_results.front().first, expected_module_vector);
+  CheckNodeEquality(*scheduling_results.front().second[0], expected_first_node);
+  scheduling_results.pop();
+  ASSERT_EQ(scheduling_results.front().first, expected_second_module_vector);
+  CheckNodeEquality(*scheduling_results.front().second[0],
+                    expected_second_node);
+}
+
+TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfSecondOutputProjection) {
+  query_node_a_->next_nodes = {nullptr, query_node_b_};
+  query_node_a_->output_data_definition_files = {"", ""};
+  query_node_b_->previous_nodes = {query_node_a_};
+
+  std::vector<int> some_data = {0, 1, 2, 3, 3};
+
+  query_node_a_->operation_parameters.output_stream_parameters = {
+      {},        some_data, some_data, some_data,
+      some_data, some_data, some_data, some_data};
+
+  base_supported_bitstreams_.insert({{{query_node_a_->operation_type, {}},
+                                      {query_node_b_->operation_type, {}}},
+                                     "Some_bitstream"});
+
+  auto expected_first_node = *query_node_a_;
+  auto expected_second_node = *query_node_b_;
+  expected_first_node.module_location = 1;
+  //expected_first_node.next_nodes = {nullptr, nullptr};
+  expected_second_node.module_location = 1;
+  expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
+
+  expected_first_node.output_data_definition_files = {
+      query_node_a_->node_name + "_0.csv", ""};
+
+  //auto expected_filename = query_node_a_->node_name + "_1.csv";
+  //expected_first_node.output_data_definition_files = {query_node_a_->node_name + "_0.csv", expected_filename};
+  //expected_second_node.input_data_definition_files = {expected_filename};
+
+  ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}}};
+  ModulesCombo expected_second_module_vector = {
+      {query_node_b_->operation_type, {}}};
+
+  std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
+
+  auto scheduling_results =
+      dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
+          starting_nodes, base_supported_bitstreams_, base_existing_modules_,
+          reuse_map_);
+
+  ASSERT_EQ(scheduling_results.front().first, expected_module_vector);
+  CheckNodeEquality(*scheduling_results.front().second[0], expected_first_node);
+  scheduling_results.pop();
+  ASSERT_EQ(scheduling_results.front().first, expected_second_module_vector);
+  CheckNodeEquality(*scheduling_results.front().second[0],
+                    expected_second_node);
+}
+
+TEST_F(NodeSchedulerTest, SameRunsDespiteIOProjection) {
+  query_node_a_->next_nodes = {nullptr, query_node_b_};
+  query_node_a_->output_data_definition_files = {"", ""};
+  query_node_b_->previous_nodes = {query_node_a_};
+
+  std::vector<int> some_data = {0, 1, 2, 3, 3};
+
+  query_node_a_->operation_parameters.output_stream_parameters = {
+      some_data, some_data, some_data, some_data,
+      {},        some_data, some_data, some_data};
+  query_node_a_->operation_parameters.input_stream_parameters = {
+      {0, 1, 2, 3, 3}};
+  query_node_b_->operation_parameters.output_stream_parameters = {
+      {1, 2, 3, 4, 5, 6, 6}};
+  query_node_b_->operation_parameters.input_stream_parameters = {
+      {}, {12}, {1, 2, 3, 4}};
+
+  ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}},
+                                         {query_node_b_->operation_type, {}}};
+
+  base_supported_bitstreams_.insert({expected_module_vector, "Some_bitstream"});
+
+  auto expected_first_node = *query_node_a_;
+  auto expected_second_node = *query_node_b_;
+  expected_first_node.module_location = 1;
+  expected_second_node.module_location = 2;
+  expected_first_node.output_data_definition_files = {
+      query_node_a_->node_name + "_0.csv", ""};
+
+  std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
+
+  auto scheduling_results =
+      dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
+          starting_nodes, base_supported_bitstreams_, base_existing_modules_,
+          reuse_map_);
+
+  ASSERT_EQ(scheduling_results.front().first, expected_module_vector);
+  CheckNodeEquality(*scheduling_results.front().second[0], expected_first_node);
+  CheckNodeEquality(*scheduling_results.front().second[1],
+                    expected_second_node);
+}
+
+TEST_F(NodeSchedulerTest, LinkedNodesGetsUpdated) {
+  query_node_a_->next_nodes = {query_node_b_};
+  query_node_b_->previous_nodes = {query_node_a_};
+
+  std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
+
+  auto expected_map = reuse_map_;
+
+  std::vector<std::pair<std::string, int>> target = {
+      {query_node_b_->node_name, 0}};
+  std::map<int, std::vector<std::pair<std::string, int>>> target_map;
+  target_map.insert({0, target});
+
+  expected_map.insert({query_node_a_->node_name, target_map});
+
+  auto scheduling_results =
+      dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
+          starting_nodes, base_supported_bitstreams_, base_existing_modules_,
+          reuse_map_);
+
+  ASSERT_EQ(reuse_map_, expected_map);
+}
+
+TEST_F(NodeSchedulerTest, LinkedNodesStaysSame) {
+  query_node_a_->next_nodes = {query_node_b_};
+  query_node_b_->previous_nodes = {query_node_a_};
+
+  ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}},
+                                         {query_node_b_->operation_type, {}}};
+
+  base_supported_bitstreams_.insert({expected_module_vector, "Some_bitstream"});
+
+  std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
+
+  auto expected_map = reuse_map_;
+
+  auto scheduling_results =
+      dbmstodspi::query_managing::NodeScheduler::FindAcceleratedQueryNodeSets(
+          starting_nodes, base_supported_bitstreams_, base_existing_modules_,
+          reuse_map_);
+
+  ASSERT_EQ(reuse_map_, expected_map);
 }
 
 }  // namespace

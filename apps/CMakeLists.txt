@@ -52,6 +52,7 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_add_mul_sum.json
 #configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_2nd_filter.csv lineitem_part_sf0_3_2nd_filter.csv COPYONLY)
 #configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_inverted.csv lineitem_part_sf0_3_inverted.csv COPYONLY)
 #configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_multiplied.csv lineitem_part_sf0_3_multiplied.csv COPYONLY)
+#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_multiplied_reduced.csv lineitem_part_sf0_3_multiplied_reduced.csv COPYONLY)
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_sf0_1.csv lineitem_sf0_1.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_sf0_1_filter.csv lineitem_sf0_1_filter.csv COPYONLY)
@@ -92,7 +93,12 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF001.json
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF01.json TPCH_Q19_SF01.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF03.json TPCH_Q19_SF03.json COPYONLY)
 
-configure_file(${DBMStoDSPI_SOURCE_DIR}/benchmark.pl benchmark.pl COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark.pl benchmark.pl COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark_defs.zip benchmark_defs.zip COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/lineitem.zip lineitem.zip COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/part.zip part.zip COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/fast_benchmark_config.ini fast_benchmark_config.ini COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/slow_benchmark_config.ini slow_benchmark_config.ini COPYONLY)
 
 FetchContent_Declare(
   cxxopts

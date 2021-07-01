@@ -6,10 +6,12 @@
 #include <vector>
 
 #include "operation_types.hpp"
+#include "table_data.hpp"
+
+using dbmstodspi::data_managing::table_data::ColumnDataType;
 
 /// Can be change to have a dictionary of config file names to make it more
 /// generic
-
 namespace dbmstodspi::input_managing {
 struct Config {
   // Constructed run time for now. So doesn't even really need to be here.
@@ -25,7 +27,8 @@ struct Config {
       accelerator_library;
 
   std::map<std::string, int> required_memory_space;
-  std::map<std::string, double> data_sizes;
-  //std::map<std::string, std::string> driver_library;
+  std::map<ColumnDataType, double> data_sizes;
+  // std::map<std::string, std::string> driver_library;
+  char separator;
 };
 }  // namespace dbmstodspi::input_managing

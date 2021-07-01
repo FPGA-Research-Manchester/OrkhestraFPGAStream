@@ -1,45 +1,58 @@
 {
-	"filter_node": {
-		"input": ["CAR_DATA.csv"],
-		"output": ["CAR_FILTER_DATA.csv"],
-		"operation": "kFilter",
-		"previous_nodes": [null],
-		"next_nodes": ["join_node"],
-		"operation_parameters": {
-			"input_stream_params": [
-				[]
-			],
-			"output_stream_params": [
-				[],
-				[2]
-			],
-			"operation_params": [
-				[1, 14, 1],
-				[0],
-				[12000],
-				[1],
-				[0]
-			]
-		}
-	},
-	"join_node": {
-		"input": ["CAR_FILTER_DATA.csv", "CUSTOMER_DATA.csv"],
-		"output": ["FILTERED_JOIN_DATA.csv"],
-		"operation": "kJoin",
-		"previous_nodes": ["filter_node", null],
-		"next_nodes": [null],
-		"operation_parameters": {
-			"input_stream_params": [
-				[],
-				[0, -1, 1, 2, 3, 4, 5, 6]
-			],
-			"output_stream_params": [
-				[],
-				[2]
-			],
-			"operation_params": [
-				[2]
-			]
-		}
-	}
+  "filter_node": {
+    "input": [ "CAR_DATA.csv" ],
+    "output": [ null ],
+    "operation": "kFilter",
+    "previous_nodes": [ null ],
+    "next_nodes": [ "join_node" ],
+    "operation_parameters": {
+      "input_stream_params": [
+        [],
+        [ 0, 1, 1, 0 ],
+        [ 1, 32, 32, 1 ],
+        []
+      ],
+      "output_stream_params": [
+        [],
+        [ 0, 1, 1, 0 ],
+        [ 1, 32, 32, 1 ],
+        [ 2 ]
+      ],
+      "operation_params": [
+        [ 1, 14, 1 ],
+        [ 0 ],
+        [ 12000 ],
+        [ 1 ],
+        [ 0 ]
+      ]
+    }
+  },
+  "join_node": {
+    "input": [ null, "CUSTOMER_DATA.csv" ],
+    "output": [ "FILTERED_JOIN_DATA.csv" ],
+    "operation": "kJoin",
+    "previous_nodes": [ "filter_node", null ],
+    "next_nodes": [ null ],
+    "operation_parameters": {
+      "input_stream_params": [
+        [],
+        [ 0, 1, 1, 0 ],
+        [ 1, 32, 32, 1 ],
+        [],
+        [ 0, -1, 1, 2, 3, 4, 5, 6 ],
+        [ 0, 1 ],
+        [ 1, 24 ],
+        []
+      ],
+      "output_stream_params": [
+        [],
+        [ 0, 1, 1, 0, 1 ],
+        [ 1, 32, 32, 1, 24 ],
+        [ 2 ]
+      ],
+      "operation_params": [
+        [ 2 ]
+      ]
+    }
+  }
 }
