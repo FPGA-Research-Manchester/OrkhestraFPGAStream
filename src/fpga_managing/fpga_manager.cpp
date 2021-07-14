@@ -226,6 +226,10 @@ auto FPGAManager::RunQueryAcceleration()
   WaitForStreamsToFinish();
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
+#ifdef _FPGA_AVAILABLE
+  ReadResultsFromRegisters();
+#endif
+
   Log(LogLevel::kInfo,
       "Execution time = " +
           std::to_string(
@@ -274,7 +278,6 @@ void FPGAManager::WaitForStreamsToFinish() {
     //          << FPGAManager::dma_engine_.IsOutputControllerFinished()
     //          << std::endl;
   }
-  ReadResultsFromRegisters();
 #endif
 }
 
