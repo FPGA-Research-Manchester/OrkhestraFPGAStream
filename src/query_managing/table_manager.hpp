@@ -60,6 +60,12 @@ class TableManager {
       int stream_index,
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>& memory_device,
       std::string filename) -> std::pair<int, int>;
+  static auto WriteDataToMemory1(
+      const data_managing::DataManager& data_manager,
+      const std::vector<std::vector<int>>& stream_specification,
+      int stream_index,
+      const std::unique_ptr<fpga_managing::MemoryBlockInterface>& memory_device,
+      std::string filename) -> std::pair<int, int>;
 
   static auto ReadTableFromMemory(
       const data_managing::DataManager& data_manager,
@@ -82,7 +88,7 @@ class TableManager {
       TableData& resulting_table, const int& result_size);
   static void WriteInputDataToMemoryBlock(
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>& input_device,
-      const TableData& input_table);
+      const TableData& input_table, int previous);
   static void PrintWrittenData(
       const std::string& table_name,
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>& input_device,

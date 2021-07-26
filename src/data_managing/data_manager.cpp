@@ -19,8 +19,9 @@ using dbmstodspi::util::IsValidFile;
 auto DataManager::ReadIntegerDataFromCSV(
     const std::vector<std::pair<ColumnDataType, int>> table_column_defs,
     const std::string& filename) -> std::vector<uint32_t> {
+  int thing = 0;
   if (IsValidFile(filename)) {
-    auto data_rows = CSVReader::ReadTableData(filename, separator_);
+    auto data_rows = CSVReader::ReadTableData(filename, separator_, thing);
     std::vector<uint32_t> table_data_vector;
     TypesConverter::AddIntegerDataFromStringData(data_rows, table_data_vector,
                                                  table_column_defs);
@@ -53,8 +54,8 @@ auto DataManager::GetHeaderColumnVector(
 auto DataManager::ParseDataFromCSV(
     const std::string& filename,
     const std::vector<ColumnDataType>& column_data_types,
-    const std::vector<int>& column_sizes) const -> TableData {
-  int size = 0;
+    const std::vector<int>& column_sizes, int& rows_already_read) const -> TableData {
+  int record_size = 0;
   std::vector<std::pair<ColumnDataType, int>> table_column_label_vector;
   // Assuming data type vector and column size vectors are the same length
   for (int i = 0; i < column_data_types.size(); i++) {
@@ -66,18 +67,19 @@ auto DataManager::ParseDataFromCSV(
 
     table_column_label_vector.emplace_back(column_data_types.at(i),
                                            static_cast<int>(data_type_size));
-    size += static_cast<int>(data_type_size);
+    record_size += static_cast<int>(data_type_size);
   }
 
   TableData table_data;
   table_data.table_column_label_vector = table_column_label_vector;
 
   if (IsValidFile(filename)) {
-    auto data_rows = CSVReader::ReadTableData(filename, separator_);
-    table_data.table_data_vector.reserve(size * data_rows.size());
+    auto data_rows =
+        CSVReader::ReadTableData(filename, separator_, rows_already_read);
+    table_data.table_data_vector.reserve(record_size * data_rows.size());
     TypesConverter::AddIntegerDataFromStringData(
         data_rows, table_data.table_data_vector, table_column_label_vector);
-  }
+  } // There should be an else here?
 
   return table_data;
 }

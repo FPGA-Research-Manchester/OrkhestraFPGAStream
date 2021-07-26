@@ -168,7 +168,7 @@ void QueryManager::AllocateInputMemoryBlocks(
     if (!observed_node && !input_memory_blocks[stream_index]) {
       input_memory_blocks[stream_index] =
           std::move(memory_manager.GetAvailableMemoryBlock());
-      input_stream_sizes[stream_index] = TableManager::WriteDataToMemory(
+      input_stream_sizes[stream_index] = TableManager::WriteDataToMemory1(
           data_manager, node.operation_parameters.input_stream_parameters,
           stream_index, input_memory_blocks[stream_index],
           node.input_data_definition_files[stream_index]);

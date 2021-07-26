@@ -36,7 +36,8 @@ class DataManager {
    */
   auto ParseDataFromCSV(const std::string& filename,
                         const std::vector<ColumnDataType>& column_data_types,
-                        const std::vector<int>& column_sizes) const
+                        const std::vector<int>& column_sizes,
+                        int& rows_already_read) const
       -> TableData;
 
   auto ReadIntegerDataFromCSV(

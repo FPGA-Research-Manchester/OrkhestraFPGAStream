@@ -35,15 +35,22 @@ void TableManager::ReadOutputDataFromMemoryBlock(
 
 void TableManager::WriteInputDataToMemoryBlock(
     const std::unique_ptr<fpga_managing::MemoryBlockInterface>& input_device,
-    const TableData& input_table) {
+    const TableData& input_table, int previous_record_count) {
   PrintDataSize(input_table);
   if (input_table.table_data_vector.size() * 4 > input_device->GetSize()) {
     throw std::runtime_error(
         "Not enough memory in the allocated memory block!");
   }
+  int record_size = 0;
+  for (const auto& column_type : input_table.table_column_label_vector) {
+    record_size += column_type.second;
+  }
   volatile uint32_t* input = input_device->GetVirtualAddress();
-  for (int i = 0; i < input_table.table_data_vector.size(); i++) {
-    input[i] = input_table.table_data_vector[i];
+  for (int i = 0;
+       i < input_table.table_data_vector.size();
+       i++) {
+    input[i + (previous_record_count * record_size)] =
+        input_table.table_data_vector[i];
   }
 }
 
@@ -79,13 +86,68 @@ auto TableManager::WriteDataToMemory(
   auto current_table = ReadTableFromFile(data_manager, stream_specification,
                                          stream_index, filename);
 
-  WriteInputDataToMemoryBlock(memory_device, current_table);
+  int thing = 0;
+
+  WriteInputDataToMemoryBlock(memory_device, current_table, thing);
   PrintWrittenData(filename, memory_device, current_table);
 
   int record_size = GetRecordSizeFromTable(current_table);
 
   int record_count =
       static_cast<int>(current_table.table_data_vector.size() / record_size);
+
+  Log(LogLevel::kTrace,
+      "RECORD_SIZE = " + std::to_string(record_size) + "[integers]");
+  Log(LogLevel::kDebug, "RECORD_COUNT = " + std::to_string(record_count));
+
+  return {record_size, record_count};
+}
+
+auto TableManager::WriteDataToMemory1(
+    const data_managing::DataManager& data_manager,
+    const std::vector<std::vector<int>>& stream_specification, int stream_index,
+    const std::unique_ptr<fpga_managing::MemoryBlockInterface>& memory_device,
+    std::string filename) -> std::pair<int, int> {
+
+    auto column_data_types =
+      GetColumnDataTypesFromSpecification(stream_specification, stream_index);
+
+  bool all_read = false;
+    int record_count = 0;
+  while (!all_read) {
+    int previous_record_count = record_count;
+    auto current_table = data_manager.ParseDataFromCSV(
+        filename, column_data_types,
+        stream_specification.at(stream_index *
+                                    kIOStreamParamDefs.kStreamParamCount +
+                                kIOStreamParamDefs.kDataSizesOffset),
+        record_count);
+    int new_records = record_count - previous_record_count;
+    if (new_records != 0) {
+      WriteInputDataToMemoryBlock(memory_device, current_table,
+                                  previous_record_count);
+    } else {
+      /*TableManager::ReadOutputDataFromMemoryBlock(memory_device, current_table,
+                                                  record_count);
+      data_managing::DataManager::PrintTableData(current_table);*/
+      all_read = true;
+    }
+  }
+
+  auto column_defs_vector = data_manager.GetHeaderColumnVector(
+      column_data_types,
+      stream_specification.at(stream_index *
+                                  kIOStreamParamDefs.kStreamParamCount +
+                              kIOStreamParamDefs.kDataSizesOffset));
+
+  int record_size = 0;
+  for (const auto& column_type : column_defs_vector) {
+    record_size += column_type.second;
+  }
+
+  
+
+  
 
   Log(LogLevel::kTrace,
       "RECORD_SIZE = " + std::to_string(record_size) + "[integers]");
@@ -130,12 +192,13 @@ auto TableManager::ReadTableFromFile(
 
   auto column_data_types =
       GetColumnDataTypesFromSpecification(stream_specification, stream_index);
-
+  int thing = 0;
   return data_manager.ParseDataFromCSV(
       filename, column_data_types,
       stream_specification.at(stream_index *
                                   kIOStreamParamDefs.kStreamParamCount +
-                              kIOStreamParamDefs.kDataSizesOffset));
+                              kIOStreamParamDefs.kDataSizesOffset),
+      thing);
 }
 
 auto TableManager::GetColumnDefsVector(
