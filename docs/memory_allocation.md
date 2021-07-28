@@ -99,14 +99,60 @@ echo install new uboot image
 sudo cp ./image.ub $UBOOT
 ```
 
+You can see that you need an image.its file. For different boards more its files are available in the FOS [GitHub](https://github.com/FPGA-Research-Manchester/fos/blob/fdac37e188e217293d296d9973c22500c8a4367c/sd_card_images/build/PYNQ/sdbuild/boot/image_aarch64.its). The contents of this file should be the following with the corresponding file names from the previous scritps:
+
+```
+/dts-v1/;
+ 
+/ {
+    description = "U-Boot fitImage for PYNQ arm kernel";
+    #address-cells = <1>;
+ 
+    images {
+        kernel@0 {
+            description = "Linux Kernel";
+            data = /incbin/("./kern.img");
+            type = "kernel";
+            arch = "arm64";
+            os = "linux";
+            compression = "none";
+            load = <0x80000>;
+            entry = <0x80000>;
+            hash@1 {
+                algo = "sha1";
+            };
+        };
+        fdt@0 {
+            description = "Flattened Device Tree blob";
+            data = /incbin/("./system_out.dtb");
+            type = "flat_dt";
+            arch = "arm64";
+            compression = "none";
+            hash@1 {
+                algo = "sha1";
+            };
+        };
+    };
+    configurations {
+        default = "conf@1";
+        conf@1 {
+            description = "Boot Linux kernel with FDT blob";
+            kernel = "kernel@0";
+            fdt = "fdt@0";
+            hash@1 {
+                algo = "sha1";
+            };
+        };
+    };
+};
+```
+
 After rebooting the system, the **cmdline** value should be like the following:
 
 ```Shell
 cat /proc/cmdline
 root=/dev/mmcblk0p2 rw earlyprintk rootfstype=ext4 rootwait devtmpfs.mount=1 uio_pdrv_genirq.of_id="generic-uio" clk_ignore_unused cma=1792m
 ```
-
-As a side note, you need the *image.its* file for this! Additional documentation on this will be added on the future.
 
 ## How the FOS libraries have been modified
 
