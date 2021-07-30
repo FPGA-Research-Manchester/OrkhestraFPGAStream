@@ -1,5 +1,7 @@
 # DBMStoDSPI - Accelerated database operations on an FPGA with a dynamic stream processing interface
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 This software stack is meant to be transparently integrated with a proven DBMS for increased performance. The software stack would accelerate specific query operations with an available FPGA. How the data flows through the FPGA stack is shown in the graph below:
 
 ![DBMStoDSPI source layout](./docs/DBMStoDSPI_graph.svg)

@@ -1,3 +1,19 @@
+/*
+Copyright 2021 University of Manchester
+
+Licensed under the Apache License, Version 2.0(the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http:  // www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 #include "join_setup.hpp"
 
 #include "query_acceleration_constants.hpp"
@@ -10,11 +26,12 @@ void JoinSetup::SetupJoinModule(modules::JoinInterface& join_module,
                                 int first_input_record_size,
                                 int second_input_stream_id,
                                 int second_input_record_size,
-                                int output_stream_id, int output_chunks_per_record, int shift_size) {
-
+                                int output_stream_id,
+                                int output_chunks_per_record, int shift_size) {
   join_module.Reset();
   join_module.DefineOutputStream(output_chunks_per_record,
-      first_input_stream_id, second_input_stream_id, output_stream_id);
+                                 first_input_stream_id, second_input_stream_id,
+                                 output_stream_id);
   join_module.SetFirstInputStreamChunkCount(
       StreamParameterCalculator::CalculateChunksPerRecord(
           first_input_record_size));
@@ -52,10 +69,11 @@ void JoinSetup::SetupTimeMultiplexer(modules::JoinInterface& join_module,
        second_stream_element_count < second_stream_size;
        second_stream_element_count++) {
     if (second_stream_element_count >= shift_size) {
-      join_module.SelectOutputDataElement(output_chunk_id,
+      join_module.SelectOutputDataElement(
+          output_chunk_id,
           second_stream_element_count /
               query_acceleration_constants::kDatapathWidth,
-                                          data_position, true);
+          data_position, true);
       data_position--;
       if (data_position == -1) {
         data_position = query_acceleration_constants::kDatapathWidth - 1;

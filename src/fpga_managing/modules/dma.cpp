@@ -1,3 +1,19 @@
+/*
+Copyright 2021 University of Manchester
+
+Licensed under the Apache License, Version 2.0(the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http:  // www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 #include "dma.hpp"
 
 #include <algorithm>
@@ -70,8 +86,10 @@ void DMA::StartController(
 auto DMA::IsControllerFinished(bool is_input)
     -> bool {  // true if all streams were read from DDR
   int base_address =
-      (is_input) ? (0)
-                 : ((1 << 16) + (3 << 6));  // input (3 << 6) && other output address in specs?
+      (is_input)
+          ? (0)
+          : ((1 << 16) +
+             (3 << 6));  // input (3 << 6) && other output address in specs?
   return (AccelerationModule::ReadFromModule(base_address) == 0);
 }
 
@@ -95,7 +113,7 @@ void DMA::SetCrossbarValues(
   int base_address = 0;
   switch (crossbar_selection) {
     case module_config_values::DMACrossbarDirectionSelection::
-    kBufferToInterfaceChunk:
+        kBufferToInterfaceChunk:
       base_address = (2 << 17) + (1 << 16);
       break;
     case module_config_values::DMACrossbarDirectionSelection::
@@ -115,8 +133,7 @@ void DMA::SetCrossbarValues(
       break;
   }
   AccelerationModule::WriteToModule(
-      (base_address + (stream_id << 12) + (clock_cycle << 5) +
-       (offset << 2)),
+      (base_address + (stream_id << 12) + (clock_cycle << 5) + (offset << 2)),
       ((configuration_values[0] << 24) + (configuration_values[1] << 16) +
        (configuration_values[2] << 8) + configuration_values[3]));
 }
