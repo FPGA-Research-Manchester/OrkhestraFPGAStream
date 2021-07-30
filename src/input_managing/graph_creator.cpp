@@ -1,8 +1,24 @@
-﻿#include "graph_creator.hpp"
+﻿/*
+Copyright 2021 University of Manchester
+
+Licensed under the Apache License, Version 2.0(the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http:  // www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+#include "graph_creator.hpp"
 
 #include <algorithm>
-#include <utility>
 #include <stdexcept>
+#include <utility>
 
 using dbmstodspi::input_managing::GraphCreator;
 using dbmstodspi::query_managing::query_scheduling_data::kSupportedFunctions;
@@ -74,7 +90,8 @@ auto GraphCreator::MakeGraph(std::string input_def_filename)
     if (search_previous != previous_nodes.end()) {
       if (search_previous->second.size() !=
           node->input_data_definition_files.size()) {
-        throw std::runtime_error("Incorrect number of input file definitions found!");
+        throw std::runtime_error(
+            "Incorrect number of input file definitions found!");
       }
       for (int i = 0; i < search_previous->second.size(); i++) {
         if (!search_previous->second[i].empty()) {
@@ -85,8 +102,7 @@ auto GraphCreator::MakeGraph(std::string input_def_filename)
               graph_nodes_map.at(search_previous->second[i]));
         } else {
           if (node->input_data_definition_files[i] == "") {
-            throw std::runtime_error(
-                "Input file required!");
+            throw std::runtime_error("Input file required!");
           }
           node->previous_nodes.push_back(std::weak_ptr<QueryNode>());
         }
@@ -96,8 +112,7 @@ auto GraphCreator::MakeGraph(std::string input_def_filename)
     if (search_next != next_nodes.end()) {
       for (auto const& next_node_name : search_next->second) {
         if (!next_node_name.empty()) {
-          node->next_nodes.push_back(
-              graph_nodes_map.at(next_node_name));
+          node->next_nodes.push_back(graph_nodes_map.at(next_node_name));
         } else {
           node->next_nodes.push_back(nullptr);
         }

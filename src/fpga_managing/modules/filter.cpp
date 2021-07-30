@@ -1,6 +1,22 @@
+/*
+Copyright 2021 University of Manchester
+
+Licensed under the Apache License, Version 2.0(the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http:  // www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 #include "filter.hpp"
 
-#include<iostream>
+#include <iostream>
 
 using namespace dbmstodspi::fpga_managing::modules;
 
@@ -67,10 +83,10 @@ void Filter::FilterSetCompareTypes(
                            // Least significant bits (reference value)
   AccelerationModule::WriteToModule(
       ((1 << 15) + (data_position << 2) + (chunk_id << 7)),
-      ((static_cast<int>(compare_4_type)
-       << 12) + (static_cast<int>(compare_3_type)
-       << 8) + (static_cast<int>(compare_2_type)
-       << 4) + static_cast<int>(compare_1_type)));
+      ((static_cast<int>(compare_4_type) << 12) +
+       (static_cast<int>(compare_3_type) << 8) +
+       (static_cast<int>(compare_2_type) << 4) +
+       static_cast<int>(compare_1_type)));
 }
 
 void Filter::FilterSetCompareReferenceValue(
@@ -94,7 +110,7 @@ void Filter::FilterSetDNFClauseLiteral(
     int dnf_clause_id /*0-31*/, int compare_number /*0-3*/,
     int chunk_id /*0-31*/, int data_position /*0-15 for 512-bit datapath etc*/,
     module_config_values::LiteralTypes literal_type) {
-  dnf_states_[dnf_clause_id].first = true; // DNF clause is used
+  dnf_states_[dnf_clause_id].first = true;  // DNF clause is used
   dnf_states_[dnf_clause_id].second[compare_number][chunk_id][data_position] =
       literal_type;
 }
@@ -118,8 +134,7 @@ void Filter::FilterWriteDNFClauseLiteralsToModule(int datapath_width,
           clauses_packed_negative_result <<= 1;
           if (dnf_states_[dnf_clause_index].first) {
             if (dnf_states_[dnf_clause_index]
-                    .second[compare_lane][chunk_id]
-                           [data_position] ==
+                    .second[compare_lane][chunk_id][data_position] ==
                 module_config_values::LiteralTypes::kLiteralDontCare) {
               clauses_packed_positive_result |= 1;
               clauses_packed_negative_result |= 1;

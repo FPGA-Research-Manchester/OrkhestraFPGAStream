@@ -1,4 +1,20 @@
-﻿#include "rapidjson_reader.hpp"
+﻿/*
+Copyright 2021 University of Manchester
+
+Licensed under the Apache License, Version 2.0(the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http:  // www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+#include "rapidjson_reader.hpp"
 
 #include <cstdio>
 #include <stdexcept>
@@ -12,8 +28,7 @@ using rapidjson::FileReadStream;
 
 auto RapidJSONReader::read(const std::string& json_filename)
     -> std::unique_ptr<Document> {
-  FILE* file_pointer =
-      fopen(json_filename.c_str(), "r");
+  FILE* file_pointer = fopen(json_filename.c_str(), "r");
 
   if (!file_pointer) {
     throw std::runtime_error("Couldn't find: " + json_filename);
@@ -61,8 +76,8 @@ auto RapidJSONReader::ReadInputDefinition(std::string json_filename)
             for (const auto& given_parameter_vectors :
                  operation_parameter.value.GetArray()) {
               std::vector<int> parameters;
-              if (given_parameter_vectors.Size() != 0 && given_parameter_vectors[0]
-                      .IsString()) {
+              if (given_parameter_vectors.Size() != 0 &&
+                  given_parameter_vectors[0].IsString()) {
                 parameters = ConvertCharStringToAscii(
                     given_parameter_vectors[0].GetString(),
                     given_parameter_vectors[1].GetInt());
@@ -146,7 +161,7 @@ auto RapidJSONReader::readAcceleratorLibrary(std::string json_filename)
 }
 
 auto RapidJSONReader::ConvertCharStringToAscii(const std::string& input_string,
-                                           int output_size)
+                                               int output_size)
     -> std::vector<int> {
   if (input_string.length() > output_size * 4) {
     throw std::runtime_error(
