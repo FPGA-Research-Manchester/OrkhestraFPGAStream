@@ -97,6 +97,9 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF01.json 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF03.json TPCH_Q19_SF03.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/merge_sort_testing.json merge_sort_testing.json COPYONLY)
 
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/TPCH_Q6_SF001.json TPCH_Q6_SF001.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/TPCH_Q6_SF1.json TPCH_Q6_SF1.json COPYONLY)
+
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark_Q19_SF001.json benchmark_Q19_SF001.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/lineitem0.01.csv lineitem0.01.csv COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/part0.01.csv part0.01.csv COPYONLY)
