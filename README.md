@@ -1,10 +1,7 @@
 # DBMStoDSPI - Accelerated database operations on an FPGA with a dynamic stream processing interface
 
-
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-![License](https://img.shields.io/github/license/FPGA-Research-Manchester/DBMStoDSPI)
-![Build & Test](https://img.shields.io/github/workflow/status/FPGA-Research-Manchester/DBMStoDSPI/CMake)
-![Build & Test](https://github.com/FPGA-Research-Manchester/DBMStoDSPI/actions/workflows/cmake.yml/badge.svg)
+[![License](https://img.shields.io/github/license/FPGA-Research-Manchester/DBMStoDSPI)](https://opensource.org/licenses/Apache-2.0)
+[![Build & Test](https://github.com/FPGA-Research-Manchester/DBMStoDSPI/actions/workflows/cmake.yml/badge.svg)](https://github.com/FPGA-Research-Manchester/DBMStoDSPI/actions)
 
 This software stack is meant to be transparently integrated with a proven DBMS for increased performance. The software stack would accelerate specific query operations with an available FPGA. How the data flows through the FPGA stack is shown in the graph below:
 
