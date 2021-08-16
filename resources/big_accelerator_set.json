@@ -56,7 +56,7 @@
 	"accelerators": {
 		"filter": "DSPI_filtering",
 		"join": "DSPI_joining",
-        "big_merge": "DSPI_double_merge_sorting",
+        "big_merge": "DSPI_big_merge_sorting",
 		"linear_sort": "DSPI_linear_sorting",
 		"add": "DSPI_addition",
 		"mul": "DSPI_multiplication",

@@ -1,6 +1,5 @@
 #include <chrono>
 #include <cmath>
-#include <fstream>
 #include <iostream>
 #include <optional>
 #include <utility>
@@ -31,8 +30,6 @@ using dbmstodspi::logger::Log;
 using dbmstodspi::logger::LogLevel;
 using dbmstodspi::logger::SetLoggingLevel;
 
-
-
 /**
  * @brief Helper method to run the given query nodes and their subsequent nodes
  * while measuring and printing the overall time it took to process the queries.
@@ -50,17 +47,9 @@ void MeasureOverallTime(std::vector<std::shared_ptr<QueryNode>> leaf_nodes,
   Log(LogLevel::kInfo,
       "Overall time = " +
           std::to_string(
-              std::chrono::duration_cast<std::chrono::seconds>(end - begin)
+              std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
                   .count()) +
-          "[s]");
-  //for (const auto& node : leaf_nodes) {
-  //  for (const auto& input : node->input_data_definition_files) {
-  //    if (!input.empty()) {
-  //      auto row_count = ReadBigFile(input, config.separator);
-  //      std::cout << row_count << std::endl;
-  //    }
-  //  }
-  //}
+          "[ms]");
 }
 
 /**

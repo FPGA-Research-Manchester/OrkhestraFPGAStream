@@ -129,11 +129,11 @@ void FPGAManager::SetupQueryAcceleration(
         MergeSortSetup::SetupMergeSortModule(
             merge_sort_module, query_node.input_streams[0].stream_id,
             GetStreamRecordSize(query_node.input_streams[0]), 0, true);
-        modules::MergeSort merge_sort_module1(
+        /*modules::MergeSort merge_sort_module1(
             memory_manager_, query_node.operation_module_location+1);
         MergeSortSetup::SetupMergeSortModule(
             merge_sort_module1, query_node.input_streams[0].stream_id,
-            GetStreamRecordSize(query_node.input_streams[0]), 64, false);
+            GetStreamRecordSize(query_node.input_streams[0]), 64, false);*/
         break;
       }
       case operation_types::QueryOperationType::kLinearSort: {

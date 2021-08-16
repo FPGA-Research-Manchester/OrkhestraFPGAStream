@@ -3,6 +3,8 @@
 #include <iostream>
 #include <stdexcept>
 
+#include <chrono>
+
 #include "logger.hpp"
 
 #ifdef _FPGA_AVAILABLE
@@ -23,11 +25,36 @@ void MemoryManager::LoadBitstreamIfNew(const std::string& bitstream_name,
 #ifdef _FPGA_AVAILABLE
     dbmstodspi::logger::Log(dbmstodspi::logger::LogLevel::kDebug,
                             "Loading " + bitstream_name);
+
+          std::chrono::steady_clock::time_point begin =
+        std::chrono::steady_clock::now();
+
     acceleration_instance_ =
         pr_manager_.fpgaLoadStatic(bitstream_name, register_space_size);
+
+        std::chrono::steady_clock::time_point end =
+        std::chrono::steady_clock::now();
+    //dbmstodspi::logger::Log(
+    //        dbmstodspi::logger::LogLevel::kInfo,
+    //    "Reconfiguration time = " +
+    //        std::to_string(
+    //            std::chrono::duration_cast<std::chrono::milliseconds>(end -
+    //                                                                  begin)
+    //                .count()) +
+    //        "[ms]");
+
     register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
     SetFPGATo300MHz();
-    dbmstodspi::logger::Log(dbmstodspi::logger::LogLevel::kTrace,
+    end = std::chrono::steady_clock::now();
+    dbmstodspi::logger::Log(
+        dbmstodspi::logger::LogLevel::kInfo,
+        "Extra config time = " +
+            std::to_string(
+                std::chrono::duration_cast<std::chrono::milliseconds>(end -
+                                                                      begin)
+                    .count()) +
+            "[ms]");
+    dbmstodspi::logger::Log(dbmstodspi::logger::LogLevel::kDebug,
                             bitstream_name + " loaded!");
 #else
     register_space_ = std::vector<uint32_t>(register_space_size, -1);
