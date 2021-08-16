@@ -1,3 +1,19 @@
+/*
+Copyright 2021 University of Manchester
+
+Licensed under the Apache License, Version 2.0(the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http:  // www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 #pragma once
 
 #include <cstdint>
@@ -128,12 +144,12 @@ class TypesConverter {
       std::vector<std::string>& string_vector);
 
  private:
-  static void ConvertDataToIntegers(ColumnDataType data_type, const std::string& input_string,
-                                    std::vector<uint32_t>& converted_data_vector,
-                                    int string_size);
-  static void ConvertDataToString(ColumnDataType data_type,
-                                  const std::vector<uint32_t>& input_integer_data,
-                                  std::vector<std::string>& converted_data_vector);
+  static void ConvertDataToIntegers(
+      ColumnDataType data_type, const std::string& input_string,
+      std::vector<uint32_t>& converted_data_vector, int string_size);
+  static void ConvertDataToString(
+      ColumnDataType data_type, const std::vector<uint32_t>& input_integer_data,
+      std::vector<std::string>& converted_data_vector);
 
   /**
    * @brief Helper method to convert strings with hexadecimal values to strings.
