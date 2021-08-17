@@ -131,12 +131,3 @@ auto main(int argc, char* argv[]) -> int {
 
   return 0;
 }
-
-// Temp not supported
-// QueryNode
-// merge_sort_query_8k_once_double = {
-//    {"CAR_DATA_HALF_SORTED_8K_64WAY.csv"},
-//    {"CAR_DATA_SORTED_8K.csv"},
-//    QueryOperationType::kMergeSort,
-//    {nullptr},
-//    {nullptr}};

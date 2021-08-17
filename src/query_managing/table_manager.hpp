@@ -70,18 +70,15 @@ class TableManager {
   static void WriteResultTableFile(const TableData& data_table,
                                    std::string filename);
 
+
   static auto WriteDataToMemory(
       const data_managing::DataManager& data_manager,
       const std::vector<std::vector<int>>& stream_specification,
       int stream_index,
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>& memory_device,
       std::string filename) -> std::pair<int, int>;
-  static auto WriteDataToMemory1(
-      const data_managing::DataManager& data_manager,
-      const std::vector<std::vector<int>>& stream_specification,
-      int stream_index,
-      const std::unique_ptr<fpga_managing::MemoryBlockInterface>& memory_device,
-      std::string filename) -> std::pair<int, int>;
+
+
 
   static auto ReadTableFromMemory(
       const data_managing::DataManager& data_manager,

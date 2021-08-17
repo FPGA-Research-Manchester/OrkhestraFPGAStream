@@ -21,11 +21,14 @@ limitations under the License.
 #include <string>
 #include <utility>
 #include <vector>
+#include <memory>
 
 #include "table_data.hpp"
+#include "memory_block_interface.hpp"
 
 using dbmstodspi::data_managing::table_data::ColumnDataType;
 using dbmstodspi::data_managing::table_data::TableData;
+using dbmstodspi::fpga_managing::MemoryBlockInterface;
 
 namespace dbmstodspi::data_managing {
 
@@ -56,6 +59,12 @@ class DataManager {
                         const std::vector<int>& column_sizes,
                         int& rows_already_read) const
       -> TableData;
+
+  auto WriteDataFromCSVToMemory(
+      const std::string& filename,
+      const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
+      const std::unique_ptr<MemoryBlockInterface>& memory_device) const
+      -> int;
 
   auto ReadIntegerDataFromCSV(
       const std::vector<std::pair<ColumnDataType, int>> table_column_defs,

@@ -18,13 +18,40 @@ limitations under the License.
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
+
+#include "types_converter.hpp"
 
 using namespace dbmstodspi::data_managing;
 
-auto CSVReader::ReadBigFile(const std::string& filename, char separator,
-                            int& rows_already_read)
+auto CSVReader::CheckDataFits(
+    const std::string& filename,
+    const std::unique_ptr<MemoryBlockInterface>& memory_device) -> bool {
+  return true;
+}
+
+void CSVReader::WriteDataToMemory(
+    const std::vector<std::vector<std::string>>& string_data,
+    const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
+    const std::unique_ptr<MemoryBlockInterface>& memory_device,
+    int row_counter) {
+  std::vector<uint32_t> integer_data;
+  TypesConverter::AddIntegerDataFromStringData(string_data, integer_data,
+                                               column_defs_vector);
+  int record_size = 0;
+  for (const auto& column_type : column_defs_vector) {
+    record_size += column_type.second;
+  }
+  volatile uint32_t* input = memory_device->GetVirtualAddress();
+  for (int i = 0; i < integer_data.size(); i++) {
+    input[i + (row_counter * record_size)] = integer_data[i];
+  }
+}
+
+auto CSVReader::ReadTableData(const std::string& filename, char separator,
+                              int& rows_already_read)
     -> std::vector<std::vector<std::string>> {
-  std::ifstream big_file(filename);  // Make this in beginning of read.
+  std::ifstream big_file(filename);
   std::vector<std::vector<std::string>> data;
   std::string line;
   int max_rows = 2000000;
@@ -52,21 +79,28 @@ auto CSVReader::ReadBigFile(const std::string& filename, char separator,
   return data;
 }
 
-auto CSVReader::ReadTableData(const std::string& filename, char separator,
-                              int& rows_already_read)
-    -> std::vector<std::vector<std::string>> {
-  /*rapidcsv::Document doc(filename, rapidcsv::LabelParams(-1, -1),
-                         rapidcsv::SeparatorParams(separator));
-  std::vector<std::vector<std::string>> data_rows;*/
+auto CSVReader::WriteTableFromFileToMemory(
+    const std::string& filename, char separator,
+    const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
+    const std::unique_ptr<MemoryBlockInterface>& memory_device) -> int {
+  CheckDataFits(filename, memory_device);
 
-  ////data_rows.reserve(doc.GetRowCount());
-  // data_rows.reserve(max_rows);
-  // for (int row_number = rows_already_read;
-  //     row_number < doc.GetRowCount() &&
-  //     row_number < rows_already_read + max_rows;
-  //     row_number++) {
-  //  data_rows.push_back(doc.GetRow<std::string>(row_number));
-  //  rows_already_read++;
-  //}
-  return ReadBigFile(filename, separator, rows_already_read);
+  std::ifstream filestream(filename);
+  std::string line;
+  int row_counter = 0;
+  while (std::getline(filestream, line)) {
+    std::vector<std::string> tokens;
+    std::stringstream linestream(line);
+    std::string token_string;
+    while (getline(linestream, token_string, separator)) {
+      if (!token_string.empty() &&
+          token_string[token_string.size() - 1] == '\r') {
+        token_string.erase(token_string.size() - 1);
+      }
+      tokens.push_back(token_string);
+    }
+    WriteDataToMemory({tokens}, column_defs_vector, memory_device, row_counter);
+    row_counter++;
+  }
+  return row_counter;
 }

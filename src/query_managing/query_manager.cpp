@@ -189,7 +189,7 @@ void QueryManager::AllocateInputMemoryBlocks(
       std::chrono::steady_clock::time_point begin =
           std::chrono::steady_clock::now();
 
-      input_stream_sizes[stream_index] = TableManager::WriteDataToMemory1(
+      input_stream_sizes[stream_index] = TableManager::WriteDataToMemory(
           data_manager, node.operation_parameters.input_stream_parameters,
           stream_index, input_memory_blocks[stream_index],
           node.input_data_definition_files[stream_index]);

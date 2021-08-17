@@ -67,6 +67,18 @@ auto DataManager::GetHeaderColumnVector(
   return table_column_label_vector;
 }
 
+auto DataManager::WriteDataFromCSVToMemory(
+    const std::string& filename,
+    const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
+    const std::unique_ptr<MemoryBlockInterface>& memory_device) const -> int {
+  if (!IsValidFile(filename)) {
+    throw std::runtime_error(filename + " not found!");
+  } else {
+    return CSVReader::WriteTableFromFileToMemory(
+        filename, separator_, column_defs_vector, memory_device);
+  }
+}
+
 auto DataManager::ParseDataFromCSV(
     const std::string& filename,
     const std::vector<ColumnDataType>& column_data_types,

@@ -15,30 +15,31 @@ limitations under the License.
 */
 
 #pragma once
-#include <rapidcsv.h>
 
 #include <map>
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "table_data.hpp"
+#include "memory_block_interface.hpp"
+#include "table_data.hpp"
+
+using dbmstodspi::data_managing::table_data::ColumnDataType;
+using dbmstodspi::fpga_managing::MemoryBlockInterface;
 
 namespace dbmstodspi::data_managing {
 
-/**
- * @brief Class which uses rapidcsv to read a CSV file for input and output
- * data.
- *
- * rapidcsv source is available at https://github.com/d99kris/rapidcsv.
- */
 class CSVReader {
  private:
-  //static void ProcessChunk(char* buffer, int char_count, char separator,
-  //                  std::vector<std::vector<std::string>>& data,
-  //                  std::vector<std::string>& current_row,
-  //                  std::string& current_element);
-  static auto ReadBigFile(const std::string& filename, char separator, int& rows_already_read)
-      -> std::vector<std::vector<std::string>>;
+  static auto CheckDataFits(
+      const std::string& filename,
+      const std::unique_ptr<MemoryBlockInterface>& memory_device) -> bool;
+  static void WriteDataToMemory(
+      const std::vector<std::vector<std::string>>& string_data, 
+      const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
+      const std::unique_ptr<MemoryBlockInterface>& memory_device,
+      int row_counter);
  public:
   /**
    * @brief Read the given CSV file and return row data.
@@ -49,6 +50,13 @@ class CSVReader {
   static auto ReadTableData(const std::string& filename, char separator,
                             int& rows_already_read)
       -> std::vector<std::vector<std::string>>;
+
+  static auto WriteTableFromFileToMemory(
+      const std::string& filename,
+      char separator,
+      const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
+      const std::unique_ptr<MemoryBlockInterface>& memory_device)
+      -> int;
 };
 
 }  // namespace dbmstodspi::data_managing
