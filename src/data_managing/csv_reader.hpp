@@ -17,11 +17,10 @@ limitations under the License.
 #pragma once
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
-#include "table_data.hpp"
 #include "memory_block_interface.hpp"
 #include "table_data.hpp"
 
@@ -35,11 +34,9 @@ class CSVReader {
   static auto CheckDataFits(
       const std::string& filename,
       const std::unique_ptr<MemoryBlockInterface>& memory_device) -> bool;
-  static void WriteDataToMemory(
-      const std::vector<std::vector<std::string>>& string_data, 
-      const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
-      const std::unique_ptr<MemoryBlockInterface>& memory_device,
-      int row_counter);
+  static void WriteDataToMemory(const std::vector<uint32_t>& data,
+                                volatile uint32_t* address, int offset);
+
  public:
   /**
    * @brief Read the given CSV file and return row data.
@@ -52,11 +49,9 @@ class CSVReader {
       -> std::vector<std::vector<std::string>>;
 
   static auto WriteTableFromFileToMemory(
-      const std::string& filename,
-      char separator,
+      const std::string& filename, char separator,
       const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
-      const std::unique_ptr<MemoryBlockInterface>& memory_device)
-      -> int;
+      const std::unique_ptr<MemoryBlockInterface>& memory_device) -> int;
 };
 
 }  // namespace dbmstodspi::data_managing

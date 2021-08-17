@@ -33,10 +33,18 @@ void TypesConverter::AddIntegerDataFromStringData(
     std::vector<uint32_t>& integer_data,
     std::vector<std::pair<ColumnDataType, int>> data_types_vector) {
   for (const auto& row : string_data) {
-    for (int column = 0; column < row.size(); column++) {
-      ConvertDataToIntegers(data_types_vector[column].first, row[column],
-                            integer_data, data_types_vector[column].second);
-    }
+    ConvertRecordStringToIntegers(row, data_types_vector, integer_data);
+  }
+}
+
+void TypesConverter::ConvertRecordStringToIntegers(
+    const std::vector<std::string>& row,
+    const std::vector<std::pair<dbmstodspi::data_managing::table_data::ColumnDataType,
+                          int>>& data_types_vector,
+    std::vector<uint32_t>& integer_data) {
+  for (int column = 0; column < row.size(); column++) {
+    ConvertDataToIntegers(data_types_vector[column].first, row[column],
+                          integer_data, data_types_vector[column].second);
   }
 }
 

@@ -30,21 +30,10 @@ auto CSVReader::CheckDataFits(
   return true;
 }
 
-void CSVReader::WriteDataToMemory(
-    const std::vector<std::vector<std::string>>& string_data,
-    const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
-    const std::unique_ptr<MemoryBlockInterface>& memory_device,
-    int row_counter) {
-  std::vector<uint32_t> integer_data;
-  TypesConverter::AddIntegerDataFromStringData(string_data, integer_data,
-                                               column_defs_vector);
-  int record_size = 0;
-  for (const auto& column_type : column_defs_vector) {
-    record_size += column_type.second;
-  }
-  volatile uint32_t* input = memory_device->GetVirtualAddress();
-  for (int i = 0; i < integer_data.size(); i++) {
-    input[i + (row_counter * record_size)] = integer_data[i];
+void CSVReader::WriteDataToMemory(const std::vector<uint32_t>& data,
+                                  volatile uint32_t* address, int offset) {
+  for (int i = 0; i < data.size(); i++) {
+    address[i + offset] = data[i];
   }
 }
 
@@ -85,21 +74,36 @@ auto CSVReader::WriteTableFromFileToMemory(
     const std::unique_ptr<MemoryBlockInterface>& memory_device) -> int {
   CheckDataFits(filename, memory_device);
 
+  std::vector<uint32_t> integer_data;
+  std::vector<std::string> tokens;
+
   std::ifstream filestream(filename);
   std::string line;
+  std::string token_string;
+
   int row_counter = 0;
+  int record_size = 0;
+  for (const auto& column_type : column_defs_vector) {
+    record_size += column_type.second;
+  }
+  volatile uint32_t* input = memory_device->GetVirtualAddress();
+
   while (std::getline(filestream, line)) {
-    std::vector<std::string> tokens;
+    tokens.clear();
     std::stringstream linestream(line);
-    std::string token_string;
     while (getline(linestream, token_string, separator)) {
       if (!token_string.empty() &&
           token_string[token_string.size() - 1] == '\r') {
         token_string.erase(token_string.size() - 1);
       }
+
       tokens.push_back(token_string);
     }
-    WriteDataToMemory({tokens}, column_defs_vector, memory_device, row_counter);
+
+    integer_data.clear();
+    TypesConverter::ConvertRecordStringToIntegers(tokens, column_defs_vector,
+                                                  integer_data);
+    WriteDataToMemory(integer_data, input, row_counter * record_size);
     row_counter++;
   }
   return row_counter;

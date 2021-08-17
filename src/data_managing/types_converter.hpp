@@ -44,6 +44,12 @@ class TypesConverter {
       const std::vector<std::vector<std::string>>& string_data,
       std::vector<uint32_t>& integer_data,
       std::vector<std::pair<ColumnDataType, int>> data_types_vector);
+  static void ConvertRecordStringToIntegers(
+      const std::vector<std::string>& row,
+      const std::vector<std::pair<
+          dbmstodspi::data_managing::table_data::ColumnDataType, int>>&
+          data_types_vector,
+      std::vector<uint32_t>& integer_data);
   /**
    * @brief Add string typed data to the output vector given input data in
    * integer format.
