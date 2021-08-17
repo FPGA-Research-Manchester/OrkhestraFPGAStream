@@ -16,18 +16,35 @@ limitations under the License.
 
 #include "csv_reader.hpp"
 
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
+#include "logger.hpp"
 #include "types_converter.hpp"
+
+using dbmstodspi::logger::Log;
+using dbmstodspi::logger::LogLevel;
+using dbmstodspi::logger::ShouldLog;
 
 using namespace dbmstodspi::data_managing;
 
-auto CSVReader::CheckDataFits(
+auto CSVReader::IsMemoryLargeEnough(
     const std::string& filename,
     const std::unique_ptr<MemoryBlockInterface>& memory_device) -> bool {
-  return true;
+  try {
+    auto data_size = std::filesystem::file_size(filename);
+    auto memory_size = memory_device->GetSize();
+
+    Log(LogLevel::kTrace, "MEMORY SIZE = " + std::to_string(memory_size));
+    Log(LogLevel::kDebug, "READING " + filename + " WITH THE SIZE OF " +
+                              std::to_string(data_size));
+
+    return data_size <= memory_size;
+  } catch (std::filesystem::filesystem_error& ex) {
+    throw std::runtime_error(ex);
+  }
 }
 
 void CSVReader::WriteDataToMemory(const std::vector<uint32_t>& data,
@@ -72,7 +89,9 @@ auto CSVReader::WriteTableFromFileToMemory(
     const std::string& filename, char separator,
     const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
     const std::unique_ptr<MemoryBlockInterface>& memory_device) -> int {
-  CheckDataFits(filename, memory_device);
+  if (!IsMemoryLargeEnough(filename, memory_device)) {
+    throw std::runtime_error(filename + " is too big!");
+  }
 
   std::vector<uint32_t> integer_data;
   std::vector<std::string> tokens;

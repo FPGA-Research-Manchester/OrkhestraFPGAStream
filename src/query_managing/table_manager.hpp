@@ -70,7 +70,15 @@ class TableManager {
   static void WriteResultTableFile(const TableData& data_table,
                                    std::string filename);
 
-
+  /**
+   * @brief Write data from file to given memory block.
+   * @param data_manager Manager to handle data types.
+   * @param stream_specification Config values describing table data types.
+   * @param stream_index Stream index for getting the correct specification.
+   * @param memory_device Memory block pointer.
+   * @param filename CSV file.
+   * @return How many rows of data were written and how big are they.
+   */
   static auto WriteDataToMemory(
       const data_managing::DataManager& data_manager,
       const std::vector<std::vector<int>>& stream_specification,
@@ -78,35 +86,86 @@ class TableManager {
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>& memory_device,
       std::string filename) -> std::pair<int, int>;
 
-
-
+  /**
+   * @brief Get TableData object from the given memory pointer.
+   * @param data_manager Manager to handle data types.
+   * @param stream_specification Config values describing table data types.
+   * @param stream_index Stream index for getting the correct specification.
+   * @param memory_device Memory block pointer.
+   * @param row_count How many rows of data should be read.
+   * @return Table data.
+   */
   static auto ReadTableFromMemory(
       const data_managing::DataManager& data_manager,
       const std::vector<std::vector<int>>& stream_specification,
       int stream_index,
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>& memory_device,
       int row_count) -> TableData;
+  /**
+   * @brief Get TableData object from the given file.
+   * @param data_manager Manager to handle data types.
+   * @param stream_specification Config values describing table data types.
+   * @param stream_index Stream index for getting the correct specification.
+   * @param filename CSV file.
+   * @return Table data.
+   */
   static auto ReadTableFromFile(
       const data_managing::DataManager& data_manager,
       const std::vector<std::vector<int>>& stream_specification,
       int stream_index, std::string filename) -> TableData;
+  /**
+   * @brief Get Column types and sizes from the input query parameters.
+   * @param data_manager Manager to handle data types.
+   * @param node_parameters Config values describing table data types.
+   * @param stream_index Stream index for getting the correct specification.
+   * @return Vector of column types and their sizes.
+   */
   static auto GetColumnDefsVector(
       const data_managing::DataManager& data_manager,
       std::vector<std::vector<int>> node_parameters, int stream_index)
       -> std::vector<std::pair<ColumnDataType, int>>;
 
  private:
+  /**
+   * @brief Read data from memory.
+   * @param output_device Memory block.
+   * @param resulting_table Table object with the column types.
+   * @param result_size How many rows should be read.
+   */
   static void ReadOutputDataFromMemoryBlock(
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>& output_device,
       TableData& resulting_table, const int& result_size);
+  /**
+   * @brief Write data from table object to memory.
+   * @param input_device Memory block.
+   * @param input_table Table object with the data.
+   * @param previous_record_count How many records have been written to memory
+   * already.
+   */
   static void WriteInputDataToMemoryBlock(
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>& input_device,
-      const TableData& input_table, int previous);
+      const TableData& input_table, int previous_record_count);
+  /**
+   * @brief Print data written to memory.
+   * @param table_name Name of the table.
+   * @param input_device Memory pointer
+   * @param input_table Table data holding column types information.
+   */
   static void PrintWrittenData(
       const std::string& table_name,
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>& input_device,
       const TableData& input_table);
+  /**
+   * @brief Method to print how big the table is.
+   * @param data_table Data object.
+   */
   static void PrintDataSize(const TableData& data_table);
+  /**
+   * @brief Get column data types without sizes.
+   * @param stream_specification Input column types specification.
+   * @param stream_index Stream index for getting the correct specification.
+   * @return Vector of column types.
+   */
   static auto GetColumnDataTypesFromSpecification(
       const std::vector<std::vector<int>>& stream_specification,
       int stream_index) -> std::vector<ColumnDataType>;

@@ -97,14 +97,8 @@ auto TableManager::WriteDataToMemory(
     const std::vector<std::vector<int>>& stream_specification, int stream_index,
     const std::unique_ptr<fpga_managing::MemoryBlockInterface>& memory_device,
     std::string filename) -> std::pair<int, int> {
-  // TODO: Combine into one method
-  auto column_data_types =
-      GetColumnDataTypesFromSpecification(stream_specification, stream_index);
-  auto column_defs_vector = data_manager.GetHeaderColumnVector(
-      column_data_types,
-      stream_specification.at(stream_index *
-                                  kIOStreamParamDefs.kStreamParamCount +
-                              kIOStreamParamDefs.kDataSizesOffset));
+  auto column_defs_vector =
+      GetColumnDefsVector(data_manager, stream_specification, stream_index);
 
   auto record_count = data_manager.WriteDataFromCSVToMemory(
       filename, column_defs_vector, memory_device);
@@ -120,81 +114,6 @@ auto TableManager::WriteDataToMemory(
 
   return {record_size, record_count};
 }
-
-// auto TableManager::WriteDataToMemory(
-//    const data_managing::DataManager& data_manager,
-//    const std::vector<std::vector<int>>& stream_specification, int
-//    stream_index, const std::unique_ptr<fpga_managing::MemoryBlockInterface>&
-//    memory_device, std::string filename) -> std::pair<int, int> {
-//  auto current_table = ReadTableFromFile(data_manager, stream_specification,
-//                                         stream_index, filename);
-//
-//  int thing = 0;
-//
-//  WriteInputDataToMemoryBlock(memory_device, current_table, thing);
-//  PrintWrittenData(filename, memory_device, current_table);
-//
-//  int record_size = GetRecordSizeFromTable(current_table);
-//
-//  int record_count =
-//      static_cast<int>(current_table.table_data_vector.size() / record_size);
-//
-//  Log(LogLevel::kTrace,
-//      "RECORD_SIZE = " + std::to_string(record_size) + "[integers]");
-//  Log(LogLevel::kDebug, "RECORD_COUNT = " + std::to_string(record_count));
-//
-//  return {record_size, record_count};
-//}
-
-// auto TableManager::WriteDataToMemory1(
-//    const data_managing::DataManager& data_manager,
-//    const std::vector<std::vector<int>>& stream_specification, int
-//    stream_index, const std::unique_ptr<fpga_managing::MemoryBlockInterface>&
-//    memory_device, std::string filename) -> std::pair<int, int> {
-//
-//    auto column_data_types =
-//      GetColumnDataTypesFromSpecification(stream_specification, stream_index);
-//
-//  bool all_read = false;
-//    int record_count = 0;
-//  while (!all_read) {
-//    int previous_record_count = record_count;
-//    auto current_table = data_manager.ParseDataFromCSV(
-//        filename, column_data_types,
-//        stream_specification.at(stream_index *
-//                                    kIOStreamParamDefs.kStreamParamCount +
-//                                kIOStreamParamDefs.kDataSizesOffset),
-//        record_count);
-//    int new_records = record_count - previous_record_count;
-//    if (new_records != 0) {
-//      WriteInputDataToMemoryBlock(memory_device, current_table,
-//                                  previous_record_count);
-//    } else {
-//      all_read = true;
-//    }
-//  }
-//
-//  auto column_defs_vector = data_manager.GetHeaderColumnVector(
-//      column_data_types,
-//      stream_specification.at(stream_index *
-//                                  kIOStreamParamDefs.kStreamParamCount +
-//                              kIOStreamParamDefs.kDataSizesOffset));
-//
-//  int record_size = 0;
-//  for (const auto& column_type : column_defs_vector) {
-//    record_size += column_type.second;
-//  }
-//
-//
-//
-//
-//
-//  Log(LogLevel::kTrace,
-//      "RECORD_SIZE = " + std::to_string(record_size) + "[integers]");
-//  Log(LogLevel::kDebug, "RECORD_COUNT = " + std::to_string(record_count));
-//
-//  return {record_size, record_count};
-//}
 
 auto TableManager::ReadTableFromMemory(
     const data_managing::DataManager& data_manager,
@@ -224,10 +143,10 @@ auto TableManager::ReadTableFromMemory(
   return table_data;
 }
 
- auto TableManager::ReadTableFromFile(
+auto TableManager::ReadTableFromFile(
     const data_managing::DataManager& data_manager,
-    const std::vector<std::vector<int>>& stream_specification, int
-    stream_index, std::string filename) -> TableData {
+    const std::vector<std::vector<int>>& stream_specification, int stream_index,
+    std::string filename) -> TableData {
   Log(LogLevel::kDebug, "Reading file: " + filename);
 
   auto column_data_types =
@@ -240,7 +159,7 @@ auto TableManager::ReadTableFromMemory(
                                   kIOStreamParamDefs.kStreamParamCount +
                               kIOStreamParamDefs.kDataSizesOffset),
       read_rows_count);
- }
+}
 
 auto TableManager::GetColumnDefsVector(
     const data_managing::DataManager& data_manager,

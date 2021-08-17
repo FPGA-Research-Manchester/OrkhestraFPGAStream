@@ -31,7 +31,8 @@ sub print_mean_and_dev {
     print "Std Dev: $std_dev\n";
 }
 
-my @input_defs=("benchmark_Q19_SF001.json", "benchmark_Q19_SF002.json", "benchmark_Q19_SF003.json", "benchmark_Q19_SF004.json", "benchmark_Q19_SF005.json", "benchmark_Q19_SF006.json", "benchmark_Q19_SF007.json", "benchmark_Q19_SF008.json","benchmark_Q19_SF009.json","benchmark_Q19_SF01.json", "benchmark_Q19_SF02.json", "benchmark_Q19_SF03.json");
+#my @input_defs=("benchmark_Q19_SF001.json", "benchmark_Q19_SF002.json", "benchmark_Q19_SF003.json", "benchmark_Q19_SF004.json", "benchmark_Q19_SF005.json", "benchmark_Q19_SF006.json", "benchmark_Q19_SF007.json", "benchmark_Q19_SF008.json","benchmark_Q19_SF009.json","benchmark_Q19_SF01.json", "benchmark_Q19_SF02.json", "benchmark_Q19_SF03.json");
+my @input_defs=("benchmark_Q19_SF01.json");
 my @input_configs=("fast_benchmark_config.ini");
 #my @input_defs=("benchmark_Q19_SF1.json");
 #my @input_configs=("big_benchmark_config.ini");
