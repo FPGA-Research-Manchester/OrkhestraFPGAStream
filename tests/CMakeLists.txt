@@ -50,6 +50,7 @@ add_test(NAME DMACrossbarSetupTest COMMAND testlib)
 add_test(NAME FilterSetupTest COMMAND testlib)
 add_test(NAME DMASetupTest COMMAND testlib)
 add_test(NAME NodeSchedulerTest COMMAND testlib)
+add_test(NAME TypesConverterTest COMMAND testlib)
 
 #add_custom_command(TARGET testlib
 #        POST_BUILD

@@ -39,8 +39,9 @@ void TypesConverter::AddIntegerDataFromStringData(
 
 void TypesConverter::ConvertRecordStringToIntegers(
     const std::vector<std::string>& row,
-    const std::vector<std::pair<dbmstodspi::data_managing::table_data::ColumnDataType,
-                          int>>& data_types_vector,
+    const std::vector<
+        std::pair<dbmstodspi::data_managing::table_data::ColumnDataType, int>>&
+        data_types_vector,
     std::vector<uint32_t>& integer_data) {
   for (int column = 0; column < row.size(); column++) {
     ConvertDataToIntegers(data_types_vector[column].first, row[column],
@@ -185,7 +186,7 @@ void TypesConverter::ConvertIntegerValuesToString(
 void TypesConverter::ConvertNullValuesToString(
     const std::vector<uint32_t>& input_value,
     std::vector<std::string>& string_vector) {
-  // These values are ignored.
+  string_vector.push_back("");
 }
 
 void TypesConverter::ConvertDecimalValuesToString(
