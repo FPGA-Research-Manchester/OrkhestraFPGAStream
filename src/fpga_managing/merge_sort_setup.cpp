@@ -37,8 +37,9 @@ void MergeSortSetup::SetupMergeSortModule(
 
   merge_sort_module.SetStreamParams(stream_id, chunks_per_record);
 
-  // TODO: Remove hardcoded parameters
-  //int sort_buffer_size = CalculateSortBufferSize(4096, 128, chunks_per_record);
+  // TODO(Kaspar): Remove hardcoded parameters
+  // int sort_buffer_size = CalculateSortBufferSize(4096, 128,
+  // chunks_per_record);
   int sort_buffer_size = CalculateSortBufferSize(2048, 64, chunks_per_record);
   int record_count_per_fetch =
       CalculateRecordCountPerFetch(sort_buffer_size, record_size);

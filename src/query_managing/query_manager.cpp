@@ -76,7 +76,7 @@ void QueryManager::InitialiseMemoryBlockVector(
     std::map<std::string,
              std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>>&
         memory_blocks,
-    int stream_count, std::string node_name) {
+    int stream_count, const std::string& node_name) {
   std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>
       empty_vector(stream_count);
   std::fill(empty_vector.begin(), empty_vector.end(), nullptr);
@@ -85,7 +85,7 @@ void QueryManager::InitialiseMemoryBlockVector(
 
 void QueryManager::InitialiseStreamSizeVector(
     std::map<std::string, std::vector<RecordSizeAndCount>>& stream_sizes,
-    int stream_count, std::string node_name) {
+    int stream_count, const std::string& node_name) {
   std::vector<RecordSizeAndCount> empty_vector(stream_count);
   std::fill(empty_vector.begin(), empty_vector.end(), std::make_pair(0, 0));
   stream_sizes.insert({node_name, std::move(empty_vector)});

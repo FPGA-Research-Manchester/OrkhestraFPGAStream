@@ -58,6 +58,7 @@ auto GraphCreator::MakeGraph(std::string input_def_filename)
     auto output_filenames =
         std::get<std::vector<std::string>>(node_parameters.at(output_field));
     std::vector<bool> is_checked;
+    is_checked.reserve(output_filenames.size());
     for (const auto& filename : output_filenames) {
       is_checked.push_back(!filename.empty());
     }
@@ -95,13 +96,13 @@ auto GraphCreator::MakeGraph(std::string input_def_filename)
       }
       for (int i = 0; i < search_previous->second.size(); i++) {
         if (!search_previous->second[i].empty()) {
-          if (node->input_data_definition_files[i] != "") {
+          if (!node->input_data_definition_files[i].empty()) {
             throw std::runtime_error("Input file not required!");
           }
           node->previous_nodes.push_back(
               graph_nodes_map.at(search_previous->second[i]));
         } else {
-          if (node->input_data_definition_files[i] == "") {
+          if (node->input_data_definition_files[i].empty()) {
             throw std::runtime_error("Input file required!");
           }
           node->previous_nodes.push_back(std::weak_ptr<QueryNode>());

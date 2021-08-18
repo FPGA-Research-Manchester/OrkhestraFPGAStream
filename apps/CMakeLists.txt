@@ -122,8 +122,8 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/part0.01.csv part0.0
 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark.pl benchmark.pl COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark_defs.zip benchmark_defs.zip COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/lineitem.zip lineitem.zip COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/part.zip part.zip COPYONLY)
+#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/lineitem.zip lineitem.zip COPYONLY)
+#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/part.zip part.zip COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/big_benchmark_config.ini big_benchmark_config.ini COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/fast_benchmark_config.ini fast_benchmark_config.ini COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/slow_benchmark_config.ini slow_benchmark_config.ini COPYONLY)

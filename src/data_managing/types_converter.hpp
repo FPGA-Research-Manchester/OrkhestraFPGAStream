@@ -43,7 +43,7 @@ class TypesConverter {
   static void AddIntegerDataFromStringData(
       const std::vector<std::vector<std::string>>& string_data,
       std::vector<uint32_t>& integer_data,
-      std::vector<std::pair<ColumnDataType, int>> data_types_vector);
+      const std::vector<std::pair<ColumnDataType, int>>& data_types_vector);
   static void ConvertRecordStringToIntegers(
       const std::vector<std::string>& row,
       const std::vector<std::pair<

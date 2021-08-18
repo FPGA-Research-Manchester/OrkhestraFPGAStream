@@ -96,7 +96,7 @@ auto TableManager::WriteDataToMemory(
     const data_managing::DataManager& data_manager,
     const std::vector<std::vector<int>>& stream_specification, int stream_index,
     const std::unique_ptr<fpga_managing::MemoryBlockInterface>& memory_device,
-    std::string filename) -> std::pair<int, int> {
+    const std::string& filename) -> std::pair<int, int> {
   auto column_defs_vector =
       GetColumnDefsVector(data_manager, stream_specification, stream_index);
 
@@ -146,12 +146,12 @@ auto TableManager::ReadTableFromMemory(
 auto TableManager::ReadTableFromFile(
     const data_managing::DataManager& data_manager,
     const std::vector<std::vector<int>>& stream_specification, int stream_index,
-    std::string filename) -> TableData {
+    const std::string& filename) -> TableData {
   Log(LogLevel::kDebug, "Reading file: " + filename);
 
   auto column_data_types =
       GetColumnDataTypesFromSpecification(stream_specification, stream_index);
-  // TODO: Change CSV reading to one buffer only version.
+  // TODO(Kaspar): Change CSV reading to one buffer only version.
   int read_rows_count = 0;
   return data_manager.ParseDataFromCSV(
       filename, column_data_types,
@@ -214,6 +214,6 @@ auto TableManager::GetColumnDataTypesFromSpecification(
 }
 
 void TableManager::WriteResultTableFile(const TableData& data_table,
-                                        std::string filename) {
+                                        const std::string& filename) {
   data_managing::DataManager::WriteTableData(data_table, filename);
 }

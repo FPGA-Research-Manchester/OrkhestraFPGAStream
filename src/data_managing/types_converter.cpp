@@ -31,7 +31,7 @@ using dbmstodspi::data_managing::table_data::ColumnDataType;
 void TypesConverter::AddIntegerDataFromStringData(
     const std::vector<std::vector<std::string>>& string_data,
     std::vector<uint32_t>& integer_data,
-    std::vector<std::pair<ColumnDataType, int>> data_types_vector) {
+    const std::vector<std::pair<ColumnDataType, int>>& data_types_vector) {
   for (const auto& row : string_data) {
     ConvertRecordStringToIntegers(row, data_types_vector, integer_data);
   }
@@ -184,9 +184,9 @@ void TypesConverter::ConvertIntegerValuesToString(
 }
 
 void TypesConverter::ConvertNullValuesToString(
-    const std::vector<uint32_t>& input_value,
+    const std::vector<uint32_t>& /*input_value*/,
     std::vector<std::string>& string_vector) {
-  string_vector.push_back("");
+  string_vector.emplace_back("");
 }
 
 void TypesConverter::ConvertDecimalValuesToString(

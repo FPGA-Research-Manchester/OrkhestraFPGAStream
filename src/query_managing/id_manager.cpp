@@ -25,8 +25,6 @@ limitations under the License.
 
 using namespace dbmstodspi::query_managing;
 
-using dbmstodspi::util::FindPositionInVector;
-
 void IDManager::AllocateStreamIDs(
     const std::vector<query_scheduling_data::QueryNode> &all_nodes,
     std::map<std::string, std::vector<int>> &input_ids,

@@ -80,8 +80,8 @@ class DataManager {
    * @return
    */
   auto ReadIntegerDataFromCSV(
-      const std::vector<std::pair<ColumnDataType, int>> table_column_defs,
-      const std::string& filename) -> std::vector<uint32_t>;
+      const std::vector<std::pair<ColumnDataType, int>>& table_column_defs,
+      const std::string& filename) const -> std::vector<uint32_t>;
 
   /**
    * @brief Calculate column sizes given types and configured scales.
@@ -105,7 +105,8 @@ class DataManager {
    * @param table_data Data to be written to the file.
    * @param filename Name of the file to be written to.
    */
-  static void WriteTableData(const TableData& table_data, std::string filename);
+  static void WriteTableData(const TableData& table_data,
+                             const std::string& filename);
 
  private:
   /// Which char is used to separate columns.

@@ -27,8 +27,6 @@ limitations under the License.
 
 namespace dbmstodspi::query_managing::query_scheduling_data {
 
-using fpga_managing::query_acceleration_constants::kModuleSize;
-
 /**
  * @brief Struct for collecting all of the parameter vectors.
  */
@@ -109,9 +107,9 @@ struct QueryNode {
         operation_type{operation},
         next_nodes{std::move(next_nodes)},
         previous_nodes{std::move(previous_nodes)},
-        operation_parameters{parameters},
-        node_name{node_name},
-        is_checked{is_checked} {};
+        operation_parameters{std::move(parameters)},
+        node_name{std::move(node_name)},
+        is_checked{std::move(is_checked)} {};
 };
 
 /// Type definition of a collection of operation types for selecting bitstreams.

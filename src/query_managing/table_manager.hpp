@@ -68,7 +68,7 @@ class TableManager {
    * @param filename String of the name of the file to be written to.
    */
   static void WriteResultTableFile(const TableData& data_table,
-                                   std::string filename);
+                                   const std::string& filename);
 
   /**
    * @brief Write data from file to given memory block.
@@ -84,7 +84,7 @@ class TableManager {
       const std::vector<std::vector<int>>& stream_specification,
       int stream_index,
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>& memory_device,
-      std::string filename) -> std::pair<int, int>;
+      const std::string& filename) -> std::pair<int, int>;
 
   /**
    * @brief Get TableData object from the given memory pointer.
@@ -112,7 +112,7 @@ class TableManager {
   static auto ReadTableFromFile(
       const data_managing::DataManager& data_manager,
       const std::vector<std::vector<int>>& stream_specification,
-      int stream_index, std::string filename) -> TableData;
+      int stream_index, const std::string& filename) -> TableData;
   /**
    * @brief Get Column types and sizes from the input query parameters.
    * @param data_manager Manager to handle data types.

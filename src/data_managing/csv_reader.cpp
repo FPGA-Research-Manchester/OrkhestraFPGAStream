@@ -26,7 +26,6 @@ limitations under the License.
 
 using dbmstodspi::logger::Log;
 using dbmstodspi::logger::LogLevel;
-using dbmstodspi::logger::ShouldLog;
 
 using namespace dbmstodspi::data_managing;
 
@@ -70,8 +69,9 @@ auto CSVReader::ReadTableData(const std::string& filename, char separator,
       std::string intermediate;
       while (getline(linestream, intermediate, separator)) {
         if (!intermediate.empty() &&
-            intermediate[intermediate.size() - 1] == '\r')
+            intermediate[intermediate.size() - 1] == '\r') {
           intermediate.erase(intermediate.size() - 1);
+        }
         tokens.push_back(intermediate);
       }
       data.push_back(tokens);

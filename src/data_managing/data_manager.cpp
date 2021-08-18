@@ -33,8 +33,8 @@ using dbmstodspi::data_managing::table_data::TableData;
 using dbmstodspi::util::IsValidFile;
 
 auto DataManager::ReadIntegerDataFromCSV(
-    const std::vector<std::pair<ColumnDataType, int>> table_column_defs,
-    const std::string& filename) -> std::vector<uint32_t> {
+    const std::vector<std::pair<ColumnDataType, int>>& table_column_defs,
+    const std::string& filename) const -> std::vector<uint32_t> {
   int thing = 0;
   if (IsValidFile(filename)) {
     auto data_rows = CSVReader::ReadTableData(filename, separator_, thing);
@@ -42,9 +42,8 @@ auto DataManager::ReadIntegerDataFromCSV(
     TypesConverter::AddIntegerDataFromStringData(data_rows, table_data_vector,
                                                  table_column_defs);
     return table_data_vector;
-  } else {
-    throw std::runtime_error("No file " + filename + " found!");
   }
+  throw std::runtime_error("No file " + filename + " found!");
 }
 
 auto DataManager::GetHeaderColumnVector(
@@ -73,10 +72,9 @@ auto DataManager::WriteDataFromCSVToMemory(
     const std::unique_ptr<MemoryBlockInterface>& memory_device) const -> int {
   if (!IsValidFile(filename)) {
     throw std::runtime_error(filename + " not found!");
-  } else {
-    return CSVReader::WriteTableFromFileToMemory(
-        filename, separator_, column_defs_vector, memory_device);
   }
+  return CSVReader::WriteTableFromFileToMemory(
+      filename, separator_, column_defs_vector, memory_device);
 }
 
 auto DataManager::ParseDataFromCSV(
@@ -148,7 +146,7 @@ void DataManager::PrintTableData(const TableData& table_data) {
 }
 
 void DataManager::WriteTableData(const TableData& table_data,
-                                 std::string filename) {
+                                 const std::string& filename) {
   std::vector<std::vector<std::string>> string_data_vector;
   DataManager::AddStringDataFromIntegerData(
       table_data.table_data_vector, string_data_vector,
@@ -157,7 +155,9 @@ void DataManager::WriteTableData(const TableData& table_data,
   if (output_file.is_open()) {
     for (const auto& line : string_data_vector) {
       for (auto iter = line.begin(); iter != line.end(); iter++) {
-        if (iter != line.begin()) output_file << ",";
+        if (iter != line.begin()) {
+          output_file << ",";
+        }
         output_file << *iter;
       }
       output_file << std::endl;

@@ -3,7 +3,7 @@
 
 projectFiles=()
 
-for entry in ./apps/fpga_run.cpp
+for entry in ./apps/main.cpp
 do
   projectFiles+=($entry)
 done
@@ -75,5 +75,6 @@ do
     done
     echo
 done
-
+echo "Automatic fixes done!"
 clang-format -i -style=google **/*.cpp **/*.hpp
+echo "Formatting done!"

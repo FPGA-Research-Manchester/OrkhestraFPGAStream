@@ -24,22 +24,20 @@ using dbmstodspi::data_managing::TypesConverter;
 TEST(TypesConverterTest, IntToInt) {
   std::vector<uint32_t> converted_data_vector;
   TypesConverter::ConvertIntegerValuesToIntegerData("123",
-                                                    converted_data_vector,
-                                                   0);
+                                                    converted_data_vector, 0);
   ASSERT_EQ(1, converted_data_vector.size());
   ASSERT_EQ(123, converted_data_vector.at(0));
 }
 TEST(TypesConverterTest, VarcharToInt) {
   std::vector<uint32_t> converted_data_vector;
-  TypesConverter::ConvertStringValuesToIntegerData("123",
-                                                    converted_data_vector, 1);
+  TypesConverter::ConvertStringValuesToIntegerData("123", converted_data_vector,
+                                                   1);
   ASSERT_EQ(1, converted_data_vector.size());
   ASSERT_EQ(825373440, converted_data_vector.at(0));
 }
 TEST(TypesConverterTest, NullToInt) {
   std::vector<uint32_t> converted_data_vector;
-  TypesConverter::ConvertNullValuesToIntegerData("",
-                                                    converted_data_vector, 1);
+  TypesConverter::ConvertNullValuesToIntegerData("", converted_data_vector, 1);
   ASSERT_EQ(1, converted_data_vector.size());
   ASSERT_EQ(0, converted_data_vector.at(0));
 }
@@ -54,15 +52,14 @@ TEST(TypesConverterTest, DecimalToInt) {
 TEST(TypesConverterTest, DateToInt) {
   std::vector<uint32_t> converted_data_vector;
   TypesConverter::ConvertDateValuesToIntegerData("12-30-11",
-                                                    converted_data_vector, 0);
+                                                 converted_data_vector, 0);
   ASSERT_EQ(1, converted_data_vector.size());
   ASSERT_EQ(123011, converted_data_vector.at(0));
 }
 
 TEST(TypesConverterTest, IntToString) {
   std::vector<std::string> converted_data_vector;
-  TypesConverter::ConvertIntegerValuesToString({123},
-                                                 converted_data_vector);
+  TypesConverter::ConvertIntegerValuesToString({123}, converted_data_vector);
   ASSERT_EQ(1, converted_data_vector.size());
   ASSERT_EQ("123", converted_data_vector.at(0));
 }
