@@ -18,14 +18,17 @@ limitations under the License.
 
 #include <cstdint>
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "memory_block_interface.hpp"
 #include "table_data.hpp"
 
 using dbmstodspi::data_managing::table_data::ColumnDataType;
 using dbmstodspi::data_managing::table_data::TableData;
+using dbmstodspi::fpga_managing::MemoryBlockInterface;
 
 namespace dbmstodspi::data_managing {
 
@@ -44,22 +47,48 @@ class DataManager {
                        char separator)
       : data_type_sizes_(std::move(data_sizes)), separator_(separator){};
   /**
-   * @brief Write data from the given CSV file to the TableData structure.
+   * @brief Write data from the given CSV file to the TableData structure in
+   * chunks.
    * @param filename Path to the DBMS CSV data.
    * @param column_data_types Vector of data type enums for each column of data
    * in the table.
    * @param column_sizes Vector of column sizes.
+   * @param rows_already_read How many rows have been parsed already.
    * @return Information about the size and datatypes and also the data itself.
    */
   auto ParseDataFromCSV(const std::string& filename,
                         const std::vector<ColumnDataType>& column_data_types,
-                        const std::vector<int>& column_sizes) const
-      -> TableData;
+                        const std::vector<int>& column_sizes,
+                        int& rows_already_read) const -> TableData;
 
+  /**
+   * @brief Write data dirtly from files to memory blocks.
+   * @param filename CSV file.
+   * @param column_defs_vector Vector defining column types and sizes.
+   * @param memory_device Memory block pointer.
+   * @return How many rows were written.
+   */
+  auto WriteDataFromCSVToMemory(
+      const std::string& filename,
+      const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
+      const std::unique_ptr<MemoryBlockInterface>& memory_device) const -> int;
+
+  /**
+   * @brief
+   * @param table_column_defs
+   * @param filename
+   * @return
+   */
   auto ReadIntegerDataFromCSV(
-      const std::vector<std::pair<ColumnDataType, int>> table_column_defs,
-      const std::string& filename) -> std::vector<uint32_t>;
+      const std::vector<std::pair<ColumnDataType, int>>& table_column_defs,
+      const std::string& filename) const -> std::vector<uint32_t>;
 
+  /**
+   * @brief Calculate column sizes given types and configured scales.
+   * @param column_data_types Column types.
+   * @param column_sizes Column scales.
+   * @return Vector of column type and size information.
+   */
   auto GetHeaderColumnVector(
       const std::vector<ColumnDataType>& column_data_types,
       const std::vector<int>& column_sizes) const
@@ -76,7 +105,8 @@ class DataManager {
    * @param table_data Data to be written to the file.
    * @param filename Name of the file to be written to.
    */
-  static void WriteTableData(const TableData& table_data, std::string filename);
+  static void WriteTableData(const TableData& table_data,
+                             const std::string& filename);
 
  private:
   /// Which char is used to separate columns.

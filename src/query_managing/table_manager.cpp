@@ -51,15 +51,20 @@ void TableManager::ReadOutputDataFromMemoryBlock(
 
 void TableManager::WriteInputDataToMemoryBlock(
     const std::unique_ptr<fpga_managing::MemoryBlockInterface>& input_device,
-    const TableData& input_table) {
+    const TableData& input_table, int previous_record_count) {
   PrintDataSize(input_table);
   if (input_table.table_data_vector.size() * 4 > input_device->GetSize()) {
     throw std::runtime_error(
         "Not enough memory in the allocated memory block!");
   }
+  int record_size = 0;
+  for (const auto& column_type : input_table.table_column_label_vector) {
+    record_size += column_type.second;
+  }
   volatile uint32_t* input = input_device->GetVirtualAddress();
   for (int i = 0; i < input_table.table_data_vector.size(); i++) {
-    input[i] = input_table.table_data_vector[i];
+    input[i + (previous_record_count * record_size)] =
+        input_table.table_data_vector[i];
   }
 }
 
@@ -91,17 +96,17 @@ auto TableManager::WriteDataToMemory(
     const data_managing::DataManager& data_manager,
     const std::vector<std::vector<int>>& stream_specification, int stream_index,
     const std::unique_ptr<fpga_managing::MemoryBlockInterface>& memory_device,
-    std::string filename) -> std::pair<int, int> {
-  auto current_table = ReadTableFromFile(data_manager, stream_specification,
-                                         stream_index, filename);
+    const std::string& filename) -> std::pair<int, int> {
+  auto column_defs_vector =
+      GetColumnDefsVector(data_manager, stream_specification, stream_index);
 
-  WriteInputDataToMemoryBlock(memory_device, current_table);
-  PrintWrittenData(filename, memory_device, current_table);
+  auto record_count = data_manager.WriteDataFromCSVToMemory(
+      filename, column_defs_vector, memory_device);
 
-  int record_size = GetRecordSizeFromTable(current_table);
-
-  int record_count =
-      static_cast<int>(current_table.table_data_vector.size() / record_size);
+  int record_size = 0;
+  for (const auto& column_type : column_defs_vector) {
+    record_size += column_type.second;
+  }
 
   Log(LogLevel::kTrace,
       "RECORD_SIZE = " + std::to_string(record_size) + "[integers]");
@@ -141,17 +146,19 @@ auto TableManager::ReadTableFromMemory(
 auto TableManager::ReadTableFromFile(
     const data_managing::DataManager& data_manager,
     const std::vector<std::vector<int>>& stream_specification, int stream_index,
-    std::string filename) -> TableData {
+    const std::string& filename) -> TableData {
   Log(LogLevel::kDebug, "Reading file: " + filename);
 
   auto column_data_types =
       GetColumnDataTypesFromSpecification(stream_specification, stream_index);
-
+  // TODO(Kaspar): Change CSV reading to one buffer only version.
+  int read_rows_count = 0;
   return data_manager.ParseDataFromCSV(
       filename, column_data_types,
       stream_specification.at(stream_index *
                                   kIOStreamParamDefs.kStreamParamCount +
-                              kIOStreamParamDefs.kDataSizesOffset));
+                              kIOStreamParamDefs.kDataSizesOffset),
+      read_rows_count);
 }
 
 auto TableManager::GetColumnDefsVector(
@@ -207,6 +214,6 @@ auto TableManager::GetColumnDataTypesFromSpecification(
 }
 
 void TableManager::WriteResultTableFile(const TableData& data_table,
-                                        std::string filename) {
+                                        const std::string& filename) {
   data_managing::DataManager::WriteTableData(data_table, filename);
 }

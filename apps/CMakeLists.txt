@@ -41,6 +41,8 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_filter_join.bin 
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_filter_join.json DSPI_filter_join.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_merge_sorting.bin DSPI_merge_sorting.bin COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_merge_sorting.json DSPI_merge_sorting.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_big_merge_sorting.bin DSPI_big_merge_sorting.bin COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_big_merge_sorting.json DSPI_big_merge_sorting.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_linear_sorting.bin DSPI_linear_sorting.bin COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_linear_sorting.json DSPI_linear_sorting.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_filtering_linear_sort.bin DSPI_filtering_linear_sort.bin COPYONLY)
@@ -95,6 +97,7 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data_type_sizes.json data_type
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/required_memory_space.json required_memory_space.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/supported_accelerators.json supported_accelerators.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/extended_accelerator_set.json extended_accelerator_set.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/big_accelerator_set.json big_accelerator_set.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/repo.json repo.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/config.ini config.ini COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/extended_config.ini extended_config.ini COPYONLY)
@@ -107,13 +110,23 @@ configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/single_run_testing.
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF001.json TPCH_Q19_SF001.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF01.json TPCH_Q19_SF01.json COPYONLY)
 configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF03.json TPCH_Q19_SF03.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/merge_sort_testing.json merge_sort_testing.json COPYONLY)
 
-#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark.pl benchmark.pl COPYONLY)
-#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark_defs.zip benchmark_defs.zip COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/TPCH_Q6_SF001.json TPCH_Q6_SF001.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/TPCH_Q6_SF1.json TPCH_Q6_SF1.json COPYONLY)
+
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark_Q19_SF001.json benchmark_Q19_SF001.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark_Q19_SF1.json benchmark_Q19_SF1.json COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/lineitem0.01.csv lineitem0.01.csv COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/part0.01.csv part0.01.csv COPYONLY)
+
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark.pl benchmark.pl COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark_defs.zip benchmark_defs.zip COPYONLY)
 #configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/lineitem.zip lineitem.zip COPYONLY)
 #configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/part.zip part.zip COPYONLY)
-#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/fast_benchmark_config.ini fast_benchmark_config.ini COPYONLY)
-#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/slow_benchmark_config.ini slow_benchmark_config.ini COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/big_benchmark_config.ini big_benchmark_config.ini COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/fast_benchmark_config.ini fast_benchmark_config.ini COPYONLY)
+configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/slow_benchmark_config.ini slow_benchmark_config.ini COPYONLY)
 
 FetchContent_Declare(
   cxxopts

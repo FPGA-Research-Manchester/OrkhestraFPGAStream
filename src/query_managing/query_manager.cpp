@@ -25,6 +25,8 @@ limitations under the License.
 #include <set>
 #include <stdexcept>
 
+#include <chrono>
+
 #include "accelerated_query_node.hpp"
 #include "data_manager.hpp"
 #include "elastic_module_checker.hpp"
@@ -74,7 +76,7 @@ void QueryManager::InitialiseMemoryBlockVector(
     std::map<std::string,
              std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>>&
         memory_blocks,
-    int stream_count, std::string node_name) {
+    int stream_count, const std::string& node_name) {
   std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>
       empty_vector(stream_count);
   std::fill(empty_vector.begin(), empty_vector.end(), nullptr);
@@ -83,7 +85,7 @@ void QueryManager::InitialiseMemoryBlockVector(
 
 void QueryManager::InitialiseStreamSizeVector(
     std::map<std::string, std::vector<RecordSizeAndCount>>& stream_sizes,
-    int stream_count, std::string node_name) {
+    int stream_count, const std::string& node_name) {
   std::vector<RecordSizeAndCount> empty_vector(stream_count);
   std::fill(empty_vector.begin(), empty_vector.end(), std::make_pair(0, 0));
   stream_sizes.insert({node_name, std::move(empty_vector)});
@@ -184,10 +186,23 @@ void QueryManager::AllocateInputMemoryBlocks(
     if (!observed_node && !input_memory_blocks[stream_index]) {
       input_memory_blocks[stream_index] =
           std::move(memory_manager.GetAvailableMemoryBlock());
+      std::chrono::steady_clock::time_point begin =
+          std::chrono::steady_clock::now();
+
       input_stream_sizes[stream_index] = TableManager::WriteDataToMemory(
           data_manager, node.operation_parameters.input_stream_parameters,
           stream_index, input_memory_blocks[stream_index],
           node.input_data_definition_files[stream_index]);
+
+      std::chrono::steady_clock::time_point end =
+          std::chrono::steady_clock::now();
+      Log(LogLevel::kInfo,
+          "Read data time = " +
+              std::to_string(
+                  std::chrono::duration_cast<std::chrono::milliseconds>(end -
+                                                                        begin)
+                      .count()) +
+              "[ms]");
     } else if (observed_node) {  // Can also be moved to output memory blocks
                                  // allocation
       for (int current_node_index = 0;
@@ -391,9 +406,20 @@ void QueryManager::WriteResults(
     const std::unique_ptr<fpga_managing::MemoryBlockInterface>& memory_device,
     int row_count, std::string filename,
     const std::vector<std::vector<int>>& node_parameters, int stream_index) {
+  std::chrono::steady_clock::time_point begin =
+      std::chrono::steady_clock::now();
+
   auto resulting_table = TableManager::ReadTableFromMemory(
       data_manager, node_parameters, stream_index, memory_device, row_count);
   TableManager::WriteResultTableFile(resulting_table, std::move(filename));
+
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  Log(LogLevel::kInfo,
+      "Write result data time = " +
+          std::to_string(
+              std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
+                  .count()) +
+          "[ms]");
 }
 void QueryManager::CopyMemoryData(
     int table_size,
@@ -509,11 +535,24 @@ void QueryManager::RunQueries(
                                  *node, output_memory_blocks[node->node_name]);
     }
 
+      std::chrono::steady_clock::time_point begin =
+        std::chrono::steady_clock::now();
+
     Log(LogLevel::kTrace, "Setup query!");
     fpga_manager.SetupQueryAcceleration(query_nodes);
     Log(LogLevel::kTrace, "Running query!");
     auto result_sizes = fpga_manager.RunQueryAcceleration();
     Log(LogLevel::kTrace, "Query done!");
+
+        std::chrono::steady_clock::time_point end =
+        std::chrono::steady_clock::now();
+    Log(LogLevel::kInfo,
+        "Init and run time = " +
+            std::to_string(
+                std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                      begin)
+                    .count()) +
+            "[ms]");
 
     ProcessResults(data_manager, result_sizes, result_parameters,
                    output_memory_blocks, output_stream_sizes);

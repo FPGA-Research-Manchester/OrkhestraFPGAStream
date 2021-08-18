@@ -49,8 +49,8 @@ TEST(DMASetupTest, InputParamsSettings) {
   std::vector<dbmstodspi::fpga_managing::StreamDataParameters> input_streams = {
       {kInputStreamId, 18, expected_stream_size, mock_db_data.data(), {}}};
 
-  dbmstodspi::fpga_managing::DMASetup dma_configurer;
-  dma_configurer.SetupDMAModule(mock_dma, input_streams, true);
+  dbmstodspi::fpga_managing::DMASetup::SetupDMAModule(mock_dma, input_streams,
+                                                      true);
   free(mock_output_memory_address);
 }
 TEST(DMASetupTest, OutputParamsSettings) {
@@ -77,8 +77,8 @@ TEST(DMASetupTest, OutputParamsSettings) {
   std::vector<dbmstodspi::fpga_managing::StreamDataParameters> output_streams =
       {{kOutputStreamId, 18, 0, mock_output_memory_address, {}, 2}};
 
-  dbmstodspi::fpga_managing::DMASetup dma_configurer;
-  dma_configurer.SetupDMAModule(mock_dma, output_streams, false);
+  dbmstodspi::fpga_managing::DMASetup::SetupDMAModule(mock_dma, output_streams,
+                                                      false);
   free(mock_output_memory_address);
 }
 TEST(DMASetupTest, RecordSettings) {
@@ -98,8 +98,8 @@ TEST(DMASetupTest, RecordSettings) {
   std::vector<dbmstodspi::fpga_managing::StreamDataParameters> input_streams = {
       {kInputStreamId, 18, 1000, mock_db_data.data(), {}}};
 
-  dbmstodspi::fpga_managing::DMASetup dma_configurer;
-  dma_configurer.SetupDMAModule(mock_dma, input_streams, true);
+  dbmstodspi::fpga_managing::DMASetup::SetupDMAModule(mock_dma, input_streams,
+                                                      true);
   free(mock_output_memory_address);
 }
 }  // namespace

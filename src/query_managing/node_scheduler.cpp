@@ -118,13 +118,10 @@ void NodeScheduler::CheckExternalLinks(
         target_maps.insert({next_node_index, targets});
       }
     }
-    for (int previous_node_index = 0;
-         previous_node_index < node->previous_nodes.size();
-         previous_node_index++) {
-      auto observed_node = node->previous_nodes[previous_node_index].lock();
+    for (auto& previous_node : node->previous_nodes) {
+      auto observed_node = previous_node.lock();
       if (IsNodeMissingFromTheVector(observed_node, current_query_nodes)) {
-        node->previous_nodes[previous_node_index] =
-            std::weak_ptr<query_scheduling_data::QueryNode>();
+        previous_node = std::weak_ptr<query_scheduling_data::QueryNode>();
       }
     }
     if (!target_maps.empty()) {
@@ -134,9 +131,9 @@ void NodeScheduler::CheckExternalLinks(
 }
 
 auto NodeScheduler::ReuseMemory(
-    const query_scheduling_data::QueryNode& source_node,
-    const query_scheduling_data::QueryNode& target_node) -> bool {
-  // TODO needs to consider the memory capabilities
+    const query_scheduling_data::QueryNode& /*source_node*/,
+    const query_scheduling_data::QueryNode& /*target_node*/) -> bool {
+  // TODO(Kaspar): needs to consider the memory capabilities
   return true;
 }
 
@@ -463,7 +460,7 @@ auto NodeScheduler::FindNextNodeLocation(
 auto NodeScheduler::FindPreviousNodeLocation(
     const std::vector<std::weak_ptr<query_scheduling_data::QueryNode>>&
         previous_nodes,
-    const std::shared_ptr<query_scheduling_data::QueryNode> previous_node)
+    const std::shared_ptr<query_scheduling_data::QueryNode>& previous_node)
     -> int {
   for (int previous_node_index = 0; previous_node_index < previous_nodes.size();
        previous_node_index++) {

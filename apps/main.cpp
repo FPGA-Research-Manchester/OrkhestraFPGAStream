@@ -63,9 +63,9 @@ void MeasureOverallTime(std::vector<std::shared_ptr<QueryNode>> leaf_nodes,
   Log(LogLevel::kInfo,
       "Overall time = " +
           std::to_string(
-              std::chrono::duration_cast<std::chrono::seconds>(end - begin)
+              std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
                   .count()) +
-          "[s]");
+          "[ms]");
 }
 
 /**
@@ -131,12 +131,3 @@ auto main(int argc, char* argv[]) -> int {
 
   return 0;
 }
-
-// Temp not supported
-// QueryNode
-// merge_sort_query_8k_once_double = {
-//    {"CAR_DATA_HALF_SORTED_8K_64WAY.csv"},
-//    {"CAR_DATA_SORTED_8K.csv"},
-//    QueryOperationType::kMergeSort,
-//    {nullptr},
-//    {nullptr}};

@@ -142,7 +142,7 @@ class NodeScheduler {
   static auto FindPreviousNodeLocation(
       const std::vector<std::weak_ptr<query_scheduling_data::QueryNode>>
           &previous_nodes,
-      const std::shared_ptr<query_scheduling_data::QueryNode> previous_node)
+      const std::shared_ptr<query_scheduling_data::QueryNode> &previous_node)
       -> int;
   static auto ReuseMemory(const query_scheduling_data::QueryNode &source_node,
                           const query_scheduling_data::QueryNode &target_node)

@@ -31,12 +31,21 @@ using dbmstodspi::data_managing::table_data::ColumnDataType;
 void TypesConverter::AddIntegerDataFromStringData(
     const std::vector<std::vector<std::string>>& string_data,
     std::vector<uint32_t>& integer_data,
-    std::vector<std::pair<ColumnDataType, int>> data_types_vector) {
+    const std::vector<std::pair<ColumnDataType, int>>& data_types_vector) {
   for (const auto& row : string_data) {
-    for (int column = 0; column < row.size(); column++) {
-      ConvertDataToIntegers(data_types_vector[column].first, row[column],
-                            integer_data, data_types_vector[column].second);
-    }
+    ConvertRecordStringToIntegers(row, data_types_vector, integer_data);
+  }
+}
+
+void TypesConverter::ConvertRecordStringToIntegers(
+    const std::vector<std::string>& row,
+    const std::vector<
+        std::pair<dbmstodspi::data_managing::table_data::ColumnDataType, int>>&
+        data_types_vector,
+    std::vector<uint32_t>& integer_data) {
+  for (int column = 0; column < row.size(); column++) {
+    ConvertDataToIntegers(data_types_vector[column].first, row[column],
+                          integer_data, data_types_vector[column].second);
   }
 }
 
@@ -175,9 +184,9 @@ void TypesConverter::ConvertIntegerValuesToString(
 }
 
 void TypesConverter::ConvertNullValuesToString(
-    const std::vector<uint32_t>& input_value,
+    const std::vector<uint32_t>& /*input_value*/,
     std::vector<std::string>& string_vector) {
-  // These values are ignored.
+  string_vector.emplace_back("");
 }
 
 void TypesConverter::ConvertDecimalValuesToString(

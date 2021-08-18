@@ -17,7 +17,7 @@
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        release-1.10.0
+  GIT_TAG        release-1.11.0
 )
 FetchContent_MakeAvailable(googletest)
 
@@ -33,7 +33,7 @@ target_link_libraries(testlib
 					  gmock_main
 					  fpga_managing
 					  data_managing 
-					  query_managing # I guess the data_managing, query_managing and fos (?) should be tested in a different lib
+					  query_managing
 )
 
 if (NOT WIN32)
@@ -50,6 +50,7 @@ add_test(NAME DMACrossbarSetupTest COMMAND testlib)
 add_test(NAME FilterSetupTest COMMAND testlib)
 add_test(NAME DMASetupTest COMMAND testlib)
 add_test(NAME NodeSchedulerTest COMMAND testlib)
+add_test(NAME TypesConverterTest COMMAND testlib)
 
 #add_custom_command(TARGET testlib
 #        POST_BUILD

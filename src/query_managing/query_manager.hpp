@@ -52,15 +52,14 @@ class QueryManager {
     bool check_results;
     std::vector<std::vector<int>> stream_specifications;
 
-    StreamResultParameters(
-        int stream_index, int output_id, std::string filename,
-        bool check_results,
-        const std::vector<std::vector<int>>& stream_specifications)
+    StreamResultParameters(int stream_index, int output_id,
+                           std::string filename, bool check_results,
+                           std::vector<std::vector<int>> stream_specifications)
         : stream_index{stream_index},
           output_id{output_id},
-          filename{filename},
+          filename{std::move(filename)},
           check_results{check_results},
-          stream_specifications{stream_specifications} {};
+          stream_specifications{std::move(stream_specifications)} {};
   };
 
   /**
@@ -78,10 +77,10 @@ class QueryManager {
           std::string,
           std::vector<std::unique_ptr<fpga_managing::MemoryBlockInterface>>>&
           memory_blocks,
-      int stream_count, std::string node_name);
+      int stream_count, const std::string& node_name);
   static void InitialiseStreamSizeVector(
       std::map<std::string, std::vector<RecordSizeAndCount>>& stream_sizes,
-      int stream_count, std::string node_name);
+      int stream_count, const std::string& node_name);
   static auto GetRecordSizeFromParameters(
       const DataManager& data_manager,
       const std::vector<std::vector<int>>& node_parameters, int stream_index)
@@ -136,8 +135,8 @@ class QueryManager {
           allocated_memory_blocks);
   static void ProcessResults(
       const DataManager& data_manager,
-      const std::array<int, dbmstodspi::fpga_managing::
-                                query_acceleration_constants::kMaxIOStreamCount>
+      std::array<int, dbmstodspi::fpga_managing::query_acceleration_constants::
+                          kMaxIOStreamCount>
           result_sizes,
       const std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,

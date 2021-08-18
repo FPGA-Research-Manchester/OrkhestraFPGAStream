@@ -57,7 +57,7 @@ auto CreateLinearSelectedColumnsVector(const int vector_size)
 }
 
 void ExpectConfigurationDataIsUnconfigured(
-    dbmstodspi::fpga_managing::DMASetupData configuration_data) {
+    const dbmstodspi::fpga_managing::DMASetupData& configuration_data) {
   for (int clock_cycle_index = 0; clock_cycle_index < kDatapathLength;
        clock_cycle_index++) {
     EXPECT_THAT(configuration_data.crossbar_setup_data.size(), testing::Eq(0));
@@ -66,7 +66,8 @@ void ExpectConfigurationDataIsUnconfigured(
 
 void ExpectConfigurationDataIsConfigured(
     dbmstodspi::fpga_managing::DMASetupData configuration_data,
-    std::string golden_chunk_data_file, std::string golden_position_data_file) {
+    const std::string& golden_chunk_data_file,
+    const std::string& golden_position_data_file) {
   std::vector<std::vector<int>> golden_chunk_config;
   GetGoldenConfigFromFile(golden_chunk_config, golden_chunk_data_file);
   std::vector<std::vector<int>> golden_position_config;

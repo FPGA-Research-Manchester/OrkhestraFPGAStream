@@ -3,6 +3,7 @@
 	"DSPI_joining": 2097152,
 	"DSPI_double_merge_sorting": 3145728,
 	"DSPI_merge_sorting": 2097152,
+    "DSPI_big_merge_sorting": 2097152,
 	"DSPI_linear_sorting": 2097152,
     "DSPI_addition": 2097152,
     "DSPI_multiplication": 2097152,
