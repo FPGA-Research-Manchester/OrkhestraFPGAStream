@@ -16,7 +16,8 @@ limitations under the License.
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <limits.h>
+
+#include <climits>
 
 #include "mock_acceleration_module.hpp"
 #include "mock_memory_manager.hpp"

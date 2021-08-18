@@ -21,7 +21,7 @@ limitations under the License.
 #include "gmock/gmock.h"
 
 class MockDMA : public dbmstodspi::fpga_managing::modules::DMAInterface {
-  typedef std::array<int, 4> crossbar_value_array;
+  using crossbar_value_array = std::array<int, 4>;
 
  public:
   MOCK_METHOD(void, SetControllerParams,

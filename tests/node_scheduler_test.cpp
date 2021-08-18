@@ -18,6 +18,8 @@ limitations under the License.
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <utility>
 /// Good documentation for using matchers:
 /// https://github.com/google/googletest/blob/master/docs/reference/matchers.md
 namespace {
@@ -78,14 +80,15 @@ class NodeSchedulerTest : public ::testing::Test {
   NodeOperationParameters base_parameters_;
 };
 
-void CheckNodeFields(
-    std::vector<std::string> input_files, std::vector<std::string> output_files,
-    OpType operation, std::vector<std::shared_ptr<Node>> next,
-    std::vector<std::weak_ptr<Node>> previous,
-    dbmstodspi::query_managing::query_scheduling_data::NodeOperationParameters
-        parameters,
-    int location, std::string name, std::vector<bool> checks,
-    Node comparable_node) {
+void CheckNodeFields(const std::vector<std::string>& input_files,
+                     const std::vector<std::string>& output_files,
+                     OpType operation,
+                     const std::vector<std::shared_ptr<Node>>& next,
+                     std::vector<std::weak_ptr<Node>> previous,
+                     const dbmstodspi::query_managing::query_scheduling_data::
+                         NodeOperationParameters& parameters,
+                     int location, const std::string& name,
+                     const std::vector<bool>& checks, Node comparable_node) {
   EXPECT_THAT(comparable_node,
               testing::Field("input_files", &Node::input_data_definition_files,
                              input_files));
@@ -114,13 +117,13 @@ void CheckNodeFields(
       }));
 }
 
-void CheckNodeEquality(Node real_node, Node expected_node) {
+void CheckNodeEquality(Node real_node, const Node& expected_node) {
   CheckNodeFields(
       expected_node.input_data_definition_files,
       expected_node.output_data_definition_files, expected_node.operation_type,
       expected_node.next_nodes, expected_node.previous_nodes,
       expected_node.operation_parameters, expected_node.module_location,
-      expected_node.node_name, expected_node.is_checked, real_node);
+      expected_node.node_name, expected_node.is_checked, std::move(real_node));
 }
 
 TEST_F(NodeSchedulerTest, MultipleAvailableNodesFindsCorrectNode) {
