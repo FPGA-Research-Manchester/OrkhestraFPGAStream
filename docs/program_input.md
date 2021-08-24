@@ -190,7 +190,7 @@ Lastly, there are the actual operation parameters for different modules. How the
 For each word of data which is checked for filtering there is a header vector containing 3 integers: chunk ID, position index and how many comparison operations are done on the word of data.
 Then for each operation there are the following vectors of data:
 
-* Operation type
+1. Operation type
  0. 32 bit less than 
  1. 32 bit less than or equal
  2. 32 bit equal
@@ -203,12 +203,12 @@ Then for each operation there are the following vectors of data:
  11. 64 bit greater than or equal
  12. 64 bit greater than
  13. 64 bit not equal
-* Comparison literal 
-* Clause literal type - If none are given it is automatically set to positive. If there are no operations on a word it defaults to don't care.
+2. Comparison literal 
+3. Clause literal type - If none are given it is automatically set to positive. If there are no operations on a word it defaults to don't care.
  0. Don't care
  1. Positive
  2. Negative
-* DNF clause IDs where the literal is included
+4. DNF clause IDs where the literal is included
 
 ### How to get query plan graph?
 

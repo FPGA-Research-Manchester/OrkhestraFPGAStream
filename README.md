@@ -2,6 +2,7 @@
 
 [![License](https://img.shields.io/github/license/FPGA-Research-Manchester/DBMStoDSPI)](https://opensource.org/licenses/Apache-2.0)
 [![Build & Test](https://github.com/FPGA-Research-Manchester/DBMStoDSPI/actions/workflows/cmake.yml/badge.svg)](https://github.com/FPGA-Research-Manchester/DBMStoDSPI/actions)
+[![Standard](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B17)
 
 This software stack is meant to be transparently integrated with a proven DBMS for increased performance. The software stack would accelerate specific query operations with an available FPGA. How the data flows through the FPGA stack is shown in the graph below:
 

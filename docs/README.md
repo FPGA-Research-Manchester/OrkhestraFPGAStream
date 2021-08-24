@@ -1,6 +1,6 @@
 # DBMStoDSPI implementation details
 
-Different concepts on how to use and how does the software work with the hardware designes is described in the documents below:
+Brief description of the project is on the main [page](../README.md). Different concepts on how to use and how does the software work with the hardware designes is described in the documents below:
 
 - [Crossbar configuration data](./crossbar_configuration.md)
   - In-detph description of the crossbar configuration between the hardware stream processing interface and AXI ports.
