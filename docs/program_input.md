@@ -191,23 +191,23 @@ For each word of data which is checked for filtering there is a header vector co
 Then for each operation there are the following vectors of data:
 
 1. Operation type
-    0. 32 bit less than 
-    1. 32 bit less than or equal
-    2. 32 bit equal
-    3. 32 bit greater than or equal
-    4. 32 bit greater than
-    5. 32 bit not equal
-    8. 64 bit less than 
-    9. 64 bit less than or equal
-    10. 64 bit equal
-    11. 64 bit greater than or equal
-    12. 64 bit greater than
-    13. 64 bit not equal
+   - 0  - 32-bit less than 
+   - 1  - 32-bit less than or equal
+   - 2  - 32-bit equal
+   - 3  - 32-bit greater than or equal
+   - 4  - 32-bit greater than
+   - 5  - 32-bit not equal
+   - 8  - 64-bit less than 
+   - 9  - 64-bit less than or equal
+   - 10 - 64-bit equal
+   - 11 - 64-bit greater than or equal
+   - 12 - 64-bit greater than
+   - 13 - 64-bit not equal
 2. Comparison literal 
 3. Clause literal type - If none are given it is automatically set to positive. If there are no operations on a word it defaults to don't care.
-    0. Don't care
-    1. Positive
-    2. Negative
+   - 0 - Don't care
+   - 1 - Positive
+   - 2 - Negative
 4. DNF clause IDs where the literal is included
 
 ### How to get query plan graph?
@@ -716,7 +716,7 @@ More on how the bitstream files are used can be found in the [memory documentati
 
 This deserves a whole separate documentation page but for now it needs to be mentioned that all of these input files will have to be available on the Zynq MPSoC chip which is also running the Linux system where the program will be executed. 
 
-It is recommended to do development on a separate machine. Therefore the input files won't be on the same system. Currently for remote execution and debugging Visual Studio is used and other workflows haven't been tested. To copy the input files over to the remote system the build process has to be modified to not only copy the built source over but also the input files. This can be done with CMake in this [CMakeLists.txt file](../apps/CMaakeLists.txt).
+It is recommended to do development on a separate machine. Therefore the input files won't be on the same system. Currently for remote execution and debugging Visual Studio is used and other workflows haven't been tested. To copy the input files over to the remote system the build process has to be modified to not only copy the built source over but also the input files. This can be done with CMake in this [CMakeLists.txt file](../apps/CMakeLists.txt).
 
 A brief description about the rest of the required steps is on the main repo README page.
 
