@@ -191,23 +191,23 @@ For each word of data which is checked for filtering there is a header vector co
 Then for each operation there are the following vectors of data:
 
 1. Operation type
- 0. 32 bit less than 
- 1. 32 bit less than or equal
- 2. 32 bit equal
- 3. 32 bit greater than or equal
- 4. 32 bit greater than
- 5. 32 bit not equal
- 8. 64 bit less than 
- 9. 64 bit less than or equal
- 10. 64 bit equal
- 11. 64 bit greater than or equal
- 12. 64 bit greater than
- 13. 64 bit not equal
+    0. 32 bit less than 
+    1. 32 bit less than or equal
+    2. 32 bit equal
+    3. 32 bit greater than or equal
+    4. 32 bit greater than
+    5. 32 bit not equal
+    8. 64 bit less than 
+    9. 64 bit less than or equal
+    10. 64 bit equal
+    11. 64 bit greater than or equal
+    12. 64 bit greater than
+    13. 64 bit not equal
 2. Comparison literal 
 3. Clause literal type - If none are given it is automatically set to positive. If there are no operations on a word it defaults to don't care.
- 0. Don't care
- 1. Positive
- 2. Negative
+    0. Don't care
+    1. Positive
+    2. Negative
 4. DNF clause IDs where the literal is included
 
 ### How to get query plan graph?

@@ -69,7 +69,7 @@ dd if=<fos_image.img> of=<SD card image> bs=4M status=progress
 ```
 
 * Boot the board from the SD card
-* Login with username *xilinx* password *xilinx*
+* Login with default username *xilinx* password *xilinx* (change the password)
 * Allocate UDMA buffer space and possibly extend CMA space as described in the tutorial [here](./docs/memory_allocation.md)
 * Build DBMStoDSPI using CMake
 * Create the dataset 

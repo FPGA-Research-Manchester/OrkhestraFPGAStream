@@ -15,7 +15,7 @@ Currently the input CSV data files look something like this:
 9|Volkswagen|CC|56205
 10|Toyota|Camry|46123
 
-This is how the [CAR_DATA](../resources/CAR_DATA.csv) file starts. The separator character is defined in the config. The data types of each column are defined in the input definition file as described [here](./program_input.md). This input shows how much of the given data type is present in the table but the sizes of the data types can be configured in the [data_config.ini](../resources/data_config.ini) file. These two values are multiplied to find how many words are required to store the column of data.
+This is how the [CAR_DATA](../resources/data/CAR_DATA.csv) file starts. The separator character is defined in the config. The data types of each column are defined in the input definition file as described [here](./program_input.md). This input shows how much of the given data type is present in the table but the sizes of the data types can be configured in the [data_type_sizes.json](../resources/data_type_sizes.json) file. These two values are multiplied to find how many words are required to store the column of data.
 
 ## Decimal
 
