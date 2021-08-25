@@ -28,6 +28,9 @@ using dbmstodspi::fpga_managing::operation_types::QueryOperation;
 using dbmstodspi::fpga_managing::operation_types::QueryOperationType;
 
 namespace dbmstodspi::input_managing {
+/**
+ * @brief Factory class creating configs based on the config and json readers given.
+*/
 class ConfigCreator {
  private:
   std::unique_ptr<JSONReaderInterface> json_reader_;
@@ -45,10 +48,20 @@ class ConfigCreator {
                   std::vector<std::vector<int>>>;
 
  public:
+  /**
+   * @brief Factory constructor.
+   * @param json_reader Object to read JSON files with.
+   * @param config_reader Object to read INI files with.
+  */
   ConfigCreator(std::unique_ptr<JSONReaderInterface> json_reader,
                 std::unique_ptr<InputConfigReaderInterface> config_reader)
       : json_reader_{std::move(json_reader)},
         config_reader_{std::move(config_reader)} {};
+  /**
+   * @brief Get information out of the given INI file.
+   * @param config_filename Filename of the INI file.
+   * @return Config struct containing the information in the file.
+  */
   auto GetConfig(const std::string& config_filename) -> Config;
 };
 }  // namespace dbmstodspi::input_managing

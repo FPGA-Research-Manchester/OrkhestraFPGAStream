@@ -2,7 +2,7 @@
 
 Currently the input CSV data files look something like this:
 
-integer-1|varchar-32|varchar-32|integer-1
+[]()  |[]()  |[]() |[]() 
 -|-|-|-
 1|Mitsubishi|Galant|54708
 2|Porsche|911|54289
@@ -15,17 +15,7 @@ integer-1|varchar-32|varchar-32|integer-1
 9|Volkswagen|CC|56205
 10|Toyota|Camry|46123
 
-This is how the [CAR_DATA](../resources/CAR_DATA.csv) file starts. The whole file must be comma separated. The first line in the file is the header row which has to consist of the following types:
-
-- integer 
-- varchar
-- null
-- decimal
-- date
-
-The type must be followed by a hyphon "-" and a number showing how long the data element is. For integer, decimal, date only 1 is currently supported but for varchar and null the data type has a variable size. The whole data element always needs to have a size which is divisible by 4. The sizes of the data types can be configured in the [data_config.ini](../resources/data_config.ini) file. This data size modified multiplied with the number given in the .CSV file will show how many integers will the data element take on the interface.
-
-Rest of the data file is one record per one row. 
+This is how the [CAR_DATA](../resources/data/CAR_DATA.csv) file starts. The separator character is defined in the config. The data types of each column are defined in the input definition file as described [here](./program_input.md). This input shows how much of the given data type is present in the table but the sizes of the data types can be configured in the [data_type_sizes.json](../resources/data_type_sizes.json) file. These two values are multiplied to find how many words are required to store the column of data.
 
 ## Decimal
 

@@ -26,25 +26,32 @@ limitations under the License.
 
 using dbmstodspi::data_managing::table_data::ColumnDataType;
 
-/// Can be change to have a dictionary of config file names to make it more
-/// generic
 namespace dbmstodspi::input_managing {
+// Can be changed to a dictionary of config file names to make it more generic
+/**
+ * @brief Hold configuration data
+ */
 struct Config {
-  // Constructed run time for now. So doesn't even really need to be here.
-  // std::map<std::string, std::vector<std::vector<int>>> module_library;
+  /// Map of hardware modules and the available variations with different
+  /// computational capacity values.
   std::map<fpga_managing::operation_types::QueryOperationType,
            std::vector<std::vector<int>>>
       module_library;
 
-  // std::map<std::vector<std::pair<std::string, std::vector<int>>>,
-  // std::string>
+  /// Map of bitstreams where a combination of modules corresponds to a
+  /// bitstream.
   std::map<std::vector<fpga_managing::operation_types::QueryOperation>,
            std::string>
       accelerator_library;
 
+  /// Map telling FOS how much memory mapped register space is available for
+  /// each bitstream.
   std::map<std::string, int> required_memory_space;
+  /// Map telling how big each instance of a specifc data type is.
   std::map<ColumnDataType, double> data_sizes;
   // std::map<std::string, std::string> driver_library;
+
+  /// CSV data column separator character.
   char separator;
 };
 }  // namespace dbmstodspi::input_managing

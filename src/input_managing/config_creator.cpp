@@ -37,7 +37,7 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
 
   auto config_values = config_reader_->ParseInputConfig(config_filename);
 
-  auto accelerator_library_data = json_reader_->readAcceleratorLibrary(
+  auto accelerator_library_data = json_reader_->ReadAcceleratorLibrary(
       config_values[configurations_library]);
 
   Config config;
@@ -47,13 +47,13 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
       ConvertAcceleratorLibraryToModuleLibrary(accelerator_library_data);
 
   auto string_key_data_sizes =
-      json_reader_->readDataSizes(config_values[data_type_sizes]);
+      json_reader_->ReadDataSizes(config_values[data_type_sizes]);
   for (const auto& [string_key, size_scale] : string_key_data_sizes) {
     config.data_sizes.insert({kDataTypeNames.at(string_key), size_scale});
   }
 
   config.required_memory_space =
-      json_reader_->readReqMemorySpace(config_values[memory_requirements]);
+      json_reader_->ReadReqMemorySpace(config_values[memory_requirements]);
   config.separator = config_values[data_separator].c_str()[0];
   return config;
 }

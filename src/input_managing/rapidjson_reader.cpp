@@ -26,7 +26,7 @@ using dbmstodspi::input_managing::RapidJSONReader;
 using rapidjson::Document;
 using rapidjson::FileReadStream;
 
-auto RapidJSONReader::read(const std::string& json_filename)
+auto RapidJSONReader::Read(const std::string& json_filename)
     -> std::unique_ptr<Document> {
   FILE* file_pointer = fopen(json_filename.c_str(), "r");
 
@@ -46,54 +46,18 @@ auto RapidJSONReader::read(const std::string& json_filename)
 
 auto RapidJSONReader::ReadInputDefinition(std::string json_filename)
     -> std::map<std::string, RapidJSONReader::InputNodeParameters> {
-  const auto document = read(json_filename);
+  const auto document = Read(json_filename);
   std::map<std::string, RapidJSONReader::InputNodeParameters> input_node_map;
   for (const auto& node : document->GetObject()) {
     InputNodeParameters node_parameters_map;
     for (const auto& node_parameter : node.value.GetObject()) {
       if (!node_parameter.value.IsNull()) {
         if (node_parameter.value.IsString()) {
-          node_parameters_map.insert({node_parameter.name.GetString(),
-                                      node_parameter.value.GetString()});
+          GetOperationType(node_parameters_map, node_parameter);
         } else if (node_parameter.value.IsArray()) {
-          std::vector<std::string> string_array;
-          for (const auto& value_array_string :
-               node_parameter.value.GetArray()) {
-            if (value_array_string.IsString()) {
-              string_array.emplace_back(value_array_string.GetString());
-            } else {
-              string_array.emplace_back("");
-            }
-          }
-          node_parameters_map.insert(
-              {node_parameter.name.GetString(), string_array});
+          GetIOStreamFilesAndDependencies(node_parameter, node_parameters_map);
         } else if (node_parameter.value.IsObject()) {
-          std::map<std::string, std::vector<std::vector<int>>>
-              operation_parameters_map;
-          for (const auto& operation_parameter :
-               node_parameter.value.GetObject()) {
-            std::vector<std::vector<int>> parameter_vectors;
-            for (const auto& given_parameter_vectors :
-                 operation_parameter.value.GetArray()) {
-              std::vector<int> parameters;
-              if (given_parameter_vectors.Size() != 0 &&
-                  given_parameter_vectors[0].IsString()) {
-                parameters = ConvertCharStringToAscii(
-                    given_parameter_vectors[0].GetString(),
-                    given_parameter_vectors[1].GetInt());
-              } else {
-                for (const auto& parameter :
-                     given_parameter_vectors.GetArray()) {
-                  parameters.push_back(parameter.GetInt());
-                }
-              }
-              parameter_vectors.push_back(parameters);
-            }
-            operation_parameters_map.insert(
-                {operation_parameter.name.GetString(), parameter_vectors});
-          }
-          node_parameters_map.insert(
-              {node_parameter.name.GetString(), operation_parameters_map});
+          GetOperationParameters(node_parameter, node_parameters_map);
         } else {
           throw std::runtime_error(
               "Something went wrong. Please use a verifier!");
@@ -105,9 +69,66 @@ auto RapidJSONReader::ReadInputDefinition(std::string json_filename)
   return input_node_map;
 }
 
-auto RapidJSONReader::readDataSizes(std::string json_filename)
+void dbmstodspi::input_managing::RapidJSONReader::GetOperationParameters(
+    const rapidjson::GenericMember<
+        rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<>>& node_parameter,
+    dbmstodspi::input_managing::JSONReaderInterface::InputNodeParameters&
+        node_parameters_map) {
+  std::map<std::string, std::vector<std::vector<int>>> operation_parameters_map;
+  for (const auto& operation_parameter : node_parameter.value.GetObject()) {
+    std::vector<std::vector<int>> parameter_vectors;
+    for (const auto& given_parameter_vectors :
+         operation_parameter.value.GetArray()) {
+      std::vector<int> parameters;
+      if (given_parameter_vectors.Size() != 0 &&
+          given_parameter_vectors[0].IsString()) {
+        parameters =
+            ConvertCharStringToAscii(given_parameter_vectors[0].GetString(),
+                                     given_parameter_vectors[1].GetInt());
+      } else {
+        for (const auto& parameter : given_parameter_vectors.GetArray()) {
+          parameters.push_back(parameter.GetInt());
+        }
+      }
+      parameter_vectors.push_back(parameters);
+    }
+    operation_parameters_map.insert(
+        {operation_parameter.name.GetString(), parameter_vectors});
+  }
+  node_parameters_map.insert(
+      {node_parameter.name.GetString(), operation_parameters_map});
+}
+
+void dbmstodspi::input_managing::RapidJSONReader::
+    GetIOStreamFilesAndDependencies(
+        const rapidjson::GenericMember<rapidjson::UTF8<>,
+                                       rapidjson::MemoryPoolAllocator<>>&
+            node_parameter,
+        dbmstodspi::input_managing::JSONReaderInterface::InputNodeParameters&
+            node_parameters_map) {
+  std::vector<std::string> string_array;
+  for (const auto& value_array_string : node_parameter.value.GetArray()) {
+    if (value_array_string.IsString()) {
+      string_array.emplace_back(value_array_string.GetString());
+    } else {
+      string_array.emplace_back("");
+    }
+  }
+  node_parameters_map.insert({node_parameter.name.GetString(), string_array});
+}
+
+void dbmstodspi::input_managing::RapidJSONReader::GetOperationType(
+    dbmstodspi::input_managing::JSONReaderInterface::InputNodeParameters&
+        node_parameters_map,
+    const rapidjson::GenericMember<
+        rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<>>& node_parameter) {
+  node_parameters_map.insert(
+      {node_parameter.name.GetString(), node_parameter.value.GetString()});
+}
+
+auto RapidJSONReader::ReadDataSizes(std::string json_filename)
     -> std::map<std::string, double> {
-  const auto document = read(json_filename);
+  const auto document = Read(json_filename);
   std::map<std::string, double> value_map;
   for (const auto& element : document->GetObject()) {
     value_map.insert({element.name.GetString(), element.value.GetDouble()});
@@ -115,9 +136,9 @@ auto RapidJSONReader::readDataSizes(std::string json_filename)
   return value_map;
 }
 
-auto RapidJSONReader::readReqMemorySpace(std::string json_filename)
+auto RapidJSONReader::ReadReqMemorySpace(std::string json_filename)
     -> std::map<std::string, int> {
-  const auto document = read(json_filename);
+  const auto document = Read(json_filename);
   std::map<std::string, int> value_map;
   for (const auto& element : document->GetObject()) {
     value_map.insert({element.name.GetString(), element.value.GetInt()});
@@ -125,14 +146,14 @@ auto RapidJSONReader::readReqMemorySpace(std::string json_filename)
   return value_map;
 }
 
-auto RapidJSONReader::readAcceleratorLibrary(std::string json_filename)
+auto RapidJSONReader::ReadAcceleratorLibrary(std::string json_filename)
     -> std::map<std::vector<std::pair<std::string, std::vector<int>>>,
                 std::string> {
   std::string module_combination_names_field = "module_combinations";
   std::string accelerator_name_field = "accelerators";
   std::string module_name_field = "name";
   std::string module_capacity_field = "capacity";
-  const auto document = read(json_filename);
+  const auto document = Read(json_filename);
   auto* document_ptr = document.get();
   auto module_combination_names =
       (*document_ptr)[module_combination_names_field.c_str()].GetArray();

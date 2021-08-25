@@ -24,22 +24,61 @@ limitations under the License.
 using rapidjson::Document;
 
 namespace dbmstodspi::input_managing {
+
+/**
+ * @brief Class to read JSON files using https://github.com/Tencent/rapidjson/
+*/
 class RapidJSONReader : public JSONReaderInterface {
  private:
-  static auto read(const std::string& json_filename)
+  static auto Read(const std::string& json_filename)
       -> std::unique_ptr<Document>;
   static auto ConvertCharStringToAscii(const std::string& input_string,
                                        int output_size) -> std::vector<int>;
+  void GetOperationParameters(
+      const rapidjson::GenericMember<
+          rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<>>& node_parameter,
+      dbmstodspi::input_managing::JSONReaderInterface::InputNodeParameters&
+          node_parameters_map);
+  void GetIOStreamFilesAndDependencies(
+      const rapidjson::GenericMember<
+          rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<>>& node_parameter,
+      dbmstodspi::input_managing::JSONReaderInterface::InputNodeParameters&
+          node_parameters_map);
+  void GetOperationType(
+      dbmstodspi::input_managing::JSONReaderInterface::InputNodeParameters&
+          node_parameters_map,
+      const rapidjson::GenericMember<
+          rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<>>& node_parameter);
 
  public:
   ~RapidJSONReader() override = default;
-  auto readDataSizes(std::string json_filename)
+  /**
+   * @brief Read the JSON file describing data type sizes.
+   * @param json_filename JSON file.
+   * @return Data type and size map.
+  */
+  auto ReadDataSizes(std::string json_filename)
       -> std::map<std::string, double> override;
-  auto readReqMemorySpace(std::string json_filename)
+  /**
+   * @brief Read memory mapped register space sizes.
+   * @param json_filename JSON file.
+   * @return How much space each bitstream has for memory mapped registers.
+  */
+  auto ReadReqMemorySpace(std::string json_filename)
       -> std::map<std::string, int> override;
-  auto readAcceleratorLibrary(std::string json_filename)
+  /**
+   * @brief Read bitstreams
+   * @param json_filename JSON file
+   * @return Which module combination is associated with which bitstream name.
+  */
+  auto ReadAcceleratorLibrary(std::string json_filename)
       -> std::map<std::vector<std::pair<std::string, std::vector<int>>>,
                   std::string> override;
+  /**
+   * @brief Read input def - query plan.
+   * @param json_filename JSON file
+   * @return Return query plan node field names and their values.
+  */
   auto ReadInputDefinition(std::string json_filename)
       -> std::map<std::string,
                   JSONReaderInterface::InputNodeParameters> override;

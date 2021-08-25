@@ -20,9 +20,17 @@ limitations under the License.
 
 namespace dbmstodspi::input_managing {
 
+/**
+ * @brief INI file reader
+*/
 class InputConfigReader : public InputConfigReaderInterface {
  public:
   ~InputConfigReader() override = default;
+  /**
+   * @brief Read the given INI file and return all of the values.
+   * @param filename INI file.
+   * @return Config field and value pairs.
+  */
   auto ParseInputConfig(const std::string& filename)
       -> std::map<std::string, std::string> override;
 };

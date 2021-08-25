@@ -22,16 +22,88 @@ limitations under the License.
 
 using dbmstodspi::input_managing::GraphCreator;
 using dbmstodspi::query_managing::query_scheduling_data::kSupportedFunctions;
-using dbmstodspi::query_managing::query_scheduling_data::
-    NodeOperationParameters;
 
-// Using vector of references now but it will be replaced with shared pointers
-// in the future.
 auto GraphCreator::MakeGraph(std::string input_def_filename)
     -> std::vector<std::shared_ptr<QueryNode>> {
-  auto data = json_reader_->ReadInputDefinition(std::move(input_def_filename));
+  std::map<std::string, std::shared_ptr<QueryNode>> graph_nodes_map;
+  std::map<std::string, std::vector<std::string>> previous_nodes;
+  std::map<std::string, std::vector<std::string>> next_nodes;
 
+  auto data = json_reader_->ReadInputDefinition(std::move(input_def_filename));
+  PopulateGraphNodesMapWithJSONData(data, graph_nodes_map, previous_nodes,
+                                    next_nodes);
+
+  LinkDependentNodes(graph_nodes_map, previous_nodes, next_nodes);
+
+  std::vector<std::shared_ptr<QueryNode>> leaf_nodes;
+  for (auto const& [node_name, node] : graph_nodes_map) {
+    if (std::none_of(
+            node->previous_nodes.begin(), node->previous_nodes.end(),
+            [](const std::weak_ptr<QueryNode>& ptr) { return ptr.lock(); })) {
+      leaf_nodes.push_back(node);
+    }
+  }
+
+  return leaf_nodes;
+}
+
+void dbmstodspi::input_managing::GraphCreator::LinkDependentNodes(
+    std::map<std::string,
+             std::shared_ptr<
+                 dbmstodspi::query_managing::query_scheduling_data::QueryNode>>&
+        graph_nodes_map,
+    std::map<std::string, std::vector<std::string>>& previous_nodes,
+    std::map<std::string, std::vector<std::string>>& next_nodes) {
+  for (auto& [node_name, node] : graph_nodes_map) {
+    auto search_previous = previous_nodes.find(node_name);
+    if (search_previous != previous_nodes.end()) {
+      if (search_previous->second.size() !=
+          node->input_data_definition_files.size()) {
+        throw std::runtime_error(
+            "Incorrect number of input file definitions found!");
+      }
+      for (int i = 0; i < search_previous->second.size(); i++) {
+        if (!search_previous->second[i].empty()) {
+          if (!node->input_data_definition_files[i].empty()) {
+            throw std::runtime_error("Input file not required!");
+          }
+          node->previous_nodes.push_back(
+              graph_nodes_map.at(search_previous->second[i]));
+        } else {
+          if (node->input_data_definition_files[i].empty()) {
+            throw std::runtime_error("Input file required!");
+          }
+          node->previous_nodes.push_back(std::weak_ptr<QueryNode>());
+        }
+      }
+    }
+    auto search_next = next_nodes.find(node_name);
+    if (search_next != next_nodes.end()) {
+      for (auto const& next_node_name : search_next->second) {
+        if (!next_node_name.empty()) {
+          node->next_nodes.push_back(graph_nodes_map.at(next_node_name));
+        } else {
+          node->next_nodes.push_back(nullptr);
+        }
+      }
+    }
+  }
+}
+
+void dbmstodspi::input_managing::GraphCreator::
+    PopulateGraphNodesMapWithJSONData(
+        std::map<std::string, dbmstodspi::input_managing::JSONReaderInterface::
+                                  InputNodeParameters>& data,
+        std::map<
+            std::string,
+            std::shared_ptr<
+                dbmstodspi::query_managing::query_scheduling_data::QueryNode>>&
+            graph_nodes_map,
+        std::map<std::string, std::vector<std::string>>& previous_nodes,
+        std::map<std::string, std::vector<std::string>>& next_nodes) {
   using ParamsMap = std::map<std::string, std::vector<std::vector<int>>>;
+  using dbmstodspi::query_managing::query_scheduling_data::
+      NodeOperationParameters;
 
   std::string input_field = "input";
   std::string output_field = "output";
@@ -42,10 +114,6 @@ auto GraphCreator::MakeGraph(std::string input_def_filename)
   std::string input_stream_params_field = "input_stream_params";
   std::string output_stream_params = "output_stream_params";
   std::string operation_params_field = "operation_params";
-
-  std::map<std::string, std::shared_ptr<QueryNode>> graph_nodes_map;
-  std::map<std::string, std::vector<std::string>> previous_nodes;
-  std::map<std::string, std::vector<std::string>> next_nodes;
 
   for (auto const& [node_name, node_parameters] : data) {
     ParamsMap all_operation_parameters_map =
@@ -85,50 +153,4 @@ auto GraphCreator::MakeGraph(std::string input_def_filename)
           {node_name, std::get<std::vector<std::string>>(search_next->second)});
     }
   }
-
-  for (auto& [node_name, node] : graph_nodes_map) {
-    auto search_previous = previous_nodes.find(node_name);
-    if (search_previous != previous_nodes.end()) {
-      if (search_previous->second.size() !=
-          node->input_data_definition_files.size()) {
-        throw std::runtime_error(
-            "Incorrect number of input file definitions found!");
-      }
-      for (int i = 0; i < search_previous->second.size(); i++) {
-        if (!search_previous->second[i].empty()) {
-          if (!node->input_data_definition_files[i].empty()) {
-            throw std::runtime_error("Input file not required!");
-          }
-          node->previous_nodes.push_back(
-              graph_nodes_map.at(search_previous->second[i]));
-        } else {
-          if (node->input_data_definition_files[i].empty()) {
-            throw std::runtime_error("Input file required!");
-          }
-          node->previous_nodes.push_back(std::weak_ptr<QueryNode>());
-        }
-      }
-    }
-    auto search_next = next_nodes.find(node_name);
-    if (search_next != next_nodes.end()) {
-      for (auto const& next_node_name : search_next->second) {
-        if (!next_node_name.empty()) {
-          node->next_nodes.push_back(graph_nodes_map.at(next_node_name));
-        } else {
-          node->next_nodes.push_back(nullptr);
-        }
-      }
-    }
-  }
-
-  std::vector<std::shared_ptr<QueryNode>> leaf_nodes;
-  for (auto const& [node_name, node] : graph_nodes_map) {
-    if (std::none_of(
-            node->previous_nodes.begin(), node->previous_nodes.end(),
-            [](const std::weak_ptr<QueryNode>& ptr) { return ptr.lock(); })) {
-      leaf_nodes.push_back(node);
-    }
-  }
-
-  return leaf_nodes;
 }
