@@ -17,6 +17,7 @@ limitations under the License.
 #include "query_manager.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -24,8 +25,6 @@ limitations under the License.
 #include <queue>
 #include <set>
 #include <stdexcept>
-
-#include <chrono>
 
 #include "accelerated_query_node.hpp"
 #include "data_manager.hpp"
@@ -53,7 +52,8 @@ using dbmstodspi::query_managing::query_scheduling_data::kIOStreamParamDefs;
 using dbmstodspi::util::CreateReferenceVector;
 using dbmstodspi::util::FindPositionInVector;
 
-void QueryManager::CheckTableData(const TableData& expected_table,
+void QueryManager::CheckTableData(const DataManager& data_manager,
+                                  const TableData& expected_table,
                                   const TableData& resulting_table) {
   if (expected_table == resulting_table) {
     Log(LogLevel::kDebug, "Query results are correct!");
@@ -68,7 +68,7 @@ void QueryManager::CheckTableData(const TableData& expected_table,
                 resulting_table.table_data_vector.size() /
                 TableManager::GetRecordSizeFromTable(resulting_table)) +
             " rows!");
-    data_managing::DataManager::PrintTableData(resulting_table);
+    data_manager.PrintTableData(resulting_table);
   }
 }
 
@@ -399,7 +399,7 @@ void QueryManager::CheckResults(
       data_manager, node_parameters, stream_index, std::move(filename));
   auto resulting_table = TableManager::ReadTableFromMemory(
       data_manager, node_parameters, stream_index, memory_device, row_count);
-  CheckTableData(expected_table, resulting_table);
+  CheckTableData(data_manager, expected_table, resulting_table);
 }
 void QueryManager::WriteResults(
     const DataManager& data_manager,
@@ -411,7 +411,8 @@ void QueryManager::WriteResults(
 
   auto resulting_table = TableManager::ReadTableFromMemory(
       data_manager, node_parameters, stream_index, memory_device, row_count);
-  TableManager::WriteResultTableFile(resulting_table, std::move(filename));
+  TableManager::WriteResultTableFile(data_manager, resulting_table,
+                                     std::move(filename));
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   Log(LogLevel::kInfo,
@@ -535,7 +536,7 @@ void QueryManager::RunQueries(
                                  *node, output_memory_blocks[node->node_name]);
     }
 
-      std::chrono::steady_clock::time_point begin =
+    std::chrono::steady_clock::time_point begin =
         std::chrono::steady_clock::now();
 
     Log(LogLevel::kTrace, "Setup query!");
@@ -544,7 +545,7 @@ void QueryManager::RunQueries(
     auto result_sizes = fpga_manager.RunQueryAcceleration();
     Log(LogLevel::kTrace, "Query done!");
 
-        std::chrono::steady_clock::time_point end =
+    std::chrono::steady_clock::time_point end =
         std::chrono::steady_clock::now();
     Log(LogLevel::kInfo,
         "Init and run time = " +

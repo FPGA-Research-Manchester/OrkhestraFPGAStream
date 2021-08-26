@@ -64,11 +64,13 @@ class TableManager {
 
   /**
    * @brief Write the table to a CSV file with a timestamp
+   * @param data_manager Data managing object to write CSV files with.
    * @param data_table Resulting data to be written to the file.
    * @param filename String of the name of the file to be written to.
    */
-  static void WriteResultTableFile(const TableData& data_table,
-                                   const std::string& filename);
+  static void WriteResultTableFile(
+      const data_managing::DataManager& data_manager,
+      const TableData& data_table, const std::string& filename);
 
   /**
    * @brief Write data from file to given memory block.
@@ -147,11 +149,13 @@ class TableManager {
       const TableData& input_table, int previous_record_count);
   /**
    * @brief Print data written to memory.
+   * @param data_manager Data managing object to print data with.
    * @param table_name Name of the table.
    * @param input_device Memory pointer
    * @param input_table Table data holding column types information.
    */
   static void PrintWrittenData(
+      const data_managing::DataManager& data_manager,
       const std::string& table_name,
       const std::unique_ptr<fpga_managing::MemoryBlockInterface>& input_device,
       const TableData& input_table);

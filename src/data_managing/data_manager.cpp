@@ -119,7 +119,7 @@ void DataManager::AddStringDataFromIntegerData(
 }
 
 void DataManager::PrintStringData(
-    const std::vector<std::vector<std::string>>& string_data) {
+    const std::vector<std::vector<std::string>>& string_data) const {
   auto log_level = dbmstodspi::logger::LogLevel::kDebug;
   if (dbmstodspi::logger::ShouldLog(log_level)) {
     std::stringstream ss;
@@ -127,7 +127,7 @@ void DataManager::PrintStringData(
     for (const auto& row : string_data) {
       for (const auto& element : row) {
         if (&element != &row.back()) {
-          ss << element << ",";
+          ss << element << separator_;
         } else {
           ss << element << std::endl;
         }
@@ -137,7 +137,7 @@ void DataManager::PrintStringData(
   }
 }
 
-void DataManager::PrintTableData(const TableData& table_data) {
+void DataManager::PrintTableData(const TableData& table_data) const {
   std::vector<std::vector<std::string>> string_data_vector;
   DataManager::AddStringDataFromIntegerData(
       table_data.table_data_vector, string_data_vector,
@@ -146,7 +146,7 @@ void DataManager::PrintTableData(const TableData& table_data) {
 }
 
 void DataManager::WriteTableData(const TableData& table_data,
-                                 const std::string& filename) {
+                                 const std::string& filename) const {
   std::vector<std::vector<std::string>> string_data_vector;
   DataManager::AddStringDataFromIntegerData(
       table_data.table_data_vector, string_data_vector,
@@ -156,7 +156,7 @@ void DataManager::WriteTableData(const TableData& table_data,
     for (const auto& line : string_data_vector) {
       for (auto iter = line.begin(); iter != line.end(); iter++) {
         if (iter != line.begin()) {
-          output_file << ",";
+          output_file << separator_;
         }
         output_file << *iter;
       }

@@ -98,15 +98,15 @@ class DataManager {
    * @brief Helper method to print table data for debugging.
    * @param table_data Data to be printed out.
    */
-  static void PrintTableData(const TableData& table_data);
+  void PrintTableData(const TableData& table_data) const;
 
   /**
    * @brief Method to write the table into a file with the given filename.
    * @param table_data Data to be written to the file.
    * @param filename Name of the file to be written to.
    */
-  static void WriteTableData(const TableData& table_data,
-                             const std::string& filename);
+  void WriteTableData(const TableData& table_data,
+                             const std::string& filename) const;
 
  private:
   /// Which char is used to separate columns.
@@ -130,8 +130,8 @@ class DataManager {
    * @brief Helper method to print the string data from tables.
    * @param string_data Rows of different elements in string format.
    */
-  static void PrintStringData(
-      const std::vector<std::vector<std::string>>& string_data);
+  void PrintStringData(
+      const std::vector<std::vector<std::string>>& string_data) const;
 };
 
 }  // namespace dbmstodspi::data_managing
