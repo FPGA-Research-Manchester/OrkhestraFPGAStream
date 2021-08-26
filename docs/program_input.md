@@ -111,7 +111,7 @@ Let's go through the different fields one at a time.
 
 ### Input data files
 
-These "*input*" & "*output*" fields take exported DBMS table data files. They are CSV files using a separator defined in the config file. More details about these files can be found in the [input data configuration documentation](./input_data_configuration.md).
+These "*input*" & "*output*" fields take exported DBMS table data files. They are CSV files using a separator defined in the config file. More details about these files and the data types can be found in the [table data documentation](./table_data.md).
 
 If the "*output*" field has values, then the node can't be pipelined with any following nodes as the results have to be written to memory and compared with the given golden output data. On the other hand, if the "*output*" is NULL, then one of the following can happen:
 

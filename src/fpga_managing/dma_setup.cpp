@@ -113,15 +113,6 @@ void DMASetup::AllocateStreamBuffers(DMASetupData& stream_setup_data,
 void DMASetup::SetMultiChannelSetupData(
     const StreamDataParameters& stream_init_data,
     DMASetupData& stream_setup_data) {
-  // This is the most optimal channel record count for the given max channel
-  // count. In reality the linear sort sorts 512 way and if one module worth of
-  // channels (64) isn't enough two modules have to get used. Or if another
-  // mergesorter run is used before then the sort can be more than 512 way! So
-  // this number comes as an input!
-  /*int channel_record_count = CalculateMultiChannelStreamRecordCountPerChannel(
-      stream_init_data.stream_record_count, max_channel_count,
-      stream_init_data.stream_record_size);*/
-
   stream_setup_data.active_channel_count =
       (stream_init_data.stream_record_count +
        stream_init_data.records_per_channel - 1) /
@@ -161,6 +152,11 @@ void DMASetup::SetMultiChannelSetupData(
   stream_setup_data.active_channel_count = stream_init_data.max_channel_count;
 }
 
+// This is the most optimal channel record count for the given max channel
+// count. In reality the linear sort sorts 512 way and if one module worth of
+// channels (64) isn't enough two modules have to get used. Or if another
+// mergesorter run is used before then the sort can be more than 512 way! So
+// this method is deprecated and not used!
 auto DMASetup::CalculateMultiChannelStreamRecordCountPerChannel(
     int stream_record_count, int max_channel_count, int record_size) -> int {
   int channel_record_count =

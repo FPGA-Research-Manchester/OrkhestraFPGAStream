@@ -1,10 +1,10 @@
 # DBMStoDSPI implementation details
 
-Brief description of the project is on the main [page](../README.md). Different concepts on how to use and how does the software work with the hardware designes is described in the documents below:
+A brief description of the project is on the main [page](../README.md). Different concepts on how to use and how does the software work with the hardware designs are described in the documents below:
 
 - [Crossbar configuration data](./crossbar_configuration.md)
   - In-detph description of the crossbar configuration between the hardware stream processing interface and AXI ports.
-- [Input CSV file configuration](./input_data_configuration.md)
+- [Input CSV file configuration](./table_data.md)
   - Brief explanation of how the database data is expected to be passed to this program.
 - [Acceleration module characteristics](./acceleration_modules.md)
   - Document classifying currently supported acceleration modules. These characteristics have to be taken into consideration to support future modules.

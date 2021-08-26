@@ -70,6 +70,7 @@ void TableManager::WriteInputDataToMemoryBlock(
 
 // Debug method
 void TableManager::PrintWrittenData(
+    const data_managing::DataManager& data_manager,
     const std::string& table_name,
     const std::unique_ptr<fpga_managing::MemoryBlockInterface>& input_device,
     const TableData& input_table) {
@@ -88,7 +89,7 @@ void TableManager::PrintWrittenData(
        << reinterpret_cast<uintptr_t>(input_device->GetPhysicalAddress())
        << std::dec;
     dbmstodspi::logger::Log(log_level, ss.str());
-    data_managing::DataManager::PrintTableData(output_table);
+    data_manager.PrintTableData(output_table);
   }
 }
 
@@ -213,7 +214,8 @@ auto TableManager::GetColumnDataTypesFromSpecification(
   return column_data_types;
 }
 
-void TableManager::WriteResultTableFile(const TableData& data_table,
-                                        const std::string& filename) {
-  data_managing::DataManager::WriteTableData(data_table, filename);
+void TableManager::WriteResultTableFile(
+    const data_managing::DataManager& data_manager, const TableData& data_table,
+    const std::string& filename) {
+  data_manager.WriteTableData(data_table, filename);
 }

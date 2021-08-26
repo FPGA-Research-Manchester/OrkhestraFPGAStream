@@ -4,11 +4,11 @@
 [![Build & Test](https://github.com/FPGA-Research-Manchester/DBMStoDSPI/actions/workflows/cmake.yml/badge.svg)](https://github.com/FPGA-Research-Manchester/DBMStoDSPI/actions)
 [![Standard](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B17)
 
-This software stack is meant to be transparently integrated with a proven DBMS for increased performance. The software stack would accelerate specific query operations with an available FPGA. How the data flows through the FPGA stack is shown in the graph below:
+DBMStoDSPI is a middleware for orchestrating a dynamic stream processing pipeline. This software stack is meant to be coupled with a SQL parser or a DBMS. Then the software stack would execute the given query plan with an available FPGA using the available accelerator module library. How the data flows through the FPGA stack is shown in the graph below:
 
 ![DBMStoDSPI source layout](./docs/DBMStoDSPI_graph.svg)
 
-As you can see from the image the input would be a query plan graph form a DBMS to the software stack which will use [FOS](https://github.com/FPGA-Research-Manchester/fos) and the modules described below to accelerate the query. The image is slightly out of date as the gray operation parameters are now used and there is an additional class for checking resource elastic module constraints.
+As the image shows, the input would be a query plan graph from a DBMS to the software stack, which will use [FOS](https://github.com/FPGA-Research-Manchester/fos) and the modules described below to accelerate the query. The image is slightly out of date, but it gives a rough overview.
 
 ## Currently supported data types:
 

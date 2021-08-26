@@ -62,14 +62,8 @@ class QueryManager {
           stream_specifications{std::move(stream_specifications)} {};
   };
 
-  /**
-   * @brief Compare the accelerated query results with the expected data.
-   *
-   * Prints out tables if they are different.
-   * @param expected_table Given expected data
-   * @param expected_table Data which was output by the FPGA.
-   */
-  static void CheckTableData(const TableData& expected_table,
+  static void CheckTableData(const DataManager& data_manager,
+                             const TableData& expected_table,
                              const TableData& resulting_table);
 
   static void InitialiseMemoryBlockVector(

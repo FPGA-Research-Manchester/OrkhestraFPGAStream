@@ -104,7 +104,7 @@ auto IDManager::FindStreamIndex(
         &stream_vector,
     const query_scheduling_data::QueryNode &node) -> int {
   for (int i = 0; i < stream_vector.size(); i++) {
-    if (*stream_vector[i] == node) {
+    if (stream_vector[i] && * stream_vector[i] == node) {
       return i;
     }
   }
