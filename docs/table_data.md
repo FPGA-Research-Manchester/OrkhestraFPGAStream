@@ -17,6 +17,8 @@ Currently the input CSV data files look something like this:
 
 This is how the [CAR_DATA](../resources/data/CAR_DATA.csv) file starts. The separator character is defined in the config. The data types of each column are defined in the input definition file as described [here](./program_input.md). This input shows how much of the given data type is present in the table but the sizes of the data types can be configured in the [data_type_sizes.json](../resources/data_type_sizes.json) file. These two values are multiplied to find how many words are required to store the column of data.
 
+Next the data types are described and how they are converted for the hardware can be seen from the [unit tests](../tests/types_converter_test.cpp).
+
 ## Decimal
 
 The only decimal supported currently is 15,2. Which means that the total number of digits possible to store is 15 and that 2 of them are right of the decimal point. This value is stored as two 32 bit integers on the interface.

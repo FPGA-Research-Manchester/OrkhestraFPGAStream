@@ -16,7 +16,7 @@ The client in our initial target is a DBMS. It could be any DBMS with some wrapp
 
 ### Input
 
-The current near future specifications for the [client input & hardware library](./program_input.md) and [data configuration](./input_data_configuration.md) have been described in their respective documentation pages. Here it is important to mention that these could look slightly different based on which implementations of the base blocks have been chosen. 
+The current near future specifications for the [client input & hardware library](./program_input.md) and [table data](./table_data.md) have been described in their respective documentation pages. Here it is important to mention that these could look slightly different based on which implementations of the base blocks have been chosen. 
 
 When it comes to function and input data + parameters then here the tree of operations should be parsed in preorder rather than in the current postorder traversal. The input data can be another function and this tree can go however deep it needs to be. So parsing should start at the root rather than at the leaves. Additionally, the necessity of parameters can be up to the chosen input parser and different blocks of the execution manager. Many of these parameters could be chosen by the scheduler instead when it comes to resource elasticity, for example. There is also a third set parameters missing from this input which should be entirely generated within the execution manager and those are the stream parameters. How big is a stream or a record and how are the IDs allocated.
 
