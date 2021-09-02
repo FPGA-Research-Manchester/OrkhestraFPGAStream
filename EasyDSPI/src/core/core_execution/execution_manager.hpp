@@ -16,6 +16,7 @@ limitations under the License.
 
 #pragma once
 
+#include <queue>
 #include <string>
 
 #include "accelerated_query_node.hpp"
@@ -31,7 +32,7 @@ limitations under the License.
 using easydspi::core_interfaces::Config;
 using easydspi::core_interfaces::ExecutionManagerInterface;
 using easydspi::core_interfaces::ExecutionPlanGraphInterface;
-using easydspi::core_interfaces::query_scheduling_data::MemoryReuseTargets;
+
 using easydspi::core_interfaces::query_scheduling_data::RecordSizeAndCount;
 using easydspi::core_interfaces::query_scheduling_data::StreamResultParameters;
 using easydspi::dbmstodspi::AcceleratedQueryNode;
@@ -58,12 +59,17 @@ class ExecutionManager : public ExecutionManagerInterface,
 
   void execute(std::pair<std::unique_ptr<ExecutionPlanGraphInterface>, Config>
                    execution_input) override;
-  std::string getCurrentGraphData() override;
-  void setCurrentGraphData(std::string new_data) override;
-  const Config& getCurrentConfig() override;
-  void setCurrentConfig(const Config& new_config) override;
-  const ExecutionPlanGraphInterface* getInitialGraph() override;
-  const Config& getInitialConfig() override;
+
+  void SetQueryNodeRunsQueue(
+      const std::queue<std::pair<ConfigurableModulesVector,
+                                 std::vector<std::shared_ptr<QueryNode>>>>&
+          new_queue) override;
+  auto GetConfig() -> Config override;
+  auto GetReuseLinks()
+      -> std::map<std::string, std::map<int, MemoryReuseTargets>> override;
+  void SetReuseLinks(
+      const std::map<std::string, std::map<int, MemoryReuseTargets>> new_links)
+      override;
 
  private:
   // Initial inputs
@@ -76,20 +82,22 @@ class ExecutionManager : public ExecutionManagerInterface,
   bool busy_flag_ = false;
   // Variables used throughout different states.
   std::unique_ptr<FPGAManagerInterface> fpga_manager_;
-  std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links;
+  std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links_;
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
-      input_memory_blocks;
+      input_memory_blocks_;
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
-      output_memory_blocks;
-  std::map<std::string, std::vector<RecordSizeAndCount>> input_stream_sizes;
-  std::map<std::string, std::vector<RecordSizeAndCount>> output_stream_sizes;
+      output_memory_blocks_;
+  std::map<std::string, std::vector<RecordSizeAndCount>> input_stream_sizes_;
+  std::map<std::string, std::vector<RecordSizeAndCount>> output_stream_sizes_;
+
+  std::queue<std::pair<ConfigurableModulesVector,
+                       std::vector<std::shared_ptr<QueryNode>>>>
+      query_node_runs_queue_;
+
   // Clear for each run
-  std::map<std::string, std::vector<StreamResultParameters>> result_parameters;
-  std::vector<AcceleratedQueryNode> query_nodes;
-  std::map<std::string, std::vector<int>> output_ids;
-  std::map<std::string, std::vector<int>> input_ids;
-  // Remove
-  std::string current_graph_data_;
-  Config current_config_;
+  std::map<std::string, std::vector<StreamResultParameters>> result_parameters_;
+  std::vector<AcceleratedQueryNode> query_nodes_;
+  std::map<std::string, std::vector<int>> output_ids_;
+  std::map<std::string, std::vector<int>> input_ids_;
 };
 }  // namespace easydspi::core::core_execution

@@ -15,10 +15,11 @@ limitations under the License.
 */
 
 #include "execution_manager.hpp"
-#include "fpga_manager.hpp"
-#include "fpga_manager_interface.hpp"
 
 #include <memory>
+
+#include "fpga_manager.hpp"
+#include "fpga_manager_interface.hpp"
 
 using easydspi::core::core_execution::ExecutionManager;
 using easydspi::dbmstodspi::FPGAManager;
@@ -41,39 +42,18 @@ void ExecutionManager::execute(
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-std::string ExecutionManager::getCurrentGraphData() {
-  return current_graph_data_;
+void ExecutionManager::SetQueryNodeRunsQueue(
+    const std::queue<std::pair<ConfigurableModulesVector,
+                               std::vector<std::shared_ptr<QueryNode>>>>&
+        new_queue) {
+  query_node_runs_queue_ = new_queue;
 }
-void ExecutionManager::setCurrentGraphData(std::string new_data) {
-  current_graph_data_ = new_data;
+auto ExecutionManager::GetConfig() -> Config { return initial_config_; }
+auto ExecutionManager::GetReuseLinks()
+    -> std::map<std::string, std::map<int, MemoryReuseTargets>> {
+  return all_reuse_links_;
 }
-const Config& ExecutionManager::getCurrentConfig() { return current_config_; }
-void ExecutionManager::setCurrentConfig(const Config& new_config) {
-  current_config_ = new_config;
+void ExecutionManager::SetReuseLinks(
+    const std::map<std::string, std::map<int, MemoryReuseTargets>> new_links) {
+  all_reuse_links_ = new_links;
 }
-const ExecutionPlanGraphInterface* ExecutionManager::getInitialGraph() {
-  return initial_graph_.get();
-}
-const Config& ExecutionManager::getInitialConfig() { return initial_config_; }

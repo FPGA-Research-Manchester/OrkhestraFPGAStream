@@ -18,15 +18,29 @@ limitations under the License.
 
 #include <iostream>
 
+#include "node_scheduler.hpp"
 #include "setup_nodes_state.hpp"
 
 using easydspi::dbmstodspi::GraphProcessingFSMInterface;
+using easydspi::dbmstodspi::NodeScheduler;
 using easydspi::dbmstodspi::ScheduleState;
 using easydspi::dbmstodspi::SetupNodesState;
 using easydspi::dbmstodspi::StateInterface;
 
 std::unique_ptr<StateInterface> ScheduleState::execute(
     GraphProcessingFSMInterface* fsm) {
+  std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links;
+  auto config = fsm->GetConfig();
+
+  /*auto queue = NodeScheduler::FindAcceleratedQueryNodeSets(
+      std::move(starting_query_nodes), config.accelerator_library,
+      config.module_library, all_reuse_links);*/ // Use real nodes
+  auto queue = NodeScheduler::FindAcceleratedQueryNodeSets(
+      {}, config.accelerator_library, config.module_library, all_reuse_links);
+
+  fsm->SetReuseLinks(all_reuse_links);
+  fsm->SetQueryNodeRunsQueue(queue);
+
   std::cout << "Schedule" << std::endl;
 
   return std::make_unique<SetupNodesState>();
