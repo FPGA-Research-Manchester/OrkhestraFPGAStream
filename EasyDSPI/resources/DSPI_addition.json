@@ -1,0 +1,11 @@
+{
+  "name": "DSPI_addition",
+  "address": "0xa0000000",
+  "bitfiles": [
+    {
+      "name": "DSPI_addition.bin",
+      "region": "full"
+    }
+  ],
+  "registers": []
+}

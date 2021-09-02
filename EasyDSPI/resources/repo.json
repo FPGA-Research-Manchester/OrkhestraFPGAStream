@@ -1,9 +1,18 @@
 {
-	"accelerators": [
-		"bitstream1",
-		"bitstream2",
-		"bitstream3",
-		"bitstream4",
-		"bitstream5"
-	]
+  "accelerators": [
+    "DSPI_joining",
+    "DSPI_filtering",
+    "DSPI_merge_sorting",
+    "DSPI_double_merge_sorting",
+    "DSPI_linear_sorting",
+    "DSPI_filter_join",
+    "DSPI_empty",
+    "DSPI_sort_join_filter",
+    "DSPI_filtering_linear_sort",
+    "DSPI_addition",
+    "DSPI_multiplication",
+    "DSPI_aggregation_sum",
+    "DSPI_add_mul_sum",
+    "DSPI_big_merge_sorting"
+  ]
 }

@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 #include "rapidjson_reader.hpp"
 
 #include <cstdio>
@@ -25,16 +26,16 @@ using easydspi::dbmstodspi::RapidJSONReader;
 using rapidjson::Document;
 using rapidjson::FileReadStream;
 
-std::unique_ptr<Document> RapidJSONReader::read(std::string json_filename) {
-  FILE* file_pointer =
-      fopen(json_filename.c_str(), "rb");  // non-Windows use "r"
+auto RapidJSONReader::Read(const std::string& json_filename)
+    -> std::unique_ptr<Document> {
+  FILE* file_pointer = fopen(json_filename.c_str(), "r");
 
   if (!file_pointer) {
     throw std::runtime_error("Couldn't find: " + json_filename);
   }
 
-  char readBuffer[8192];
-  FileReadStream input_stream(file_pointer, readBuffer, sizeof(readBuffer));
+  char read_buffer[8192];
+  FileReadStream input_stream(file_pointer, read_buffer, sizeof(read_buffer));
 
   auto document = std::make_unique<Document>();
   document->ParseStream(input_stream);
@@ -43,21 +44,86 @@ std::unique_ptr<Document> RapidJSONReader::read(std::string json_filename) {
   return document;
 }
 
-std::map<std::string, std::string>
-easydspi::dbmstodspi::RapidJSONReader::readDriverLibrary(
-    std::string json_filename) {
-  const auto document = read(json_filename);
-  std::map<std::string, std::string> value_map;
-  for (const auto& element : document->GetObject()) {
-    value_map.insert({element.name.GetString(), element.value.GetString()});
+auto RapidJSONReader::ReadInputDefinition(std::string json_filename)
+    -> std::map<std::string, RapidJSONReader::InputNodeParameters> {
+  const auto document = Read(json_filename);
+  std::map<std::string, RapidJSONReader::InputNodeParameters> input_node_map;
+  for (const auto& node : document->GetObject()) {
+    InputNodeParameters node_parameters_map;
+    for (const auto& node_parameter : node.value.GetObject()) {
+      if (!node_parameter.value.IsNull()) {
+        if (node_parameter.value.IsString()) {
+          GetOperationType(node_parameters_map, node_parameter);
+        } else if (node_parameter.value.IsArray()) {
+          GetIOStreamFilesAndDependencies(node_parameter, node_parameters_map);
+        } else if (node_parameter.value.IsObject()) {
+          GetOperationParameters(node_parameter, node_parameters_map);
+        } else {
+          throw std::runtime_error(
+              "Something went wrong. Please use a verifier!");
+        }
+      }
+    }
+    input_node_map.insert({node.name.GetString(), node_parameters_map});
   }
-  return value_map;
+  return input_node_map;
 }
 
-std::map<std::string, double>
-easydspi::dbmstodspi::RapidJSONReader::readDataSizes(
-    std::string json_filename) {
-  const auto document = read(json_filename);
+void RapidJSONReader::GetOperationParameters(
+    const rapidjson::GenericMember<
+        rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<>>& node_parameter,
+    JSONReaderInterface::InputNodeParameters& node_parameters_map) {
+  std::map<std::string, std::vector<std::vector<int>>> operation_parameters_map;
+  for (const auto& operation_parameter : node_parameter.value.GetObject()) {
+    std::vector<std::vector<int>> parameter_vectors;
+    for (const auto& given_parameter_vectors :
+         operation_parameter.value.GetArray()) {
+      std::vector<int> parameters;
+      if (given_parameter_vectors.Size() != 0 &&
+          given_parameter_vectors[0].IsString()) {
+        parameters =
+            ConvertCharStringToAscii(given_parameter_vectors[0].GetString(),
+                                     given_parameter_vectors[1].GetInt());
+      } else {
+        for (const auto& parameter : given_parameter_vectors.GetArray()) {
+          parameters.push_back(parameter.GetInt());
+        }
+      }
+      parameter_vectors.push_back(parameters);
+    }
+    operation_parameters_map.insert(
+        {operation_parameter.name.GetString(), parameter_vectors});
+  }
+  node_parameters_map.insert(
+      {node_parameter.name.GetString(), operation_parameters_map});
+}
+
+void RapidJSONReader::GetIOStreamFilesAndDependencies(
+    const rapidjson::GenericMember<
+        rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<>>& node_parameter,
+    JSONReaderInterface::InputNodeParameters& node_parameters_map) {
+  std::vector<std::string> string_array;
+  for (const auto& value_array_string : node_parameter.value.GetArray()) {
+    if (value_array_string.IsString()) {
+      string_array.emplace_back(value_array_string.GetString());
+    } else {
+      string_array.emplace_back("");
+    }
+  }
+  node_parameters_map.insert({node_parameter.name.GetString(), string_array});
+}
+
+void RapidJSONReader::GetOperationType(
+    JSONReaderInterface::InputNodeParameters& node_parameters_map,
+    const rapidjson::GenericMember<
+        rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<>>& node_parameter) {
+  node_parameters_map.insert(
+      {node_parameter.name.GetString(), node_parameter.value.GetString()});
+}
+
+auto RapidJSONReader::ReadDataSizes(std::string json_filename)
+    -> std::map<std::string, double> {
+  const auto document = Read(json_filename);
   std::map<std::string, double> value_map;
   for (const auto& element : document->GetObject()) {
     value_map.insert({element.name.GetString(), element.value.GetDouble()});
@@ -65,10 +131,9 @@ easydspi::dbmstodspi::RapidJSONReader::readDataSizes(
   return value_map;
 }
 
-std::map<std::string, int>
-easydspi::dbmstodspi::RapidJSONReader::readReqMemorySpace(
-    std::string json_filename) {
-  const auto document = read(json_filename);
+auto RapidJSONReader::ReadReqMemorySpace(std::string json_filename)
+    -> std::map<std::string, int> {
+  const auto document = Read(json_filename);
   std::map<std::string, int> value_map;
   for (const auto& element : document->GetObject()) {
     value_map.insert({element.name.GetString(), element.value.GetInt()});
@@ -76,15 +141,15 @@ easydspi::dbmstodspi::RapidJSONReader::readReqMemorySpace(
   return value_map;
 }
 
-std::map<std::vector<std::pair<std::string, std::vector<int>>>, std::string>
-easydspi::dbmstodspi::RapidJSONReader::readAcceleratorLibrary(
-    std::string json_filename) {
+auto RapidJSONReader::ReadAcceleratorLibrary(std::string json_filename)
+    -> std::map<std::vector<std::pair<std::string, std::vector<int>>>,
+                std::string> {
   std::string module_combination_names_field = "module_combinations";
   std::string accelerator_name_field = "accelerators";
   std::string module_name_field = "name";
   std::string module_capacity_field = "capacity";
-  const auto document = read(json_filename);
-  auto document_ptr = document.get();
+  const auto document = Read(json_filename);
+  auto* document_ptr = document.get();
   auto module_combination_names =
       (*document_ptr)[module_combination_names_field.c_str()].GetArray();
 
@@ -111,40 +176,17 @@ easydspi::dbmstodspi::RapidJSONReader::readAcceleratorLibrary(
   return value_map;
 }
 
-std::map<std::string, RapidJSONReader::InputNodeParameters>
-RapidJSONReader::readInputDefinition(std::string json_filename) {
-  const auto document = read(json_filename);
-  std::map<std::string, RapidJSONReader::InputNodeParameters> input_node_map;
-  for (const auto& node : document->GetObject()) {
-    InputNodeParameters node_parameters_map;
-    for (const auto& node_parameter : node.value.GetObject()) {
-      if (!node_parameter.value.IsNull()) {
-        if (node_parameter.value.IsString()) {
-          node_parameters_map.insert({node_parameter.name.GetString(),
-                                      node_parameter.value.GetString()});
-        } else {
-          std::map<std::string, std::vector<std::vector<int>>>
-              operation_parameters_map;
-          for (const auto& operation_parameter :
-               node_parameter.value.GetObject()) {
-            std::vector<std::vector<int>> parameter_vectors;
-            for (const auto& given_parameter_vectors :
-                 operation_parameter.value.GetArray()) {
-              std::vector<int> parameters;
-              for (const auto& parameter : given_parameter_vectors.GetArray()) {
-                parameters.push_back(parameter.GetInt());
-              }
-              parameter_vectors.push_back(parameters);
-            }
-            operation_parameters_map.insert(
-                {operation_parameter.name.GetString(), parameter_vectors});
-          }
-          node_parameters_map.insert(
-              {node_parameter.name.GetString(), operation_parameters_map});
-        }
-      }
-    }
-    input_node_map.insert({node.name.GetString(), node_parameters_map});
+auto RapidJSONReader::ConvertCharStringToAscii(const std::string& input_string,
+                                               int output_size)
+    -> std::vector<int> {
+  if (input_string.length() > output_size * 4) {
+    throw std::runtime_error(
+        (input_string + " is longer than " + std::to_string(output_size * 4))
+            .c_str());
   }
-  return input_node_map;
+  std::vector<int> integer_values(output_size, 0);
+  for (int i = 0; i < input_string.length(); i++) {
+    integer_values[i / 4] += int(input_string[i]) << (3 - (i % 4)) * 8;
+  }
+  return integer_values;
 }

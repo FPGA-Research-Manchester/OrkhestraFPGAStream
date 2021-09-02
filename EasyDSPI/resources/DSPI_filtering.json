@@ -1,0 +1,8 @@
+{
+  "name": "DSPI_filtering",
+  "address": "0xa0000000",
+  "bitfiles": [
+    {"name": "DSPI_filtering.bin", "region": "full"}
+  ],
+  "registers": []
+}

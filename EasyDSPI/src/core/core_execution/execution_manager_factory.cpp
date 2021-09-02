@@ -16,15 +16,21 @@ limitations under the License.
 
 #include "execution_manager_factory.hpp"
 
+#include "data_manager.hpp"
 #include "execution_manager.hpp"
-#include "init_state.hpp"
+#include "memory_manager.hpp"
+#include "schedule_state.hpp"
 
 using easydspi::core::core_execution::ExecutionManager;
 using easydspi::core::core_execution::ExecutionManagerFactory;
 using easydspi::core_interfaces::ExecutionManagerInterface;
-using easydspi::dbmstodspi::InitState;
+using easydspi::dbmstodspi::DataManager;
+using easydspi::dbmstodspi::MemoryManager;
+using easydspi::dbmstodspi::ScheduleState;
 
-std::unique_ptr<ExecutionManagerInterface>
-ExecutionManagerFactory::getManager() {
-  return std::make_unique<ExecutionManager>(std::make_unique<InitState>());
+std::unique_ptr<ExecutionManagerInterface> ExecutionManagerFactory::getManager(
+    Config config) {
+  return std::make_unique<ExecutionManager>(
+      std::make_unique<DataManager>(config.data_sizes, config.csv_separator),
+      std::make_unique<MemoryManager>(), std::make_unique<ScheduleState>());
 }

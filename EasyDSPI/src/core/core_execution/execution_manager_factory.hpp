@@ -19,12 +19,14 @@ limitations under the License.
 #include <memory>
 
 #include "execution_manager_interface.hpp"
+#include "config.hpp"
 
 using easydspi::core_interfaces::ExecutionManagerInterface;
+using easydspi::core_interfaces::Config;
 
 namespace easydspi::core::core_execution {
 class ExecutionManagerFactory {
  public:
-  static std::unique_ptr<ExecutionManagerInterface> getManager();
+  static std::unique_ptr<ExecutionManagerInterface> getManager(Config config);
 };
 }  // namespace easydspi::core::core_execution

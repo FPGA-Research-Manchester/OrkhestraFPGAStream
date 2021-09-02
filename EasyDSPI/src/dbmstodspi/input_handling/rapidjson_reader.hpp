@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 #pragma once
 
 #include <memory>
@@ -23,26 +24,60 @@ limitations under the License.
 using rapidjson::Document;
 
 namespace easydspi::dbmstodspi {
-class RapidJSONReader : public JSONReaderInterface {
-  using InputNodeParameters = std::map<
-      std::string,
-      std::variant<std::string,
-                   std::map<std::string, std::vector<std::vector<int>>>>>;
 
+/**
+ * @brief Class to read JSON files using https://github.com/Tencent/rapidjson/
+ */
+class RapidJSONReader : public JSONReaderInterface {
  private:
-  std::unique_ptr<Document> read(std::string json_filename);
+  static auto Read(const std::string& json_filename)
+      -> std::unique_ptr<Document>;
+  static auto ConvertCharStringToAscii(const std::string& input_string,
+                                       int output_size) -> std::vector<int>;
+  void GetOperationParameters(
+      const rapidjson::GenericMember<
+          rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<>>& node_parameter,
+      JSONReaderInterface::InputNodeParameters& node_parameters_map);
+  void GetIOStreamFilesAndDependencies(
+      const rapidjson::GenericMember<
+          rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<>>& node_parameter,
+      JSONReaderInterface::InputNodeParameters& node_parameters_map);
+  void GetOperationType(
+      JSONReaderInterface::InputNodeParameters& node_parameters_map,
+      const rapidjson::GenericMember<
+          rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<>>& node_parameter);
 
  public:
   ~RapidJSONReader() override = default;
-  std::map<std::string, std::string> readDriverLibrary(
-      std::string json_filename) override;
-  std::map<std::string, double> readDataSizes(
-      std::string json_filename) override;
-  std::map<std::string, int> readReqMemorySpace(
-      std::string json_filename) override;
-  std::map<std::vector<std::pair<std::string, std::vector<int>>>, std::string>
-  readAcceleratorLibrary(std::string json_filename) override;
-  std::map<std::string, InputNodeParameters> readInputDefinition(
-      std::string json_filename) override;
+  /**
+   * @brief Read the JSON file describing data type sizes.
+   * @param json_filename JSON file.
+   * @return Data type and size map.
+   */
+  auto ReadDataSizes(std::string json_filename)
+      -> std::map<std::string, double> override;
+  /**
+   * @brief Read memory mapped register space sizes.
+   * @param json_filename JSON file.
+   * @return How much space each bitstream has for memory mapped registers.
+   */
+  auto ReadReqMemorySpace(std::string json_filename)
+      -> std::map<std::string, int> override;
+  /**
+   * @brief Read bitstreams
+   * @param json_filename JSON file
+   * @return Which module combination is associated with which bitstream name.
+   */
+  auto ReadAcceleratorLibrary(std::string json_filename)
+      -> std::map<std::vector<std::pair<std::string, std::vector<int>>>,
+                  std::string> override;
+  /**
+   * @brief Read input def - query plan.
+   * @param json_filename JSON file
+   * @return Return query plan node field names and their values.
+   */
+  auto ReadInputDefinition(std::string json_filename)
+      -> std::map<std::string,
+                  JSONReaderInterface::InputNodeParameters> override;
 };
 }  // namespace easydspi::dbmstodspi

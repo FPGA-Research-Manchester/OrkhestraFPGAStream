@@ -19,9 +19,10 @@ set(header_files
     ${CMAKE_CURRENT_SOURCE_DIR}/config.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/execution_manager_interface.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/execution_plan_graph_interface.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/execution_plan_node.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/input_manager_interface.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/output_manager_interface.hpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/operation_types.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/table_data.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/query_scheduling_data.hpp)
 
 add_library(core_interfaces INTERFACE)
 

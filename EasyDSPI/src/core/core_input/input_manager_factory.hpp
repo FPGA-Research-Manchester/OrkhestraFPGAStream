@@ -18,7 +18,6 @@ limitations under the License.
 
 #include <memory>
 
-#include "input_manager_config_enums.hpp"
 #include "input_manager_interface.hpp"
 
 using easydspi::core_interfaces::InputManagerInterface;
@@ -26,7 +25,6 @@ using easydspi::core_interfaces::InputManagerInterface;
 namespace easydspi::core::core_input {
 class InputManagerFactory {
  public:
-  static std::unique_ptr<InputManagerInterface> getManager(
-      InputManagerValidationEnum manager_type);
+  static std::unique_ptr<InputManagerInterface> getManager();
 };
 }  // namespace easydspi::core::core_input

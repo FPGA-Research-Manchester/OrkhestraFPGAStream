@@ -34,11 +34,8 @@ int main(int argc, char* argv[]) {
   } else if (argc > required_arg_count) {
     cout << "Number of arguments passed is too big: " << argc << "!" << endl;
   } else {
-    const auto results = Core::run(argv[1], argv[2]);
-    cout << "Results written to: " << endl;
-    for (const auto& result : results) {
-      cout << result << endl;
-    }
+    Core::run(argv[1], argv[2]);
+    cout << "Succesful run! " << endl;
   }
   return 0;
 }

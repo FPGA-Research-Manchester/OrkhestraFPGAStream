@@ -1,41 +1,90 @@
 {
-  "module_combinations": [ "funcCombo1", "funcCombo2", "funcCombo3", "funcCombo4" ],
-  "funcCombo1": [
-    {
-      "name": "function1",
-      "capacity": [ 1, 2 ]
-    }
-  ],
-  "funcCombo2": [
-    {
-      "name": "function1",
-      "capacity": [ 1, 2 ]
-    },
-    {
-      "name": "function2",
-      "capacity": []
-    }
-  ],
-  "funcCombo3": [
-    {
-      "name": "function3",
-      "capacity": []
-    },
-    {
-      "name": "function1",
-      "capacity": [ 4, 2 ]
-    }
-  ],
-  "funcCombo4": [
-    {
-      "name": "function1",
-      "capacity": [ 0, 1 ]
-    }
-  ],
-  "accelerators": {
-    "funcCombo1": "bitstream1",
-    "funcCombo2": "bitstream1",
-    "funcCombo3": "bitstream3",
-    "funcCombo4": "bitstream5"
-  }
+	"module_combinations": ["filter", "join", "single_merge", "linear_sort", "add", "mul", "sum", "empty", "double_merge", "sort_join_filter", "filter_join", "filter_sort", "add_mul_sum"],
+	"filter": [{
+		"name": "kFilter",
+		"capacity": [32, 4]
+	}],
+	"join": [{
+		"name": "kJoin",
+		"capacity": []
+	}],
+	"single_merge": [{
+		"name": "kMergeSort",
+		"capacity": [64]
+	}],
+	"double_merge": [{
+			"name": "kMergeSort",
+			"capacity": [64]
+		},
+		{
+			"name": "kMergeSort",
+			"capacity": [64]
+		}
+	],
+	"linear_sort": [{
+		"name": "kLinearSort",
+		"capacity": [512]
+	}],
+	"add": [{
+		"name": "kAddition",
+		"capacity": []
+	}],
+	"mul": [{
+		"name": "kMultiplication",
+		"capacity": []
+	}],
+	"sum": [{
+		"name": "kAggregationSum",
+		"capacity": []
+	}],
+	"empty": [],
+	"sort_join_filter": [{
+		"name": "kMergeSort",
+		"capacity": [64]
+	}, {
+		"name": "kJoin",
+		"capacity": []
+	}, {
+		"name": "kFilter",
+		"capacity": [32, 4]
+	}],
+	"filter_join": [{
+		"name": "kFilter",
+		"capacity": [8, 1]
+	}, {
+		"name": "kJoin",
+		"capacity": []
+	}],
+	"filter_sort": [{
+		"name": "kFilter",
+		"capacity": [16, 2]
+	}, {
+		"name": "kLinearSort",
+		"capacity": [1024]
+	}],
+	"add_mul_sum": [{
+		"name": "kAddition",
+		"capacity": []
+	}, {
+		"name": "kMultiplication",
+		"capacity": []
+	}, {
+		"name": "kAggregationSum",
+		"capacity": []
+	}],
+	"accelerators": {
+		"filter": "DSPI_filtering",
+		"join": "DSPI_joining",
+		"single_merge": "DSPI_merge_sorting",
+		"double_merge": "DSPI_double_merge_sorting",
+		"linear_sort": "DSPI_linear_sorting",
+		"add": "DSPI_addition",
+		"mul": "DSPI_multiplication",
+		"sum": "DSPI_aggregation_sum",
+		"empty": "DSPI_empty",
+		"sort_join_filter": "DSPI_sort_join_filter",
+		"filter_join": "DSPI_filter_join",
+		"filter_sort": "DSPI_filtering_linear_sort",
+		"add_mul_sum": "DSPI_add_mul_sum"
+	}
 }

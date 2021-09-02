@@ -16,21 +16,21 @@ limitations under the License.
 #pragma once
 
 #include "execution_plan_graph_interface.hpp"
-#include "execution_plan_node.hpp"
+#include "query_scheduling_data.hpp"
 
 using easydspi::core_interfaces::ExecutionPlanGraphInterface;
-using easydspi::core_interfaces::ExecutionPlanNode;
+using easydspi::core_interfaces::query_scheduling_data::QueryNode;
 
 namespace easydspi::dbmstodspi {
 class Graph : public ExecutionPlanGraphInterface {
  private:
-  std::vector<std::shared_ptr<ExecutionPlanNode>> stored_data_;
+  std::vector<std::shared_ptr<QueryNode>> stored_data_;
 
  public:
   ~Graph() override = default;
 
-  Graph(std::vector<std::shared_ptr<ExecutionPlanNode>> graph_data)
-      : stored_data_{graph_data} {}
+  Graph(std::vector<std::shared_ptr<QueryNode>> graph_data)
+      : stored_data_{std::move(graph_data)} {}
 
   void insertData(std::string given_data) override;
   std::string exportData() const override;

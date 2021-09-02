@@ -43,4 +43,5 @@ endif()
 target_include_directories(input_handling PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
                                           PUBLIC "${rapidjson_SOURCE_DIR}/include")
 
+target_link_libraries(input_handling PRIVATE query_execution)
 target_link_libraries(input_handling PRIVATE core_interfaces)

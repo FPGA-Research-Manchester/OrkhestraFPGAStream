@@ -28,7 +28,7 @@ namespace easydspi::core_interfaces {
 class ExecutionManagerInterface {
  public:
   virtual ~ExecutionManagerInterface() = default;
-  virtual std::vector<std::string> execute(
+  virtual void execute(
       std::pair<std::unique_ptr<ExecutionPlanGraphInterface>, Config>
           execution_input) = 0;
 };

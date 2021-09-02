@@ -15,12 +15,13 @@
 
 # DBMStoDSPI
 
+add_subdirectory(util)
 add_subdirectory(input_handling)
-add_subdirectory(fsm_states)
+add_subdirectory(query_execution)
 
 add_library(dbmstodspi 
             $<TARGET_OBJECTS:input_handling>
-            $<TARGET_OBJECTS:fsm_states>)
+            $<TARGET_OBJECTS:query_execution>)
 
 target_link_libraries(dbmstodspi PUBLIC input_handling
-                                 PUBLIC fsm_states)
+                                 PUBLIC query_execution)

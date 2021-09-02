@@ -1,0 +1,11 @@
+{
+  "name": "DSPI_multiplication",
+  "address": "0xa0000000",
+  "bitfiles": [
+    {
+      "name": "DSPI_multiplication.bin",
+      "region": "full"
+    }
+  ],
+  "registers": []
+}

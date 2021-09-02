@@ -15,12 +15,18 @@ limitations under the License.
 */
 
 #include "execution_manager.hpp"
+#include "fpga_manager.hpp"
+#include "fpga_manager_interface.hpp"
+
+#include <memory>
 
 using easydspi::core::core_execution::ExecutionManager;
+using easydspi::dbmstodspi::FPGAManager;
+using easydspi::dbmstodspi::FPGAManagerInterface;
 
 void ExecutionManager::setFinishedFlag() { busy_flag_ = false; }
 
-std::vector<std::string> ExecutionManager::execute(
+void ExecutionManager::execute(
     std::pair<std::unique_ptr<ExecutionPlanGraphInterface>, Config>
         execution_input) {
   initial_config_ = execution_input.second;
@@ -33,8 +39,29 @@ std::vector<std::string> ExecutionManager::execute(
       current_state_ = std::move(new_state);
     }
   }
-  return {getCurrentGraphData()};
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 std::string ExecutionManager::getCurrentGraphData() {
   return current_graph_data_;

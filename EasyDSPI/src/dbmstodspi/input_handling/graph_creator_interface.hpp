@@ -26,7 +26,7 @@ namespace easydspi::dbmstodspi {
 class GraphCreatorInterface {
  public:
   virtual ~GraphCreatorInterface() = default;
-  virtual std::unique_ptr<ExecutionPlanGraphInterface> makeGraph(
+  virtual std::unique_ptr<ExecutionPlanGraphInterface> MakeGraph(
       std::string graph_def_filename) = 0;
 };
 }  // namespace easydspi::dbmstodspi

@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 #pragma once
 
 #include <map>
@@ -24,22 +25,19 @@ limitations under the License.
 namespace easydspi::dbmstodspi {
 class JSONReaderInterface {
  public:
-  virtual ~JSONReaderInterface() = default;
-  virtual std::map<std::string, std::string> readDriverLibrary(
-      std::string json_filename) = 0;
-  virtual std::map<std::string, double> readDataSizes(
-      std::string json_filename) = 0;
-  virtual std::map<std::string, int> readReqMemorySpace(
-      std::string json_filename) = 0;
-  virtual std::map<std::vector<std::pair<std::string, std::vector<int>>>,
-                   std::string>
-  readAcceleratorLibrary(std::string json_filename) = 0;
-  virtual std::map<
+  using InputNodeParameters = std::map<
       std::string,
-      std::map<
-          std::string,
-          std::variant<std::string,
-                       std::map<std::string, std::vector<std::vector<int>>>>>>
-  readInputDefinition(std::string json_filename) = 0;
+      std::variant<std::string, std::vector<std::string>,
+                   std::map<std::string, std::vector<std::vector<int>>>>>;
+  virtual ~JSONReaderInterface() = default;
+  virtual auto ReadDataSizes(std::string json_filename)
+      -> std::map<std::string, double> = 0;
+  virtual auto ReadReqMemorySpace(std::string json_filename)
+      -> std::map<std::string, int> = 0;
+  virtual auto ReadAcceleratorLibrary(std::string json_filename)
+      -> std::map<std::vector<std::pair<std::string, std::vector<int>>>,
+                  std::string> = 0;
+  virtual auto ReadInputDefinition(std::string json_filename)
+      -> std::map<std::string, InputNodeParameters> = 0;
 };
 }  // namespace easydspi::dbmstodspi

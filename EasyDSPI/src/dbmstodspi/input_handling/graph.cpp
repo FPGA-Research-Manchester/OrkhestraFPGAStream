@@ -17,10 +17,8 @@ limitations under the License.
 
 using easydspi::dbmstodspi::Graph;
 
-std::string Graph::exportData() const {
-  return stored_data_.at(0)->operation_type;
-}
+std::string Graph::exportData() const { return "HARDCODED STRING"; }
 
 void Graph::insertData(std::string given_data) {
-  stored_data_.at(0)->operation_type = given_data;
+  // Do nothing
 }

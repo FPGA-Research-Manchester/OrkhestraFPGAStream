@@ -13,23 +13,53 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 #pragma once
+
+#include <memory>
 
 #include "graph_creator_interface.hpp"
 #include "json_reader_interface.hpp"
+#include "json_validator_interface.hpp"
+#include "query_scheduling_data.hpp"
 
-using easydspi::core_interfaces::ExecutionPlanGraphInterface;
+using easydspi::core_interfaces::query_scheduling_data::QueryNode;
 
 namespace easydspi::dbmstodspi {
+/**
+ * @brief Factory for creating query plan graphs.
+ */
 class GraphCreator : public GraphCreatorInterface {
  private:
   std::unique_ptr<JSONReaderInterface> json_reader_;
+  std::unique_ptr<JSONValidatorInterface> json_validator_;
+
+  static void PopulateGraphNodesMapWithJSONData(
+      std::map<std::string, JSONReaderInterface::InputNodeParameters> &data,
+      std::map<std::string, std::shared_ptr<QueryNode>> &graph_nodes_map,
+      std::map<std::string, std::vector<std::string>> &previous_nodes,
+      std::map<std::string, std::vector<std::string>> &next_nodes);
+  static void LinkDependentNodes(
+      std::map<std::string, std::shared_ptr<QueryNode>> &graph_nodes_map,
+      std::map<std::string, std::vector<std::string>> &previous_nodes,
+      std::map<std::string, std::vector<std::string>> &next_nodes);
 
  public:
-  ~GraphCreator() override = default;
-  GraphCreator(std::unique_ptr<JSONReaderInterface> json_reader)
-      : json_reader_{std::move(json_reader)} {};
-  std::unique_ptr<ExecutionPlanGraphInterface> makeGraph(
-      std::string graph_def_filename) override;
+  /**
+   * @brief Constructor for making the graph creator with the given JSON reader
+   * object.
+   * @param json_reader Object to read JSON files with.
+   */
+  explicit GraphCreator(std::unique_ptr<JSONReaderInterface> json_reader,
+                        std::unique_ptr<JSONValidatorInterface> json_validator)
+      : json_reader_{std::move(json_reader)},
+        json_validator_{std::move(json_validator)} {};
+  /**
+   * @brief Read the given input_def file and make the query plan graph object.
+   * @param graph_def_filename File containing the query plan information.
+   * @return Query plan graph created form the given JSON.
+   */
+  auto MakeGraph(std::string graph_def_filename)
+      -> std::unique_ptr<ExecutionPlanGraphInterface>;
 };
 }  // namespace easydspi::dbmstodspi
