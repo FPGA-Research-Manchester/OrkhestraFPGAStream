@@ -62,7 +62,7 @@ auto MergeSortSetup::CalculateSortBufferSize(int buffer_space,
   int max_buffered_record_count = buffer_space / chunks_per_record -
                                   16;  // -16 for records in the pipelines.
 
-  return std::min(16,
+  return std::min(2 * buffer_space / channel_count,
                   (max_buffered_record_count - internal_logic_buffer_reserve) /
                       channel_count);
 }
