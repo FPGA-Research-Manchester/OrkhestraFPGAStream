@@ -56,13 +56,13 @@ class QueryManagerInterface {
   virtual auto SetupAccelerationNodesForExecution(
       DataManagerInterface* data_manager,
       MemoryManagerInterface* memory_manager,
-      std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>*
+      std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
           input_memory_blocks,
-      std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>*
+      std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
           output_memory_blocks,
-      std::map<std::string, std::vector<RecordSizeAndCount>>*
+      std::map<std::string, std::vector<RecordSizeAndCount>>&
           input_stream_sizes,
-      std::map<std::string, std::vector<RecordSizeAndCount>>*
+      std::map<std::string, std::vector<RecordSizeAndCount>>&
           output_stream_sizes,
       const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes)
       -> std::pair<

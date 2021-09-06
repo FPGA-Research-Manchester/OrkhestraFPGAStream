@@ -109,7 +109,11 @@ add_library(query_execution OBJECT
             scheduling/query_manager.cpp
             scheduling/query_manager_interface.hpp
             scheduling/elastic_module_checker.hpp
-            scheduling/elastic_module_checker.cpp)
+            scheduling/elastic_module_checker.cpp
+            scheduling/id_manager.hpp
+            scheduling/id_manager.cpp
+            scheduling/table_manager.hpp
+            scheduling/table_manager.cpp)
 
 target_include_directories(query_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} 
                                                   ${CMAKE_CURRENT_SOURCE_DIR}/states

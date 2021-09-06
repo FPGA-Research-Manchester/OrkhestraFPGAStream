@@ -1,6 +1,6 @@
 {
   "first_reverse_node": {
-    "input": [ "CAR_DATA.csv" ],
+    "input": [ "resources/CAR_DATA.csv" ],
     "output": [ null ],
     "operation": "kFilter",
     "previous_nodes": [ null ],
