@@ -35,5 +35,5 @@ void Core::run(std::string input_filename,
   auto input =
       InputManagerFactory::getManager()
           ->parse(input_filename, config_filename);
-  ExecutionManagerFactory::getManager(input.second)->execute(std::move(input));
+  ExecutionManagerFactory::getManager(input.second)->execute(std::move(input.first));
 }

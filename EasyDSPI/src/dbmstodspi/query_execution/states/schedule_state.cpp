@@ -30,16 +30,11 @@ using easydspi::dbmstodspi::StateInterface;
 std::unique_ptr<StateInterface> ScheduleState::execute(
     GraphProcessingFSMInterface* fsm) {
   std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links;
-  auto config = fsm->GetConfig();
-
-  /*auto queue = NodeScheduler::FindAcceleratedQueryNodeSets(
-      std::move(starting_query_nodes), config.accelerator_library,
-      config.module_library, all_reuse_links);*/ // Use real nodes
-  auto queue = NodeScheduler::FindAcceleratedQueryNodeSets(
-      {}, config.accelerator_library, config.module_library, all_reuse_links);
-
-  fsm->SetReuseLinks(all_reuse_links);
-  fsm->SetQueryNodeRunsQueue(queue);
+  if (fsm->IsUnscheduledNodesGraphEmpty()) {
+    fsm->setFinishedFlag();
+    return std::make_unique<ScheduleState>();
+  }
+  fsm->ScheduleUnscheduledNodes();
 
   std::cout << "Schedule" << std::endl;
 

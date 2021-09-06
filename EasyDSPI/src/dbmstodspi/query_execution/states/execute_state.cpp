@@ -15,18 +15,28 @@ limitations under the License.
 */
 
 #include "execute_state.hpp"
+#include "setup_nodes_state.hpp"
 
 #include <iostream>
+#include <stdexcept>
 
 using easydspi::dbmstodspi::ExecuteState;
 using easydspi::dbmstodspi::GraphProcessingFSMInterface;
 using easydspi::dbmstodspi::StateInterface;
+using easydspi::dbmstodspi::SetupNodesState;
 
 std::unique_ptr<StateInterface> ExecuteState::execute(
     GraphProcessingFSMInterface* fsm) {
-  // Read some data or do something
-  std::cout << "Execute" << std::endl;
-  fsm->setFinishedFlag();
+  if (fsm->IsRunReadyForExecution()) {
+    if (!fsm->IsRunValid()) {
+        // Fix stuff
+      throw std::runtime_error("Not implemented");
+    }
+  } else {
+    throw std::runtime_error("No nodes ready to execute!");
+  }
 
-  return std::make_unique<ExecuteState>();
+  std::cout << "Execute" << std::endl;
+
+  return std::make_unique<SetupNodesState>();
 }

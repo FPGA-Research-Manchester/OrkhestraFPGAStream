@@ -18,16 +18,20 @@ limitations under the License.
 
 #include <iostream>
 
-#include "check_constraints_state.hpp"
+#include "execute_state.hpp"
+#include "schedule_state.hpp"
 
-using easydspi::dbmstodspi::CheckConstraintsState;
+using easydspi::dbmstodspi::ExecuteState;
 using easydspi::dbmstodspi::GraphProcessingFSMInterface;
 using easydspi::dbmstodspi::SetupNodesState;
 using easydspi::dbmstodspi::StateInterface;
 
 std::unique_ptr<StateInterface> SetupNodesState::execute(
     GraphProcessingFSMInterface* fsm) {
+  if (!fsm->IsARunScheduled()) {
+    return std::make_unique<ScheduleState>();
+  }
+  fsm->SetupNextRunData();
   std::cout << "SetupNodes" << std::endl;
-
-  return std::make_unique<CheckConstraintsState>();
+  return std::make_unique<ExecuteState>();
 }

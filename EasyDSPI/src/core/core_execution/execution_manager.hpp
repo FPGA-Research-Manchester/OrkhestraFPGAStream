@@ -28,6 +28,7 @@ limitations under the License.
 #include "memory_manager_interface.hpp"
 #include "query_scheduling_data.hpp"
 #include "state_interface.hpp"
+#include "query_manager_interface.hpp"
 
 using easydspi::core_interfaces::Config;
 using easydspi::core_interfaces::ExecutionManagerInterface;
@@ -41,6 +42,7 @@ using easydspi::dbmstodspi::FPGAManagerInterface;
 using easydspi::dbmstodspi::GraphProcessingFSMInterface;
 using easydspi::dbmstodspi::MemoryManagerInterface;
 using easydspi::dbmstodspi::StateInterface;
+using easydspi::dbmstodspi::QueryManagerInterface;
 
 namespace easydspi::core::core_execution {
 
@@ -48,41 +50,44 @@ class ExecutionManager : public ExecutionManagerInterface,
                          public GraphProcessingFSMInterface {
  public:
   ~ExecutionManager() override = default;
-  ExecutionManager(std::unique_ptr<DataManagerInterface> data_manager,
+  ExecutionManager(Config config,
+                   std::unique_ptr<QueryManagerInterface> query_manager,
+                   std::unique_ptr<DataManagerInterface> data_manager,
                    std::unique_ptr<MemoryManagerInterface> memory_manager,
                    std::unique_ptr<StateInterface> start_state)
       : current_state_{std::move(start_state)},
         data_manager_{std::move(data_manager)},
-        memory_manager_{std::move(memory_manager)} {}
+        memory_manager_{std::move(memory_manager)},
+        query_manager_{std::move(query_manager)},
+        config_{config} {};
 
   void setFinishedFlag() override;
 
-  void execute(std::pair<std::unique_ptr<ExecutionPlanGraphInterface>, Config>
-                   execution_input) override;
+  void execute(
+      std::unique_ptr<ExecutionPlanGraphInterface> execution_graph) override;
 
-  void SetQueryNodeRunsQueue(
-      const std::queue<std::pair<ConfigurableModulesVector,
-                                 std::vector<std::shared_ptr<QueryNode>>>>&
-          new_queue) override;
-  auto GetConfig() -> Config override;
-  auto GetReuseLinks()
-      -> std::map<std::string, std::map<int, MemoryReuseTargets>> override;
-  void SetReuseLinks(
-      const std::map<std::string, std::map<int, MemoryReuseTargets>> new_links)
-      override;
+  auto IsUnscheduledNodesGraphEmpty() -> bool override;
+  void ScheduleUnscheduledNodes() override;
+  auto IsARunScheduled() -> bool override;
+  void SetupNextRunData() override;
+  auto IsRunReadyForExecution() -> bool override;
+  auto IsRunValid() -> bool override;
+  void ExecuteAndProcessResults() override;
 
  private:
   // Initial inputs
+  std::unique_ptr<QueryManagerInterface> query_manager_;
   std::unique_ptr<DataManagerInterface> data_manager_;
   std::unique_ptr<MemoryManagerInterface> memory_manager_;
-  std::unique_ptr<ExecutionPlanGraphInterface> initial_graph_;
-  Config initial_config_;
+  std::unique_ptr<ExecutionPlanGraphInterface> unscheduled_graph_;
+  const Config config_;
   // State status
   std::unique_ptr<StateInterface> current_state_;
   bool busy_flag_ = false;
   // Variables used throughout different states.
   std::unique_ptr<FPGAManagerInterface> fpga_manager_;
   std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links_;
+  std::map<std::string, std::map<int, MemoryReuseTargets>> current_reuse_links_;
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
       input_memory_blocks_;
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
@@ -97,7 +102,8 @@ class ExecutionManager : public ExecutionManagerInterface,
   // Clear for each run
   std::map<std::string, std::vector<StreamResultParameters>> result_parameters_;
   std::vector<AcceleratedQueryNode> query_nodes_;
-  std::map<std::string, std::vector<int>> output_ids_;
-  std::map<std::string, std::vector<int>> input_ids_;
+
+  auto PopNextScheduledRun()
+      -> std::vector<std::shared_ptr<QueryNode>>;
 };
 }  // namespace easydspi::core::core_execution

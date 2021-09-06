@@ -17,8 +17,8 @@ limitations under the License.
 
 using easydspi::dbmstodspi::Graph;
 
-std::string Graph::exportData() const { return "HARDCODED STRING"; }
-
-void Graph::insertData(std::string given_data) {
-  // Do nothing
+auto Graph::ExportRootNodes() -> std::vector<std::shared_ptr<QueryNode>> {
+  return std::move(root_nodes_);
 }
+
+auto Graph::IsEmpty() -> bool { return root_nodes_.empty(); }

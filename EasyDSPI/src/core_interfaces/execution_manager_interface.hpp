@@ -29,7 +29,7 @@ class ExecutionManagerInterface {
  public:
   virtual ~ExecutionManagerInterface() = default;
   virtual void execute(
-      std::pair<std::unique_ptr<ExecutionPlanGraphInterface>, Config>
-          execution_input) = 0;
+      std::unique_ptr<ExecutionPlanGraphInterface>
+          execution_grpah) = 0;
 };
 }  // namespace easydspi::core_interfaces

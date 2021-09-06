@@ -21,14 +21,18 @@ limitations under the License.
 
 #include "config.hpp"
 #include "execution_plan_graph_interface.hpp"
+#include "fpga_manager_interface.hpp"
+#include "memory_block_interface.hpp"
 #include "query_scheduling_data.hpp"
 
 using easydspi::core_interfaces::Config;
 using easydspi::core_interfaces::ExecutionPlanGraphInterface;
 using easydspi::core_interfaces::query_scheduling_data::
     ConfigurableModulesVector;
-using easydspi::core_interfaces::query_scheduling_data::QueryNode;
 using easydspi::core_interfaces::query_scheduling_data::MemoryReuseTargets;
+using easydspi::core_interfaces::query_scheduling_data::QueryNode;
+using easydspi::core_interfaces::query_scheduling_data::RecordSizeAndCount;
+using easydspi::core_interfaces::query_scheduling_data::StreamResultParameters;
 
 namespace easydspi::dbmstodspi {
 
@@ -39,13 +43,12 @@ class GraphProcessingFSMInterface {
 
   virtual void setFinishedFlag() = 0;
 
-  virtual void SetQueryNodeRunsQueue(
-      const std::queue<std::pair<ConfigurableModulesVector,
-                           std::vector<std::shared_ptr<QueryNode>>>>& new_queue) = 0;
-  virtual auto GetConfig() -> Config = 0;
-  virtual auto GetReuseLinks()
-      -> std::map<std::string, std::map<int, MemoryReuseTargets>> = 0;
-  virtual void SetReuseLinks(
-      const std::map<std::string, std::map<int, MemoryReuseTargets>> new_links) = 0;
+  virtual auto IsUnscheduledNodesGraphEmpty() -> bool = 0;
+  virtual void ScheduleUnscheduledNodes() = 0;
+  virtual auto IsARunScheduled() -> bool = 0;
+  virtual void SetupNextRunData() = 0;
+  virtual auto IsRunReadyForExecution() -> bool = 0;
+  virtual auto IsRunValid() -> bool = 0;
+  virtual void ExecuteAndProcessResults() = 0;
 };
 }  // namespace easydspi::dbmstodspi

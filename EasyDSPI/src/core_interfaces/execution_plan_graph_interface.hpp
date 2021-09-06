@@ -17,13 +17,15 @@ limitations under the License.
 #pragma once
 
 #include <string>
+#include "query_scheduling_data.hpp"
+
+using easydspi::core_interfaces::query_scheduling_data::QueryNode;
 
 namespace easydspi::core_interfaces {
 class ExecutionPlanGraphInterface {
  public:
   virtual ~ExecutionPlanGraphInterface() = default;
-  // Some pointless functions
-  virtual void insertData(std::string given_data) = 0;
-  virtual std::string exportData() const = 0;
+  virtual auto ExportRootNodes() -> std::vector<std::shared_ptr<QueryNode>> = 0;
+  virtual auto IsEmpty() -> bool = 0;
 };
 }  // namespace easydspi::core_interfaces

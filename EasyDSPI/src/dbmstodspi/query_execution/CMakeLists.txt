@@ -19,8 +19,6 @@ add_library(query_execution OBJECT
             states/execute_state.cpp
             states/schedule_state.hpp
             states/schedule_state.cpp
-            states/check_constraints_state.hpp
-            states/check_constraints_state.cpp
             states/setup_nodes_state.hpp
             states/setup_nodes_state.cpp
             states/state_interface.hpp
@@ -106,7 +104,12 @@ add_library(query_execution OBJECT
             fpga_managing/setup/multiplication_setup.cpp
             fpga_managing/setup/multiplication_setup.hpp
             scheduling/node_scheduler.cpp
-            scheduling/node_scheduler.hpp)
+            scheduling/node_scheduler.hpp
+            scheduling/query_manager.hpp
+            scheduling/query_manager.cpp
+            scheduling/query_manager_interface.hpp
+            scheduling/elastic_module_checker.hpp
+            scheduling/elastic_module_checker.cpp)
 
 target_include_directories(query_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} 
                                                   ${CMAKE_CURRENT_SOURCE_DIR}/states
@@ -114,7 +117,7 @@ target_include_directories(query_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
                                                   ${CMAKE_CURRENT_SOURCE_DIR}/fpga_managing
                                                   ${CMAKE_CURRENT_SOURCE_DIR}/fpga_managing/modules
                                                   ${CMAKE_CURRENT_SOURCE_DIR}/fpga_managing/setup
-					          ${CMAKE_CURRENT_SOURCE_DIR}/scheduling)
+					                              ${CMAKE_CURRENT_SOURCE_DIR}/scheduling)
 
 target_link_libraries(query_execution PRIVATE core_interfaces)
 target_link_libraries(query_execution PRIVATE util)

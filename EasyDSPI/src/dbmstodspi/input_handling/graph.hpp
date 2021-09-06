@@ -24,15 +24,15 @@ using easydspi::core_interfaces::query_scheduling_data::QueryNode;
 namespace easydspi::dbmstodspi {
 class Graph : public ExecutionPlanGraphInterface {
  private:
-  std::vector<std::shared_ptr<QueryNode>> stored_data_;
+  std::vector<std::shared_ptr<QueryNode>> root_nodes_;
 
  public:
   ~Graph() override = default;
 
   Graph(std::vector<std::shared_ptr<QueryNode>> graph_data)
-      : stored_data_{std::move(graph_data)} {}
+      : root_nodes_{std::move(graph_data)} {}
 
-  void insertData(std::string given_data) override;
-  std::string exportData() const override;
+  auto ExportRootNodes() -> std::vector<std::shared_ptr<QueryNode>> override;
+  auto IsEmpty() -> bool override;
 };
 }  // namespace easydspi::dbmstodspi
