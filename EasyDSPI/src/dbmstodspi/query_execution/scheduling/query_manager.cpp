@@ -16,8 +16,6 @@ limitations under the License.
 
 #include "query_manager.hpp"
 
-#include <iostream>
-
 #include "elastic_module_checker.hpp"
 #include "fpga_manager.hpp"
 #include "id_manager.hpp"
@@ -46,16 +44,11 @@ auto QueryManager::GetCurrentLinks(
       current_links.insert({node_name, data_mapping});
     }
   }
-
-  std::cout << "Links" << std::endl;
-
   return current_links;
 }
 
 auto QueryManager::CreateFPGAManager(MemoryManagerInterface* memory_manager)
     -> std::unique_ptr<FPGAManagerInterface> {
-  std::cout << "FPGA Manager" << std::endl;
-
   return std::make_unique<FPGAManager>(memory_manager);
 }
 
@@ -305,17 +298,12 @@ auto QueryManager::SetupAccelerationNodesForExecution(
     StoreStreamResultPrameters(result_parameters, output_ids[node->node_name],
                                *node, output_memory_blocks[node->node_name]);
   }
-
-  std::cout << "Acceleration" << std::endl;
-
   return {query_nodes, result_parameters};
 }
 
 void QueryManager::LoadNextBitstreamIfNew(
     MemoryManagerInterface* memory_manager, std::string bitstream_file_name,
     Config config) {
-  std::cout << "Bitstream" << std::endl;
-
   return memory_manager->LoadBitstreamIfNew(
       bitstream_file_name,
       config.required_memory_space.at(bitstream_file_name));
@@ -328,8 +316,6 @@ auto QueryManager::ScheduleUnscheduledNodes(
         std::map<std::string, std::map<int, MemoryReuseTargets>>,
         std::queue<std::pair<ConfigurableModulesVector,
                              std::vector<std::shared_ptr<QueryNode>>>>> {
-  std::cout << "Scheduler" << std::endl;
-
   std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links;
 
   auto query_node_runs_queue = NodeScheduler::FindAcceleratedQueryNodeSets(
@@ -340,8 +326,6 @@ auto QueryManager::ScheduleUnscheduledNodes(
 
 auto QueryManager::IsRunValid(std::vector<AcceleratedQueryNode> current_run)
     -> bool {
-  std::cout << "Check" << std::endl;
-
   for (const auto& node : current_run) {
     ElasticModuleChecker::CheckElasticityNeeds(
         node.input_streams, node.operation_type, node.operation_parameters);
@@ -552,13 +536,11 @@ void QueryManager::ExecuteAndProcessResults(
           std::to_string(
               std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
                   .count()) +
-          "[ms]");
+          "[µs]");
 
   ProcessResults(data_manager, result_sizes, result_parameters,
                  output_memory_blocks, output_stream_sizes);
   FreeMemoryBlocks(memory_manager, input_memory_blocks, output_memory_blocks,
                    input_stream_sizes, output_stream_sizes, current_run_links,
                    current_node_names);
-
-  std::cout << "Execute" << std::endl;
 }

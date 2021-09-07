@@ -16,8 +16,6 @@ limitations under the License.
 
 #include "setup_nodes_state.hpp"
 
-#include <iostream>
-
 #include "execute_state.hpp"
 #include "schedule_state.hpp"
 
@@ -32,6 +30,5 @@ std::unique_ptr<StateInterface> SetupNodesState::execute(
     return std::make_unique<ScheduleState>();
   }
   fsm->SetupNextRunData();
-  std::cout << "SetupNodes" << std::endl;
   return std::make_unique<ExecuteState>();
 }

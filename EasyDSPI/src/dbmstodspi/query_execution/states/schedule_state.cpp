@@ -16,8 +16,6 @@ limitations under the License.
 
 #include "schedule_state.hpp"
 
-#include <iostream>
-
 #include "node_scheduler.hpp"
 #include "setup_nodes_state.hpp"
 
@@ -35,8 +33,6 @@ std::unique_ptr<StateInterface> ScheduleState::execute(
     return std::make_unique<ScheduleState>();
   }
   fsm->ScheduleUnscheduledNodes();
-
-  std::cout << "Schedule" << std::endl;
 
   return std::make_unique<SetupNodesState>();
 }

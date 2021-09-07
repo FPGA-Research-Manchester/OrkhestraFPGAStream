@@ -15,21 +15,21 @@ limitations under the License.
 */
 
 #include "execute_state.hpp"
-#include "setup_nodes_state.hpp"
 
-#include <iostream>
 #include <stdexcept>
+
+#include "setup_nodes_state.hpp"
 
 using easydspi::dbmstodspi::ExecuteState;
 using easydspi::dbmstodspi::GraphProcessingFSMInterface;
-using easydspi::dbmstodspi::StateInterface;
 using easydspi::dbmstodspi::SetupNodesState;
+using easydspi::dbmstodspi::StateInterface;
 
 std::unique_ptr<StateInterface> ExecuteState::execute(
     GraphProcessingFSMInterface* fsm) {
   if (fsm->IsRunReadyForExecution()) {
     if (!fsm->IsRunValid()) {
-        // Fix stuff
+      // Fix stuff
       throw std::runtime_error("Not implemented");
     }
   } else {
@@ -37,8 +37,6 @@ std::unique_ptr<StateInterface> ExecuteState::execute(
   }
 
   fsm->ExecuteAndProcessResults();
-
-  std::cout << "Execute" << std::endl;
 
   return std::make_unique<SetupNodesState>();
 }
