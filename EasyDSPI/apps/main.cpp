@@ -39,9 +39,9 @@ using easydspi::dbmstodspi::SetLoggingLevel;
  * configuration files.
  */
 void MeasureOverallTime(string input_def_filename, string config_filename) {
-  chrono::steady_clock::time_point begin = chrono::steady_clock::now();
+  auto begin = chrono::steady_clock::now();
   Core::run(input_def_filename, config_filename);
-  chrono::steady_clock::time_point end = chrono::steady_clock::now();
+  auto end = chrono::steady_clock::now();
 
   Log(LogLevel::kInfo,
       "Overall time = " +

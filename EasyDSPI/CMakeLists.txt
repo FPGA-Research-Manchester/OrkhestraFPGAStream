@@ -16,19 +16,24 @@
 # In theory up to 3.14 should be supported but it's tested with 3.17
 cmake_minimum_required(VERSION 3.17)
 
-project (Prototype)
+project(Prototype 
+        VERSION 0.1 
+        DESCRIPTION "A transparent DBMS FPGA acceleration configurator"
+        LANGUAGES CXX C
+)
 
 #Using C++ 17 features like concatenated namespaces
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 17)
+
+#To download external libraries like rapidcsv, rapidjson and googletest
+include(FetchContent)
 
 if (NOT WIN32)
     add_subdirectory(src/fos)
     # Assuming that dev work isn't done on a unix machine
     add_definitions (-D_FPGA_AVAILABLE)
 endif()
-
-#To download external libraries like rapidcsv, rapidjson and googletest
-include(FetchContent)
 
 # Global dependency
 add_subdirectory(src/core_interfaces)

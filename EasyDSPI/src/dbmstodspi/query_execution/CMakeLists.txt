@@ -12,6 +12,11 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
+if (NOT WIN32)
+	file(GLOB OS_DEPENDENT_MEMORY_BLOCK "table_data/udma_memory_block.cpp" "table_data/udma_memory_block.hpp")
+else()
+	file(GLOB OS_DEPENDENT_MEMORY_BLOCK "table_data/virtual_memory_block.hpp" "table_data/virtual_memory_block.cpp")
+endif()
 
 # DBMStoDSPI::FSM_states
 add_library(query_execution OBJECT 
@@ -32,8 +37,6 @@ add_library(query_execution OBJECT
             table_data/types_converter.cpp
             table_data/types_converter.hpp
             table_data/memory_block_interface.hpp
-            table_data/virtual_memory_block.hpp
-            table_data/virtual_memory_block.cpp
             table_data/memory_manager.cpp
             table_data/memory_manager.hpp
             table_data/memory_manager_interface.hpp
@@ -113,7 +116,8 @@ add_library(query_execution OBJECT
             scheduling/id_manager.hpp
             scheduling/id_manager.cpp
             scheduling/table_manager.hpp
-            scheduling/table_manager.cpp)
+            scheduling/table_manager.cpp
+            ${OS_DEPENDENT_MEMORY_BLOCK})
 
 target_include_directories(query_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} 
                                                   ${CMAKE_CURRENT_SOURCE_DIR}/states
@@ -125,3 +129,7 @@ target_include_directories(query_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 
 target_link_libraries(query_execution PRIVATE core_interfaces)
 target_link_libraries(query_execution PRIVATE util)
+
+if (NOT WIN32)
+	target_link_libraries(query_execution PUBLIC fos)
+endif()

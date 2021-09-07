@@ -15,6 +15,7 @@ limitations under the License.
 */
 #include "input_config_reader.hpp"
 
+#include <algorithm>
 #include <fstream>
 
 using easydspi::dbmstodspi::InputConfigReader;

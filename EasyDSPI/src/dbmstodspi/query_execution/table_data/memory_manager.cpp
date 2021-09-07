@@ -16,10 +16,9 @@ limitations under the License.
 
 #include "memory_manager.hpp"
 
+#include <chrono>
 #include <iostream>
 #include <stdexcept>
-
-#include <chrono>
 
 #include "logger.hpp"
 
@@ -30,6 +29,8 @@ limitations under the License.
 #include "virtual_memory_block.hpp"
 #endif
 
+using easydspi::dbmstodspi::Log;
+using easydspi::dbmstodspi::LogLevel;
 using easydspi::dbmstodspi::MemoryManager;
 
 MemoryManager::~MemoryManager() = default;
@@ -39,39 +40,27 @@ void MemoryManager::LoadBitstreamIfNew(const std::string& bitstream_name,
   if (bitstream_name != loaded_bitstream_ ||
       register_space_size != loaded_register_space_size_) {
 #ifdef _FPGA_AVAILABLE
-    dbmstodspi::logger::Log(dbmstodspi::logger::LogLevel::kDebug,
-                            "Loading " + bitstream_name);
+    Log(LogLevel::kDebug, "Loading " + bitstream_name);
 
-          std::chrono::steady_clock::time_point begin =
+    std::chrono::steady_clock::time_point begin =
         std::chrono::steady_clock::now();
 
     acceleration_instance_ =
         pr_manager_.fpgaLoadStatic(bitstream_name, register_space_size);
 
-        std::chrono::steady_clock::time_point end =
+    std::chrono::steady_clock::time_point end =
         std::chrono::steady_clock::now();
-    //dbmstodspi::logger::Log(
-    //        dbmstodspi::logger::LogLevel::kInfo,
-    //    "Reconfiguration time = " +
-    //        std::to_string(
-    //            std::chrono::duration_cast<std::chrono::milliseconds>(end -
-    //                                                                  begin)
-    //                .count()) +
-    //        "[ms]");
-
     register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
     SetFPGATo300MHz();
     end = std::chrono::steady_clock::now();
-    dbmstodspi::logger::Log(
-        dbmstodspi::logger::LogLevel::kInfo,
+    Log(LogLevel::kInfo,
         "Extra config time = " +
             std::to_string(
                 std::chrono::duration_cast<std::chrono::milliseconds>(end -
                                                                       begin)
                     .count()) +
             "[ms]");
-    dbmstodspi::logger::Log(dbmstodspi::logger::LogLevel::kDebug,
-                            bitstream_name + " loaded!");
+    Log(LogLevel::kDebug, bitstream_name + " loaded!");
 #else
     register_space_ = std::vector<uint32_t>(register_space_size, -1);
 #endif

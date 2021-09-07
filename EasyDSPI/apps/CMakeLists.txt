@@ -45,6 +45,10 @@ set(data
 	${Prototype_SOURCE_DIR}/resources/DSPI_multiplication.json
 	${Prototype_SOURCE_DIR}/resources/DSPI_sort_join_filter.bin
 	${Prototype_SOURCE_DIR}/resources/DSPI_sort_join_filter.json
+	${Prototype_SOURCE_DIR}/resources/DSPI_double_merge_sorting.bin
+	${Prototype_SOURCE_DIR}/resources/DSPI_double_merge_sorting.json
+	${Prototype_SOURCE_DIR}/resources/DSPI_big_merge_sorting.bin
+	${Prototype_SOURCE_DIR}/resources/DSPI_big_merge_sorting.json
 
 	${Prototype_SOURCE_DIR}/resources/filter_testing.json
 	${Prototype_SOURCE_DIR}/resources/repo.json
