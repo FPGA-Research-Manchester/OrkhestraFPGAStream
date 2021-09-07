@@ -80,7 +80,24 @@ class QueryManagerInterface {
                                std::vector<std::shared_ptr<QueryNode>>>>> = 0;
   virtual auto IsRunValid(std::vector<AcceleratedQueryNode> current_run)
       -> bool = 0;
-  virtual void ExecuteAndProcessResults() = 0;
+  virtual void ExecuteAndProcessResults(
+      FPGAManagerInterface* fpga_manager,
+      const DataManagerInterface* data_manager,
+      MemoryManagerInterface* memory_manager,
+      std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+          input_memory_blocks,
+      std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+          output_memory_blocks,
+      std::map<std::string, std::vector<RecordSizeAndCount>>&
+          input_stream_sizes,
+      std::map<std::string, std::vector<RecordSizeAndCount>>&
+          output_stream_sizes,
+      const std::map<std::string, std::vector<StreamResultParameters>>&
+          result_parameters,
+      const std::vector<std::string>& current_node_names,
+      const std::map<std::string, std::map<int, MemoryReuseTargets>>&
+          current_run_links,
+      const std::vector<AcceleratedQueryNode>& execution_query_nodes) = 0;
 };
 
 }  // namespace easydspi::dbmstodspi

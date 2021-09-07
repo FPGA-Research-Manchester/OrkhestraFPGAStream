@@ -57,21 +57,34 @@ void ExecutionManager::ScheduleUnscheduledNodes() {
   query_node_runs_queue_ = nodes_and_links.second;
 }
 void ExecutionManager::SetupNextRunData() {
-  const auto bitstream_file_name =
-      config_.accelerator_library.at(query_node_runs_queue_.front().first);
-  query_manager_->LoadNextBitstreamIfNew(memory_manager_.get(),
-                                         bitstream_file_name, config_);
+  query_manager_->LoadNextBitstreamIfNew(
+      memory_manager_.get(),
+      config_.accelerator_library.at(query_node_runs_queue_.front().first),
+      config_);
   auto next_scheduled_run_nodes = PopNextScheduledRun();
+
+  for (const auto& node : next_scheduled_run_nodes) {
+    scheduled_node_names_.push_back(node->node_name);
+  }
+
   auto execution_nodes_and_result_params =
       query_manager_->SetupAccelerationNodesForExecution(
           data_manager_.get(), memory_manager_.get(), input_memory_blocks_,
           output_memory_blocks_, input_stream_sizes_, output_stream_sizes_,
-          next_scheduled_run_nodes);
+          std::move(next_scheduled_run_nodes));
   query_nodes_ = std::move(execution_nodes_and_result_params.first);
   result_parameters_ = std::move(execution_nodes_and_result_params.second);
 }
 void ExecutionManager::ExecuteAndProcessResults() {
-  query_manager_->ExecuteAndProcessResults();
+  if (!fpga_manager_) {
+    fpga_manager_ =
+        std::move(query_manager_->CreateFPGAManager(memory_manager_.get()));
+  }
+  query_manager_->ExecuteAndProcessResults(
+      fpga_manager_.get(), data_manager_.get(), memory_manager_.get(),
+      input_memory_blocks_, output_memory_blocks_, input_stream_sizes_,
+      output_stream_sizes_, result_parameters_, scheduled_node_names_,
+      current_reuse_links_, query_nodes_);
 }
 auto ExecutionManager::IsRunValid() -> bool {
   return query_manager_->IsRunValid(query_nodes_);

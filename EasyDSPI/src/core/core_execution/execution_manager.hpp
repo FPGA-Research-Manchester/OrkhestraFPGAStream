@@ -102,6 +102,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   // Clear for each run
   std::map<std::string, std::vector<StreamResultParameters>> result_parameters_;
   std::vector<AcceleratedQueryNode> query_nodes_;
+  std::vector<std::string> scheduled_node_names_;
 
   auto PopNextScheduledRun()
       -> std::vector<std::shared_ptr<QueryNode>>;

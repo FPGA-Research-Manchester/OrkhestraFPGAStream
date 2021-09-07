@@ -350,6 +350,215 @@ auto QueryManager::IsRunValid(std::vector<AcceleratedQueryNode> current_run)
   return true;
 }
 
-void QueryManager::ExecuteAndProcessResults() {
+void QueryManager::CheckTableData(const DataManagerInterface* data_manager,
+                                  const TableData& expected_table,
+                                  const TableData& resulting_table) {
+  if (expected_table == resulting_table) {
+    Log(LogLevel::kDebug, "Query results are correct!");
+  } else {
+    Log(LogLevel::kError,
+        "Incorrect query results: " +
+            std::to_string(
+                expected_table.table_data_vector.size() /
+                TableManager::GetRecordSizeFromTable(expected_table)) +
+            " vs " +
+            std::to_string(
+                resulting_table.table_data_vector.size() /
+                TableManager::GetRecordSizeFromTable(resulting_table)) +
+            " rows!");
+    data_manager->PrintTableData(resulting_table);
+  }
+}
+
+void QueryManager::CheckResults(
+    const DataManagerInterface* data_manager,
+    const std::unique_ptr<MemoryBlockInterface>& memory_device, int row_count,
+    std::string filename, const std::vector<std::vector<int>>& node_parameters,
+    int stream_index) {
+  auto expected_table = TableManager::ReadTableFromFile(
+      data_manager, node_parameters, stream_index, std::move(filename));
+  auto resulting_table = TableManager::ReadTableFromMemory(
+      data_manager, node_parameters, stream_index, memory_device, row_count);
+  CheckTableData(data_manager, expected_table, resulting_table);
+}
+void QueryManager::WriteResults(
+    const DataManagerInterface* data_manager,
+    const std::unique_ptr<MemoryBlockInterface>& memory_device, int row_count,
+    std::string filename, const std::vector<std::vector<int>>& node_parameters,
+    int stream_index) {
+  std::chrono::steady_clock::time_point begin =
+      std::chrono::steady_clock::now();
+
+  auto resulting_table = TableManager::ReadTableFromMemory(
+      data_manager, node_parameters, stream_index, memory_device, row_count);
+  TableManager::WriteResultTableFile(data_manager, resulting_table,
+                                     std::move(filename));
+
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  Log(LogLevel::kInfo,
+      "Write result data time = " +
+          std::to_string(
+              std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
+                  .count()) +
+          "[ms]");
+}
+void QueryManager::CopyMemoryData(
+    int table_size,
+    const std::unique_ptr<MemoryBlockInterface>& source_memory_device,
+    const std::unique_ptr<MemoryBlockInterface>& target_memory_device) {
+  volatile uint32_t* source = source_memory_device->GetVirtualAddress();
+  volatile uint32_t* target = target_memory_device->GetVirtualAddress();
+  for (int i = 0; i < table_size; i++) {
+    target[i] = source[i];
+  }
+}
+
+void QueryManager::ProcessResults(
+    const DataManagerInterface* data_manager,
+    const std::array<int, query_acceleration_constants::kMaxIOStreamCount>
+        result_sizes,
+    const std::map<std::string, std::vector<StreamResultParameters>>&
+        result_parameters,
+    const std::map<std::string,
+                   std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+        allocated_memory_blocks,
+    std::map<std::string, std::vector<RecordSizeAndCount>>&
+        output_stream_sizes) {
+  for (auto const& [node_name, result_parameter_vector] : result_parameters) {
+    for (auto const& result_params : result_parameter_vector) {
+      int record_count = result_sizes.at(result_params.output_id);
+      Log(LogLevel::kDebug,
+          node_name + "_" + std::to_string(result_params.stream_index) +
+              " has " + std::to_string(record_count) + " rows!");
+      output_stream_sizes[node_name][result_params.stream_index].second =
+          record_count;
+      if (!result_params.filename.empty()) {
+        if (result_params.check_results) {
+          CheckResults(
+              data_manager,
+              allocated_memory_blocks.at(node_name)[result_params.stream_index],
+              record_count, result_params.filename,
+              result_params.stream_specifications, result_params.stream_index);
+        } else {
+          WriteResults(
+              data_manager,
+              allocated_memory_blocks.at(node_name)[result_params.stream_index],
+              record_count, result_params.filename,
+              result_params.stream_specifications, result_params.stream_index);
+        }
+      }
+    }
+  }
+}
+
+void QueryManager::FreeMemoryBlocks(
+    MemoryManagerInterface* memory_manager,
+    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+        input_memory_blocks,
+    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+        output_memory_blocks,
+    std::map<std::string, std::vector<RecordSizeAndCount>>& input_stream_sizes,
+    std::map<std::string, std::vector<RecordSizeAndCount>>& output_stream_sizes,
+    const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links,
+    const std::vector<std::string>& scheduled_node_names) {
+  std::vector<std::string> removable_vectors;
+  for (const auto& name : scheduled_node_names) {
+    for (auto& memory_block : input_memory_blocks[name]) {
+      if (memory_block) {
+        memory_manager->FreeMemoryBlock(std::move(memory_block));
+      }
+      memory_block = nullptr;
+    }
+    input_stream_sizes.erase(name);
+    input_memory_blocks.erase(name);
+  }
+
+  for (const auto& [node_name, data_mapping] : reuse_links) {
+    for (const auto& [output_stream_index, targe_input_streams] :
+         data_mapping) {
+      if (targe_input_streams.size() == 1) {
+        auto target_node_name = targe_input_streams.at(0).first;
+        auto target_stream_index = targe_input_streams.at(0).second;
+        removable_vectors.erase(
+            std::remove(removable_vectors.begin(), removable_vectors.end(),
+                        target_node_name),
+            removable_vectors.end());
+        input_memory_blocks[target_node_name][target_stream_index] =
+            std::move(output_memory_blocks[node_name][output_stream_index]);
+        output_memory_blocks[node_name][output_stream_index] = nullptr;
+        input_stream_sizes[target_node_name][target_stream_index] =
+            output_stream_sizes[node_name][output_stream_index];
+      } else {
+        for (const auto& [target_node_name, target_stream_index] :
+             targe_input_streams) {
+          removable_vectors.erase(
+              std::remove(removable_vectors.begin(), removable_vectors.end(),
+                          target_node_name),
+              removable_vectors.end());
+          input_memory_blocks[target_node_name][target_stream_index] =
+              std::move(memory_manager->GetAvailableMemoryBlock());
+          CopyMemoryData(
+              output_stream_sizes[node_name][output_stream_index].first *
+                  output_stream_sizes[node_name][output_stream_index].second,
+              output_memory_blocks[node_name][output_stream_index],
+              input_memory_blocks[target_node_name][target_stream_index]);
+          input_stream_sizes[target_node_name][target_stream_index] =
+              output_stream_sizes[node_name][output_stream_index];
+        }
+      }
+    }
+  }
+
+  for (auto& [node_name, memory_block_vector] : output_memory_blocks) {
+    for (auto& memory_block : memory_block_vector) {
+      if (memory_block) {
+        memory_manager->FreeMemoryBlock(std::move(memory_block));
+      }
+    }
+  }
+
+  output_memory_blocks.clear();
+  output_stream_sizes.clear();
+}
+
+void QueryManager::ExecuteAndProcessResults(
+    FPGAManagerInterface* fpga_manager,
+    const DataManagerInterface* data_manager,
+    MemoryManagerInterface* memory_manager,
+    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+        input_memory_blocks,
+    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+        output_memory_blocks,
+    std::map<std::string, std::vector<RecordSizeAndCount>>& input_stream_sizes,
+    std::map<std::string, std::vector<RecordSizeAndCount>>& output_stream_sizes,
+    const std::map<std::string, std::vector<StreamResultParameters>>&
+        result_parameters,
+    const std::vector<std::string>& current_node_names,
+    const std::map<std::string, std::map<int, MemoryReuseTargets>>&
+        current_run_links,
+    const std::vector<AcceleratedQueryNode>& execution_query_nodes) {
+  std::chrono::steady_clock::time_point begin =
+      std::chrono::steady_clock::now();
+
+  Log(LogLevel::kTrace, "Setup query!");
+  fpga_manager->SetupQueryAcceleration(execution_query_nodes);
+  Log(LogLevel::kTrace, "Running query!");
+  auto result_sizes = fpga_manager->RunQueryAcceleration();
+  Log(LogLevel::kTrace, "Query done!");
+
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  Log(LogLevel::kInfo,
+      "Init and run time = " +
+          std::to_string(
+              std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+                  .count()) +
+          "[ms]");
+
+  ProcessResults(data_manager, result_sizes, result_parameters,
+                 output_memory_blocks, output_stream_sizes);
+  FreeMemoryBlocks(memory_manager, input_memory_blocks, output_memory_blocks,
+                   input_stream_sizes, output_stream_sizes, current_run_links,
+                   current_node_names);
+
   std::cout << "Execute" << std::endl;
 }

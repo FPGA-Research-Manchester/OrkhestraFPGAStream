@@ -36,6 +36,8 @@ std::unique_ptr<StateInterface> ExecuteState::execute(
     throw std::runtime_error("No nodes ready to execute!");
   }
 
+  fsm->ExecuteAndProcessResults();
+
   std::cout << "Execute" << std::endl;
 
   return std::make_unique<SetupNodesState>();
