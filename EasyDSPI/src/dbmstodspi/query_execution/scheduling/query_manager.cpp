@@ -28,7 +28,10 @@ limitations under the License.
 
 using easydspi::dbmstodspi::QueryManager;
 using easydspi::dbmstodspi::StreamDataParameters;
+using easydspi::dbmstodspi::logging::Log;
+using easydspi::dbmstodspi::logging::LogLevel;
 using easydspi::dbmstodspi::query_acceleration_constants::kIOStreamParamDefs;
+using easydspi::dbmstodspi::util::CreateReferenceVector;
 
 auto QueryManager::GetCurrentLinks(
     const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
@@ -536,7 +539,7 @@ void QueryManager::ExecuteAndProcessResults(
           std::to_string(
               std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
                   .count()) +
-          "[µs]");
+          "[microseconds]");
 
   ProcessResults(data_manager, result_sizes, result_parameters,
                  output_memory_blocks, output_stream_sizes);

@@ -22,7 +22,7 @@ using easydspi::core::core_input::InputManager;
 using easydspi::core_interfaces::Config;
 
 std::pair<std::unique_ptr<ExecutionPlanGraphInterface>, Config>
-InputManager::parse(std::string input_filename, std::string config_filename) {
+InputManager::Parse(std::string input_filename, std::string config_filename) {
   auto config = config_creator_.GetConfig(config_filename);
   auto graph = graph_creator_->MakeGraph(input_filename);
 

@@ -24,8 +24,8 @@ limitations under the License.
 #include "logger.hpp"
 #include "types_converter.hpp"
 
-using easydspi::dbmstodspi::Log;
-using easydspi::dbmstodspi::LogLevel;
+using easydspi::dbmstodspi::logging::Log;
+using easydspi::dbmstodspi::logging::LogLevel;
 using easydspi::dbmstodspi::CSVReader;
 
 auto CSVReader::IsMemoryLargeEnough(

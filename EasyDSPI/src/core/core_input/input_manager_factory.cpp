@@ -33,7 +33,7 @@ using easydspi::dbmstodspi::GraphCreator;
 using easydspi::dbmstodspi::InputConfigReader;
 using easydspi::dbmstodspi::RapidJSONReader;
 
-std::unique_ptr<InputManagerInterface> InputManagerFactory::getManager() {
+std::unique_ptr<InputManagerInterface> InputManagerFactory::GetManager() {
   return std::make_unique<InputManager>(
       std::make_unique<GraphCreator>(std::make_unique<RapidJSONReader>(),
                                      nullptr),

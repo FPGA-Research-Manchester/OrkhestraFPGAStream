@@ -23,8 +23,15 @@ limitations under the License.
 using easydspi::core_interfaces::InputManagerInterface;
 
 namespace easydspi::core::core_input {
+/**
+ * @brief Factory to create input managers
+ */
 class InputManagerFactory {
  public:
-  static std::unique_ptr<InputManagerInterface> getManager();
+  /**
+   * @brief Create an input manager for parsing the files to setup the library.
+   * @return Input manager pointer.
+   */
+  static std::unique_ptr<InputManagerInterface> GetManager();
 };
 }  // namespace easydspi::core::core_input

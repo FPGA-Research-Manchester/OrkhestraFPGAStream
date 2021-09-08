@@ -23,20 +23,48 @@ limitations under the License.
 #include <vector>
 
 namespace easydspi::dbmstodspi {
+/**
+ * @brief Interface for classes to read JSON.
+ */
 class JSONReaderInterface {
  public:
+  /**
+   * @brief Datatype for node parameters from the query graph definition file. A
+   * node parameter could have a string or a vector of string or more vectors of
+   * strings as a value.
+   */
   using InputNodeParameters = std::map<
       std::string,
       std::variant<std::string, std::vector<std::string>,
                    std::map<std::string, std::vector<std::vector<int>>>>>;
   virtual ~JSONReaderInterface() = default;
+  /**
+   * @brief Read the JSON file describing data type sizes.
+   * @param json_filename JSON file.
+   * @return Data type and size map.
+   */
   virtual auto ReadDataSizes(std::string json_filename)
       -> std::map<std::string, double> = 0;
+  /**
+   * @brief Read memory mapped register space sizes.
+   * @param json_filename JSON file.
+   * @return How much space each bitstream has for memory mapped registers.
+   */
   virtual auto ReadReqMemorySpace(std::string json_filename)
       -> std::map<std::string, int> = 0;
+  /**
+   * @brief Read bitstreams
+   * @param json_filename JSON file
+   * @return Which module combination is associated with which bitstream name.
+   */
   virtual auto ReadAcceleratorLibrary(std::string json_filename)
       -> std::map<std::vector<std::pair<std::string, std::vector<int>>>,
                   std::string> = 0;
+  /**
+   * @brief Read input def - query plan.
+   * @param json_filename JSON file
+   * @return Return query plan node field names and their values.
+   */
   virtual auto ReadInputDefinition(std::string json_filename)
       -> std::map<std::string, InputNodeParameters> = 0;
 };

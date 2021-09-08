@@ -28,11 +28,11 @@ limitations under the License.
 
 using easydspi::core_interfaces::table_data::ColumnDataType;
 using easydspi::core_interfaces::table_data::TableData;
-using easydspi::dbmstodspi::IsValidFile;
+using easydspi::dbmstodspi::util::IsValidFile;
 using easydspi::dbmstodspi::DataManager;
-using easydspi::dbmstodspi::LogLevel;
-using easydspi::dbmstodspi::Log;
-using easydspi::dbmstodspi::ShouldLog;
+using easydspi::dbmstodspi::logging::LogLevel;
+using easydspi::dbmstodspi::logging::Log;
+using easydspi::dbmstodspi::logging::ShouldLog;
 
 auto DataManager::ReadIntegerDataFromCSV(
     const std::vector<std::pair<ColumnDataType, int>>& table_column_defs,

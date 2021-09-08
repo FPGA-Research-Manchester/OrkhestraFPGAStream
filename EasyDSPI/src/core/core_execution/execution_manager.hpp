@@ -26,9 +26,9 @@ limitations under the License.
 #include "graph_processing_fsm_interface.hpp"
 #include "memory_block_interface.hpp"
 #include "memory_manager_interface.hpp"
+#include "query_manager_interface.hpp"
 #include "query_scheduling_data.hpp"
 #include "state_interface.hpp"
-#include "query_manager_interface.hpp"
 
 using easydspi::core_interfaces::Config;
 using easydspi::core_interfaces::ExecutionManagerInterface;
@@ -41,8 +41,8 @@ using easydspi::dbmstodspi::DataManagerInterface;
 using easydspi::dbmstodspi::FPGAManagerInterface;
 using easydspi::dbmstodspi::GraphProcessingFSMInterface;
 using easydspi::dbmstodspi::MemoryManagerInterface;
-using easydspi::dbmstodspi::StateInterface;
 using easydspi::dbmstodspi::QueryManagerInterface;
+using easydspi::dbmstodspi::StateInterface;
 
 namespace easydspi::core::core_execution {
 
@@ -63,7 +63,7 @@ class ExecutionManager : public ExecutionManagerInterface,
 
   void setFinishedFlag() override;
 
-  void execute(
+  void Execute(
       std::unique_ptr<ExecutionPlanGraphInterface> execution_graph) override;
 
   auto IsUnscheduledNodesGraphEmpty() -> bool override;
@@ -104,7 +104,6 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::vector<AcceleratedQueryNode> query_nodes_;
   std::vector<std::string> scheduled_node_names_;
 
-  auto PopNextScheduledRun()
-      -> std::vector<std::shared_ptr<QueryNode>>;
+  auto PopNextScheduledRun() -> std::vector<std::shared_ptr<QueryNode>>;
 };
 }  // namespace easydspi::core::core_execution

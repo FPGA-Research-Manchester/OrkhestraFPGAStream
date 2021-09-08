@@ -28,6 +28,11 @@ class ReadBackModuleInterface {
  public:
   virtual ~ReadBackModuleInterface() = default;
 
+  /**
+   * @brief Read the result of the module.
+   * @param data_position Bus index of the interface to read from.
+   * @return 32 bit value written in the result register of the module.
+  */
   virtual auto ReadResult(int data_position) -> uint32_t = 0;
 };
 

@@ -18,9 +18,17 @@ limitations under the License.
 #include <string>
 
 namespace easydspi::dbmstodspi {
+/**
+ * @brief Interface describing classes able to check JSON contents.
+ */
 class JSONValidatorInterface {
  public:
   virtual ~JSONValidatorInterface() = default;
-  virtual bool check(std::string json_filename) = 0;
+  /**
+   * @brief Check json format.
+   * @param json_filename File to be checked.
+   * @return Boolean flag noting the validity of the JSON file.
+   */
+  virtual bool Check(std::string json_filename) = 0;
 };
 }  // namespace easydspi::dbmstodspi

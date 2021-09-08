@@ -39,7 +39,7 @@ class InputManager : public InputManagerInterface {
       : graph_creator_{std::move(graph_creator)},
         config_creator_{std::move(config_creator)} {};
 
-  std::pair<std::unique_ptr<ExecutionPlanGraphInterface>, Config> parse(
+  std::pair<std::unique_ptr<ExecutionPlanGraphInterface>, Config> Parse(
       std::string input_filename, std::string config_filename) override;
 };
 }  // namespace easydspi::core::core_input

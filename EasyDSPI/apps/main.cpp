@@ -24,9 +24,9 @@ limitations under the License.
 
 using namespace std;
 using easydspi::core::Core;
-using easydspi::dbmstodspi::Log;
-using easydspi::dbmstodspi::LogLevel;
-using easydspi::dbmstodspi::SetLoggingLevel;
+using easydspi::dbmstodspi::logging::Log;
+using easydspi::dbmstodspi::logging::LogLevel;
+using easydspi::dbmstodspi::logging::SetLoggingLevel;
 
 /**
  * @brief Helper method to run the given query nodes and their subsequent nodes
@@ -40,7 +40,7 @@ using easydspi::dbmstodspi::SetLoggingLevel;
  */
 void MeasureOverallTime(string input_def_filename, string config_filename) {
   auto begin = chrono::steady_clock::now();
-  Core::run(input_def_filename, config_filename);
+  Core::Run(input_def_filename, config_filename);
   auto end = chrono::steady_clock::now();
 
   Log(LogLevel::kInfo,

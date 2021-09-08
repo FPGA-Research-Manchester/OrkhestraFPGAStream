@@ -18,7 +18,7 @@ limitations under the License.
 
 using easydspi::core::core_execution::ExecutionManager;
 
-std::vector<std::string> ExecutionManager::execute(
+std::vector<std::string> ExecutionManager::Execute(
     std::pair<std::unique_ptr<ExecutionPlanGraphInterface>, Config>
         execution_input) {
   return {execution_input.first->exportData()};

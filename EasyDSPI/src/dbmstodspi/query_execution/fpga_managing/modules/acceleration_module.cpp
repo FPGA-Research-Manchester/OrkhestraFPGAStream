@@ -21,9 +21,9 @@ limitations under the License.
 #include "logger.hpp"
 
 using easydspi::dbmstodspi::AccelerationModule;
-using easydspi::dbmstodspi::Log;
-using easydspi::dbmstodspi::LogLevel;
-using easydspi::dbmstodspi::ShouldLog;
+using easydspi::dbmstodspi::logging::Log;
+using easydspi::dbmstodspi::logging::LogLevel;
+using easydspi::dbmstodspi::logging::ShouldLog;
 
 auto AccelerationModule::CalculateMemoryMappedAddress(
     int module_internal_address) -> volatile uint32_t* {

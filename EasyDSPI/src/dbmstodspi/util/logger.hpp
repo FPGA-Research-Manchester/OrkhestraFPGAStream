@@ -19,8 +19,14 @@ limitations under the License.
 
 #include "spdlog/spdlog.h"
 
-namespace easydspi::dbmstodspi {
+/**
+ * @brief Namespace for logging methods using https://github.com/gabime/spdlog.
+ */
+namespace easydspi::dbmstodspi::logging {
 
+/**
+ * @brief Logging level enums.
+ */
 enum class LogLevel {
   kTrace = spdlog::level::trace,
   kDebug = spdlog::level::debug,
@@ -31,16 +37,31 @@ enum class LogLevel {
   kOff = spdlog::level::off
 };
 
+/**
+ * @brief Set global logging level.
+ * @param global_level Which importance printted log messages have to have.
+ */
 inline void SetLoggingLevel(LogLevel global_level) {
   spdlog::set_level(static_cast<spdlog::level::level_enum>(global_level));
 }
 
-inline void Log(LogLevel global_level, std::string message) {
-  spdlog::log(static_cast<spdlog::level::level_enum>(global_level), message);
+/**
+ * @brief Log messages with a certain priority.
+ * @param log_level Importance of the logging message.
+ * @param message The log message recorded.
+ */
+inline void Log(LogLevel log_level, std::string message) {
+  spdlog::log(static_cast<spdlog::level::level_enum>(log_level), message);
 }
 
+/**
+ * @brief Check if the given log level is high enough to have log messages
+ * appear.
+ * @param log_level Importance of the logging message.
+ * @return Boolean flag showing if the log level is high enough.
+ */
 inline auto ShouldLog(LogLevel log_level) {
   return spdlog::should_log(static_cast<spdlog::level::level_enum>(log_level));
 }
 
-}  // namespace dbmstodspi::logger
+}  // namespace easydspi::dbmstodspi::logging

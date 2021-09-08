@@ -21,12 +21,14 @@ limitations under the License.
 using easydspi::dbmstodspi::GraphProcessingFSMInterface;
 
 namespace easydspi::dbmstodspi {
-
+/**
+ * @brief State for setting up nodes.
+ */
 class SetupNodesState : public StateInterface {
  public:
   ~SetupNodesState() override = default;
 
-  std::unique_ptr<StateInterface> execute(
+  std::unique_ptr<StateInterface> Execute(
       GraphProcessingFSMInterface* fsm) override;
 };
 }  // namespace easydspi::dbmstodspi

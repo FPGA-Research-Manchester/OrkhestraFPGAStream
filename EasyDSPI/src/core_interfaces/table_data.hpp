@@ -23,8 +23,14 @@ limitations under the License.
 
 namespace easydspi::core_interfaces::table_data {
 
+/**
+ * @brief Data types parsable by the library.
+ */
 enum class ColumnDataType { kInteger, kVarchar, kNull, kDecimal, kDate };
 
+/**
+ * @brief String names for the supported data type enums.
+ */
 const std::map<std::string, ColumnDataType> kDataTypeNames = {
     {"integer", ColumnDataType::kInteger},
     {"varchar", ColumnDataType::kVarchar},

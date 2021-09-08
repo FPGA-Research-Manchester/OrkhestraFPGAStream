@@ -48,8 +48,8 @@ limitations under the License.
 
 using easydspi::core_interfaces::operation_types::QueryOperationType;
 using easydspi::dbmstodspi::FPGAManager;
-using easydspi::dbmstodspi::Log;
-using easydspi::dbmstodspi::LogLevel;
+using easydspi::dbmstodspi::logging::Log;
+using easydspi::dbmstodspi::logging::LogLevel;
 
 void FPGAManager::SetupQueryAcceleration(
     const std::vector<AcceleratedQueryNode>& query_nodes) {

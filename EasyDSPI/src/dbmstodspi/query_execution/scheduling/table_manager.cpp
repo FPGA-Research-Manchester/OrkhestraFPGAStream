@@ -25,9 +25,9 @@ limitations under the License.
 
 using easydspi::dbmstodspi::TableManager;
 
-using easydspi::dbmstodspi::Log;
-using easydspi::dbmstodspi::LogLevel;
-using easydspi::dbmstodspi::ShouldLog;
+using easydspi::dbmstodspi::logging::Log;
+using easydspi::dbmstodspi::logging::LogLevel;
+using easydspi::dbmstodspi::logging::ShouldLog;
 using easydspi::dbmstodspi::query_acceleration_constants::kIOStreamParamDefs;
 
 using easydspi::core_interfaces::table_data::ColumnDataType;

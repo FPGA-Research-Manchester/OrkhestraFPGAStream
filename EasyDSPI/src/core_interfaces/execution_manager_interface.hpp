@@ -25,11 +25,18 @@ limitations under the License.
 #include "execution_plan_graph_interface.hpp"
 
 namespace easydspi::core_interfaces {
+/**
+ * @brief Interface for a class to implement the execute the given query graph.
+ */
 class ExecutionManagerInterface {
  public:
   virtual ~ExecutionManagerInterface() = default;
-  virtual void execute(
-      std::unique_ptr<ExecutionPlanGraphInterface>
-          execution_grpah) = 0;
+  /**
+   * @brief Method to execute the operation nodes in the given graph.
+   * @param execution_grpah Graph representing operation nodes and their
+   * dependencies.
+   */
+  virtual void Execute(
+      std::unique_ptr<ExecutionPlanGraphInterface> execution_grpah) = 0;
 };
 }  // namespace easydspi::core_interfaces

@@ -22,7 +22,9 @@ limitations under the License.
 #include "query_acceleration_constants.hpp"
 
 namespace easydspi::dbmstodspi {
-
+/**
+ * @brief Implemented by #FPGAManager
+*/
 class FPGAManagerInterface {
  public:
   virtual ~FPGAManagerInterface() = default;

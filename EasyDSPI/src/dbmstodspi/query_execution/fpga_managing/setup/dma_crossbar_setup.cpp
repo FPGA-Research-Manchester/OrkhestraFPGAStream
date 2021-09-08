@@ -29,9 +29,9 @@ limitations under the License.
 #include "stream_parameter_calculator.hpp"
 
 using easydspi::dbmstodspi::DMACrossbarSetup;
-using easydspi::dbmstodspi::Log;
-using easydspi::dbmstodspi::LogLevel;
-using easydspi::dbmstodspi::ShouldLog;
+using easydspi::dbmstodspi::logging::Log;
+using easydspi::dbmstodspi::logging::LogLevel;
+using easydspi::dbmstodspi::logging::ShouldLog;
 
 void DMACrossbarSetup::CalculateCrossbarSetupData(
     DMASetupData& stream_setup_data, const int record_size,

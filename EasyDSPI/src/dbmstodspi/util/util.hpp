@@ -19,8 +19,17 @@ limitations under the License.
 #include <stdexcept>
 #include <vector>
 
-namespace easydspi::dbmstodspi {
+/**
+ * @brief Namespace for various util methods handling collections.
+ */
+namespace easydspi::dbmstodspi::util {
 
+/**
+ * @brief Create a vector of references from a pointer vector.
+ * @tparam T Type Type of the elements in the vector.
+ * @param element_vector Vector of smart pointers.
+ * @return Vector of references.
+ */
 template <typename T>
 inline auto CreateReferenceVector(
     const std::vector<std::shared_ptr<T>>& pointer_vector) -> std::vector<T> {
@@ -36,6 +45,13 @@ inline auto CreateReferenceVector(
   return ref_vector;
 }
 
+/**
+ * @brief Method to find the position index of the given element.
+ * @tparam T Type Type of the elements in the vector.
+ * @param element_vector Vector to search from.
+ * @param element Element to search for.
+ * @return Integer noting the position of the element. -1 if not found.
+ */
 template <typename T>
 inline auto FindPositionInVector(const std::vector<T>& element_vector,
                                  const T& element) -> int {
@@ -48,6 +64,11 @@ inline auto FindPositionInVector(const std::vector<T>& element_vector,
   }
 }
 
+/**
+ * @brief Method to check if the filename given is found.
+ * @param name Filename.
+ * @return Is file found boolean flag.
+ */
 inline auto IsValidFile(const std::string& name) -> bool {
   if (FILE* file = fopen(name.c_str(), "r")) {
     fclose(file);
@@ -57,4 +78,4 @@ inline auto IsValidFile(const std::string& name) -> bool {
   }
 }
 
-}  // namespace dbmstodspi::util
+}  // namespace easydspi::dbmstodspi::util

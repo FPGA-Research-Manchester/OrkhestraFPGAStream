@@ -18,15 +18,19 @@ limitations under the License.
 
 #include "node_scheduler.hpp"
 #include "setup_nodes_state.hpp"
+#include "logger.hpp"
 
 using easydspi::dbmstodspi::GraphProcessingFSMInterface;
 using easydspi::dbmstodspi::NodeScheduler;
 using easydspi::dbmstodspi::ScheduleState;
 using easydspi::dbmstodspi::SetupNodesState;
 using easydspi::dbmstodspi::StateInterface;
+using easydspi::dbmstodspi::logging::Log;
+using easydspi::dbmstodspi::logging::LogLevel;
 
-std::unique_ptr<StateInterface> ScheduleState::execute(
+std::unique_ptr<StateInterface> ScheduleState::Execute(
     GraphProcessingFSMInterface* fsm) {
+  Log(LogLevel::kTrace, "Schedule state");
   std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links;
   if (fsm->IsUnscheduledNodesGraphEmpty()) {
     fsm->setFinishedFlag();

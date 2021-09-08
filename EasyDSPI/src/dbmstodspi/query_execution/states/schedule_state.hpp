@@ -21,12 +21,14 @@ limitations under the License.
 using easydspi::dbmstodspi::GraphProcessingFSMInterface;
 
 namespace easydspi::dbmstodspi {
-
+/**
+ * @brief State for scheduling.
+ */
 class ScheduleState : public StateInterface {
  public:
   ~ScheduleState() override = default;
 
-  std::unique_ptr<StateInterface> execute(
+  std::unique_ptr<StateInterface> Execute(
       GraphProcessingFSMInterface* fsm) override;
 };
 }  // namespace easydspi::dbmstodspi

@@ -27,13 +27,13 @@ using easydspi::dbmstodspi::FPGAManagerInterface;
 
 void ExecutionManager::setFinishedFlag() { busy_flag_ = false; }
 
-void ExecutionManager::execute(
+void ExecutionManager::Execute(
     std::unique_ptr<ExecutionPlanGraphInterface> execution_graph) {
   unscheduled_graph_ = std::move(execution_graph);
 
   busy_flag_ = true;
   while (busy_flag_) {
-    auto new_state = current_state_->execute(this);
+    auto new_state = current_state_->Execute(this);
     if (new_state) {
       current_state_ = std::move(new_state);
     }

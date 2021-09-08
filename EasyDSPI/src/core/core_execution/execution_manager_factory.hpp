@@ -25,8 +25,16 @@ using easydspi::core_interfaces::ExecutionManagerInterface;
 using easydspi::core_interfaces::Config;
 
 namespace easydspi::core::core_execution {
+/**
+ * @brief Class to create execution managers.
+*/
 class ExecutionManagerFactory {
  public:
-  static std::unique_ptr<ExecutionManagerInterface> getManager(Config config);
+  /**
+   * @brief Create a manager described by the execution manager interface.
+   * @param config Config to setup the operators library
+   * @return A smart pointer to the execution manager class to execute the FSM with.
+  */
+  static std::unique_ptr<ExecutionManagerInterface> GetManager(Config config);
 };
 }  // namespace easydspi::core::core_execution

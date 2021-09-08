@@ -19,14 +19,18 @@ limitations under the License.
 #include <stdexcept>
 
 #include "setup_nodes_state.hpp"
+#include "logger.hpp"
 
 using easydspi::dbmstodspi::ExecuteState;
 using easydspi::dbmstodspi::GraphProcessingFSMInterface;
 using easydspi::dbmstodspi::SetupNodesState;
 using easydspi::dbmstodspi::StateInterface;
+using easydspi::dbmstodspi::logging::Log;
+using easydspi::dbmstodspi::logging::LogLevel;
 
-std::unique_ptr<StateInterface> ExecuteState::execute(
+std::unique_ptr<StateInterface> ExecuteState::Execute(
     GraphProcessingFSMInterface* fsm) {
+  Log(LogLevel::kTrace, "Execute state");
   if (fsm->IsRunReadyForExecution()) {
     if (!fsm->IsRunValid()) {
       // Fix stuff

@@ -20,9 +20,17 @@ limitations under the License.
 using easydspi::core_interfaces::Config;
 
 namespace easydspi::dbmstodspi {
+/**
+ * @brief Check config validity interface.
+ */
 class ConfigValueCheckerInterface {
  public:
   virtual ~ConfigValueCheckerInterface() = default;
-  virtual bool check(Config input_config) = 0;
+  /**
+   * @brief Check config validity.
+   * @param input_config Config to check.
+   * @return Boolean flag noting if the input is correct.
+   */
+  virtual bool Check(Config input_config) = 0;
 };
 }  // namespace easydspi::dbmstodspi

@@ -17,15 +17,27 @@ limitations under the License.
 #pragma once
 
 #include <string>
+
 #include "query_scheduling_data.hpp"
 
 using easydspi::core_interfaces::query_scheduling_data::QueryNode;
 
 namespace easydspi::core_interfaces {
+/**
+ * @brief Interface describing a class which holds the execution graph nodes.
+ */
 class ExecutionPlanGraphInterface {
  public:
   virtual ~ExecutionPlanGraphInterface() = default;
+  /**
+   * @brief Move all of the root nodes.
+   * @return Nodes vectors which have no dependencies.
+   */
   virtual auto ExportRootNodes() -> std::vector<std::shared_ptr<QueryNode>> = 0;
+  /**
+   * @brief Check if there are any nodes held.
+   * @return Boolean flag noting if there are any nodes.
+   */
   virtual auto IsEmpty() -> bool = 0;
 };
 }  // namespace easydspi::core_interfaces

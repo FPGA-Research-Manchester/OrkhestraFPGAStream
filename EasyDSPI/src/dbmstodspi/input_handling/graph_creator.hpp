@@ -49,6 +49,7 @@ class GraphCreator : public GraphCreatorInterface {
    * @brief Constructor for making the graph creator with the given JSON reader
    * object.
    * @param json_reader Object to read JSON files with.
+   * @param json_validator Object to check JSON formating.
    */
   explicit GraphCreator(std::unique_ptr<JSONReaderInterface> json_reader,
                         std::unique_ptr<JSONValidatorInterface> json_validator)
@@ -60,6 +61,6 @@ class GraphCreator : public GraphCreatorInterface {
    * @return Query plan graph created form the given JSON.
    */
   auto MakeGraph(std::string graph_def_filename)
-      -> std::unique_ptr<ExecutionPlanGraphInterface>;
+      -> std::unique_ptr<ExecutionPlanGraphInterface> override;
 };
 }  // namespace easydspi::dbmstodspi

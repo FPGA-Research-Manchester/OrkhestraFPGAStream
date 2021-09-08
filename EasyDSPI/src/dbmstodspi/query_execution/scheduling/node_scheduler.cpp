@@ -24,7 +24,7 @@ limitations under the License.
 #include "query_scheduling_data.hpp"
 #include "util.hpp"
 
-using easydspi::dbmstodspi::CreateReferenceVector;
+using easydspi::dbmstodspi::util::CreateReferenceVector;
 using easydspi::dbmstodspi::NodeScheduler;
 using easydspi::dbmstodspi::query_acceleration_constants::kIOStreamParamDefs;
 

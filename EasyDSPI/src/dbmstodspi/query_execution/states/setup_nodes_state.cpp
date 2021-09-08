@@ -18,14 +18,18 @@ limitations under the License.
 
 #include "execute_state.hpp"
 #include "schedule_state.hpp"
+#include "logger.hpp"
 
 using easydspi::dbmstodspi::ExecuteState;
 using easydspi::dbmstodspi::GraphProcessingFSMInterface;
 using easydspi::dbmstodspi::SetupNodesState;
 using easydspi::dbmstodspi::StateInterface;
+using easydspi::dbmstodspi::logging::Log;
+using easydspi::dbmstodspi::logging::LogLevel;
 
-std::unique_ptr<StateInterface> SetupNodesState::execute(
+std::unique_ptr<StateInterface> SetupNodesState::Execute(
     GraphProcessingFSMInterface* fsm) {
+  Log(LogLevel::kTrace, "Setup nodes state");
   if (!fsm->IsARunScheduled()) {
     return std::make_unique<ScheduleState>();
   }

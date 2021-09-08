@@ -23,9 +23,17 @@ limitations under the License.
 using easydspi::core_interfaces::ExecutionPlanGraphInterface;
 
 namespace easydspi::dbmstodspi {
+/**
+ * @brief Factory for creating query plan graphs.
+ */
 class GraphCreatorInterface {
  public:
   virtual ~GraphCreatorInterface() = default;
+  /**
+   * @brief Read the given input_def file and make the query plan graph object.
+   * @param graph_def_filename File containing the query plan information.
+   * @return Query plan graph created form the given JSON.
+   */
   virtual std::unique_ptr<ExecutionPlanGraphInterface> MakeGraph(
       std::string graph_def_filename) = 0;
 };

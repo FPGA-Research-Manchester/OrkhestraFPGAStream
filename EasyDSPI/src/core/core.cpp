@@ -28,12 +28,12 @@ using easydspi::core::core_input::InputManagerFactory;
 
 using easydspi::core_interfaces::InputManagerInterface;
 
-void Core::run(std::string input_filename,
+void Core::Run(std::string input_filename,
                                    std::string config_filename) {
   // Could be done as a one liner but additional future logic is expected here
   // to be passed to the factories.
   auto input =
-      InputManagerFactory::getManager()
-          ->parse(input_filename, config_filename);
-  ExecutionManagerFactory::getManager(input.second)->execute(std::move(input.first));
+      InputManagerFactory::GetManager()
+          ->Parse(input_filename, config_filename);
+  ExecutionManagerFactory::GetManager(input.second)->Execute(std::move(input.first));
 }

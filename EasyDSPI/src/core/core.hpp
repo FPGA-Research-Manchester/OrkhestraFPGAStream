@@ -20,9 +20,16 @@ limitations under the License.
 #include <vector>
 
 namespace easydspi::core {
+/**
+ * @brief Main class to run the whole library
+ */
 class Core {
  public:
-  static void run(std::string input_filename,
-                                      std::string config_filename);
+  /**
+   * @brief Run the middleware
+   * @param input_filename Input definition filename.
+   * @param config_filename Config file contianing files to configure the HW.
+   */
+  static void Run(std::string input_filename, std::string config_filename);
 };
 }  // namespace easydspi::core

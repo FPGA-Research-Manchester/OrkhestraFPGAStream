@@ -18,10 +18,17 @@ limitations under the License.
 #include <string>
 
 namespace easydspi::dbmstodspi {
-
+/**
+ * @brief Interface class describing a class reading a config file.
+ */
 class InputConfigReaderInterface {
  public:
   virtual ~InputConfigReaderInterface() = default;
+  /**
+   * @brief Parse the given config file.
+   * @param filename Config filename.
+   * @return Return the name of the field and the given value map.
+   */
   virtual auto ParseInputConfig(const std::string& filename)
       -> std::map<std::string, std::string> = 0;
 };

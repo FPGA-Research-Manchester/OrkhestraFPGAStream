@@ -29,8 +29,8 @@ limitations under the License.
 #include "virtual_memory_block.hpp"
 #endif
 
-using easydspi::dbmstodspi::Log;
-using easydspi::dbmstodspi::LogLevel;
+using easydspi::dbmstodspi::logging::Log;
+using easydspi::dbmstodspi::logging::LogLevel;
 using easydspi::dbmstodspi::MemoryManager;
 
 MemoryManager::~MemoryManager() = default;

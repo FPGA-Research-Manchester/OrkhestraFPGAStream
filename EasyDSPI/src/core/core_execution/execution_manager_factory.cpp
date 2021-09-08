@@ -30,7 +30,7 @@ using easydspi::dbmstodspi::MemoryManager;
 using easydspi::dbmstodspi::QueryManager;
 using easydspi::dbmstodspi::ScheduleState;
 
-std::unique_ptr<ExecutionManagerInterface> ExecutionManagerFactory::getManager(
+std::unique_ptr<ExecutionManagerInterface> ExecutionManagerFactory::GetManager(
     Config config) {
   return std::make_unique<ExecutionManager>(
       config, std::make_unique<QueryManager>(),

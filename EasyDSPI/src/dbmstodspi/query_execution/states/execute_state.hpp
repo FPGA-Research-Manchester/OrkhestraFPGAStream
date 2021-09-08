@@ -21,12 +21,14 @@ limitations under the License.
 using easydspi::dbmstodspi::GraphProcessingFSMInterface;
 
 namespace easydspi::dbmstodspi {
-
+/**
+ * @brief Class for executing the FPGA.
+ */
 class ExecuteState : public StateInterface {
  public:
   ~ExecuteState() override = default;
 
-  std::unique_ptr<StateInterface> execute(
+  std::unique_ptr<StateInterface> Execute(
       GraphProcessingFSMInterface* fsm) override;
 };
 }  // namespace easydspi::dbmstodspi

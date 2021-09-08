@@ -25,10 +25,19 @@ limitations under the License.
 #include "execution_plan_graph_interface.hpp"
 
 namespace easydspi::core_interfaces {
+/**
+ * @brief Interface to class to describe a class parsing config and inpud graph.
+ */
 class InputManagerInterface {
  public:
   virtual ~InputManagerInterface() = default;
-  virtual std::pair<std::unique_ptr<ExecutionPlanGraphInterface>, Config> parse(
+  /**
+   * @brief Parse the files to create an execution graph and a config.
+   * @param input_filename Operation graph definition.
+   * @param config_filename Operator library configuration files.
+   * @return The execution graph and a config configuring the operator library.
+   */
+  virtual std::pair<std::unique_ptr<ExecutionPlanGraphInterface>, Config> Parse(
       std::string input_filename, std::string config_filename) = 0;
 };
 }  // namespace easydspi::core_interfaces

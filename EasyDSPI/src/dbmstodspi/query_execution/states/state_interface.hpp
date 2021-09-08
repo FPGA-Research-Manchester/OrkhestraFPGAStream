@@ -23,12 +23,18 @@ limitations under the License.
 using easydspi::dbmstodspi::GraphProcessingFSMInterface;
 
 namespace easydspi::dbmstodspi {
-
+/**
+ * @brief Interface class for states.
+*/
 class StateInterface {
  public:
   virtual ~StateInterface() = default;
-
-  virtual std::unique_ptr<StateInterface> execute(
+  /**
+   * @brief Execute the state
+   * @param fsm FSM engine to progress between the states and hold the data.
+   * @return Next state
+  */
+  virtual std::unique_ptr<StateInterface> Execute(
       GraphProcessingFSMInterface* fsm) = 0;
 };
 }  // namespace easydspi::dbmstodspi

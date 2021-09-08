@@ -42,17 +42,46 @@ using easydspi::dbmstodspi::FPGAManagerInterface;
 using easydspi::dbmstodspi::MemoryBlockInterface;
 
 namespace easydspi::dbmstodspi {
-
+/**
+ * @brief Interface to describe a class managing the setup and execution of a
+ * query
+ */
 class QueryManagerInterface {
  public:
   virtual ~QueryManagerInterface() = default;
+  /**
+   * @brief Get memory dependencies in the current run to save memory block
+   * pointers for next runs.
+   * @param current_query_nodes Current nodes to be executed.
+   * @param all_reuse_links All links for currently scheduled nodes.
+   * @return Map of current memory reuse targets and for which stream they
+   * should be saved for.
+   */
   virtual auto GetCurrentLinks(
       const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
           all_reuse_links)
       -> std::map<std::string, std::map<int, MemoryReuseTargets>> = 0;
+  /**
+   * @brief Factory method to create FPGA managers.
+   * @param memory_manager Pointer to the memory manager for writing to memory
+   * mapped registers.
+   * @return FPGA manager object to execute the FPGA.
+   */
   virtual auto CreateFPGAManager(MemoryManagerInterface* memory_manager)
       -> std::unique_ptr<FPGAManagerInterface> = 0;
+  /**
+   * @brief Method to create nodes for execution from scheduled nodes.
+   * @param data_manager Manager to handle table data and different data types.
+   * @param memory_manager Manager to handle memory blocks.
+   * @param input_memory_blocks Memory for input streams.
+   * @param output_memory_blocks Memory for output streams.
+   * @param input_stream_sizes Map for input stream size parameters.
+   * @param output_stream_sizes Map for output stream size parameters.
+   * @param current_query_nodes Currently scheduled nodes.
+   * @return Nodes ready for execution with saved parameters for reading out
+   * results.
+   */
   virtual auto SetupAccelerationNodesForExecution(
       DataManagerInterface* data_manager,
       MemoryManagerInterface* memory_manager,
@@ -68,9 +97,23 @@ class QueryManagerInterface {
       -> std::pair<
           std::vector<AcceleratedQueryNode>,
           std::map<std::string, std::vector<StreamResultParameters>>> = 0;
+  /**
+   * @brief Load a bitstream
+   * @param memory_manager Memory manager for accessing FOS and loading the
+   * bitstream.
+   * @param bitstream_file_name Bitstream to load
+   * @param config Configuration for how much addressable memory is usable.
+   */
   virtual void LoadNextBitstreamIfNew(MemoryManagerInterface* memory_manager,
                                       std::string bitstream_file_name,
                                       Config config) = 0;
+  /**
+   * @brief Schedule operations to different runs.
+   * @param unscheduled_root_nodes Nodes with no dependencies.
+   * @param config Configuration for different operators.
+   * @return How memory pointers could be reused between differnt runs and a
+   * queue of runs.
+   */
   virtual auto ScheduleUnscheduledNodes(
       std::vector<std::shared_ptr<QueryNode>> unscheduled_root_nodes,
       Config config)
@@ -78,8 +121,28 @@ class QueryManagerInterface {
           std::map<std::string, std::map<int, MemoryReuseTargets>>,
           std::queue<std::pair<ConfigurableModulesVector,
                                std::vector<std::shared_ptr<QueryNode>>>>> = 0;
+  /**
+   * @brief Check if the run is correctly scheduled.
+   * @param current_run Nodes ready for execution.
+   * @return Boolean flag noting if the run is valid.
+   */
   virtual auto IsRunValid(std::vector<AcceleratedQueryNode> current_run)
       -> bool = 0;
+  /**
+   * @brief Execute given nodes.
+   * @param fpga_manager Manager to setup and operate modules.
+   * @param data_manager Manager to handle table data for result reading.
+   * @param memory_manager Manager to handle memory blocks and reading and
+   * writing to memory mapped addresses.
+   * @param input_memory_blocks Memory for input streams.
+   * @param output_memory_blocks Memory for output streams.
+   * @param input_stream_sizes Map for input stream size parameters.
+   * @param output_stream_sizes Map for output stream size parameters.
+   * @param result_parameters Saved parameters for result reading.
+   * @param current_node_names Names of the currently executed nodes.
+   * @param current_run_links Map for reusing memory blocks for next runs.
+   * @param execution_query_nodes Nodes to execute
+   */
   virtual void ExecuteAndProcessResults(
       FPGAManagerInterface* fpga_manager,
       const DataManagerInterface* data_manager,
