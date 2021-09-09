@@ -18,7 +18,7 @@ StaticAccelInst accelerator_instance_= prmanager.fpgaLoadStatic("DSPI_filtering"
 accelerator_instance_->pr_manager->accelRegs[register_offset_address/ 4] = register data
 ```
 
-In DBMStoDSPI the two instances are stored in the [MemoryManager class](../src/fpga_managing/memory_manager.hpp). The MemoryManager is instantiated at the beginning of the scheduling process in the [QueryManager class](../src/query_managing/query_manager.hpp) and is kept in memory throughout the process. The pointer to the MemoryManager instance is used in all module driver code to access configuration registers for both read and write operations. 
+In DBMStoDSPI the two instances are stored in the [MemoryManager class](../src/dbmstodspi/query_execution/table_data/memory_manager.hpp). The MemoryManager is instantiated at the beginning of the scheduling process in the [ExecutionManagerFactory class](../src/core/core_execution/execution_manager_factory.cpp) and is kept in memory throughout the process. The pointer to the MemoryManager instance is used in all module driver code to access configuration registers for both read and write operations. 
 
 ## Pinning DDR memory on the FPGA
 

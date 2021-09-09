@@ -21,8 +21,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-file(GLOB HEADER_LIST "${DBMStoDSPI_SOURCE_DIR}/tests/*.hpp")
-file(GLOB SOURCE_LIST "${DBMStoDSPI_SOURCE_DIR}/tests/*.cpp")
+file(GLOB HEADER_LIST "${OrkhestraFPGAStream_SOURCE_DIR}/tests/*.hpp")
+file(GLOB SOURCE_LIST "${OrkhestraFPGAStream_SOURCE_DIR}/tests/*.cpp")
 
 add_executable(testlib ${HEADER_LIST} ${SOURCE_LIST}) 
 
@@ -31,18 +31,17 @@ target_link_libraries(testlib
 					  gtest_main
 					  gmock
 					  gmock_main
-					  fpga_managing
-					  data_managing 
-					  query_managing
+					  dbmstodspi
+					  core_interfaces
 )
 
 if (NOT WIN32)
 	target_link_libraries(testlib fos)
 endif()
 
-target_include_directories(testlib INTERFACE "${DBMStoDSPI_SOURCE_DIR}/tests")
+target_include_directories(testlib INTERFACE "${OrkhestraFPGAStream_SOURCE_DIR}/tests")
 
-file(COPY ${DBMStoDSPI_SOURCE_DIR}/tests/resources/DMACrossbarSetupTest DESTINATION .)
+file(COPY ${OrkhestraFPGAStream_SOURCE_DIR}/tests/resources/DMACrossbarSetupTest DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_test(NAME DMACrossbarSpecifierTest COMMAND testlib)
 add_test(NAME AccelerationModuleTest COMMAND testlib)
@@ -53,6 +52,7 @@ add_test(NAME NodeSchedulerTest COMMAND testlib)
 add_test(NAME TypesConverterTest COMMAND testlib)
 add_test(NAME IDManagerTest COMMAND testlib)
 
+# Uncomment for automatic testing
 #add_custom_command(TARGET testlib
 #        POST_BUILD
 #		COMMAND ctest 

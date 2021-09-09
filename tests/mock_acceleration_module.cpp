@@ -18,16 +18,16 @@ limitations under the License.
 
 #include <cstdint>
 
+using orkhestrafs::dbmstodspi::AccelerationModule;
+
 MockAccelerationModule::~MockAccelerationModule() = default;
 
 void MockAccelerationModule::WriteToModule(int module_internal_address,
                                            uint32_t write_data) {
-  dbmstodspi::fpga_managing::modules::AccelerationModule::WriteToModule(
-      module_internal_address, write_data);
+  AccelerationModule::WriteToModule(module_internal_address, write_data);
 }
 
 auto MockAccelerationModule::ReadFromModule(int module_internal_address)
     -> uint32_t {
-  return dbmstodspi::fpga_managing::modules::AccelerationModule::ReadFromModule(
-      module_internal_address);
+  return AccelerationModule::ReadFromModule(module_internal_address);
 }

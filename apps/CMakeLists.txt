@@ -12,121 +12,122 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-
 # Apps
-add_executable(dbmstodspi main.cpp)
+# This list is for moving example testing data.
+set(data 
+	${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/CAR_DATA.csv
+	${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/CAR_DATA_HALF_SORTED.csv
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/CAR_DATA_SORTED.csv
+    
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/CAR_DATA_8K.csv
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/CAR_DATA_HALF_SORTED_8K_512WAY.csv
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/CAR_DATA_HALF_SORTED_8K_128WAY.csv
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/CAR_DATA_HALF_SORTED_8K_64WAY.csv
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/CAR_DATA_SORTED_8K.csv
+    
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/CAR_FILTER_DATA.csv
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/CUSTOMER_DATA.csv
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/JOIN_DATA.csv
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/FILTERED_JOIN_DATA.csv
+    
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_empty.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_empty.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_joining.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_joining.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_filtering.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_filtering.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_filter_join.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_filter_join.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_merge_sorting.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_merge_sorting.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_big_merge_sorting.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_big_merge_sorting.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_linear_sorting.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_linear_sorting.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_filtering_linear_sort.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_filtering_linear_sort.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_double_merge_sorting.bin 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_double_merge_sorting.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_sort_join_filter.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_sort_join_filter.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_addition.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_addition.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_multiplication.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_multiplication.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_aggregation_sum.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_aggregation_sum.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_add_mul_sum.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_add_mul_sum.json
 
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/CAR_DATA.csv CAR_DATA.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/CAR_DATA_HALF_SORTED.csv CAR_DATA_HALF_SORTED.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/CAR_DATA_SORTED.csv CAR_DATA_SORTED.csv COPYONLY)
+#${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/SF03/lineitem_sf0_3.csv
+#${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/SF03/lineitem_sf0_3_filter.csv
+#${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/SF03/lineitem_sf0_3_linear_sort.csv
+#${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/SF03/lineitem_sf0_3_sort.csv 
+#${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/SF03/part_sf0_3.csv 
+#${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_1st_filter.csv 
+#${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_2nd_filter.csv 
+#${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_inverted.csv 
+#${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_multiplied.csv 
+#${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_multiplied_reduced.csv 
 
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/CAR_DATA_8K.csv CAR_DATA_8K.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/CAR_DATA_HALF_SORTED_8K_512WAY.csv CAR_DATA_HALF_SORTED_8K_512WAY.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/CAR_DATA_HALF_SORTED_8K_128WAY.csv CAR_DATA_HALF_SORTED_8K_128WAY.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/CAR_DATA_HALF_SORTED_8K_64WAY.csv CAR_DATA_HALF_SORTED_8K_64WAY.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/CAR_DATA_SORTED_8K.csv CAR_DATA_SORTED_8K.csv COPYONLY)
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_sf0_1.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_sf0_1_filter.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_sf0_1_linear_sort.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_sf0_1_sort.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/part_sf0_1.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/part_sf0_1_filter.csv
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_part_sf0_1_1st_filter.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_part_sf0_1_2nd_filter.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_part_sf0_1_inverted.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_part_sf0_1_multiplied.csv 
+    
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_sf0_01.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_sf0_01_filter.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_sf0_01_linear_sort.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_sf0_01_sort.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/part_sf0_01.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/part_sf0_01_filter.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_part_sf0_01_1st_filter.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_part_sf0_01_2nd_filter.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_part_sf0_01_inverted.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_part_sf0_01_multiplied.csv 
+    
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data_type_sizes.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/required_memory_space.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/supported_accelerators.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/extended_accelerator_set.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/big_accelerator_set.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/repo.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/config.ini
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/extended_config.ini 
+    
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/concurrency_testing.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/double_run_testing.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/filter_join_testing.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/filter_testing.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/single_run_testing.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF001.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF01.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF03.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/merge_sort_testing.json 
+    
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/TPCH_Q6_SF001.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/TPCH_Q6_SF1.json 
+    
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_Q19_SF001.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_Q19_SF1.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem0.01.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/part0.01.csv
+    
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark.pl
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_defs.zip 
+#${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem.zip 
+#${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/part.zip 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/big_benchmark_config.ini 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/fast_benchmark_config.ini
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/slow_benchmark_config.ini)
 
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/CAR_FILTER_DATA.csv CAR_FILTER_DATA.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/CUSTOMER_DATA.csv CUSTOMER_DATA.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/JOIN_DATA.csv JOIN_DATA.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/FILTERED_JOIN_DATA.csv FILTERED_JOIN_DATA.csv COPYONLY)
-
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_empty.bin DSPI_empty.bin COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_empty.json DSPI_empty.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_joining.bin DSPI_joining.bin COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_joining.json DSPI_joining.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_filtering.bin DSPI_filtering.bin COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_filtering.json DSPI_filtering.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_filter_join.bin DSPI_filter_join.bin COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_filter_join.json DSPI_filter_join.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_merge_sorting.bin DSPI_merge_sorting.bin COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_merge_sorting.json DSPI_merge_sorting.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_big_merge_sorting.bin DSPI_big_merge_sorting.bin COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_big_merge_sorting.json DSPI_big_merge_sorting.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_linear_sorting.bin DSPI_linear_sorting.bin COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_linear_sorting.json DSPI_linear_sorting.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_filtering_linear_sort.bin DSPI_filtering_linear_sort.bin COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_filtering_linear_sort.json DSPI_filtering_linear_sort.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_double_merge_sorting.bin DSPI_double_merge_sorting.bin COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_double_merge_sorting.json DSPI_double_merge_sorting.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_sort_join_filter.bin DSPI_sort_join_filter.bin COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_sort_join_filter.json DSPI_sort_join_filter.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_addition.bin DSPI_addition.bin COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_addition.json DSPI_addition.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_multiplication.bin DSPI_multiplication.bin COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_multiplication.json DSPI_multiplication.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_aggregation_sum.bin DSPI_aggregation_sum.bin COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_aggregation_sum.json DSPI_aggregation_sum.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_add_mul_sum.bin DSPI_add_mul_sum.bin COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/hardware/DSPI_add_mul_sum.json DSPI_add_mul_sum.json COPYONLY)
-
-#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/lineitem_sf0_3.csv lineitem_sf0_3.csv COPYONLY)
-#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/lineitem_sf0_3_filter.csv lineitem_sf0_3_filter.csv COPYONLY)
-#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/lineitem_sf0_3_linear_sort.csv lineitem_sf0_3_linear_sort.csv COPYONLY)
-#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/lineitem_sf0_3_sort.csv lineitem_sf0_3_sort.csv COPYONLY)
-#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/part_sf0_3.csv part_sf0_3.csv COPYONLY)
-#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_1st_filter.csv lineitem_part_sf0_3_1st_filter.csv COPYONLY)
-#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_2nd_filter.csv lineitem_part_sf0_3_2nd_filter.csv COPYONLY)
-#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_inverted.csv lineitem_part_sf0_3_inverted.csv COPYONLY)
-#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_multiplied.csv lineitem_part_sf0_3_multiplied.csv COPYONLY)
-#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/SF03/lineitem_part_sf0_3_multiplied_reduced.csv lineitem_part_sf0_3_multiplied_reduced.csv COPYONLY)
-
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_sf0_1.csv lineitem_sf0_1.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_sf0_1_filter.csv lineitem_sf0_1_filter.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_sf0_1_linear_sort.csv lineitem_sf0_1_linear_sort.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_sf0_1_sort.csv lineitem_sf0_1_sort.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/part_sf0_1.csv part_sf0_1.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/part_sf0_1_filter.csv part_sf0_1_filter.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_part_sf0_1_1st_filter.csv lineitem_part_sf0_1_1st_filter.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_part_sf0_1_2nd_filter.csv lineitem_part_sf0_1_2nd_filter.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_part_sf0_1_inverted.csv lineitem_part_sf0_1_inverted.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_part_sf0_1_multiplied.csv lineitem_part_sf0_1_multiplied.csv COPYONLY)
-
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_sf0_01.csv lineitem_sf0_01.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_sf0_01_filter.csv lineitem_sf0_01_filter.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_sf0_01_linear_sort.csv lineitem_sf0_01_linear_sort.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_sf0_01_sort.csv lineitem_sf0_01_sort.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/part_sf0_01.csv part_sf0_01.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/part_sf0_01_filter.csv part_sf0_01_filter.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_part_sf0_01_1st_filter.csv lineitem_part_sf0_01_1st_filter.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_part_sf0_01_2nd_filter.csv lineitem_part_sf0_01_2nd_filter.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_part_sf0_01_inverted.csv lineitem_part_sf0_01_inverted.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data/lineitem_part_sf0_01_multiplied.csv lineitem_part_sf0_01_multiplied.csv COPYONLY)
-
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/data_type_sizes.json data_type_sizes.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/required_memory_space.json required_memory_space.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/supported_accelerators.json supported_accelerators.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/extended_accelerator_set.json extended_accelerator_set.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/big_accelerator_set.json big_accelerator_set.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/repo.json repo.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/config.ini config.ini COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/extended_config.ini extended_config.ini COPYONLY)
-
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/concurrency_testing.json concurrency_testing.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/double_run_testing.json double_run_testing.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/filter_join_testing.json filter_join_testing.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/filter_testing.json filter_testing.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/single_run_testing.json single_run_testing.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF001.json TPCH_Q19_SF001.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF01.json TPCH_Q19_SF01.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF03.json TPCH_Q19_SF03.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/input_defs/merge_sort_testing.json merge_sort_testing.json COPYONLY)
-
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/TPCH_Q6_SF001.json TPCH_Q6_SF001.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/TPCH_Q6_SF1.json TPCH_Q6_SF1.json COPYONLY)
-
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark_Q19_SF001.json benchmark_Q19_SF001.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark_Q19_SF1.json benchmark_Q19_SF1.json COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/lineitem0.01.csv lineitem0.01.csv COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/part0.01.csv part0.01.csv COPYONLY)
-
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark.pl benchmark.pl COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/benchmark_defs.zip benchmark_defs.zip COPYONLY)
-#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/lineitem.zip lineitem.zip COPYONLY)
-#configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/part.zip part.zip COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/big_benchmark_config.ini big_benchmark_config.ini COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/fast_benchmark_config.ini fast_benchmark_config.ini COPYONLY)
-configure_file(${DBMStoDSPI_SOURCE_DIR}/resources/benchmark/slow_benchmark_config.ini slow_benchmark_config.ini COPYONLY)
+add_executable (OrkhestraFPGAStream main.cpp ${data})
 
 FetchContent_Declare(
   cxxopts
@@ -137,9 +138,10 @@ FetchContent_Declare(
 FetchContent_GetProperties(cxxopts)
 if(NOT cxxopts_POPULATED)
   FetchContent_Populate(cxxopts)
-  target_include_directories(dbmstodspi PRIVATE ${cxxopts_SOURCE_DIR}/include)
+  target_include_directories(OrkhestraFPGAStream PRIVATE ${cxxopts_SOURCE_DIR}/include)
 endif()
 
-target_link_libraries(dbmstodspi PRIVATE query_managing)
-target_link_libraries(dbmstodspi PRIVATE input_managing)
-target_link_libraries(dbmstodspi PRIVATE util)
+target_link_libraries(OrkhestraFPGAStream PRIVATE core)
+target_link_libraries(OrkhestraFPGAStream PRIVATE util)
+
+file(COPY ${data} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

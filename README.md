@@ -1,10 +1,10 @@
-# DBMStoDSPI - Accelerated database operations on an FPGA with a dynamic stream processing interface
+# OrkhestraFPGAStream - Accelerated database operations on an FPGA with a dynamic stream processing interface
 
-[![License](https://img.shields.io/github/license/FPGA-Research-Manchester/DBMStoDSPI)](https://opensource.org/licenses/Apache-2.0)
-[![Build & Test](https://github.com/FPGA-Research-Manchester/DBMStoDSPI/actions/workflows/cmake.yml/badge.svg)](https://github.com/FPGA-Research-Manchester/DBMStoDSPI/actions)
+[![License](https://img.shields.io/github/license/FPGA-Research-Manchester/OrkhestraFPGAStream)](https://opensource.org/licenses/Apache-2.0)
+[![Build & Test](https://github.com/FPGA-Research-Manchester/OrkhestraFPGAStream/actions/workflows/cmake.yml/badge.svg)](https://github.com/FPGA-Research-Manchester/OrkhestraFPGAStream/actions)
 [![Standard](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B17)
 
-DBMStoDSPI is a middleware for orchestrating a dynamic stream processing pipeline. This software stack is meant to be coupled with a SQL parser or a DBMS. Then the software stack would execute the given query plan with an available FPGA using the available accelerator module library. How the data flows through the FPGA stack is shown in the graph below:
+OrkhestraFPGAStream is a middleware for orchestrating a dynamic stream processing pipeline. Currently, it only supports DBMS data streams with *DBMStoDSPI*, which uses FPGA modules with our Dynamic Stream Processing Interface (*DSPI*). This software stack is meant to be coupled with a SQL parser or a DBMS. Then the software stack would execute the given query plan with an available FPGA using the available accelerator module library. How the data flows through the FPGA stack is shown in the graph below:
 
 ![DBMStoDSPI source layout](./docs/DBMStoDSPI_graph.svg)
 
@@ -71,7 +71,7 @@ dd if=<fos_image.img> of=<SD card image> bs=4M status=progress
 * Boot the board from the SD card
 * Login with default username *xilinx* password *xilinx* (change the password)
 * Allocate UDMA buffer space and possibly extend CMA space as described in the tutorial [here](./docs/memory_allocation.md)
-* Build DBMStoDSPI using CMake
+* Build OrkhestraFPGAStream using CMake
 * Create the dataset 
   * Get a [TPC-H data generator](https://github.com/databricks/tpch-dbgen) 
   * Use [data generation script](./resources/benchmark/generate_data.sh)

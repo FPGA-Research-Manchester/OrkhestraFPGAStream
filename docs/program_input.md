@@ -212,7 +212,7 @@ Then for each operation there are the following vectors of data:
 
 ### How to get query plan graph?
 
-Currently the input is hand crafted and automation is being looked into in issue [#91](https://github.com/FPGA-Research-Manchester/DBMStoDSPI/issues/91).
+Currently the input is hand crafted and automation is being looked into in issue [#91](https://github.com/FPGA-Research-Manchester/OrkhestraFPGAStream/issues/91).
 
 But in general how do we get an SQL query to something like this [example](../resources/input_defs/TPCH_Q19_SF01.json)?
 <details>
@@ -653,7 +653,7 @@ Ideally with a lot more development time SQLite integration could be possible wh
 
 ## Available bitstream library
 
-Currently the bitstream library is hardcoded in the [query_scheduling_data.hpp](../src/query_managing/query_scheduling_data.hpp). The library is a map of module combinations mapped to a bitstream file name which can be found in a [repo.json](../resources/repo.json) file. The map of combinations to bitstream file should be given as a JSON input file. 
+Currently the bitstream library is hardcoded in the [query_scheduling_data.hpp](../src/core_interfaces/query_scheduling_data.hpp). The library is a map of module combinations mapped to a bitstream file name which can be found in a [repo.json](../resources/repo.json) file. The map of combinations to bitstream file should be given as a JSON input file. 
 
 There is a problem though. Different bitstreams can have the same operation accelerators but with different parameters. In the future, these parameters should be included in the module combinations. For example, how many comparison lanes and DNF clauses the specific **filter** bitstream has or how long sequences does the **linear sort** produce should be included in the map. Then it is possible to differentiate between two combinations with different parameters.
 

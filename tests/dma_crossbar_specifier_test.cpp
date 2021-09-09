@@ -20,69 +20,58 @@ limitations under the License.
 #include <gtest/gtest.h>
 namespace {
 
+using orkhestrafs::dbmstodspi::DMACrossbarSpecifier;
+
 TEST(DMACrossbarSpecifierTest, SpecifierDetectsInputClash) {
   // Normal
-  EXPECT_FALSE(dbmstodspi::fpga_managing::DMACrossbarSpecifier::IsInputClashing(
-      {0, 1, 2}));
+  EXPECT_FALSE(DMACrossbarSpecifier::IsInputClashing({0, 1, 2}));
   // Legal diagonal move
-  EXPECT_FALSE(dbmstodspi::fpga_managing::DMACrossbarSpecifier::IsInputClashing(
-      {2, 1, 16}));
+  EXPECT_FALSE(DMACrossbarSpecifier::IsInputClashing({2, 1, 16}));
   // Duplication
-  EXPECT_FALSE(dbmstodspi::fpga_managing::DMACrossbarSpecifier::IsInputClashing(
-      {1, 1, 2, 2, 2}));
+  EXPECT_FALSE(DMACrossbarSpecifier::IsInputClashing({1, 1, 2, 2, 2}));
   // Garbage data
-  EXPECT_FALSE(dbmstodspi::fpga_managing::DMACrossbarSpecifier::IsInputClashing(
-      {-1, -1, 0, 1, 2}));
+  EXPECT_FALSE(DMACrossbarSpecifier::IsInputClashing({-1, -1, 0, 1, 2}));
   // Simple clash
-  EXPECT_TRUE(dbmstodspi::fpga_managing::DMACrossbarSpecifier::IsInputClashing(
-      {1, 17}));
+  EXPECT_TRUE(DMACrossbarSpecifier::IsInputClashing({1, 17}));
   // 2 Chunk clash
-  EXPECT_TRUE(dbmstodspi::fpga_managing::DMACrossbarSpecifier::IsInputClashing(
+  EXPECT_TRUE(DMACrossbarSpecifier::IsInputClashing(
       {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 15, 0, 17}));
 }
 
 TEST(DMACrossbarSpecifierTest, SpecifierDetectsOutputClash) {
   // Normal
-  EXPECT_FALSE(
-      dbmstodspi::fpga_managing::DMACrossbarSpecifier::IsOutputClashing(
-          {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17}));
+  EXPECT_FALSE(DMACrossbarSpecifier::IsOutputClashing(
+      {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17}));
   // Legal diagonal move with garbage data
-  EXPECT_FALSE(
-      dbmstodspi::fpga_managing::DMACrossbarSpecifier::IsOutputClashing(
-          {17, -1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1, 0}));
+  EXPECT_FALSE(DMACrossbarSpecifier::IsOutputClashing(
+      {17, -1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1, 0}));
   // Duplication
-  EXPECT_FALSE(
-      dbmstodspi::fpga_managing::DMACrossbarSpecifier::IsOutputClashing(
-          {0, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}));
+  EXPECT_FALSE(DMACrossbarSpecifier::IsOutputClashing(
+      {0, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}));
   // 2 Chunk clash
-  EXPECT_TRUE(dbmstodspi::fpga_managing::DMACrossbarSpecifier::IsOutputClashing(
+  EXPECT_TRUE(DMACrossbarSpecifier::IsOutputClashing(
       {1, 3, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0, 17, 18}));
   // Duplication clash
-  EXPECT_TRUE(dbmstodspi::fpga_managing::DMACrossbarSpecifier::IsOutputClashing(
+  EXPECT_TRUE(DMACrossbarSpecifier::IsOutputClashing(
       {0, 3, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0, 17, 18}));
 }
 
 TEST(DMACrossbarSpecifierTest, SpecifierDetectsOutputOverwrites) {
   // Normal
-  EXPECT_FALSE(
-      dbmstodspi::fpga_managing::DMACrossbarSpecifier::IsOutputOverwritingData(
-          {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17}));
+  EXPECT_FALSE(DMACrossbarSpecifier::IsOutputOverwritingData(
+      {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17}));
   // Legal overwrites
-  EXPECT_FALSE(
-      dbmstodspi::fpga_managing::DMACrossbarSpecifier::IsOutputOverwritingData(
-          {0, 0, 2, 3, 0, 5, 15, 7, 8, 9, 2, 11, 1, 13, 14, 15, 16, 16}));
+  EXPECT_FALSE(DMACrossbarSpecifier::IsOutputOverwritingData(
+      {0, 0, 2, 3, 0, 5, 15, 7, 8, 9, 2, 11, 1, 13, 14, 15, 16, 16}));
   // Garbage data
-  EXPECT_FALSE(
-      dbmstodspi::fpga_managing::DMACrossbarSpecifier::IsOutputOverwritingData(
-          {0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-           -1, 1}));
+  EXPECT_FALSE(DMACrossbarSpecifier::IsOutputOverwritingData(
+      {0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+       1}));
   // Too much duplication
-  EXPECT_TRUE(
-      dbmstodspi::fpga_managing::DMACrossbarSpecifier::IsOutputOverwritingData(
-          {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 8}));
-  EXPECT_TRUE(
-      dbmstodspi::fpga_managing::DMACrossbarSpecifier::IsOutputOverwritingData(
-          {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18}));
+  EXPECT_TRUE(DMACrossbarSpecifier::IsOutputOverwritingData(
+      {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 8}));
+  EXPECT_TRUE(DMACrossbarSpecifier::IsOutputOverwritingData(
+      {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18}));
 }
 
 TEST(DMACrossbarSpecifierTest, DISABLED_ResolveInputClashDetectsNoClash) {
@@ -92,9 +81,8 @@ TEST(DMACrossbarSpecifierTest, DISABLED_ResolveInputClashDetectsNoClash) {
   const int record_size = 3;
 
   // Run
-  dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ResolveInputClashesSingleChannel(record_size, record_specification,
-                                       records_per_ddr_burst);
+  DMACrossbarSpecifier::ResolveInputClashesSingleChannel(
+      record_size, record_specification, records_per_ddr_burst);
 
   // Assert everything is the same
   ASSERT_EQ(32, records_per_ddr_burst);
@@ -103,9 +91,9 @@ TEST(DMACrossbarSpecifierTest, DISABLED_ResolveInputClashDetectsNoClash) {
   // Setup additional input for multi-channel streams.
   int chunks_per_record = 1;
 
-  dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ResolveInputClashesMultiChannel(record_size, record_specification,
-                                      records_per_ddr_burst, chunks_per_record);
+  DMACrossbarSpecifier::ResolveInputClashesMultiChannel(
+      record_size, record_specification, records_per_ddr_burst,
+      chunks_per_record);
 
   // Assert everything is still the same
   ASSERT_EQ(1, chunks_per_record);
@@ -119,9 +107,8 @@ TEST(DMACrossbarSpecifierTest, DISABLED_ResolveInputClashOnce) {
                                            10, 11, 12, 13, 14, 16, 15, 5, 17};
   const int record_size = 19;
 
-  dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ResolveInputClashesSingleChannel(record_size, record_specification,
-                                       records_per_ddr_burst);
+  DMACrossbarSpecifier::ResolveInputClashesSingleChannel(
+      record_size, record_specification, records_per_ddr_burst);
 
   ASSERT_EQ(16, records_per_ddr_burst);
   ASSERT_THAT(
@@ -130,9 +117,9 @@ TEST(DMACrossbarSpecifierTest, DISABLED_ResolveInputClashOnce) {
                                  10, 11, 12, 13, 14, -1, 15, 5, 17, 16}));
 
   int chunks_per_record = 2;
-  dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ResolveInputClashesMultiChannel(record_size, record_specification,
-                                      records_per_ddr_burst, chunks_per_record);
+  DMACrossbarSpecifier::ResolveInputClashesMultiChannel(
+      record_size, record_specification, records_per_ddr_burst,
+      chunks_per_record);
 
   ASSERT_EQ(2, chunks_per_record);
   ASSERT_THAT(
@@ -148,9 +135,8 @@ TEST(DMACrossbarSpecifierTest, DISABLED_ResolveInputClashTwice) {
                                            10, 11, 12, 13, 17, 16, 15, 5, 17};
   const int record_size = 19;
 
-  dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ResolveInputClashesSingleChannel(record_size, record_specification,
-                                       records_per_ddr_burst);
+  DMACrossbarSpecifier::ResolveInputClashesSingleChannel(
+      record_size, record_specification, records_per_ddr_burst);
 
   ASSERT_EQ(16, records_per_ddr_burst);
   ASSERT_THAT(
@@ -159,9 +145,9 @@ TEST(DMACrossbarSpecifierTest, DISABLED_ResolveInputClashTwice) {
                                  11, 12, 13, -1, -1, 15, 5, 17, 16, 17}));
 
   int chunks_per_record = 2;
-  dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ResolveInputClashesMultiChannel(record_size, record_specification,
-                                      records_per_ddr_burst, chunks_per_record);
+  DMACrossbarSpecifier::ResolveInputClashesMultiChannel(
+      record_size, record_specification, records_per_ddr_burst,
+      chunks_per_record);
 
   ASSERT_EQ(2, chunks_per_record);
   ASSERT_THAT(
@@ -178,9 +164,8 @@ TEST(DMACrossbarSpecifierTest, DISABLED_ResolveInputClashWithExtraSpace) {
                                            10, 11, 12, 13, 14, 16, 15, 0, 17};
   const int record_size = 19;
 
-  dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ResolveInputClashesSingleChannel(record_size, record_specification,
-                                       records_per_ddr_burst);
+  DMACrossbarSpecifier::ResolveInputClashesSingleChannel(
+      record_size, record_specification, records_per_ddr_burst);
 
   // Records per DDR burst gets halved
   ASSERT_EQ(8, records_per_ddr_burst);
@@ -192,9 +177,9 @@ TEST(DMACrossbarSpecifierTest, DISABLED_ResolveInputClashWithExtraSpace) {
 
   int chunks_per_record = 2;
   records_per_ddr_burst = 16;
-  dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ResolveInputClashesMultiChannel(record_size, record_specification,
-                                      records_per_ddr_burst, chunks_per_record);
+  DMACrossbarSpecifier::ResolveInputClashesMultiChannel(
+      record_size, record_specification, records_per_ddr_burst,
+      chunks_per_record);
 
   // Chunks per record gets increased.
   ASSERT_EQ(3, chunks_per_record);
@@ -213,9 +198,8 @@ TEST(DMACrossbarSpecifierTest, DISABLED_ResolveInputClashWithoutExtraSpace) {
                                            10, 11, 12, 13, 14, 16, 15, 0, 17};
   const int record_size = 33;
 
-  dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ResolveInputClashesSingleChannel(record_size, record_specification,
-                                       records_per_ddr_burst);
+  DMACrossbarSpecifier::ResolveInputClashesSingleChannel(
+      record_size, record_specification, records_per_ddr_burst);
 
   ASSERT_EQ(8, records_per_ddr_burst);
   ASSERT_THAT(
@@ -226,9 +210,9 @@ TEST(DMACrossbarSpecifierTest, DISABLED_ResolveInputClashWithoutExtraSpace) {
 
   int chunks_per_record = 3;
   records_per_ddr_burst = 8;
-  dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ResolveInputClashesMultiChannel(record_size, record_specification,
-                                      records_per_ddr_burst, chunks_per_record);
+  DMACrossbarSpecifier::ResolveInputClashesMultiChannel(
+      record_size, record_specification, records_per_ddr_burst,
+      chunks_per_record);
 
   ASSERT_EQ(3, chunks_per_record);
   ASSERT_THAT(
@@ -245,9 +229,8 @@ TEST(DMACrossbarSpecifierTest, DISABLED_ResolveOutputClashDetectsNoClash) {
                                            9, 10, 11, 12, 13, 14, 15, 16, 17};
   const int record_size = 18;
 
-  dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ResolveOutputClashesSingleChannel(record_size, record_specification,
-                                        records_per_ddr_burst);
+  DMACrossbarSpecifier::ResolveOutputClashesSingleChannel(
+      record_size, record_specification, records_per_ddr_burst);
 
   ASSERT_EQ(16, records_per_ddr_burst);
   ASSERT_THAT(record_specification,
@@ -262,11 +245,9 @@ TEST(DMACrossbarSpecifierTest, ResolveOutputClashThrowsError) {
                                            0, 0, 0, 0, 0, 0, 0, 0, 18};
   const int record_size = 19;
 
-  ASSERT_THROW(
-      dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-          ResolveOutputClashesSingleChannel(record_size, record_specification,
-                                            records_per_ddr_burst),
-      std::runtime_error);
+  ASSERT_THROW(DMACrossbarSpecifier::ResolveOutputClashesSingleChannel(
+                   record_size, record_specification, records_per_ddr_burst),
+               std::runtime_error);
 }
 
 TEST(DMACrossbarSpecifierTest, DISABLED_ResolveOutputClashOnce) {
@@ -276,9 +257,8 @@ TEST(DMACrossbarSpecifierTest, DISABLED_ResolveOutputClashOnce) {
                                            10, 11, 12, 13, 14, 15, 0, 17, 18};
   const int record_size = 19;
 
-  dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ResolveOutputClashesSingleChannel(record_size, record_specification,
-                                        records_per_ddr_burst);
+  DMACrossbarSpecifier::ResolveOutputClashesSingleChannel(
+      record_size, record_specification, records_per_ddr_burst);
 
   ASSERT_EQ(16, records_per_ddr_burst);
   ASSERT_THAT(
@@ -294,9 +274,8 @@ TEST(DMACrossbarSpecifierTest, DISABLED_ResolveOutputClashTwice) {
                                            10, 11, 12, 13, 14, 15, 0, 17, 18};
   const int record_size = 19;
 
-  dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ResolveOutputClashesSingleChannel(record_size, record_specification,
-                                        records_per_ddr_burst);
+  DMACrossbarSpecifier::ResolveOutputClashesSingleChannel(
+      record_size, record_specification, records_per_ddr_burst);
 
   ASSERT_EQ(16, records_per_ddr_burst);
   ASSERT_THAT(
@@ -312,9 +291,8 @@ TEST(DMACrossbarSpecifierTest, DISABLED_ResolveOutputClashWithExtraSpace) {
       0, 3, 16, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 0};
   const int record_size = 20;
 
-  dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ResolveOutputClashesSingleChannel(record_size, record_specification,
-                                        records_per_ddr_burst);
+  DMACrossbarSpecifier::ResolveOutputClashesSingleChannel(
+      record_size, record_specification, records_per_ddr_burst);
 
   ASSERT_EQ(8, records_per_ddr_burst);
   ASSERT_THAT(
@@ -332,9 +310,8 @@ TEST(DMACrossbarSpecifierTest, DISABLED_ResolveOutputClashWithoutExtraSpace) {
       0, 3, 16, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 0};
   const int record_size = 33;
 
-  dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ResolveOutputClashesSingleChannel(record_size, record_specification,
-                                        records_per_ddr_burst);
+  DMACrossbarSpecifier::ResolveOutputClashesSingleChannel(
+      record_size, record_specification, records_per_ddr_burst);
 
   ASSERT_EQ(8, records_per_ddr_burst);
   ASSERT_THAT(
@@ -350,7 +327,7 @@ TEST(DMACrossbarSpecifierTest, ExtendSpecificationAsMuchAsPossible) {
       0, 3, -1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1, -1, 0, 17, 18};
   const int record_size = 19;
 
-  auto extended_specification = dbmstodspi::fpga_managing::
+  auto extended_specification =
       DMACrossbarSpecifier::ExtendSpecificationSingleChannel(
           record_size, record_specification, records_per_ddr_burst);
 
@@ -396,9 +373,10 @@ TEST(DMACrossbarSpecifierTest, ExtendSpecificationAsMuchAsPossible) {
            -1,  -1,  -1,  288, 289, 274, -1,  -1}));
 
   int const chunks_per_record = 2;
-  extended_specification = dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ExtendSpecificationMultiChannel(record_size, record_specification,
-                                      records_per_ddr_burst, chunks_per_record);
+  extended_specification =
+      DMACrossbarSpecifier::ExtendSpecificationMultiChannel(
+          record_size, record_specification, records_per_ddr_burst,
+          chunks_per_record);
 
   ASSERT_THAT(
       extended_specification,
@@ -449,7 +427,7 @@ TEST(DMACrossbarSpecifierTest, ExtendSpecificationWithUnsupportedChunkCount) {
       0, 17, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18};
   const int record_size = 19;
 
-  auto extended_specification = dbmstodspi::fpga_managing::
+  auto extended_specification =
       DMACrossbarSpecifier::ExtendSpecificationSingleChannel(
           record_size, record_specification, records_per_ddr_burst);
 
@@ -495,9 +473,10 @@ TEST(DMACrossbarSpecifierTest, ExtendSpecificationWithUnsupportedChunkCount) {
            -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1}));
 
   int const chunks_per_record = 3;
-  extended_specification = dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ExtendSpecificationMultiChannel(record_size, record_specification,
-                                      records_per_ddr_burst, chunks_per_record);
+  extended_specification =
+      DMACrossbarSpecifier::ExtendSpecificationMultiChannel(
+          record_size, record_specification, records_per_ddr_burst,
+          chunks_per_record);
 
   ASSERT_THAT(
       extended_specification,
@@ -548,7 +527,7 @@ TEST(DMACrossbarSpecifierTest,
       0, 3, -1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1, -1, 0, 17, 18};
   const int record_size = 19;
 
-  auto extended_specification = dbmstodspi::fpga_managing::
+  auto extended_specification =
       DMACrossbarSpecifier::ExtendSpecificationSingleChannel(
           record_size, record_specification, records_per_ddr_burst);
 
@@ -588,9 +567,10 @@ TEST(DMACrossbarSpecifierTest,
            -1, -1}));
 
   int const chunks_per_record = 4;
-  extended_specification = dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ExtendSpecificationMultiChannel(record_size, record_specification,
-                                      records_per_ddr_burst, chunks_per_record);
+  extended_specification =
+      DMACrossbarSpecifier::ExtendSpecificationMultiChannel(
+          record_size, record_specification, records_per_ddr_burst,
+          chunks_per_record);
 
   ASSERT_THAT(
       extended_specification,
@@ -618,7 +598,7 @@ TEST(DMACrossbarSpecifierTest, ExtendSpecificationConsidersRecordSize) {
   const std::vector<int> record_specification = {0, 3};
   const int record_size = 19;
 
-  auto extended_specification = dbmstodspi::fpga_managing::
+  auto extended_specification =
       DMACrossbarSpecifier::ExtendSpecificationSingleChannel(
           record_size, record_specification, records_per_ddr_burst);
 
@@ -659,9 +639,10 @@ TEST(DMACrossbarSpecifierTest, ExtendSpecificationConsidersRecordSize) {
            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  -1}));
 
   int const chunks_per_record = 2;
-  extended_specification = dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-      ExtendSpecificationMultiChannel(record_size, record_specification,
-                                      records_per_ddr_burst, chunks_per_record);
+  extended_specification =
+      DMACrossbarSpecifier::ExtendSpecificationMultiChannel(
+          record_size, record_specification, records_per_ddr_burst,
+          chunks_per_record);
 
   ASSERT_THAT(
       extended_specification,
@@ -706,9 +687,8 @@ TEST(DMACrossbarSpecifierTest, ExtendOutputSpecificationAsMuchAsPossible) {
       0, 3, 16, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1, -1, 0, 17, 18};
   const int chunks_per_record = 2;
 
-  auto extended_specification = dbmstodspi::fpga_managing::
-      DMACrossbarSpecifier::ExtendOutputSpecification(
-          record_specification, records_per_ddr_burst, chunks_per_record);
+  auto extended_specification = DMACrossbarSpecifier::ExtendOutputSpecification(
+      record_specification, records_per_ddr_burst, chunks_per_record);
 
   ASSERT_THAT(
       extended_specification,
@@ -759,9 +739,8 @@ TEST(DMACrossbarSpecifierTest,
       0, 3, 16, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1, -1, 0, 17, 18};
   const int chunks_per_record = 3;
 
-  auto extended_specification = dbmstodspi::fpga_managing::
-      DMACrossbarSpecifier::ExtendOutputSpecification(
-          record_specification, records_per_ddr_burst, chunks_per_record);
+  auto extended_specification = DMACrossbarSpecifier::ExtendOutputSpecification(
+      record_specification, records_per_ddr_burst, chunks_per_record);
 
   ASSERT_THAT(
       extended_specification,
@@ -812,9 +791,8 @@ TEST(DMACrossbarSpecifierTest,
       0, 3, 16, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, -1, -1, 0, 17, 18};
   const int chunks_per_record = 2;
 
-  auto extended_specification = dbmstodspi::fpga_managing::
-      DMACrossbarSpecifier::ExtendOutputSpecification(
-          record_specification, records_per_ddr_burst, chunks_per_record);
+  auto extended_specification = DMACrossbarSpecifier::ExtendOutputSpecification(
+      record_specification, records_per_ddr_burst, chunks_per_record);
 
   ASSERT_THAT(
       extended_specification,
@@ -866,12 +844,9 @@ TEST(DMACrossbarSpecifierTest,
   const int chunks_per_record = 8;
 
   ASSERT_THROW(
-      dbmstodspi::fpga_managing::DMACrossbarSpecifier::
-          ExtendOutputSpecification(record_specification, records_per_ddr_burst,
-                                    chunks_per_record),
+      DMACrossbarSpecifier::ExtendOutputSpecification(
+          record_specification, records_per_ddr_burst, chunks_per_record),
       std::runtime_error);
 }
 
 }  // namespace
-
-// Fix input clashes in the tests!

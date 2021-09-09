@@ -28,11 +28,11 @@ limitations under the License.
 #include "query_scheduling_data.hpp"
 namespace {
 
-using dbmstodspi::fpga_managing::operation_types::QueryOperationType;
-using dbmstodspi::query_managing::IDManager;
-using dbmstodspi::query_managing::query_scheduling_data::
+using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
+using orkhestrafs::core_interfaces::query_scheduling_data::
     NodeOperationParameters;
-using dbmstodspi::query_managing::query_scheduling_data::QueryNode;
+using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
+using orkhestrafs::dbmstodspi::IDManager;
 
 class IDManagerTest : public ::testing::Test {
  protected:
@@ -58,9 +58,9 @@ TEST_F(IDManagerTest, SingleNode1In1Out) {
   std::vector<std::shared_ptr<QueryNode>> next_nodes = {nullptr};
 
   QueryNode first_node(one_data_file_vector_, one_data_file_vector_,
-                       any_operation_type_,
-                       next_nodes, previous_nodes, any_operation_parameters_,
-                       first_node_name_, any_is_checked_);
+                       any_operation_type_, next_nodes, previous_nodes,
+                       any_operation_parameters_, first_node_name_,
+                       any_is_checked_);
 
   expected_input_ids_.insert({first_node_name_, {0}});
   expected_output_ids_.insert({first_node_name_, {0}});
@@ -159,16 +159,15 @@ TEST_F(IDManagerTest, TwoPipelinedNodes) {
   ASSERT_EQ(expected_output_ids_, output_ids_);
 }
 
-
 TEST_F(IDManagerTest, TwoIndependentNodes) {
   std::vector<std::weak_ptr<QueryNode>> previous_nodes = {
       std::weak_ptr<QueryNode>()};
   std::vector<std::shared_ptr<QueryNode>> next_nodes = {nullptr};
 
   QueryNode first_node(one_data_file_vector_, one_data_file_vector_,
-                       any_operation_type_,
-                       next_nodes, previous_nodes, any_operation_parameters_,
-                       first_node_name_, any_is_checked_);
+                       any_operation_type_, next_nodes, previous_nodes,
+                       any_operation_parameters_, first_node_name_,
+                       any_is_checked_);
   QueryNode second_node(one_data_file_vector_, one_data_file_vector_,
                         any_operation_type_, next_nodes, previous_nodes,
                         any_operation_parameters_, second_node_name_,
@@ -290,12 +289,13 @@ TEST_F(IDManagerTest, TooManyStreamsError) {
 
   for (int i = 0; i < 17; i++) {
     all_nodes.emplace_back(one_data_file_vector_, one_data_file_vector_,
-                         any_operation_type_, next_nodes, previous_nodes,
-                         any_operation_parameters_, std::to_string(i), any_is_checked_);
+                           any_operation_type_, next_nodes, previous_nodes,
+                           any_operation_parameters_, std::to_string(i),
+                           any_is_checked_);
   }
 
   ASSERT_THROW(IDManager::AllocateStreamIDs(all_nodes, input_ids_, output_ids_),
-      std::runtime_error);
+               std::runtime_error);
 }
 
 }  // namespace

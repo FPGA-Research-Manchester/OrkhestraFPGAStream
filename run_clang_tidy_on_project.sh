@@ -3,45 +3,29 @@
 
 projectFiles=()
 
-for entry in ./apps/main.cpp
-do
-  projectFiles+=($entry)
-done
-
-for entry in ./src/fpga_managing/*
-do
-  if [ ! -d "$entry" ]; then
+set_project_files () {
+  for entry in $1
+  do
+    if [ ! -d "$entry" ]; then
       projectFiles+=($entry)
-  fi
-done
+    fi
+  done
+}
 
-for entry in ./src/fpga_managing/modules/*
-do
-  projectFiles+=($entry)
-done
-
-for entry in ./src/data_managing/*
-do
-  projectFiles+=($entry)
-done
-
-for entry in ./src/query_managing/*
-do
-  projectFiles+=($entry)
-done
-
-for entry in ./src/input_managing/*
-do
-  projectFiles+=($entry)
-done
-
-# If it doesn't work well with gtest and gmock try doing these files sepparately.
-for entry in ./tests/*
-do
-  if [ ! -d "$entry" ]; then 
-    projectFiles+=($entry)
-  fi
-done
+set_project_files "./apps/main.cpp"
+set_project_files "./src/core/*"
+set_project_files "./src/core/core_execution/*"
+set_project_files "./src/core/core_input/*"
+set_project_files "./src/core_interfaces/*"
+set_project_files "./src/dbmstodspi/input_handling/*"
+set_project_files "./src/dbmstodspi/query_execution/*"
+set_project_files "./src/dbmstodspi/query_execution/fpga_managing/*"
+set_project_files "./src/dbmstodspi/query_execution/fpga_managing/modules/*"
+set_project_files "./src/dbmstodspi/query_execution/fpga_managing/setup/*"
+set_project_files "./src/dbmstodspi/query_execution/scheduling/*"
+set_project_files "./src/dbmstodspi/query_execution/states/*"
+set_project_files "./src/dbmstodspi/query_execution/table_data/*"
+set_project_files "./src/dbmstodspi/util/*"
 
 tempArray=()
 for file in ${projectFiles[@]}
