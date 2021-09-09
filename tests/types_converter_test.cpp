@@ -20,7 +20,7 @@ limitations under the License.
 #include <gtest/gtest.h>
 namespace {
 
-using dbmstodspi::data_managing::TypesConverter;
+using orkhestrafs::dbmstodspi::TypesConverter;
 TEST(TypesConverterTest, IntToInt) {
   std::vector<uint32_t> converted_data_vector;
   TypesConverter::ConvertIntegerValuesToIntegerData("123",

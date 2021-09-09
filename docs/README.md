@@ -1,4 +1,4 @@
-# DBMStoDSPI implementation details
+# OrkhestraFPGAStream implementation details
 
 A brief description of the project is on the main [page](../README.md). Different concepts on how to use and how does the software work with the hardware designs are described in the documents below:
 

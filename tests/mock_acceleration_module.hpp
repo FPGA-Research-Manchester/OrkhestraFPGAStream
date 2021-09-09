@@ -20,11 +20,14 @@ limitations under the License.
 #include "acceleration_module.hpp"
 #include "memory_manager_interface.hpp"
 
+using orkhestrafs::dbmstodspi::AccelerationModule;
+using orkhestrafs::dbmstodspi::MemoryManagerInterface;
+
 class MockAccelerationModule
-    : public dbmstodspi::fpga_managing::modules::AccelerationModule {
+    : public AccelerationModule {
  public:
   MockAccelerationModule(
-      dbmstodspi::fpga_managing::MemoryManagerInterface* memory_manager,
+      MemoryManagerInterface* memory_manager,
       int module_position)
       : AccelerationModule(memory_manager, module_position) {}
   ~MockAccelerationModule() override;

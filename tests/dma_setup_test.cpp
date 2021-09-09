@@ -21,6 +21,9 @@ limitations under the License.
 
 #include "mock_dma.hpp"
 namespace {
+using orkhestrafs::dbmstodspi::DMASetup;
+using orkhestrafs::dbmstodspi::StreamDataParameters;
+
 const int kInputStreamId = 0;
 const int kOutputStreamId = 0;
 
@@ -46,11 +49,10 @@ TEST(DMASetupTest, InputParamsSettings) {
                                                 expected_stream_size))
       .Times(1);
 
-  std::vector<dbmstodspi::fpga_managing::StreamDataParameters> input_streams = {
+  std::vector<StreamDataParameters> input_streams = {
       {kInputStreamId, 18, expected_stream_size, mock_db_data.data(), {}}};
 
-  dbmstodspi::fpga_managing::DMASetup::SetupDMAModule(mock_dma, input_streams,
-                                                      true);
+  DMASetup::SetupDMAModule(mock_dma, input_streams, true);
   free(mock_output_memory_address);
 }
 TEST(DMASetupTest, OutputParamsSettings) {
@@ -74,11 +76,10 @@ TEST(DMASetupTest, OutputParamsSettings) {
   EXPECT_CALL(mock_dma, SetControllerStreamSize(false, kOutputStreamId, 0))
       .Times(1);
 
-  std::vector<dbmstodspi::fpga_managing::StreamDataParameters> output_streams =
-      {{kOutputStreamId, 18, 0, mock_output_memory_address, {}, 2}};
+  std::vector<StreamDataParameters> output_streams = {
+      {kOutputStreamId, 18, 0, mock_output_memory_address, {}, 2}};
 
-  dbmstodspi::fpga_managing::DMASetup::SetupDMAModule(mock_dma, output_streams,
-                                                      false);
+  DMASetup::SetupDMAModule(mock_dma, output_streams, false);
   free(mock_output_memory_address);
 }
 TEST(DMASetupTest, RecordSettings) {
@@ -95,11 +96,10 @@ TEST(DMASetupTest, RecordSettings) {
   EXPECT_CALL(mock_dma, SetRecordChunkIDs(kInputStreamId, testing::_, 1))
       .Times(16);
 
-  std::vector<dbmstodspi::fpga_managing::StreamDataParameters> input_streams = {
+  std::vector<StreamDataParameters> input_streams = {
       {kInputStreamId, 18, 1000, mock_db_data.data(), {}}};
 
-  dbmstodspi::fpga_managing::DMASetup::SetupDMAModule(mock_dma, input_streams,
-                                                      true);
+  DMASetup::SetupDMAModule(mock_dma, input_streams, true);
   free(mock_output_memory_address);
 }
 }  // namespace

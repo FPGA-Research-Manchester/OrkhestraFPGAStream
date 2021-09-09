@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright 2021 University of Manchester
 
 Licensed under the Apache License, Version 2.0(the "License");
@@ -15,55 +15,38 @@ limitations under the License.
 */
 
 #include <chrono>
-#include <cmath>
 #include <iostream>
-#include <optional>
-#include <utility>
-#include <vector>
+#include <string>
 
-#include "config.hpp"
-#include "config_creator.hpp"
+#include "core.hpp"
 #include "cxxopts.hpp"
-#include "graph_creator.hpp"
-#include "input_config_reader.hpp"
 #include "logger.hpp"
-#include "operation_types.hpp"
-#include "query_manager.hpp"
-#include "query_scheduling_data.hpp"
-#include "rapidjson_reader.hpp"
 
-using dbmstodspi::fpga_managing::operation_types::QueryOperationType;
-using dbmstodspi::query_managing::QueryManager;
-using dbmstodspi::query_managing::query_scheduling_data::QueryNode;
-
-using dbmstodspi::input_managing::Config;
-using dbmstodspi::input_managing::ConfigCreator;
-using dbmstodspi::input_managing::GraphCreator;
-using dbmstodspi::input_managing::InputConfigReader;
-using dbmstodspi::input_managing::RapidJSONReader;
-
-using dbmstodspi::logger::Log;
-using dbmstodspi::logger::LogLevel;
-using dbmstodspi::logger::SetLoggingLevel;
+using namespace std;
+using orkhestrafs::core::Core;
+using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
+using orkhestrafs::dbmstodspi::logging::SetLoggingLevel;
 
 /**
  * @brief Helper method to run the given query nodes and their subsequent nodes
  * while measuring and printing the overall time it took to process the queries.
  *
  * This includes data writing and reading from and to the DDR.
- * @param leaf_nodes Vector of nodes from which the parsing starts.
+ * @param input_def_filename Filename for the JSON file defining the input query
+ * graph.
+ * @param config_filename Filename for the INI file containing paths to query
+ * configuration files.
  */
-void MeasureOverallTime(std::vector<std::shared_ptr<QueryNode>> leaf_nodes,
-                        const Config& config) {
-  std::chrono::steady_clock::time_point begin =
-      std::chrono::steady_clock::now();
-  QueryManager::RunQueries(std::move(leaf_nodes), config);
-  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+void MeasureOverallTime(string input_def_filename, string config_filename) {
+  auto begin = chrono::steady_clock::now();
+  Core::Run(input_def_filename, config_filename);
+  auto end = chrono::steady_clock::now();
 
   Log(LogLevel::kInfo,
       "Overall time = " +
-          std::to_string(
-              std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
+          to_string(
+              chrono::duration_cast<std::chrono::milliseconds>(end - begin)
                   .count()) +
           "[ms]");
 }
@@ -76,7 +59,7 @@ void MeasureOverallTime(std::vector<std::shared_ptr<QueryNode>> leaf_nodes,
  */
 auto main(int argc, char* argv[]) -> int {
   cxxopts::Options options(
-      "DBMStoDSPI",
+      "OrkhestraFPGAStream",
       "Accelerate the given query operations with an available FPGA!");
 
   options.add_options()("i,input", "Input definition",
@@ -89,7 +72,7 @@ auto main(int argc, char* argv[]) -> int {
   auto result = options.parse(argc, argv);
 
   if (result.count("help")) {
-    std::cout << options.help() << std::endl;
+    cout << options.help() << endl;
     exit(0);
   }
 
@@ -103,31 +86,8 @@ auto main(int argc, char* argv[]) -> int {
     SetLoggingLevel(LogLevel::kInfo);
   }
 
-  auto config_creator = ConfigCreator(std::make_unique<RapidJSONReader>(),
-                                      std::make_unique<InputConfigReader>());
-  auto graph_maker = GraphCreator(std::make_unique<RapidJSONReader>());
-  MeasureOverallTime(
-      std::move(graph_maker.MakeGraph(result["input"].as<std::string>())),
-      config_creator.GetConfig(result["config"].as<std::string>()));
-
-  // Tests
-  // MeasureOverallTime(std::move(graph_maker.MakeGraph("filter_testing.json")),
-  //                   config_creator.GetConfig("config.ini"));
-  // MeasureOverallTime(std::move(graph_maker.MakeGraph("filter_join_testing.json")),
-  //                   config_creator.GetConfig("config.ini"));
-  // MeasureOverallTime(std::move(graph_maker.MakeGraph("concurrency_testing.json")),
-  //                   config_creator.GetConfig("config.ini"));
-  // MeasureOverallTime(std::move(graph_maker.MakeGraph("single_run_testing.json")),
-  //                   config_creator.GetConfig("config.ini"));
-  // MeasureOverallTime(std::move(graph_maker.MakeGraph("double_run_testing.json")),
-  //                   config_creator.GetConfig("config.ini"));
-  // MeasureOverallTime(std::move(graph_maker.MakeGraph("TPCH_Q19_SF001.json")),
-  //                   config_creator.GetConfig("config.ini"));
-  // MeasureOverallTime(std::move(graph_maker.MakeGraph("TPCH_Q19_SF01.json")),
-  //                   config_creator.GetConfig("config.ini"));
-  // Need to unpack SF=0.3 data
-  /*MeasureOverallTime(std::move(graph_maker.MakeGraph("TPCH_Q19_SF03.json")),
-                     config_creator.GetConfig("extended_config.ini"));*/
+  MeasureOverallTime(result["input"].as<string>(),
+                     result["config"].as<string>());
 
   return 0;
 }

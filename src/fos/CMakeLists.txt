@@ -13,7 +13,6 @@
 #limitations under the License.
 
 # Picked src files from https://github.com/FPGA-Research-Manchester/fos
-link_libraries(stdc++fs)
 add_library(fos 
 			"cynq.cpp"  
 			"cynq.h"
@@ -25,3 +24,5 @@ add_library(fos
 			"udma.h")
 
 target_include_directories(fos PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+
+target_link_libraries(fos PRIVATE stdc++fs)

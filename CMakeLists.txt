@@ -1,4 +1,4 @@
-#Copyright 2021 University of Manchester
+﻿#Copyright 2021 University of Manchester
 #
 #Licensed under the Apache License, Version 2.0(the "License");
 #you may not use this file except in compliance with the License.
@@ -13,18 +13,21 @@
 #limitations under the License.
 
 
-# Root
+# In theory up to 3.14 should be supported but it's tested with 3.17
 cmake_minimum_required(VERSION 3.17)
 
-project(DBMStoDSPI 
+project(OrkhestraFPGAStream  
         VERSION 0.1 
-        DESCRIPTION "A transparent DBMS FPGA acceleration configurator"
+        DESCRIPTION "A DBMS FPGA acceleration configurator"
         LANGUAGES CXX C
 )
 
+#To enable clang-tidy tools
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+#Using C++ 17 features like concatenated namespaces
 set(CMAKE_CXX_STANDARD 17)
 
+#To download external libraries like rapidcsv, rapidjson and googletest
 include(FetchContent)
 if (ENABLE_TESTS)
     include(CTest)
@@ -35,19 +38,21 @@ if (NOT WIN32)
     # Assuming that dev work isn't done on a unix machine
     add_definitions (-D_FPGA_AVAILABLE)
 endif()
-add_subdirectory(src/util)
-add_subdirectory(src/fpga_managing)
-add_subdirectory(src/data_managing)
-add_subdirectory(src/query_managing)
-add_subdirectory(src/input_managing)
 
+# Global dependency
+add_subdirectory(src/core_interfaces)
+# Implementation
+add_subdirectory(src/dbmstodspi)
+# Core libraries gluing everything together
+add_subdirectory(src/core)
+# Applications
 add_subdirectory(apps)
-
+# Tests
 if(BUILD_TESTING)
     add_subdirectory(tests)
 endif()
 
-# Build docs
+# Build docs. Set it to ON to build
 set (BUILD_DOCS OFF)
 if(BUILD_DOCS)
     # From https://vicrucann.github.io/tutorials/quick-cmake-doxygen/

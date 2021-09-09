@@ -20,7 +20,11 @@ limitations under the License.
 #include "dma_interface.hpp"
 #include "gmock/gmock.h"
 
-class MockDMA : public dbmstodspi::fpga_managing::modules::DMAInterface {
+using orkhestrafs::dbmstodspi::DMAInterface;
+using orkhestrafs::dbmstodspi::module_config_values::DMACrossbarDirectionSelection;
+using orkhestrafs::dbmstodspi::query_acceleration_constants::kMaxIOStreamCount;
+
+class MockDMA : public DMAInterface {
   using crossbar_value_array = std::array<int, 4>;
 
  public:
@@ -39,10 +43,7 @@ class MockDMA : public dbmstodspi::fpga_managing::modules::DMAInterface {
   MOCK_METHOD(volatile int, GetControllerStreamSize,
               (bool is_input, int stream_id), (override));
   MOCK_METHOD(void, StartController,
-              (bool is_input,
-               std::bitset<dbmstodspi::fpga_managing::
-                               query_acceleration_constants::kMaxIOStreamCount>
-                   stream_active),
+              (bool is_input, std::bitset<kMaxIOStreamCount> stream_active),
               (override));
   MOCK_METHOD(bool, IsControllerFinished, (bool is_input), (override));
 
@@ -51,9 +52,8 @@ class MockDMA : public dbmstodspi::fpga_managing::modules::DMAInterface {
               (int stream_id, int interfaceCycle, int chunkID), (override));
 
   MOCK_METHOD(void, SetCrossbarValues,
-              (dbmstodspi::fpga_managing::module_config_values::
-                   DMACrossbarDirectionSelection crossbar_selection,
-               int stream_id, int clock_cycle, int offset,
+              (DMACrossbarDirectionSelection crossbar_selection, int stream_id,
+               int clock_cycle, int offset,
                crossbar_value_array configuration_values),
               (override));
 
