@@ -21,8 +21,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-file(GLOB HEADER_LIST "${OrkhestraFPGAStream_SOURCE_DIR}/tests/*.hpp")
-file(GLOB SOURCE_LIST "${OrkhestraFPGAStream_SOURCE_DIR}/tests/*.cpp")
+file(GLOB_RECURSE HEADER_LIST "${OrkhestraFPGAStream_SOURCE_DIR}/tests/*.hpp")
+file(GLOB_RECURSE SOURCE_LIST "${OrkhestraFPGAStream_SOURCE_DIR}/tests/*.cpp")
 
 add_executable(testlib ${HEADER_LIST} ${SOURCE_LIST}) 
 
@@ -39,9 +39,21 @@ if (NOT WIN32)
 	target_link_libraries(testlib fos)
 endif()
 
+target_include_directories(testlib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core
+										  ${CMAKE_CURRENT_SOURCE_DIR}/core/core_execution
+										  ${CMAKE_CURRENT_SOURCE_DIR}/core/core_input
+										  ${CMAKE_CURRENT_SOURCE_DIR}/dbmstodspi/query_execution/states
+                                          ${CMAKE_CURRENT_SOURCE_DIR}/dbmstodspi/query_execution/table_data
+                                          ${CMAKE_CURRENT_SOURCE_DIR}/dbmstodspi/query_execution/fpga_managing
+                                          ${CMAKE_CURRENT_SOURCE_DIR}/dbmstodspi/query_execution/fpga_managing/modules
+                                          ${CMAKE_CURRENT_SOURCE_DIR}/dbmstodspi/query_execution/fpga_managing/setup
+					                      ${CMAKE_CURRENT_SOURCE_DIR}/dbmstodspi/query_execution/scheduling
+										  ${CMAKE_CURRENT_SOURCE_DIR}/dbmstodspi/util
+										  ${CMAKE_CURRENT_SOURCE_DIR}/dbmstodspi/input_handling)
+
 target_include_directories(testlib INTERFACE "${OrkhestraFPGAStream_SOURCE_DIR}/tests")
 
-file(COPY ${OrkhestraFPGAStream_SOURCE_DIR}/tests/resources/DMACrossbarSetupTest DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${OrkhestraFPGAStream_SOURCE_DIR}/tests/dbmstodspi/query_execution/fpga_managing/setup/resources/DMACrossbarSetupTest DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_test(NAME DMACrossbarSpecifierTest COMMAND testlib)
 add_test(NAME AccelerationModuleTest COMMAND testlib)
