@@ -32,6 +32,6 @@ class InputManagerFactory {
    * @brief Create an input manager for parsing the files to setup the library.
    * @return Input manager pointer.
    */
-  static std::unique_ptr<InputManagerInterface> GetManager();
+  static auto GetManager() -> std::unique_ptr<InputManagerInterface>;
 };
 }  // namespace orkhestrafs::core::core_input

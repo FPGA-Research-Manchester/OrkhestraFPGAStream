@@ -50,7 +50,7 @@ inline void SetLoggingLevel(LogLevel global_level) {
  * @param log_level Importance of the logging message.
  * @param message The log message recorded.
  */
-inline void Log(LogLevel log_level, std::string message) {
+inline void Log(LogLevel log_level, const std::string& message) {
   spdlog::log(static_cast<spdlog::level::level_enum>(log_level), message);
 }
 

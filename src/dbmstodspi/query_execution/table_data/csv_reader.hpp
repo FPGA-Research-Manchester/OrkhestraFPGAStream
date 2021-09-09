@@ -80,4 +80,4 @@ class CSVReader {
       const std::unique_ptr<MemoryBlockInterface>& memory_device) -> int;
 };
 
-}  // namespace dbmstodspi::data_managing
+}  // namespace orkhestrafs::dbmstodspi

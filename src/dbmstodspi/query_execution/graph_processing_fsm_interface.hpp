@@ -25,14 +25,10 @@ limitations under the License.
 #include "memory_block_interface.hpp"
 #include "query_scheduling_data.hpp"
 
-using orkhestrafs::core_interfaces::Config;
-using orkhestrafs::core_interfaces::ExecutionPlanGraphInterface;
 using orkhestrafs::core_interfaces::query_scheduling_data::
     ConfigurableModulesVector;
 using orkhestrafs::core_interfaces::query_scheduling_data::MemoryReuseTargets;
-using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
 using orkhestrafs::core_interfaces::query_scheduling_data::RecordSizeAndCount;
-using orkhestrafs::core_interfaces::query_scheduling_data::StreamResultParameters;
 
 namespace orkhestrafs::dbmstodspi {
 /**

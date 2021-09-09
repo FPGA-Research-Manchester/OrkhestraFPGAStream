@@ -121,4 +121,4 @@ enum class ILADataTypes {
   kUBs = 51
 };
 
-}  // namespace dbmstodspi::fpga_managing
+}  // namespace orkhestrafs::dbmstodspi

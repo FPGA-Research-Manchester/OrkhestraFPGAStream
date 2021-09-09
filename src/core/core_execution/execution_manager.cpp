@@ -22,8 +22,6 @@ limitations under the License.
 #include "fpga_manager_interface.hpp"
 
 using orkhestrafs::core::core_execution::ExecutionManager;
-using orkhestrafs::dbmstodspi::FPGAManager;
-using orkhestrafs::dbmstodspi::FPGAManagerInterface;
 
 void ExecutionManager::setFinishedFlag() { busy_flag_ = false; }
 
@@ -73,7 +71,7 @@ void ExecutionManager::SetupNextRunData() {
       query_manager_->SetupAccelerationNodesForExecution(
           data_manager_.get(), memory_manager_.get(), input_memory_blocks_,
           output_memory_blocks_, input_stream_sizes_, output_stream_sizes_,
-          std::move(next_scheduled_run_nodes));
+          next_scheduled_run_nodes);
   query_nodes_ = std::move(execution_nodes_and_result_params.first);
   result_parameters_ = std::move(execution_nodes_and_result_params.second);
 }

@@ -21,7 +21,8 @@ limitations under the License.
 #include "gmock/gmock.h"
 
 using orkhestrafs::dbmstodspi::DMAInterface;
-using orkhestrafs::dbmstodspi::module_config_values::DMACrossbarDirectionSelection;
+using orkhestrafs::dbmstodspi::module_config_values::
+    DMACrossbarDirectionSelection;
 using orkhestrafs::dbmstodspi::query_acceleration_constants::kMaxIOStreamCount;
 
 class MockDMA : public DMAInterface {

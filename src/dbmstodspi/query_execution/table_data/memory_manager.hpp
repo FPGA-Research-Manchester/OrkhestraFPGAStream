@@ -92,4 +92,4 @@ class MemoryManager : public MemoryManagerInterface {
   static void SetFPGATo100MHz();
 };
 
-}  // namespace dbmstodspi::fpga_managing
+}  // namespace orkhestrafs::dbmstodspi

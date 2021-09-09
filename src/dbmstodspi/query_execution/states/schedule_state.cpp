@@ -21,15 +21,14 @@ limitations under the License.
 #include "logger.hpp"
 
 using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
-using orkhestrafs::dbmstodspi::NodeScheduler;
 using orkhestrafs::dbmstodspi::ScheduleState;
 using orkhestrafs::dbmstodspi::SetupNodesState;
 using orkhestrafs::dbmstodspi::StateInterface;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 
-std::unique_ptr<StateInterface> ScheduleState::Execute(
-    GraphProcessingFSMInterface* fsm) {
+auto ScheduleState::Execute(GraphProcessingFSMInterface* fsm)
+    -> std::unique_ptr<StateInterface> {
   Log(LogLevel::kTrace, "Schedule state");
   std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links;
   if (fsm->IsUnscheduledNodesGraphEmpty()) {

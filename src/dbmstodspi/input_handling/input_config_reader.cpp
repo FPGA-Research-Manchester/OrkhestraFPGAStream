@@ -20,8 +20,8 @@ limitations under the License.
 
 using orkhestrafs::dbmstodspi::InputConfigReader;
 
-std::map<std::string, std::string> InputConfigReader::ParseInputConfig(
-    const std::string& filename) {
+auto InputConfigReader::ParseInputConfig(const std::string& filename)
+    -> std::map<std::string, std::string> {
   std::ifstream filestream(filename);
   if (filestream.is_open()) {
     std::map<std::string, std::string> config_data;

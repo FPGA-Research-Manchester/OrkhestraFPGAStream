@@ -37,7 +37,7 @@ class InputManagerInterface {
    * @param config_filename Operator library configuration files.
    * @return The execution graph and a config configuring the operator library.
    */
-  virtual std::pair<std::unique_ptr<ExecutionPlanGraphInterface>, Config> Parse(
-      std::string input_filename, std::string config_filename) = 0;
+  virtual auto Parse(std::string input_filename, std::string config_filename)
+      -> std::pair<std::unique_ptr<ExecutionPlanGraphInterface>, Config> = 0;
 };
 }  // namespace orkhestrafs::core_interfaces

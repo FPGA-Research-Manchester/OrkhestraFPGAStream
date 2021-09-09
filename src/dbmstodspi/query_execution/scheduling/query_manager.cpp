@@ -360,10 +360,10 @@ void QueryManager::CheckTableData(const DataManagerInterface* data_manager,
 void QueryManager::CheckResults(
     const DataManagerInterface* data_manager,
     const std::unique_ptr<MemoryBlockInterface>& memory_device, int row_count,
-    std::string filename, const std::vector<std::vector<int>>& node_parameters,
-    int stream_index) {
+    const std::string& filename,
+    const std::vector<std::vector<int>>& node_parameters, int stream_index) {
   auto expected_table = TableManager::ReadTableFromFile(
-      data_manager, node_parameters, stream_index, std::move(filename));
+      data_manager, node_parameters, stream_index, filename);
   auto resulting_table = TableManager::ReadTableFromMemory(
       data_manager, node_parameters, stream_index, memory_device, row_count);
   CheckTableData(data_manager, expected_table, resulting_table);
@@ -372,15 +372,14 @@ void QueryManager::CheckResults(
 void QueryManager::WriteResults(
     const DataManagerInterface* data_manager,
     const std::unique_ptr<MemoryBlockInterface>& memory_device, int row_count,
-    std::string filename, const std::vector<std::vector<int>>& node_parameters,
-    int stream_index) {
+    const std::string& filename,
+    const std::vector<std::vector<int>>& node_parameters, int stream_index) {
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
 
   auto resulting_table = TableManager::ReadTableFromMemory(
       data_manager, node_parameters, stream_index, memory_device, row_count);
-  TableManager::WriteResultTableFile(data_manager, resulting_table,
-                                     std::move(filename));
+  TableManager::WriteResultTableFile(data_manager, resulting_table, filename);
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   Log(LogLevel::kInfo,

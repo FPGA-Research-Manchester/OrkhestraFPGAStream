@@ -34,15 +34,15 @@ class RapidJSONReader : public JSONReaderInterface {
       -> std::unique_ptr<Document>;
   static auto ConvertCharStringToAscii(const std::string& input_string,
                                        int output_size) -> std::vector<int>;
-  void GetOperationParameters(
+  static void GetOperationParameters(
       const rapidjson::GenericMember<
           rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<>>& node_parameter,
       JSONReaderInterface::InputNodeParameters& node_parameters_map);
-  void GetIOStreamFilesAndDependencies(
+  static void GetIOStreamFilesAndDependencies(
       const rapidjson::GenericMember<
           rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<>>& node_parameter,
       JSONReaderInterface::InputNodeParameters& node_parameters_map);
-  void GetOperationType(
+  static void GetOperationType(
       JSONReaderInterface::InputNodeParameters& node_parameters_map,
       const rapidjson::GenericMember<
           rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<>>& node_parameter);

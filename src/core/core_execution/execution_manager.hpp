@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <queue>
 #include <string>
+#include <utility>
 
 #include "accelerated_query_node.hpp"
 #include "data_manager_interface.hpp"
@@ -59,7 +60,7 @@ class ExecutionManager : public ExecutionManagerInterface,
         data_manager_{std::move(data_manager)},
         memory_manager_{std::move(memory_manager)},
         query_manager_{std::move(query_manager)},
-        config_{config} {};
+        config_{std::move(config)} {};
 
   void setFinishedFlag() override;
 

@@ -22,8 +22,8 @@ namespace orkhestrafs::dbmstodspi {
 class InputConfigReader : public InputConfigReaderInterface {
  public:
   ~InputConfigReader() override = default;
-  std::map<std::string, std::string> ParseInputConfig(
-      const std::string& filename) override;
+  auto ParseInputConfig(const std::string& filename)
+      -> std::map<std::string, std::string> override;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

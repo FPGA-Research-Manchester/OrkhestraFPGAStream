@@ -46,4 +46,4 @@ class AggregationSumSetup {
       const std::vector<std::vector<int>>& operation_parameters);
 };
 
-}  // namespace dbmstodspi::fpga_managing
+}  // namespace orkhestrafs::dbmstodspi

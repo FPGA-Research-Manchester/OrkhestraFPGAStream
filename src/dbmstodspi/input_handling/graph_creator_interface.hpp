@@ -34,7 +34,7 @@ class GraphCreatorInterface {
    * @param graph_def_filename File containing the query plan information.
    * @return Query plan graph created form the given JSON.
    */
-  virtual std::unique_ptr<ExecutionPlanGraphInterface> MakeGraph(
-      std::string graph_def_filename) = 0;
+  virtual auto MakeGraph(std::string graph_def_filename)
+      -> std::unique_ptr<ExecutionPlanGraphInterface> = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

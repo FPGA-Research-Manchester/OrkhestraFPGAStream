@@ -45,4 +45,4 @@ class MemoryManagerInterface {
       -> std::unique_ptr<MemoryBlockInterface> = 0;
 };
 
-}  // namespace dbmstodspi::fpga_managing
+}  // namespace orkhestrafs::dbmstodspi

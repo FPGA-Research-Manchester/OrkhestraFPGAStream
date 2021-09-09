@@ -29,6 +29,6 @@ class JSONValidatorInterface {
    * @param json_filename File to be checked.
    * @return Boolean flag noting the validity of the JSON file.
    */
-  virtual bool Check(std::string json_filename) = 0;
+  virtual auto Check(std::string json_filename) -> bool = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

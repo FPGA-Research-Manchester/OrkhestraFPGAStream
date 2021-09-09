@@ -35,6 +35,7 @@ class ExecutionManagerFactory {
    * @param config Config to setup the operators library
    * @return A smart pointer to the execution manager class to execute the FSM with.
   */
-  static std::unique_ptr<ExecutionManagerInterface> GetManager(Config config);
+  static auto GetManager(const Config& config)
+      -> std::unique_ptr<ExecutionManagerInterface>;
 };
 }  // namespace orkhestrafs::core::core_execution

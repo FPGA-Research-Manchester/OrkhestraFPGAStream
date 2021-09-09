@@ -76,26 +76,26 @@ class QueryManager : public QueryManagerInterface {
       const std::vector<AcceleratedQueryNode>& execution_query_nodes) override;
 
  private:
-  void CheckTableData(const DataManagerInterface* data_manager,
-                      const TableData& expected_table,
-                      const TableData& resulting_table);
+  static void CheckTableData(const DataManagerInterface* data_manager,
+                             const TableData& expected_table,
+                             const TableData& resulting_table);
   void CheckResults(const DataManagerInterface* data_manager,
                     const std::unique_ptr<MemoryBlockInterface>& memory_device,
-                    int row_count, std::string filename,
+                    int row_count, const std::string& filename,
                     const std::vector<std::vector<int>>& node_parameters,
                     int stream_index);
-  void WriteResults(const DataManagerInterface* data_manager,
-                    const std::unique_ptr<MemoryBlockInterface>& memory_device,
-                    int row_count, std::string filename,
-                    const std::vector<std::vector<int>>& node_parameters,
-                    int stream_index);
-  void CopyMemoryData(
+  static void WriteResults(
+      const DataManagerInterface* data_manager,
+      const std::unique_ptr<MemoryBlockInterface>& memory_device, int row_count,
+      const std::string& filename,
+      const std::vector<std::vector<int>>& node_parameters, int stream_index);
+  static void CopyMemoryData(
       int table_size,
       const std::unique_ptr<MemoryBlockInterface>& source_memory_device,
       const std::unique_ptr<MemoryBlockInterface>& target_memory_device);
   void ProcessResults(
       const DataManagerInterface* data_manager,
-      const std::array<int, query_acceleration_constants::kMaxIOStreamCount>
+      std::array<int, query_acceleration_constants::kMaxIOStreamCount>
           result_sizes,
       const std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
@@ -117,20 +117,20 @@ class QueryManager : public QueryManagerInterface {
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
           reuse_links,
       const std::vector<std::string>& scheduled_node_names);
-  void StoreStreamResultPrameters(
+  static void StoreStreamResultPrameters(
       std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
       const std::vector<int>& stream_ids, const QueryNode& node,
       const std::vector<std::unique_ptr<MemoryBlockInterface>>&
           allocated_memory_blocks);
-  auto CreateStreamParams(
+  static auto CreateStreamParams(
       const std::vector<int>& stream_ids,
       const std::vector<std::vector<int>>& node_parameters,
       const std::vector<std::unique_ptr<MemoryBlockInterface>>&
           allocated_memory_blocks,
       const std::vector<RecordSizeAndCount>& stream_sizes)
       -> std::vector<StreamDataParameters>;
-  auto GetRecordSizeFromParameters(
+  static auto GetRecordSizeFromParameters(
       const DataManagerInterface* data_manager,
       const std::vector<std::vector<int>>& node_parameters, int stream_index)
       -> int;
@@ -140,7 +140,7 @@ class QueryManager : public QueryManagerInterface {
       std::vector<std::unique_ptr<MemoryBlockInterface>>& output_memory_blocks,
       const QueryNode& node,
       std::vector<RecordSizeAndCount>& output_stream_sizes);
-  void AllocateInputMemoryBlocks(
+  static void AllocateInputMemoryBlocks(
       MemoryManagerInterface* memory_manager,
       const DataManagerInterface* data_manager,
       std::vector<std::unique_ptr<MemoryBlockInterface>>& input_memory_blocks,
@@ -148,10 +148,10 @@ class QueryManager : public QueryManagerInterface {
       const std::map<std::string, std::vector<RecordSizeAndCount>>&
           output_stream_sizes,
       std::vector<RecordSizeAndCount>& input_stream_sizes);
-  void InitialiseStreamSizeVector(
+  static void InitialiseStreamSizeVector(
       std::map<std::string, std::vector<RecordSizeAndCount>>& stream_sizes,
       int stream_count, const std::string& node_name);
-  void InitialiseMemoryBlockVector(
+  static void InitialiseMemoryBlockVector(
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
           memory_blocks,
       int stream_count, const std::string& node_name);

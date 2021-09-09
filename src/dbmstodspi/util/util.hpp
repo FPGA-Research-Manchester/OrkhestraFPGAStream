@@ -73,9 +73,8 @@ inline auto IsValidFile(const std::string& name) -> bool {
   if (FILE* file = fopen(name.c_str(), "r")) {
     fclose(file);
     return true;
-  } else {
-    return false;
   }
+  return false;
 }
 
 }  // namespace orkhestrafs::dbmstodspi::util

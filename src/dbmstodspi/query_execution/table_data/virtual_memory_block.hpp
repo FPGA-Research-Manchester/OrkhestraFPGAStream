@@ -40,4 +40,4 @@ class VirtualMemoryBlock : public MemoryBlockInterface {
   auto GetSize() -> const uint32_t override;
 };
 
-}  // namespace dbmstodspi::fpga_managing
+}  // namespace orkhestrafs::dbmstodspi

@@ -29,7 +29,8 @@ limitations under the License.
 namespace {
 
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
-using orkhestrafs::core_interfaces::query_scheduling_data::NodeOperationParameters;
+using orkhestrafs::core_interfaces::query_scheduling_data::
+    NodeOperationParameters;
 using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
 using orkhestrafs::dbmstodspi::IDManager;
 

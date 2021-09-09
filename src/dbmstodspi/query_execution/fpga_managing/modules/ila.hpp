@@ -75,4 +75,4 @@ class ILA {
   auto ReadFromModule(int module_internal_address) -> uint32_t;
 };
 
-}  // namespace dbmstodspi::fpga_managing
+}  // namespace orkhestrafs::dbmstodspi

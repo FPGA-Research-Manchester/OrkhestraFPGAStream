@@ -28,8 +28,8 @@ using orkhestrafs::dbmstodspi::StateInterface;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 
-std::unique_ptr<StateInterface> ExecuteState::Execute(
-    GraphProcessingFSMInterface* fsm) {
+auto ExecuteState::Execute(GraphProcessingFSMInterface* fsm)
+    -> std::unique_ptr<StateInterface> {
   Log(LogLevel::kTrace, "Execute state");
   if (fsm->IsRunReadyForExecution()) {
     if (!fsm->IsRunValid()) {

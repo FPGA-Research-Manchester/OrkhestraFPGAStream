@@ -34,7 +34,7 @@ class StateInterface {
    * @param fsm FSM engine to progress between the states and hold the data.
    * @return Next state
   */
-  virtual std::unique_ptr<StateInterface> Execute(
-      GraphProcessingFSMInterface* fsm) = 0;
+  virtual auto Execute(GraphProcessingFSMInterface* fsm)
+      -> std::unique_ptr<StateInterface> = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

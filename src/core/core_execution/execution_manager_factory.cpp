@@ -30,8 +30,8 @@ using orkhestrafs::dbmstodspi::MemoryManager;
 using orkhestrafs::dbmstodspi::QueryManager;
 using orkhestrafs::dbmstodspi::ScheduleState;
 
-std::unique_ptr<ExecutionManagerInterface> ExecutionManagerFactory::GetManager(
-    Config config) {
+auto ExecutionManagerFactory::GetManager(const Config& config)
+    -> std::unique_ptr<ExecutionManagerInterface> {
   return std::make_unique<ExecutionManager>(
       config, std::make_unique<QueryManager>(),
       std::make_unique<DataManager>(config.data_sizes, config.csv_separator),

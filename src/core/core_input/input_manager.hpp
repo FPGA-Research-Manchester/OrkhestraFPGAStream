@@ -39,7 +39,8 @@ class InputManager : public InputManagerInterface {
       : graph_creator_{std::move(graph_creator)},
         config_creator_{std::move(config_creator)} {};
 
-  std::pair<std::unique_ptr<ExecutionPlanGraphInterface>, Config> Parse(
-      std::string input_filename, std::string config_filename) override;
+  auto Parse(std::string input_filename, std::string config_filename)
+      -> std::pair<std::unique_ptr<ExecutionPlanGraphInterface>,
+                   Config> override;
 };
 }  // namespace orkhestrafs::core::core_input

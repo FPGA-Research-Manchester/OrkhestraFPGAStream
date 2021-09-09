@@ -24,12 +24,14 @@ limitations under the License.
 /// https://github.com/google/googletest/blob/master/docs/reference/matchers.md
 namespace {
 
-using orkhestrafs::core_interfaces::query_scheduling_data::NodeOperationParameters;
+using orkhestrafs::core_interfaces::query_scheduling_data::
+    NodeOperationParameters;
 using orkhestrafs::dbmstodspi::NodeScheduler;
-using ModulesCombo =
-    orkhestrafs::core_interfaces::query_scheduling_data::ConfigurableModulesVector;
+using ModulesCombo = orkhestrafs::core_interfaces::query_scheduling_data::
+    ConfigurableModulesVector;
 using Node = orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
-using OpType = orkhestrafs::core_interfaces::operation_types::QueryOperationType;
+using OpType =
+    orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 
 const std::vector<std::string> kDefaultEmptyFileNames = {""};
 const std::vector<std::string> kDefaultFileNames = {"some_name.csv"};

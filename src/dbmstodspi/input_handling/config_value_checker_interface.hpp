@@ -31,6 +31,6 @@ class ConfigValueCheckerInterface {
    * @param input_config Config to check.
    * @return Boolean flag noting if the input is correct.
    */
-  virtual bool Check(Config input_config) = 0;
+  virtual auto Check(Config input_config) -> bool = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

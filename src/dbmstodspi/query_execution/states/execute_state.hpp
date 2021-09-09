@@ -28,7 +28,7 @@ class ExecuteState : public StateInterface {
  public:
   ~ExecuteState() override = default;
 
-  std::unique_ptr<StateInterface> Execute(
-      GraphProcessingFSMInterface* fsm) override;
+  auto Execute(GraphProcessingFSMInterface* fsm)
+      -> std::unique_ptr<StateInterface> override;
 };
 }  // namespace orkhestrafs::dbmstodspi

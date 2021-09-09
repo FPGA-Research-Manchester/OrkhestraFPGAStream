@@ -33,7 +33,8 @@ using orkhestrafs::dbmstodspi::GraphCreator;
 using orkhestrafs::dbmstodspi::InputConfigReader;
 using orkhestrafs::dbmstodspi::RapidJSONReader;
 
-std::unique_ptr<InputManagerInterface> InputManagerFactory::GetManager() {
+auto InputManagerFactory::GetManager()
+    -> std::unique_ptr<InputManagerInterface> {
   return std::make_unique<InputManager>(
       std::make_unique<GraphCreator>(std::make_unique<RapidJSONReader>(),
                                      nullptr),

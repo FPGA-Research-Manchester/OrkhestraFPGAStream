@@ -69,7 +69,7 @@ class DataManager : public DataManagerInterface {
    * @param memory_device Memory block pointer.
    * @return How many rows were written.
    */
-  auto WriteDataFromCSVToMemory(
+  [[nodiscard]] auto WriteDataFromCSVToMemory(
       const std::string& filename,
       const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
       const std::unique_ptr<MemoryBlockInterface>& memory_device) const
@@ -81,7 +81,7 @@ class DataManager : public DataManagerInterface {
    * @param filename
    * @return
    */
-  auto ReadIntegerDataFromCSV(
+  [[nodiscard]] auto ReadIntegerDataFromCSV(
       const std::vector<std::pair<ColumnDataType, int>>& table_column_defs,
       const std::string& filename) const -> std::vector<uint32_t> override;
 
@@ -91,7 +91,7 @@ class DataManager : public DataManagerInterface {
    * @param column_sizes Column scales.
    * @return Vector of column type and size information.
    */
-  auto GetHeaderColumnVector(
+  [[nodiscard]] auto GetHeaderColumnVector(
       const std::vector<ColumnDataType>& column_data_types,
       const std::vector<int>& column_sizes) const
       -> std::vector<std::pair<ColumnDataType, int>> override;

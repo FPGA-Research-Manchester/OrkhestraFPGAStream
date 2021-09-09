@@ -17,6 +17,7 @@ limitations under the License.
 #include <chrono>
 #include <iostream>
 #include <string>
+#include <utility>
 
 #include "core.hpp"
 #include "cxxopts.hpp"
@@ -40,7 +41,7 @@ using orkhestrafs::dbmstodspi::logging::SetLoggingLevel;
  */
 void MeasureOverallTime(string input_def_filename, string config_filename) {
   auto begin = chrono::steady_clock::now();
-  Core::Run(input_def_filename, config_filename);
+  Core::Run(std::move(input_def_filename), std::move(config_filename));
   auto end = chrono::steady_clock::now();
 
   Log(LogLevel::kInfo,

@@ -29,7 +29,7 @@ class Graph : public ExecutionPlanGraphInterface {
  public:
   ~Graph() override = default;
 
-  Graph(std::vector<std::shared_ptr<QueryNode>> graph_data)
+  explicit Graph(std::vector<std::shared_ptr<QueryNode>> graph_data)
       : root_nodes_{std::move(graph_data)} {}
 
   auto ExportRootNodes() -> std::vector<std::shared_ptr<QueryNode>> override;

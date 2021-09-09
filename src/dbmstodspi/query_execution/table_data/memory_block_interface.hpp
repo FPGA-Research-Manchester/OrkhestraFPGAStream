@@ -44,4 +44,4 @@ class MemoryBlockInterface {
   virtual auto GetSize() -> const uint32_t = 0;
 };
 
-}  // namespace dbmstodspi::fpga_managing
+}  // namespace orkhestrafs::dbmstodspi

@@ -27,8 +27,8 @@ using orkhestrafs::dbmstodspi::StateInterface;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 
-std::unique_ptr<StateInterface> SetupNodesState::Execute(
-    GraphProcessingFSMInterface* fsm) {
+auto SetupNodesState::Execute(GraphProcessingFSMInterface* fsm)
+    -> std::unique_ptr<StateInterface> {
   Log(LogLevel::kTrace, "Setup nodes state");
   if (!fsm->IsARunScheduled()) {
     return std::make_unique<ScheduleState>();

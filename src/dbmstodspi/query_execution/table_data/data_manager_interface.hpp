@@ -42,17 +42,17 @@ class DataManagerInterface {
       const std::vector<int>& column_sizes, int& rows_already_read) const
       -> TableData = 0;
 
-  virtual auto WriteDataFromCSVToMemory(
+  [[nodiscard]] virtual auto WriteDataFromCSVToMemory(
       const std::string& filename,
       const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
       const std::unique_ptr<MemoryBlockInterface>& memory_device) const
       -> int = 0;
 
-  virtual auto ReadIntegerDataFromCSV(
+  [[nodiscard]] virtual auto ReadIntegerDataFromCSV(
       const std::vector<std::pair<ColumnDataType, int>>& table_column_defs,
       const std::string& filename) const -> std::vector<uint32_t> = 0;
 
-  virtual auto GetHeaderColumnVector(
+  [[nodiscard]] virtual auto GetHeaderColumnVector(
       const std::vector<ColumnDataType>& column_data_types,
       const std::vector<int>& column_sizes) const
       -> std::vector<std::pair<ColumnDataType, int>> = 0;
