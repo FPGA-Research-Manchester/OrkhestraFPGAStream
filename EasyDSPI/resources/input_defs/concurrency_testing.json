@@ -1,0 +1,50 @@
+{
+  "pass_through_1k_node": {
+    "input": [ "CAR_DATA.csv" ],
+    "output": [ "CAR_DATA.csv" ],
+    "operation": "kPassThrough",
+    "previous_nodes": [ null ],
+    "next_nodes": [ null ],
+    "operation_parameters": {
+      "input_stream_params": [
+        [],
+        [ 0, 1, 1, 0 ],
+        [ 1, 32, 32, 1 ],
+        []
+      ],
+      "output_stream_params": [
+        [],
+        [ 0, 1, 1, 0 ],
+        [ 1, 32, 32, 1 ],
+        [ 2 ]
+      ],
+      "operation_params": [
+        []
+      ]
+    }
+  },
+  "merge_sort_8k_node": {
+    "input": [ "CAR_DATA_HALF_SORTED_8K_128WAY.csv" ],
+    "output": [ "CAR_DATA_SORTED_8K.csv" ],
+    "operation": "kMergeSort",
+    "previous_nodes": [ null ],
+    "next_nodes": [ null ],
+    "operation_parameters": {
+      "input_stream_params": [
+        [],
+        [ 0, 1, 1, 0 ],
+        [ 1, 32, 32, 1 ],
+        []
+      ],
+      "output_stream_params": [
+        [],
+        [ 0, 1, 1, 0 ],
+        [ 1, 32, 32, 1 ],
+        [ 2 ]
+      ],
+      "operation_params": [
+        [ 64, 128 ]
+      ]
+    }
+  }
+}
