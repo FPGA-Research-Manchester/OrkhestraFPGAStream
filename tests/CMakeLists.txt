@@ -63,6 +63,7 @@ add_test(NAME DMASetupTest COMMAND testlib)
 add_test(NAME NodeSchedulerTest COMMAND testlib)
 add_test(NAME TypesConverterTest COMMAND testlib)
 add_test(NAME IDManagerTest COMMAND testlib)
+add_test(NAME ElasticModuleCheckerTest COMMAND testlib)
 
 # Uncomment for automatic testing
 #add_custom_command(TARGET testlib

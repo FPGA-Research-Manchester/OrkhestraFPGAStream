@@ -330,10 +330,12 @@ auto QueryManager::ScheduleUnscheduledNodes(
 auto QueryManager::IsRunValid(std::vector<AcceleratedQueryNode> current_run)
     -> bool {
   for (const auto& node : current_run) {
-    ElasticModuleChecker::CheckElasticityNeeds(
-        node.input_streams, node.operation_type, node.operation_parameters);
+    if (!ElasticModuleChecker::IsRunValid(node.input_streams,
+                                          node.operation_type,
+                                          node.operation_parameters)) {
+      return false;
+    }
   }
-
   return true;
 }
 
