@@ -65,6 +65,7 @@ add_test(NAME TypesConverterTest COMMAND testlib)
 add_test(NAME IDManagerTest COMMAND testlib)
 add_test(NAME ElasticModuleCheckerTest COMMAND testlib)
 add_test(NAME DataManagerTest COMMAND testlib)
+add_test(NAME TableManagerTest COMMAND testlib)
 
 # Uncomment for automatic testing
 #add_custom_command(TARGET testlib

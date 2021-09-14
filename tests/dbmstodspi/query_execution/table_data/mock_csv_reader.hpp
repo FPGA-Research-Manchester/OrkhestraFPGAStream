@@ -24,6 +24,9 @@ using orkhestrafs::dbmstodspi::CSVReaderInterface;
 using orkhestrafs::dbmstodspi::MemoryBlockInterface;
 
 class MockCSVReader : public CSVReaderInterface {
+ private:
+  using ColumDefsVector = std::vector<std::pair<ColumnDataType, int>>;
+
  public:
   virtual auto WriteTableFromFileToMemory(
       const std::string& filename, char separator,

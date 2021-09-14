@@ -31,9 +31,6 @@ using orkhestrafs::dbmstodspi::MemoryBlockInterface;
 namespace orkhestrafs::dbmstodspi {
 
 class CSVReaderInterface {
- protected:
-  using ColumDefsVector = std::vector<std::pair<ColumnDataType, int>>;
-
  public:
   virtual ~CSVReaderInterface() = default;
 
@@ -43,7 +40,7 @@ class CSVReaderInterface {
 
   virtual auto WriteTableFromFileToMemory(
       const std::string& filename, char separator,
-      const ColumDefsVector& column_defs_vector,
+      const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
       const std::unique_ptr<MemoryBlockInterface>& memory_device) -> int = 0;
 };
 

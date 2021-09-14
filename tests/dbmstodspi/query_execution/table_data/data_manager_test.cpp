@@ -40,7 +40,9 @@ class DataManagerTest : public ::testing::Test {
   MockCSVReader& mock_csv_reader_;
 };
 
+// Write return thing here!
 TEST_F(DataManagerTest, WriteDataFromCSVToMemoryUsesReader) {
+  int expected_return = 10;
   std::string test_filename = "test";
   std::vector<std::pair<ColumnDataType, int>> column_defs_vector;
   std::unique_ptr<MemoryBlockInterface> memory_device =
@@ -49,11 +51,12 @@ TEST_F(DataManagerTest, WriteDataFromCSVToMemoryUsesReader) {
   EXPECT_CALL(mock_csv_reader_, MockWriteTableFromFileToMemory(
                                     test_filename, any_separator_,
                                     column_defs_vector, memory_device.get()))
-      .Times(1);
+      .WillOnce(testing::Return(expected_return));
   DataManager data_manager_under_test(any_data_sizes_, any_separator_,
                                       std::move(csv_reader_ptr_));
-  data_manager_under_test.WriteDataFromCSVToMemory(
-      test_filename, column_defs_vector, memory_device);
+  ASSERT_EQ(expected_return,
+            data_manager_under_test.WriteDataFromCSVToMemory(
+                test_filename, column_defs_vector, memory_device));
 }
 
 TEST_F(DataManagerTest, GetHeaderColumnVectorReturnsModifiedSizes) {
