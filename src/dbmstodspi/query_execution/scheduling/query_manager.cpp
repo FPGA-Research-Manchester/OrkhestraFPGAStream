@@ -359,6 +359,9 @@ void QueryManager::CheckTableData(const DataManagerInterface* data_manager,
   }
 }
 
+// This checking needs to get redone to not use the CheckTableData method and
+// instead compare memory blocks. For extra debugging (i.e., finding the lines
+// which are different) a separate debug method should be added.
 void QueryManager::CheckResults(
     const DataManagerInterface* data_manager,
     const std::unique_ptr<MemoryBlockInterface>& memory_device, int row_count,

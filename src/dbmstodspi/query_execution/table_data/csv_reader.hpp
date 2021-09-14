@@ -16,16 +16,7 @@ limitations under the License.
 
 #pragma once
 
-#include <map>
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "memory_block_interface.hpp"
-#include "table_data.hpp"
-
-using orkhestrafs::core_interfaces::table_data::ColumnDataType;
-using orkhestrafs::dbmstodspi::MemoryBlockInterface;
+#include "csv_reader_interface.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -33,7 +24,7 @@ namespace orkhestrafs::dbmstodspi {
  * @brief Class to read given CSV data files row by row either as string data or
  * 32bit integer data.
  */
-class CSVReader {
+class CSVReader : public CSVReaderInterface{
  private:
   /**
    * @brief Check if the given memory block is large enough for the data in the
@@ -56,6 +47,8 @@ class CSVReader {
                                 volatile uint32_t* address, int offset);
 
  public:
+  ~CSVReader() override = default;
+
   /**
    * @brief Read CSV file and store the string data vector.
    * @param filename File where the data is.
@@ -63,9 +56,9 @@ class CSVReader {
    * @param rows_already_read Offset of where to start reading data from.
    * @return String data vector
    */
-  static auto ReadTableData(const std::string& filename, char separator,
+  auto ReadTableData(const std::string& filename, char separator,
                             int& rows_already_read)
-      -> std::vector<std::vector<std::string>>;
+      -> std::vector<std::vector<std::string>> override;
   /**
    * @brief Write data directly from filesystem to given memory block.
    * @param filename Data file.
@@ -74,10 +67,11 @@ class CSVReader {
    * @param memory_device Memory block pointer.
    * @return How many rows of data were read.
    */
-  static auto WriteTableFromFileToMemory(
+  auto WriteTableFromFileToMemory(
       const std::string& filename, char separator,
       const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
-      const std::unique_ptr<MemoryBlockInterface>& memory_device) -> int;
+      const std::unique_ptr<MemoryBlockInterface>& memory_device)
+      -> int override;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

@@ -31,6 +31,7 @@ add_library(query_execution OBJECT
             query_acceleration_constants.hpp
             table_data/csv_reader.cpp
             table_data/csv_reader.hpp
+            table_data/csv_reader_interface.hpp
             table_data/data_manager.cpp
             table_data/data_manager.hpp
             table_data/data_manager_interface.hpp

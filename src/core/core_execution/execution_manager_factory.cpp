@@ -16,6 +16,7 @@ limitations under the License.
 
 #include "execution_manager_factory.hpp"
 
+#include "csv_reader.hpp"
 #include "data_manager.hpp"
 #include "execution_manager.hpp"
 #include "memory_manager.hpp"
@@ -25,6 +26,7 @@ limitations under the License.
 using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::core::core_execution::ExecutionManagerFactory;
 using orkhestrafs::core_interfaces::ExecutionManagerInterface;
+using orkhestrafs::dbmstodspi::CSVReader;
 using orkhestrafs::dbmstodspi::DataManager;
 using orkhestrafs::dbmstodspi::MemoryManager;
 using orkhestrafs::dbmstodspi::QueryManager;
@@ -34,6 +36,7 @@ auto ExecutionManagerFactory::GetManager(const Config& config)
     -> std::unique_ptr<ExecutionManagerInterface> {
   return std::make_unique<ExecutionManager>(
       config, std::make_unique<QueryManager>(),
-      std::make_unique<DataManager>(config.data_sizes, config.csv_separator),
+      std::make_unique<DataManager>(config.data_sizes, config.csv_separator,
+                                    std::make_unique<CSVReader>()),
       std::make_unique<MemoryManager>(), std::make_unique<ScheduleState>());
 }

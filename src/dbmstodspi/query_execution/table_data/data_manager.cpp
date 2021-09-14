@@ -28,25 +28,11 @@ limitations under the License.
 
 using orkhestrafs::core_interfaces::table_data::ColumnDataType;
 using orkhestrafs::core_interfaces::table_data::TableData;
-using orkhestrafs::dbmstodspi::util::IsValidFile;
 using orkhestrafs::dbmstodspi::DataManager;
-using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::logging::ShouldLog;
-
-auto DataManager::ReadIntegerDataFromCSV(
-    const std::vector<std::pair<ColumnDataType, int>>& table_column_defs,
-    const std::string& filename) const -> std::vector<uint32_t> {
-  int thing = 0;
-  if (IsValidFile(filename)) {
-    auto data_rows = CSVReader::ReadTableData(filename, separator_, thing);
-    std::vector<uint32_t> table_data_vector;
-    TypesConverter::AddIntegerDataFromStringData(data_rows, table_data_vector,
-                                                 table_column_defs);
-    return table_data_vector;
-  }
-  throw std::runtime_error("No file " + filename + " found!");
-}
+using orkhestrafs::dbmstodspi::util::IsValidFile;
 
 auto DataManager::GetHeaderColumnVector(
     const std::vector<ColumnDataType>& column_data_types,
@@ -54,6 +40,7 @@ auto DataManager::GetHeaderColumnVector(
     -> std::vector<std::pair<ColumnDataType, int>> {
   std::vector<std::pair<ColumnDataType, int>> table_column_label_vector;
   // Assuming data type vector and column size vectors are the same length
+  // (Change them into a single vector of pairs or sth like that.)
   for (int i = 0; i < column_data_types.size(); i++) {
     double data_type_size =
         data_type_sizes_.at(column_data_types.at(i)) * column_sizes.at(i);
@@ -72,17 +59,20 @@ auto DataManager::WriteDataFromCSVToMemory(
     const std::string& filename,
     const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
     const std::unique_ptr<MemoryBlockInterface>& memory_device) const -> int {
-  if (!IsValidFile(filename)) {
-    throw std::runtime_error(filename + " not found!");
-  }
-  return CSVReader::WriteTableFromFileToMemory(
-      filename, separator_, column_defs_vector, memory_device);
+  return csv_reader_->WriteTableFromFileToMemory(
+      filename, separator_, column_defs_vector,
+      memory_device);  // Make the CSVReader and this function return the record
+                       // size as well as it is already calculated in the
+                       // function.
 }
+
+// Rest of the methods should get eventually removed!
 
 auto DataManager::ParseDataFromCSV(
     const std::string& filename,
     const std::vector<ColumnDataType>& column_data_types,
-    const std::vector<int>& column_sizes, int& rows_already_read) const -> TableData {
+    const std::vector<int>& column_sizes, int& rows_already_read) const
+    -> TableData {
   int record_size = 0;
   std::vector<std::pair<ColumnDataType, int>> table_column_label_vector;
   // Assuming data type vector and column size vectors are the same length
@@ -103,11 +93,11 @@ auto DataManager::ParseDataFromCSV(
 
   if (IsValidFile(filename)) {
     auto data_rows =
-        CSVReader::ReadTableData(filename, separator_, rows_already_read);
+        csv_reader_->ReadTableData(filename, separator_, rows_already_read);
     table_data.table_data_vector.reserve(record_size * data_rows.size());
     TypesConverter::AddIntegerDataFromStringData(
         data_rows, table_data.table_data_vector, table_column_label_vector);
-  } // There should be an else here?
+  }  // There should be an else here?
 
   return table_data;
 }

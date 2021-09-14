@@ -23,6 +23,7 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
+#include "csv_reader_interface.hpp"
 #include "data_manager_interface.hpp"
 
 using orkhestrafs::core_interfaces::table_data::ColumnDataType;
@@ -45,8 +46,11 @@ class DataManager : public DataManagerInterface {
    * @param spearator Which character is used for separating columns.
    */
   explicit DataManager(std::map<ColumnDataType, double> data_sizes,
-                       char separator)
-      : data_type_sizes_(std::move(data_sizes)), separator_(separator){};
+                       char separator,
+                       std::unique_ptr<CSVReaderInterface> csv_reader)
+      : data_type_sizes_(std::move(data_sizes)),
+        separator_(separator),
+        csv_reader_(std::move(csv_reader)){};
   /**
    * @brief Write data from the given CSV file to the TableData structure in
    * chunks.
@@ -76,16 +80,6 @@ class DataManager : public DataManagerInterface {
       -> int override;
 
   /**
-   * @brief
-   * @param table_column_defs
-   * @param filename
-   * @return
-   */
-  [[nodiscard]] auto ReadIntegerDataFromCSV(
-      const std::vector<std::pair<ColumnDataType, int>>& table_column_defs,
-      const std::string& filename) const -> std::vector<uint32_t> override;
-
-  /**
    * @brief Calculate column sizes given types and configured scales.
    * @param column_data_types Column types.
    * @param column_sizes Column scales.
@@ -111,6 +105,8 @@ class DataManager : public DataManagerInterface {
                       const std::string& filename) const override;
 
  private:
+  /// CSV reader object to read data with.
+  std::unique_ptr<CSVReaderInterface> csv_reader_;
   /// Which char is used to separate columns.
   char separator_;
   /// Map to hold information about data type sizes from the given config file.
