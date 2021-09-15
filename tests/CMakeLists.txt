@@ -66,6 +66,7 @@ add_test(NAME IDManagerTest COMMAND testlib)
 add_test(NAME ElasticModuleCheckerTest COMMAND testlib)
 add_test(NAME DataManagerTest COMMAND testlib)
 add_test(NAME TableManagerTest COMMAND testlib)
+add_test(NAME QueryManagerTest COMMAND testlib)
 
 # Uncomment for automatic testing
 #add_custom_command(TARGET testlib

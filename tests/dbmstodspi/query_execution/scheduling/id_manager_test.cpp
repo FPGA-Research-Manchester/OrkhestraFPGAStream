@@ -38,7 +38,7 @@ class IDManagerTest : public ::testing::Test {
  protected:
   std::map<std::string, std::vector<int>> input_ids_, output_ids_,
       expected_input_ids_, expected_output_ids_;
-  const QueryOperationType any_operation_type_ = QueryOperationType::kFilter;
+  const QueryOperationType base_operation_type_ = QueryOperationType::kFilter;
   const NodeOperationParameters any_operation_parameters_;
   const std::vector<bool> any_is_checked_;
 
@@ -58,7 +58,7 @@ TEST_F(IDManagerTest, SingleNode1In1Out) {
   std::vector<std::shared_ptr<QueryNode>> next_nodes = {nullptr};
 
   QueryNode first_node(one_data_file_vector_, one_data_file_vector_,
-                       any_operation_type_, next_nodes, previous_nodes,
+                       base_operation_type_, next_nodes, previous_nodes,
                        any_operation_parameters_, first_node_name_,
                        any_is_checked_);
 
@@ -79,7 +79,7 @@ TEST_F(IDManagerTest, SingleNodeNIn1Out) {
   std::vector<std::string> input_data_files = {"", "", ""};
   std::vector<std::string> output_data_files = {""};
 
-  QueryNode first_node(input_data_files, output_data_files, any_operation_type_,
+  QueryNode first_node(input_data_files, output_data_files, base_operation_type_,
                        next_nodes, previous_nodes, any_operation_parameters_,
                        first_node_name_, any_is_checked_);
 
@@ -100,7 +100,7 @@ TEST_F(IDManagerTest, SingleNode1InMOut) {
   std::vector<std::string> input_data_files = {""};
   std::vector<std::string> output_data_files = {"", "", "", ""};
 
-  QueryNode first_node(input_data_files, output_data_files, any_operation_type_,
+  QueryNode first_node(input_data_files, output_data_files, base_operation_type_,
                        next_nodes, previous_nodes, any_operation_parameters_,
                        first_node_name_, any_is_checked_);
 
@@ -121,7 +121,7 @@ TEST_F(IDManagerTest, SingleNodeNInMOut) {
   std::vector<std::string> input_data_files = {"", ""};
   std::vector<std::string> output_data_files = {"", "", ""};
 
-  QueryNode first_node(input_data_files, output_data_files, any_operation_type_,
+  QueryNode first_node(input_data_files, output_data_files, base_operation_type_,
                        next_nodes, previous_nodes, any_operation_parameters_,
                        first_node_name_, any_is_checked_);
 
@@ -135,11 +135,11 @@ TEST_F(IDManagerTest, SingleNodeNInMOut) {
 
 TEST_F(IDManagerTest, TwoPipelinedNodes) {
   auto first_node = std::make_shared<QueryNode>(
-      one_data_file_vector_, one_data_file_vector_, any_operation_type_,
+      one_data_file_vector_, one_data_file_vector_, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
       any_operation_parameters_, first_node_name_, any_is_checked_);
   auto second_node = std::make_shared<QueryNode>(
-      one_data_file_vector_, one_data_file_vector_, any_operation_type_,
+      one_data_file_vector_, one_data_file_vector_, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
       any_operation_parameters_, second_node_name_, any_is_checked_);
 
@@ -165,11 +165,11 @@ TEST_F(IDManagerTest, TwoIndependentNodes) {
   std::vector<std::shared_ptr<QueryNode>> next_nodes = {nullptr};
 
   QueryNode first_node(one_data_file_vector_, one_data_file_vector_,
-                       any_operation_type_, next_nodes, previous_nodes,
+                       base_operation_type_, next_nodes, previous_nodes,
                        any_operation_parameters_, first_node_name_,
                        any_is_checked_);
   QueryNode second_node(one_data_file_vector_, one_data_file_vector_,
-                        any_operation_type_, next_nodes, previous_nodes,
+                        base_operation_type_, next_nodes, previous_nodes,
                         any_operation_parameters_, second_node_name_,
                         any_is_checked_);
 
@@ -186,15 +186,15 @@ TEST_F(IDManagerTest, TwoIndependentNodes) {
 
 TEST_F(IDManagerTest, TwoPipelinedNodesAndOneIndependent) {
   auto first_node = std::make_shared<QueryNode>(
-      one_data_file_vector_, one_data_file_vector_, any_operation_type_,
+      one_data_file_vector_, one_data_file_vector_, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
       any_operation_parameters_, first_node_name_, any_is_checked_);
   auto second_node = std::make_shared<QueryNode>(
-      one_data_file_vector_, one_data_file_vector_, any_operation_type_,
+      one_data_file_vector_, one_data_file_vector_, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
       any_operation_parameters_, second_node_name_, any_is_checked_);
   auto third_node = std::make_shared<QueryNode>(
-      one_data_file_vector_, one_data_file_vector_, any_operation_type_,
+      one_data_file_vector_, one_data_file_vector_, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
       any_operation_parameters_, third_node_name_, any_is_checked_);
 
@@ -223,11 +223,11 @@ TEST_F(IDManagerTest, TwoPipelineNodesWithDanglingOutputs) {
   std::vector<std::string> output_data_file_vector = {"", ""};
 
   auto first_node = std::make_shared<QueryNode>(
-      input_data_file_vector, output_data_file_vector, any_operation_type_,
+      input_data_file_vector, output_data_file_vector, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
       any_operation_parameters_, first_node_name_, any_is_checked_);
   auto second_node = std::make_shared<QueryNode>(
-      input_data_file_vector, output_data_file_vector, any_operation_type_,
+      input_data_file_vector, output_data_file_vector, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
       any_operation_parameters_, second_node_name_, any_is_checked_);
 
@@ -254,11 +254,11 @@ TEST_F(IDManagerTest, TwoPipelinedNodesWithDanglingInputs) {
   std::vector<std::string> input_data_file_vector = {"", ""};
 
   auto first_node = std::make_shared<QueryNode>(
-      input_data_file_vector, output_data_file_vector, any_operation_type_,
+      input_data_file_vector, output_data_file_vector, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
       any_operation_parameters_, first_node_name_, any_is_checked_);
   auto second_node = std::make_shared<QueryNode>(
-      input_data_file_vector, output_data_file_vector, any_operation_type_,
+      input_data_file_vector, output_data_file_vector, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
       any_operation_parameters_, second_node_name_, any_is_checked_);
 
@@ -289,7 +289,7 @@ TEST_F(IDManagerTest, TooManyStreamsError) {
 
   for (int i = 0; i < 17; i++) {
     all_nodes.emplace_back(one_data_file_vector_, one_data_file_vector_,
-                           any_operation_type_, next_nodes, previous_nodes,
+                           base_operation_type_, next_nodes, previous_nodes,
                            any_operation_parameters_, std::to_string(i),
                            any_is_checked_);
   }

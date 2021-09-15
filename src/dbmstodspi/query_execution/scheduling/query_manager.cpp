@@ -517,18 +517,11 @@ void QueryManager::FreeMemoryBlocks(
 void QueryManager::ExecuteAndProcessResults(
     FPGAManagerInterface* fpga_manager,
     const DataManagerInterface* data_manager,
-    MemoryManagerInterface* memory_manager,
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
-        input_memory_blocks,
     std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
         output_memory_blocks,
-    std::map<std::string, std::vector<RecordSizeAndCount>>& input_stream_sizes,
     std::map<std::string, std::vector<RecordSizeAndCount>>& output_stream_sizes,
     const std::map<std::string, std::vector<StreamResultParameters>>&
         result_parameters,
-    const std::vector<std::string>& current_node_names,
-    const std::map<std::string, std::map<int, MemoryReuseTargets>>&
-        current_run_links,
     const std::vector<AcceleratedQueryNode>& execution_query_nodes) {
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
@@ -549,7 +542,4 @@ void QueryManager::ExecuteAndProcessResults(
 
   ProcessResults(data_manager, result_sizes, result_parameters,
                  output_memory_blocks, output_stream_sizes);
-  FreeMemoryBlocks(memory_manager, input_memory_blocks, output_memory_blocks,
-                   input_stream_sizes, output_stream_sizes, current_run_links,
-                   current_node_names);
 }

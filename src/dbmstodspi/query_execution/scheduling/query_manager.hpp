@@ -59,6 +59,14 @@ class QueryManager : public QueryManagerInterface {
   void ExecuteAndProcessResults(
       FPGAManagerInterface* fpga_manager,
       const DataManagerInterface* data_manager,
+      std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+          output_memory_blocks,
+      std::map<std::string, std::vector<RecordSizeAndCount>>&
+          output_stream_sizes,
+      const std::map<std::string, std::vector<StreamResultParameters>>&
+          result_parameters,
+      const std::vector<AcceleratedQueryNode>& execution_query_nodes) override;
+  void FreeMemoryBlocks(
       MemoryManagerInterface* memory_manager,
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
           input_memory_blocks,
@@ -68,13 +76,9 @@ class QueryManager : public QueryManagerInterface {
           input_stream_sizes,
       std::map<std::string, std::vector<RecordSizeAndCount>>&
           output_stream_sizes,
-      const std::map<std::string, std::vector<StreamResultParameters>>&
-          result_parameters,
-      const std::vector<std::string>& current_node_names,
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
-          current_run_links,
-      const std::vector<AcceleratedQueryNode>& execution_query_nodes) override;
-
+          reuse_links,
+      const std::vector<std::string>& scheduled_node_names) override;
  private:
   static void CheckTableData(const DataManagerInterface* data_manager,
                              const TableData& expected_table,
@@ -104,19 +108,6 @@ class QueryManager : public QueryManagerInterface {
           allocated_memory_blocks,
       std::map<std::string, std::vector<RecordSizeAndCount>>&
           output_stream_sizes);
-  void FreeMemoryBlocks(
-      MemoryManagerInterface* memory_manager,
-      std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
-          input_memory_blocks,
-      std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
-          output_memory_blocks,
-      std::map<std::string, std::vector<RecordSizeAndCount>>&
-          input_stream_sizes,
-      std::map<std::string, std::vector<RecordSizeAndCount>>&
-          output_stream_sizes,
-      const std::map<std::string, std::map<int, MemoryReuseTargets>>&
-          reuse_links,
-      const std::vector<std::string>& scheduled_node_names);
   static void StoreStreamResultPrameters(
       std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,

@@ -65,7 +65,8 @@ void ExecutionManager::SetupNextRunData() {
     scheduled_node_names_.push_back(node->node_name);
   }
 
-  current_reuse_links_ = query_manager_->GetCurrentLinks(next_scheduled_run_nodes, all_reuse_links_);
+  current_reuse_links_ = query_manager_->GetCurrentLinks(
+      next_scheduled_run_nodes, all_reuse_links_);
 
   auto execution_nodes_and_result_params =
       query_manager_->SetupAccelerationNodesForExecution(
@@ -81,10 +82,12 @@ void ExecutionManager::ExecuteAndProcessResults() {
         std::move(query_manager_->CreateFPGAManager(memory_manager_.get()));
   }
   query_manager_->ExecuteAndProcessResults(
-      fpga_manager_.get(), data_manager_.get(), memory_manager_.get(),
-      input_memory_blocks_, output_memory_blocks_, input_stream_sizes_,
-      output_stream_sizes_, result_parameters_, scheduled_node_names_,
-      current_reuse_links_, query_nodes_);
+      fpga_manager_.get(), data_manager_.get(), output_memory_blocks_,
+      output_stream_sizes_, result_parameters_, query_nodes_);
+  query_manager_->FreeMemoryBlocks(memory_manager_.get(), input_memory_blocks_,
+                                   output_memory_blocks_, input_stream_sizes_,
+                                   output_stream_sizes_, current_reuse_links_,
+                                   scheduled_node_names_);
 }
 auto ExecutionManager::IsRunValid() -> bool {
   return query_manager_->IsRunValid(query_nodes_);

@@ -36,12 +36,13 @@ struct AcceleratedQueryNode {
   const int operation_module_location;
   const std::vector<std::vector<int>> operation_parameters;
 
-  // auto operator==(const AcceleratedQueryNode& rhs) const -> bool {
-  //  return input_streams == rhs.input_streams &&
-  //         output_streams == rhs.output_streams &&
-  //         operation_type == rhs.operation_type &&
-  //         operation_parameters == rhs.operation_parameters;
-  //}
+  auto operator==(const AcceleratedQueryNode& rhs) const -> bool {
+    return input_streams == rhs.input_streams &&
+           output_streams == rhs.output_streams &&
+           operation_type == rhs.operation_type &&
+           operation_module_location == rhs.operation_module_location &&
+           operation_parameters == rhs.operation_parameters;
+  }
 };
 
 }  // namespace orkhestrafs::dbmstodspi

@@ -133,6 +133,12 @@ struct StreamResultParameters {
         filename{std::move(filename)},
         check_results{check_results},
         stream_specifications{std::move(stream_specifications)} {};
+
+  auto operator==(const StreamResultParameters& rhs) const -> bool {
+    return stream_index == rhs.stream_index && output_id == rhs.output_id &&
+           filename == rhs.filename && check_results == rhs.check_results &&
+           stream_specifications == rhs.stream_specifications;
+  }
 };
 
 /// Type definition of a collection of operation types for selecting bitstreams.
