@@ -48,6 +48,7 @@ target_include_directories(testlib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/core
                                           ${CMAKE_CURRENT_SOURCE_DIR}/dbmstodspi/query_execution/fpga_managing/modules
                                           ${CMAKE_CURRENT_SOURCE_DIR}/dbmstodspi/query_execution/fpga_managing/setup
 					                      ${CMAKE_CURRENT_SOURCE_DIR}/dbmstodspi/query_execution/scheduling
+										  ${CMAKE_CURRENT_SOURCE_DIR}/dbmstodspi/query_execution
 										  ${CMAKE_CURRENT_SOURCE_DIR}/dbmstodspi/util
 										  ${CMAKE_CURRENT_SOURCE_DIR}/dbmstodspi/input_handling)
 
@@ -67,6 +68,9 @@ add_test(NAME ElasticModuleCheckerTest COMMAND testlib)
 add_test(NAME DataManagerTest COMMAND testlib)
 add_test(NAME TableManagerTest COMMAND testlib)
 add_test(NAME QueryManagerTest COMMAND testlib)
+add_test(NAME ExecuteStateTest COMMAND testlib)
+add_test(NAME ScheduleStateTest COMMAND testlib)
+add_test(NAME SetupNodesStateTest COMMAND testlib)
 
 # Uncomment for automatic testing
 #add_custom_command(TARGET testlib

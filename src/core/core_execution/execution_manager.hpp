@@ -62,7 +62,7 @@ class ExecutionManager : public ExecutionManagerInterface,
         query_manager_{std::move(query_manager)},
         config_{std::move(config)} {};
 
-  void setFinishedFlag() override;
+  void SetFinishedFlag() override;
 
   void Execute(
       std::unique_ptr<ExecutionPlanGraphInterface> execution_graph) override;

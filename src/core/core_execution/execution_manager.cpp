@@ -23,7 +23,7 @@ limitations under the License.
 
 using orkhestrafs::core::core_execution::ExecutionManager;
 
-void ExecutionManager::setFinishedFlag() { busy_flag_ = false; }
+void ExecutionManager::SetFinishedFlag() { busy_flag_ = false; }
 
 void ExecutionManager::Execute(
     std::unique_ptr<ExecutionPlanGraphInterface> execution_graph) {
