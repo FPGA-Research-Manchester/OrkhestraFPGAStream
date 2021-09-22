@@ -20,15 +20,15 @@ limitations under the License.
 
 using orkhestrafs::dbmstodspi::ElasticModuleChecker;
 
-void ElasticModuleChecker::CheckElasticityNeeds(
+// Needs to have a way to say what was wrong with the configuration and how to
+// fix it.
+auto ElasticModuleChecker::IsRunValid(
     const std::vector<StreamDataParameters>& input_stream_parameters,
     QueryOperationType operation_type,
-    const std::vector<std::vector<int>>& operation_parameters) {
-  if (operation_type == QueryOperationType::kMergeSort &&
-      !IsMergeSortBigEnough(input_stream_parameters, operation_parameters)) {
-    throw std::runtime_error(
-        "Unable to use current merge sort on the given data!");
-  }
+    const std::vector<std::vector<int>>& operation_parameters) -> bool {
+  return (!(operation_type == QueryOperationType::kMergeSort) ||
+          IsMergeSortConfiguredCorrectly(input_stream_parameters,
+                                         operation_parameters));
 }
 
 auto ElasticModuleChecker::IsMergeSortBigEnough(
@@ -36,4 +36,20 @@ auto ElasticModuleChecker::IsMergeSortBigEnough(
     const std::vector<std::vector<int>>& operation_parameters) -> bool {
   return input_stream_parameters.at(0).stream_record_count <=
          operation_parameters.at(0).at(0) * operation_parameters.at(0).at(1);
+}
+
+auto ElasticModuleChecker::IsMergeSortConfiguredCorrectly(
+    const std::vector<StreamDataParameters>& input_stream_parameters,
+    const std::vector<std::vector<int>>& operation_parameters) -> bool {
+  return IsMergeSortWithOneStream(input_stream_parameters,
+                                  operation_parameters) &&
+         IsMergeSortBigEnough(input_stream_parameters, operation_parameters);
+}
+
+auto ElasticModuleChecker::IsMergeSortWithOneStream(
+    const std::vector<StreamDataParameters>& input_stream_parameters,
+    const std::vector<std::vector<int>>& operation_parameters) -> bool {
+  return input_stream_parameters.size() == 1 &&
+         operation_parameters.size() == 1 &&
+         operation_parameters.at(0).size() == 2;
 }

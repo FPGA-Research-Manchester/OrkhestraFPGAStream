@@ -58,6 +58,8 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_aggregation_sum.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_add_mul_sum.bin
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_add_mul_sum.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_join_filter.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_join_filter.json
 
 #${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/SF03/lineitem_sf0_3.csv
 #${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/SF03/lineitem_sf0_3_filter.csv

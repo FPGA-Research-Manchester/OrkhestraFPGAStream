@@ -13,7 +13,7 @@
 #limitations under the License.
 
 if (NOT WIN32)
-	file(GLOB OS_DEPENDENT_MEMORY_BLOCK "table_data/udma_memory_block.cpp" "table_data/udma_memory_block.hpp")
+	file(GLOB OS_DEPENDENT_MEMORY_BLOCK "table_data/udma_memory_block.cpp" "table_data/udma_memory_block.hpp" "table_data/virtual_memory_block.hpp" "table_data/virtual_memory_block.cpp")
 else()
 	file(GLOB OS_DEPENDENT_MEMORY_BLOCK "table_data/virtual_memory_block.hpp" "table_data/virtual_memory_block.cpp")
 endif()
@@ -31,6 +31,7 @@ add_library(query_execution OBJECT
             query_acceleration_constants.hpp
             table_data/csv_reader.cpp
             table_data/csv_reader.hpp
+            table_data/csv_reader_interface.hpp
             table_data/data_manager.cpp
             table_data/data_manager.hpp
             table_data/data_manager_interface.hpp
@@ -43,6 +44,8 @@ add_library(query_execution OBJECT
             fpga_managing/fpga_manager.hpp
             fpga_managing/fpga_manager.cpp
             fpga_managing/fpga_manager_interface.hpp
+            fpga_managing/fpga_manager_factory.hpp
+            fpga_managing/fpga_manager_factory.cpp
             fpga_managing/module_config_values.hpp
             fpga_managing/accelerated_query_node.hpp
             fpga_managing/stream_data_parameters.hpp

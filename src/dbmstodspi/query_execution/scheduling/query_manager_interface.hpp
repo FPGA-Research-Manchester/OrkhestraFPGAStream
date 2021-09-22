@@ -36,7 +36,8 @@ using orkhestrafs::core_interfaces::query_scheduling_data::
 using orkhestrafs::core_interfaces::query_scheduling_data::MemoryReuseTargets;
 using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
 using orkhestrafs::core_interfaces::query_scheduling_data::RecordSizeAndCount;
-using orkhestrafs::core_interfaces::query_scheduling_data::StreamResultParameters;
+using orkhestrafs::core_interfaces::query_scheduling_data::
+    StreamResultParameters;
 using orkhestrafs::dbmstodspi::AcceleratedQueryNode;
 using orkhestrafs::dbmstodspi::FPGAManagerInterface;
 using orkhestrafs::dbmstodspi::MemoryBlockInterface;
@@ -62,14 +63,6 @@ class QueryManagerInterface {
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
           all_reuse_links)
       -> std::map<std::string, std::map<int, MemoryReuseTargets>> = 0;
-  /**
-   * @brief Factory method to create FPGA managers.
-   * @param memory_manager Pointer to the memory manager for writing to memory
-   * mapped registers.
-   * @return FPGA manager object to execute the FPGA.
-   */
-  virtual auto CreateFPGAManager(MemoryManagerInterface* memory_manager)
-      -> std::unique_ptr<FPGAManagerInterface> = 0;
   /**
    * @brief Method to create nodes for execution from scheduled nodes.
    * @param data_manager Manager to handle table data and different data types.
@@ -132,20 +125,35 @@ class QueryManagerInterface {
    * @brief Execute given nodes.
    * @param fpga_manager Manager to setup and operate modules.
    * @param data_manager Manager to handle table data for result reading.
+   * @param output_memory_blocks Memory for output streams.
+   * @param output_stream_sizes Map for output stream size parameters.
+   * @param result_parameters Saved parameters for result reading.
+   * @param execution_query_nodes Nodes to execute
+   */
+  virtual void ExecuteAndProcessResults(
+      FPGAManagerInterface* fpga_manager,
+      const DataManagerInterface* data_manager,
+      std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+          output_memory_blocks,
+      std::map<std::string, std::vector<RecordSizeAndCount>>&
+          output_stream_sizes,
+      const std::map<std::string, std::vector<StreamResultParameters>>&
+          result_parameters,
+      const std::vector<AcceleratedQueryNode>& execution_query_nodes) = 0;
+
+  /**
+   * @brief Method to move reusable output memory blocks to input maps. And the
+   * rest of the memory blocks get freed.
    * @param memory_manager Manager to handle memory blocks and reading and
    * writing to memory mapped addresses.
    * @param input_memory_blocks Memory for input streams.
    * @param output_memory_blocks Memory for output streams.
    * @param input_stream_sizes Map for input stream size parameters.
    * @param output_stream_sizes Map for output stream size parameters.
-   * @param result_parameters Saved parameters for result reading.
-   * @param current_node_names Names of the currently executed nodes.
-   * @param current_run_links Map for reusing memory blocks for next runs.
-   * @param execution_query_nodes Nodes to execute
+   * @param reuse_links Map for reusing memory blocks for next runs.
+   * @param scheduled_node_names Names of the currently executed nodes.
    */
-  virtual void ExecuteAndProcessResults(
-      FPGAManagerInterface* fpga_manager,
-      const DataManagerInterface* data_manager,
+  virtual void FreeMemoryBlocks(
       MemoryManagerInterface* memory_manager,
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
           input_memory_blocks,
@@ -155,12 +163,9 @@ class QueryManagerInterface {
           input_stream_sizes,
       std::map<std::string, std::vector<RecordSizeAndCount>>&
           output_stream_sizes,
-      const std::map<std::string, std::vector<StreamResultParameters>>&
-          result_parameters,
-      const std::vector<std::string>& current_node_names,
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
-          current_run_links,
-      const std::vector<AcceleratedQueryNode>& execution_query_nodes) = 0;
+          reuse_links,
+      const std::vector<std::string>& scheduled_node_names) = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

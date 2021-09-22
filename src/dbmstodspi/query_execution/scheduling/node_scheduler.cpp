@@ -177,7 +177,7 @@ auto NodeScheduler::FindMinPosition(
           throw std::runtime_error("Something went wrong with scheduling!");
         }
         int current_position_index =
-            current_modules_iterator - current_modules_vector.begin();
+            current_modules_iterator - current_modules_vector.begin() + 1;
         if (current_position_index > min_position_index) {
           min_position_index = current_position_index;
         }

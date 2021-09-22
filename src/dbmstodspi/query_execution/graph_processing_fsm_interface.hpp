@@ -42,7 +42,7 @@ class GraphProcessingFSMInterface {
   /**
    * @brief Stop the FSM form executing the next state.
    */
-  virtual void setFinishedFlag() = 0;
+  virtual void SetFinishedFlag() = 0;
   /**
    * @brief Check if there are nodes to schedule.
    * @return Boolean flag showing if there are no more nodes to schedule.

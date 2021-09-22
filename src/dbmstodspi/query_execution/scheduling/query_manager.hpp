@@ -27,8 +27,6 @@ class QueryManager : public QueryManagerInterface {
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
           all_reuse_links)
       -> std::map<std::string, std::map<int, MemoryReuseTargets>> override;
-  auto CreateFPGAManager(MemoryManagerInterface* memory_manager)
-      -> std::unique_ptr<FPGAManagerInterface> override;
   auto SetupAccelerationNodesForExecution(
       DataManagerInterface* data_manager,
       MemoryManagerInterface* memory_manager,
@@ -59,6 +57,14 @@ class QueryManager : public QueryManagerInterface {
   void ExecuteAndProcessResults(
       FPGAManagerInterface* fpga_manager,
       const DataManagerInterface* data_manager,
+      std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+          output_memory_blocks,
+      std::map<std::string, std::vector<RecordSizeAndCount>>&
+          output_stream_sizes,
+      const std::map<std::string, std::vector<StreamResultParameters>>&
+          result_parameters,
+      const std::vector<AcceleratedQueryNode>& execution_query_nodes) override;
+  void FreeMemoryBlocks(
       MemoryManagerInterface* memory_manager,
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
           input_memory_blocks,
@@ -68,22 +74,18 @@ class QueryManager : public QueryManagerInterface {
           input_stream_sizes,
       std::map<std::string, std::vector<RecordSizeAndCount>>&
           output_stream_sizes,
-      const std::map<std::string, std::vector<StreamResultParameters>>&
-          result_parameters,
-      const std::vector<std::string>& current_node_names,
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
-          current_run_links,
-      const std::vector<AcceleratedQueryNode>& execution_query_nodes) override;
-
+          reuse_links,
+      const std::vector<std::string>& scheduled_node_names) override;
  private:
   static void CheckTableData(const DataManagerInterface* data_manager,
                              const TableData& expected_table,
                              const TableData& resulting_table);
-  void CheckResults(const DataManagerInterface* data_manager,
-                    const std::unique_ptr<MemoryBlockInterface>& memory_device,
-                    int row_count, const std::string& filename,
-                    const std::vector<std::vector<int>>& node_parameters,
-                    int stream_index);
+  static void CheckResults(
+      const DataManagerInterface* data_manager,
+      const std::unique_ptr<MemoryBlockInterface>& memory_device, int row_count,
+      const std::string& filename,
+      const std::vector<std::vector<int>>& node_parameters, int stream_index);
   static void WriteResults(
       const DataManagerInterface* data_manager,
       const std::unique_ptr<MemoryBlockInterface>& memory_device, int row_count,
@@ -104,19 +106,6 @@ class QueryManager : public QueryManagerInterface {
           allocated_memory_blocks,
       std::map<std::string, std::vector<RecordSizeAndCount>>&
           output_stream_sizes);
-  void FreeMemoryBlocks(
-      MemoryManagerInterface* memory_manager,
-      std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
-          input_memory_blocks,
-      std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
-          output_memory_blocks,
-      std::map<std::string, std::vector<RecordSizeAndCount>>&
-          input_stream_sizes,
-      std::map<std::string, std::vector<RecordSizeAndCount>>&
-          output_stream_sizes,
-      const std::map<std::string, std::map<int, MemoryReuseTargets>>&
-          reuse_links,
-      const std::vector<std::string>& scheduled_node_names);
   static void StoreStreamResultPrameters(
       std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
@@ -134,7 +123,7 @@ class QueryManager : public QueryManagerInterface {
       const DataManagerInterface* data_manager,
       const std::vector<std::vector<int>>& node_parameters, int stream_index)
       -> int;
-  void AllocateOutputMemoryBlocks(
+  static void AllocateOutputMemoryBlocks(
       MemoryManagerInterface* memory_manager,
       const DataManagerInterface* data_manager,
       std::vector<std::unique_ptr<MemoryBlockInterface>>& output_memory_blocks,
@@ -155,7 +144,7 @@ class QueryManager : public QueryManagerInterface {
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
           memory_blocks,
       int stream_count, const std::string& node_name);
-  void InitialiseVectorSizes(
+  static void InitialiseVectorSizes(
       const std::vector<std::shared_ptr<QueryNode>>& scheduled_nodes,
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
           input_memory_blocks,

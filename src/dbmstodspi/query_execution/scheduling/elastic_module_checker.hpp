@@ -39,11 +39,12 @@ class ElasticModuleChecker {
    * @param operation_type What operation is going to get used.
    * @param operation_parameters What are the given parameters for the given
    * operation.
+   * @return Boolean flag noting if the run is valid.
    */
-  static void CheckElasticityNeeds(
+  static auto IsRunValid(
       const std::vector<StreamDataParameters>& input_stream_parameters,
       QueryOperationType operation_type,
-      const std::vector<std::vector<int>>& operation_parameters);
+      const std::vector<std::vector<int>>& operation_parameters) -> bool;
 
  private:
   /**
@@ -57,6 +58,13 @@ class ElasticModuleChecker {
   static auto IsMergeSortBigEnough(
       const std::vector<StreamDataParameters>& input_stream_parameters,
       const std::vector<std::vector<int>>& operation_parameters) -> bool;
-};
 
+  static auto IsMergeSortConfiguredCorrectly(
+      const std::vector<StreamDataParameters>& input_stream_parameters,
+      const std::vector<std::vector<int>>& operation_parameters) -> bool;
+
+  static auto IsMergeSortWithOneStream(
+      const std::vector<StreamDataParameters>& input_stream_parameters,
+      const std::vector<std::vector<int>>& operation_parameters) -> bool;
+};
 }  // namespace orkhestrafs::dbmstodspi

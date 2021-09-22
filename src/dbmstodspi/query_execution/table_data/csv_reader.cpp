@@ -23,9 +23,11 @@ limitations under the License.
 
 #include "logger.hpp"
 #include "types_converter.hpp"
+#include "util.hpp"
 
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
+using orkhestrafs::dbmstodspi::util::IsValidFile;
 using orkhestrafs::dbmstodspi::CSVReader;
 
 auto CSVReader::IsMemoryLargeEnough(
@@ -88,6 +90,9 @@ auto CSVReader::WriteTableFromFileToMemory(
     const std::string& filename, char separator,
     const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
     const std::unique_ptr<MemoryBlockInterface>& memory_device) -> int {
+  if (!IsValidFile(filename)) {
+    throw std::runtime_error(filename + " not found!");
+  }
   if (!IsMemoryLargeEnough(filename, memory_device)) {
     throw std::runtime_error(filename + " is too big!");
   }

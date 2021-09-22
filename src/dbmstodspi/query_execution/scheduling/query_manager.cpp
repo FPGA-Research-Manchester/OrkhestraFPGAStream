@@ -50,11 +50,6 @@ auto QueryManager::GetCurrentLinks(
   return current_links;
 }
 
-auto QueryManager::CreateFPGAManager(MemoryManagerInterface* memory_manager)
-    -> std::unique_ptr<FPGAManagerInterface> {
-  return std::make_unique<FPGAManager>(memory_manager);
-}
-
 void QueryManager::InitialiseMemoryBlockVector(
     std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
         memory_blocks,
@@ -330,10 +325,12 @@ auto QueryManager::ScheduleUnscheduledNodes(
 auto QueryManager::IsRunValid(std::vector<AcceleratedQueryNode> current_run)
     -> bool {
   for (const auto& node : current_run) {
-    ElasticModuleChecker::CheckElasticityNeeds(
-        node.input_streams, node.operation_type, node.operation_parameters);
+    if (!ElasticModuleChecker::IsRunValid(node.input_streams,
+                                          node.operation_type,
+                                          node.operation_parameters)) {
+      return false;
+    }
   }
-
   return true;
 }
 
@@ -357,6 +354,9 @@ void QueryManager::CheckTableData(const DataManagerInterface* data_manager,
   }
 }
 
+// This checking needs to get redone to not use the CheckTableData method and
+// instead compare memory blocks. For extra debugging (i.e., finding the lines
+// which are different) a separate debug method should be added.
 void QueryManager::CheckResults(
     const DataManagerInterface* data_manager,
     const std::unique_ptr<MemoryBlockInterface>& memory_device, int row_count,
@@ -512,18 +512,11 @@ void QueryManager::FreeMemoryBlocks(
 void QueryManager::ExecuteAndProcessResults(
     FPGAManagerInterface* fpga_manager,
     const DataManagerInterface* data_manager,
-    MemoryManagerInterface* memory_manager,
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
-        input_memory_blocks,
     std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
         output_memory_blocks,
-    std::map<std::string, std::vector<RecordSizeAndCount>>& input_stream_sizes,
     std::map<std::string, std::vector<RecordSizeAndCount>>& output_stream_sizes,
     const std::map<std::string, std::vector<StreamResultParameters>>&
         result_parameters,
-    const std::vector<std::string>& current_node_names,
-    const std::map<std::string, std::map<int, MemoryReuseTargets>>&
-        current_run_links,
     const std::vector<AcceleratedQueryNode>& execution_query_nodes) {
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
@@ -544,7 +537,4 @@ void QueryManager::ExecuteAndProcessResults(
 
   ProcessResults(data_manager, result_sizes, result_parameters,
                  output_memory_blocks, output_stream_sizes);
-  FreeMemoryBlocks(memory_manager, input_memory_blocks, output_memory_blocks,
-                   input_stream_sizes, output_stream_sizes, current_run_links,
-                   current_node_names);
 }
