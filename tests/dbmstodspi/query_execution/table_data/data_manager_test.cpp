@@ -40,7 +40,6 @@ class DataManagerTest : public ::testing::Test {
   MockCSVReader& mock_csv_reader_;
 };
 
-// Write return thing here!
 TEST_F(DataManagerTest, WriteDataFromCSVToMemoryUsesReader) {
   int expected_return = 10;
   std::string test_filename = "test";

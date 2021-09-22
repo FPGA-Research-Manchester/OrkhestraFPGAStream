@@ -33,6 +33,7 @@ target_link_libraries(testlib
 					  gmock_main
 					  dbmstodspi
 					  core_interfaces
+					  core_execution
 )
 
 if (NOT WIN32)
@@ -71,6 +72,7 @@ add_test(NAME QueryManagerTest COMMAND testlib)
 add_test(NAME ExecuteStateTest COMMAND testlib)
 add_test(NAME ScheduleStateTest COMMAND testlib)
 add_test(NAME SetupNodesStateTest COMMAND testlib)
+add_test(NAME ExecutionManagerTest COMMAND testlib)
 
 # Uncomment for automatic testing
 #add_custom_command(TARGET testlib

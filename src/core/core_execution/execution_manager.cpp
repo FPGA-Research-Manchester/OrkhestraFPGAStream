@@ -79,7 +79,7 @@ void ExecutionManager::SetupNextRunData() {
 void ExecutionManager::ExecuteAndProcessResults() {
   if (!fpga_manager_) {
     fpga_manager_ =
-        std::move(query_manager_->CreateFPGAManager(memory_manager_.get()));
+        std::move(FPGAManagerFactory::CreateFPGAManager(memory_manager_.get()));
   }
   query_manager_->ExecuteAndProcessResults(
       fpga_manager_.get(), data_manager_.get(), output_memory_blocks_,

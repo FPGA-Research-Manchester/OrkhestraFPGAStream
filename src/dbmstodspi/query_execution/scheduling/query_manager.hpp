@@ -27,8 +27,6 @@ class QueryManager : public QueryManagerInterface {
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
           all_reuse_links)
       -> std::map<std::string, std::map<int, MemoryReuseTargets>> override;
-  auto CreateFPGAManager(MemoryManagerInterface* memory_manager)
-      -> std::unique_ptr<FPGAManagerInterface> override;
   auto SetupAccelerationNodesForExecution(
       DataManagerInterface* data_manager,
       MemoryManagerInterface* memory_manager,

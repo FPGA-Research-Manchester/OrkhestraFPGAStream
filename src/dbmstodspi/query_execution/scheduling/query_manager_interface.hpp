@@ -64,14 +64,6 @@ class QueryManagerInterface {
           all_reuse_links)
       -> std::map<std::string, std::map<int, MemoryReuseTargets>> = 0;
   /**
-   * @brief Factory method to create FPGA managers.
-   * @param memory_manager Pointer to the memory manager for writing to memory
-   * mapped registers.
-   * @return FPGA manager object to execute the FPGA.
-   */
-  virtual auto CreateFPGAManager(MemoryManagerInterface* memory_manager)
-      -> std::unique_ptr<FPGAManagerInterface> = 0;
-  /**
    * @brief Method to create nodes for execution from scheduled nodes.
    * @param data_manager Manager to handle table data and different data types.
    * @param memory_manager Manager to handle memory blocks.

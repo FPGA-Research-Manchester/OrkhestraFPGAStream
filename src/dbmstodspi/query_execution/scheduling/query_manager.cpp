@@ -50,11 +50,6 @@ auto QueryManager::GetCurrentLinks(
   return current_links;
 }
 
-auto QueryManager::CreateFPGAManager(MemoryManagerInterface* memory_manager)
-    -> std::unique_ptr<FPGAManagerInterface> {
-  return std::make_unique<FPGAManager>(memory_manager);
-}
-
 void QueryManager::InitialiseMemoryBlockVector(
     std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
         memory_blocks,
