@@ -19,6 +19,7 @@ limitations under the License.
 #include "fpga_manager_interface.hpp"
 #include "gmock/gmock.h"
 
+using orkhestrafs::dbmstodspi::AcceleratedQueryNode;
 using orkhestrafs::dbmstodspi::FPGAManagerInterface;
 using orkhestrafs::dbmstodspi::query_acceleration_constants::kMaxIOStreamCount;
 

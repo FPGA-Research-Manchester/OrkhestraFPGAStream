@@ -98,8 +98,7 @@ TEST_F(ElasticModuleCheckerTest, MergeSortHasIncorrectOperationParams) {
                                                operation_parameters_));
 
   operation_parameters_.clear();
-  operation_parameters_.push_back(
-      {});
+  operation_parameters_.emplace_back();
 
   ASSERT_FALSE(ElasticModuleChecker::IsRunValid(input_stream_parameters_,
                                                QueryOperationType::kMergeSort,
@@ -133,7 +132,7 @@ TEST_F(ElasticModuleCheckerTest, FilterPassesMergeSortCheck) {
       any_address_pointer_, any_stream_specification_};
 
   input_stream_parameters_.push_back(stream_parameters);
-  operation_parameters_.push_back({});
+  operation_parameters_.emplace_back();
 
   ASSERT_TRUE(ElasticModuleChecker::IsRunValid(input_stream_parameters_,
                                                QueryOperationType::kFilter,

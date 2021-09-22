@@ -31,7 +31,6 @@ using orkhestrafs::core_interfaces::query_scheduling_data::
 using orkhestrafs::dbmstodspi::QueryManager;
 using orkhestrafs::dbmstodspi::StreamDataParameters;
 using orkhestrafs::dbmstodspi::VirtualMemoryBlock;
-using orkhestrafs::dbmstodspi::query_acceleration_constants::kMaxIOStreamCount;
 
 namespace {
 
@@ -57,9 +56,10 @@ class QueryManagerTest : public ::testing::Test {
 // Two links. One link is about current run and the other one is for the second
 // run.
 TEST_F(QueryManagerTest, GetCurrentLinksReturnsLinks) {
-  std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_targets,
-      expected_results;
-  std::map<int, MemoryReuseTargets> any_reuse_target, expected_reuse_target;
+  std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_targets;
+  std::map<std::string, std::map<int, MemoryReuseTargets>> expected_results;
+  std::map<int, MemoryReuseTargets> any_reuse_target;
+  std::map<int, MemoryReuseTargets> expected_reuse_target;
   std::string other_node_name = "other";
   expected_reuse_target.insert({0, {{other_node_name, 0}}});
   auto other_query_node = std::make_shared<QueryNode>(
@@ -81,8 +81,8 @@ TEST_F(QueryManagerTest, SetupAccelerationNodesForExecutionReturnsExpectedRun) {
   std::unique_ptr<MemoryBlockInterface> input_memory_block =
       std::make_unique<VirtualMemoryBlock>();
 
-  auto input_physical_address = input_memory_block->GetPhysicalAddress();
-  auto output_physical_address = output_memory_block->GetPhysicalAddress();
+  auto *input_physical_address = input_memory_block->GetPhysicalAddress();
+  auto *output_physical_address = output_memory_block->GetPhysicalAddress();
 
   std::string input_filename = "input_file";
   std::string output_filename = "output_file";
@@ -127,9 +127,11 @@ TEST_F(QueryManagerTest, SetupAccelerationNodesForExecutionReturnsExpectedRun) {
           testing::Return(testing::ByMove(std::move(input_memory_block))));
 
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
-      input_memory_blocks, output_memory_blocks;
-  std::map<std::string, std::vector<RecordSizeAndCount>> input_stream_sizes,
-      output_stream_sizes;
+      input_memory_blocks;
+  std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
+      output_memory_blocks;
+  std::map<std::string, std::vector<RecordSizeAndCount>> input_stream_sizes;
+  std::map<std::string, std::vector<RecordSizeAndCount>> output_stream_sizes;
 
   base_query_node_->input_data_definition_files.push_back(input_filename);
   base_query_node_->output_data_definition_files.push_back(output_filename);
@@ -242,15 +244,17 @@ TEST_F(QueryManagerTest, FreeMemoryBlocksMovesLinkedMemoryBlocks) {
   QueryManager query_manager_under_test;
   MockMemoryManager mock_memory_manager;
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
-      input_memory_blocks, output_memory_blocks;
-  std::map<std::string, std::vector<RecordSizeAndCount>> input_stream_sizes,
-      output_stream_sizes;
+      input_memory_blocks;
+  std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
+      output_memory_blocks;
+  std::map<std::string, std::vector<RecordSizeAndCount>> input_stream_sizes;
+  std::map<std::string, std::vector<RecordSizeAndCount>> output_stream_sizes;
   std::map<std::string, std::map<int, MemoryReuseTargets>> reuse_links;
   std::vector<std::string> scheduled_node_names;
 
   std::unique_ptr<MemoryBlockInterface> expected_memory_block =
       std::make_unique<VirtualMemoryBlock>();
-  auto expected_physical_address = expected_memory_block->GetPhysicalAddress();
+  auto *expected_physical_address = expected_memory_block->GetPhysicalAddress();
   std::string target_node_name = "target";
   std::string source_node_name = "source";
   std::vector<std::unique_ptr<MemoryBlockInterface>> source_input_vector;
@@ -300,9 +304,11 @@ TEST_F(QueryManagerTest, FreeMemoryBlocksRemovesMemoryBlocksAndStreamData) {
   QueryManager query_manager_under_test;
   MockMemoryManager mock_memory_manager;
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
-      input_memory_blocks, output_memory_blocks;
-  std::map<std::string, std::vector<RecordSizeAndCount>> input_stream_sizes,
-      output_stream_sizes;
+      input_memory_blocks;
+  std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
+      output_memory_blocks;
+  std::map<std::string, std::vector<RecordSizeAndCount>> input_stream_sizes;
+  std::map<std::string, std::vector<RecordSizeAndCount>> output_stream_sizes;
   std::map<std::string, std::map<int, MemoryReuseTargets>> reuse_links;
   std::vector<std::string> scheduled_node_names;
 

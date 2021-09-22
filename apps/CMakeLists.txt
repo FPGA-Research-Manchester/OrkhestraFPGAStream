@@ -123,8 +123,8 @@ set(data
     
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark.pl
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_defs.zip 
-${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem.zip 
-${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/part.zip 
+#${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem.zip 
+#${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/part.zip 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/big_benchmark_config.ini 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/fast_benchmark_config.ini
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/slow_benchmark_config.ini)

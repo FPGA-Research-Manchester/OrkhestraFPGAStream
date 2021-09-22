@@ -19,6 +19,8 @@ limitations under the License.
 #include "gmock/gmock.h"
 #include "query_manager_interface.hpp"
 
+using orkhestrafs::dbmstodspi::QueryManagerInterface;
+
 class MockQueryManager : public QueryManagerInterface {
  private:
   using ReuseLinks = std::map<std::string, std::map<int, MemoryReuseTargets>>;

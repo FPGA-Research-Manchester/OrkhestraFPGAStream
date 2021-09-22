@@ -27,8 +27,8 @@ using orkhestrafs::dbmstodspi::MemoryManagerInterface;
 
 class MockMemoryManager : public MemoryManagerInterface {
  public:
-  virtual void FreeMemoryBlock(
-      std::unique_ptr<MemoryBlockInterface> memory_block_pointer) {
+  void FreeMemoryBlock(
+      std::unique_ptr<MemoryBlockInterface> memory_block_pointer) override {
     return MockFreeMemoryBlock(memory_block_pointer.get());
   }
 

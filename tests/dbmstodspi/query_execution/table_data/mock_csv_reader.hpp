@@ -28,10 +28,11 @@ class MockCSVReader : public CSVReaderInterface {
   using ColumDefsVector = std::vector<std::pair<ColumnDataType, int>>;
 
  public:
-  virtual auto WriteTableFromFileToMemory(
+  auto WriteTableFromFileToMemory(
       const std::string& filename, char separator,
       const ColumDefsVector& column_defs_vector,
-      const std::unique_ptr<MemoryBlockInterface>& memory_device) -> int {
+      const std::unique_ptr<MemoryBlockInterface>& memory_device)
+      -> int override {
     return MockWriteTableFromFileToMemory(
         filename, separator, column_defs_vector, memory_device.get());
   }

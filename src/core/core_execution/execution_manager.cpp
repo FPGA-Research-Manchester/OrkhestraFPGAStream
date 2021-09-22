@@ -18,10 +18,10 @@ limitations under the License.
 
 #include <memory>
 
-#include "fpga_manager.hpp"
-#include "fpga_manager_interface.hpp"
+#include "fpga_manager_factory.hpp"
 
 using orkhestrafs::core::core_execution::ExecutionManager;
+using orkhestrafs::dbmstodspi::FPGAManagerFactory;
 
 void ExecutionManager::SetFinishedFlag() { busy_flag_ = false; }
 

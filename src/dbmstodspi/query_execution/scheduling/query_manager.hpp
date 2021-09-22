@@ -81,11 +81,11 @@ class QueryManager : public QueryManagerInterface {
   static void CheckTableData(const DataManagerInterface* data_manager,
                              const TableData& expected_table,
                              const TableData& resulting_table);
-  void CheckResults(const DataManagerInterface* data_manager,
-                    const std::unique_ptr<MemoryBlockInterface>& memory_device,
-                    int row_count, const std::string& filename,
-                    const std::vector<std::vector<int>>& node_parameters,
-                    int stream_index);
+  static void CheckResults(
+      const DataManagerInterface* data_manager,
+      const std::unique_ptr<MemoryBlockInterface>& memory_device, int row_count,
+      const std::string& filename,
+      const std::vector<std::vector<int>>& node_parameters, int stream_index);
   static void WriteResults(
       const DataManagerInterface* data_manager,
       const std::unique_ptr<MemoryBlockInterface>& memory_device, int row_count,
@@ -123,7 +123,7 @@ class QueryManager : public QueryManagerInterface {
       const DataManagerInterface* data_manager,
       const std::vector<std::vector<int>>& node_parameters, int stream_index)
       -> int;
-  void AllocateOutputMemoryBlocks(
+  static void AllocateOutputMemoryBlocks(
       MemoryManagerInterface* memory_manager,
       const DataManagerInterface* data_manager,
       std::vector<std::unique_ptr<MemoryBlockInterface>>& output_memory_blocks,
@@ -144,7 +144,7 @@ class QueryManager : public QueryManagerInterface {
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
           memory_blocks,
       int stream_count, const std::string& node_name);
-  void InitialiseVectorSizes(
+  static void InitialiseVectorSizes(
       const std::vector<std::shared_ptr<QueryNode>>& scheduled_nodes,
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
           input_memory_blocks,

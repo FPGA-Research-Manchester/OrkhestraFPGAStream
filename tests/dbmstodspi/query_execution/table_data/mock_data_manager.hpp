@@ -28,10 +28,11 @@ class MockDataManager : public DataManagerInterface {
   using ColumDefsVector = std::vector<std::pair<ColumnDataType, int>>;
 
  public:
-  virtual auto WriteDataFromCSVToMemory(
+  auto WriteDataFromCSVToMemory(
       const std::string& filename,
       const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
-      const std::unique_ptr<MemoryBlockInterface>& memory_device) const -> int {
+      const std::unique_ptr<MemoryBlockInterface>& memory_device) const
+      -> int override {
     return MockWriteDataFromCSVToMemory(filename, column_defs_vector,
                                         memory_device.get());
   }

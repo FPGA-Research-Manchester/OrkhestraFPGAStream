@@ -41,7 +41,6 @@ using orkhestrafs::core_interfaces::query_scheduling_data::
     StreamResultParameters;
 using orkhestrafs::dbmstodspi::AcceleratedQueryNode;
 using orkhestrafs::dbmstodspi::DataManagerInterface;
-using orkhestrafs::dbmstodspi::FPGAManagerFactory;
 using orkhestrafs::dbmstodspi::FPGAManagerInterface;
 using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
 using orkhestrafs::dbmstodspi::MemoryManagerInterface;

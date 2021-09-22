@@ -31,7 +31,6 @@ using orkhestrafs::dbmstodspi::DataManager;
 using orkhestrafs::dbmstodspi::MemoryManager;
 using orkhestrafs::dbmstodspi::QueryManager;
 using orkhestrafs::dbmstodspi::ScheduleState;
-using orkhestrafs::dbmstodspi::FPGAManagerFactory;
 
 auto ExecutionManagerFactory::GetManager(const Config& config)
     -> std::unique_ptr<ExecutionManagerInterface> {

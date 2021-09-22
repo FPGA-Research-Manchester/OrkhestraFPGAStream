@@ -62,7 +62,8 @@ class ExecutionManagerTest : public ::testing::Test {
   Config test_config_;
 };
 
-std::unique_ptr<StateInterface> StopFSM(GraphProcessingFSMInterface* ptr) {
+auto StopFSM(GraphProcessingFSMInterface* ptr)
+    -> std::unique_ptr<StateInterface> {
   ptr->SetFinishedFlag();
   return std::make_unique<MockState>();
 }
