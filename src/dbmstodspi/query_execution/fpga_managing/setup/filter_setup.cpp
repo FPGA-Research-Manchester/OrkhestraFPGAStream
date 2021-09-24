@@ -18,12 +18,36 @@ limitations under the License.
 
 #include <cstdio>
 #include <iostream>
-#include <stdexcept>
 #include <utility>
 
+#include "filter.hpp"
+#include "filter_interface.hpp"
+#include "logger.hpp"
 #include "query_acceleration_constants.hpp"
 
+using orkhestrafs::dbmstodspi::Filter;
+using orkhestrafs::dbmstodspi::FilterInterface;
 using orkhestrafs::dbmstodspi::FilterSetup;
+using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
+
+void FilterSetup::SetupModule(AccelerationModule& acceleration_module,
+                              const AcceleratedQueryNode& module_parameters) {
+  Log(LogLevel::kInfo,
+      "Configuring filter on pos " +
+          std::to_string(module_parameters.operation_module_location));
+  FilterSetup::SetupFilterModule(
+      dynamic_cast<FilterInterface&>(acceleration_module),
+      module_parameters.input_streams[0].stream_id,
+      module_parameters.output_streams[0].stream_id,
+      module_parameters.operation_parameters);
+}
+
+auto FilterSetup::CreateModule(MemoryManagerInterface* memory_manager,
+                               int module_postion)
+    -> std::unique_ptr<AccelerationModule> {
+  return std::make_unique<Filter>(memory_manager, module_postion);
+}
 
 void FilterSetup::SetupFilterModule(
     FilterInterface& filter_module, int input_stream_id, int output_stream_id,

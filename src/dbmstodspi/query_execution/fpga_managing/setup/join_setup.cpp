@@ -16,10 +16,40 @@ limitations under the License.
 
 #include "join_setup.hpp"
 
+#include "join.hpp"
+#include "join_interface.hpp"
+#include "logger.hpp"
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
 
 using orkhestrafs::dbmstodspi::JoinSetup;
+
+using orkhestrafs::dbmstodspi::Join;
+using orkhestrafs::dbmstodspi::JoinInterface;
+using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
+
+void JoinSetup::SetupModule(AccelerationModule& acceleration_module,
+                            const AcceleratedQueryNode& module_parameters) {
+  Log(LogLevel::kInfo,
+      "Configuring join on pos " +
+          std::to_string(module_parameters.operation_module_location));
+  JoinSetup::SetupJoinModule(
+      dynamic_cast<JoinInterface&>(acceleration_module),
+      module_parameters.input_streams[0].stream_id,
+      GetStreamRecordSize(module_parameters.input_streams[0]),
+      module_parameters.input_streams[1].stream_id,
+      GetStreamRecordSize(module_parameters.input_streams[1]),
+      module_parameters.output_streams[0].stream_id,
+      module_parameters.output_streams[0].input_chunks_per_record,
+      module_parameters.operation_parameters.at(0).at(0));
+}
+
+auto JoinSetup::CreateModule(MemoryManagerInterface* memory_manager,
+                             int module_postion)
+    -> std::unique_ptr<AccelerationModule> {
+  return std::make_unique<Join>(memory_manager, module_postion);
+}
 
 void JoinSetup::SetupJoinModule(JoinInterface& join_module,
                                 int first_input_stream_id,

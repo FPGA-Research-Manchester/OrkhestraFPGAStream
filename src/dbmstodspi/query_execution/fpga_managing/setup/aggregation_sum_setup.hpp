@@ -17,6 +17,7 @@ limitations under the License.
 #pragma once
 #include <vector>
 
+#include "acceleration_module_setup_interface.hpp"
 #include "aggregation_sum_interface.hpp"
 
 namespace orkhestrafs::dbmstodspi {
@@ -25,9 +26,12 @@ namespace orkhestrafs::dbmstodspi {
  * @brief Class to calculate the aggregating global sum acceleration module
  * setup.
  */
-class AggregationSumSetup {
- private:
+class AggregationSumSetup : public AccelerationModuleSetupInterface {
  public:
+  void SetupModule(AccelerationModule& acceleration_module,
+                   const AcceleratedQueryNode& module_parameters) override;
+  auto CreateModule(MemoryManagerInterface* memory_manager, int module_position)
+      -> std::unique_ptr<AccelerationModule> override;
   /**
    * @brief Setup the configuration for the global sum module.
    *

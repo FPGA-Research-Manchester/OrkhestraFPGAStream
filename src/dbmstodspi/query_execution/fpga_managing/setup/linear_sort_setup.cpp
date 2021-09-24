@@ -16,9 +16,35 @@ limitations under the License.
 
 #include "linear_sort_setup.hpp"
 
+#include "linear_sort.hpp"
+#include "linear_sort_interface.hpp"
+#include "logger.hpp"
 #include "stream_parameter_calculator.hpp"
 
 using orkhestrafs::dbmstodspi::LinearSortSetup;
+
+using orkhestrafs::dbmstodspi::LinearSort;
+using orkhestrafs::dbmstodspi::LinearSortInterface;
+using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
+
+void LinearSortSetup::SetupModule(
+    AccelerationModule& acceleration_module,
+    const AcceleratedQueryNode& module_parameters) {
+  Log(LogLevel::kInfo,
+      "Configuring linear sort on pos " +
+          std::to_string(module_parameters.operation_module_location));
+  LinearSortSetup::SetupLinearSortModule(
+      dynamic_cast<LinearSortInterface&>(acceleration_module),
+      module_parameters.input_streams[0].stream_id,
+      GetStreamRecordSize(module_parameters.input_streams[0]));
+}
+
+auto LinearSortSetup::CreateModule(MemoryManagerInterface* memory_manager,
+                                   int module_postion)
+    -> std::unique_ptr<AccelerationModule> {
+  return std::make_unique<LinearSort>(memory_manager, module_postion);
+}
 
 void LinearSortSetup::SetupLinearSortModule(
     LinearSortInterface& linear_sort_module, int stream_id, int record_size) {

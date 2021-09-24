@@ -15,25 +15,26 @@ limitations under the License.
 */
 
 #pragma once
+#include <vector>
 
-#include <cstdint>
+#include "dma_interface.hpp"
+#include "stream_data_parameters.hpp"
+#include "memory_manager_interface.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 
 /**
- * @brief Interface class for modules which need to get it's result read from
- * the configuration registers.
+ * @brief Interface for classes which can setup DMA modules.
  */
-class ReadBackModuleInterface {
+class DMASetupInterface {
  public:
-  virtual ~ReadBackModuleInterface() = default;
-
-  /**
-   * @brief Read the result of the module.
-   * @param data_position Bus index of the interface to read from.
-   * @return 32 bit value written in the result register of the module.
-  */
-  virtual auto ReadResult(int data_position) -> uint32_t = 0;
+  virtual ~DMASetupInterface() = default;
+  virtual void SetupDMAModule(
+      DMAInterface& dma_module,
+      const std::vector<StreamDataParameters>& input_streams,
+      const std::vector<StreamDataParameters>& output_streams) = 0;
+  virtual auto CreateDMAModule(MemoryManagerInterface* memory_manager)
+      -> std::unique_ptr<DMAInterface> = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

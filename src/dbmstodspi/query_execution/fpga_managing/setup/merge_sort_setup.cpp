@@ -19,10 +19,36 @@ limitations under the License.
 #include <cmath>
 #include <stdexcept>
 
+#include "logger.hpp"
+#include "merge_sort.hpp"
+#include "merge_sort_interface.hpp"
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
 
 using orkhestrafs::dbmstodspi::MergeSortSetup;
+
+using orkhestrafs::dbmstodspi::MergeSort;
+using orkhestrafs::dbmstodspi::MergeSortInterface;
+using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
+
+void MergeSortSetup::SetupModule(
+    AccelerationModule& acceleration_module,
+    const AcceleratedQueryNode& module_parameters) {
+  Log(LogLevel::kInfo,
+      "Configuring addition on pos " +
+          std::to_string(module_parameters.operation_module_location));
+  MergeSortSetup::SetupMergeSortModule(
+      dynamic_cast<MergeSortInterface&>(acceleration_module),
+      module_parameters.input_streams[0].stream_id,
+      GetStreamRecordSize(module_parameters.input_streams[0]), 0, true);
+}
+
+auto MergeSortSetup::CreateModule(MemoryManagerInterface* memory_manager,
+                                  int module_postion)
+    -> std::unique_ptr<AccelerationModule> {
+  return std::make_unique<MergeSort>(memory_manager, module_postion);
+}
 
 void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
                                           int stream_id, int record_size,

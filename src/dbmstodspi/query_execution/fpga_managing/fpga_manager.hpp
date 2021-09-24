@@ -23,14 +23,12 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "aggregation_sum.hpp"
-#include "dma.hpp"
-#include "filter.hpp"
+#include "dma_interface.hpp"
 #include "fpga_manager_interface.hpp"
-#include "ila.hpp"
-#include "memory_manager_interface.hpp"
-#include "read_back_module_interface.hpp"
+#include "read_back_module.hpp"
 #include "stream_data_parameters.hpp"
+#include "dma_setup_interface.hpp"
+#include "accelerator_library_interface.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -39,6 +37,39 @@ namespace orkhestrafs::dbmstodspi {
  * Then start the streaming to accelerate the query node.
  */
 class FPGAManager : public FPGAManagerInterface {
+ private:
+  // Could be array<bool> as well since none of the bitset functions are being
+  // used.
+  std::bitset<query_acceleration_constants::kMaxIOStreamCount>
+      input_streams_active_status_;
+  std::bitset<query_acceleration_constants::kMaxIOStreamCount>
+      output_streams_active_status_;
+
+  std::unique_ptr<AcceleratorLibraryInterface> module_library_;
+  std::unique_ptr<DMAInterface> dma_engine_;
+  DMASetupInterface& dma_setup_;
+  std::unique_ptr<ILA> ila_module_;
+  std::vector<std::unique_ptr<ReadBackModule>> read_back_modules_;
+  std::vector<std::vector<int>> read_back_parameters_;
+
+  void FindActiveStreams(std::vector<int>& active_input_stream_ids,
+                         std::vector<int>& active_output_stream_ids);
+  void WaitForStreamsToFinish();
+  void ReadResultsFromRegisters();
+  auto GetResultingStreamSizes(const std::vector<int>& active_input_stream_ids,
+                               const std::vector<int>& active_output_stream_ids)
+      -> std::array<int, query_acceleration_constants::kMaxIOStreamCount>;
+  void PrintDebuggingData();
+  static void FindIOStreams(
+      const std::vector<StreamDataParameters>& all_streams,
+      std::vector<StreamDataParameters>& found_streams,
+      const std::vector<std::vector<int>>& operation_parameters,
+      bool is_multichannel_stream,
+      std::bitset<query_acceleration_constants::kMaxIOStreamCount>&
+          stream_status_array);
+
+  static auto ReadModuleResultRegisters(
+      std::unique_ptr<ReadBackModule> read_back_module, int position) -> double;
  public:
   ~FPGAManager() override = default;
 
@@ -60,47 +91,14 @@ class FPGAManager : public FPGAManagerInterface {
 
   /**
    * @brief Constructor to setup memory mapped registers.
-   * @param memory_manager Instance to access memory mapped registers.
+   * @param module_library Library of the drivers and the modules.
    */
-  explicit FPGAManager(MemoryManagerInterface* memory_manager)
-      : memory_manager_{memory_manager}, dma_engine_{memory_manager} {};
-
- private:
-  // Could be array<bool> as well since none of the bitset functions are being
-  // used.
-  std::bitset<query_acceleration_constants::kMaxIOStreamCount>
-      input_streams_active_status_;
-  std::bitset<query_acceleration_constants::kMaxIOStreamCount>
-      output_streams_active_status_;
-
-  MemoryManagerInterface* memory_manager_;
-  DMA dma_engine_;
-  std::optional<ILA> ila_module_;
-  std::vector<std::unique_ptr<ReadBackModuleInterface>> read_back_modules_;
-  std::vector<std::vector<int>> read_back_parameters_;
-
-  void FindActiveStreams(std::vector<int>& active_input_stream_ids,
-                         std::vector<int>& active_output_stream_ids);
-  void WaitForStreamsToFinish();
-  void ReadResultsFromRegisters();
-  auto GetResultingStreamSizes(const std::vector<int>& active_input_stream_ids,
-                               const std::vector<int>& active_output_stream_ids)
-      -> std::array<int, query_acceleration_constants::kMaxIOStreamCount>;
-  void PrintDebuggingData();
-  static void FindIOStreams(
-      const std::vector<StreamDataParameters>& all_streams,
-      std::vector<StreamDataParameters>& found_streams,
-      const std::vector<std::vector<int>>& operation_parameters,
-      bool is_multichannel_stream,
-      std::bitset<query_acceleration_constants::kMaxIOStreamCount>&
-          stream_status_array);
-
-  static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)
-      -> int;
-
-  static auto ReadModuleResultRegisters(
-      std::unique_ptr<ReadBackModuleInterface> read_back_module, int position)
-      -> double;
+  explicit FPGAManager(
+      std::unique_ptr<AcceleratorLibraryInterface> module_library)
+      : module_library_{std::move(module_library)},
+        dma_engine_{std::move(module_library_->GetDMAModule())},
+        dma_setup_{module_library_->GetDMAModuleSetup()},
+        ila_module_{std::move(module_library_->GetILAModule())} {};
 };
 
 }  // namespace orkhestrafs::dbmstodspi

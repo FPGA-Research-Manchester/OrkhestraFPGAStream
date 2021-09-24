@@ -17,6 +17,7 @@ limitations under the License.
 #pragma once
 #include <vector>
 
+#include "acceleration_module_setup_interface.hpp"
 #include "multiplication_interface.hpp"
 
 namespace orkhestrafs::dbmstodspi {
@@ -24,9 +25,12 @@ namespace orkhestrafs::dbmstodspi {
 /**
  * @brief Class to calculate the Multiplication module setup.
  */
-class MultiplicationSetup {
- private:
+class MultiplicationSetup : public AccelerationModuleSetupInterface {
  public:
+  void SetupModule(AccelerationModule& acceleration_module,
+                   const AcceleratedQueryNode& module_parameters) override;
+  auto CreateModule(MemoryManagerInterface* memory_manager, int module_position)
+      -> std::unique_ptr<AccelerationModule> override;
   /**
    * @brief Method to setup the multiplication operation acceleration.
    *

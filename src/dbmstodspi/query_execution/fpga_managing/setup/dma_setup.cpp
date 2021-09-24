@@ -27,9 +27,22 @@ limitations under the License.
 
 using orkhestrafs::dbmstodspi::DMASetup;
 
-void DMASetup::SetupDMAModule(DMAInterface& dma_engine,
-                              const std::vector<StreamDataParameters>& streams,
-                              const bool is_input_stream) {
+void DMASetup::SetupDMAModule(
+    DMAInterface& dma_module,
+    const std::vector<StreamDataParameters>& input_streams,
+    const std::vector<StreamDataParameters>& output_streams) {
+  DMASetup::SetupDMAModuleDirection(dma_module, input_streams, true);
+  DMASetup::SetupDMAModuleDirection(dma_module, output_streams, false);
+}
+
+auto DMASetup::CreateDMAModule(MemoryManagerInterface* memory_manager)
+    -> std::unique_ptr<DMAInterface> {
+  return std::make_unique<DMA>(memory_manager);
+}
+
+void DMASetup::SetupDMAModuleDirection(
+    DMAInterface& dma_engine, const std::vector<StreamDataParameters>& streams,
+    const bool is_input_stream) {
   const int buffer_size = 16 / streams.size();
   int multichannel_stream_count = 0;
   for (int current_stream_count = 0; current_stream_count < streams.size();

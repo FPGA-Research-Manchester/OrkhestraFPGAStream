@@ -53,16 +53,15 @@ using orkhestrafs::dbmstodspi::logging::LogLevel;
 
 void FPGAManager::SetupQueryAcceleration(
     const std::vector<AcceleratedQueryNode>& query_nodes) {
-  // Doesn't reset configuration. Unused modules should be configured to be
-  // unused.
-  dma_engine_.GlobalReset();
+  // TODO: Doesn't reset configuration. Unused modules should be configured to
+  // be unused.
+  dma_engine_->GlobalReset();
   read_back_modules_.clear();
   read_back_parameters_.clear();
 
-  // ila_module_ = std::make_optional (ILA(memory_manager_));
-  /*if (ila_module_) {
-    ila_module_.value().startAxiILA();
-  }*/
+  // if (ila_module_) {
+  //  ila_module_->StartAxiILA();
+  //}
 
   std::vector<StreamDataParameters> input_streams;
   std::vector<StreamDataParameters> output_streams;
@@ -78,123 +77,28 @@ void FPGAManager::SetupQueryAcceleration(
   }
 
   // MISSING PIECE OF LOGIC HERE...
-  // TODO(Kaspar): Need to check for stream specification validity and
-  // intermediate stream specifications have to be merged with the IO stream
-  // specs.
+  // TODO(Kaspar): Need to check for stream specification validity.
 
   if (input_streams.empty() || output_streams.empty()) {
     throw std::runtime_error("Input or output streams missing!");
   }
-  DMASetup::SetupDMAModule(dma_engine_, input_streams, true);
-  DMASetup::SetupDMAModule(dma_engine_, output_streams, false);
+  dma_setup_.SetupDMAModule(*dma_engine_, input_streams, output_streams);
 
-  FPGAManager::dma_engine_.StartController(
-      true, FPGAManager::input_streams_active_status_);
+  dma_engine_->StartController(true, input_streams_active_status_);
 
   if (ila_module_) {
-    ila_module_.value().StartILAs();
+    ila_module_->StartILAs();
   }
 
   for (const auto& query_node : query_nodes) {
-    // TODO(Kaspar): For each of the operations different properties have to be
-    // written down to add classifications. The operation_parameters can be
-    // generalised based on classifiactions
-
-    // Assumptions are taken that the input and output streams are defined
-    // correctly and that the correct amount of streams have been given for each
-    // operation.
-
-    // Make it possible to configure a module to be unused.
-    auto log_level = LogLevel::kInfo;
-    switch (query_node.operation_type) {
-      case QueryOperationType::kFilter: {
-        Log(log_level,
-            "Configuring filter on pos " +
-                std::to_string(query_node.operation_module_location));
-        Filter filter_module(memory_manager_,
-                             query_node.operation_module_location);
-        FilterSetup::SetupFilterModule(filter_module,
-                                       query_node.input_streams[0].stream_id,
-                                       query_node.output_streams[0].stream_id,
-                                       query_node.operation_parameters);
-        break;
-      }
-      case QueryOperationType::kJoin: {
-        Log(log_level,
-            "Configuring join on pos " +
-                std::to_string(query_node.operation_module_location));
-        Join join_module(memory_manager_, query_node.operation_module_location);
-        JoinSetup::SetupJoinModule(
-            join_module, query_node.input_streams[0].stream_id,
-            GetStreamRecordSize(query_node.input_streams[0]),
-            query_node.input_streams[1].stream_id,
-            GetStreamRecordSize(query_node.input_streams[1]),
-            query_node.output_streams[0].stream_id,
-            query_node.output_streams[0].input_chunks_per_record,
-            query_node.operation_parameters.at(0).at(0));
-        break;
-      }
-      case QueryOperationType::kMergeSort: {
-        Log(log_level,
-            "Configuring merge sort on pos " +
-                std::to_string(query_node.operation_module_location));
-        MergeSort merge_sort_module(memory_manager_,
-                                    query_node.operation_module_location);
-        MergeSortSetup::SetupMergeSortModule(
-            merge_sort_module, query_node.input_streams[0].stream_id,
-            GetStreamRecordSize(query_node.input_streams[0]), 0, true);
-        /*MergeSort merge_sort_module1(
-            memory_manager_, query_node.operation_module_location+1);
-        MergeSortSetup::SetupMergeSortModule(
-            merge_sort_module1, query_node.input_streams[0].stream_id,
-            GetStreamRecordSize(query_node.input_streams[0]), 64, false);*/
-        break;
-      }
-      case QueryOperationType::kLinearSort: {
-        Log(log_level,
-            "Configuring linear sort on pos " +
-                std::to_string(query_node.operation_module_location));
-        LinearSort linear_sort_module(memory_manager_,
-                                      query_node.operation_module_location);
-        LinearSortSetup::SetupLinearSortModule(
-            linear_sort_module, query_node.input_streams[0].stream_id,
-            GetStreamRecordSize(query_node.input_streams[0]));
-        break;
-      }
-      case QueryOperationType::kAddition: {
-        Log(log_level,
-            "Configuring addition on pos " +
-                std::to_string(query_node.operation_module_location));
-        Addition addition_module(memory_manager_,
-                                 query_node.operation_module_location);
-        AdditionSetup::SetupAdditionModule(
-            addition_module, query_node.input_streams[0].stream_id,
-            query_node.operation_parameters);
-        break;
-      }
-      case QueryOperationType::kMultiplication: {
-        Log(log_level,
-            "Configuring multiplication on pos " +
-                std::to_string(query_node.operation_module_location));
-        Multiplication multiplication_module(
-            memory_manager_, query_node.operation_module_location);
-        MultiplicationSetup::SetupMultiplicationModule(
-            multiplication_module, {query_node.input_streams[0].stream_id},
-            query_node.operation_parameters);
-        break;
-      }
-      case QueryOperationType::kAggregationSum: {
-        Log(log_level,
-            "Configuring sum on pos " +
-                std::to_string(query_node.operation_module_location));
-        auto aggregation_module = std::make_unique<AggregationSum>(
-            memory_manager_, query_node.operation_module_location);
-        AggregationSumSetup::SetupAggregationSum(
-            *aggregation_module, query_node.input_streams[0].stream_id,
-            query_node.operation_parameters);
-        read_back_modules_.push_back(std::move(aggregation_module));
+    module_library_->SetupOperation(query_node);
+    auto readback_modules = module_library_->ExportLastModulesIfReadback();
+    if (!readback_modules.empty()) {
+      for (int i = 0; i < readback_modules.size(); i++) {
+        read_back_modules_.push_back(std::move(readback_modules.at(i)));
+        // Don't know how this will work out with combined readback modules as
+        // we don't have any at the moment.
         read_back_parameters_.push_back(query_node.operation_parameters.at(1));
-        break;
       }
     }
   }
@@ -277,7 +181,7 @@ void FPGAManager::FindActiveStreams(
 }
 
 void FPGAManager::WaitForStreamsToFinish() {
-  FPGAManager::dma_engine_.StartController(
+  FPGAManager::dma_engine_->StartController(
       false, FPGAManager::output_streams_active_status_);
 
 #ifdef _FPGA_AVAILABLE
@@ -326,7 +230,7 @@ auto FPGAManager::GetResultingStreamSizes(
   for (auto stream_id : active_output_stream_ids) {
     FPGAManager::output_streams_active_status_[stream_id] = false;
     result_sizes[stream_id] =
-        dma_engine_.GetControllerStreamSize(false, stream_id);
+        dma_engine_->GetControllerStreamSize(false, stream_id);
   }
   return result_sizes;
 }
@@ -359,17 +263,8 @@ void FPGAManager::PrintDebuggingData() {
 #endif
 }
 
-auto FPGAManager::GetStreamRecordSize(
-    const StreamDataParameters& stream_parameters) -> int {
-  if (stream_parameters.stream_specification.empty()) {
-    return stream_parameters.stream_record_size;
-  }
-  return stream_parameters.stream_specification.size();
-}
-
 auto FPGAManager::ReadModuleResultRegisters(
-    std::unique_ptr<ReadBackModuleInterface> read_back_module, int position)
-    -> double {
+    std::unique_ptr<ReadBackModule> read_back_module, int position) -> double {
   // Reversed reading because the data is reversed.
   uint32_t high_bits = read_back_module->ReadResult(
       ((query_acceleration_constants::kDatapathWidth - 1) - position * 2));

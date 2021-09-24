@@ -18,7 +18,7 @@ limitations under the License.
 #include "acceleration_module.hpp"
 #include "aggregation_sum_interface.hpp"
 #include "memory_manager_interface.hpp"
-#include "read_back_module_interface.hpp"
+#include "read_back_module.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -26,9 +26,8 @@ namespace orkhestrafs::dbmstodspi {
  * @brief Class which implements low level memory writes to the aggregating
  * global sum operation accelerator.
  */
-class AggregationSum : public AccelerationModule,
-                       public AggregationSumInterface,
-                       public ReadBackModuleInterface {
+class AggregationSum : public AggregationSumInterface,
+                       public ReadBackModule {
  private:
  public:
   ~AggregationSum() override = default;
@@ -40,7 +39,7 @@ class AggregationSum : public AccelerationModule,
    */
   explicit AggregationSum(MemoryManagerInterface* memory_manager,
                           int module_position)
-      : AccelerationModule(memory_manager, module_position){};
+      : ReadBackModule(memory_manager, module_position){};
 
   /**
    * @brief Set the module to start prefetching data.

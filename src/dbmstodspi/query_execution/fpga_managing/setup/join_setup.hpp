@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 #pragma once
+#include "acceleration_module_setup_interface.hpp"
 #include "join_interface.hpp"
 
 namespace orkhestrafs::dbmstodspi {
@@ -23,13 +24,18 @@ namespace orkhestrafs::dbmstodspi {
  * @brief Class to calculate the join module configuration data and write the
  * data to the registers.
  */
-class JoinSetup {
+class JoinSetup : public AccelerationModuleSetupInterface {
  private:
   static void SetupTimeMultiplexer(JoinInterface& join_module,
                                    int first_stream_size,
                                    int second_stream_size, int shift_size);
 
  public:
+  void SetupModule(AccelerationModule& acceleration_module,
+                   const AcceleratedQueryNode& module_parameters) override;
+  auto CreateModule(MemoryManagerInterface* memory_manager, int module_position)
+      -> std::unique_ptr<AccelerationModule> override;
+
   /**
    * @brief Method to setup the join module.
    *

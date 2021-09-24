@@ -55,6 +55,9 @@ add_library(query_execution OBJECT
             fpga_managing/dma_setup_data.hpp
             fpga_managing/stream_parameter_calculator.hpp
             fpga_managing/stream_parameter_calculator.cpp
+            fpga_managing/accelerator_library.hpp
+            fpga_managing/accelerator_library.cpp
+            fpga_managing/accelerator_library_interface.hpp
             fpga_managing/modules/acceleration_module.cpp
             fpga_managing/modules/acceleration_module.hpp
             fpga_managing/modules/addition.cpp
@@ -90,7 +93,7 @@ add_library(query_execution OBJECT
             fpga_managing/modules/ila.cpp
             fpga_managing/modules/ila.hpp
             fpga_managing/modules/ila_types.hpp
-            fpga_managing/modules/read_back_module_interface.hpp
+            fpga_managing/modules/read_back_module.hpp
             fpga_managing/setup/addition_setup.cpp
             fpga_managing/setup/addition_setup.hpp
             fpga_managing/setup/aggregation_sum_setup.cpp
@@ -99,6 +102,7 @@ add_library(query_execution OBJECT
             fpga_managing/setup/dma_crossbar_setup.hpp
             fpga_managing/setup/dma_setup.cpp
             fpga_managing/setup/dma_setup.hpp
+            fpga_managing/setup/dma_setup_interface.hpp
             fpga_managing/setup/filter_setup.cpp
             fpga_managing/setup/filter_setup.hpp
             fpga_managing/setup/join_setup.cpp
@@ -109,6 +113,8 @@ add_library(query_execution OBJECT
             fpga_managing/setup/merge_sort_setup.hpp
             fpga_managing/setup/multiplication_setup.cpp
             fpga_managing/setup/multiplication_setup.hpp
+            fpga_managing/setup/acceleration_module_setup_interface.hpp
+            fpga_managing/setup/acceleration_module_setup_interface.cpp
             scheduling/node_scheduler.cpp
             scheduling/node_scheduler.hpp
             scheduling/query_manager.hpp

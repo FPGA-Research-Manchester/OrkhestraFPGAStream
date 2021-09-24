@@ -18,6 +18,7 @@ limitations under the License.
 #include <string>
 #include <vector>
 
+#include "acceleration_module_setup_interface.hpp"
 #include "filter_interface.hpp"
 
 namespace orkhestrafs::dbmstodspi {
@@ -26,8 +27,13 @@ namespace orkhestrafs::dbmstodspi {
  * @brief Filter setup class which calculates the correct configuration data to
  * be written into the filter configuration registers.
  */
-class FilterSetup {
+class FilterSetup : public AccelerationModuleSetupInterface {
  public:
+  void SetupModule(AccelerationModule& acceleration_module,
+                   const AcceleratedQueryNode& module_parameters) override;
+  auto CreateModule(MemoryManagerInterface* memory_manager, int module_position)
+      -> std::unique_ptr<AccelerationModule> override;
+
   /**
    * @brief Setup filter module according to the input and output streams and
    * the given operation parameters.
