@@ -50,6 +50,7 @@ using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 using orkhestrafs::dbmstodspi::FPGAManager;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
+using orkhestrafs::dbmstodspi::AcceleratedQueryNode;
 
 void FPGAManager::SetupQueryAcceleration(
     const std::vector<AcceleratedQueryNode>& query_nodes) {
@@ -181,36 +182,36 @@ void FPGAManager::FindActiveStreams(
 }
 
 void FPGAManager::WaitForStreamsToFinish() {
-  FPGAManager::dma_engine_->StartController(
-      false, FPGAManager::output_streams_active_status_);
+  dma_engine_->StartController(
+      false, output_streams_active_status_);
 
 #ifdef _FPGA_AVAILABLE
-  while (!(FPGAManager::dma_engine_.IsControllerFinished(true) &&
-           FPGAManager::dma_engine_.IsControllerFinished(false))) {
+  while (!(dma_engine_->IsControllerFinished(true) &&
+           dma_engine_->IsControllerFinished(false))) {
     // sleep(3);
     // std::cout << "Processing..." << std::endl;
     // std::cout << "Input:"
-    //          << FPGAManager::dma_engine_.IsInputControllerFinished()
+    //          << dma_engine_.IsInputControllerFinished()
     //          << std::endl;
     // std::cout << "Output:"
-    //          << FPGAManager::dma_engine_.IsOutputControllerFinished()
+    //          << dma_engine_.IsOutputControllerFinished()
     //          << std::endl;
   }
 #endif
 }
 
 void FPGAManager::ReadResultsFromRegisters() {
-  if (!FPGAManager::read_back_modules_.empty()) {
+  if (!read_back_modules_.empty()) {
     // Assuming there are equal number of read back modules and parameters
     for (int module_index = 0;
-         module_index < FPGAManager::read_back_modules_.size();
+         module_index < read_back_modules_.size();
          module_index++) {
       for (auto const& position :
-           FPGAManager::read_back_parameters_.at(module_index)) {
+           read_back_parameters_.at(module_index)) {
         std::cout << "SUM: " << std::fixed << std::setprecision(2)
                   << ReadModuleResultRegisters(
                          std::move(
-                             FPGAManager::read_back_modules_.at(module_index)),
+                             read_back_modules_.at(module_index)),
                          position)
                   << std::endl;
       }
@@ -223,12 +224,12 @@ auto FPGAManager::GetResultingStreamSizes(
     const std::vector<int>& active_output_stream_ids)
     -> std::array<int, query_acceleration_constants::kMaxIOStreamCount> {
   for (auto stream_id : active_input_stream_ids) {
-    FPGAManager::input_streams_active_status_[stream_id] = false;
+    input_streams_active_status_[stream_id] = false;
   }
   std::array<int, query_acceleration_constants::kMaxIOStreamCount>
       result_sizes{};
   for (auto stream_id : active_output_stream_ids) {
-    FPGAManager::output_streams_active_status_[stream_id] = false;
+    output_streams_active_status_[stream_id] = false;
     result_sizes[stream_id] =
         dma_engine_->GetControllerStreamSize(false, stream_id);
   }
@@ -239,26 +240,26 @@ void FPGAManager::PrintDebuggingData() {
 #ifdef _FPGA_AVAILABLE
   auto log_level = LogLevel::kDebug;
   Log(log_level,
-      "Runtime: " + std::to_string(FPGAManager::dma_engine_.GetRuntime()));
+      "Runtime: " + std::to_string(dma_engine_->GetRuntime()));
   Log(log_level,
       "ValidReadCount: " +
-          std::to_string(FPGAManager::dma_engine_.GetValidReadCyclesCount()));
+          std::to_string(dma_engine_->GetValidReadCyclesCount()));
   Log(log_level,
       "ValidWriteCount: " +
-          std::to_string(FPGAManager::dma_engine_.GetValidWriteCyclesCount()));
-  if (FPGAManager::ila_module_) {
+          std::to_string(dma_engine_->GetValidWriteCyclesCount()));
+  if (ila_module_) {
     std::cout << "======================================================ILA 0 "
                  "DATA ======================================================="
               << std::endl;
-    FPGAManager::ila_module_.value().PrintILAData(0, 2048);
+    ila_module_->PrintILAData(0, 2048);
     std::cout << "======================================================ILA 1 "
                  "DATA ======================================================="
               << std::endl;
-    FPGAManager::ila_module_.value().PrintILAData(1, 2048);
+    ila_module_->PrintILAData(1, 2048);
     std::cout << "======================================================ILA 2 "
                  "DATA ======================================================="
               << std::endl;
-    FPGAManager::ila_module_.value().PrintDMAILAData(2048);
+    ila_module_->PrintDMAILAData(2048);
   }
 #endif
 }

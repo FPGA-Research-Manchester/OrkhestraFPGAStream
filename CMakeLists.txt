@@ -29,14 +29,11 @@ set(CMAKE_CXX_STANDARD 17)
 
 #To download external libraries like rapidcsv, rapidjson and googletest
 include(FetchContent)
-if (ENABLE_TESTS)
+if (_ENABLE_TESTS)
     include(CTest)
 endif()
-
-if (NOT WIN32)
+if (_FPGA_AVAILABLE)
     add_subdirectory(src/fos)
-    # Assuming that dev work isn't done on a unix machine
-    add_definitions (-D_FPGA_AVAILABLE)
 endif()
 
 # Global dependency

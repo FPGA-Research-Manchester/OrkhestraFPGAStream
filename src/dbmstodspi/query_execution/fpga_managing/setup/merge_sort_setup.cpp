@@ -36,7 +36,7 @@ void MergeSortSetup::SetupModule(
     AccelerationModule& acceleration_module,
     const AcceleratedQueryNode& module_parameters) {
   Log(LogLevel::kInfo,
-      "Configuring addition on pos " +
+      "Configuring merge sort on pos " +
           std::to_string(module_parameters.operation_module_location));
   MergeSortSetup::SetupMergeSortModule(
       dynamic_cast<MergeSortInterface&>(acceleration_module),

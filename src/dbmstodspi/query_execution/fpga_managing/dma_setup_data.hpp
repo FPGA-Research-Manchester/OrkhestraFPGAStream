@@ -19,6 +19,8 @@ limitations under the License.
 #include <tuple>
 #include <vector>
 
+#include <cstdint>
+
 #include "dma_crossbar_setup_data.hpp"
 
 namespace orkhestrafs::dbmstodspi {

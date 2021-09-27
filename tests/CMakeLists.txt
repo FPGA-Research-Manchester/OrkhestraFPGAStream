@@ -36,7 +36,7 @@ target_link_libraries(testlib
 					  core_execution
 )
 
-if (NOT WIN32)
+if (_FPGA_AVAILABLE)
 	target_link_libraries(testlib fos)
 endif()
 
