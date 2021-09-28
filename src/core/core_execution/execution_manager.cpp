@@ -18,10 +18,7 @@ limitations under the License.
 
 #include <memory>
 
-#include "fpga_manager_factory.hpp"
-
 using orkhestrafs::core::core_execution::ExecutionManager;
-using orkhestrafs::dbmstodspi::FPGAManagerFactory;
 
 void ExecutionManager::SetFinishedFlag() { busy_flag_ = false; }
 
@@ -77,10 +74,6 @@ void ExecutionManager::SetupNextRunData() {
   result_parameters_ = std::move(execution_nodes_and_result_params.second);
 }
 void ExecutionManager::ExecuteAndProcessResults() {
-  if (!fpga_manager_) {
-    fpga_manager_ =
-        std::move(FPGAManagerFactory::CreateFPGAManager(memory_manager_.get()));
-  }
   query_manager_->ExecuteAndProcessResults(
       fpga_manager_.get(), data_manager_.get(), output_memory_blocks_,
       output_stream_sizes_, result_parameters_, query_nodes_);

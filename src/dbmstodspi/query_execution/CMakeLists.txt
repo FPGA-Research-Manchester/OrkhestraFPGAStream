@@ -44,8 +44,9 @@ add_library(query_execution OBJECT
             fpga_managing/fpga_manager.hpp
             fpga_managing/fpga_manager.cpp
             fpga_managing/fpga_manager_interface.hpp
-            fpga_managing/fpga_manager_factory.hpp
-            fpga_managing/fpga_manager_factory.cpp
+            fpga_managing/fpga_driver_factory.hpp
+            fpga_managing/fpga_driver_factory.cpp
+            fpga_managing/fpga_driver_factory_interface.hpp
             fpga_managing/module_config_values.hpp
             fpga_managing/accelerated_query_node.hpp
             fpga_managing/stream_data_parameters.hpp

@@ -106,7 +106,7 @@ class QueryManager : public QueryManagerInterface {
           allocated_memory_blocks,
       std::map<std::string, std::vector<RecordSizeAndCount>>&
           output_stream_sizes);
-  static void StoreStreamResultPrameters(
+  static void StoreStreamResultParameters(
       std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
       const std::vector<int>& stream_ids, const QueryNode& node,
@@ -157,7 +157,7 @@ class QueryManager : public QueryManagerInterface {
   void AddQueryNodes(std::vector<AcceleratedQueryNode> &query_nodes_vector,
                      std::vector<StreamDataParameters> &&input_params,
                      std::vector<StreamDataParameters> &&output_params,
-                     const std::shared_ptr<QueryNode> &node);
+                     const QueryNode& node);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

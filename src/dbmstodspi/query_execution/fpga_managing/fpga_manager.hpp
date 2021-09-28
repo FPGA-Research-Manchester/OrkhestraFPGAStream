@@ -45,7 +45,7 @@ class FPGAManager : public FPGAManagerInterface {
   std::bitset<query_acceleration_constants::kMaxIOStreamCount>
       output_streams_active_status_;
 
-  std::unique_ptr<AcceleratorLibraryInterface> module_library_;
+  AcceleratorLibraryInterface* module_library_;
   std::unique_ptr<DMAInterface> dma_engine_;
   DMASetupInterface& dma_setup_;
   std::unique_ptr<ILA> ila_module_;
@@ -94,8 +94,8 @@ class FPGAManager : public FPGAManagerInterface {
    * @param module_library Library of the drivers and the modules.
    */
   explicit FPGAManager(
-      std::unique_ptr<AcceleratorLibraryInterface> module_library)
-      : module_library_{std::move(module_library)},
+      AcceleratorLibraryInterface* module_library)
+      : module_library_{module_library},
         dma_engine_{std::move(module_library_->GetDMAModule())},
         dma_setup_{module_library_->GetDMAModuleSetup()},
         ila_module_{std::move(module_library_->GetILAModule())} {};
