@@ -163,7 +163,7 @@ TEST_F(ExecutionManagerTest, SetupPopsScheduledNodes) {
 
   AcceleratedQueryNode test_node = {
       stream_params, stream_params, expected_operation_type,
-      operation_module_location, operation_parameters};
+      operation_module_location, {}, operation_parameters};
 
   std::vector<AcceleratedQueryNode> expected_accel_nodes = {test_node};
   std::map<std::string, std::vector<StreamResultParameters>>

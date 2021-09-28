@@ -16,6 +16,9 @@ limitations under the License.
 
 #include "query_manager.hpp"
 
+#include <algorithm>
+#include <stdexcept>
+
 #include "elastic_module_checker.hpp"
 #include "fpga_manager.hpp"
 #include "id_manager.hpp"
@@ -290,12 +293,19 @@ auto QueryManager::SetupAccelerationNodesForExecution(
                            output_memory_blocks[node->node_name],
                            output_stream_sizes[node->node_name]);
 
-    query_nodes.push_back({std::move(input_params), std::move(output_params),
-                           node->operation_type, node->module_location,
-                           node->operation_parameters.operation_parameters});
+    AddQueryNodes(query_nodes, std::move(input_params), std::move(output_params), node);
+
+
     StoreStreamResultPrameters(result_parameters, output_ids[node->node_name],
                                *node, output_memory_blocks[node->node_name]);
   }
+
+  std::sort(query_nodes.begin(), query_nodes.end(),
+       [] (AcceleratedQueryNode const& lhs, AcceleratedQueryNode const& rhs)
+           -> bool {
+         return lhs.operation_module_location < rhs.operation_module_location;
+       });
+
   return {query_nodes, result_parameters};
 }
 
@@ -537,4 +547,35 @@ void QueryManager::ExecuteAndProcessResults(
 
   ProcessResults(data_manager, result_sizes, result_parameters,
                  output_memory_blocks, output_stream_sizes);
+}
+void QueryManager::AddQueryNodes(
+    std::vector<AcceleratedQueryNode> &query_nodes_vector,
+    std::vector<StreamDataParameters> &&input_params,
+    std::vector<StreamDataParameters> &&output_params,
+    const std::shared_ptr<QueryNode> &node) {
+  if (node->module_locations.size() == 1) {
+    query_nodes_vector.push_back(
+        {std::move(input_params), std::move(output_params),
+         node->operation_type, node->module_locations.at(0), {},
+         node->operation_parameters.operation_parameters});
+  } else if (node->operation_parameters.operation_parameters.empty()) {
+    for (const auto& module_location: node->module_locations) {
+      query_nodes_vector.push_back(
+          {input_params, output_params,
+           node->operation_type, module_location, node->module_locations,
+           node->operation_parameters.operation_parameters});
+    }
+  } else {
+    auto all_module_params = node->operation_parameters.operation_parameters;
+    if (all_module_params.at(0).at(0) != node->module_locations.size()) {
+      throw std::runtime_error("Wrong parameters given!");
+    }
+    int offset = all_module_params.at(0).at(1);
+    for (int i = 0; i < node->module_locations.size(); i++) {
+      query_nodes_vector.push_back(
+          {input_params, output_params,
+           node->operation_type, node->module_locations.at(i), node->module_locations,
+           {all_module_params.begin() + 1 + offset * i, all_module_params.begin() + 1 + offset * (i + 1)}});
+    }
+  }
 }

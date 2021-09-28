@@ -299,7 +299,7 @@ auto NodeScheduler::FindSuitableModuleCombination(
           current_node->operation_type, current_module_possible_parameters,
           supported_accelerator_bitstreams);
       if (!new_modules_vector.empty()) {
-        current_node->module_location = module_position + 1;
+        current_node->module_locations.push_back(module_position + 1);
         return new_modules_vector;
       }
       // TODO(Kaspar): Make this nicer. A bit smelly
@@ -310,7 +310,7 @@ auto NodeScheduler::FindSuitableModuleCombination(
                                  current_modules_vector, module_parameters);
       if (IsModuleSetSupported(new_modules_vector,
                                supported_accelerator_bitstreams)) {
-        current_node->module_location = module_position + 1;
+        current_node->module_locations.push_back(module_position + 1);
         return new_modules_vector;
       }
     }
@@ -318,7 +318,7 @@ auto NodeScheduler::FindSuitableModuleCombination(
   return {};
 }
 
-// Recursive method to go through all of the module parameters to find the first
+// Recursive method to go through all the module parameters to find the first
 // supported one
 auto NodeScheduler::CheckModuleParameterSupport(
     std::vector<int> module_parameters,

@@ -145,7 +145,8 @@ TEST_F(QueryManagerTest, SetupAccelerationNodesForExecutionReturnsExpectedRun) {
   bool check_status = false;
   base_query_node_->is_checked = {check_status};
   int expected_location = 99;
-  base_query_node_->module_location = expected_location;
+  // TODO: Missing test with composed modules!
+  base_query_node_->module_locations = {expected_location};
 
   QueryManager query_manager_under_test;
 
@@ -169,6 +170,7 @@ TEST_F(QueryManagerTest, SetupAccelerationNodesForExecutionReturnsExpectedRun) {
                                               {expected_output_stream_param},
                                               base_operation_type_,
                                               expected_location,
+                                              {},
                                               empty_operation_params};
 
   int expected_stream_index = 0;

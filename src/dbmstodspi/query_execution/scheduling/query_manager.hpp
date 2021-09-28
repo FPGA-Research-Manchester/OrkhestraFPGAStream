@@ -154,6 +154,10 @@ class QueryManager : public QueryManagerInterface {
           input_stream_sizes,
       std::map<std::string, std::vector<RecordSizeAndCount>>&
           output_stream_sizes);
+  void AddQueryNodes(std::vector<AcceleratedQueryNode> &query_nodes_vector,
+                     std::vector<StreamDataParameters> &&input_params,
+                     std::vector<StreamDataParameters> &&output_params,
+                     const std::shared_ptr<QueryNode> &node);
 };
 
 }  // namespace orkhestrafs::dbmstodspi
