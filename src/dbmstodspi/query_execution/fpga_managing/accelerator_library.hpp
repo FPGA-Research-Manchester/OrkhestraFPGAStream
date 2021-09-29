@@ -65,7 +65,29 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
    */
   auto GetILAModule() -> std::unique_ptr<ILA> override;
 
+  /**
+   * @brief Check if a stream is supposed to be a multi-channel stream
+   * @param is_input Is the stream an input stream.
+   * @param stream_index The index of the stream.
+   * @param operation_type The operation performed on the stream
+   * @return Is the stream multi-channel
+   */
+  auto IsMultiChannelStream(bool is_input, int stream_index, QueryOperationType operation_type) -> bool override;
+
+  /**
+   * @brief Get multi channel parameters
+   * @param is_input Is the stream an input stream.
+   * @param stream_index The index of the stream.
+   * @param operation_type The operation performed on the stream
+   * @param operation_parameters Parameters where multi channel data can be extracted from
+   * @return How many channels with how many records there are for this stream.
+   */
+  auto GetMultiChannelParams(bool is_input, int stream_index, QueryOperationType operation_type,
+                             std::vector<std::vector<int>> operation_parameters) -> std::pair<int, int> override;
+
  private:
+   auto GetDriver(QueryOperationType operation_type) -> AccelerationModuleSetupInterface*;
+
   std::unique_ptr<DMASetupInterface> dma_setup_;
   std::map<QueryOperationType,
            std::unique_ptr<AccelerationModuleSetupInterface>>

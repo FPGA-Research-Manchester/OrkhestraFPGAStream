@@ -47,6 +47,24 @@ class AccelerationModuleSetupInterface {
                             int module_position)
       -> std::unique_ptr<AccelerationModule> = 0;
 
+  /**
+   * @brief Method to check if a stream is supposed to be a multi-channel stream.
+   * @param is_input_stream Boolean to check input or output streams
+   * @param stream_index Index of the stream
+   * @return True if the stream is supposed to be multi-channel
+   */
+  virtual auto IsMultiChannelStream(bool is_input_stream, int stream_index) -> bool;
+
+  /**
+   * @brief Get multi channel parameters
+   * @param is_input Is the stream an input stream.
+   * @param stream_index The index of the stream.
+   * @param operation_parameters Parameters where multi channel data can be extracted from
+   * @return How many channels with how many records there are for this stream.
+   */
+  virtual auto GetMultiChannelParams(bool is_input, int stream_index,
+                             std::vector<std::vector<int>> operation_parameters) -> std::pair<int, int>;
+
  protected:
   static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)
       -> int;

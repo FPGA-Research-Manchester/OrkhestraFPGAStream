@@ -34,4 +34,7 @@ class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
   MOCK_METHOD(DMASetupInterface&, GetDMAModuleSetup, (), (override));
   MOCK_METHOD(std::vector<std::unique_ptr<ReadBackModule>>, ExportLastModulesIfReadback, (), (override));
   MOCK_METHOD(std::unique_ptr<ILA>, GetILAModule, (), (override));
+  MOCK_METHOD(bool, IsMultiChannelStream, (bool is_input, int stream_index, QueryOperationType operation_type), (override));
+  MOCK_METHOD((std::pair<int, int>), GetMultiChannelParams, (bool is_input, int stream_index, QueryOperationType operation_type,
+                                                               std::vector<std::vector<int>> operation_parameters), (override));
 };

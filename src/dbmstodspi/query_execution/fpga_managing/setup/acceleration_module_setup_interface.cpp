@@ -18,6 +18,15 @@ limitations under the License.
 
 using orkhestrafs::dbmstodspi::AccelerationModuleSetupInterface;
 
+auto AccelerationModuleSetupInterface::IsMultiChannelStream(bool is_input_stream, int stream_index) -> bool {
+  return false;
+}
+
+auto AccelerationModuleSetupInterface::GetMultiChannelParams(bool is_input, int stream_index,
+                           std::vector<std::vector<int>> operation_parameters) -> std::pair<int, int> {
+  return {-1,-1};
+}
+
 auto AccelerationModuleSetupInterface::GetStreamRecordSize(
     const StreamDataParameters& stream_parameters) -> int {
   if (stream_parameters.stream_specification.empty()) {

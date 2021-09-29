@@ -47,6 +47,7 @@ class MockQueryManager : public QueryManagerInterface {
       ExecutionReadyNodes, SetupAccelerationNodesForExecution,
       (DataManagerInterface * data_manager,
        MemoryManagerInterface* memory_manager,
+       AcceleratorLibraryInterface* accelerator_library,
        MappedMemoryBlocks& input_memory_blocks,
        MappedMemoryBlocks& output_memory_blocks,
        MappedRecordSizes& input_stream_sizes,

@@ -200,7 +200,7 @@ TEST_F(ExecutionManagerTest, SetupPopsScheduledNodes) {
               GetCurrentLinks(expected_nodes, expected_links))
       .Times(1);
   EXPECT_CALL(mock_query_manager_, SetupAccelerationNodesForExecution(
-                                       _, _, _, _, _, _, expected_nodes))
+                                       _, _, _, _, _, _, _, expected_nodes))
       .WillOnce(testing::Return(expected_setup_results));
 
   execution_manager_under_test->Execute(std::move(mock_graph_ptr));

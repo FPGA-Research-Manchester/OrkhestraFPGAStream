@@ -16,13 +16,11 @@ limitations under the License.
 
 #include "merge_sort_setup.hpp"
 
-#include <cmath>
 #include <stdexcept>
 
 #include "logger.hpp"
 #include "merge_sort.hpp"
 #include "merge_sort_interface.hpp"
-#include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
 
 using orkhestrafs::dbmstodspi::MergeSortSetup;
@@ -45,9 +43,9 @@ void MergeSortSetup::SetupModule(
 }
 
 auto MergeSortSetup::CreateModule(MemoryManagerInterface* memory_manager,
-                                  int module_postion)
+                                  int module_position)
     -> std::unique_ptr<AccelerationModule> {
-  return std::make_unique<MergeSort>(memory_manager, module_postion);
+  return std::make_unique<MergeSort>(memory_manager, module_position);
 }
 
 void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
@@ -118,5 +116,26 @@ auto MergeSortSetup::PotentialRecordCountIsValid(int potential_record_count,
       return true;
     default:
       throw std::runtime_error("Something went wrong!");
+  }
+}
+auto orkhestrafs::dbmstodspi::MergeSortSetup::IsMultiChannelStream(
+    bool is_input_stream, int stream_index) -> bool {
+  return is_input_stream && stream_index == 0;
+}
+auto orkhestrafs::dbmstodspi::MergeSortSetup::GetMultiChannelParams(
+    bool is_input, int stream_index,
+    std::vector<std::vector<int>> operation_parameters) -> std::pair<int, int> {
+  if (operation_parameters.size() == 1) {
+    return {operation_parameters.at(0).at(0), operation_parameters.at(0).at(1)};
+  } else {
+    int max_channel_count = 0;
+    // Assuming all modules have the same records_per_channel
+    int records_per_channel = operation_parameters.at(1).at(1);
+    int module_count = operation_parameters.at(0).at(0);
+    int parameter_offset = operation_parameters.at(0).at(1);
+    for (int module_index = 0; module_index< module_count; module_index++){
+      max_channel_count+=operation_parameters.at(module_index * parameter_offset + 1).at(0);
+    }
+    return {max_channel_count, records_per_channel};
   }
 }

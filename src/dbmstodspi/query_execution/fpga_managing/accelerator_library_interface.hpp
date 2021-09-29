@@ -17,6 +17,8 @@ limitations under the License.
 #pragma once
 
 #include <memory>
+#include <vector>
+#include <utility>
 
 #include "accelerated_query_node.hpp"
 #include "dma_interface.hpp"
@@ -40,6 +42,9 @@ class AcceleratorLibraryInterface {
   virtual auto ExportLastModulesIfReadback()
       -> std::vector<std::unique_ptr<ReadBackModule>> = 0;
   virtual auto GetILAModule() -> std::unique_ptr<ILA> = 0;
+  virtual auto IsMultiChannelStream(bool is_input, int stream_index, QueryOperationType operation_type) -> bool = 0;
+  virtual auto GetMultiChannelParams(bool is_input, int stream_index, QueryOperationType operation_type,
+                                     std::vector<std::vector<int>> operation_parameters) -> std::pair<int, int> = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

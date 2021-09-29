@@ -193,12 +193,15 @@ void QueryManager::AllocateInputMemoryBlocks(
 }
 
 auto QueryManager::CreateStreamParams(
+    bool is_input, const QueryNode& node,
+    AcceleratorLibraryInterface* accelerator_library,
     const std::vector<int>& stream_ids,
-    const std::vector<std::vector<int>>& node_parameters,
     const std::vector<std::unique_ptr<MemoryBlockInterface>>&
         allocated_memory_blocks,
     const std::vector<RecordSizeAndCount>& stream_sizes)
     -> std::vector<StreamDataParameters> {
+  auto node_parameters = (is_input) ? node.operation_parameters.input_stream_parameters : node.operation_parameters.output_stream_parameters;
+
   std::vector<StreamDataParameters> parameters_for_acceleration;
 
   for (int stream_index = 0; stream_index < stream_ids.size(); stream_index++) {
@@ -216,18 +219,20 @@ auto QueryManager::CreateStreamParams(
       chunk_count = chunk_count_def.at(0);
     }
 
-    StreamDataParameters current_stream_parameters = {
-        stream_ids[stream_index],
-        stream_sizes[stream_index].first,
-        stream_sizes[stream_index].second,
-        physical_address_ptr,
-        node_parameters.at(stream_index * kIOStreamParamDefs.kStreamParamCount +
-                           kIOStreamParamDefs.kProjectionOffset),
-        chunk_count};
+    auto [channel_count, records_per_channel] =
+          accelerator_library->GetMultiChannelParams(is_input, stream_index,
+                                                   node.operation_type, node.operation_parameters.operation_parameters);
+      StreamDataParameters current_stream_parameters = {
+          stream_ids[stream_index],
+          stream_sizes[stream_index].first,
+          stream_sizes[stream_index].second,
+          physical_address_ptr,
+          node_parameters.at(stream_index * kIOStreamParamDefs.kStreamParamCount +
+                             kIOStreamParamDefs.kProjectionOffset),
+          chunk_count, channel_count, records_per_channel};
 
-    parameters_for_acceleration.push_back(current_stream_parameters);
+      parameters_for_acceleration.push_back(current_stream_parameters);
   }
-
   return parameters_for_acceleration;
 }
 
@@ -252,6 +257,7 @@ void QueryManager::StoreStreamResultParameters(
 
 auto QueryManager::SetupAccelerationNodesForExecution(
     DataManagerInterface* data_manager, MemoryManagerInterface* memory_manager,
+    AcceleratorLibraryInterface* accelerator_library,
     std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
         input_memory_blocks,
     std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
@@ -283,13 +289,13 @@ auto QueryManager::SetupAccelerationNodesForExecution(
         *node, output_stream_sizes, input_stream_sizes[node->node_name]);
 
     auto input_params =
-        CreateStreamParams(input_ids[node->node_name],
-                           node->operation_parameters.input_stream_parameters,
+        CreateStreamParams(true, *node, accelerator_library,
+            input_ids[node->node_name],
                            input_memory_blocks[node->node_name],
                            input_stream_sizes[node->node_name]);
     auto output_params =
-        CreateStreamParams(output_ids[node->node_name],
-                           node->operation_parameters.output_stream_parameters,
+        CreateStreamParams(false, *node, accelerator_library,
+            output_ids[node->node_name],
                            output_memory_blocks[node->node_name],
                            output_stream_sizes[node->node_name]);
 
@@ -472,11 +478,11 @@ void QueryManager::FreeMemoryBlocks(
   }
 
   for (const auto& [node_name, data_mapping] : reuse_links) {
-    for (const auto& [output_stream_index, targe_input_streams] :
+    for (const auto& [output_stream_index, target_input_streams] :
          data_mapping) {
-      if (targe_input_streams.size() == 1) {
-        auto target_node_name = targe_input_streams.at(0).first;
-        auto target_stream_index = targe_input_streams.at(0).second;
+      if (target_input_streams.size() == 1) {
+        auto target_node_name = target_input_streams.at(0).first;
+        auto target_stream_index = target_input_streams.at(0).second;
         removable_vectors.erase(
             std::remove(removable_vectors.begin(), removable_vectors.end(),
                         target_node_name),
@@ -488,7 +494,7 @@ void QueryManager::FreeMemoryBlocks(
             output_stream_sizes[node_name][output_stream_index];
       } else {
         for (const auto& [target_node_name, target_stream_index] :
-             targe_input_streams) {
+             target_input_streams) {
           removable_vectors.erase(
               std::remove(removable_vectors.begin(), removable_vectors.end(),
                           target_node_name),

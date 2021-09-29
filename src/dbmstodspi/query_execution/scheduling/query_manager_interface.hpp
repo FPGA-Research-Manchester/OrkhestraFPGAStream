@@ -29,6 +29,7 @@ limitations under the License.
 #include "memory_block_interface.hpp"
 #include "memory_manager_interface.hpp"
 #include "query_scheduling_data.hpp"
+#include "accelerator_library_interface.hpp"
 
 using orkhestrafs::core_interfaces::Config;
 using orkhestrafs::core_interfaces::query_scheduling_data::
@@ -41,6 +42,7 @@ using orkhestrafs::core_interfaces::query_scheduling_data::
 using orkhestrafs::dbmstodspi::AcceleratedQueryNode;
 using orkhestrafs::dbmstodspi::FPGAManagerInterface;
 using orkhestrafs::dbmstodspi::MemoryBlockInterface;
+using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
 
 namespace orkhestrafs::dbmstodspi {
 /**
@@ -67,6 +69,7 @@ class QueryManagerInterface {
    * @brief Method to create nodes for execution from scheduled nodes.
    * @param data_manager Manager to handle table data and different data types.
    * @param memory_manager Manager to handle memory blocks.
+   * @param accelerator_library Library of accelerators and their drivers.
    * @param input_memory_blocks Memory for input streams.
    * @param output_memory_blocks Memory for output streams.
    * @param input_stream_sizes Map for input stream size parameters.
@@ -78,6 +81,7 @@ class QueryManagerInterface {
   virtual auto SetupAccelerationNodesForExecution(
       DataManagerInterface* data_manager,
       MemoryManagerInterface* memory_manager,
+      AcceleratorLibraryInterface* accelerator_library,
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
           input_memory_blocks,
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&

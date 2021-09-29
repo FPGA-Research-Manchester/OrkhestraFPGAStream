@@ -114,19 +114,7 @@ void FPGAManager::FindIOStreams(
         stream_status_array) {
   for (const auto& current_stream : all_streams) {
     if (current_stream.physical_address) {
-      if (is_multichannel_stream) {
-        // Assumption is that there is only one multichannel stream in this node
-        // which gets the multi channel parameters
-        found_streams.push_back(
-            {current_stream.stream_id, current_stream.stream_record_size,
-             current_stream.stream_record_count,
-             current_stream.physical_address,
-             current_stream.stream_specification,
-             current_stream.input_chunks_per_record, operation_parameters[0][0],
-             operation_parameters[0][1]});
-      } else {
-        found_streams.push_back(current_stream);
-      }
+      found_streams.push_back(current_stream);
       stream_status_array[current_stream.stream_id] = true;
     }
   }

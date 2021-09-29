@@ -30,6 +30,7 @@ class QueryManager : public QueryManagerInterface {
   auto SetupAccelerationNodesForExecution(
       DataManagerInterface* data_manager,
       MemoryManagerInterface* memory_manager,
+      AcceleratorLibraryInterface* accelerator_library,
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
           input_memory_blocks,
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
@@ -113,8 +114,9 @@ class QueryManager : public QueryManagerInterface {
       const std::vector<std::unique_ptr<MemoryBlockInterface>>&
           allocated_memory_blocks);
   static auto CreateStreamParams(
+      bool is_input, const QueryNode& node,
+      AcceleratorLibraryInterface* accelerator_library,
       const std::vector<int>& stream_ids,
-      const std::vector<std::vector<int>>& node_parameters,
       const std::vector<std::unique_ptr<MemoryBlockInterface>>&
           allocated_memory_blocks,
       const std::vector<RecordSizeAndCount>& stream_sizes)
