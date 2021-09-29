@@ -554,33 +554,50 @@ void QueryManager::ExecuteAndProcessResults(
   ProcessResults(data_manager, result_sizes, result_parameters,
                  output_memory_blocks, output_stream_sizes);
 }
+
 void QueryManager::AddQueryNodes(
     std::vector<AcceleratedQueryNode> &query_nodes_vector,
     std::vector<StreamDataParameters> &&input_params,
     std::vector<StreamDataParameters> &&output_params,
     const QueryNode &node) {
-  if (node.module_locations.size() == 1) {
+  auto sorted_module_locations = node.module_locations;
+  std::sort(sorted_module_locations.begin(), sorted_module_locations.end());
+  auto no_io_input_params = input_params;
+  for (auto& stream_param : no_io_input_params){
+    stream_param.physical_address = nullptr;
+  }
+  auto no_io_output_params = output_params;
+  for (auto& stream_param : no_io_output_params){
+    stream_param.physical_address = nullptr;
+  }
+  if (sorted_module_locations.size() == 1) {
     query_nodes_vector.push_back(
         {std::move(input_params), std::move(output_params),
-         node.operation_type, node.module_locations.at(0), {},
+         node.operation_type, sorted_module_locations.at(0), {},
          node.operation_parameters.operation_parameters});
   } else if (node.operation_parameters.operation_parameters.empty()) {
-    for (const auto& module_location: node.module_locations) {
+    // Multiple composed modules
+    for (int i = 0; i < sorted_module_locations.size(); i++) {
+      auto current_input = (i==0) ? input_params : no_io_input_params;
+      auto current_output = (i==sorted_module_locations.size() -1 ) ? output_params : no_io_output_params;
       query_nodes_vector.push_back(
-          {input_params, output_params,
-           node.operation_type, module_location, node.module_locations,
+          {current_input, current_output,
+           node.operation_type, sorted_module_locations.at(i), sorted_module_locations,
            node.operation_parameters.operation_parameters});
     }
   } else {
+    // Multiple resource elastic modules.
     auto all_module_params = node.operation_parameters.operation_parameters;
-    if (all_module_params.at(0).at(0) != node.module_locations.size()) {
+    if (all_module_params.at(0).at(0) != sorted_module_locations.size()) {
       throw std::runtime_error("Wrong parameters given!");
     }
     int offset = all_module_params.at(0).at(1);
-    for (int i = 0; i < node.module_locations.size(); i++) {
+    for (int i = 0; i < sorted_module_locations.size(); i++) {
+      auto current_input = (i==0) ? input_params : no_io_input_params;
+      auto current_output = (i==sorted_module_locations.size() -1 ) ? output_params : no_io_output_params;
       query_nodes_vector.push_back(
-          {input_params, output_params,
-           node.operation_type, node.module_locations.at(i), node.module_locations,
+          {current_input, current_output,
+           node.operation_type, sorted_module_locations.at(i), sorted_module_locations,
            {all_module_params.begin() + 1 + offset * i, all_module_params.begin() + 1 + offset * (i + 1)}});
     }
   }
