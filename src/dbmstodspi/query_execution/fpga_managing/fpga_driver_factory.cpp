@@ -24,14 +24,13 @@ limitations under the License.
 #include "aggregation_sum_setup.hpp"
 #include "dma_setup.hpp"
 #include "filter_setup.hpp"
+#include "fpga_driver_factory.hpp"
 #include "fpga_manager.hpp"
 #include "join_setup.hpp"
 #include "linear_sort_setup.hpp"
 #include "merge_sort_setup.hpp"
 #include "multiplication_setup.hpp"
 #include "operation_types.hpp"
-#include "fpga_driver_factory.hpp"
-
 
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 using orkhestrafs::dbmstodspi::FPGADriverFactory;
@@ -42,7 +41,7 @@ auto FPGADriverFactory::CreateFPGAManager(
   return std::make_unique<FPGAManager>(driver_library);
 }
 auto FPGADriverFactory::CreateAcceleratorLibrary(
-    MemoryManagerInterface *memory_manager)
+    MemoryManagerInterface* memory_manager)
     -> std::unique_ptr<AcceleratorLibraryInterface> {
   std::map<QueryOperationType,
            std::unique_ptr<AccelerationModuleSetupInterface>>
@@ -61,6 +60,7 @@ auto FPGADriverFactory::CreateAcceleratorLibrary(
                                 std::make_unique<MultiplicationSetup>()});
   module_driver_library.insert({QueryOperationType::kAggregationSum,
                                 std::make_unique<AggregationSumSetup>()});
-  return std::make_unique<AcceleratorLibrary>(
-      memory_manager, std::make_unique<DMASetup>(), std::move(module_driver_library));
+  return std::make_unique<AcceleratorLibrary>(memory_manager,
+                                              std::make_unique<DMASetup>(),
+                                              std::move(module_driver_library));
 }

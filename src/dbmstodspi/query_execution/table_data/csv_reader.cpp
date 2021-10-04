@@ -25,10 +25,10 @@ limitations under the License.
 #include "types_converter.hpp"
 #include "util.hpp"
 
+using orkhestrafs::dbmstodspi::CSVReader;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::util::IsValidFile;
-using orkhestrafs::dbmstodspi::CSVReader;
 
 auto CSVReader::IsMemoryLargeEnough(
     const std::string& filename,

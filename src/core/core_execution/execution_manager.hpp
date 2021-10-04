@@ -21,11 +21,11 @@ limitations under the License.
 #include <utility>
 
 #include "accelerated_query_node.hpp"
+#include "accelerator_library_interface.hpp"
 #include "data_manager_interface.hpp"
 #include "execution_manager_interface.hpp"
 #include "fpga_driver_factory_interface.hpp"
 #include "fpga_manager_interface.hpp"
-#include "accelerator_library_interface.hpp"
 #include "graph_processing_fsm_interface.hpp"
 #include "memory_block_interface.hpp"
 #include "memory_manager_interface.hpp"
@@ -41,15 +41,14 @@ using orkhestrafs::core_interfaces::query_scheduling_data::RecordSizeAndCount;
 using orkhestrafs::core_interfaces::query_scheduling_data::
     StreamResultParameters;
 using orkhestrafs::dbmstodspi::AcceleratedQueryNode;
+using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
 using orkhestrafs::dbmstodspi::DataManagerInterface;
+using orkhestrafs::dbmstodspi::FPGADriverFactoryInterface;
 using orkhestrafs::dbmstodspi::FPGAManagerInterface;
 using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
 using orkhestrafs::dbmstodspi::MemoryManagerInterface;
 using orkhestrafs::dbmstodspi::QueryManagerInterface;
 using orkhestrafs::dbmstodspi::StateInterface;
-using orkhestrafs::dbmstodspi::FPGAManagerInterface;
-using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
-using orkhestrafs::dbmstodspi::FPGADriverFactoryInterface;
 
 namespace orkhestrafs::core::core_execution {
 
@@ -68,8 +67,10 @@ class ExecutionManager : public ExecutionManagerInterface,
         memory_manager_{std::move(memory_manager)},
         query_manager_{std::move(query_manager)},
         config_{std::move(config)},
-        accelerator_library_{std::move(driver_factory->CreateAcceleratorLibrary(memory_manager_.get()))},
-        fpga_manager_{std::move(driver_factory->CreateFPGAManager(accelerator_library_.get()))} {};
+        accelerator_library_{std::move(
+            driver_factory->CreateAcceleratorLibrary(memory_manager_.get()))},
+        fpga_manager_{std::move(
+            driver_factory->CreateFPGAManager(accelerator_library_.get()))} {};
 
   void SetFinishedFlag() override;
 

@@ -22,13 +22,13 @@ using orkhestrafs::dbmstodspi::AcceleratorLibrary;
 
 void AcceleratorLibrary::SetupOperation(
     const AcceleratedQueryNode& node_parameters) {
-    auto driver = GetDriver(node_parameters.operation_type);
-    recent_setup_modules_.clear();
-    // TODO: Put into a for loop for composed modules.
-    auto current_module =
-        driver->CreateModule(memory_manager_, node_parameters.operation_module_location);
-    driver->SetupModule(*current_module, node_parameters);
-    recent_setup_modules_.push_back(std::move(current_module));
+  auto driver = GetDriver(node_parameters.operation_type);
+  recent_setup_modules_.clear();
+  // TODO: Put into a for loop for composed modules.
+  auto current_module = driver->CreateModule(
+      memory_manager_, node_parameters.operation_module_location);
+  driver->SetupModule(*current_module, node_parameters);
+  recent_setup_modules_.push_back(std::move(current_module));
 }
 
 auto AcceleratorLibrary::GetDMAModule() -> std::unique_ptr<DMAInterface> {
@@ -52,18 +52,16 @@ auto AcceleratorLibrary::ExportLastModulesIfReadback()
   return resulting_vector;
 }
 
-auto AcceleratorLibrary::GetDMAModuleSetup()
-    -> DMASetupInterface& {
+auto AcceleratorLibrary::GetDMAModuleSetup() -> DMASetupInterface& {
   return *dma_setup_;
 }
 
-auto AcceleratorLibrary::GetILAModule()
-    -> std::unique_ptr<ILA> {
+auto AcceleratorLibrary::GetILAModule() -> std::unique_ptr<ILA> {
   // return std::make_unique<ILA>(memory_manager_.get());
   return nullptr;
 }
-auto AcceleratorLibrary::IsMultiChannelStream(
-    bool is_input, int stream_index, QueryOperationType operation_type)
+auto AcceleratorLibrary::IsMultiChannelStream(bool is_input, int stream_index,
+                                              QueryOperationType operation_type)
     -> bool {
   auto driver = GetDriver(operation_type);
   return driver->IsMultiChannelStream(is_input, stream_index);
@@ -72,12 +70,12 @@ auto AcceleratorLibrary::GetMultiChannelParams(
     bool is_input, int stream_index, QueryOperationType operation_type,
     std::vector<std::vector<int>> operation_parameters) -> std::pair<int, int> {
   auto driver = GetDriver(operation_type);
-  return driver->GetMultiChannelParams(is_input, stream_index, operation_parameters);
+  return driver->GetMultiChannelParams(is_input, stream_index,
+                                       operation_parameters);
 }
 
-auto AcceleratorLibrary::GetDriver(
-    QueryOperationType operation_type)
-    -> AccelerationModuleSetupInterface * {
+auto AcceleratorLibrary::GetDriver(QueryOperationType operation_type)
+    -> AccelerationModuleSetupInterface* {
   auto search = module_driver_library_.find(operation_type);
   if (search != module_driver_library_.end()) {
     return search->second.get();

@@ -17,15 +17,15 @@ limitations under the License.
 #pragma once
 
 #include <memory>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include "accelerated_query_node.hpp"
 #include "dma_interface.hpp"
 #include "dma_setup_interface.hpp"
+#include "ila.hpp"
 #include "operation_types.hpp"
 #include "read_back_module.hpp"
-#include "ila.hpp"
 
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 
@@ -42,9 +42,13 @@ class AcceleratorLibraryInterface {
   virtual auto ExportLastModulesIfReadback()
       -> std::vector<std::unique_ptr<ReadBackModule>> = 0;
   virtual auto GetILAModule() -> std::unique_ptr<ILA> = 0;
-  virtual auto IsMultiChannelStream(bool is_input, int stream_index, QueryOperationType operation_type) -> bool = 0;
-  virtual auto GetMultiChannelParams(bool is_input, int stream_index, QueryOperationType operation_type,
-                                     std::vector<std::vector<int>> operation_parameters) -> std::pair<int, int> = 0;
+  virtual auto IsMultiChannelStream(bool is_input, int stream_index,
+                                    QueryOperationType operation_type)
+      -> bool = 0;
+  virtual auto GetMultiChannelParams(
+      bool is_input, int stream_index, QueryOperationType operation_type,
+      std::vector<std::vector<int>> operation_parameters)
+      -> std::pair<int, int> = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

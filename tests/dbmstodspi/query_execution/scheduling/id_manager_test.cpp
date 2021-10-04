@@ -79,9 +79,10 @@ TEST_F(IDManagerTest, SingleNodeNIn1Out) {
   std::vector<std::string> input_data_files = {"", "", ""};
   std::vector<std::string> output_data_files = {""};
 
-  QueryNode first_node(input_data_files, output_data_files, base_operation_type_,
-                       next_nodes, previous_nodes, any_operation_parameters_,
-                       first_node_name_, any_is_checked_);
+  QueryNode first_node(input_data_files, output_data_files,
+                       base_operation_type_, next_nodes, previous_nodes,
+                       any_operation_parameters_, first_node_name_,
+                       any_is_checked_);
 
   expected_input_ids_.insert({first_node_name_, {0, 1, 2}});
   expected_output_ids_.insert({first_node_name_, {0}});
@@ -100,9 +101,10 @@ TEST_F(IDManagerTest, SingleNode1InMOut) {
   std::vector<std::string> input_data_files = {""};
   std::vector<std::string> output_data_files = {"", "", "", ""};
 
-  QueryNode first_node(input_data_files, output_data_files, base_operation_type_,
-                       next_nodes, previous_nodes, any_operation_parameters_,
-                       first_node_name_, any_is_checked_);
+  QueryNode first_node(input_data_files, output_data_files,
+                       base_operation_type_, next_nodes, previous_nodes,
+                       any_operation_parameters_, first_node_name_,
+                       any_is_checked_);
 
   expected_input_ids_.insert({first_node_name_, {0}});
   expected_output_ids_.insert({first_node_name_, {0, 1, 2, 3}});
@@ -121,9 +123,10 @@ TEST_F(IDManagerTest, SingleNodeNInMOut) {
   std::vector<std::string> input_data_files = {"", ""};
   std::vector<std::string> output_data_files = {"", "", ""};
 
-  QueryNode first_node(input_data_files, output_data_files, base_operation_type_,
-                       next_nodes, previous_nodes, any_operation_parameters_,
-                       first_node_name_, any_is_checked_);
+  QueryNode first_node(input_data_files, output_data_files,
+                       base_operation_type_, next_nodes, previous_nodes,
+                       any_operation_parameters_, first_node_name_,
+                       any_is_checked_);
 
   expected_input_ids_.insert({first_node_name_, {0, 1}});
   expected_output_ids_.insert({first_node_name_, {0, 1, 2}});

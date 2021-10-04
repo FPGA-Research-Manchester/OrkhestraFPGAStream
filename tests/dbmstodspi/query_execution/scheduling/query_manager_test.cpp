@@ -21,10 +21,10 @@ limitations under the License.
 
 #include <utility>
 
+#include "mock_accelerator_library.hpp"
 #include "mock_data_manager.hpp"
 #include "mock_fpga_manager.hpp"
 #include "mock_memory_manager.hpp"
-#include "mock_accelerator_library.hpp"
 #include "query_acceleration_constants.hpp"
 #include "stream_data_parameters.hpp"
 #include "virtual_memory_block.hpp"
@@ -131,11 +131,13 @@ TEST_F(QueryManagerTest, SetupAccelerationNodesForExecutionReturnsExpectedRun) {
 
   MockAcceleratorLibrary mock_accelerator_library;
   std::pair<int, int> expected_multi_channel_params = {-1, -1};
-  EXPECT_CALL(mock_accelerator_library, GetMultiChannelParams(true, 0, base_operation_type_,
-              empty_operation_params))
+  EXPECT_CALL(mock_accelerator_library,
+              GetMultiChannelParams(true, 0, base_operation_type_,
+                                    empty_operation_params))
       .WillOnce(testing::Return(expected_multi_channel_params));
-  EXPECT_CALL(mock_accelerator_library, GetMultiChannelParams(false, 0, base_operation_type_,
-              empty_operation_params))
+  EXPECT_CALL(mock_accelerator_library,
+              GetMultiChannelParams(false, 0, base_operation_type_,
+                                    empty_operation_params))
       .WillOnce(testing::Return(expected_multi_channel_params));
 
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
@@ -164,9 +166,9 @@ TEST_F(QueryManagerTest, SetupAccelerationNodesForExecutionReturnsExpectedRun) {
 
   auto [query_nodes, result_parameters] =
       query_manager_under_test.SetupAccelerationNodesForExecution(
-          &mock_data_manager, &mock_memory_manager, &mock_accelerator_library, input_memory_blocks,
-          output_memory_blocks, input_stream_sizes, output_stream_sizes,
-          {base_query_node_});
+          &mock_data_manager, &mock_memory_manager, &mock_accelerator_library,
+          input_memory_blocks, output_memory_blocks, input_stream_sizes,
+          output_stream_sizes, {base_query_node_});
 
   int expected_stream_id = 0;
   int expected_record_size = 7;

@@ -18,8 +18,8 @@ limitations under the License.
 
 #include <stdexcept>
 
-#include "setup_nodes_state.hpp"
 #include "logger.hpp"
+#include "setup_nodes_state.hpp"
 
 using orkhestrafs::dbmstodspi::ExecuteState;
 using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;

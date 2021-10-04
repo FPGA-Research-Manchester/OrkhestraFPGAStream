@@ -23,13 +23,13 @@ limitations under the License.
 #include <utility>
 
 #include "accelerated_query_node.hpp"
+#include "accelerator_library_interface.hpp"
 #include "config.hpp"
 #include "data_manager_interface.hpp"
 #include "fpga_manager_interface.hpp"
 #include "memory_block_interface.hpp"
 #include "memory_manager_interface.hpp"
 #include "query_scheduling_data.hpp"
-#include "accelerator_library_interface.hpp"
 
 using orkhestrafs::core_interfaces::Config;
 using orkhestrafs::core_interfaces::query_scheduling_data::
@@ -40,9 +40,9 @@ using orkhestrafs::core_interfaces::query_scheduling_data::RecordSizeAndCount;
 using orkhestrafs::core_interfaces::query_scheduling_data::
     StreamResultParameters;
 using orkhestrafs::dbmstodspi::AcceleratedQueryNode;
+using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
 using orkhestrafs::dbmstodspi::FPGAManagerInterface;
 using orkhestrafs::dbmstodspi::MemoryBlockInterface;
-using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
 
 namespace orkhestrafs::dbmstodspi {
 /**

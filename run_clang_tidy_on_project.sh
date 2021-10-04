@@ -74,5 +74,5 @@ do
     echo
 done
 echo "Automatic fixes done!"
-clang-format -i -style=google **/*.cpp **/*.hpp
+find . -regex '.*\.\(cpp\|hpp\|cc\|cxx\)' -exec clang-format -style=file -i {} \;
 echo "Formatting done!"

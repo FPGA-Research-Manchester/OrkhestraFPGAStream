@@ -78,6 +78,7 @@ class QueryManager : public QueryManagerInterface {
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
           reuse_links,
       const std::vector<std::string>& scheduled_node_names) override;
+
  private:
   static void CheckTableData(const DataManagerInterface* data_manager,
                              const TableData& expected_table,
@@ -156,9 +157,9 @@ class QueryManager : public QueryManagerInterface {
           input_stream_sizes,
       std::map<std::string, std::vector<RecordSizeAndCount>>&
           output_stream_sizes);
-  void AddQueryNodes(std::vector<AcceleratedQueryNode> &query_nodes_vector,
-                     std::vector<StreamDataParameters> &&input_params,
-                     std::vector<StreamDataParameters> &&output_params,
+  void AddQueryNodes(std::vector<AcceleratedQueryNode>& query_nodes_vector,
+                     std::vector<StreamDataParameters>&& input_params,
+                     std::vector<StreamDataParameters>&& output_params,
                      const QueryNode& node);
 };
 

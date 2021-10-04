@@ -22,19 +22,25 @@ limitations under the License.
 using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
 using orkhestrafs::dbmstodspi::DMAInterface;
 using orkhestrafs::dbmstodspi::DMASetupInterface;
-using orkhestrafs::dbmstodspi::ReadBackModule;
 using orkhestrafs::dbmstodspi::ILA;
+using orkhestrafs::dbmstodspi::ReadBackModule;
 
 class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
  public:
   MOCK_METHOD(void, SetupOperation,
-              (const AcceleratedQueryNode& node_parameters),
-              (override));
+              (const AcceleratedQueryNode& node_parameters), (override));
   MOCK_METHOD(std::unique_ptr<DMAInterface>, GetDMAModule, (), (override));
   MOCK_METHOD(DMASetupInterface&, GetDMAModuleSetup, (), (override));
-  MOCK_METHOD(std::vector<std::unique_ptr<ReadBackModule>>, ExportLastModulesIfReadback, (), (override));
+  MOCK_METHOD(std::vector<std::unique_ptr<ReadBackModule>>,
+              ExportLastModulesIfReadback, (), (override));
   MOCK_METHOD(std::unique_ptr<ILA>, GetILAModule, (), (override));
-  MOCK_METHOD(bool, IsMultiChannelStream, (bool is_input, int stream_index, QueryOperationType operation_type), (override));
-  MOCK_METHOD((std::pair<int, int>), GetMultiChannelParams, (bool is_input, int stream_index, QueryOperationType operation_type,
-                                                               std::vector<std::vector<int>> operation_parameters), (override));
+  MOCK_METHOD(bool, IsMultiChannelStream,
+              (bool is_input, int stream_index,
+               QueryOperationType operation_type),
+              (override));
+  MOCK_METHOD((std::pair<int, int>), GetMultiChannelParams,
+              (bool is_input, int stream_index,
+               QueryOperationType operation_type,
+               std::vector<std::vector<int>> operation_parameters),
+              (override));
 };

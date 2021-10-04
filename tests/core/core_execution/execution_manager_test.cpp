@@ -20,21 +20,21 @@ limitations under the License.
 #include <gtest/gtest.h>
 
 #include "fpga_driver_factory.hpp"
+#include "mock_accelerator_library.hpp"
 #include "mock_data_manager.hpp"
+#include "mock_fpga_driver_factory.hpp"
+#include "mock_fpga_manager.hpp"
 #include "mock_graph.hpp"
 #include "mock_memory_manager.hpp"
 #include "mock_query_manager.hpp"
 #include "mock_state.hpp"
 #include "stream_data_parameters.hpp"
-#include "mock_accelerator_library.hpp"
-#include "mock_fpga_driver_factory.hpp"
-#include "mock_fpga_manager.hpp"
 
 namespace {
 
 using orkhestrafs::core::core_execution::ExecutionManager;
-using orkhestrafs::dbmstodspi::StreamDataParameters;
 using orkhestrafs::dbmstodspi::FPGADriverFactory;
+using orkhestrafs::dbmstodspi::StreamDataParameters;
 using testing::_;
 
 class ExecutionManagerTest : public ::testing::Test {
@@ -45,8 +45,10 @@ class ExecutionManagerTest : public ::testing::Test {
         mock_memory_manager_ptr_(std::make_unique<MockMemoryManager>()),
         mock_first_state_ptr_(std::make_unique<MockState>()),
         mock_second_state_ptr_(std::make_unique<MockState>()),
-        mock_fpga_driver_factory_ptr_(std::make_unique<MockFPGADriverFactory>()),
-        mock_accelerator_library_ptr_(std::make_unique<MockAcceleratorLibrary>()),
+        mock_fpga_driver_factory_ptr_(
+            std::make_unique<MockFPGADriverFactory>()),
+        mock_accelerator_library_ptr_(
+            std::make_unique<MockAcceleratorLibrary>()),
         mock_fpga_manager_ptr_(std::make_unique<MockFPGAManager>()),
         mock_query_manager_(*mock_query_manager_ptr_),
         mock_data_manager_(*mock_data_manager_ptr_),
@@ -80,16 +82,19 @@ class ExecutionManagerTest : public ::testing::Test {
   Config test_config_;
 
   auto SetUpExecutionManager() -> std::unique_ptr<ExecutionManager> {
-    EXPECT_CALL(mock_fpga_driver_factory_, CreateFPGAManager(mock_accelerator_library_ptr_.get()))
-        .WillOnce(
-            testing::Return(testing::ByMove(std::move(mock_fpga_manager_ptr_))));
-    EXPECT_CALL(mock_fpga_driver_factory_, CreateAcceleratorLibrary(mock_memory_manager_ptr_.get()))
-        .WillOnce(
-            testing::Return(testing::ByMove(std::move(mock_accelerator_library_ptr_))));
+    EXPECT_CALL(mock_fpga_driver_factory_,
+                CreateFPGAManager(mock_accelerator_library_ptr_.get()))
+        .WillOnce(testing::Return(
+            testing::ByMove(std::move(mock_fpga_manager_ptr_))));
+    EXPECT_CALL(mock_fpga_driver_factory_,
+                CreateAcceleratorLibrary(mock_memory_manager_ptr_.get()))
+        .WillOnce(testing::Return(
+            testing::ByMove(std::move(mock_accelerator_library_ptr_))));
     return std::make_unique<ExecutionManager>(
         test_config_, std::move(mock_query_manager_ptr_),
         std::move(mock_data_manager_ptr_), std::move(mock_memory_manager_ptr_),
-        std::move(mock_first_state_ptr_), std::move(mock_fpga_driver_factory_ptr_));
+        std::move(mock_first_state_ptr_),
+        std::move(mock_fpga_driver_factory_ptr_));
   }
 };
 
@@ -180,9 +185,12 @@ TEST_F(ExecutionManagerTest, SetupPopsScheduledNodes) {
   int operation_module_location = 0;
   std::vector<std::vector<int>> operation_parameters;
 
-  AcceleratedQueryNode test_node = {
-      stream_params, stream_params, expected_operation_type,
-      operation_module_location, {}, operation_parameters};
+  AcceleratedQueryNode test_node = {stream_params,
+                                    stream_params,
+                                    expected_operation_type,
+                                    operation_module_location,
+                                    {},
+                                    operation_parameters};
 
   std::vector<AcceleratedQueryNode> expected_accel_nodes = {test_node};
   std::map<std::string, std::vector<StreamResultParameters>>

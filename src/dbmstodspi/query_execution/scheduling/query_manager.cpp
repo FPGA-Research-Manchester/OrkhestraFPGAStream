@@ -200,7 +200,9 @@ auto QueryManager::CreateStreamParams(
         allocated_memory_blocks,
     const std::vector<RecordSizeAndCount>& stream_sizes)
     -> std::vector<StreamDataParameters> {
-  auto node_parameters = (is_input) ? node.operation_parameters.input_stream_parameters : node.operation_parameters.output_stream_parameters;
+  auto node_parameters =
+      (is_input) ? node.operation_parameters.input_stream_parameters
+                 : node.operation_parameters.output_stream_parameters;
 
   std::vector<StreamDataParameters> parameters_for_acceleration;
 
@@ -220,18 +222,21 @@ auto QueryManager::CreateStreamParams(
     }
 
     auto [channel_count, records_per_channel] =
-          accelerator_library->GetMultiChannelParams(is_input, stream_index,
-                                                   node.operation_type, node.operation_parameters.operation_parameters);
-      StreamDataParameters current_stream_parameters = {
-          stream_ids[stream_index],
-          stream_sizes[stream_index].first,
-          stream_sizes[stream_index].second,
-          physical_address_ptr,
-          node_parameters.at(stream_index * kIOStreamParamDefs.kStreamParamCount +
-                             kIOStreamParamDefs.kProjectionOffset),
-          chunk_count, channel_count, records_per_channel};
+        accelerator_library->GetMultiChannelParams(
+            is_input, stream_index, node.operation_type,
+            node.operation_parameters.operation_parameters);
+    StreamDataParameters current_stream_parameters = {
+        stream_ids[stream_index],
+        stream_sizes[stream_index].first,
+        stream_sizes[stream_index].second,
+        physical_address_ptr,
+        node_parameters.at(stream_index * kIOStreamParamDefs.kStreamParamCount +
+                           kIOStreamParamDefs.kProjectionOffset),
+        chunk_count,
+        channel_count,
+        records_per_channel};
 
-      parameters_for_acceleration.push_back(current_stream_parameters);
+    parameters_for_acceleration.push_back(current_stream_parameters);
   }
   return parameters_for_acceleration;
 }
@@ -288,29 +293,28 @@ auto QueryManager::SetupAccelerationNodesForExecution(
         memory_manager, data_manager, input_memory_blocks[node->node_name],
         *node, output_stream_sizes, input_stream_sizes[node->node_name]);
 
-    auto input_params =
-        CreateStreamParams(true, *node, accelerator_library,
-            input_ids[node->node_name],
-                           input_memory_blocks[node->node_name],
-                           input_stream_sizes[node->node_name]);
-    auto output_params =
-        CreateStreamParams(false, *node, accelerator_library,
-            output_ids[node->node_name],
-                           output_memory_blocks[node->node_name],
-                           output_stream_sizes[node->node_name]);
+    auto input_params = CreateStreamParams(true, *node, accelerator_library,
+                                           input_ids[node->node_name],
+                                           input_memory_blocks[node->node_name],
+                                           input_stream_sizes[node->node_name]);
+    auto output_params = CreateStreamParams(
+        false, *node, accelerator_library, output_ids[node->node_name],
+        output_memory_blocks[node->node_name],
+        output_stream_sizes[node->node_name]);
 
-    AddQueryNodes(query_nodes, std::move(input_params), std::move(output_params), *node);
-
+    AddQueryNodes(query_nodes, std::move(input_params),
+                  std::move(output_params), *node);
 
     StoreStreamResultParameters(result_parameters, output_ids[node->node_name],
-                               *node, output_memory_blocks[node->node_name]);
+                                *node, output_memory_blocks[node->node_name]);
   }
 
   std::sort(query_nodes.begin(), query_nodes.end(),
-       [] (AcceleratedQueryNode const& lhs, AcceleratedQueryNode const& rhs)
-           -> bool {
-         return lhs.operation_module_location < rhs.operation_module_location;
-       });
+            [](AcceleratedQueryNode const& lhs,
+               AcceleratedQueryNode const& rhs) -> bool {
+              return lhs.operation_module_location <
+                     rhs.operation_module_location;
+            });
 
   return {query_nodes, result_parameters};
 }
@@ -556,33 +560,37 @@ void QueryManager::ExecuteAndProcessResults(
 }
 
 void QueryManager::AddQueryNodes(
-    std::vector<AcceleratedQueryNode> &query_nodes_vector,
-    std::vector<StreamDataParameters> &&input_params,
-    std::vector<StreamDataParameters> &&output_params,
-    const QueryNode &node) {
+    std::vector<AcceleratedQueryNode>& query_nodes_vector,
+    std::vector<StreamDataParameters>&& input_params,
+    std::vector<StreamDataParameters>&& output_params, const QueryNode& node) {
   auto sorted_module_locations = node.module_locations;
   std::sort(sorted_module_locations.begin(), sorted_module_locations.end());
   auto no_io_input_params = input_params;
-  for (auto& stream_param : no_io_input_params){
+  for (auto& stream_param : no_io_input_params) {
     stream_param.physical_address = nullptr;
   }
   auto no_io_output_params = output_params;
-  for (auto& stream_param : no_io_output_params){
+  for (auto& stream_param : no_io_output_params) {
     stream_param.physical_address = nullptr;
   }
   if (sorted_module_locations.size() == 1) {
     query_nodes_vector.push_back(
-        {std::move(input_params), std::move(output_params),
-         node.operation_type, sorted_module_locations.at(0), {},
+        {std::move(input_params),
+         std::move(output_params),
+         node.operation_type,
+         sorted_module_locations.at(0),
+         {},
          node.operation_parameters.operation_parameters});
   } else if (node.operation_parameters.operation_parameters.empty()) {
     // Multiple composed modules
     for (int i = 0; i < sorted_module_locations.size(); i++) {
-      auto current_input = (i==0) ? input_params : no_io_input_params;
-      auto current_output = (i==sorted_module_locations.size() -1 ) ? output_params : no_io_output_params;
+      auto current_input = (i == 0) ? input_params : no_io_input_params;
+      auto current_output = (i == sorted_module_locations.size() - 1)
+                                ? output_params
+                                : no_io_output_params;
       query_nodes_vector.push_back(
-          {current_input, current_output,
-           node.operation_type, sorted_module_locations.at(i), sorted_module_locations,
+          {current_input, current_output, node.operation_type,
+           sorted_module_locations.at(i), sorted_module_locations,
            node.operation_parameters.operation_parameters});
     }
   } else {
@@ -593,12 +601,18 @@ void QueryManager::AddQueryNodes(
     }
     int offset = all_module_params.at(0).at(1);
     for (int i = 0; i < sorted_module_locations.size(); i++) {
-      auto current_input = (i==0) ? input_params : no_io_input_params;
-      auto current_output = (i==sorted_module_locations.size() -1 ) ? output_params : no_io_output_params;
+      auto current_input = (i == 0) ? input_params : no_io_input_params;
+      auto current_output = (i == sorted_module_locations.size() - 1)
+                                ? output_params
+                                : no_io_output_params;
       query_nodes_vector.push_back(
-          {current_input, current_output,
-           node.operation_type, sorted_module_locations.at(i), sorted_module_locations,
-           {all_module_params.begin() + 1 + offset * i, all_module_params.begin() + 1 + offset * (i + 1)}});
+          {current_input,
+           current_output,
+           node.operation_type,
+           sorted_module_locations.at(i),
+           sorted_module_locations,
+           {all_module_params.begin() + 1 + offset * i,
+            all_module_params.begin() + 1 + offset * (i + 1)}});
     }
   }
 }

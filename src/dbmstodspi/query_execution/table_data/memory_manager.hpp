@@ -22,7 +22,7 @@ limitations under the License.
 
 #include "memory_block_interface.hpp"
 #include "memory_manager_interface.hpp"
-#ifdef _FPGA_AVAILABLE
+#ifdef FPGA_AVAILABLE
 #include "cynq.h"
 #include "udma.h"
 #else
@@ -46,7 +46,7 @@ class MemoryManager : public MemoryManagerInterface {
 
   std::string loaded_bitstream_;
   int loaded_register_space_size_ = 0;
-#ifdef _FPGA_AVAILABLE
+#ifdef FPGA_AVAILABLE
   uint32_t* register_memory_block_;
   UdmaRepo udma_repo_;
   // Store to not delete the instances
@@ -90,6 +90,7 @@ class MemoryManager : public MemoryManagerInterface {
   static void SetFPGAClockSpeed(int speed_value);
   static void SetFPGATo300MHz();
   static void SetFPGATo100MHz();
+  static void UnSetPCAP();
 };
 
 }  // namespace orkhestrafs::dbmstodspi

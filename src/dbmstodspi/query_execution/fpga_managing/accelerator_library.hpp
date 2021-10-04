@@ -27,11 +27,11 @@ namespace orkhestrafs::dbmstodspi {
 class AcceleratorLibrary : public AcceleratorLibraryInterface {
  public:
   ~AcceleratorLibrary() override = default;
-  AcceleratorLibrary(
-      MemoryManagerInterface* memory_manager_,
-      std::unique_ptr<DMASetupInterface> dma_setup,
-      std::map<QueryOperationType, std::unique_ptr<AccelerationModuleSetupInterface>>
-          module_driver_library)
+  AcceleratorLibrary(MemoryManagerInterface* memory_manager_,
+                     std::unique_ptr<DMASetupInterface> dma_setup,
+                     std::map<QueryOperationType,
+                              std::unique_ptr<AccelerationModuleSetupInterface>>
+                         module_driver_library)
       : memory_manager_{memory_manager_},
         dma_setup_{std::move(dma_setup)},
         module_driver_library_{std::move(module_driver_library)} {};
@@ -72,21 +72,26 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
    * @param operation_type The operation performed on the stream
    * @return Is the stream multi-channel
    */
-  auto IsMultiChannelStream(bool is_input, int stream_index, QueryOperationType operation_type) -> bool override;
+  auto IsMultiChannelStream(bool is_input, int stream_index,
+                            QueryOperationType operation_type) -> bool override;
 
   /**
    * @brief Get multi channel parameters
    * @param is_input Is the stream an input stream.
    * @param stream_index The index of the stream.
    * @param operation_type The operation performed on the stream
-   * @param operation_parameters Parameters where multi channel data can be extracted from
+   * @param operation_parameters Parameters where multi channel data can be
+   * extracted from
    * @return How many channels with how many records there are for this stream.
    */
-  auto GetMultiChannelParams(bool is_input, int stream_index, QueryOperationType operation_type,
-                             std::vector<std::vector<int>> operation_parameters) -> std::pair<int, int> override;
+  auto GetMultiChannelParams(bool is_input, int stream_index,
+                             QueryOperationType operation_type,
+                             std::vector<std::vector<int>> operation_parameters)
+      -> std::pair<int, int> override;
 
  private:
-   auto GetDriver(QueryOperationType operation_type) -> AccelerationModuleSetupInterface*;
+  auto GetDriver(QueryOperationType operation_type)
+      -> AccelerationModuleSetupInterface*;
 
   std::unique_ptr<DMASetupInterface> dma_setup_;
   std::map<QueryOperationType,

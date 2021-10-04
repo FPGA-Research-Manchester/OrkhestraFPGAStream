@@ -133,8 +133,9 @@ auto orkhestrafs::dbmstodspi::MergeSortSetup::GetMultiChannelParams(
     int records_per_channel = operation_parameters.at(1).at(1);
     int module_count = operation_parameters.at(0).at(0);
     int parameter_offset = operation_parameters.at(0).at(1);
-    for (int module_index = 0; module_index< module_count; module_index++){
-      max_channel_count+=operation_parameters.at(module_index * parameter_offset + 1).at(0);
+    for (int module_index = 0; module_index < module_count; module_index++) {
+      max_channel_count +=
+          operation_parameters.at(module_index * parameter_offset + 1).at(0);
     }
     return {max_channel_count, records_per_channel};
   }

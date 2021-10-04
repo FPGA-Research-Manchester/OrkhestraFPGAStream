@@ -47,10 +47,10 @@ limitations under the License.
 #include "query_acceleration_constants.hpp"
 
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
+using orkhestrafs::dbmstodspi::AcceleratedQueryNode;
 using orkhestrafs::dbmstodspi::FPGAManager;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
-using orkhestrafs::dbmstodspi::AcceleratedQueryNode;
 
 void FPGAManager::SetupQueryAcceleration(
     const std::vector<AcceleratedQueryNode>& query_nodes) {
@@ -170,8 +170,7 @@ void FPGAManager::FindActiveStreams(
 }
 
 void FPGAManager::WaitForStreamsToFinish() {
-  dma_engine_->StartController(
-      false, output_streams_active_status_);
+  dma_engine_->StartController(false, output_streams_active_status_);
 
 #ifdef _FPGA_AVAILABLE
   while (!(dma_engine_->IsControllerFinished(true) &&
@@ -191,15 +190,12 @@ void FPGAManager::WaitForStreamsToFinish() {
 void FPGAManager::ReadResultsFromRegisters() {
   if (!read_back_modules_.empty()) {
     // Assuming there are equal number of read back modules and parameters
-    for (int module_index = 0;
-         module_index < read_back_modules_.size();
+    for (int module_index = 0; module_index < read_back_modules_.size();
          module_index++) {
-      for (auto const& position :
-           read_back_parameters_.at(module_index)) {
+      for (auto const& position : read_back_parameters_.at(module_index)) {
         std::cout << "SUM: " << std::fixed << std::setprecision(2)
                   << ReadModuleResultRegisters(
-                         std::move(
-                             read_back_modules_.at(module_index)),
+                         std::move(read_back_modules_.at(module_index)),
                          position)
                   << std::endl;
       }
@@ -227,14 +223,11 @@ auto FPGAManager::GetResultingStreamSizes(
 void FPGAManager::PrintDebuggingData() {
 #ifdef _FPGA_AVAILABLE
   auto log_level = LogLevel::kDebug;
-  Log(log_level,
-      "Runtime: " + std::to_string(dma_engine_->GetRuntime()));
-  Log(log_level,
-      "ValidReadCount: " +
-          std::to_string(dma_engine_->GetValidReadCyclesCount()));
-  Log(log_level,
-      "ValidWriteCount: " +
-          std::to_string(dma_engine_->GetValidWriteCyclesCount()));
+  Log(log_level, "Runtime: " + std::to_string(dma_engine_->GetRuntime()));
+  Log(log_level, "ValidReadCount: " +
+                     std::to_string(dma_engine_->GetValidReadCyclesCount()));
+  Log(log_level, "ValidWriteCount: " +
+                     std::to_string(dma_engine_->GetValidWriteCyclesCount()));
   if (ila_module_) {
     std::cout << "======================================================ILA 0 "
                  "DATA ======================================================="

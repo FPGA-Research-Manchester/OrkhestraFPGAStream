@@ -26,8 +26,7 @@ namespace orkhestrafs::dbmstodspi {
  * @brief Class which implements low level memory writes to the aggregating
  * global sum operation accelerator.
  */
-class AggregationSum : public AggregationSumInterface,
-                       public ReadBackModule {
+class AggregationSum : public AggregationSumInterface, public ReadBackModule {
  private:
  public:
   ~AggregationSum() override = default;

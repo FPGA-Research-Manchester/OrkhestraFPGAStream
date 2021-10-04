@@ -25,7 +25,7 @@ using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
 namespace orkhestrafs::dbmstodspi {
 /**
  * @brief Interface class for states.
-*/
+ */
 class StateInterface {
  public:
   virtual ~StateInterface() = default;
@@ -33,7 +33,7 @@ class StateInterface {
    * @brief Execute the state
    * @param fsm FSM engine to progress between the states and hold the data.
    * @return Next state
-  */
+   */
   virtual auto Execute(GraphProcessingFSMInterface* fsm)
       -> std::unique_ptr<StateInterface> = 0;
 };

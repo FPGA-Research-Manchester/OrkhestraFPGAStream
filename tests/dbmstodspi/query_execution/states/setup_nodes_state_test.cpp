@@ -14,18 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "execute_state.hpp"
+#include "setup_nodes_state.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "execute_state.hpp"
 #include "mock_graph_processing_fsm.hpp"
-#include "setup_nodes_state.hpp"
 #include "schedule_state.hpp"
 
 using orkhestrafs::dbmstodspi::ExecuteState;
-using orkhestrafs::dbmstodspi::SetupNodesState;
 using orkhestrafs::dbmstodspi::ScheduleState;
+using orkhestrafs::dbmstodspi::SetupNodesState;
 
 namespace {
 
@@ -36,8 +36,7 @@ class SetupNodesStateTest : public ::testing::Test {
 };
 
 TEST_F(SetupNodesStateTest, ExecuteGoesToScheduleStateWithNoNodes) {
-  EXPECT_CALL(mock_fsm_, IsARunScheduled())
-      .WillOnce(testing::Return(false));
+  EXPECT_CALL(mock_fsm_, IsARunScheduled()).WillOnce(testing::Return(false));
   EXPECT_CALL(mock_fsm_, SetupNextRunData()).Times(0);
 
   ASSERT_EQ(typeid(*std::make_unique<ScheduleState>()).hash_code(),
@@ -45,8 +44,7 @@ TEST_F(SetupNodesStateTest, ExecuteGoesToScheduleStateWithNoNodes) {
 }
 
 TEST_F(SetupNodesStateTest, ExecuteSetupsNodes) {
-  EXPECT_CALL(mock_fsm_, IsARunScheduled())
-      .WillOnce(testing::Return(true));
+  EXPECT_CALL(mock_fsm_, IsARunScheduled()).WillOnce(testing::Return(true));
   EXPECT_CALL(mock_fsm_, SetupNextRunData()).Times(1);
 
   ASSERT_EQ(typeid(*std::make_unique<ExecuteState>()).hash_code(),

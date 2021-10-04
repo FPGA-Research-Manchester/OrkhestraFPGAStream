@@ -24,9 +24,9 @@ limitations under the License.
 #include "query_scheduling_data.hpp"
 #include "util.hpp"
 
-using orkhestrafs::dbmstodspi::util::CreateReferenceVector;
 using orkhestrafs::dbmstodspi::NodeScheduler;
 using orkhestrafs::dbmstodspi::query_acceleration_constants::kIOStreamParamDefs;
+using orkhestrafs::dbmstodspi::util::CreateReferenceVector;
 
 auto NodeScheduler::FindAcceleratedQueryNodeSets(
     std::vector<std::shared_ptr<QueryNode>> starting_nodes,

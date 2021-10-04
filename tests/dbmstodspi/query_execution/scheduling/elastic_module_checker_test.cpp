@@ -40,8 +40,7 @@ TEST_F(ElasticModuleCheckerTest, MergeSortIsValid) {
   int stream_id = 0;
 
   StreamDataParameters stream_parameters = {
-      stream_id, any_stream_record_size_,
-      stream_record_count_to_sort,
+      stream_id, any_stream_record_size_, stream_record_count_to_sort,
       any_address_pointer_, any_stream_specification_};
 
   input_stream_parameters_.push_back(stream_parameters);
@@ -67,8 +66,8 @@ TEST_F(ElasticModuleCheckerTest, MergeSortHasTooManyStreams) {
   operation_parameters_.push_back({max_channel_count, sorted_sequences_count});
 
   ASSERT_FALSE(ElasticModuleChecker::IsRunValid(input_stream_parameters_,
-                                               QueryOperationType::kMergeSort,
-                                               operation_parameters_));
+                                                QueryOperationType::kMergeSort,
+                                                operation_parameters_));
 
   input_stream_parameters_.clear();
   input_stream_parameters_.push_back(stream_parameters);
@@ -94,15 +93,15 @@ TEST_F(ElasticModuleCheckerTest, MergeSortHasIncorrectOperationParams) {
       {max_channel_count, sorted_sequences_count, random_param});
 
   ASSERT_FALSE(ElasticModuleChecker::IsRunValid(input_stream_parameters_,
-                                               QueryOperationType::kMergeSort,
-                                               operation_parameters_));
+                                                QueryOperationType::kMergeSort,
+                                                operation_parameters_));
 
   operation_parameters_.clear();
   operation_parameters_.emplace_back();
 
   ASSERT_FALSE(ElasticModuleChecker::IsRunValid(input_stream_parameters_,
-                                               QueryOperationType::kMergeSort,
-                                               operation_parameters_));
+                                                QueryOperationType::kMergeSort,
+                                                operation_parameters_));
 }
 
 TEST_F(ElasticModuleCheckerTest, MergeSorterIsNotBigEnough) {
@@ -119,8 +118,8 @@ TEST_F(ElasticModuleCheckerTest, MergeSorterIsNotBigEnough) {
   operation_parameters_.push_back({max_channel_count, sorted_sequences_count});
 
   ASSERT_FALSE(ElasticModuleChecker::IsRunValid(input_stream_parameters_,
-                                               QueryOperationType::kMergeSort,
-                                               operation_parameters_));
+                                                QueryOperationType::kMergeSort,
+                                                operation_parameters_));
 }
 
 TEST_F(ElasticModuleCheckerTest, FilterPassesMergeSortCheck) {

@@ -23,7 +23,6 @@ using orkhestrafs::dbmstodspi::StateInterface;
 
 class MockState : public StateInterface {
  public:
-
   MOCK_METHOD(std::unique_ptr<StateInterface>, Execute,
-                  (GraphProcessingFSMInterface * fsm), (override));
+              (GraphProcessingFSMInterface * fsm), (override));
 };

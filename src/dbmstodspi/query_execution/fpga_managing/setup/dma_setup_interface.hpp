@@ -18,8 +18,8 @@ limitations under the License.
 #include <vector>
 
 #include "dma_interface.hpp"
-#include "stream_data_parameters.hpp"
 #include "memory_manager_interface.hpp"
+#include "stream_data_parameters.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 

@@ -22,9 +22,10 @@ limitations under the License.
 using orkhestrafs::dbmstodspi::FPGADriverFactoryInterface;
 
 class MockFPGADriverFactory : public FPGADriverFactoryInterface {
-public:
+ public:
   MOCK_METHOD(std::unique_ptr<FPGAManagerInterface>, CreateFPGAManager,
-              (AcceleratorLibraryInterface* driver_library),
-              (override));
-  MOCK_METHOD(std::unique_ptr<AcceleratorLibraryInterface>, CreateAcceleratorLibrary, (MemoryManagerInterface *memory_manager), (override));
+              (AcceleratorLibraryInterface * driver_library), (override));
+  MOCK_METHOD(std::unique_ptr<AcceleratorLibraryInterface>,
+              CreateAcceleratorLibrary,
+              (MemoryManagerInterface * memory_manager), (override));
 };

@@ -23,12 +23,12 @@ limitations under the License.
 #include <string>
 #include <vector>
 
+#include "accelerator_library_interface.hpp"
 #include "dma_interface.hpp"
+#include "dma_setup_interface.hpp"
 #include "fpga_manager_interface.hpp"
 #include "read_back_module.hpp"
 #include "stream_data_parameters.hpp"
-#include "dma_setup_interface.hpp"
-#include "accelerator_library_interface.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -70,6 +70,7 @@ class FPGAManager : public FPGAManagerInterface {
 
   static auto ReadModuleResultRegisters(
       std::unique_ptr<ReadBackModule> read_back_module, int position) -> double;
+
  public:
   ~FPGAManager() override = default;
 
@@ -93,8 +94,7 @@ class FPGAManager : public FPGAManagerInterface {
    * @brief Constructor to setup memory mapped registers.
    * @param module_library Library of the drivers and the modules.
    */
-  explicit FPGAManager(
-      AcceleratorLibraryInterface* module_library)
+  explicit FPGAManager(AcceleratorLibraryInterface* module_library)
       : module_library_{module_library},
         dma_engine_{std::move(module_library_->GetDMAModule())},
         dma_setup_{module_library_->GetDMAModuleSetup()},

@@ -87,9 +87,9 @@ void CheckNodeFields(const std::vector<std::string>& input_files,
                      OpType operation,
                      const std::vector<std::shared_ptr<Node>>& next,
                      std::vector<std::weak_ptr<Node>> previous,
-                     const NodeOperationParameters& parameters, std::vector<int> location,
-                     const std::string& name, const std::vector<bool>& checks,
-                     Node comparable_node) {
+                     const NodeOperationParameters& parameters,
+                     std::vector<int> location, const std::string& name,
+                     const std::vector<bool>& checks, Node comparable_node) {
   EXPECT_THAT(comparable_node,
               testing::Field("input_files", &Node::input_data_definition_files,
                              input_files));

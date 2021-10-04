@@ -15,16 +15,17 @@ limitations under the License.
 */
 
 #include "graph_creator.hpp"
-#include "query_scheduling_data.hpp"
-#include "graph.hpp"
 
 #include <algorithm>
 #include <stdexcept>
 #include <utility>
 
-using orkhestrafs::dbmstodspi::GraphCreator;
-using orkhestrafs::dbmstodspi::Graph;
+#include "graph.hpp"
+#include "query_scheduling_data.hpp"
+
 using orkhestrafs::core_interfaces::query_scheduling_data::kSupportedFunctions;
+using orkhestrafs::dbmstodspi::Graph;
+using orkhestrafs::dbmstodspi::GraphCreator;
 
 auto GraphCreator::MakeGraph(std::string graph_def_filename)
     -> std::unique_ptr<ExecutionPlanGraphInterface> {
@@ -51,10 +52,7 @@ auto GraphCreator::MakeGraph(std::string graph_def_filename)
 }
 
 void GraphCreator::LinkDependentNodes(
-    std::map<std::string,
-             std::shared_ptr<
-                 QueryNode>>&
-        graph_nodes_map,
+    std::map<std::string, std::shared_ptr<QueryNode>>& graph_nodes_map,
     std::map<std::string, std::vector<std::string>>& previous_nodes,
     std::map<std::string, std::vector<std::string>>& next_nodes) {
   for (auto& [node_name, node] : graph_nodes_map) {
@@ -93,19 +91,14 @@ void GraphCreator::LinkDependentNodes(
   }
 }
 
-void GraphCreator::
-    PopulateGraphNodesMapWithJSONData(
-        std::map<std::string, JSONReaderInterface::
-                                  InputNodeParameters>& data,
-        std::map<
-            std::string,
-            std::shared_ptr<
-                QueryNode>>&
-            graph_nodes_map,
-        std::map<std::string, std::vector<std::string>>& previous_nodes,
-        std::map<std::string, std::vector<std::string>>& next_nodes) {
+void GraphCreator::PopulateGraphNodesMapWithJSONData(
+    std::map<std::string, JSONReaderInterface::InputNodeParameters>& data,
+    std::map<std::string, std::shared_ptr<QueryNode>>& graph_nodes_map,
+    std::map<std::string, std::vector<std::string>>& previous_nodes,
+    std::map<std::string, std::vector<std::string>>& next_nodes) {
   using ParamsMap = std::map<std::string, std::vector<std::vector<int>>>;
-  using orkhestrafs::core_interfaces::query_scheduling_data::NodeOperationParameters;
+  using orkhestrafs::core_interfaces::query_scheduling_data::
+      NodeOperationParameters;
 
   std::string input_field = "input";
   std::string output_field = "output";

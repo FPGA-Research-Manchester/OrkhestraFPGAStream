@@ -27,7 +27,8 @@ class FPGADriverFactory : public FPGADriverFactoryInterface {
  public:
   /**
    * @brief Factory method to create FPGA managers.
-   * @param driver_library Accelerator library containing drivers for different operators.
+   * @param driver_library Accelerator library containing drivers for different
+   * operators.
    * @return FPGA manager object to execute the FPGA.
    */
   auto CreateFPGAManager(AcceleratorLibraryInterface* driver_library)
@@ -35,10 +36,11 @@ class FPGADriverFactory : public FPGADriverFactoryInterface {
   /**
    * @brief Factory method to create accelerator libraries.
    * @param memory_manager Pointer to the memory manager for writing to memory
-* mapped registers.
+   * mapped registers.
    * @return Accelerator drivers and objects to access memory mapped registers.
    */
-  auto CreateAcceleratorLibrary(MemoryManagerInterface* memory_manager) -> std::unique_ptr<AcceleratorLibraryInterface> override;
+  auto CreateAcceleratorLibrary(MemoryManagerInterface* memory_manager)
+      -> std::unique_ptr<AcceleratorLibraryInterface> override;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

@@ -18,23 +18,24 @@ limitations under the License.
 
 #include <memory>
 
-#include "execution_manager_interface.hpp"
 #include "config.hpp"
+#include "execution_manager_interface.hpp"
 
-using orkhestrafs::core_interfaces::ExecutionManagerInterface;
 using orkhestrafs::core_interfaces::Config;
+using orkhestrafs::core_interfaces::ExecutionManagerInterface;
 
 namespace orkhestrafs::core::core_execution {
 /**
  * @brief Class to create execution managers.
-*/
+ */
 class ExecutionManagerFactory {
  public:
   /**
    * @brief Create a manager described by the execution manager interface.
    * @param config Config to setup the operators library
-   * @return A smart pointer to the execution manager class to execute the FSM with.
-  */
+   * @return A smart pointer to the execution manager class to execute the FSM
+   * with.
+   */
   static auto GetManager(const Config& config)
       -> std::unique_ptr<ExecutionManagerInterface>;
 };

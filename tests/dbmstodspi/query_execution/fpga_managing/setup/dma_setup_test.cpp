@@ -75,9 +75,9 @@ TEST(DMASetupTest, RecordSettings) {
   auto* mock_output_memory_address = static_cast<uint32_t*>(malloc(1));
   MockDMA mock_dma;
   // Output stream configuration checks are possibly not needed.
-  //EXPECT_CALL(mock_dma, SetRecordSize(kOutputStreamId, 2)).Times(1);
-  //EXPECT_CALL(mock_dma, SetRecordChunkIDs(kOutputStreamId, 0, 0)).Times(1);
-  //EXPECT_CALL(mock_dma, SetRecordChunkIDs(kOutputStreamId, 1, 1)).Times(1);
+  // EXPECT_CALL(mock_dma, SetRecordSize(kOutputStreamId, 2)).Times(1);
+  // EXPECT_CALL(mock_dma, SetRecordChunkIDs(kOutputStreamId, 0, 0)).Times(1);
+  // EXPECT_CALL(mock_dma, SetRecordChunkIDs(kOutputStreamId, 1, 1)).Times(1);
   EXPECT_CALL(mock_dma, SetRecordSize(kInputStreamId, 2)).Times(1);
   EXPECT_CALL(mock_dma, SetRecordChunkIDs(kInputStreamId, testing::_, 0))
       .Times(16);

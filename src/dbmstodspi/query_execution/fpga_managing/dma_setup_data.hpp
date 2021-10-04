@@ -15,11 +15,10 @@ limitations under the License.
 */
 
 #pragma once
+#include <cstdint>
 #include <cstdio>
 #include <tuple>
 #include <vector>
-
-#include <cstdint>
 
 #include "dma_crossbar_setup_data.hpp"
 
