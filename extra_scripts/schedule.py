@@ -32,7 +32,8 @@ def place_nodes_recursively_no_placement_check(available_nodes, past_nodes, all_
             new_available_nodes.remove(node)
             new_past_nodes = past_nodes.copy()
             new_past_nodes.append(node)
-            new_available_nodes.extend(get_new_available_nodes(node, new_past_nodes, all_nodes))
+            new_available_nodes.extend(
+                get_new_available_nodes(node, new_past_nodes, all_nodes))
 
             # Place node in current run
             new_current_run = current_run.copy()
@@ -55,83 +56,49 @@ def place_nodes_recursively_no_placement_check(available_nodes, past_nodes, all_
         return
 
 
-# Old
-# def suitable_for_current_run_returns_false():
-#     return False
-#
-#
-# # Return only first available
-# def find_first_available_bitstream(operation):
-#     for start_location_index in range(len(hw_library[operation]["start_locations"])):
-#         if hw_library[operation]["start_locations"][start_location_index]:
-#             return start_location_index, 0
-#
-#
-#
-# def place_nodes_recursively_only_placement_check(available_nodes, all_nodes, current_run, current_plan, all_plans):
-#     if available_nodes:
-#         for node in available_nodes:
-#             # Update available nodes copy for next recursive calls
-#             new_available_nodes = available_nodes.copy()
-#             new_available_nodes.remove(node)
-#             new_available_nodes.extend(all_nodes[node]["after"])
-#
-#             # Always false for now
-#             if suitable_for_current_run_returns_false():
-#                 # Place node in current run
-#                 new_current_run = current_run.copy()
-#                 new_current_run.append(node)
-#                 place_nodes_recursively_only_placement_check(new_available_nodes.copy(), all_nodes, new_current_run,
-#                                                              current_plan.copy(), all_plans)
-#
-#             # Schedule current run and place node in next run
-#             new_current_plan = current_plan.copy()
-#             if current_run:
-#                 new_current_plan.append(tuple(current_run))
-#             current_operation = all_nodes[node]["operation"]
-#             chosen_position, chosen_bitstream_index = find_first_available_bitstream(current_operation)
-#             chosen_bitstream = hw_library[current_operation]["start_locations"][chosen_position]
-#             [chosen_bitstream_index]
-#             end_index = chosen_position + hw_library[current_operation]["bitstreams"][chosen_bitstream]["length"]
-#             new_current_run = [ScheduledModule(node, chosen_bitstream, (chosen_position, end_index))]
-#             place_nodes_recursively_only_placement_check(new_available_nodes.copy(), all_nodes, new_current_run,
-#                                                          new_current_plan, all_plans)
-#     else:
-#         # Out of nodes -> Save current plan and return
-#         current_plan.append(tuple(current_run))
-#         all_plans.append(tuple(current_plan))
-#         return
-
-
 def get_module_index(start_location_index, taken_columns):
     if not taken_columns:
         raise ValueError("Taken positions can't be empty!")
     if start_location_index < taken_columns[0][0]:
         return 0
-    for module_index in range(len(taken_columns)):
+    for module_index in list(range(len(taken_columns)))[::-1]:
         if start_location_index > taken_columns[module_index][1]:
             return module_index + 1
     return len(taken_columns)
 
 
-def find_all_available_bitstream(operation, min_position, taken_columns, hw_library):
+# This needs node cost
+def find_all_available_bitstream(operation, node_cost, min_position, taken_columns, hw_library):
     all_positions_and_bitstreams = []
     for start_location_index in range(len(hw_library[operation]["start_locations"]))[min_position:]:
-        if hw_library[operation]["start_locations"][start_location_index]:  # This line possibly not needed
+        # This line possibly not needed
+        if hw_library[operation]["start_locations"][start_location_index]:
             for bitstream_index in range(len(hw_library[operation]["start_locations"][start_location_index])):
-                if not taken_columns:
-                    all_positions_and_bitstreams.append((0, start_location_index, bitstream_index))
-                else:
-                    # Here need to check if beginning is after last taken and end is before next taken.
-                    module_index = get_module_index(start_location_index, taken_columns)
-                    _, final_column_index = get_bitstream_end_from_library_with_operation(bitstream_index,
-                                                                                          start_location_index,
-                                                                                          operation, hw_library)
-                    # If fits then append
-                    if (len(taken_columns) == module_index and taken_columns[module_index - 1][
-                        1] < start_location_index) or (
-                            len(taken_columns) != module_index and taken_columns[module_index][0] > final_column_index):
-                        all_positions_and_bitstreams.append((module_index, start_location_index, bitstream_index))
+                bitstream, final_column_index = get_bitstream_end_from_library_with_operation(bitstream_index,
+                                                                                              start_location_index,
+                                                                                              operation, hw_library)
+                bitstream_capacity = hw_library[operation]["bitstreams"][bitstream]["capacity"]
+                bitstream_fits = True
+                if len(bitstream_capacity) != len(node_cost):
+                    raise ValueError("Capacity parameters don't match")
+                for capacity_parameter_index in range(len(bitstream_capacity)):
+                    if bitstream_capacity[capacity_parameter_index] < node_cost[capacity_parameter_index]:
+                        bitstream_fits = False
+                        break
+                if bitstream_fits:
+                    if not taken_columns:
+                        all_positions_and_bitstreams.append(
+                            (0, start_location_index, bitstream_index))
+                    else:
+                        # Here need to check if beginning is after last taken and end is before next taken.
+                        module_index = get_module_index(
+                            start_location_index, taken_columns)
+                        # If fits then append
+                        if (len(taken_columns) == module_index and taken_columns[module_index - 1][
+                            1] < start_location_index) or (
+                                len(taken_columns) != module_index and taken_columns[module_index][0] > final_column_index):
+                            all_positions_and_bitstreams.append(
+                                (module_index, start_location_index, bitstream_index))
     return all_positions_and_bitstreams
 
 
@@ -166,6 +133,7 @@ def get_new_available_nodes(scheduled_node, past_nodes, all_nodes):
     for potential_node in potential_nodes:
         for previous_node in all_nodes[potential_node]["before"]:
             if previous_node not in past_nodes:
+                # Assuming there isn't a double dependency on the same node
                 new_available_nodes.remove(potential_node)
     return new_available_nodes
 
@@ -179,9 +147,11 @@ def place_nodes_recursively_only_placement_check_v2(available_nodes, past_nodes,
             new_available_nodes.remove(node)
             new_past_nodes = past_nodes.copy()
             new_past_nodes.append(node)
-            new_available_nodes.extend(get_new_available_nodes(node, new_past_nodes, all_nodes))
+            new_available_nodes.extend(
+                get_new_available_nodes(node, new_past_nodes, all_nodes))
 
-            min_position = get_min_position_in_current_run(current_run, node, all_nodes)
+            min_position = get_min_position_in_current_run(
+                current_run, node, all_nodes)
             taken_columns = get_taken_columns(current_run)
             available_module_placements = get_scheduled_modules_for_node_after_pos(all_nodes, min_position, node,
                                                                                    taken_columns, hw_library)
@@ -203,7 +173,8 @@ def place_nodes_recursively_only_placement_check_v2(available_nodes, past_nodes,
                 if available_module_placements:
                     for _, module_placement in available_module_placements:
                         place_nodes_recursively_only_placement_check_v2(new_available_nodes.copy(), new_past_nodes,
-                                                                        all_nodes, [module_placement],
+                                                                        all_nodes, [
+                                                                            module_placement],
                                                                         new_current_plan.copy(), all_plans,
                                                                         reduce_single_runs, hw_library)
                 else:
@@ -218,7 +189,8 @@ def place_nodes_recursively_only_placement_check_v2(available_nodes, past_nodes,
 
 def get_scheduled_modules_for_node_after_pos(all_nodes, min_position, node, taken_columns, hw_library):
     current_operation = all_nodes[node]["operation"]
-    available_bitstreams = find_all_available_bitstream(current_operation, min_position, taken_columns, hw_library)
+    available_bitstreams = find_all_available_bitstream(
+        current_operation, all_nodes[node]["capacity"], min_position, taken_columns, hw_library)
     available_module_placements = []
     if available_bitstreams:
         for chosen_module_position, chosen_column_position, chosen_bitstream_index in available_bitstreams:
@@ -235,7 +207,7 @@ def get_bitstream_end_from_library_with_operation(chosen_bitstream_index, chosen
     chosen_bitstream = hw_library[current_operation]["start_locations"][chosen_column_position][
         chosen_bitstream_index]
     end_index = chosen_column_position + hw_library[current_operation]["bitstreams"][chosen_bitstream][
-        "length"]
+        "length"]-1
     return chosen_bitstream, end_index
 
 
@@ -244,12 +216,12 @@ def print_resource_string(current_resource_string, module_coordinates):
     for coordinate_i in range(len(module_coordinates)):
         coordinate = module_coordinates[coordinate_i]
         resulting_string = current_resource_string[:coordinate[0] + coordinate_i * 2 * colour_char_len] \
-                           + FancyText.GREEN + current_resource_string[
-                                               coordinate[0] + coordinate_i * 2 * colour_char_len:]
+            + FancyText.GREEN + current_resource_string[
+            coordinate[0] + coordinate_i * 2 * colour_char_len:]
         current_resource_string = resulting_string
-        resulting_string = current_resource_string[:coordinate[1] + (coordinate_i * 2 + 1) * colour_char_len] \
-                           + FancyText.DEFAULT + current_resource_string[
-                                                 coordinate[1] + (coordinate_i * 2 + 1) * colour_char_len:]
+        resulting_string = current_resource_string[:(coordinate[1] + 1) + (coordinate_i * 2 + 1) * colour_char_len] \
+            + FancyText.DEFAULT + current_resource_string[
+            (coordinate[1] + 1) + (coordinate_i * 2 + 1) * colour_char_len:]
         current_resource_string = resulting_string
     print(current_resource_string)
 
@@ -290,7 +262,8 @@ def print_node_placement_permutations(available_nodes, all_nodes):
     simple_plans = []
     # For each choice:
     #   Make the choice and then update available nodes and come back to initial step
-    place_nodes_recursively_no_placement_check(available_nodes, [], all_nodes, [], [], simple_plans)
+    place_nodes_recursively_no_placement_check(
+        available_nodes, [], all_nodes, [], [], simple_plans)
     # Remove duplicates
     simple_plans = list(dict.fromkeys(simple_plans))
     # Print plans
@@ -303,7 +276,7 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library):
     print(f"{FancyText.UNDERLINE}Plans with placed modules below:{FancyText.END}")
     # Now with string match checks
     resulting_plans = []
-    place_nodes_recursively_only_placement_check_v2(starting_nodes, [], graph, [], [], resulting_plans, False,
+    place_nodes_recursively_only_placement_check_v2(starting_nodes, [], graph, [], [], resulting_plans, True,
                                                     hw_library)
     resulting_plans = list(dict.fromkeys(resulting_plans))
     print_statistics(resulting_plans)
@@ -330,10 +303,14 @@ def main():
                 "filter324.bit": {"locations": (1, 11, 21), "length": 10, "capacity": (32, 4), "string": "BDMMBDMDMM",
                                   "is_backwards": False}},
             "start_locations": [[], ['filter324.bit'], ['filter84.bit', 'filter322.bit'], [], ['filter164.bit'], [],
-                                ['filter162.bit', 'filter321.bit'], ['filter81.bit'], [], [], [], ['filter324.bit'],
-                                ['filter84.bit', 'filter322.bit'], [], ['filter164.bit'], [],
-                                ['filter162.bit', 'filter321.bit'], ['filter81.bit'], [], [], [], ['filter324.bit'],
-                                ['filter84.bit', 'filter322.bit'], [], ['filter164.bit'], [],
+                                ['filter162.bit', 'filter321.bit'], [
+                                    'filter81.bit'], [], [], [], ['filter324.bit'],
+                                ['filter84.bit', 'filter322.bit'], [], [
+                                    'filter164.bit'], [],
+                                ['filter162.bit', 'filter321.bit'], [
+                                    'filter81.bit'], [], [], [], ['filter324.bit'],
+                                ['filter84.bit', 'filter322.bit'], [], [
+                                    'filter164.bit'], [],
                                 ['filter162.bit', 'filter321.bit'], ['filter81.bit'], [], [], []]
         }, "Linear Sort": {
             "bitstreams": {
@@ -342,9 +319,10 @@ def main():
                 "linear1024.bit": {"locations": (1, 11), "length": 14, "capacity": (1024,), "string": "BDMMBDMDMMBDMM",
                                    "is_backwards": False}},
             "start_locations": [[], ['linear512.bit', 'linear1024.bit'], [], [], [], [], [], [], [], [], [],
-                                ['linear512.bit', 'linear1024.bit'], [], [], [], [], [], [], [], [], [],
-                                ['linear512.bit'],
-                                [], [], [], [], [], [], [], [], []]
+                                ['linear512.bit', 'linear1024.bit'], [
+            ], [], [], [], [], [], [], [], [],
+                ['linear512.bit'],
+                [], [], [], [], [], [], [], [], []]
         }, "Merge Sort": {
             "bitstreams": {
                 "mergesort32.bit": {"locations": (4, 14, 24), "length": 7, "capacity": (32,), "string": "MBDMDMM",
@@ -383,8 +361,9 @@ def main():
                 "globalsum.bit": {"locations": (6, 16, 26), "length": 3, "capacity": (), "string": "DMD",
                                   "is_backwards": False}},
             "start_locations": [[], [], [], [], [], [], ['globalsum.bit'], [], [], [], [], [], [], [], [], [],
-                                ['globalsum.bit'], [], [], [], [], [], [], [], [], [], ['globalsum.bit'], [], [], [],
-                                []]
+                                ['globalsum.bit'], [], [], [], [], [], [], [
+            ], [], [], ['globalsum.bit'], [], [], [],
+                []]
         }
     }
 
@@ -393,14 +372,36 @@ def main():
         "B": {"operation": "Multiplier", "capacity": (), "before": ("A",), "after": ()},
         "C": {"operation": "Global Sum", "capacity": (), "before": (), "after": ()}
     }
+    q19_graph = {
+        "FirstFilter":  {"operation": "Filter",     "capacity": (4, 2),  "before": (),                  "after": ("LinSort",)},
+        "LinSort":      {"operation": "Linear Sort", "capacity": (511,),  "before": ("FirstFilter",),     "after": ("MergeSort",)},
+        "MergeSort":    {"operation": "Merge Sort", "capacity": (31,),   "before": ("LinSort",),         "after": ("Join",)},
+        "Join":         {"operation": "Merge Join", "capacity": (),     "before": ("MergeSort",),       "after": ("SecondFilter",)},
+        "SecondFilter": {"operation": "Filter",     "capacity": (12, 4), "before": ("Join",),            "after": ("Add",)},
+        "Add":          {"operation": "Addition",   "capacity": (),     "before": ("SecondFilter",),    "after": ("Mul",)},
+        "Mul":          {"operation": "Multiplier", "capacity": (),     "before": ("Add",),             "after": ("Sum",)},
+        "Sum":          {"operation": "Global Sum", "capacity": (),     "before": ("Mul",),              "after": ()}
+    }
+    capacity_test = {
+        "FirstFilter":  {"operation": "Filter",     "capacity": (4, 2),  "before": (),                  "after": ("LinSort",)},
+        "LinSort":      {"operation": "Linear Sort", "capacity": (513,),  "before": ("FirstFilter",),     "after": ("Sum",)},
+        "Sum":          {"operation": "Global Sum", "capacity": (),     "before": ("LinSort",),              "after": ()}
+    }
+
     starting_nodes = ["A", "C"]
     find_plans_and_print(starting_nodes, graph, resource_string, hw_library)
+    q19_starting_nodes = ["FirstFilter"]
+    find_plans_and_print(q19_starting_nodes, capacity_test,
+                         resource_string, hw_library)
+    q19_starting_nodes = ["FirstFilter"]
+    find_plans_and_print(q19_starting_nodes, q19_graph,
+                         resource_string, hw_library)
 
 
 if __name__ == '__main__':
     main()
     # Missing parts:
-    # 1. Capacity checks
+    # 1. Correct stream capacity
     # 2. Backwards paths
     # Decorators:
     #   Composable
