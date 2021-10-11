@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Tuple
+from sys import maxsize
 
 
 @dataclass(eq=True, frozen=True)
@@ -67,8 +68,7 @@ def get_module_index(start_location_index, taken_columns):
     return len(taken_columns)
 
 
-# This needs node cost
-def find_all_available_bitstream(operation, node_cost, min_position, taken_columns, hw_library):
+def find_all_available_bitstream(operation, min_position, taken_columns, hw_library):
     all_positions_and_bitstreams = []
     for start_location_index in range(len(hw_library[operation]["start_locations"]))[min_position:]:
         # This line possibly not needed
@@ -77,29 +77,35 @@ def find_all_available_bitstream(operation, node_cost, min_position, taken_colum
                 bitstream, final_column_index = get_bitstream_end_from_library_with_operation(bitstream_index,
                                                                                               start_location_index,
                                                                                               operation, hw_library)
-                bitstream_capacity = hw_library[operation]["bitstreams"][bitstream]["capacity"]
-                bitstream_fits = True
-                if len(bitstream_capacity) != len(node_cost):
-                    raise ValueError("Capacity parameters don't match")
-                for capacity_parameter_index in range(len(bitstream_capacity)):
-                    if bitstream_capacity[capacity_parameter_index] < node_cost[capacity_parameter_index]:
-                        bitstream_fits = False
-                        break
-                if bitstream_fits:
-                    if not taken_columns:
+                if not taken_columns:
+                    all_positions_and_bitstreams.append(
+                        (0, start_location_index, bitstream_index))
+                else:
+                    # Here need to check if beginning is after last taken and end is before next taken.
+                    module_index = get_module_index(
+                        start_location_index, taken_columns)
+                    # If fits then append
+                    if (len(taken_columns) == module_index and taken_columns[module_index - 1][
+                        1] < start_location_index) or (
+                            len(taken_columns) != module_index and taken_columns[module_index][
+                        0] > final_column_index):
                         all_positions_and_bitstreams.append(
-                            (0, start_location_index, bitstream_index))
-                    else:
-                        # Here need to check if beginning is after last taken and end is before next taken.
-                        module_index = get_module_index(
-                            start_location_index, taken_columns)
-                        # If fits then append
-                        if (len(taken_columns) == module_index and taken_columns[module_index - 1][
-                            1] < start_location_index) or (
-                                len(taken_columns) != module_index and taken_columns[module_index][0] > final_column_index):
-                            all_positions_and_bitstreams.append(
-                                (module_index, start_location_index, bitstream_index))
+                            (module_index, start_location_index, bitstream_index))
     return all_positions_and_bitstreams
+
+
+def is_bitstream_utility_great_enough(bitstream, hw_library, node_cost, operation):
+    bitstream_capacity = hw_library[operation]["bitstreams"][bitstream]["capacity"]
+    satisfies_requirements = True
+    missing_utility = []
+    if len(bitstream_capacity) != len(node_cost):
+        raise ValueError("Capacity parameters don't match")
+    for capacity_parameter_index in range(len(bitstream_capacity)):
+        missing_utility.append(node_cost[capacity_parameter_index] - bitstream_capacity[capacity_parameter_index])
+        if bitstream_capacity[capacity_parameter_index] < node_cost[capacity_parameter_index]:
+            satisfies_requirements = False
+
+    return satisfies_requirements, missing_utility
 
 
 def get_taken_columns(current_run):
@@ -138,59 +144,94 @@ def get_new_available_nodes(scheduled_node, past_nodes, all_nodes):
     return new_available_nodes
 
 
-def place_nodes_recursively_only_placement_check_v2(available_nodes, past_nodes, all_nodes, current_run, current_plan,
-                                                    all_plans, reduce_single_runs, hw_library):
-    if available_nodes:
-        for node in available_nodes:
-            # Update available nodes copy for next recursive calls
-            new_available_nodes = available_nodes.copy()
-            new_available_nodes.remove(node)
-            new_past_nodes = past_nodes.copy()
-            new_past_nodes.append(node)
-            new_available_nodes.extend(
-                get_new_available_nodes(node, new_past_nodes, all_nodes))
-
-            min_position = get_min_position_in_current_run(
-                current_run, node, all_nodes)
-            taken_columns = get_taken_columns(current_run)
-            available_module_placements = get_scheduled_modules_for_node_after_pos(all_nodes, min_position, node,
-                                                                                   taken_columns, hw_library)
-            if available_module_placements:
-                # Place node in current run
-                for insert_at, module_placement in available_module_placements:
-                    new_current_run = current_run.copy()
-                    new_current_run[insert_at:insert_at] = [module_placement]
-                    place_nodes_recursively_only_placement_check_v2(new_available_nodes.copy(), new_past_nodes,
-                                                                    all_nodes, new_current_run, current_plan.copy(),
-                                                                    all_plans, reduce_single_runs, hw_library)
-            if not available_module_placements or not reduce_single_runs:
-                # Schedule current run and place node in next run
-                new_current_plan = current_plan.copy()
-                if current_run:
-                    new_current_plan.append(tuple(current_run))
-                available_module_placements = get_scheduled_modules_for_node_after_pos(all_nodes, 0, node, [],
-                                                                                       hw_library)
+def place_nodes_recursively_only_placement_check(available_nodes, past_nodes, all_nodes, current_run, current_plan,
+                                                 all_plans, reduce_single_runs, hw_library, current_min_runs_pointer):
+    if len(current_plan) <= current_min_runs_pointer[0]:
+        if available_nodes:
+            for node in available_nodes:
+                min_position = get_min_position_in_current_run(
+                    current_run, node, all_nodes)
+                taken_columns = get_taken_columns(current_run)
+                available_module_placements = get_scheduled_modules_for_node_after_pos(all_nodes, min_position, node,
+                                                                                       taken_columns, hw_library)
                 if available_module_placements:
-                    for _, module_placement in available_module_placements:
-                        place_nodes_recursively_only_placement_check_v2(new_available_nodes.copy(), new_past_nodes,
-                                                                        all_nodes, [
-                                                                            module_placement],
-                                                                        new_current_plan.copy(), all_plans,
-                                                                        reduce_single_runs, hw_library)
-                else:
-                    raise ValueError("Something went wrong!")
+                    # Place node in current run
+                    for insert_at, module_placement in available_module_placements:
+                        new_current_run = current_run.copy()
+                        new_current_run[insert_at:insert_at] = [module_placement]
+                        find_next_module_placement(all_nodes, all_plans, available_nodes, current_plan, hw_library,
+                                                   module_placement, new_current_run, node, past_nodes,
+                                                   reduce_single_runs, current_min_runs_pointer)
+                if not available_module_placements or not reduce_single_runs:
+                    # Schedule current run and place node in next run
+                    new_current_plan = current_plan.copy()
+                    if current_run:
+                        new_current_plan.append(tuple(current_run))
+                    available_module_placements = get_scheduled_modules_for_node_after_pos(all_nodes, 0, node, [],
+                                                                                           hw_library)
+                    if available_module_placements:
+                        for _, module_placement in available_module_placements:
+                            find_next_module_placement(all_nodes, all_plans, available_nodes, new_current_plan,
+                                                       hw_library,
+                                                       module_placement, [module_placement], node, past_nodes,
+                                                       reduce_single_runs, current_min_runs_pointer)
+                    else:
+                        raise ValueError("Something went wrong!")
 
+        else:
+            # Out of nodes -> Save current plan and return
+            current_plan.append(tuple(current_run))
+            all_plans.append(tuple(current_plan))
+            if len(current_plan) < current_min_runs_pointer[0]:
+                current_min_runs_pointer[0] = len(current_plan)
+
+
+def find_next_module_placement(all_nodes, all_plans, available_nodes, new_current_plan, hw_library, module_placement,
+                               new_current_run, node, past_nodes, reduce_single_runs, current_min_runs):
+    satisfies_requirements, missing_utility = is_bitstream_utility_great_enough(
+        module_placement.bitstream, hw_library, all_nodes[node]["capacity"],
+        all_nodes[node]["operation"])
+    new_all_nodes = get_new_all_nodes_with_updated_costs(all_nodes, missing_utility, node, satisfies_requirements)
+    new_available_nodes, new_past_nodes = create_new_available_nodes_lists(all_nodes,
+                                                                           available_nodes,
+                                                                           past_nodes, node,
+                                                                           satisfies_requirements)
+    place_nodes_recursively_only_placement_check(new_available_nodes, new_past_nodes,
+                                                 new_all_nodes, new_current_run.copy(), new_current_plan.copy(),
+                                                 all_plans, reduce_single_runs, hw_library, current_min_runs)
+
+
+def get_new_all_nodes_with_updated_costs(all_nodes, missing_utility, node, satisfies_requirements):
+    new_all_nodes = all_nodes.copy()
+    if not satisfies_requirements:
+        new_all_nodes[node] = all_nodes[node].copy()
+        new_capacity_values = []
+        for capacity_parameter_index in range(len(missing_utility)):
+            if missing_utility[capacity_parameter_index] <= 0:
+                new_capacity_values.append(0)
+            else:
+                new_capacity_values.append(missing_utility[capacity_parameter_index])
+        new_all_nodes[node]["capacity"] = tuple(new_capacity_values)
     else:
-        # Out of nodes -> Save current plan and return
-        current_plan.append(tuple(current_run))
-        all_plans.append(tuple(current_plan))
-        return
+        del new_all_nodes[node]
+    return new_all_nodes
+
+
+def create_new_available_nodes_lists(all_nodes, available_nodes, past_nodes, node, satisfies_requirements):
+    new_available_nodes = available_nodes.copy()
+    new_past_nodes = past_nodes.copy()
+    if satisfies_requirements:
+        new_available_nodes.remove(node)
+        new_past_nodes.append(node)
+        new_available_nodes.extend(
+            get_new_available_nodes(node, new_past_nodes, all_nodes))
+    return new_available_nodes, new_past_nodes
 
 
 def get_scheduled_modules_for_node_after_pos(all_nodes, min_position, node, taken_columns, hw_library):
     current_operation = all_nodes[node]["operation"]
     available_bitstreams = find_all_available_bitstream(
-        current_operation, all_nodes[node]["capacity"], min_position, taken_columns, hw_library)
+        current_operation, min_position, taken_columns, hw_library)
     available_module_placements = []
     if available_bitstreams:
         for chosen_module_position, chosen_column_position, chosen_bitstream_index in available_bitstreams:
@@ -207,7 +248,7 @@ def get_bitstream_end_from_library_with_operation(chosen_bitstream_index, chosen
     chosen_bitstream = hw_library[current_operation]["start_locations"][chosen_column_position][
         chosen_bitstream_index]
     end_index = chosen_column_position + hw_library[current_operation]["bitstreams"][chosen_bitstream][
-        "length"]-1
+        "length"] - 1
     return chosen_bitstream, end_index
 
 
@@ -216,12 +257,12 @@ def print_resource_string(current_resource_string, module_coordinates):
     for coordinate_i in range(len(module_coordinates)):
         coordinate = module_coordinates[coordinate_i]
         resulting_string = current_resource_string[:coordinate[0] + coordinate_i * 2 * colour_char_len] \
-            + FancyText.GREEN + current_resource_string[
-            coordinate[0] + coordinate_i * 2 * colour_char_len:]
+                           + FancyText.GREEN + current_resource_string[
+                                               coordinate[0] + coordinate_i * 2 * colour_char_len:]
         current_resource_string = resulting_string
         resulting_string = current_resource_string[:(coordinate[1] + 1) + (coordinate_i * 2 + 1) * colour_char_len] \
-            + FancyText.DEFAULT + current_resource_string[
-            (coordinate[1] + 1) + (coordinate_i * 2 + 1) * colour_char_len:]
+                           + FancyText.DEFAULT + current_resource_string[
+                                                 (coordinate[1] + 1) + (coordinate_i * 2 + 1) * colour_char_len:]
         current_resource_string = resulting_string
     print(current_resource_string)
 
@@ -276,11 +317,12 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library):
     print(f"{FancyText.UNDERLINE}Plans with placed modules below:{FancyText.END}")
     # Now with string match checks
     resulting_plans = []
-    place_nodes_recursively_only_placement_check_v2(starting_nodes, [], graph, [], [], resulting_plans, True,
-                                                    hw_library)
+    min_runs_pointer = [maxsize]
+    place_nodes_recursively_only_placement_check(starting_nodes, [], graph, [], [], resulting_plans, True,
+                                                            hw_library, min_runs_pointer)
     resulting_plans = list(dict.fromkeys(resulting_plans))
     print_statistics(resulting_plans)
-    print_all_runs_using_less_runs_than(resulting_plans, 2, resource_string)
+    print_all_runs_using_less_runs_than(resulting_plans, min_runs_pointer[0] + 1, resource_string)
 
 
 def main():
@@ -320,9 +362,9 @@ def main():
                                    "is_backwards": False}},
             "start_locations": [[], ['linear512.bit', 'linear1024.bit'], [], [], [], [], [], [], [], [], [],
                                 ['linear512.bit', 'linear1024.bit'], [
-            ], [], [], [], [], [], [], [], [],
-                ['linear512.bit'],
-                [], [], [], [], [], [], [], [], []]
+                                ], [], [], [], [], [], [], [], [],
+                                ['linear512.bit'],
+                                [], [], [], [], [], [], [], [], []]
         }, "Merge Sort": {
             "bitstreams": {
                 "mergesort32.bit": {"locations": (4, 14, 24), "length": 7, "capacity": (32,), "string": "MBDMDMM",
@@ -362,8 +404,8 @@ def main():
                                   "is_backwards": False}},
             "start_locations": [[], [], [], [], [], [], ['globalsum.bit'], [], [], [], [], [], [], [], [], [],
                                 ['globalsum.bit'], [], [], [], [], [], [], [
-            ], [], [], ['globalsum.bit'], [], [], [],
-                []]
+                                ], [], [], ['globalsum.bit'], [], [], [],
+                                []]
         }
     }
 
@@ -373,19 +415,20 @@ def main():
         "C": {"operation": "Global Sum", "capacity": (), "before": (), "after": ()}
     }
     q19_graph = {
-        "FirstFilter":  {"operation": "Filter",     "capacity": (4, 2),  "before": (),                  "after": ("LinSort",)},
-        "LinSort":      {"operation": "Linear Sort", "capacity": (511,),  "before": ("FirstFilter",),     "after": ("MergeSort",)},
-        "MergeSort":    {"operation": "Merge Sort", "capacity": (31,),   "before": ("LinSort",),         "after": ("Join",)},
-        "Join":         {"operation": "Merge Join", "capacity": (),     "before": ("MergeSort",),       "after": ("SecondFilter",)},
-        "SecondFilter": {"operation": "Filter",     "capacity": (12, 4), "before": ("Join",),            "after": ("Add",)},
-        "Add":          {"operation": "Addition",   "capacity": (),     "before": ("SecondFilter",),    "after": ("Mul",)},
-        "Mul":          {"operation": "Multiplier", "capacity": (),     "before": ("Add",),             "after": ("Sum",)},
-        "Sum":          {"operation": "Global Sum", "capacity": (),     "before": ("Mul",),              "after": ()}
+        "FirstFilter": {"operation": "Filter", "capacity": (4, 2), "before": (), "after": ("LinSort",)},
+        "LinSort": {"operation": "Linear Sort", "capacity": (511,), "before": ("FirstFilter",),
+                    "after": ("MergeSort",)},
+        "MergeSort": {"operation": "Merge Sort", "capacity": (31,), "before": ("LinSort",), "after": ("Join",)},
+        "Join": {"operation": "Merge Join", "capacity": (), "before": ("MergeSort",), "after": ("SecondFilter",)},
+        "SecondFilter": {"operation": "Filter", "capacity": (12, 4), "before": ("Join",), "after": ("Add",)},
+        "Add": {"operation": "Addition", "capacity": (), "before": ("SecondFilter",), "after": ("Mul",)},
+        "Mul": {"operation": "Multiplier", "capacity": (), "before": ("Add",), "after": ("Sum",)},
+        "Sum": {"operation": "Global Sum", "capacity": (), "before": ("Mul",), "after": ()}
     }
     capacity_test = {
-        "FirstFilter":  {"operation": "Filter",     "capacity": (4, 2),  "before": (),                  "after": ("LinSort",)},
-        "LinSort":      {"operation": "Linear Sort", "capacity": (513,),  "before": ("FirstFilter",),     "after": ("Sum",)},
-        "Sum":          {"operation": "Global Sum", "capacity": (),     "before": ("LinSort",),              "after": ()}
+        "FirstFilter": {"operation": "Filter", "capacity": (4, 2), "before": (), "after": ("LinSort",)},
+        "LinSort": {"operation": "Linear Sort", "capacity": (513,), "before": ("FirstFilter",), "after": ("Sum",)},
+        "Sum": {"operation": "Global Sum", "capacity": (), "before": ("LinSort",), "after": ()}
     }
 
     starting_nodes = ["A", "C"]
@@ -408,7 +451,7 @@ if __name__ == '__main__':
     #   First module
     #   Reducing
     #   Increasing
-    #   How many outputs Bigger problem!
+    #   How many outputs - Just the graph has to say 1st or 2nd output
     # Optimisation rules:
     #   Merge sort removal
     #   Reordering
