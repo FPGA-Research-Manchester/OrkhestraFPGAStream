@@ -94,20 +94,6 @@ def find_all_available_bitstream(operation, min_position, taken_columns, hw_libr
     return all_positions_and_bitstreams
 
 
-def is_bitstream_utility_great_enough(bitstream, hw_library, node_cost, operation):
-    bitstream_capacity = hw_library[operation]["bitstreams"][bitstream]["capacity"]
-    satisfies_requirements = True
-    missing_utility = []
-    if len(bitstream_capacity) != len(node_cost):
-        raise ValueError("Capacity parameters don't match")
-    for capacity_parameter_index in range(len(bitstream_capacity)):
-        missing_utility.append(node_cost[capacity_parameter_index] - bitstream_capacity[capacity_parameter_index])
-        if bitstream_capacity[capacity_parameter_index] < node_cost[capacity_parameter_index]:
-            satisfies_requirements = False
-
-    return satisfies_requirements, missing_utility
-
-
 def get_taken_columns(current_run):
     taken_columns = []
     for module in current_run:
@@ -145,7 +131,8 @@ def get_new_available_nodes(scheduled_node, past_nodes, all_nodes):
 
 
 def place_nodes_recursively_only_placement_check(available_nodes, past_nodes, all_nodes, current_run, current_plan,
-                                                 all_plans, reduce_single_runs, hw_library, current_min_runs_pointer):
+                                                 all_plans, reduce_single_runs, hw_library, current_min_runs_pointer,
+                                                 data_tables):
     if len(current_plan) <= current_min_runs_pointer[0]:
         if available_nodes:
             for node in available_nodes:
@@ -161,7 +148,7 @@ def place_nodes_recursively_only_placement_check(available_nodes, past_nodes, al
                         new_current_run[insert_at:insert_at] = [module_placement]
                         find_next_module_placement(all_nodes, all_plans, available_nodes, current_plan, hw_library,
                                                    module_placement, new_current_run, node, past_nodes,
-                                                   reduce_single_runs, current_min_runs_pointer)
+                                                   reduce_single_runs, current_min_runs_pointer, data_tables)
                 if not available_module_placements or not reduce_single_runs:
                     # Schedule current run and place node in next run
                     new_current_plan = current_plan.copy()
@@ -174,7 +161,7 @@ def place_nodes_recursively_only_placement_check(available_nodes, past_nodes, al
                             find_next_module_placement(all_nodes, all_plans, available_nodes, new_current_plan,
                                                        hw_library,
                                                        module_placement, [module_placement], node, past_nodes,
-                                                       reduce_single_runs, current_min_runs_pointer)
+                                                       reduce_single_runs, current_min_runs_pointer, data_tables)
                     else:
                         raise ValueError("Something went wrong!")
 
@@ -186,19 +173,21 @@ def place_nodes_recursively_only_placement_check(available_nodes, past_nodes, al
                 current_min_runs_pointer[0] = len(current_plan)
 
 
-def find_next_module_placement(all_nodes, all_plans, available_nodes, new_current_plan, hw_library, module_placement,
-                               new_current_run, node, past_nodes, reduce_single_runs, current_min_runs):
-    satisfies_requirements, missing_utility = is_bitstream_utility_great_enough(
-        module_placement.bitstream, hw_library, all_nodes[node]["capacity"],
-        all_nodes[node]["operation"])
-    new_all_nodes = get_new_all_nodes_with_updated_costs(all_nodes, missing_utility, node, satisfies_requirements)
-    new_available_nodes, new_past_nodes = create_new_available_nodes_lists(all_nodes,
-                                                                           available_nodes,
-                                                                           past_nodes, node,
-                                                                           satisfies_requirements)
-    place_nodes_recursively_only_placement_check(new_available_nodes, new_past_nodes,
-                                                 new_all_nodes, new_current_run.copy(), new_current_plan.copy(),
-                                                 all_plans, reduce_single_runs, hw_library, current_min_runs)
+def is_bitstream_utility_great_enough(bitstream, hw_library, node_cost, operation):
+    bitstream_capacity = hw_library[operation]["bitstreams"][bitstream]["capacity"]
+    satisfies_requirements = True
+    missing_utility = []
+    if len(bitstream_capacity) != len(node_cost):
+        raise ValueError("Capacity parameters don't match")
+    for capacity_parameter_index in range(len(bitstream_capacity)):
+        missing_utility.append(node_cost[capacity_parameter_index] - bitstream_capacity[capacity_parameter_index])
+        if bitstream_capacity[capacity_parameter_index] < node_cost[capacity_parameter_index]:
+            satisfies_requirements = False
+
+    if "composable" not in hw_library[operation]["decorators"]:
+        satisfies_requirements = True
+
+    return satisfies_requirements, missing_utility
 
 
 def get_new_all_nodes_with_updated_costs(all_nodes, missing_utility, node, satisfies_requirements):
@@ -226,6 +215,125 @@ def create_new_available_nodes_lists(all_nodes, available_nodes, past_nodes, nod
         new_available_nodes.extend(
             get_new_available_nodes(node, new_past_nodes, all_nodes))
     return new_available_nodes, new_past_nodes
+
+
+# TODO: Update new_data_tables and retrun if the node can be returned or not (update all_new_nodes if yes!). Then run!
+# This would be done by the operation driver
+def update_node_table(all_nodes, new_all_nodes, node, bitstream_capacity, operation, data_tables, new_data_tables):
+    if operation == "Linear Sort":
+        if len(all_nodes[node]["tables"]) != 1:
+            raise ValueError("Wrong number of tables for linear sort!")
+        if len(bitstream_capacity) != 1:
+            raise ValueError("Wrong linear sort capacity given!")
+        table_name = all_nodes[node]["tables"][0]
+        current_table = data_tables[table_name].copy()
+        new_sorted_sequences = []
+        # Update the table to have gone through the linear sorter
+        sequence_count = current_table["record_count"] // bitstream_capacity[0]
+        if sequence_count == 0:
+            current_table["sorted_sequences"] = (0, current_table["record_count"] - 1, 0)
+        else:
+            for sequence_id in range(sequence_count):
+                new_sorted_sequences.append((bitstream_capacity[0] * sequence_id,
+                                             bitstream_capacity[0] * (sequence_id + 1) - 1, 0))
+                if sequence_id == sequence_count - 1:
+                    new_sorted_sequences.append((bitstream_capacity[0] * sequence_count,
+                                                 (bitstream_capacity[0] * sequence_count + current_table[
+                                                     "record_count"] % bitstream_capacity[0]) - 1, 0))
+            current_table["sorted_sequences"] = tuple(new_sorted_sequences)
+        new_data_tables[table_name] = current_table
+        # Move the table name to the correct place for next nodes. This method should also go to all other non-sorting nodes!
+        add_new_table_names_to_next_nodes(all_nodes, new_all_nodes, node, table_name)
+
+        return True
+    elif operation == "Merge Sort":
+        pass  # Do later as it is a bit more difficult -> Check table forwarding that the node after linear sort gets the correct table and then commit!
+        return True
+
+
+def add_new_table_names_to_next_nodes(all_nodes, new_all_nodes, node, table_name):
+    for next_node in new_all_nodes[node]["after"]:
+        new_all_nodes[next_node] = all_nodes[next_node].copy()
+
+        # Get index
+        current_node_index = get_current_node_index(new_all_nodes, next_node, node)
+
+        # Add a new name to this table
+        # Assuming it is large enough!
+        new_all_nodes[next_node]["tables"][current_node_index] = table_name
+
+
+def get_current_node_index(new_all_nodes, next_node, node):
+    current_node_index = -1
+    for potential_current_node_i in range(len(new_all_nodes[next_node]["before"])):
+        if new_all_nodes[next_node]["before"][potential_current_node_i] == node:
+            current_node_index = potential_current_node_i
+    return current_node_index
+
+
+def find_next_module_placement(all_nodes, all_plans, available_nodes, new_current_plan, hw_library, module_placement,
+                               new_current_run, node, past_nodes, reduce_single_runs, current_min_runs, data_tables):
+    # Check requirements and utility and update all nodes accordingly no matter if the node is removed or not.
+    new_all_nodes, new_data_tables, satisfies_requirements = update_all_nodes(all_nodes, module_placement.bitstream,
+                                                                              data_tables, hw_library, node,
+                                                                              all_nodes[node]["capacity"],
+                                                                              all_nodes[node]["operation"])
+
+    # Set new available and past nodes if the current node can be removed
+    new_available_nodes, new_past_nodes = create_new_available_nodes_lists(all_nodes,
+                                                                           available_nodes,
+                                                                           past_nodes, node,
+                                                                           satisfies_requirements)
+
+    # Next recursive step
+    place_nodes_recursively_only_placement_check(new_available_nodes, new_past_nodes,
+                                                 new_all_nodes, new_current_run.copy(), new_current_plan.copy(),
+                                                 all_plans, reduce_single_runs, hw_library, current_min_runs,
+                                                 new_data_tables)
+
+
+def update_all_nodes(all_nodes, bitstream, data_tables, hw_library, node, node_cost, operation):
+    bitstream_capacity = hw_library[operation]["bitstreams"][bitstream]["capacity"]
+    missing_utility = []
+    new_all_nodes = all_nodes.copy()
+    new_data_tables = data_tables.copy()
+    if "sorting" in hw_library[operation]["decorators"]:
+        # Update table
+        should_node_be_removed = update_node_table(all_nodes, new_all_nodes, node, bitstream_capacity, operation,
+                                                   data_tables, new_data_tables)
+    else:
+        # Find missing utility
+        should_node_be_removed = find_missing_utility(bitstream_capacity, missing_utility, node_cost)
+        update_graph_capacities(all_nodes, missing_utility, new_all_nodes, node, should_node_be_removed)
+        # TODO: This needs to be done for all module drivers
+        add_new_table_names_to_next_nodes(all_nodes, new_all_nodes, node, all_nodes[node]["tables"][0])
+    # Update all nodes
+    if should_node_be_removed:
+        del new_all_nodes[node]
+    return new_all_nodes, new_data_tables, should_node_be_removed
+
+
+def update_graph_capacities(all_nodes, missing_utility, new_all_nodes, node, should_node_be_removed):
+    if not should_node_be_removed:
+        new_all_nodes[node] = all_nodes[node].copy()
+        new_capacity_values = []
+        for capacity_parameter_index in range(len(missing_utility)):
+            if missing_utility[capacity_parameter_index] <= 0:
+                new_capacity_values.append(0)
+            else:
+                new_capacity_values.append(missing_utility[capacity_parameter_index])
+        new_all_nodes[node]["capacity"] = tuple(new_capacity_values)
+
+
+def find_missing_utility(bitstream_capacity, missing_utility, node_cost):
+    should_node_be_removed = True
+    if len(bitstream_capacity) != len(node_cost):
+        raise ValueError("Capacity parameters don't match")
+    for capacity_parameter_index in range(len(bitstream_capacity)):
+        missing_utility.append(node_cost[capacity_parameter_index] - bitstream_capacity[capacity_parameter_index])
+        if bitstream_capacity[capacity_parameter_index] < node_cost[capacity_parameter_index]:
+            should_node_be_removed = False
+    return should_node_be_removed
 
 
 def get_scheduled_modules_for_node_after_pos(all_nodes, min_position, node, taken_columns, hw_library):
@@ -312,14 +420,14 @@ def print_node_placement_permutations(available_nodes, all_nodes):
         print(f"{plan_i}: {simple_plans[plan_i]}")
 
 
-def find_plans_and_print(starting_nodes, graph, resource_string, hw_library):
+def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, data_tables):
     print_node_placement_permutations(starting_nodes, graph)
     print(f"{FancyText.UNDERLINE}Plans with placed modules below:{FancyText.END}")
     # Now with string match checks
     resulting_plans = []
     min_runs_pointer = [maxsize]
     place_nodes_recursively_only_placement_check(starting_nodes, [], graph, [], [], resulting_plans, True,
-                                                            hw_library, min_runs_pointer)
+                                                 hw_library, min_runs_pointer, data_tables)
     resulting_plans = list(dict.fromkeys(resulting_plans))
     print_statistics(resulting_plans)
     print_all_runs_using_less_runs_than(resulting_plans, min_runs_pointer[0] + 1, resource_string)
@@ -353,7 +461,8 @@ def main():
                                     'filter81.bit'], [], [], [], ['filter324.bit'],
                                 ['filter84.bit', 'filter322.bit'], [], [
                                     'filter164.bit'], [],
-                                ['filter162.bit', 'filter321.bit'], ['filter81.bit'], [], [], []]
+                                ['filter162.bit', 'filter321.bit'], ['filter81.bit'], [], [], []],
+            "decorators": ["composable"]
         }, "Linear Sort": {
             "bitstreams": {
                 "linear512.bit": {"locations": (1, 11, 21), "length": 10, "capacity": (512,), "string": "BDMMBDMDMM",
@@ -364,7 +473,8 @@ def main():
                                 ['linear512.bit', 'linear1024.bit'], [
                                 ], [], [], [], [], [], [], [], [],
                                 ['linear512.bit'],
-                                [], [], [], [], [], [], [], [], []]
+                                [], [], [], [], [], [], [], [], []],
+            "decorators": ["sorting"]
         }, "Merge Sort": {
             "bitstreams": {
                 "mergesort32.bit": {"locations": (4, 14, 24), "length": 7, "capacity": (32,), "string": "MBDMDMM",
@@ -377,27 +487,31 @@ def main():
                                 [],
                                 [], [], ['mergesort64.bit', 'mergesort128.bit'], [], [], ['mergesort32.bit'], [], [],
                                 [],
-                                [], [], [], ['mergesort64.bit'], [], [], ['mergesort32.bit'], [], [], [], [], [], []]
+                                [], [], [], ['mergesort64.bit'], [], [], ['mergesort32.bit'], [], [], [], [], [], []],
+            "decorators": ["composable", "sorting", "blocking"]
         }, "Merge Join": {
             "bitstreams": {
                 "join.bit": {"locations": (5, 15, 25), "length": 6, "capacity": (), "string": "BDMDMM",
                              "is_backwards": False}},
             "start_locations": [[], [], [], [], [], ['join.bit'], [], [], [], [], [], [], [], [], [], ['join.bit'], [],
                                 [],
-                                [], [], [], [], [], [], [], ['join.bit'], [], [], [], [], []]
+                                [], [], [], [], [], [], [], ['join.bit'], [], [], [], [], []],
+            "decorators": []
         }, "Addition": {
             "bitstreams": {
                 "addition.bit": {"locations": (7, 17, 27), "length": 4, "capacity": (), "string": "MDMM",
                                  "is_backwards": False}},
             "start_locations": [[], [], [], [], [], [], [], ['addition.bit'], [], [], [], [], [], [], [], [], [],
-                                ['addition.bit'], [], [], [], [], [], [], [], [], [], ['addition.bit'], [], [], []]
+                                ['addition.bit'], [], [], [], [], [], [], [], [], [], ['addition.bit'], [], [], []],
+            "decorators": []
         }, "Multiplier": {
             "bitstreams": {
                 "multiplier.bit": {"locations": (0, 10, 20), "length": 7, "capacity": (), "string": "MBDMMBD",
                                    "is_backwards": False}},
             "start_locations": [['multiplier.bit'], [], [], [], [], [], [], [], [], [], ['multiplier.bit'], [], [], [],
                                 [],
-                                [], [], [], [], [], ['multiplier.bit'], [], [], [], [], [], [], [], [], [], []]
+                                [], [], [], [], [], ['multiplier.bit'], [], [], [], [], [], [], [], [], [], []],
+            "decorators": []
         }, "Global Sum": {
             "bitstreams": {
                 "globalsum.bit": {"locations": (6, 16, 26), "length": 3, "capacity": (), "string": "DMD",
@@ -405,40 +519,54 @@ def main():
             "start_locations": [[], [], [], [], [], [], ['globalsum.bit'], [], [], [], [], [], [], [], [], [],
                                 ['globalsum.bit'], [], [], [], [], [], [], [
                                 ], [], [], ['globalsum.bit'], [], [], [],
-                                []]
+                                []],
+            "decorators": []
         }
     }
 
     graph = {
-        "A": {"operation": "Addition", "capacity": (), "before": (), "after": ("B",)},
-        "B": {"operation": "Multiplier", "capacity": (), "before": ("A",), "after": ()},
-        "C": {"operation": "Global Sum", "capacity": (), "before": (), "after": ()}
+        "A": {"operation": "Addition", "capacity": (), "before": (), "after": ("B",),
+              "tables": ["test_table"]},
+        "B": {"operation": "Multiplier", "capacity": (), "before": ("A",), "after": (), "tables": [""]},
+        "C": {"operation": "Global Sum", "capacity": (), "before": (), "after": (), "tables": ["test_table2"]}
     }
     q19_graph = {
-        "FirstFilter": {"operation": "Filter", "capacity": (4, 2), "before": (), "after": ("LinSort",)},
-        "LinSort": {"operation": "Linear Sort", "capacity": (511,), "before": ("FirstFilter",),
-                    "after": ("MergeSort",)},
-        "MergeSort": {"operation": "Merge Sort", "capacity": (31,), "before": ("LinSort",), "after": ("Join",)},
-        "Join": {"operation": "Merge Join", "capacity": (), "before": ("MergeSort",), "after": ("SecondFilter",)},
-        "SecondFilter": {"operation": "Filter", "capacity": (12, 4), "before": ("Join",), "after": ("Add",)},
-        "Add": {"operation": "Addition", "capacity": (), "before": ("SecondFilter",), "after": ("Mul",)},
-        "Mul": {"operation": "Multiplier", "capacity": (), "before": ("Add",), "after": ("Sum",)},
-        "Sum": {"operation": "Global Sum", "capacity": (), "before": ("Mul",), "after": ()}
+        "FirstFilter": {"operation": "Filter", "capacity": (4, 2), "before": ("test_table",), "after": ("LinSort",),
+                        "tables": ["test_table"]},
+        "LinSort": {"operation": "Linear Sort", "capacity": (10), "before": ("FirstFilter",),
+                    "after": ("MergeSort",), "tables": [""]},
+        "MergeSort": {"operation": "Merge Sort", "capacity": (10), "before": ("LinSort",), "after": ("Join",),
+                      "tables": [""]},
+        "Join": {"operation": "Merge Join", "capacity": (), "before": ("MergeSort",), "after": ("SecondFilter",),
+                 "tables": [""]},
+        "SecondFilter": {"operation": "Filter", "capacity": (12, 4), "before": ("Join",), "after": ("Add",),
+                         "tables": [""]},
+        "Add": {"operation": "Addition", "capacity": (), "before": ("SecondFilter",), "after": ("Mul",),
+                "tables": [""]},
+        "Mul": {"operation": "Multiplier", "capacity": (), "before": ("Add",), "after": ("Sum",), "tables": [""]},
+        "Sum": {"operation": "Global Sum", "capacity": (), "before": ("Mul",), "after": (), "tables": [""]}
     }
     capacity_test = {
-        "FirstFilter": {"operation": "Filter", "capacity": (4, 2), "before": (), "after": ("LinSort",)},
-        "LinSort": {"operation": "Linear Sort", "capacity": (513,), "before": ("FirstFilter",), "after": ("Sum",)},
-        "Sum": {"operation": "Global Sum", "capacity": (), "before": ("LinSort",), "after": ()}
+        "FirstFilter": {"operation": "Filter", "capacity": (4, 2), "before": (), "after": ("LinSort",),
+                        "tables": ["test_table2"]},
+        "LinSort": {"operation": "Linear Sort", "capacity": (10), "before": ("FirstFilter",), "after": ("Sum",),
+                    "tables": [""]},
+        "Sum": {"operation": "Global Sum", "capacity": (), "before": ("LinSort",), "after": (), "tables": [""]}
+    }
+    # Sorted sequence = ((begin, end, column_i),...); empty = unsorted
+    tables = {
+        "test_table": {"record_count": 10, "sorted_sequences": ()},
+        "test_table2": {"record_count": 10000, "sorted_sequences": ((0, 9999, 0),)}
     }
 
-    starting_nodes = ["A", "C"]
-    find_plans_and_print(starting_nodes, graph, resource_string, hw_library)
-    q19_starting_nodes = ["FirstFilter"]
-    find_plans_and_print(q19_starting_nodes, capacity_test,
-                         resource_string, hw_library)
-    q19_starting_nodes = ["FirstFilter"]
-    find_plans_and_print(q19_starting_nodes, q19_graph,
-                         resource_string, hw_library)
+    # starting_nodes = ["A", "C"]
+    # find_plans_and_print(starting_nodes, graph, resource_string, hw_library, tables)
+    capacity_test_nodes = ["FirstFilter"]
+    find_plans_and_print(capacity_test_nodes, capacity_test,
+                         resource_string, hw_library, tables)
+    # q19_starting_nodes = ["FirstFilter"]
+    # find_plans_and_print(q19_starting_nodes, q19_graph,
+    #                      resource_string, hw_library, tables)
 
 
 if __name__ == '__main__':
