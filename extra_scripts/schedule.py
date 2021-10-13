@@ -217,6 +217,11 @@ def create_new_available_nodes_lists(all_nodes, available_nodes, past_nodes, nod
     return new_available_nodes, new_past_nodes
 
 
+def is_table_sorted(table, column_id):
+    return len(table["sorted_sequences"]) == 1 and table["sorted_sequences"][0][0] == 0 and \
+           table["sorted_sequences"][0][1] == table["record_count"] and table["sorted_sequences"][0][2] == column_id
+
+
 # TODO: Update new_data_tables and retrun if the node can be returned or not (update all_new_nodes if yes!). Then run!
 # This would be done by the operation driver
 def update_node_table(all_nodes, new_all_nodes, node, bitstream_capacity, operation, data_tables, new_data_tables):
@@ -231,24 +236,52 @@ def update_node_table(all_nodes, new_all_nodes, node, bitstream_capacity, operat
         # Update the table to have gone through the linear sorter
         sequence_count = current_table["record_count"] // bitstream_capacity[0]
         if sequence_count == 0:
-            current_table["sorted_sequences"] = (0, current_table["record_count"] - 1, 0)
+            current_table["sorted_sequences"] = ((0, current_table["record_count"], 0),)
         else:
             for sequence_id in range(sequence_count):
-                new_sorted_sequences.append((bitstream_capacity[0] * sequence_id,
-                                             bitstream_capacity[0] * (sequence_id + 1) - 1, 0))
+                new_sorted_sequences.append((bitstream_capacity[0] * sequence_id, bitstream_capacity[0], 0))
                 if sequence_id == sequence_count - 1:
-                    new_sorted_sequences.append((bitstream_capacity[0] * sequence_count,
-                                                 (bitstream_capacity[0] * sequence_count + current_table[
-                                                     "record_count"] % bitstream_capacity[0]) - 1, 0))
+                    new_sorted_sequences.append((bitstream_capacity[0] * sequence_count, current_table[
+                        "record_count"] % bitstream_capacity[0], 0))
             current_table["sorted_sequences"] = tuple(new_sorted_sequences)
         new_data_tables[table_name] = current_table
-        # Move the table name to the correct place for next nodes. This method should also go to all other non-sorting nodes!
+        # Move the table name to the correct place for next nodes.
+        # This method should also go to all other non-sorting nodes!
         add_new_table_names_to_next_nodes(all_nodes, new_all_nodes, node, table_name)
 
         return True
     elif operation == "Merge Sort":
-        pass  # Do later as it is a bit more difficult -> Check table forwarding that the node after linear sort gets the correct table and then commit!
-        return True
+        if len(all_nodes[node]["tables"]) != 1:
+            raise ValueError("Wrong number of tables for merge sort!")
+        if len(bitstream_capacity) != 1:
+            raise ValueError("Wrong merge sort capacity given!")
+        table_name = all_nodes[node]["tables"][0]
+        current_table = data_tables[table_name].copy()
+        # Not checking if it is sorted with the correct column_id (just id 0)
+        if is_table_sorted(current_table, 0):
+            raise ValueError("Table is sorted already!")
+        new_sorted_sequences = []
+        current_sequences = current_table["sorted_sequences"]
+        if len(current_sequences) == 0:
+            new_sorted_sequences.append((0, min(bitstream_capacity[0], current_table["record_count"]), 0))
+        else:
+            new_sequence_length = 0
+            for i in range(min(bitstream_capacity[0], len(current_sequences))):
+                new_sequence_length += current_sequences[i][1]
+            if bitstream_capacity[0] > len(current_sequences) and new_sequence_length < current_table["record_count"]:
+                new_sequence_length += bitstream_capacity[0] - len(current_sequences)
+                new_sequence_length = min(new_sequence_length, current_table["record_count"])
+            new_sorted_sequences.append((0, new_sequence_length, 0))
+            if new_sequence_length < current_table["record_count"] and bitstream_capacity[0] < len(current_sequences):
+                for sequence_i in range(bitstream_capacity[0], len(current_sequences)):
+                    new_sorted_sequences.append(current_sequences[sequence_i])
+        current_table["sorted_sequences"] = tuple(new_sorted_sequences)
+        new_data_tables[table_name] = current_table
+        if is_table_sorted(current_table, 0):
+            add_new_table_names_to_next_nodes(all_nodes, new_all_nodes, node, table_name)
+            return True
+        else:
+            return False
 
 
 def add_new_table_names_to_next_nodes(all_nodes, new_all_nodes, node, table_name):
@@ -306,6 +339,7 @@ def update_all_nodes(all_nodes, bitstream, data_tables, hw_library, node, node_c
         should_node_be_removed = find_missing_utility(bitstream_capacity, missing_utility, node_cost)
         update_graph_capacities(all_nodes, missing_utility, new_all_nodes, node, should_node_be_removed)
         # TODO: This needs to be done for all module drivers
+        #  - For now a workaround can be if the module has multiple input tables (like join then do things differently)
         add_new_table_names_to_next_nodes(all_nodes, new_all_nodes, node, all_nodes[node]["tables"][0])
     # Update all nodes
     if should_node_be_removed:
@@ -533,9 +567,9 @@ def main():
     q19_graph = {
         "FirstFilter": {"operation": "Filter", "capacity": (4, 2), "before": ("test_table",), "after": ("LinSort",),
                         "tables": ["test_table"]},
-        "LinSort": {"operation": "Linear Sort", "capacity": (10), "before": ("FirstFilter",),
+        "LinSort": {"operation": "Linear Sort", "capacity": (), "before": ("FirstFilter",),
                     "after": ("MergeSort",), "tables": [""]},
-        "MergeSort": {"operation": "Merge Sort", "capacity": (10), "before": ("LinSort",), "after": ("Join",),
+        "MergeSort": {"operation": "Merge Sort", "capacity": (), "before": ("LinSort",), "after": ("Join",),
                       "tables": [""]},
         "Join": {"operation": "Merge Join", "capacity": (), "before": ("MergeSort",), "after": ("SecondFilter",),
                  "tables": [""]},
@@ -549,24 +583,34 @@ def main():
     capacity_test = {
         "FirstFilter": {"operation": "Filter", "capacity": (4, 2), "before": (), "after": ("LinSort",),
                         "tables": ["test_table2"]},
-        "LinSort": {"operation": "Linear Sort", "capacity": (10), "before": ("FirstFilter",), "after": ("Sum",),
+        "LinSort": {"operation": "Linear Sort", "capacity": (), "before": ("FirstFilter",), "after": ("Sum",),
                     "tables": [""]},
         "Sum": {"operation": "Global Sum", "capacity": (), "before": ("LinSort",), "after": (), "tables": [""]}
     }
-    # Sorted sequence = ((begin, end, column_i),...); empty = unsorted
+    filter_test = {
+        "LinSort": {"operation": "Linear Sort", "capacity": (), "before": (), "after": ("MergeSort",),
+                    "tables": ["huge_table"]},
+        "MergeSort": {"operation": "Merge Sort", "capacity": (), "before": ("LinSort",), "after": (),
+                      "tables": [""]}}
+    # Sorted sequence = ((begin, length, column_i),...); empty = unsorted
     tables = {
-        "test_table": {"record_count": 10, "sorted_sequences": ()},
-        "test_table2": {"record_count": 10000, "sorted_sequences": ((0, 9999, 0),)}
+        "test_table": {"record_count": 2000, "sorted_sequences": ()},
+        "test_table2": {"record_count": 10000, "sorted_sequences": ((0, 10000, 0),)},
+        "huge_table": {"record_count": 210000, "sorted_sequences": ((0, 10, 0), (10, 20, 0),)}
     }
 
     # starting_nodes = ["A", "C"]
     # find_plans_and_print(starting_nodes, graph, resource_string, hw_library, tables)
-    capacity_test_nodes = ["FirstFilter"]
-    find_plans_and_print(capacity_test_nodes, capacity_test,
-                         resource_string, hw_library, tables)
-    # q19_starting_nodes = ["FirstFilter"]
-    # find_plans_and_print(q19_starting_nodes, q19_graph,
+    # capacity_test_nodes = ["FirstFilter"]
+    # find_plans_and_print(capacity_test_nodes, capacity_test,
     #                      resource_string, hw_library, tables)
+    # filter_test_nodes = ["LinSort"]
+    # find_plans_and_print(filter_test_nodes, filter_test,
+    #                      resource_string, hw_library, tables)
+    #
+    q19_starting_nodes = ["FirstFilter"]
+    find_plans_and_print(q19_starting_nodes, q19_graph,
+                         resource_string, hw_library, tables)
 
 
 if __name__ == '__main__':
