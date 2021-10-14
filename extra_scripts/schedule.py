@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Tuple
 from sys import maxsize
+from enum import Enum
 
 
 @dataclass(eq=True, frozen=True)
@@ -22,6 +23,14 @@ class FancyText:
     UNDERLINE = '\033[4m'
     DEFAULT = '\033[39m'
     END = '\033[0m'
+
+
+class ModuleSelection(Enum):
+    ALL_AVAILABLE = 1
+    FIRST_AVAILABLE = 2
+    LAST_AVAILABLE = 3
+    SHORTEST = 4
+    LONGEST = 5
 
 
 # DON'T TOUCH THIS ONE!
@@ -104,8 +113,8 @@ def get_taken_columns(current_run):
 
 def current_run_has_first_module(hw_library, current_run, node):
     for scheduled_module in current_run:
-        if scheduled_module.node_name != node and "first_module" in hw_library[scheduled_module.operation][
-            "decorators"]:
+        if scheduled_module.node_name != node \
+                and "first_module" in hw_library[scheduled_module.operation]["decorators"]:
             return True
     return False
 
@@ -148,7 +157,7 @@ def get_new_available_nodes(scheduled_node, past_nodes, all_nodes):
 # Main recursive loop
 def place_nodes_recursively_only_placement_check(available_nodes, past_nodes, all_nodes, current_run, current_plan,
                                                  all_plans, reduce_single_runs, hw_library, current_min_runs_pointer,
-                                                 data_tables):
+                                                 data_tables, module_placement_selections):
     if len(current_plan) <= current_min_runs_pointer[0]:
         if available_nodes:
             for node in available_nodes:
@@ -156,7 +165,8 @@ def place_nodes_recursively_only_placement_check(available_nodes, past_nodes, al
                     current_run, node, all_nodes, all_nodes[node]["operation"], hw_library)
                 taken_columns = get_taken_columns(current_run)
                 available_module_placements = get_scheduled_modules_for_node_after_pos(all_nodes, min_position, node,
-                                                                                       taken_columns, hw_library)
+                                                                                       taken_columns, hw_library,
+                                                                                       module_placement_selections)
                 if available_module_placements:
                     # Place node in current run
                     for insert_at, module_placement in available_module_placements:
@@ -164,20 +174,23 @@ def place_nodes_recursively_only_placement_check(available_nodes, past_nodes, al
                         new_current_run[insert_at:insert_at] = [module_placement]
                         find_next_module_placement(all_nodes, all_plans, available_nodes, current_plan, hw_library,
                                                    module_placement, new_current_run, node, past_nodes,
-                                                   reduce_single_runs, current_min_runs_pointer, data_tables)
+                                                   reduce_single_runs, current_min_runs_pointer, data_tables,
+                                                   module_placement_selections)
                 if not available_module_placements or not reduce_single_runs:
                     # Schedule current run and place node in next run
                     new_current_plan = current_plan.copy()
                     if current_run:
                         new_current_plan.append(tuple(current_run))
                     available_module_placements = get_scheduled_modules_for_node_after_pos(all_nodes, 0, node, [],
-                                                                                           hw_library)
+                                                                                           hw_library,
+                                                                                           module_placement_selections)
                     if available_module_placements:
                         for _, module_placement in available_module_placements:
                             find_next_module_placement(all_nodes, all_plans, available_nodes, new_current_plan,
                                                        hw_library,
                                                        module_placement, [module_placement], node, past_nodes,
-                                                       reduce_single_runs, current_min_runs_pointer, data_tables)
+                                                       reduce_single_runs, current_min_runs_pointer, data_tables,
+                                                       module_placement_selections)
                     else:
                         raise ValueError("Something went wrong!")
 
@@ -282,7 +295,8 @@ def get_current_node_index(new_all_nodes, next_node, node):
 
 
 def find_next_module_placement(all_nodes, all_plans, available_nodes, new_current_plan, hw_library, module_placement,
-                               new_current_run, node, past_nodes, reduce_single_runs, current_min_runs, data_tables):
+                               new_current_run, node, past_nodes, reduce_single_runs, current_min_runs, data_tables,
+                               module_placement_selections):
     # Check requirements and utility and update all nodes accordingly no matter if the node is removed or not.
     new_all_nodes, new_data_tables, satisfies_requirements = update_all_nodes(all_nodes, module_placement.bitstream,
                                                                               data_tables, hw_library, node,
@@ -299,7 +313,7 @@ def find_next_module_placement(all_nodes, all_plans, available_nodes, new_curren
     place_nodes_recursively_only_placement_check(new_available_nodes, new_past_nodes,
                                                  new_all_nodes, new_current_run.copy(), new_current_plan.copy(),
                                                  all_plans, reduce_single_runs, hw_library, current_min_runs,
-                                                 new_data_tables)
+                                                 new_data_tables, module_placement_selections)
 
 
 def add_tables_to_next_nodes(all_nodes, new_all_nodes, node, input_tables, current_node_decorators, new_data_tables):
@@ -373,7 +387,51 @@ def find_missing_utility(bitstream_capacity, missing_utility, node_cost):
     return should_node_be_removed
 
 
-def get_scheduled_modules_for_node_after_pos(all_nodes, min_position, node, taken_columns, hw_library):
+# An enum refactoring is available where each enum has a function attached to it to find the suitable modules
+# TODO: Can optimise such that multiple selection options is faster
+def select_according_to_preferences(available_module_placements, module_placement_selections):
+    chosen_module_placements = []
+    if ModuleSelection.ALL_AVAILABLE in module_placement_selections:
+        chosen_module_placements = available_module_placements
+    if ModuleSelection.LAST_AVAILABLE in module_placement_selections:
+        max_available_position = 0
+        for placement in available_module_placements:
+            if placement[1].position[0] > max_available_position:
+                max_available_position = placement[1].position[0]
+        for placement in available_module_placements:
+            if placement[1].position[0] == max_available_position and placement not in chosen_module_placements:
+                chosen_module_placements.append(placement)
+    if ModuleSelection.FIRST_AVAILABLE in module_placement_selections:
+        min_available_position = maxsize
+        for placement in available_module_placements:
+            if placement[1].position[0] < min_available_position:
+                min_available_position = placement[1].position[0]
+        for placement in available_module_placements:
+            if placement[1].position[0] == min_available_position and placement not in chosen_module_placements:
+                chosen_module_placements.append(placement)
+    if ModuleSelection.LONGEST in module_placement_selections:
+        max_module_size = 0
+        for placement in available_module_placements:
+            if placement[1].position[1] - placement[1].position[1] + 1 > max_module_size:
+                max_module_size = placement[1].position[1] - placement[1].position[1] + 1
+        for placement in available_module_placements:
+            if placement[1].position[1] - placement[1].position[1] + 1 == max_module_size \
+                    and placement not in chosen_module_placements:
+                chosen_module_placements.append(placement)
+    if ModuleSelection.SHORTEST in module_placement_selections:
+        min_module_size = maxsize
+        for placement in available_module_placements:
+            if placement[1].position[1] - placement[1].position[1] + 1 < min_module_size:
+                min_module_size = placement[1].position[1] - placement[1].position[1] + 1
+        for placement in available_module_placements:
+            if placement[1].position[1] - placement[1].position[1] + 1 == min_module_size \
+                    and placement not in chosen_module_placements:
+                chosen_module_placements.append(placement)
+    return chosen_module_placements
+
+
+def get_scheduled_modules_for_node_after_pos(all_nodes, min_position, node, taken_columns, hw_library,
+                                             module_placement_selections):
     current_operation = all_nodes[node]["operation"]
     available_bitstreams = find_all_available_bitstream(
         current_operation, min_position, taken_columns, hw_library)
@@ -386,6 +444,8 @@ def get_scheduled_modules_for_node_after_pos(all_nodes, min_position, node, take
             available_module_placements.append(
                 (chosen_module_position,
                  ScheduledModule(node, current_operation, chosen_bitstream, (chosen_column_position, end_index))))
+        available_module_placements = select_according_to_preferences(available_module_placements,
+                                                                      module_placement_selections)
     return available_module_placements
 
 
@@ -458,14 +518,14 @@ def print_node_placement_permutations(available_nodes, all_nodes):
         print(f"{plan_i}: {simple_plans[plan_i]}")
 
 
-def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, data_tables):
+def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, data_tables, module_placement_selections):
     print_node_placement_permutations(starting_nodes, graph)
     print(f"{FancyText.UNDERLINE}Plans with placed modules below:{FancyText.END}")
     # Now with string match checks
     resulting_plans = []
     min_runs_pointer = [maxsize]
     place_nodes_recursively_only_placement_check(starting_nodes, [], graph, [], [], resulting_plans, True,
-                                                 hw_library, min_runs_pointer, data_tables)
+                                                 hw_library, min_runs_pointer, data_tables, module_placement_selections)
     resulting_plans = list(dict.fromkeys(resulting_plans))
     print_statistics(resulting_plans)
     print_all_runs_using_less_runs_than(resulting_plans, min_runs_pointer[0] + 1, resource_string)
@@ -598,37 +658,38 @@ def main():
                       "tables": [""]}}
     # Sorted sequence = ((begin, length, column_i),...); empty = unsorted
     tables = {
-        "test_table": {"record_count": 1500, "sorted_sequences": ()},
+        "test_table": {"record_count": 150000, "sorted_sequences": ()},
         "test_table2": {"record_count": 10000, "sorted_sequences": ((0, 10000, 0),)},
         "huge_table": {"record_count": 210000, "sorted_sequences": ((0, 10, 0), (10, 20, 0),)}
     }
 
     # starting_nodes = ["A", "C"]
-    # find_plans_and_print(starting_nodes, graph, resource_string, hw_library, tables)
+    # find_plans_and_print(starting_nodes, graph, resource_string, hw_library, tables, [ModuleSelection.ALL_AVAILABLE])
     # capacity_test_nodes = ["FirstFilter"]
     # find_plans_and_print(capacity_test_nodes, capacity_test,
-    #                      resource_string, hw_library, tables)
+    #                      resource_string, hw_library, tables, [ModuleSelection.ALL_AVAILABLE])
     # filter_test_nodes = ["LinSort"]
     # find_plans_and_print(filter_test_nodes, filter_test,
-    #                      resource_string, hw_library, tables)
+    #                      resource_string, hw_library, tables, [ModuleSelection.FIRST_AVAILABLE, ModuleSelection.SHORTEST, ModuleSelection.LONGEST])
     #
     q19_starting_nodes = ["FirstFilter"]
     find_plans_and_print(q19_starting_nodes, q19_graph,
-                         resource_string, hw_library, tables)
+                         resource_string, hw_library, tables, [ModuleSelection.FIRST_AVAILABLE])
 
 
 if __name__ == '__main__':
     main()
     # Missing parts:
-    # 1. Correct stream capacity
     # 2. Backwards paths
     # Decorators:
-    #   Composable
-    #   First module
     #   Reducing
-    #   Increasing
     #   How many outputs - Just the graph has to say 1st or 2nd output
     # Optimisation rules:
     #   Merge sort removal
     #   Reordering
     #   Data duplication for filters
+    #   Actually linear sort removal is also an option
+
+    # More to add: ANDing and ORing selections using this:
+    # https://stackoverflow.com/questions/40338652/how-to-define-enum-values-that-are-functions
+    #
