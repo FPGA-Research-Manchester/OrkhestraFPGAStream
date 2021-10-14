@@ -6,6 +6,7 @@ from sys import maxsize
 @dataclass(eq=True, frozen=True)
 class ScheduledModule:
     node_name: str
+    operation: str
     bitstream: str
     position: Tuple[int, int]
 
@@ -101,7 +102,18 @@ def get_taken_columns(current_run):
     return taken_columns
 
 
-def get_min_position_in_current_run(current_run, node, all_nodes):
+def current_run_has_first_module(hw_library, current_run, node):
+    for scheduled_module in current_run:
+        if scheduled_module.node_name != node and "first_module" in hw_library[scheduled_module.operation][
+            "decorators"]:
+            return True
+    return False
+
+
+def get_min_position_in_current_run(current_run, node, all_nodes, operation, hw_library):
+    if "first_module" in hw_library[operation]["decorators"] and current_run_has_first_module(hw_library, current_run,
+                                                                                              node):
+        return maxsize
     prereq_nodes = all_nodes[node]["before"]
     currently_scheduled_prereq_nodes = []
     for previous_node in prereq_nodes:
@@ -109,6 +121,9 @@ def get_min_position_in_current_run(current_run, node, all_nodes):
             if previous_node == module.node_name:
                 currently_scheduled_prereq_nodes.append(module)
     if currently_scheduled_prereq_nodes:
+        # Figure out how to not place more than one first_module
+        if "first_module" in hw_library[operation]["decorators"]:
+            return maxsize
         current_min = 0
         for module in currently_scheduled_prereq_nodes:
             if module.position[1] > current_min:
@@ -130,6 +145,7 @@ def get_new_available_nodes(scheduled_node, past_nodes, all_nodes):
     return new_available_nodes
 
 
+# Main recursive loop
 def place_nodes_recursively_only_placement_check(available_nodes, past_nodes, all_nodes, current_run, current_plan,
                                                  all_plans, reduce_single_runs, hw_library, current_min_runs_pointer,
                                                  data_tables):
@@ -137,7 +153,7 @@ def place_nodes_recursively_only_placement_check(available_nodes, past_nodes, al
         if available_nodes:
             for node in available_nodes:
                 min_position = get_min_position_in_current_run(
-                    current_run, node, all_nodes)
+                    current_run, node, all_nodes, all_nodes[node]["operation"], hw_library)
                 taken_columns = get_taken_columns(current_run)
                 available_module_placements = get_scheduled_modules_for_node_after_pos(all_nodes, min_position, node,
                                                                                        taken_columns, hw_library)
@@ -173,39 +189,6 @@ def place_nodes_recursively_only_placement_check(available_nodes, past_nodes, al
                 current_min_runs_pointer[0] = len(current_plan)
 
 
-def is_bitstream_utility_great_enough(bitstream, hw_library, node_cost, operation):
-    bitstream_capacity = hw_library[operation]["bitstreams"][bitstream]["capacity"]
-    satisfies_requirements = True
-    missing_utility = []
-    if len(bitstream_capacity) != len(node_cost):
-        raise ValueError("Capacity parameters don't match")
-    for capacity_parameter_index in range(len(bitstream_capacity)):
-        missing_utility.append(node_cost[capacity_parameter_index] - bitstream_capacity[capacity_parameter_index])
-        if bitstream_capacity[capacity_parameter_index] < node_cost[capacity_parameter_index]:
-            satisfies_requirements = False
-
-    if "composable" not in hw_library[operation]["decorators"]:
-        satisfies_requirements = True
-
-    return satisfies_requirements, missing_utility
-
-
-def get_new_all_nodes_with_updated_costs(all_nodes, missing_utility, node, satisfies_requirements):
-    new_all_nodes = all_nodes.copy()
-    if not satisfies_requirements:
-        new_all_nodes[node] = all_nodes[node].copy()
-        new_capacity_values = []
-        for capacity_parameter_index in range(len(missing_utility)):
-            if missing_utility[capacity_parameter_index] <= 0:
-                new_capacity_values.append(0)
-            else:
-                new_capacity_values.append(missing_utility[capacity_parameter_index])
-        new_all_nodes[node]["capacity"] = tuple(new_capacity_values)
-    else:
-        del new_all_nodes[node]
-    return new_all_nodes
-
-
 def create_new_available_nodes_lists(all_nodes, available_nodes, past_nodes, node, satisfies_requirements):
     new_available_nodes = available_nodes.copy()
     new_past_nodes = past_nodes.copy()
@@ -222,10 +205,9 @@ def is_table_sorted(table, column_id):
            table["sorted_sequences"][0][1] == table["record_count"] and table["sorted_sequences"][0][2] == column_id
 
 
-# TODO: Update new_data_tables and retrun if the node can be returned or not (update all_new_nodes if yes!). Then run!
 # This would be done by the operation driver
-def update_node_table(all_nodes, new_all_nodes, node, bitstream_capacity, operation, data_tables, new_data_tables):
-    if operation == "Linear Sort":
+def update_node_data_tables(all_nodes, node, bitstream_capacity, current_node_decorators, data_tables, new_data_tables):
+    if "partial_sort" in current_node_decorators:
         if len(all_nodes[node]["tables"]) != 1:
             raise ValueError("Wrong number of tables for linear sort!")
         if len(bitstream_capacity) != 1:
@@ -245,12 +227,8 @@ def update_node_table(all_nodes, new_all_nodes, node, bitstream_capacity, operat
                         "record_count"] % bitstream_capacity[0], 0))
             current_table["sorted_sequences"] = tuple(new_sorted_sequences)
         new_data_tables[table_name] = current_table
-        # Move the table name to the correct place for next nodes.
-        # This method should also go to all other non-sorting nodes!
-        add_new_table_names_to_next_nodes(all_nodes, new_all_nodes, node, table_name)
-
         return True
-    elif operation == "Merge Sort":
+    elif "blocking_sort" in current_node_decorators:
         if len(all_nodes[node]["tables"]) != 1:
             raise ValueError("Wrong number of tables for merge sort!")
         if len(bitstream_capacity) != 1:
@@ -278,13 +256,12 @@ def update_node_table(all_nodes, new_all_nodes, node, bitstream_capacity, operat
         current_table["sorted_sequences"] = tuple(new_sorted_sequences)
         new_data_tables[table_name] = current_table
         if is_table_sorted(current_table, 0):
-            add_new_table_names_to_next_nodes(all_nodes, new_all_nodes, node, table_name)
             return True
         else:
             return False
 
 
-def add_new_table_names_to_next_nodes(all_nodes, new_all_nodes, node, table_name):
+def add_new_table_to_next_nodes(all_nodes, new_all_nodes, node, table_name):
     for next_node in new_all_nodes[node]["after"]:
         new_all_nodes[next_node] = all_nodes[next_node].copy()
 
@@ -325,6 +302,30 @@ def find_next_module_placement(all_nodes, all_plans, available_nodes, new_curren
                                                  new_data_tables)
 
 
+def add_tables_to_next_nodes(all_nodes, new_all_nodes, node, input_tables, current_node_decorators, new_data_tables):
+    # Data generator decorators haven't been added yet!
+    if len(input_tables) == 0:
+        raise ValueError("No input data found!")
+    if "sorted_input" in current_node_decorators:
+        for table_name in input_tables:
+            if not is_table_sorted(new_data_tables[table_name], 0):
+                raise ValueError("Table should be sorted!")
+    # Simplified decorator for equi-join
+    if "largest_input_is_output" in current_node_decorators:
+        max_table_name = ""
+        max_size = 0
+        for table_name in input_tables:
+            if new_data_tables[table_name]["record_count"] >= max_size:
+                max_table_name = table_name
+                max_size = new_data_tables[table_name]["record_count"]
+        add_new_table_to_next_nodes(all_nodes, new_all_nodes, node, max_table_name)
+    else:
+        if len(input_tables) != 1:
+            raise ValueError("Should only have one input!")
+        else:
+            add_new_table_to_next_nodes(all_nodes, new_all_nodes, node, input_tables[0])
+
+
 def update_all_nodes(all_nodes, bitstream, data_tables, hw_library, node, node_cost, operation):
     bitstream_capacity = hw_library[operation]["bitstreams"][bitstream]["capacity"]
     missing_utility = []
@@ -332,17 +333,19 @@ def update_all_nodes(all_nodes, bitstream, data_tables, hw_library, node, node_c
     new_data_tables = data_tables.copy()
     if "sorting" in hw_library[operation]["decorators"]:
         # Update table
-        should_node_be_removed = update_node_table(all_nodes, new_all_nodes, node, bitstream_capacity, operation,
-                                                   data_tables, new_data_tables)
+        should_node_be_removed = update_node_data_tables(all_nodes, node, bitstream_capacity,
+                                                         hw_library[operation]["decorators"],
+                                                         data_tables, new_data_tables)
     else:
         # Find missing utility
         should_node_be_removed = find_missing_utility(bitstream_capacity, missing_utility, node_cost)
         update_graph_capacities(all_nodes, missing_utility, new_all_nodes, node, should_node_be_removed)
-        # TODO: This needs to be done for all module drivers
-        #  - For now a workaround can be if the module has multiple input tables (like join then do things differently)
-        add_new_table_names_to_next_nodes(all_nodes, new_all_nodes, node, all_nodes[node]["tables"][0])
     # Update all nodes
     if should_node_be_removed:
+        add_tables_to_next_nodes(all_nodes, new_all_nodes, node, all_nodes[node]["tables"],
+                                 hw_library[operation]["decorators"],
+                                 new_data_tables)
+
         del new_all_nodes[node]
     return new_all_nodes, new_data_tables, should_node_be_removed
 
@@ -381,7 +384,8 @@ def get_scheduled_modules_for_node_after_pos(all_nodes, min_position, node, take
                                                                                         chosen_column_position,
                                                                                         current_operation, hw_library)
             available_module_placements.append(
-                (chosen_module_position, ScheduledModule(node, chosen_bitstream, (chosen_column_position, end_index))))
+                (chosen_module_position,
+                 ScheduledModule(node, current_operation, chosen_bitstream, (chosen_column_position, end_index))))
     return available_module_placements
 
 
@@ -508,7 +512,7 @@ def main():
                                 ], [], [], [], [], [], [], [], [],
                                 ['linear512.bit'],
                                 [], [], [], [], [], [], [], [], []],
-            "decorators": ["sorting"]
+            "decorators": ["sorting", "partial_sort"]
         }, "Merge Sort": {
             "bitstreams": {
                 "mergesort32.bit": {"locations": (4, 14, 24), "length": 7, "capacity": (32,), "string": "MBDMDMM",
@@ -522,7 +526,7 @@ def main():
                                 [], [], ['mergesort64.bit', 'mergesort128.bit'], [], [], ['mergesort32.bit'], [], [],
                                 [],
                                 [], [], [], ['mergesort64.bit'], [], [], ['mergesort32.bit'], [], [], [], [], [], []],
-            "decorators": ["composable", "sorting", "blocking"]
+            "decorators": ["composable", "blocking_sort", "sorting", "first_module"]
         }, "Merge Join": {
             "bitstreams": {
                 "join.bit": {"locations": (5, 15, 25), "length": 6, "capacity": (), "string": "BDMDMM",
@@ -530,7 +534,7 @@ def main():
             "start_locations": [[], [], [], [], [], ['join.bit'], [], [], [], [], [], [], [], [], [], ['join.bit'], [],
                                 [],
                                 [], [], [], [], [], [], [], ['join.bit'], [], [], [], [], []],
-            "decorators": []
+            "decorators": ["sorted_input", "largest_input_is_output"]
         }, "Addition": {
             "bitstreams": {
                 "addition.bit": {"locations": (7, 17, 27), "length": 4, "capacity": (), "string": "MDMM",
@@ -572,7 +576,7 @@ def main():
         "MergeSort": {"operation": "Merge Sort", "capacity": (), "before": ("LinSort",), "after": ("Join",),
                       "tables": [""]},
         "Join": {"operation": "Merge Join", "capacity": (), "before": ("MergeSort",), "after": ("SecondFilter",),
-                 "tables": [""]},
+                 "tables": ["", "test_table2"]},
         "SecondFilter": {"operation": "Filter", "capacity": (12, 4), "before": ("Join",), "after": ("Add",),
                          "tables": [""]},
         "Add": {"operation": "Addition", "capacity": (), "before": ("SecondFilter",), "after": ("Mul",),
@@ -594,7 +598,7 @@ def main():
                       "tables": [""]}}
     # Sorted sequence = ((begin, length, column_i),...); empty = unsorted
     tables = {
-        "test_table": {"record_count": 2000, "sorted_sequences": ()},
+        "test_table": {"record_count": 1500, "sorted_sequences": ()},
         "test_table2": {"record_count": 10000, "sorted_sequences": ((0, 10000, 0),)},
         "huge_table": {"record_count": 210000, "sorted_sequences": ((0, 10, 0), (10, 20, 0),)}
     }
