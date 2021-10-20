@@ -419,20 +419,8 @@ def update_node_data_tables(all_nodes, node, bitstream_capacity, current_node_de
             raise ValueError("Wrong linear sort capacity given!")
         table_name = all_nodes[node]["tables"][0]
         current_table = data_tables[table_name].copy()
-        new_sorted_sequences = []
-        # Update the table to have gone through the linear sorter
-        sequence_count = current_table["record_count"] // bitstream_capacity[0]
-        if sequence_count == 0:
-            current_table["sorted_sequences"] = (
-                (0, current_table["record_count"], 0),)
-        else:
-            for sequence_id in range(sequence_count):
-                new_sorted_sequences.append(
-                    (bitstream_capacity[0] * sequence_id, bitstream_capacity[0], 0))
-                if sequence_id == sequence_count - 1:
-                    new_sorted_sequences.append((bitstream_capacity[0] * sequence_count, current_table[
-                        "record_count"] % bitstream_capacity[0], 0))
-            current_table["sorted_sequences"] = tuple(new_sorted_sequences)
+        new_sorted_sequences = get_linear_sorter_sequences(bitstream_capacity[0], current_table["record_count"])
+        current_table["sorted_sequences"] = tuple(new_sorted_sequences)
         new_data_tables[table_name] = current_table
         return True
     elif "blocking_sort" in current_node_decorators:
@@ -469,6 +457,20 @@ def update_node_data_tables(all_nodes, node, bitstream_capacity, current_node_de
             return True
         else:
             return False
+
+
+def get_linear_sorter_sequences(bitstream_capacity, record_count):
+    new_sorted_sequences = []
+    sequence_count = record_count // bitstream_capacity
+    if sequence_count == 0:
+        new_sorted_sequences.append((0, record_count, 0))
+    else:
+        for sequence_id in range(sequence_count):
+            new_sorted_sequences.append(
+                (bitstream_capacity * sequence_id, bitstream_capacity, 0))
+            if sequence_id == sequence_count - 1:
+                new_sorted_sequences.append((bitstream_capacity * sequence_count, record_count % bitstream_capacity, 0))
+    return new_sorted_sequences
 
 
 def is_table_sorted(table, column_id):
@@ -561,7 +563,6 @@ def add_new_table_to_next_nodes(all_nodes, new_all_nodes, node, table_names):
             new_all_nodes, next_node, node)
 
         for node_table_index, current_node_stream_index in current_node_indexes:
-            # Add a new name to this table
             # Assuming it is large enough!
             new_all_nodes[next_node]["tables"][node_table_index] = table_names[current_node_stream_index]
 
@@ -585,25 +586,161 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
     # Now with string match checks
     resulting_plans = []
     min_runs_pointer = [maxsize]
-    start_time = perf_counter()
     skipped_placements_stat_pointer = [0, 0]
+
+    start_time = perf_counter()
+    # Prepare first_nodes
     first_nodes = get_first_nodes_from_saved_nodes(saved_nodes, graph)
     add_all_first_modules_nodes_to_list(first_nodes, graph, hw_library)
     add_all_splitting_modules_nodes_to_list(first_nodes, graph)
-    place_nodes_recursively(starting_nodes, [], graph, [], [], resulting_plans, True,
-                            hw_library, min_runs_pointer, data_tables, module_placement_selections,
-                            skipped_placements_stat_pointer, first_nodes)
-    stop_time = perf_counter()
-    print(f"Number of full plans generated: {len(resulting_plans)}")
-    print(f"Number of nodes placed to runs: {skipped_placements_stat_pointer[1]}")
-    print(f"Number of module placements discarded: {skipped_placements_stat_pointer[0]}")
-    print(
-        f"Number of discarded placements per node: {skipped_placements_stat_pointer[0] / skipped_placements_stat_pointer[1]:.3f}")
-    resulting_plans = list(dict.fromkeys(resulting_plans))
-    print_statistics(resulting_plans)
-    print_all_runs_using_less_runs_than(
-        resulting_plans, min_runs_pointer[0] + 1, resource_string)
-    print(f"Elapsed time of the scheduler: {stop_time - start_time:.3f}s")
+    # Find satisfying bitstreams
+    add_satisfying_bitstream_locations_to_graph(starting_nodes, graph, hw_library, data_tables)
+    # Start the main recursive method
+    # place_nodes_recursively(starting_nodes, [], graph, [], [], resulting_plans, True,
+    #                         hw_library, min_runs_pointer, data_tables, module_placement_selections,
+    #                         skipped_placements_stat_pointer, first_nodes)
+    # stop_time = perf_counter()
+    #
+    # print(f"Number of full plans generated: {len(resulting_plans)}")
+    # print(f"Number of nodes placed to runs: {skipped_placements_stat_pointer[1]}")
+    # print(f"Number of module placements discarded: {skipped_placements_stat_pointer[0]}")
+    # print(
+    #     f"Number of discarded placements per node: {skipped_placements_stat_pointer[0] / skipped_placements_stat_pointer[1]:.3f}")
+    # resulting_plans = list(dict.fromkeys(resulting_plans))
+    # print_statistics(resulting_plans)
+    # print_all_runs_using_less_runs_than(
+    #     resulting_plans, min_runs_pointer[0] + 1, resource_string)
+    # print(f"Elapsed time of the scheduler: {stop_time - start_time:.3f}s")
+
+
+# ----------- Preprocessing before scheduling util methods to find satisfying bitstreams -----------
+def add_satisfying_bitstream_locations_to_graph(available_nodes, graph, hw_library, data_tables):
+    processed_nodes = []
+    while available_nodes:
+        current_node_name = available_nodes.pop()
+        print(current_node_name)
+        available_nodes.extend(get_new_available_nodes(current_node_name, processed_nodes, graph))
+        min_requirements = get_min_requirements(current_node_name, graph, hw_library, data_tables)
+        list_of_fitting_bitstreams = find_adequate_bitstreams(min_requirements, graph[current_node_name]["operation"],
+                                                              hw_library)
+        if list_of_fitting_bitstreams:
+            fitting_bitstream_locations = get_fitting_bitstream_locations_based_on_list(list_of_fitting_bitstreams,
+                                                                                        hw_library[
+                                                                                            graph[current_node_name][
+                                                                                                "operation"]][
+                                                                                            "start_locations"])
+            graph[current_node_name]["satisfying_bitstreams"] = fitting_bitstream_locations
+            print(fitting_bitstream_locations)
+        resulting_tables = get_resulting_tables_after_full_processing(graph[current_node_name]["tables"],
+                                                                      hw_library[graph[current_node_name]["operation"]][
+                                                                          "decorators"], data_tables)
+        add_new_table_to_next_nodes_in_place(graph, current_node_name, resulting_tables)
+
+    # DO we skip nodes?
+    # Not now
+    # But eventually yes?
+    # Then update worst case scenario and after reducing modules the scheduling calls this exact same method again:
+    # Maybe new things can be skipped then.
+    # The original thing doesn't skip anything.
+    # But no can't skip because we don't know if the fully sorting one could have been actually chosen.
+
+    print(graph)
+
+    # Also have to do the Table progression through the graph.
+    # First get the min capacity numbers required. Every bitstream with bigger number gets added.
+    # Then Get list of fitting bitstream names.
+    # Then iterate over the start location to see matching bitstream names if any
+    # For each node in the graph.
+    # start traversing from the starting nodes until it is empty.
+    # for linear sort it is easy
+    # for merge sort it needs more steps
+    # for the rest just check the capacity values
+    #
+    # Tables are the worst case scenario
+    # First run with then with the graph containing worst case scneario tables.
+    # The table updating should be done on the output nodes instead of input nodes as done by the scheduler.
+    # Then try to remove checking the rest of the things if there are locations in the graph list
+    # Then Add the partial sort decorator check
+
+
+# TODO: Make this real. - For now just get the first capacity
+def get_min_requirements(current_node_name, graph, hw_library, data_tables):
+    node_operation = graph[current_node_name]["operation"]
+    min_requirements = \
+        hw_library[node_operation]["bitstreams"][list(hw_library[node_operation]["bitstreams"].keys())[0]]["capacity"]
+
+    # Get decorators and do the stuff.
+
+    return min_requirements
+
+
+def find_adequate_bitstreams(min_requirements, operation, hw_library):
+    fitting_bitstreams = []
+    for bitstream_name, bitstream_parameters in hw_library[operation]["bitstreams"].items():
+        bitstream_utility_is_great_enough = True
+        for capacity_parameter_i in range(len(bitstream_parameters["capacity"])):
+            if bitstream_parameters["capacity"][capacity_parameter_i] < min_requirements[capacity_parameter_i]:
+                bitstream_utility_is_great_enough = False
+                break
+        if bitstream_utility_is_great_enough:
+            fitting_bitstreams.append(bitstream_name)
+    return fitting_bitstreams
+
+
+def get_fitting_bitstream_locations_based_on_list(list_of_fitting_bitstreams, start_locations):
+    fitting_bitstream_locations = []
+    for location_index in range(len(start_locations)):
+        for bitstream_index in range(len(start_locations[location_index])):
+            if start_locations[location_index][bitstream_index] in list_of_fitting_bitstreams:
+                fitting_bitstream_locations.append((location_index, bitstream_index))
+    return fitting_bitstream_locations
+
+
+# ----------- Update tables in preprocessing ------------
+# (Eventually can remove previous methods for updating tables during scheduling)
+def get_resulting_tables_after_full_processing(input_tables, current_node_decorators, data_tables):
+    if len(input_tables) == 0:
+        # Data generator decorators haven't been added yet!
+        raise ValueError("No input data found!")
+    elif "partial_sort" in current_node_decorators:
+        # We don't know which partial sorter will be picked
+        return input_tables
+    elif "blocking_sort" in current_node_decorators:
+        sorted_tables = []
+        for table_name in input_tables:
+            if is_table_sorted(data_tables[table_name], 0):
+                sorted_tables.append(table_name)
+            else:
+                new_table_name = table_name + "_now_sorted"
+                new_table_data = data_tables[table_name].copy()
+                new_table_data["sorted_sequences"] = ((0, new_table_data["record_count"], 0), )
+                sorted_tables.append(new_table_name)
+                data_tables[new_table_name] = new_table_data
+        return sorted_tables
+    # Simplified decorator for equi-join
+    elif "largest_input_is_output" in current_node_decorators:
+        max_table_name = ""
+        max_size = 0
+        for table_name in input_tables:
+            if data_tables[table_name]["record_count"] >= max_size:
+                max_table_name = table_name
+                max_size = data_tables[table_name]["record_count"]
+        return [max_table_name]
+    # Other modules have input tables forwarded to output
+    else:
+        return input_tables
+
+
+# TODO: Remove code duplication
+def add_new_table_to_next_nodes_in_place(all_nodes, node, table_names):
+    for next_node in all_nodes[node]["after"]:
+
+        # Get index
+        current_node_indexes = get_current_node_index(all_nodes, next_node, node)
+
+        for node_table_index, current_node_stream_index in current_node_indexes:
+            # Assuming it is large enough!
+            all_nodes[next_node]["tables"][node_table_index] = table_names[current_node_stream_index]
 
 
 # ----------- Preprocessing before scheduling util methods to find breaking nodes -----------
@@ -806,47 +943,52 @@ def main():
     # == Graphs ==
     graph = {
         "A": {"operation": "Addition", "capacity": (), "before": (), "after": ("B",),
-              "tables": ["test_table"]},
-        "B": {"operation": "Multiplier", "capacity": (), "before": (("A", 0),), "after": (), "tables": [""]},
-        "C": {"operation": "Global Sum", "capacity": (), "before": (), "after": (), "tables": ["test_table2"]}
+              "tables": ["test_table"], "satisfying_bitstreams": []},
+        "B": {"operation": "Multiplier", "capacity": (), "before": (("A", 0),), "after": (), "tables": [""],
+              "satisfying_bitstreams": []},
+        "C": {"operation": "Global Sum", "capacity": (), "before": (), "after": (), "tables": ["test_table2"],
+              "satisfying_bitstreams": []}
     }
     q19_graph = {
         "FirstFilter": {"operation": "Filter", "capacity": (4, 2), "before": (), "after": ("LinSort",),
-                        "tables": ["test_table"]},
+                        "tables": ["test_table"], "satisfying_bitstreams": []},
         "LinSort": {"operation": "Linear Sort", "capacity": (), "before": (("FirstFilter", 0),),
-                    "after": ("MergeSort",), "tables": [""]},
+                    "after": ("MergeSort",), "tables": [""], "satisfying_bitstreams": []},
         "MergeSort": {"operation": "Merge Sort", "capacity": (), "before": (("LinSort", 0),), "after": ("Join",),
-                      "tables": [""]},
+                      "tables": [""], "satisfying_bitstreams": []},
         "Join": {"operation": "Merge Join", "capacity": (), "before": (("MergeSort", 0),), "after": ("SecondFilter",),
-                 "tables": ["", "test_table2"]},
+                 "tables": ["", "test_table2"], "satisfying_bitstreams": []},
         "SecondFilter": {"operation": "Filter", "capacity": (12, 4), "before": (("Join", 0),), "after": ("Add",),
-                         "tables": [""]},
+                         "tables": [""], "satisfying_bitstreams": []},
         "Add": {"operation": "Addition", "capacity": (), "before": (("SecondFilter", 0),), "after": ("Mul",),
-                "tables": [""]},
-        "Mul": {"operation": "Multiplier", "capacity": (), "before": (("Add", 0),), "after": ("Sum",), "tables": [""]},
-        "Sum": {"operation": "Global Sum", "capacity": (), "before": (("Mul", 0),), "after": (), "tables": [""]}
+                "tables": [""], "satisfying_bitstreams": []},
+        "Mul": {"operation": "Multiplier", "capacity": (), "before": (("Add", 0),), "after": ("Sum",), "tables": [""],
+                "satisfying_bitstreams": []},
+        "Sum": {"operation": "Global Sum", "capacity": (), "before": (("Mul", 0),), "after": (), "tables": [""],
+                "satisfying_bitstreams": []}
     }
     capacity_test = {
         "FirstFilter": {"operation": "Filter", "capacity": (4, 2), "before": (), "after": ("LinSort",),
-                        "tables": ["test_table2"]},
+                        "tables": ["test_table2"], "satisfying_bitstreams": []},
         "LinSort": {"operation": "Linear Sort", "capacity": (), "before": (("FirstFilter", 0),), "after": ("Sum",),
-                    "tables": [""]},
-        "Sum": {"operation": "Global Sum", "capacity": (), "before": (("LinSort", 0),), "after": (), "tables": [""]}
+                    "tables": [""], "satisfying_bitstreams": []},
+        "Sum": {"operation": "Global Sum", "capacity": (), "before": (("LinSort", 0),), "after": (), "tables": [""],
+                "satisfying_bitstreams": []}
     }
     filter_test = {
         "LinSort": {"operation": "Linear Sort", "capacity": (), "before": (), "after": ("MergeSort",),
-                    "tables": ["huge_table"]},
+                    "tables": ["huge_table"], "satisfying_bitstreams": []},
         "MergeSort": {"operation": "Merge Sort", "capacity": (), "before": (("LinSort", 0),), "after": (),
-                      "tables": [""]}}
+                      "tables": [""], "satisfying_bitstreams": []}}
     test_graph = {
         "first": {"operation": "thing", "capacity": (), "before": (), "after": ("secondA", "secondB", "secondC"),
-                  "tables": ["test_table", "test_table2"]},
+                  "tables": ["test_table", "test_table2"], "satisfying_bitstreams": []},
         "secondA": {"operation": "thing", "capacity": (), "before": (("first", 0),), "after": (),
-                    "tables": [""]},
+                    "tables": [""], "satisfying_bitstreams": []},
         "secondB": {"operation": "thing", "capacity": (), "before": (("first", 0),), "after": (),
-                    "tables": [""]},
+                    "tables": [""], "satisfying_bitstreams": []},
         "secondC": {"operation": "thing", "capacity": (), "before": (("first", 1),), "after": (),
-                    "tables": [""]}}
+                    "tables": [""], "satisfying_bitstreams": []}}
 
     # == TABLES ==
     # Sorted sequence = ((begin, length, column_i),...); empty = unsorted
