@@ -143,9 +143,9 @@ def get_new_available_nodes(scheduled_node, past_nodes, all_nodes):
 
 # ----------- Main recursive loop -----------
 def place_nodes_recursively(available_nodes, past_nodes, all_nodes, current_run, current_plan,
-                            all_plans, reduce_single_runs, hw_library, current_min_runs_pointer,
-                            data_tables, module_placement_selections, skipped_placements, first_nodes):
-    if len(current_plan) <= current_min_runs_pointer[0]:
+                            all_plans, reduce_single_runs, hw_library, current_min_runs_ptr,
+                            data_tables, module_placement_selections, skipped_placements_stat_ptr, first_nodes):
+    if len(current_plan) <= current_min_runs_ptr[0]:
         if available_nodes:
             available_nodes_in_this_run = remove_unavailable_nodes_in_this_run(
                 available_nodes, current_run, hw_library, all_nodes, first_nodes)
@@ -159,7 +159,7 @@ def place_nodes_recursively(available_nodes, past_nodes, all_nodes, current_run,
                                                                                            node,
                                                                                            taken_columns, hw_library,
                                                                                            module_placement_selections,
-                                                                                           skipped_placements)
+                                                                                           skipped_placements_stat_ptr)
                     if available_module_placements:
                         # Place node in current run
                         for insert_at, module_placement in available_module_placements:
@@ -168,8 +168,8 @@ def place_nodes_recursively(available_nodes, past_nodes, all_nodes, current_run,
                                 module_placement]
                             find_next_module_placement(all_nodes, all_plans, available_nodes, current_plan, hw_library,
                                                        module_placement, new_current_run, node, past_nodes,
-                                                       reduce_single_runs, current_min_runs_pointer, data_tables,
-                                                       module_placement_selections, skipped_placements, first_nodes)
+                                                       reduce_single_runs, current_min_runs_ptr, data_tables,
+                                                       module_placement_selections, skipped_placements_stat_ptr, first_nodes)
                 if not available_module_placements or not reduce_single_runs:
                     # Schedule current run and place node in next run
                     new_current_plan = current_plan.copy()
@@ -178,15 +178,15 @@ def place_nodes_recursively(available_nodes, past_nodes, all_nodes, current_run,
                     available_module_placements = get_scheduled_modules_for_node_after_pos(all_nodes, 0, node, [],
                                                                                            hw_library,
                                                                                            module_placement_selections,
-                                                                                           skipped_placements)
+                                                                                           skipped_placements_stat_ptr)
                     if available_module_placements:
                         for _, module_placement in available_module_placements:
                             find_next_module_placement(all_nodes, all_plans, available_nodes, new_current_plan,
                                                        hw_library,
                                                        module_placement, [
                                                            module_placement], node, past_nodes,
-                                                       reduce_single_runs, current_min_runs_pointer, data_tables,
-                                                       module_placement_selections, skipped_placements, first_nodes)
+                                                       reduce_single_runs, current_min_runs_ptr, data_tables,
+                                                       module_placement_selections, skipped_placements_stat_ptr, first_nodes)
                     else:
                         raise ValueError("Something went wrong!")
 
@@ -194,8 +194,8 @@ def place_nodes_recursively(available_nodes, past_nodes, all_nodes, current_run,
             # Out of nodes -> Save current plan and return
             current_plan.append(tuple(current_run))
             all_plans.append(tuple(current_plan))
-            if len(current_plan) < current_min_runs_pointer[0]:
-                current_min_runs_pointer[0] = len(current_plan)
+            if len(current_plan) < current_min_runs_ptr[0]:
+                current_min_runs_ptr[0] = len(current_plan)
 
 
 # ----------- Find nodes available for current run -----------
@@ -252,8 +252,19 @@ def get_taken_columns(current_run):
 def get_scheduled_modules_for_node_after_pos(all_nodes, min_position, node, taken_columns, hw_library,
                                              module_placement_selections, skipped_placements):
     current_operation = all_nodes[node]["operation"]
-    available_bitstreams = find_all_available_bitstream(
-        current_operation, min_position, taken_columns, hw_library)
+    available_module_placements = []
+    if all_nodes[node]["satisfying_bitstreams"]:
+        available_module_placements = get_chosen_module_placements(
+            node, hw_library, skipped_placements, current_operation, module_placement_selections[0], min_position, taken_columns, all_nodes[node]["satisfying_bitstreams"])
+    if not available_module_placements:
+        available_module_placements = get_chosen_module_placements(
+            node, hw_library, skipped_placements, current_operation, module_placement_selections[1], min_position, taken_columns, hw_library[current_operation]["start_locations"])
+    return available_module_placements
+
+
+def get_chosen_module_placements(node, hw_library, skipped_placements, current_operation, placement_selections, min_position, taken_columns, start_locations):
+    available_bitstreams = find_all_available_bitstreams_after_min_pos(
+        current_operation, min_position, taken_columns, hw_library, start_locations)
     available_module_placements = []
     if available_bitstreams:
         for chosen_module_position, chosen_column_position, chosen_bitstream_index in available_bitstreams:
@@ -266,18 +277,18 @@ def get_scheduled_modules_for_node_after_pos(all_nodes, min_position, node, take
         # For stats gathering: 0 - alternatives; 1 - nodes placed
         skipped_placements[0] += len(available_module_placements)
         available_module_placements = select_according_to_preferences(available_module_placements,
-                                                                      module_placement_selections)
+                                                                      placement_selections)
         skipped_placements[0] -= len(available_module_placements)
         skipped_placements[1] += 1
     return available_module_placements
 
 
-def find_all_available_bitstream(operation, min_position, taken_columns, hw_library):
+def find_all_available_bitstreams_after_min_pos(operation, min_position, taken_columns, hw_library, start_locations):
     all_positions_and_bitstreams = []
-    for start_location_index in range(len(hw_library[operation]["start_locations"]))[min_position:]:
+    for start_location_index in range(len(start_locations))[min_position:]:
         # This line possibly not needed
-        if hw_library[operation]["start_locations"][start_location_index]:
-            for bitstream_index in range(len(hw_library[operation]["start_locations"][start_location_index])):
+        if start_locations[start_location_index]:
+            for bitstream_index in range(len(start_locations[start_location_index])):
                 bitstream, final_column_index = get_bitstream_end_from_library_with_operation(bitstream_index,
                                                                                               start_location_index,
                                                                                               operation, hw_library)
@@ -298,6 +309,15 @@ def find_all_available_bitstream(operation, min_position, taken_columns, hw_libr
     return all_positions_and_bitstreams
 
 
+def get_bitstream_end_from_library_with_operation(chosen_bitstream_index, chosen_column_position, current_operation,
+                                                  hw_library):
+    chosen_bitstream = hw_library[current_operation]["start_locations"][chosen_column_position][
+        chosen_bitstream_index]
+    end_index = chosen_column_position + hw_library[current_operation]["bitstreams"][chosen_bitstream][
+        "length"] - 1
+    return chosen_bitstream, end_index
+
+
 def get_module_index(start_location_index, taken_columns):
     if not taken_columns:
         raise ValueError("Taken positions can't be empty!")
@@ -307,15 +327,6 @@ def get_module_index(start_location_index, taken_columns):
         if start_location_index > taken_columns[module_index][1]:
             return module_index + 1
     return len(taken_columns)
-
-
-def get_bitstream_end_from_library_with_operation(chosen_bitstream_index, chosen_column_position, current_operation,
-                                                  hw_library):
-    chosen_bitstream = hw_library[current_operation]["start_locations"][chosen_column_position][
-        chosen_bitstream_index]
-    end_index = chosen_column_position + hw_library[current_operation]["bitstreams"][chosen_bitstream][
-        "length"] - 1
-    return chosen_bitstream, end_index
 
 
 def select_according_to_preferences(available_module_placements, module_placement_selections):
@@ -361,6 +372,10 @@ def find_next_module_placement(all_nodes, all_plans, available_nodes, new_curren
                                                                                    new_past_nodes, skipped_node,
                                                                                    satisfies_requirements)
 
+    # Check new graph and old graph and if all of the nodes in the new graph are the same as the old graph then it's fine. Otherwise redo the new_graph!
+    update_satisifying_bitstreams(
+        node, all_nodes, new_all_nodes, new_available_nodes, hw_library, data_tables, new_data_tables)
+
     # Next recursive step
     place_nodes_recursively(new_available_nodes, new_past_nodes,
                             new_all_nodes, new_current_run.copy(), new_current_plan.copy(),
@@ -380,8 +395,37 @@ def create_new_available_nodes_lists(all_nodes, available_nodes, past_nodes, nod
     return new_available_nodes, new_past_nodes
 
 
+def update_satisifying_bitstreams(current_node, previous_all_nodes, new_all_nodes, new_available_nodes, hw_library, old_data_tables, new_data_tables):
+    update_required = False
+    for node_name in new_all_nodes.keys():
+        if previous_all_nodes[node_name]["capacity"] != new_all_nodes[node_name]["capacity"]:
+            update_required = True
+            break
+        update_required = check_table_equality_of_given_node(
+            previous_all_nodes, new_all_nodes, node_name, old_data_tables, new_data_tables)
+        if update_required:
+            break
+    if not update_required:
+        for next_node in previous_all_nodes[current_node]["after"]:
+            update_required = check_table_equality_of_given_node(
+                previous_all_nodes, new_all_nodes, next_node, old_data_tables, new_data_tables)
+            if update_required:
+                break
+    if update_required:
+        add_satisfying_bitstream_locations_to_graph(
+            new_available_nodes.copy(), new_all_nodes, hw_library, new_data_tables)
+
+
+def check_table_equality_of_given_node(previous_all_nodes, new_all_nodes, node_name, old_data_tables, new_data_tables):
+    for table_index in range(len(previous_all_nodes[node_name]["tables"])):
+        if old_data_tables[previous_all_nodes[node_name]["tables"][table_index]] != new_data_tables[new_all_nodes[node_name]["tables"][table_index]]:
+            return True
+    return False
+
+
 # -------- Find out if current selection satisfies operation requirements --------
 def update_all_nodes(all_nodes, bitstream, data_tables, hw_library, node, node_cost, operation):
+    # available_nodes, graph, hw_library, data_tables
     bitstream_capacity = hw_library[operation]["bitstreams"][bitstream]["capacity"]
     missing_utility = []
     new_all_nodes = all_nodes.copy()
@@ -560,6 +604,7 @@ def update_next_node_tables(all_nodes, node, new_all_nodes, skipped_nodes, resul
 def add_new_table_to_next_nodes(all_nodes, new_all_nodes, node, table_names):
     for next_node in new_all_nodes[node]["after"]:
         new_all_nodes[next_node] = all_nodes[next_node].copy()
+        new_all_nodes[next_node]["tables"] = all_nodes[next_node]["tables"].copy()
 
         # Get index
         current_node_indexes = get_current_node_index(
@@ -620,6 +665,7 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
 
 
 # ----------- Preprocessing before scheduling util methods to find satisfying bitstreams -----------
+# No node skipping as we don't know which bitstream will be picked.
 def add_satisfying_bitstream_locations_to_graph(available_nodes, graph, hw_library, data_tables):
     processed_nodes = []
     min_capacity = get_minimum_capacity_values(hw_library)
@@ -644,13 +690,6 @@ def add_satisfying_bitstream_locations_to_graph(available_nodes, graph, hw_libra
             "decorators"], data_tables, min_capacity[graph[current_node_name]["operation"]])
         add_new_table_to_next_nodes_in_place(
             graph, current_node_name, resulting_tables)
-
-    # DO we skip nodes?
-    # Not now
-    # But eventually yes?
-    # Then update worst case scenario and after reducing modules the scheduling calls this exact same method again:
-    # Maybe new things can be skipped then.
-    # The original thing doesn't skip anything.
 
 
 def get_minimum_capacity_values(hw_library):
@@ -713,10 +752,11 @@ def find_adequate_bitstreams(min_requirements, operation, hw_library):
 def get_fitting_bitstream_locations_based_on_list(list_of_fitting_bitstreams, start_locations):
     fitting_bitstream_locations = []
     for location_index in range(len(start_locations)):
-        for bitstream_index in range(len(start_locations[location_index])):
-            if start_locations[location_index][bitstream_index] in list_of_fitting_bitstreams:
-                fitting_bitstream_locations.append(
-                    (location_index, bitstream_index))
+        fitting_bitstream_locations.append(
+            start_locations[location_index].copy())
+        for bitstream_index in range(len(start_locations[location_index]))[::-1]:
+            if start_locations[location_index][bitstream_index] not in list_of_fitting_bitstreams:
+                del fitting_bitstream_locations[location_index][bitstream_index]
     return fitting_bitstream_locations
 
 
@@ -1032,25 +1072,28 @@ def main():
     # == TABLES ==
     # Sorted sequence = ((begin, length, column_i),...); empty = unsorted
     tables = {
-        "test_table": {"record_count": 10000, "sorted_sequences": ()},
+        "test_table": {"record_count": 1000000, "sorted_sequences": ()},
         "test_table2": {"record_count": 10000, "sorted_sequences": ((0, 10000, 0),)},
         "huge_table": {"record_count": 210000, "sorted_sequences": ((0, 10, 0), (10, 20, 0),)}
     }
 
+    # First selection is for fitting, the second selection for the rest
+    default_selection = ([[ModuleSelection.SHORTEST, ModuleSelection.FIRST_AVAILABLE]], [
+                         [ModuleSelection.LONGEST, ModuleSelection.FIRST_AVAILABLE]])
     # starting_nodes = ["A", "C"]
-    # find_plans_and_print(starting_nodes, graph, resource_string, hw_library, tables, [], [[ModuleSelection.ALL_AVAILABLE]])
+    # find_plans_and_print(starting_nodes, graph, resource_string, hw_library, tables, [], default_selection)
     # capacity_test_nodes = ["FirstFilter"]
     # find_plans_and_print(capacity_test_nodes, capacity_test,
-    #                      resource_string, hw_library, tables, [], [[ModuleSelection.ALL_AVAILABLE]])
+    #                      resource_string, hw_library, tables, [], default_selection)
     # filter_test_nodes = ["LinSort"]
     # find_plans_and_print(filter_test_nodes, filter_test,
-    #                      resource_string, hw_library, tables, [], [[ModuleSelection.FIRST_AVAILABLE, ModuleSelection.SHORTEST], [ModuleSelection.LAST_AVAILABLE, ModuleSelection.SHORTEST]])
+    #                      resource_string, hw_library, tables, [], default_selection)
     #
     q19_starting_nodes = ["FirstFilter"]
     find_plans_and_print(q19_starting_nodes, q19_graph,
-                         resource_string, hw_library, tables, [], [[ModuleSelection.FIRST_AVAILABLE]])
+                         resource_string, hw_library, tables, [], default_selection)
     # find_plans_and_print(["first"], test_graph,
-    #                      resource_string, test_hw, tables, [], [[ModuleSelection.ALL_AVAILABLE]])
+    #                      resource_string, test_hw, tables, [], default_selection)
 
 
 if __name__ == '__main__':
@@ -1064,4 +1107,3 @@ if __name__ == '__main__':
     #   Data duplication for filters
     #   Actually linear sort removal is also an option
     # Fixing filter and sorting parameters
-    # Add another list to graph nodes about satisfying bitstreams.
