@@ -76,5 +76,9 @@ class GraphProcessingFSMInterface {
    * @brief Execute the next run ready for execution.
    */
   virtual void ExecuteAndProcessResults() = 0;
+  /**
+   * @brief Debug method to print the current plan. Can break the run!
+  */
+  virtual void PrintCurrentPlan() = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

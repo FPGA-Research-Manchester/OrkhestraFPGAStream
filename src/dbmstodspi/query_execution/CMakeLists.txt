@@ -22,8 +22,12 @@ endif()
 add_library(query_execution OBJECT 
             states/execute_state.hpp
             states/execute_state.cpp
+            states/print_plan_state.hpp
+            states/print_plan_state.cpp
             states/schedule_state.hpp
             states/schedule_state.cpp
+            states/debug_schedule_state.hpp
+            states/debug_schedule_state.cpp
             states/setup_nodes_state.hpp
             states/setup_nodes_state.cpp
             states/state_interface.hpp

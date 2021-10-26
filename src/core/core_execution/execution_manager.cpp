@@ -17,6 +17,7 @@ limitations under the License.
 #include "execution_manager.hpp"
 
 #include <memory>
+#include <iostream>
 
 using orkhestrafs::core::core_execution::ExecutionManager;
 
@@ -92,4 +93,18 @@ auto ExecutionManager::PopNextScheduledRun()
   const auto executable_query_nodes = query_node_runs_queue_.front().second;
   query_node_runs_queue_.pop();
   return executable_query_nodes;
+}
+
+void ExecutionManager::PrintCurrentPlan() {
+  int run_count = 0;
+  while (!query_node_runs_queue_.empty()) {
+    auto executable_query_nodes = query_node_runs_queue_.front().second;
+    std::cout << "Run " << run_count << std::endl;
+    for (const auto& node : executable_query_nodes) {
+      std::cout << node->node_name << " ";
+    }
+    std::cout << std::endl;
+    run_count++;
+    query_node_runs_queue_.pop();
+  }
 }

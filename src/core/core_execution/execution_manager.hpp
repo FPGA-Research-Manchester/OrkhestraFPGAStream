@@ -88,6 +88,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   auto IsRunReadyForExecution() -> bool override;
   auto IsRunValid() -> bool override;
   void ExecuteAndProcessResults() override;
+  void PrintCurrentPlan() override;
 
  private:
   // Initial inputs

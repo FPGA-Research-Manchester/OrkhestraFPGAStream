@@ -26,6 +26,7 @@ limitations under the License.
 #include "plan_evaluator.hpp"
 #include "query_manager.hpp"
 #include "schedule_state.hpp"
+#include "debug_schedule_state.hpp"
 
 using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::core::core_execution::ExecutionManagerFactory;
@@ -39,6 +40,7 @@ using orkhestrafs::dbmstodspi::OnePlanNodeScheduler;
 using orkhestrafs::dbmstodspi::PlanEvaluator;
 using orkhestrafs::dbmstodspi::QueryManager;
 using orkhestrafs::dbmstodspi::ScheduleState;
+using orkhestrafs::dbmstodspi::DebugScheduleState;
 
 auto ExecutionManagerFactory::GetManager(const Config& config)
     -> std::unique_ptr<ExecutionManagerInterface> {
@@ -46,10 +48,13 @@ auto ExecutionManagerFactory::GetManager(const Config& config)
   auto secondary_scheduler = std::make_unique<ElasticResourceNodeScheduler>(
       std::make_unique<PlanEvaluator>());
 
+  auto chosen_start_state = std::make_unique<ScheduleState>();
+  auto secondary_start_state = std::make_unique<DebugScheduleState>();
+
   return std::make_unique<ExecutionManager>(
       config, std::make_unique<QueryManager>(),
       std::make_unique<DataManager>(config.data_sizes, config.csv_separator,
                                     std::make_unique<CSVReader>()),
-      std::make_unique<MemoryManager>(), std::make_unique<ScheduleState>(),
+      std::make_unique<MemoryManager>(), std::move(secondary_start_state),
       std::make_unique<FPGADriverFactory>(), std::move(chosen_scheduler));
 }
