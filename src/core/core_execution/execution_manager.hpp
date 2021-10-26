@@ -29,6 +29,7 @@ limitations under the License.
 #include "graph_processing_fsm_interface.hpp"
 #include "memory_block_interface.hpp"
 #include "memory_manager_interface.hpp"
+#include "node_scheduler_interface.hpp"
 #include "query_manager_interface.hpp"
 #include "query_scheduling_data.hpp"
 #include "state_interface.hpp"
@@ -47,6 +48,7 @@ using orkhestrafs::dbmstodspi::FPGADriverFactoryInterface;
 using orkhestrafs::dbmstodspi::FPGAManagerInterface;
 using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
 using orkhestrafs::dbmstodspi::MemoryManagerInterface;
+using orkhestrafs::dbmstodspi::NodeSchedulerInterface;
 using orkhestrafs::dbmstodspi::QueryManagerInterface;
 using orkhestrafs::dbmstodspi::StateInterface;
 
@@ -61,11 +63,13 @@ class ExecutionManager : public ExecutionManagerInterface,
                    std::unique_ptr<DataManagerInterface> data_manager,
                    std::unique_ptr<MemoryManagerInterface> memory_manager,
                    std::unique_ptr<StateInterface> start_state,
-                   std::unique_ptr<FPGADriverFactoryInterface> driver_factory)
+                   std::unique_ptr<FPGADriverFactoryInterface> driver_factory,
+                   std::unique_ptr<NodeSchedulerInterface> scheduler)
       : current_state_{std::move(start_state)},
         data_manager_{std::move(data_manager)},
         memory_manager_{std::move(memory_manager)},
         query_manager_{std::move(query_manager)},
+        scheduler_{std::move(scheduler)},
         config_{std::move(config)},
         accelerator_library_{std::move(
             driver_factory->CreateAcceleratorLibrary(memory_manager_.get()))},
@@ -93,6 +97,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::unique_ptr<ExecutionPlanGraphInterface> unscheduled_graph_;
   std::unique_ptr<AcceleratorLibraryInterface> accelerator_library_;
   std::unique_ptr<FPGAManagerInterface> fpga_manager_;
+  std::unique_ptr<NodeSchedulerInterface> scheduler_;
   const Config config_;
   // State status
   std::unique_ptr<StateInterface> current_state_;

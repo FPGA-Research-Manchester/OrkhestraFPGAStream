@@ -14,19 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "node_scheduler.hpp"
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <utility>
+
+#include "one_plan_node_scheduler.hpp"
 /// Good documentation for using matchers:
 /// https://github.com/google/googletest/blob/master/docs/reference/matchers.md
 namespace {
 
 using orkhestrafs::core_interfaces::query_scheduling_data::
     NodeOperationParameters;
-using orkhestrafs::dbmstodspi::NodeScheduler;
+using orkhestrafs::dbmstodspi::OnePlanNodeScheduler;
 using ModulesCombo = orkhestrafs::core_interfaces::query_scheduling_data::
     ConfigurableModulesVector;
 using Node = orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
@@ -80,6 +80,8 @@ class NodeSchedulerTest : public ::testing::Test {
   std::shared_ptr<Node> query_node_b_;
 
   NodeOperationParameters base_parameters_;
+
+  OnePlanNodeScheduler scheduler;
 };
 
 void CheckNodeFields(const std::vector<std::string>& input_files,
@@ -134,7 +136,7 @@ TEST_F(NodeSchedulerTest, MultipleAvailableNodesFindsCorrectNode) {
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -161,7 +163,7 @@ TEST_F(NodeSchedulerTest, TwoNodesWereFoundWithDifferentRuns) {
   std::vector<std::shared_ptr<Node>> starting_nodes = {first_query,
                                                        second_query};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -186,7 +188,7 @@ TEST_F(NodeSchedulerTest, TwoNodesWereFoundWithinTheSameRun) {
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_,
                                                        query_node_b_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -207,7 +209,7 @@ TEST_F(NodeSchedulerTest, PassthroughNodeIsUsedInTheSameRun) {
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_,
                                                        passthrough_node_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -238,7 +240,7 @@ TEST_F(NodeSchedulerTest, TwoPipelinedNodesWereFoundWithDifferentRuns) {
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -266,7 +268,7 @@ TEST_F(NodeSchedulerTest, TwoPipelinedNodesWereFoundWithinTheSameRun) {
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -304,7 +306,7 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfInputProjection) {
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -342,7 +344,7 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfOutputChecking) {
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -382,7 +384,7 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfOutputProjection) {
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -424,7 +426,7 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfIOProjection) {
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -472,7 +474,7 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfSecondOutputProjection) {
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -515,7 +517,7 @@ TEST_F(NodeSchedulerTest, SameRunsDespiteIOProjection) {
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -540,7 +542,7 @@ TEST_F(NodeSchedulerTest, LinkedNodesGetsUpdated) {
 
   expected_map.insert({query_node_a_->node_name, target_map});
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -560,7 +562,7 @@ TEST_F(NodeSchedulerTest, LinkedNodesStaysSame) {
 
   auto expected_map = reuse_map_;
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 

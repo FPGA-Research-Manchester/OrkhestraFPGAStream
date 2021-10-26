@@ -29,6 +29,7 @@ limitations under the License.
 #include "fpga_manager_interface.hpp"
 #include "memory_block_interface.hpp"
 #include "memory_manager_interface.hpp"
+#include "node_scheduler_interface.hpp"
 #include "query_scheduling_data.hpp"
 
 using orkhestrafs::core_interfaces::Config;
@@ -43,6 +44,7 @@ using orkhestrafs::dbmstodspi::AcceleratedQueryNode;
 using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
 using orkhestrafs::dbmstodspi::FPGAManagerInterface;
 using orkhestrafs::dbmstodspi::MemoryBlockInterface;
+using orkhestrafs::dbmstodspi::NodeSchedulerInterface;
 
 namespace orkhestrafs::dbmstodspi {
 /**
@@ -113,7 +115,7 @@ class QueryManagerInterface {
    */
   virtual auto ScheduleUnscheduledNodes(
       std::vector<std::shared_ptr<QueryNode>> unscheduled_root_nodes,
-      Config config)
+      Config config, NodeSchedulerInterface& node_scheduler)
       -> std::pair<
           std::map<std::string, std::map<int, MemoryReuseTargets>>,
           std::queue<std::pair<ConfigurableModulesVector,

@@ -29,6 +29,7 @@ limitations under the License.
 #include "mock_query_manager.hpp"
 #include "mock_state.hpp"
 #include "stream_data_parameters.hpp"
+#include "mock_node_scheduler.hpp"
 
 namespace {
 
@@ -50,6 +51,7 @@ class ExecutionManagerTest : public ::testing::Test {
         mock_accelerator_library_ptr_(
             std::make_unique<MockAcceleratorLibrary>()),
         mock_fpga_manager_ptr_(std::make_unique<MockFPGAManager>()),
+        mock_node_scheduler_ptr_(std::make_unique<MockNodeScheduler>()),
         mock_query_manager_(*mock_query_manager_ptr_),
         mock_data_manager_(*mock_data_manager_ptr_),
         mock_memory_manager_(*mock_memory_manager_ptr_),
@@ -57,7 +59,8 @@ class ExecutionManagerTest : public ::testing::Test {
         mock_second_state_(*mock_second_state_ptr_),
         mock_fpga_driver_factory_(*mock_fpga_driver_factory_ptr_),
         mock_accelerator_library_(*mock_accelerator_library_ptr_),
-        mock_fpga_manager_(*mock_fpga_manager_ptr_) {}
+        mock_fpga_manager_(*mock_fpga_manager_ptr_),
+        mock_node_scheduler_(*mock_node_scheduler_ptr_) {}
 
   std::unique_ptr<MockQueryManager> mock_query_manager_ptr_;
   std::unique_ptr<MockDataManager> mock_data_manager_ptr_;
@@ -68,6 +71,7 @@ class ExecutionManagerTest : public ::testing::Test {
   std::unique_ptr<MockFPGADriverFactory> mock_fpga_driver_factory_ptr_;
   std::unique_ptr<MockAcceleratorLibrary> mock_accelerator_library_ptr_;
   std::unique_ptr<MockFPGAManager> mock_fpga_manager_ptr_;
+  std::unique_ptr<MockNodeScheduler> mock_node_scheduler_ptr_;
 
   MockQueryManager& mock_query_manager_;
   MockDataManager& mock_data_manager_;
@@ -78,6 +82,7 @@ class ExecutionManagerTest : public ::testing::Test {
   MockFPGADriverFactory& mock_fpga_driver_factory_;
   MockAcceleratorLibrary& mock_accelerator_library_;
   MockFPGAManager& mock_fpga_manager_;
+  MockNodeScheduler& mock_node_scheduler_; // Not tested
 
   Config test_config_;
 
@@ -94,7 +99,8 @@ class ExecutionManagerTest : public ::testing::Test {
         test_config_, std::move(mock_query_manager_ptr_),
         std::move(mock_data_manager_ptr_), std::move(mock_memory_manager_ptr_),
         std::move(mock_first_state_ptr_),
-        std::move(mock_fpga_driver_factory_ptr_));
+        std::move(mock_fpga_driver_factory_ptr_),
+        std::move(mock_node_scheduler_ptr_));
   }
 };
 
@@ -151,7 +157,7 @@ TEST_F(ExecutionManagerTest, ScheduleUnscheduledNodesUsesGraph) {
   // std::vector<std::shared_ptr<QueryNode>> expected_nodes;
 
   EXPECT_CALL(mock_graph, ExportRootNodes()).Times(1);
-  EXPECT_CALL(mock_query_manager_, ScheduleUnscheduledNodes(_, _)).Times(1);
+  EXPECT_CALL(mock_query_manager_, ScheduleUnscheduledNodes(_, _, _)).Times(1);
 
   execution_manager_under_test->Execute(std::move(mock_graph_ptr));
   execution_manager_under_test->ScheduleUnscheduledNodes();
@@ -200,7 +206,7 @@ TEST_F(ExecutionManagerTest, SetupPopsScheduledNodes) {
       expected_setup_results = {expected_accel_nodes, expected_result_params};
 
   EXPECT_CALL(mock_graph, ExportRootNodes()).Times(1);
-  EXPECT_CALL(mock_query_manager_, ScheduleUnscheduledNodes(_, _))
+  EXPECT_CALL(mock_query_manager_, ScheduleUnscheduledNodes(_, _, _))
       .WillOnce(testing::Return(schedule_results));
 
   EXPECT_CALL(mock_query_manager_, LoadNextBitstreamIfNew(_, _, _)).Times(1);

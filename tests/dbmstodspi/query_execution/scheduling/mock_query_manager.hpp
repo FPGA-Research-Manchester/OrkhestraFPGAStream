@@ -60,7 +60,7 @@ class MockQueryManager : public QueryManagerInterface {
               (override));
   MOCK_METHOD(ScheduledNodes, ScheduleUnscheduledNodes,
               (std::vector<std::shared_ptr<QueryNode>> unscheduled_root_nodes,
-               Config config),
+               Config config, NodeSchedulerInterface& node_scheduler),
               (override));
   MOCK_METHOD(bool, IsRunValid, (std::vector<AcceleratedQueryNode> current_run),
               (override));

@@ -23,7 +23,7 @@ limitations under the License.
 #include "fpga_manager.hpp"
 #include "id_manager.hpp"
 #include "logger.hpp"
-#include "node_scheduler.hpp"
+#include "node_scheduler_interface.hpp"
 #include "query_acceleration_constants.hpp"
 #include "stream_data_parameters.hpp"
 #include "table_manager.hpp"
@@ -329,14 +329,14 @@ void QueryManager::LoadNextBitstreamIfNew(
 
 auto QueryManager::ScheduleUnscheduledNodes(
     std::vector<std::shared_ptr<QueryNode>> unscheduled_root_nodes,
-    Config config)
+    Config config, NodeSchedulerInterface& node_scheduler)
     -> std::pair<
         std::map<std::string, std::map<int, MemoryReuseTargets>>,
         std::queue<std::pair<ConfigurableModulesVector,
                              std::vector<std::shared_ptr<QueryNode>>>>> {
   std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links;
 
-  auto query_node_runs_queue = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto query_node_runs_queue = node_scheduler.FindAcceleratedQueryNodeSets(
       std::move(unscheduled_root_nodes), config.accelerator_library,
       config.module_library, all_reuse_links);
   return {all_reuse_links, query_node_runs_queue};

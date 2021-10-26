@@ -12,7 +12,7 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-if (_FPGA_AVAILABLE)
+if (FPGA_AVAILABLE)
 	file(GLOB OS_DEPENDENT_MEMORY_BLOCK "table_data/udma_memory_block.cpp" "table_data/udma_memory_block.hpp" "table_data/virtual_memory_block.hpp" "table_data/virtual_memory_block.cpp")
 else()
 	file(GLOB OS_DEPENDENT_MEMORY_BLOCK "table_data/virtual_memory_block.hpp" "table_data/virtual_memory_block.cpp")
@@ -116,8 +116,9 @@ add_library(query_execution OBJECT
             fpga_managing/setup/multiplication_setup.hpp
             fpga_managing/setup/acceleration_module_setup_interface.hpp
             fpga_managing/setup/acceleration_module_setup_interface.cpp
-            scheduling/node_scheduler.cpp
-            scheduling/node_scheduler.hpp
+            scheduling/one_plan_node_scheduler.cpp
+            scheduling/one_plan_node_scheduler.hpp
+            scheduling/node_scheduler_interface.hpp
             scheduling/query_manager.hpp
             scheduling/query_manager.cpp
             scheduling/query_manager_interface.hpp

@@ -23,6 +23,7 @@ limitations under the License.
 #include "memory_manager.hpp"
 #include "query_manager.hpp"
 #include "schedule_state.hpp"
+#include "one_plan_node_scheduler.hpp"
 
 using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::core::core_execution::ExecutionManagerFactory;
@@ -33,6 +34,7 @@ using orkhestrafs::dbmstodspi::FPGADriverFactory;
 using orkhestrafs::dbmstodspi::MemoryManager;
 using orkhestrafs::dbmstodspi::QueryManager;
 using orkhestrafs::dbmstodspi::ScheduleState;
+using orkhestrafs::dbmstodspi::OnePlanNodeScheduler;
 
 auto ExecutionManagerFactory::GetManager(const Config& config)
     -> std::unique_ptr<ExecutionManagerInterface> {
@@ -41,5 +43,6 @@ auto ExecutionManagerFactory::GetManager(const Config& config)
       std::make_unique<DataManager>(config.data_sizes, config.csv_separator,
                                     std::make_unique<CSVReader>()),
       std::make_unique<MemoryManager>(), std::make_unique<ScheduleState>(),
-      std::make_unique<dbmstodspi::FPGADriverFactory>());
+      std::make_unique<dbmstodspi::FPGADriverFactory>(),
+      std::make_unique<dbmstodspi::OnePlanNodeScheduler>());
 }

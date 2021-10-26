@@ -47,7 +47,7 @@ auto ExecutionManager::IsRunReadyForExecution() -> bool {
 
 void ExecutionManager::ScheduleUnscheduledNodes() {
   auto nodes_and_links = query_manager_->ScheduleUnscheduledNodes(
-      unscheduled_graph_->ExportRootNodes(), config_);
+      unscheduled_graph_->ExportRootNodes(), config_, *scheduler_);
   all_reuse_links_ = nodes_and_links.first;
   query_node_runs_queue_ = nodes_and_links.second;
 }
