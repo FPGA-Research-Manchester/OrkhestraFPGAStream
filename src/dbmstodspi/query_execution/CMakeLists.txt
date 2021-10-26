@@ -119,6 +119,15 @@ add_library(query_execution OBJECT
             scheduling/one_plan_node_scheduler.cpp
             scheduling/one_plan_node_scheduler.hpp
             scheduling/node_scheduler_interface.hpp
+            scheduling/elastic_resource_scheduler.cpp
+            scheduling/elastic_resource_scheduler.hpp
+            scheduling/plan_evaluator_interface.hpp
+            scheduling/plan_evaluator.cpp
+            scheduling/plan_evaluator.hpp
+            scheduling/run_linker.cpp
+            scheduling/run_linker.hpp
+            scheduling/elastic_scheduling_graph_parser.cpp
+            scheduling/elastic_scheduling_graph_parser.hpp
             scheduling/query_manager.hpp
             scheduling/query_manager.cpp
             scheduling/query_manager_interface.hpp

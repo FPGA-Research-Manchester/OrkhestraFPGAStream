@@ -22,9 +22,11 @@ limitations under the License.
 #include "operation_types.hpp"
 #include "query_acceleration_constants.hpp"
 #include "query_scheduling_data.hpp"
+#include "run_linker.hpp"
 #include "util.hpp"
 
 using orkhestrafs::dbmstodspi::OnePlanNodeScheduler;
+using orkhestrafs::dbmstodspi::RunLinker;
 using orkhestrafs::dbmstodspi::query_acceleration_constants::kIOStreamParamDefs;
 using orkhestrafs::dbmstodspi::util::CreateReferenceVector;
 
@@ -61,82 +63,10 @@ auto OnePlanNodeScheduler::FindAcceleratedQueryNodeSets(
       throw std::runtime_error("Failed to schedule!");
     }
 
-    CheckExternalLinks(current_query_nodes, linked_nodes);
-
     query_node_runs_queue.push({current_set, current_query_nodes});
   }
-  return query_node_runs_queue;
-}
-
-// Method to remove next or previous nodes from a node once it has been
-// scheduled
-void OnePlanNodeScheduler::CheckExternalLinks(
-    const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
-    std::map<std::string,
-             std::map<int, std::vector<std::pair<std::string, int>>>>&
-        linked_nodes) {
-  for (const auto& node : current_query_nodes) {
-    std::map<int, std::vector<std::pair<std::string, int>>> target_maps;
-    for (int next_node_index = 0; next_node_index < node->next_nodes.size();
-         next_node_index++) {
-      std::vector<std::pair<std::string, int>> targets;
-      if (!node->next_nodes[next_node_index]) {
-        if (node->output_data_definition_files[next_node_index].empty()) {
-          node->output_data_definition_files[next_node_index] =
-              node->node_name + "_" + std::to_string(next_node_index) + ".csv";
-        }
-      } else if (IsNodeMissingFromTheVector(node->next_nodes[next_node_index],
-                                            current_query_nodes)) {
-        int current_node_location = FindPreviousNodeLocation(
-            node->next_nodes[next_node_index]->previous_nodes, node);
-        auto current_filename =
-            node->output_data_definition_files[next_node_index];
-        if (current_filename.empty() &&
-            ReuseMemory(*node, *node->next_nodes[next_node_index])) {
-          targets.emplace_back(node->next_nodes[next_node_index]->node_name,
-                               current_node_location);
-        } else {
-          if (current_filename.empty()) {
-            current_filename = node->node_name + "_" +
-                               std::to_string(next_node_index) + ".csv";
-            node->output_data_definition_files[next_node_index] =
-                current_filename;
-          }
-          node->next_nodes[next_node_index]
-              ->input_data_definition_files[current_node_location] =
-              current_filename;
-          node->next_nodes[next_node_index] = nullptr;
-        }
-      }
-      if (!targets.empty()) {
-        target_maps.insert({next_node_index, targets});
-      }
-    }
-    for (auto& previous_node : node->previous_nodes) {
-      auto observed_node = previous_node.lock();
-      if (IsNodeMissingFromTheVector(observed_node, current_query_nodes)) {
-        previous_node = std::weak_ptr<QueryNode>();
-      }
-    }
-    if (!target_maps.empty()) {
-      linked_nodes.insert({node->node_name, target_maps});
-    }
-  }
-}
-
-auto OnePlanNodeScheduler::ReuseMemory(const QueryNode& /*source_node*/,
-                                const QueryNode& /*target_node*/) -> bool {
-  // TODO(Kaspar): needs to consider the memory capabilities
-  return true;
-}
-
-auto OnePlanNodeScheduler::IsNodeMissingFromTheVector(
-    const std::shared_ptr<QueryNode>& linked_node,
-    const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes)
-    -> bool {
-  return linked_node &&
-         std::find(current_query_nodes.begin(), current_query_nodes.end(),
-                   linked_node) == current_query_nodes.end();
+  return RunLinker::LinkPeripheralNodesFromGivenRuns(query_node_runs_queue,
+                                                     linked_nodes);
 }
 
 // Function to find the minimum position for a node such that all the
@@ -188,11 +118,8 @@ auto OnePlanNodeScheduler::FindMinPosition(
 }
 
 auto OnePlanNodeScheduler::IsProjectionOperationDefined(
-    const QueryNode* current_node,
-                                                 const QueryNode* previous_node,
-                                                 int previous_node_index,
-                                                 int current_node_index)
-    -> bool {
+    const QueryNode* current_node, const QueryNode* previous_node,
+    int previous_node_index, int current_node_index) -> bool {
   return !previous_node->operation_parameters
               .output_stream_parameters
                   [current_node_index * kIOStreamParamDefs.kStreamParamCount +
@@ -396,8 +323,8 @@ auto OnePlanNodeScheduler::IsModuleSetSupported(
 
 // Check if the given node is in the given vector.
 auto OnePlanNodeScheduler::IsNodeIncluded(
-    const std::vector<QueryNode>& node_vector,
-                                   const QueryNode& searched_node) -> bool {
+    const std::vector<QueryNode>& node_vector, const QueryNode& searched_node)
+    -> bool {
   return std::any_of(node_vector.begin(), node_vector.end(),
                      [&](const QueryNode& scheduled_node) {
                        return scheduled_node == searched_node;
@@ -424,19 +351,6 @@ auto OnePlanNodeScheduler::FindNextNodeLocation(
        next_node_index++) {
     if (next_nodes[next_node_index].get() == next_node) {
       return next_node_index;
-    }
-  }
-  throw std::runtime_error("No node found!");
-}
-
-auto OnePlanNodeScheduler::FindPreviousNodeLocation(
-    const std::vector<std::weak_ptr<QueryNode>>& previous_nodes,
-    const std::shared_ptr<QueryNode>& previous_node) -> int {
-  for (int previous_node_index = 0; previous_node_index < previous_nodes.size();
-       previous_node_index++) {
-    auto observed_node = previous_nodes[previous_node_index].lock();
-    if (observed_node == previous_node) {
-      return previous_node_index;
     }
   }
   throw std::runtime_error("No node found!");
