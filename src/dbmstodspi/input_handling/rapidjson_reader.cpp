@@ -69,6 +69,43 @@ auto RapidJSONReader::ReadInputDefinition(std::string json_filename)
   return input_node_map;
 }
 
+auto RapidJSONReader::ReadAllTablesData(std::string json_filename)
+    -> std::vector<TableMetaDataStringMap> {
+  std::string filename_field = "filename";
+  std::string record_size_field = "record_size";
+  std::string record_count_field = "record_count";
+  std::string sorted_status_field = "sorted_status";
+  const auto document = Read(json_filename);
+  auto* document_ptr = document.get();
+  auto tables_parameters_vector = (*document_ptr).GetArray();
+
+  std::vector<TableMetaDataStringMap> table_data_vector;
+  for (const auto& table_parameters_ptr : tables_parameters_vector) {
+    TableMetaDataStringMap current_table_value_map;
+    auto table_parameters = table_parameters_ptr.GetObject();
+    current_table_value_map.insert(
+        {filename_field, table_parameters[filename_field.c_str()].GetString()});
+    current_table_value_map.insert(
+        {record_size_field,
+         table_parameters[record_size_field.c_str()].GetInt()});
+    current_table_value_map.insert(
+        {record_count_field,
+         table_parameters[record_count_field.c_str()].GetInt()});
+    std::vector<std::vector<int>> sorted_sequences;
+    for (const auto& sorted_sequence :
+         table_parameters[sorted_status_field.c_str()].GetArray()) {
+      std::vector<int> sequence_params;
+      for (const auto& sequence_param : sorted_sequence.GetArray()) {
+        sequence_params.push_back(sequence_param.GetInt());
+      }
+      sorted_sequences.push_back(sequence_params);
+    }
+    current_table_value_map.insert({sorted_status_field, sorted_sequences});
+    table_data_vector.push_back(current_table_value_map);
+  }
+  return table_data_vector;
+}
+
 void RapidJSONReader::GetOperationParameters(
     const rapidjson::GenericMember<
         rapidjson::UTF8<>, rapidjson::MemoryPoolAllocator<>>& node_parameter,

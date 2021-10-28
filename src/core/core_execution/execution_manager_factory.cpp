@@ -52,7 +52,7 @@ auto ExecutionManagerFactory::GetManager(const Config& config)
   auto secondary_start_state = std::make_unique<DebugScheduleState>();
 
   return std::make_unique<ExecutionManager>(
-      config, std::make_unique<QueryManager>(),
+      std::move(config), std::make_unique<QueryManager>(),
       std::make_unique<DataManager>(config.data_sizes, config.csv_separator,
                                     std::make_unique<CSVReader>()),
       std::make_unique<MemoryManager>(), std::move(secondary_start_state),

@@ -22,7 +22,8 @@ set(header_files
     ${CMAKE_CURRENT_SOURCE_DIR}/input_manager_interface.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/operation_types.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/table_data.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/query_scheduling_data.hpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/query_scheduling_data.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/memory_block_interface.hpp)
 
 add_library(core_interfaces INTERFACE)
 

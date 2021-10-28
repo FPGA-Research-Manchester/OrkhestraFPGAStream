@@ -43,7 +43,7 @@ using orkhestrafs::core_interfaces::query_scheduling_data::
 using orkhestrafs::dbmstodspi::AcceleratedQueryNode;
 using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
 using orkhestrafs::dbmstodspi::FPGAManagerInterface;
-using orkhestrafs::dbmstodspi::MemoryBlockInterface;
+using orkhestrafs::core_interfaces::MemoryBlockInterface;
 using orkhestrafs::dbmstodspi::NodeSchedulerInterface;
 
 namespace orkhestrafs::dbmstodspi {

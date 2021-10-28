@@ -41,7 +41,6 @@ add_library(query_execution OBJECT
             table_data/data_manager_interface.hpp
             table_data/types_converter.cpp
             table_data/types_converter.hpp
-            table_data/memory_block_interface.hpp
             table_data/memory_manager.cpp
             table_data/memory_manager.hpp
             table_data/memory_manager_interface.hpp

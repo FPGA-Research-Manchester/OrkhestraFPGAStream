@@ -26,7 +26,7 @@ limitations under the License.
 #include "table_data.hpp"
 
 using orkhestrafs::core_interfaces::table_data::ColumnDataType;
-using orkhestrafs::dbmstodspi::MemoryBlockInterface;
+using orkhestrafs::core_interfaces::MemoryBlockInterface;
 
 namespace orkhestrafs::dbmstodspi {
 

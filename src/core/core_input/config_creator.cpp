@@ -27,12 +27,14 @@ using orkhestrafs::core::core_input::ConfigCreator;
 using orkhestrafs::core_interfaces::operation_types::QueryOperation;
 using orkhestrafs::core_interfaces::query_scheduling_data::kSupportedFunctions;
 using orkhestrafs::core_interfaces::table_data::kDataTypeNames;
+using orkhestrafs::core_interfaces::table_data::SortedSequence;
 
 auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string configurations_library = "CONFIGURATIONS_LIBRARY";
   std::string memory_requirements = "BITSTREAMS_MEM_REQ";
   std::string data_type_sizes = "DATA_SIZE_CONFIG";
   std::string data_separator = "DATA_SEPARATOR";
+  std::string table_metadata = "TABLE_METADATA";
 
   // repo.json is hardcoded for now.
 
@@ -46,6 +48,12 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
       ConvertStringMapToQueryOperations(accelerator_library_data);
   config.module_library =
       ConvertAcceleratorLibraryToModuleLibrary(accelerator_library_data);
+
+  auto all_tables_json_data =
+      json_reader_->ReadAllTablesData(config_values[table_metadata]);
+
+  auto thing = CreateTablesData(all_tables_json_data);
+  //config.all_tables = CreateTablesData(all_tables_json_data);
 
   auto string_key_data_sizes =
       json_reader_->ReadDataSizes(config_values[data_type_sizes]);
@@ -73,6 +81,38 @@ auto ConfigCreator::ConvertStringMapToQueryOperations(
     resulting_map.insert({query_vector, string_value});
   }
   return resulting_map;
+}
+
+auto ConfigCreator::CreateTablesData(
+    const std::vector<
+        std::map<std::string, std::variant<std::string, int,
+                                           std::vector<std::vector<int>>>>>&
+        tables_data_in_string_form) -> std::vector<TableMetaData> {
+  std::vector<TableMetaData> resulting_table_meta_data;
+
+  std::string filename_field = "filename";
+  std::string record_size_field = "record_size";
+  std::string record_count_field = "record_count";
+  std::string sorted_status_field = "sorted_status";
+
+  for (const auto& table_meta_data_map : tables_data_in_string_form) {
+    TableMetaData current_table;
+    current_table.filename =
+        std::get<std::string>(table_meta_data_map.at(filename_field));
+    current_table.memory_area = nullptr;
+    current_table.record_count =
+        std::get<int>(table_meta_data_map.at(record_count_field));
+    current_table.record_size =
+        std::get<int>(table_meta_data_map.at(record_size_field));
+    for (const auto& sorted_sequence : std::get<std::vector<std::vector<int>>>(
+             table_meta_data_map.at(sorted_status_field))) {
+      SortedSequence current_sequence = {sorted_sequence.at(0),
+                                         sorted_sequence.at(1)};
+      current_table.sorted_status.push_back(current_sequence);
+    }
+    resulting_table_meta_data.push_back(std::move(current_table));
+  }
+  return resulting_table_meta_data;
 }
 
 auto ConfigCreator::ConvertAcceleratorLibraryToModuleLibrary(

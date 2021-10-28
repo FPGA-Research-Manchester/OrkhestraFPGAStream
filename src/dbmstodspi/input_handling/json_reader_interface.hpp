@@ -37,6 +37,13 @@ class JSONReaderInterface {
       std::string,
       std::variant<std::string, std::vector<std::string>,
                    std::map<std::string, std::vector<std::vector<int>>>>>;
+  /**
+   * @brief Datatype for table metadata
+   */
+  using TableMetaDataStringMap =
+      std::map<std::string,
+               std::variant<std::string, int, std::vector<std::vector<int>>>>;
+
   virtual ~JSONReaderInterface() = default;
   /**
    * @brief Read the JSON file describing data type sizes.
@@ -67,5 +74,13 @@ class JSONReaderInterface {
    */
   virtual auto ReadInputDefinition(std::string json_filename)
       -> std::map<std::string, InputNodeParameters> = 0;
+
+  /**
+   * @brief Read tables metadata - How is it sorted and how large is it.
+   * @param json_filename JSON file
+   * @return Return metadata about all of the current tables usable.
+   */
+  virtual auto ReadAllTablesData(std::string json_filename)
+      -> std::vector<TableMetaDataStringMap> = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

@@ -58,7 +58,7 @@ class ExecutionManager : public ExecutionManagerInterface,
                          public GraphProcessingFSMInterface {
  public:
   ~ExecutionManager() override = default;
-  ExecutionManager(Config config,
+  ExecutionManager(const Config& config,
                    std::unique_ptr<QueryManagerInterface> query_manager,
                    std::unique_ptr<DataManagerInterface> data_manager,
                    std::unique_ptr<MemoryManagerInterface> memory_manager,

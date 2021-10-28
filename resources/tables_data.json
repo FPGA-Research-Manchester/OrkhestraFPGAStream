@@ -1,0 +1,11 @@
+[{
+	"filename": "lineitem0.01.csv",
+	"record_size": 38,
+	"record_count": 60175,
+	"sorted_status": []
+}, {
+	"filename": "part0.01.csv",
+	"record_size": 44,
+	"record_count": 2000,
+	"sorted_status": []
+}]

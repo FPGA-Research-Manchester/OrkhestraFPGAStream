@@ -56,6 +56,12 @@ class ConfigCreator {
                      std::string>& accelerator_library_data)
       -> std::map<QueryOperationType, std::vector<std::vector<int>>>;
 
+  static auto CreateTablesData(
+      const std::vector<
+          std::map<std::string, std::variant<std::string, int,
+                                             std::vector<std::vector<int>>>>>&
+          tables_data_in_string_form) -> std::vector<TableMetaData>;
+
  public:
   /**
    * @brief Factory constructor.
