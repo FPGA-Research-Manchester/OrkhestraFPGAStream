@@ -27,7 +27,7 @@ limitations under the License.
 using orkhestrafs::core_interfaces::operation_types::QueryOperation;
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 using orkhestrafs::core_interfaces::table_data::ColumnDataType;
-using orkhestrafs::core_interfaces::table_data::TableMetaData;
+using orkhestrafs::core_interfaces::table_data::TableMetadata;
 
 namespace orkhestrafs::core_interfaces {
 struct Config {
@@ -45,7 +45,7 @@ struct Config {
   /// Map telling how big each instance of a specifc data type is.
   std::map<ColumnDataType, double> data_sizes;
 
-  //std::vector<TableMetaData> all_tables;
+  std::vector<TableMetadata> initial_all_tables_metadata;
 
   /// CSV data column separator character.
   char csv_separator;

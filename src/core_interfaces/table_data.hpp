@@ -71,9 +71,10 @@ struct SortedSequence {
 /**
  * @brief Struct to hold information about the specific table.
  */
-struct TableMetaData {
+struct TableMetadata {
   std::string filename;
-  std::unique_ptr<MemoryBlockInterface> memory_area;
+  // This is the actual data. This will be paired together with the metadata.
+  // std::unique_ptr<MemoryBlockInterface> memory_area;
   int record_size;
   int record_count;
   std::vector<SortedSequence> sorted_status;

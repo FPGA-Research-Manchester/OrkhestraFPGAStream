@@ -16,6 +16,7 @@ limitations under the License.
 
 #include "run_linker.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 
 using orkhestrafs::dbmstodspi::RunLinker;

@@ -52,8 +52,7 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   auto all_tables_json_data =
       json_reader_->ReadAllTablesData(config_values[table_metadata]);
 
-  auto thing = CreateTablesData(all_tables_json_data);
-  //config.all_tables = CreateTablesData(all_tables_json_data);
+  config.initial_all_tables_metadata = CreateTablesData(all_tables_json_data);
 
   auto string_key_data_sizes =
       json_reader_->ReadDataSizes(config_values[data_type_sizes]);
@@ -87,8 +86,8 @@ auto ConfigCreator::CreateTablesData(
     const std::vector<
         std::map<std::string, std::variant<std::string, int,
                                            std::vector<std::vector<int>>>>>&
-        tables_data_in_string_form) -> std::vector<TableMetaData> {
-  std::vector<TableMetaData> resulting_table_meta_data;
+        tables_data_in_string_form) -> std::vector<TableMetadata> {
+  std::vector<TableMetadata> resulting_table_meta_data;
 
   std::string filename_field = "filename";
   std::string record_size_field = "record_size";
@@ -96,10 +95,9 @@ auto ConfigCreator::CreateTablesData(
   std::string sorted_status_field = "sorted_status";
 
   for (const auto& table_meta_data_map : tables_data_in_string_form) {
-    TableMetaData current_table;
+    TableMetadata current_table;
     current_table.filename =
         std::get<std::string>(table_meta_data_map.at(filename_field));
-    current_table.memory_area = nullptr;
     current_table.record_count =
         std::get<int>(table_meta_data_map.at(record_count_field));
     current_table.record_size =

@@ -89,6 +89,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   auto IsRunValid() -> bool override;
   void ExecuteAndProcessResults() override;
   void PrintCurrentPlan() override;
+  void GetCurrentTableMetadataFromConfig() override;
 
  private:
   // Initial inputs
@@ -103,6 +104,10 @@ class ExecutionManager : public ExecutionManagerInterface,
   // State status
   std::unique_ptr<StateInterface> current_state_;
   bool busy_flag_ = false;
+  // New TableMetadata variables.
+  std::vector<TableMetadata> current_tables_metadata_;
+  std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
+      memory_blocks_;
   // Variables used throughout different states.
   std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links_;
   std::map<std::string, std::map<int, MemoryReuseTargets>> current_reuse_links_;

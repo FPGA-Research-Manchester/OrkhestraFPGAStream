@@ -108,3 +108,8 @@ void ExecutionManager::PrintCurrentPlan() {
     query_node_runs_queue_.pop();
   }
 }
+
+void ExecutionManager::GetCurrentTableMetadataFromConfig() {
+  current_tables_metadata_ = config_.initial_all_tables_metadata;
+
+}

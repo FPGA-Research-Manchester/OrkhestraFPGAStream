@@ -60,7 +60,7 @@ class ConfigCreator {
       const std::vector<
           std::map<std::string, std::variant<std::string, int,
                                              std::vector<std::vector<int>>>>>&
-          tables_data_in_string_form) -> std::vector<TableMetaData>;
+          tables_data_in_string_form) -> std::vector<TableMetadata>;
 
  public:
   /**

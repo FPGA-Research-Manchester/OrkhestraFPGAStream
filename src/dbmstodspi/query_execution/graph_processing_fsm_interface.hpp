@@ -78,7 +78,12 @@ class GraphProcessingFSMInterface {
   virtual void ExecuteAndProcessResults() = 0;
   /**
    * @brief Debug method to print the current plan. Can break the run!
-  */
+   */
   virtual void PrintCurrentPlan() = 0;
+  /**
+   * @brief Method to setup current table data from config which tells the
+   * scheduler about the available tables.
+   */
+  virtual void GetCurrentTableMetadataFromConfig() = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi
