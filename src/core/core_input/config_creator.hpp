@@ -62,6 +62,14 @@ class ConfigCreator {
                                              std::vector<std::vector<int>>>>>&
           tables_data_in_string_form) -> std::vector<TableMetadata>;
 
+  static auto CreateHWLibrary(
+      const std::map<
+          std::string,
+          std::pair<std::map<std::string,
+                             std::map<std::string, std::variant<std::vector<int>,
+                                                                int, std::string>>>,
+                    std::vector<std::vector<std::string>>>>& hw_data_in_string_form) -> std::map<QueryOperationType, OperationPRModules>;
+
  public:
   /**
    * @brief Factory constructor.

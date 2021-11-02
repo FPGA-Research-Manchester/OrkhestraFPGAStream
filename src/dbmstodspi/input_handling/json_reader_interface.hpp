@@ -44,6 +44,13 @@ class JSONReaderInterface {
       std::map<std::string,
                std::variant<std::string, int, std::vector<std::vector<int>>>>;
 
+  using HWLibraryStringMap = std::map<
+      std::string,
+      std::pair<std::map<std::string,
+                         std::map<std::string, std::variant<std::vector<int>,
+                                                            int, std::string>>>,
+                std::vector<std::vector<std::string>>>>;
+
   virtual ~JSONReaderInterface() = default;
   /**
    * @brief Read the JSON file describing data type sizes.
@@ -82,5 +89,12 @@ class JSONReaderInterface {
    */
   virtual auto ReadAllTablesData(std::string json_filename)
       -> std::vector<TableMetaDataStringMap> = 0;
+
+  /**
+   * @brief Read HW library capacities and module locations data
+   * @param json_filename JSON file
+   * @return Return a map of the read json.
+   */
+  virtual auto ReadHWLibraryData(std::string json_filename) -> HWLibraryStringMap = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

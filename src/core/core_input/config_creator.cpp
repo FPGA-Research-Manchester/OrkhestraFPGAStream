@@ -19,11 +19,13 @@ limitations under the License.
 #include <algorithm>
 #include <vector>
 
+#include "pr_module_data.hpp"
 #include "query_scheduling_data.hpp"
 #include "table_data.hpp"
 
 using orkhestrafs::core::core_input::ConfigCreator;
 
+using orkhestrafs::core_interfaces::hw_library::PRModuleData;
 using orkhestrafs::core_interfaces::operation_types::QueryOperation;
 using orkhestrafs::core_interfaces::query_scheduling_data::kSupportedFunctions;
 using orkhestrafs::core_interfaces::table_data::kDataTypeNames;
@@ -35,6 +37,7 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string data_type_sizes = "DATA_SIZE_CONFIG";
   std::string data_separator = "DATA_SEPARATOR";
   std::string table_metadata = "TABLE_METADATA";
+  std::string hw_library = "HW_LIBRARY";
 
   // repo.json is hardcoded for now.
 
@@ -53,6 +56,11 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
       json_reader_->ReadAllTablesData(config_values[table_metadata]);
 
   config.initial_all_tables_metadata = CreateTablesData(all_tables_json_data);
+
+  auto hw_library_json_data =
+      json_reader_->ReadHWLibraryData(config_values[hw_library]);
+
+  config.pr_hw_library = CreateHWLibrary(hw_library_json_data);
 
   auto string_key_data_sizes =
       json_reader_->ReadDataSizes(config_values[data_type_sizes]);
@@ -111,6 +119,51 @@ auto ConfigCreator::CreateTablesData(
     resulting_table_meta_data.push_back(std::move(current_table));
   }
   return resulting_table_meta_data;
+}
+
+auto ConfigCreator::CreateHWLibrary(
+    const std::map<
+        std::string,
+        std::pair<
+            std::map<std::string,
+                     std::map<std::string, std::variant<std::vector<int>, int,
+                                                        std::string>>>,
+            std::vector<std::vector<std::string>>>>& hw_data_in_string_form)
+    -> std::map<QueryOperationType, OperationPRModules> {
+  std::string locations_field = "locations";
+  std::string length_field = "length";
+  std::string capacity_field = "capacity";
+  std::string resource_string_field = "string";
+  std::string is_backwards_field = "is_backwards";
+
+  std::map<QueryOperationType, OperationPRModules> resulting_library;
+
+  for (const auto& [operation_string, pr_module_data] :
+       hw_data_in_string_form) {
+    std::map<std::string, PRModuleData> bitstream_map;
+    for (const auto& [bitstream_name, bitstream_parameters] :
+         pr_module_data.first) {
+      PRModuleData current_module;
+      current_module.capacity =
+          std::get<std::vector<int>>(bitstream_parameters.at(capacity_field));
+      current_module.fitting_locations =
+          std::get<std::vector<int>>(bitstream_parameters.at(locations_field));
+      current_module.is_backwards =
+          std::get<int>(bitstream_parameters.at(is_backwards_field));
+      current_module.length =
+          std::get<int>(bitstream_parameters.at(length_field));
+      current_module.resource_string =
+          std::get<std::string>(bitstream_parameters.at(resource_string_field));
+
+      bitstream_map.insert({bitstream_name, current_module});
+    }
+    OperationPRModules current_module_set;
+    current_module_set.bitstream_map = bitstream_map;
+    current_module_set.starting_locations = pr_module_data.second;
+    resulting_library.insert(
+        {kSupportedFunctions.at(operation_string), current_module_set});
+  }
+  return resulting_library;
 }
 
 auto ConfigCreator::ConvertAcceleratorLibraryToModuleLibrary(

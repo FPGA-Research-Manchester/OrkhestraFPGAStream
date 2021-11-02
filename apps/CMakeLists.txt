@@ -129,7 +129,8 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/fast_benchmark_config.ini
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/slow_benchmark_config.ini
 
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/tables_data.json)
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/tables_data.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/pr_hw_library.json)
 
 add_executable (OrkhestraFPGAStream main.cpp ${data})
 

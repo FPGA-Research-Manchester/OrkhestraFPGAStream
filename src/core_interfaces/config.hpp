@@ -23,11 +23,13 @@ limitations under the License.
 
 #include "query_scheduling_data.hpp"
 #include "table_data.hpp"
+#include "pr_module_data.hpp"
 
 using orkhestrafs::core_interfaces::operation_types::QueryOperation;
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 using orkhestrafs::core_interfaces::table_data::ColumnDataType;
 using orkhestrafs::core_interfaces::table_data::TableMetadata;
+using orkhestrafs::core_interfaces::hw_library::OperationPRModules;
 
 namespace orkhestrafs::core_interfaces {
 struct Config {
@@ -45,7 +47,9 @@ struct Config {
   /// Map telling how big each instance of a specifc data type is.
   std::map<ColumnDataType, double> data_sizes;
 
+  // Data for the PR capable scheduler.
   std::vector<TableMetadata> initial_all_tables_metadata;
+  std::map<QueryOperationType, OperationPRModules> pr_hw_library;
 
   /// CSV data column separator character.
   char csv_separator;

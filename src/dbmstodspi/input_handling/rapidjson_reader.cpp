@@ -227,3 +227,81 @@ auto RapidJSONReader::ConvertCharStringToAscii(const std::string& input_string,
   }
   return integer_values;
 }
+
+auto RapidJSONReader::ReadHWLibraryData(std::string json_filename)
+    -> HWLibraryStringMap {
+  std::string bitstreams_field = "bitstreams";
+  std::string start_locations_field = "start_locations";
+  std::string locations_field = "locations";
+  std::string length_field = "length";
+  std::string capacity_field = "capacity";
+  std::string resource_string_field = "string";
+  std::string is_backwards_field = "is_backwards";
+
+  const auto document = Read(json_filename);
+  auto* document_ptr = document.get();
+  auto operator_functions_list = (*document_ptr).GetObject();
+
+  //  using HWLibraryStringMap = std::map<
+  //      std::string,
+  //      std::pair<std::map<std::string,
+  //                         std::map<std::string,
+  //                            std::variant<std::vector<int>,
+  //                            int,
+  //                            std::string>>>,
+  //                std::vector<std::vector<std::string>>>>;
+
+  HWLibraryStringMap resulting_string_map;
+  for (const auto& operator_parameters_object : operator_functions_list) {
+    std::string operation_type = operator_parameters_object.name.GetString();
+    auto operator_parameters = operator_parameters_object.value.GetObject();
+
+    std::map<
+        std::string,
+        std::map<std::string, std::variant<std::vector<int>, int, std::string>>>
+        operation_module_bitstream_map;
+    for (const auto& bitstream_object :
+         operator_parameters[bitstreams_field.c_str()].GetObject()) {
+      std::map<std::string, std::variant<std::vector<int>, int, std::string>>
+          bitstream_parameters_map;
+      std::string bitstream_name = bitstream_object.name.GetString();
+      std::vector<int> bitstream_locations;
+      for (const auto& location_integer_ptr :
+           bitstream_object.value[locations_field.c_str()].GetArray()) {
+        bitstream_locations.push_back(location_integer_ptr.GetInt());
+      }
+      std::vector<int> capacity_values;
+      for (const auto& capacity_integer_ptr :
+           bitstream_object.value[capacity_field.c_str()].GetArray()) {
+        capacity_values.push_back(capacity_integer_ptr.GetInt());
+      }
+      bitstream_parameters_map.insert({locations_field, bitstream_locations});
+      bitstream_parameters_map.insert({capacity_field, capacity_values});
+      bitstream_parameters_map.insert(
+          {length_field,
+           bitstream_object.value[length_field.c_str()].GetInt()});
+      bitstream_parameters_map.insert(
+          {resource_string_field,
+           bitstream_object.value[resource_string_field.c_str()].GetString()});
+      bitstream_parameters_map.insert(
+          {is_backwards_field,
+           bitstream_object.value[is_backwards_field.c_str()].GetInt()});
+      operation_module_bitstream_map.insert(
+          {bitstream_name, bitstream_parameters_map});
+    }
+
+    std::vector<std::vector<std::string>> start_locations_vector;
+    for (const auto& start_location_array :
+         operator_parameters[start_locations_field.c_str()].GetArray()) {
+      std::vector<std::string> current_location_bitstreams;
+      for (const auto& bitstream_name : start_location_array.GetArray()) {
+        current_location_bitstreams.push_back(bitstream_name.GetString());
+      }
+      start_locations_vector.push_back(current_location_bitstreams);
+    }
+    resulting_string_map.insert(
+        {operation_type,
+         {operation_module_bitstream_map, start_locations_vector}});
+  }
+  return resulting_string_map;
+}

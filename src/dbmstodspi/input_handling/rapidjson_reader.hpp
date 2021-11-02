@@ -87,5 +87,7 @@ class RapidJSONReader : public JSONReaderInterface {
    */
   auto ReadAllTablesData(std::string json_filename)
       -> std::vector<TableMetaDataStringMap> override;
+
+  auto ReadHWLibraryData(std::string json_filename) -> HWLibraryStringMap override;
 };
 }  // namespace orkhestrafs::dbmstodspi
