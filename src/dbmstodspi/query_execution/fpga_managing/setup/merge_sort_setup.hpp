@@ -17,6 +17,7 @@ limitations under the License.
 #pragma once
 #include "acceleration_module_setup_interface.hpp"
 #include "merge_sort_interface.hpp"
+#include "first_module_setup.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -24,7 +25,7 @@ namespace orkhestrafs::dbmstodspi {
  * @brief Class to calculate the configuration data and setup the merge sorting
  * acceleration.
  */
-class MergeSortSetup : public AccelerationModuleSetupInterface {
+class MergeSortSetup : public virtual AccelerationModuleSetupInterface, public FirstModuleSetup {
  public:
   void SetupModule(AccelerationModule& acceleration_module,
                    const AcceleratedQueryNode& module_parameters) override;

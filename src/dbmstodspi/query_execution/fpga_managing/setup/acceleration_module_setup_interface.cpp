@@ -36,3 +36,8 @@ auto AccelerationModuleSetupInterface::GetStreamRecordSize(
   }
   return stream_parameters.stream_specification.size();
 }
+
+auto AccelerationModuleSetupInterface::IsConstrainedToFirstInPipeline()
+    -> bool {
+  return false;
+}

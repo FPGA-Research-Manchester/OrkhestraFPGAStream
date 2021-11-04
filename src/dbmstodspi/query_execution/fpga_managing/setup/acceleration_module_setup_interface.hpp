@@ -70,6 +70,11 @@ class AccelerationModuleSetupInterface {
       std::vector<std::vector<int>> operation_parameters)
       -> std::pair<int, int>;
 
+  /**
+   * @brief Can the module have any prerequisite modules before it?
+   * @return Bool showing if it has the constraint.
+   */
+  virtual auto IsConstrainedToFirstInPipeline() -> bool;
  protected:
   static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)
       -> int;

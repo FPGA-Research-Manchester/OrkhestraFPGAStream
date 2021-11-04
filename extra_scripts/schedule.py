@@ -1,18 +1,3 @@
-#Copyright 2021 University of Manchester
-#
-#Licensed under the Apache License, Version 2.0(the "License");
-#you may not use this file except in compliance with the License.
-#You may obtain a copy of the License at
-#
-#http:  // www.apache.org/licenses/LICENSE-2.0
-#
-#Unless required by applicable law or agreed to in writing, software
-#distributed under the License is distributed on an "AS IS" BASIS,
-#WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#See the License for the specific language governing permissions and
-#limitations under the License.
-
-
 from dataclasses import dataclass
 from typing import Tuple
 from sys import maxsize
@@ -668,13 +653,7 @@ def add_new_table_to_next_nodes(all_nodes, new_all_nodes, node, table_names):
         new_all_nodes[next_node] = all_nodes[next_node].copy()
         new_all_nodes[next_node]["tables"] = all_nodes[next_node]["tables"].copy()
 
-        # Get index
-        current_node_indexes = get_current_node_index(
-            new_all_nodes, next_node, node)
-
-        for node_table_index, current_node_stream_index in current_node_indexes:
-            # Assuming it is large enough!
-            new_all_nodes[next_node]["tables"][node_table_index] = table_names[current_node_stream_index]
+    add_new_table_to_next_nodes_in_place(new_all_nodes, node, table_names)
 
 
 def get_current_node_index(new_all_nodes, next_node, node_name):
@@ -841,7 +820,6 @@ def get_fitting_bitstream_locations_based_on_list(list_of_fitting_bitstreams, st
 
 
 # ----------- Update tables in preprocessing ------------
-# (Eventually can remove previous methods for updating tables during scheduling)
 def get_worst_case_fully_processed_tables(input_tables, current_node_decorators, data_tables, min_capacity):
     if len(input_tables) == 0:
         # Data generator decorators haven't been added yet!
@@ -889,7 +867,6 @@ def get_worst_case_fully_processed_tables(input_tables, current_node_decorators,
         return input_tables
 
 
-# TODO: Remove code duplication
 def add_new_table_to_next_nodes_in_place(all_nodes, node, table_names):
     for next_node in all_nodes[node]["after"]:
 

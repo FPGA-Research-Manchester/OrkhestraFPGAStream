@@ -99,7 +99,7 @@ add_library(query_execution OBJECT
             fpga_managing/modules/ila.cpp
             fpga_managing/modules/ila.hpp
             fpga_managing/modules/ila_types.hpp
-            fpga_managing/modules/read_back_module.hpp
+            fpga_managing/modules/decorators/read_back_module.hpp
             fpga_managing/setup/addition_setup.cpp
             fpga_managing/setup/addition_setup.hpp
             fpga_managing/setup/aggregation_sum_setup.cpp
@@ -121,6 +121,8 @@ add_library(query_execution OBJECT
             fpga_managing/setup/multiplication_setup.hpp
             fpga_managing/setup/acceleration_module_setup_interface.hpp
             fpga_managing/setup/acceleration_module_setup_interface.cpp
+		    fpga_managing/setup/decorators/first_module_setup.cpp
+            fpga_managing/setup/decorators/first_module_setup.hpp
             scheduling/one_plan_node_scheduler.cpp
             scheduling/one_plan_node_scheduler.hpp
             scheduling/node_scheduler_interface.hpp
@@ -150,6 +152,8 @@ target_include_directories(query_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
                                                   ${CMAKE_CURRENT_SOURCE_DIR}/fpga_managing
                                                   ${CMAKE_CURRENT_SOURCE_DIR}/fpga_managing/modules
                                                   ${CMAKE_CURRENT_SOURCE_DIR}/fpga_managing/setup
+		                                          ${CMAKE_CURRENT_SOURCE_DIR}/fpga_managing/modules/decorators
+		                                          ${CMAKE_CURRENT_SOURCE_DIR}/fpga_managing/setup/decorators
 					                              ${CMAKE_CURRENT_SOURCE_DIR}/scheduling)
 
 target_link_libraries(query_execution PRIVATE core_interfaces)
