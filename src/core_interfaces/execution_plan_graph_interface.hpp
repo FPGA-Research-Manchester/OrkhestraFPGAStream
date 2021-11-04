@@ -39,5 +39,15 @@ class ExecutionPlanGraphInterface {
    * @return Boolean flag noting if there are any nodes.
    */
   virtual auto IsEmpty() -> bool = 0;
+  /**
+   * @brief Get non owning ptrs to the root nodes.
+   * @return Nodes which have no dependencies.
+  */
+  virtual auto GetRootNodesPtrs() -> std::vector<QueryNode*> = 0;
+  /**
+   * @brief Method to return all node pointers
+   * @return Vector of all nodes.
+  */
+  virtual auto GetAllNodesPtrs() -> std::vector<QueryNode*> = 0;
 };
 }  // namespace orkhestrafs::core_interfaces

@@ -33,6 +33,7 @@ limitations under the License.
 #include "query_manager_interface.hpp"
 #include "query_scheduling_data.hpp"
 #include "state_interface.hpp"
+#include "scheduling_query_node.hpp"
 
 using orkhestrafs::core_interfaces::Config;
 using orkhestrafs::core_interfaces::ExecutionManagerInterface;
@@ -51,6 +52,7 @@ using orkhestrafs::dbmstodspi::MemoryManagerInterface;
 using orkhestrafs::dbmstodspi::NodeSchedulerInterface;
 using orkhestrafs::dbmstodspi::QueryManagerInterface;
 using orkhestrafs::dbmstodspi::StateInterface;
+using orkhestrafs::dbmstodspi::SchedulingQueryNode;
 
 namespace orkhestrafs::core::core_execution {
 
@@ -88,8 +90,8 @@ class ExecutionManager : public ExecutionManagerInterface,
   auto IsRunReadyForExecution() -> bool override;
   auto IsRunValid() -> bool override;
   void ExecuteAndProcessResults() override;
-  void PrintCurrentPlan() override;
-  void GetCurrentTableMetadataFromConfig() override;
+  void PopAndPrintCurrentPlan() override;
+  void SetupSchedulingData() override;
 
  private:
   // Initial inputs
@@ -108,6 +110,10 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::vector<TableMetadata> current_tables_metadata_;
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
       memory_blocks_;
+  std::map<std::string, SchedulingQueryNode> current_query_graph_;
+
+  std::vector<std::string> current_available_nodes_;
+  std::vector<std::string> nodes_constrained_to_first_;
   // Variables used throughout different states.
   std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links_;
   std::map<std::string, std::map<int, MemoryReuseTargets>> current_reuse_links_;

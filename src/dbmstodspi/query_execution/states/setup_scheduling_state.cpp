@@ -31,6 +31,6 @@ using orkhestrafs::dbmstodspi::logging::LogLevel;
 auto SetupSchedulingState::Execute(GraphProcessingFSMInterface* fsm)
     -> std::unique_ptr<StateInterface> {
   Log(LogLevel::kTrace, "Setup scheduling state");
-  fsm->GetCurrentTableMetadataFromConfig();
+  fsm->SetupSchedulingData();
   return std::make_unique<DebugScheduleState>();
 }

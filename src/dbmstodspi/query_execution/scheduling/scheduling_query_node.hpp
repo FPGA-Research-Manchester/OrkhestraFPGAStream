@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright 2021 University of Manchester
 
 Licensed under the Apache License, Version 2.0(the "License");
@@ -13,29 +13,31 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 #pragma once
 
-#include "execution_plan_graph_interface.hpp"
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "operation_types.hpp"
 #include "query_scheduling_data.hpp"
 
-using orkhestrafs::core_interfaces::ExecutionPlanGraphInterface;
+using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
 
 namespace orkhestrafs::dbmstodspi {
-class Graph : public ExecutionPlanGraphInterface {
- private:
-  std::vector<std::shared_ptr<QueryNode>> root_nodes_;
-  void AddNextNodeToVector(QueryNode* next_node,
-                           std::vector<QueryNode*>& all_nodes_vector);
- public:
-  ~Graph() override = default;
 
-  explicit Graph(std::vector<std::shared_ptr<QueryNode>> graph_data)
-      : root_nodes_{std::move(graph_data)} {}
-
-  auto ExportRootNodes() -> std::vector<std::shared_ptr<QueryNode>> override;
-  auto IsEmpty() -> bool override;
-  auto GetRootNodesPtrs() -> std::vector<QueryNode*> override;
-  auto GetAllNodesPtrs() -> std::vector<QueryNode*> override;
+/**
+ * @brief Struct to hold query graph data
+ */
+struct SchedulingQueryNode {
+  QueryOperationType operation;
+  std::vector<int> capacity;
+  std::vector<std::pair<std::string, int>> before_nodes;
+  std::vector<std::string> after_nodes;
+  std::vector<std::string> data_tables;
+  std::vector<std::vector<std::string>> satisfying_bitstreams;
+  QueryNode* corresponding_node;
 };
 }  // namespace orkhestrafs::dbmstodspi

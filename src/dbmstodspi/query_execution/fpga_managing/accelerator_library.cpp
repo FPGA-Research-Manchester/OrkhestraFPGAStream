@@ -83,3 +83,11 @@ auto AcceleratorLibrary::GetDriver(QueryOperationType operation_type)
     throw std::runtime_error("Operator driver not found!");
   }
 }
+
+auto AcceleratorLibrary::GetNodeCapacity(
+    QueryOperationType operation_type,
+    std::vector<std::vector<int>> operation_parameters)
+    -> std::vector<int> {
+  auto driver = GetDriver(operation_type);
+  return driver->GetCapacityRequirement(operation_parameters);
+}

@@ -1,3 +1,18 @@
+# Copyright 2021 University of Manchester
+#
+# Licensed under the Apache License, Version 2.0(the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http:  // www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 from dataclasses import dataclass
 from typing import Tuple
 from sys import maxsize
@@ -63,7 +78,7 @@ def select_shortest_placement_enum_func(available_module_placements):
     for placement in available_module_placements:
         if placement[1].position[1] - placement[1].position[0] + 1 < min_module_size:
             min_module_size = placement[1].position[1] - \
-                              placement[1].position[0] + 1
+                placement[1].position[0] + 1
     for placement in available_module_placements:
         if placement[1].position[1] - placement[1].position[0] + 1 == min_module_size \
                 and placement not in chosen_module_placements:
@@ -77,7 +92,7 @@ def select_longest_placement_enum_func(available_module_placements):
     for placement in available_module_placements:
         if placement[1].position[1] - placement[1].position[0] + 1 > max_module_size:
             max_module_size = placement[1].position[1] - \
-                              placement[1].position[0] + 1
+                placement[1].position[0] + 1
     for placement in available_module_placements:
         if placement[1].position[1] - placement[1].position[0] + 1 == max_module_size \
                 and placement not in chosen_module_placements:
@@ -276,11 +291,13 @@ def get_scheduled_modules_for_node_after_pos(all_nodes, min_position, node, take
     available_module_placements = []
     if all_nodes[node]["satisfying_bitstreams"]:
         available_module_placements = get_chosen_module_placements(
-            node, hw_library, skipped_placements, current_operation, module_placement_selections[0], min_position,
+            node, hw_library, skipped_placements, current_operation, module_placement_selections[
+                0], min_position,
             taken_columns, all_nodes[node]["satisfying_bitstreams"])
     if not available_module_placements:
         available_module_placements = get_chosen_module_placements(
-            node, hw_library, skipped_placements, current_operation, module_placement_selections[1], min_position,
+            node, hw_library, skipped_placements, current_operation, module_placement_selections[
+                1], min_position,
             taken_columns, hw_library[current_operation]["start_locations"])
     return available_module_placements
 
@@ -313,7 +330,8 @@ def find_all_available_bitstreams_after_min_pos(operation, min_position, taken_c
         # This line possibly not needed
         if start_locations[start_location_index]:
             for bitstream in start_locations[start_location_index]:
-                bitstream_index = hw_library[operation]["start_locations"][start_location_index].index(bitstream)
+                bitstream_index = hw_library[operation]["start_locations"][start_location_index].index(
+                    bitstream)
                 if not taken_columns:
                     all_positions_and_bitstreams.append(
                         (0, start_location_index, bitstream_index))
@@ -327,7 +345,7 @@ def find_all_available_bitstreams_after_min_pos(operation, min_position, taken_c
                     if (len(taken_columns) == module_index and taken_columns[module_index - 1][
                         1] < start_location_index) or (
                             len(taken_columns) != module_index and taken_columns[module_index][
-                        0] > end_index):
+                                0] > end_index):
                         all_positions_and_bitstreams.append(
                             (module_index, start_location_index, bitstream_index))
     return all_positions_and_bitstreams
@@ -450,7 +468,7 @@ def update_satisifying_bitstreams(current_node, previous_all_nodes, new_all_node
 def check_table_equality_of_given_node(previous_all_nodes, new_all_nodes, node_name, old_data_tables, new_data_tables):
     for table_index in range(len(previous_all_nodes[node_name]["tables"])):
         if old_data_tables[previous_all_nodes[node_name]["tables"][table_index]] != new_data_tables[
-            new_all_nodes[node_name]["tables"][table_index]]:
+                new_all_nodes[node_name]["tables"][table_index]]:
             return True
     return False
 
@@ -569,7 +587,7 @@ def get_linear_sorter_sequences(bitstream_capacity, record_count):
 
 def is_table_sorted(table, column_id):
     return len(table["sorted_sequences"]) == 1 and table["sorted_sequences"][0][0] == 0 and \
-           table["sorted_sequences"][0][1] == table["record_count"] and table["sorted_sequences"][0][2] == column_id
+        table["sorted_sequences"][0][1] == table["record_count"] and table["sorted_sequences"][0][2] == column_id
 
 
 def check_for_skippable_sort_operations(new_all_nodes, new_data_tables, node, hw_library):
@@ -679,6 +697,12 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
     current_plan = []
 
     start_time = perf_counter()
+
+    # Prepare first_nodes
+    first_nodes = get_first_nodes_from_saved_nodes(saved_nodes, graph)
+    add_all_first_modules_nodes_to_list(first_nodes, graph, hw_library)
+    add_all_splitting_modules_nodes_to_list(first_nodes, graph)
+
     # Put this into a while (starting_nodes)
     while starting_nodes:
         resulting_plans = dict()
@@ -687,10 +711,6 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
         blocked_nodes = []
         next_run_blocked_nodes = []
 
-        # Prepare first_nodes
-        first_nodes = get_first_nodes_from_saved_nodes(saved_nodes, graph)
-        add_all_first_modules_nodes_to_list(first_nodes, graph, hw_library)
-        add_all_splitting_modules_nodes_to_list(first_nodes, graph)
         # Find satisfying bitstreams
         add_satisfying_bitstream_locations_to_graph(
             starting_nodes.copy(), graph, hw_library, data_tables)
@@ -780,16 +800,16 @@ def get_min_requirements(current_node_name, graph, hw_library, data_tables):
         elif "blocking_sort" in current_decorator_list:
             # TODO: Add a check that correct things are being sorted
             current_table_sorted_sequences = data_tables[tables_to_be_sorted[0]
-            ]["sorted_sequences"]
+                                                         ]["sorted_sequences"]
             if not current_table_sorted_sequences:
                 return (data_tables[tables_to_be_sorted[0]]["record_count"],)
             else:
                 pos_of_last_sorted_element = current_table_sorted_sequences[-1][0] + \
-                                             current_table_sorted_sequences[-1][1]
+                    current_table_sorted_sequences[-1][1]
                 if pos_of_last_sorted_element > data_tables[tables_to_be_sorted[0]]["record_count"]:
                     raise ValueError("Incorrect sorted sequences!")
                 unsorted_tail_length = data_tables[tables_to_be_sorted[0]
-                                       ]["record_count"] - pos_of_last_sorted_element
+                                                   ]["record_count"] - pos_of_last_sorted_element
                 return (len(current_table_sorted_sequences) + unsorted_tail_length,)
     else:
         return graph[current_node_name]["capacity"]
@@ -952,12 +972,12 @@ def print_resource_string(current_resource_string, module_coordinates):
     for coordinate_i in range(len(module_coordinates)):
         coordinate = module_coordinates[coordinate_i]
         resulting_string = current_resource_string[:coordinate[0] + coordinate_i * 2 * colour_char_len] \
-                           + FancyText.GREEN + current_resource_string[
-                                               coordinate[0] + coordinate_i * 2 * colour_char_len:]
+            + FancyText.GREEN + current_resource_string[
+            coordinate[0] + coordinate_i * 2 * colour_char_len:]
         current_resource_string = resulting_string
         resulting_string = current_resource_string[:(coordinate[1] + 1) + (coordinate_i * 2 + 1) * colour_char_len] \
-                           + FancyText.DEFAULT + current_resource_string[
-                                                 (coordinate[1] + 1) + (coordinate_i * 2 + 1) * colour_char_len:]
+            + FancyText.DEFAULT + current_resource_string[
+            (coordinate[1] + 1) + (coordinate_i * 2 + 1) * colour_char_len:]
         current_resource_string = resulting_string
     print(current_resource_string)
 
@@ -989,7 +1009,7 @@ def choose_best_plan(all_unique_plans, smallest_run_count):
                 for module in all_unique_plans[plan_i][run_i]:
                     unique_node_names.add(module.node_name)
                     configured_rows += module.position[1] - \
-                                       module.position[0] + 1
+                        module.position[0] + 1
             if len(unique_node_names) > max_nodes_in_min_plan:
                 max_nodes_in_min_plan = len(unique_node_names)
                 min_configured_rows_in_min_plan = configured_rows
@@ -1025,9 +1045,11 @@ def main():
                                   "is_backwards": False}},
             "start_locations": [['filter81.bit', 'filter162.bit', 'filter164.bit', 'filter321.bit', 'filter324.bit'],
                                 [], ['filter84.bit', 'filter322.bit'], [], [], [], [], [], [], [],
-                                ['filter81.bit', 'filter162.bit', 'filter164.bit', 'filter321.bit', 'filter324.bit'],
+                                ['filter81.bit', 'filter162.bit', 'filter164.bit',
+                                    'filter321.bit', 'filter324.bit'],
                                 [], ['filter84.bit', 'filter322.bit'], [], [], [], [], [], [], [],
-                                ['filter81.bit', 'filter162.bit', 'filter164.bit', 'filter321.bit', 'filter324.bit'],
+                                ['filter81.bit', 'filter162.bit', 'filter164.bit',
+                                    'filter321.bit', 'filter324.bit'],
                                 [], ['filter84.bit', 'filter322.bit'], [], [], [], [], [], [], [], []],
             "decorators": ["composable", "reducing"]
         }, "Linear Sort": {
@@ -1038,7 +1060,8 @@ def main():
                                    "is_backwards": False}},
             "start_locations": [['linear512.bit'], [], [], [], [], [], ['linear1024.bit'], [], [], [],
                                 ['linear512.bit'], [],
-                                [], [], [], [], ['linear1024.bit'], [], [], [], ['linear512.bit'], [], [], [], [], [],
+                                [], [], [], [], ['linear1024.bit'], [], [], [], [
+                                    'linear512.bit'], [], [], [], [], [],
                                 [],
                                 [], [], [], []],
             "decorators": ["sorting", "partial_sort"]
@@ -1052,9 +1075,10 @@ def main():
                                      "is_backwards": False}},
             "start_locations": [['mergesort32.bit', 'mergesort64.bit'], [], [], [], [], [], [], [],
                                 ['mergesort128.bit'], [],
-                                ['mergesort32.bit', 'mergesort64.bit'], [], [], [], [], [], [], [],
-                                ['mergesort128.bit'], [],
-                                ['mergesort32.bit', 'mergesort64.bit'], [], [], [], [], [], [], [], [], [], []],
+                                ['mergesort32.bit', 'mergesort64.bit'], [
+            ], [], [], [], [], [], [],
+                ['mergesort128.bit'], [],
+                ['mergesort32.bit', 'mergesort64.bit'], [], [], [], [], [], [], [], [], [], []],
             "decorators": ["composable", "blocking_sort", "sorting", "first_module"]
         }, "Merge Join": {
             "bitstreams": {

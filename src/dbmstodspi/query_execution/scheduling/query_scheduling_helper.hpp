@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright 2021 University of Manchester
 
 Licensed under the Apache License, Version 2.0(the "License");
@@ -13,29 +13,28 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-#pragma once
 
-#include "execution_plan_graph_interface.hpp"
+#pragma once
 #include "query_scheduling_data.hpp"
 
-using orkhestrafs::core_interfaces::ExecutionPlanGraphInterface;
 using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
 
 namespace orkhestrafs::dbmstodspi {
-class Graph : public ExecutionPlanGraphInterface {
- private:
-  std::vector<std::shared_ptr<QueryNode>> root_nodes_;
-  void AddNextNodeToVector(QueryNode* next_node,
-                           std::vector<QueryNode*>& all_nodes_vector);
+
+/**
+ * @brief Class to contain static helper methods.
+ */
+class QuerySchedulingHelper {
  public:
-  ~Graph() override = default;
 
-  explicit Graph(std::vector<std::shared_ptr<QueryNode>> graph_data)
-      : root_nodes_{std::move(graph_data)} {}
-
-  auto ExportRootNodes() -> std::vector<std::shared_ptr<QueryNode>> override;
-  auto IsEmpty() -> bool override;
-  auto GetRootNodesPtrs() -> std::vector<QueryNode*> override;
-  auto GetAllNodesPtrs() -> std::vector<QueryNode*> override;
+  /**
+   * @brief Find the index of the current node of the previous node's next nodes.
+   * @param current_node Current node which's index is unknown
+   * @param previous_node Previous node.
+   * @return Integer showing which stream of the previous node is used for this node.
+  */
+  static auto FindNodePtrIndex(QueryNode* current_node, QueryNode* previous_node)
+      -> int;
 };
+
 }  // namespace orkhestrafs::dbmstodspi

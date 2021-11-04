@@ -118,11 +118,11 @@ auto MergeSortSetup::PotentialRecordCountIsValid(int potential_record_count,
       throw std::runtime_error("Something went wrong!");
   }
 }
-auto orkhestrafs::dbmstodspi::MergeSortSetup::IsMultiChannelStream(
+auto MergeSortSetup::IsMultiChannelStream(
     bool is_input_stream, int stream_index) -> bool {
   return is_input_stream && stream_index == 0;
 }
-auto orkhestrafs::dbmstodspi::MergeSortSetup::GetMultiChannelParams(
+auto MergeSortSetup::GetMultiChannelParams(
     bool is_input, int stream_index,
     std::vector<std::vector<int>> operation_parameters) -> std::pair<int, int> {
   if (operation_parameters.size() == 1) {

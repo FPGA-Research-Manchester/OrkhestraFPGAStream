@@ -16,10 +16,14 @@ limitations under the License.
 
 #include "execution_manager.hpp"
 
-#include <memory>
+#include <algorithm>
 #include <iostream>
+#include <memory>
+
+#include "query_scheduling_helper.hpp"
 
 using orkhestrafs::core::core_execution::ExecutionManager;
+using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
 void ExecutionManager::SetFinishedFlag() { busy_flag_ = false; }
 
@@ -95,7 +99,7 @@ auto ExecutionManager::PopNextScheduledRun()
   return executable_query_nodes;
 }
 
-void ExecutionManager::PrintCurrentPlan() {
+void ExecutionManager::PopAndPrintCurrentPlan() {
   int run_count = 0;
   while (!query_node_runs_queue_.empty()) {
     auto executable_query_nodes = query_node_runs_queue_.front().second;
@@ -109,7 +113,50 @@ void ExecutionManager::PrintCurrentPlan() {
   }
 }
 
-void ExecutionManager::GetCurrentTableMetadataFromConfig() {
+void ExecutionManager::SetupSchedulingData() {
   current_tables_metadata_ = config_.initial_all_tables_metadata;
 
+  for (const auto& node : unscheduled_graph_->GetRootNodesPtrs()) {
+    current_available_nodes_.push_back(node->node_name);
+  }
+
+  for (const auto& node : unscheduled_graph_->GetAllNodesPtrs()) {
+    SchedulingQueryNode current_node;
+    for (const auto& next_node : node->next_nodes) {
+      if (next_node) {
+        current_node.after_nodes.push_back(next_node->node_name);
+      }
+    }
+    for (const auto& previous_node : node->previous_nodes) {
+      auto previous_node_ptr = previous_node.lock();
+      if (previous_node_ptr) {
+        current_node.before_nodes.push_back(
+            {previous_node_ptr->node_name,
+             QuerySchedulingHelper::FindNodePtrIndex(node,
+                                                     previous_node_ptr.get())});
+      }
+    }
+    for (const auto& input_files : node->input_data_definition_files) {
+      current_node.data_tables.push_back(input_files);
+    }
+    current_node.corresponding_node = node;
+    current_node.operation = node->operation_type;
+    current_node.capacity = accelerator_library_->GetNodeCapacity(
+        node->operation_type, node->operation_parameters.operation_parameters);
+
+    for (int node_index = 0; node_index < node->is_checked.size();
+         node_index++) {
+      if (node->is_checked[node_index]) {
+        auto constrained_node_name = node->next_nodes[node_index]->node_name;
+        if (std::find(nodes_constrained_to_first_.begin(),
+                      nodes_constrained_to_first_.end(),
+                      constrained_node_name) ==
+            nodes_constrained_to_first_.end()) {
+          nodes_constrained_to_first_.push_back(constrained_node_name);
+        }
+      }
+    }
+  }
+
+  // Also need to setup Saved nodes
 }

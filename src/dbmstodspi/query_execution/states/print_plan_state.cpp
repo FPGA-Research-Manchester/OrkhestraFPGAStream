@@ -25,7 +25,7 @@ using orkhestrafs::dbmstodspi::logging::LogLevel;
 auto PrintPlanState::Execute(GraphProcessingFSMInterface* fsm)
     -> std::unique_ptr<StateInterface> {
   Log(LogLevel::kTrace, "Print plan state");
-  fsm->PrintCurrentPlan();
+  fsm->PopAndPrintCurrentPlan();
   fsm->SetFinishedFlag();
   return std::make_unique<PrintPlanState>();
 }

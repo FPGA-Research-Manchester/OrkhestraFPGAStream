@@ -19,6 +19,7 @@ limitations under the License.
 #include <cstdio>
 #include <iostream>
 #include <utility>
+#include <stdexcept>
 
 #include "filter.hpp"
 #include "filter_interface.hpp"
@@ -49,6 +50,40 @@ auto FilterSetup::CreateModule(MemoryManagerInterface* memory_manager,
   return std::make_unique<Filter>(memory_manager, module_postion);
 }
 
+auto FilterSetup::GetCapacityRequirement(
+    std::vector<std::vector<int>> operation_parameters) -> std::vector<int> {
+  if (operation_parameters.empty()) {
+    throw std::runtime_error("No filter parameters given!");
+  }
+  int max_dnf_clauses = 0;
+  int max_comparison_units_required = 0;
+  int parameter_vector_counter = 0;
+  while (parameter_vector_counter < operation_parameters.size()) {
+    int current_comparison_units_count =
+        operation_parameters.at(parameter_vector_counter)
+            .at(kComparisonCountIndex);
+    if (current_comparison_units_count > max_comparison_units_required) {
+      max_comparison_units_required = current_comparison_units_count;
+    }
+    for (int comparison_index = 0;
+         comparison_index < current_comparison_units_count;
+         comparison_index++) {
+      int current_dnf_clause_definition_index =
+          parameter_vector_counter +
+          comparison_index * kNumberOfParameterVectors + kDNFClauseIdsOffset;
+      for (const auto& clause_id :
+           operation_parameters.at(current_dnf_clause_definition_index)) {
+        if (clause_id > max_dnf_clauses) {
+          max_dnf_clauses = clause_id;
+        }
+      }
+    }
+    parameter_vector_counter +=
+        1 + current_comparison_units_count * kNumberOfParameterVectors;
+  }
+  return {max_dnf_clauses + 1, max_comparison_units_required};
+}
+
 void FilterSetup::SetupFilterModule(
     FilterInterface& filter_module, int input_stream_id, int output_stream_id,
     const std::vector<std::vector<int>>& operation_parameters) {
@@ -70,39 +105,36 @@ void FilterSetup::SetupFilterModule(
 void FilterSetup::SetAllComparisons(
     FilterInterface& filter_module,
     const std::vector<std::vector<int>>& operation_parameters) {
-  int chunk_id_index = 0;
-  int data_position_index = 1;
-  int comparison_count_index = 2;
-  int number_of_parameter_vectors = 4;
-
   int current_vector_id = 0;
   while (current_vector_id != operation_parameters.size()) {
     int current_chunk_id =
-        operation_parameters.at(current_vector_id).at(chunk_id_index);
+        operation_parameters.at(current_vector_id).at(kChunkIdIndex);
     int current_data_position =
-        operation_parameters.at(current_vector_id).at(data_position_index);
+        operation_parameters.at(current_vector_id).at(kDataPositionIndex);
     int comparison_count =
-        operation_parameters.at(current_vector_id).at(comparison_count_index);
+        operation_parameters.at(current_vector_id).at(kComparisonCountIndex);
     std::vector<FilterComparison> current_comparison_parameters;
     for (int i = 0; i < comparison_count; i++) {
       auto compare_function =
           static_cast<module_config_values::FilterCompareFunctions>(
-              operation_parameters.at(current_vector_id + 1).at(0));
-      std::vector<int> compare_reference_values =
-          operation_parameters.at(current_vector_id + 2);
+              operation_parameters
+                  .at(current_vector_id + kCompareFunctionOffset)
+                  .at(0));
+      std::vector<int> compare_reference_values = operation_parameters.at(
+          current_vector_id + kCompareRefgerenceValuesOffset);
       std::vector<module_config_values::LiteralTypes> literal_types;
       for (const auto& literal_type :
-           operation_parameters.at(current_vector_id + 3)) {
+           operation_parameters.at(current_vector_id + kLiteralTypeOffset)) {
         literal_types.push_back(
             static_cast<module_config_values::LiteralTypes>(literal_type));
       }
       std::vector<int> dnf_clause_ids =
-          operation_parameters.at(current_vector_id + 4);
+          operation_parameters.at(current_vector_id + kDNFClauseIdsOffset);
 
       current_comparison_parameters.emplace_back(compare_function,
                                                  compare_reference_values,
                                                  literal_types, dnf_clause_ids);
-      current_vector_id += number_of_parameter_vectors;
+      current_vector_id += kNumberOfParameterVectors;
     }
     SetComparisons(filter_module, current_comparison_parameters,
                    current_chunk_id, current_data_position);

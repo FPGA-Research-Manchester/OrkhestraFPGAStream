@@ -41,3 +41,8 @@ auto AccelerationModuleSetupInterface::IsConstrainedToFirstInPipeline()
     -> bool {
   return false;
 }
+
+auto AccelerationModuleSetupInterface::GetCapacityRequirement(
+    std::vector<std::vector<int>> operation_parameters) -> std::vector<int> {
+  return {};
+}

@@ -75,6 +75,14 @@ class AccelerationModuleSetupInterface {
    * @return Bool showing if it has the constraint.
    */
   virtual auto IsConstrainedToFirstInPipeline() -> bool;
+  /**
+   * @brief Get capacity requirements for scheduling
+   * @param operation_parameters Parameters for the operator
+   * @return Vector of different capacity requirements.
+  */
+  virtual auto GetCapacityRequirement(
+      std::vector<std::vector<int>> operation_parameters) -> std::vector<int>;
+
  protected:
   static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)
       -> int;

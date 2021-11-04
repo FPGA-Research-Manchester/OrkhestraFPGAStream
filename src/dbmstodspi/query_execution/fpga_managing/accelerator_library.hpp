@@ -89,6 +89,17 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
                              std::vector<std::vector<int>> operation_parameters)
       -> std::pair<int, int> override;
 
+  /**
+   * @brief Method to get capacity requirement values from the driver based on
+   * operation parameters.
+   * @param operation_type Operation type to find the correct driver.
+   * @param operation_parameters Parameters to get the capacity from.
+   * @return Vector holding the functional capacity requirement values.
+   */
+  auto GetNodeCapacity(QueryOperationType operation_type,
+                       std::vector<std::vector<int>> operation_parameters)
+      -> std::vector<int> override;
+
  private:
   auto GetDriver(QueryOperationType operation_type)
       -> AccelerationModuleSetupInterface*;

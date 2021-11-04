@@ -31,8 +31,8 @@ add_library(query_execution OBJECT
             states/setup_nodes_state.hpp
             states/setup_nodes_state.cpp
             states/state_interface.hpp
-			states/setup_scheduling_state.cpp
-			states/setup_scheduling_state.hpp
+            states/setup_scheduling_state.cpp
+            states/setup_scheduling_state.hpp
             graph_processing_fsm_interface.hpp
             query_acceleration_constants.hpp
             table_data/csv_reader.cpp
@@ -146,6 +146,9 @@ add_library(query_execution OBJECT
             scheduling/table_manager.cpp
 		    scheduling/pre_scheduling_processor.cpp
 		    scheduling/pre_scheduling_processor.hpp
+            scheduling/scheduling_query_node.hpp
+            scheduling/query_scheduling_helper.hpp
+            scheduling/query_scheduling_helper.cpp
             ${OS_DEPENDENT_MEMORY_BLOCK})
 
 target_include_directories(query_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} 

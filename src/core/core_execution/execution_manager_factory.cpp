@@ -27,6 +27,7 @@ limitations under the License.
 #include "query_manager.hpp"
 #include "schedule_state.hpp"
 #include "debug_schedule_state.hpp"
+#include "setup_scheduling_state.hpp"
 
 using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::core::core_execution::ExecutionManagerFactory;
@@ -41,6 +42,7 @@ using orkhestrafs::dbmstodspi::PlanEvaluator;
 using orkhestrafs::dbmstodspi::QueryManager;
 using orkhestrafs::dbmstodspi::ScheduleState;
 using orkhestrafs::dbmstodspi::DebugScheduleState;
+using orkhestrafs::dbmstodspi::SetupSchedulingState;
 
 auto ExecutionManagerFactory::GetManager(const Config& config)
     -> std::unique_ptr<ExecutionManagerInterface> {
@@ -50,11 +52,12 @@ auto ExecutionManagerFactory::GetManager(const Config& config)
 
   auto chosen_start_state = std::make_unique<ScheduleState>();
   auto secondary_start_state = std::make_unique<DebugScheduleState>();
+  auto actual_start_state = std::make_unique<SetupSchedulingState>();
 
   return std::make_unique<ExecutionManager>(
       std::move(config), std::make_unique<QueryManager>(),
       std::make_unique<DataManager>(config.data_sizes, config.csv_separator,
                                     std::make_unique<CSVReader>()),
-      std::make_unique<MemoryManager>(), std::move(secondary_start_state),
+      std::make_unique<MemoryManager>(), std::move(actual_start_state),
       std::make_unique<FPGADriverFactory>(), std::move(chosen_scheduler));
 }
