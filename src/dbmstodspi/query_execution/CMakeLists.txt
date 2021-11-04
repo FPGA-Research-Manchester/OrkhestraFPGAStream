@@ -144,6 +144,8 @@ add_library(query_execution OBJECT
             scheduling/id_manager.cpp
             scheduling/table_manager.hpp
             scheduling/table_manager.cpp
+		    scheduling/pre_scheduling_processor.cpp
+		    scheduling/pre_scheduling_processor.hpp
             ${OS_DEPENDENT_MEMORY_BLOCK})
 
 target_include_directories(query_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} 
