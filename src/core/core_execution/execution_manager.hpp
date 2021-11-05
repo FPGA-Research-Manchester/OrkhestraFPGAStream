@@ -32,8 +32,8 @@ limitations under the License.
 #include "node_scheduler_interface.hpp"
 #include "query_manager_interface.hpp"
 #include "query_scheduling_data.hpp"
-#include "state_interface.hpp"
 #include "scheduling_query_node.hpp"
+#include "state_interface.hpp"
 
 using orkhestrafs::core_interfaces::Config;
 using orkhestrafs::core_interfaces::ExecutionManagerInterface;
@@ -51,8 +51,8 @@ using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
 using orkhestrafs::dbmstodspi::MemoryManagerInterface;
 using orkhestrafs::dbmstodspi::NodeSchedulerInterface;
 using orkhestrafs::dbmstodspi::QueryManagerInterface;
-using orkhestrafs::dbmstodspi::StateInterface;
 using orkhestrafs::dbmstodspi::SchedulingQueryNode;
+using orkhestrafs::dbmstodspi::StateInterface;
 
 namespace orkhestrafs::core::core_execution {
 
@@ -134,5 +134,25 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::vector<std::string> scheduled_node_names_;
 
   auto PopNextScheduledRun() -> std::vector<std::shared_ptr<QueryNode>>;
+
+  // TODO: Move this to a different class
+  static void SetupSchedulingGraphAndConstrainedNodes(
+      std::vector<QueryNode*>& all_query_nodes,
+      std::map<std::string, SchedulingQueryNode>& current_scheduling_graph,
+      AcceleratorLibraryInterface& hw_library,
+      std::vector<std::string>& constrained_nodes_vector);
+
+  static void AddSchedulingNodeToGraph(
+      QueryNode* const& node,
+      std::map<std::string, SchedulingQueryNode>& scheduling_graph,
+      AcceleratorLibraryInterface& accelerator_library);
+  static void AddSavedNodesToConstrainedList(
+      QueryNode* const& node, std::vector<std::string>& constrained_nodes);
+  static void AddFirstModuleNodesToConstrainedList(
+      QueryNode* const& node, std::vector<std::string>& constrained_nodes,
+      AcceleratorLibraryInterface& accelerator_library);
+  static void AddSplittingNodesToConstrainedList(
+      std::map<std::string, SchedulingQueryNode>& scheduling_graph,
+      std::vector<std::string>& constrained_nodes);
 };
 }  // namespace orkhestrafs::core::core_execution

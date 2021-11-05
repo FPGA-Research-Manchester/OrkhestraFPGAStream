@@ -68,7 +68,8 @@ auto AcceleratorLibrary::IsMultiChannelStream(bool is_input, int stream_index,
 }
 auto AcceleratorLibrary::GetMultiChannelParams(
     bool is_input, int stream_index, QueryOperationType operation_type,
-    std::vector<std::vector<int>> operation_parameters) -> std::pair<int, int> {
+    const std::vector<std::vector<int>>& operation_parameters)
+    -> std::pair<int, int> {
   auto driver = GetDriver(operation_type);
   return driver->GetMultiChannelParams(is_input, stream_index,
                                        operation_parameters);
@@ -86,8 +87,14 @@ auto AcceleratorLibrary::GetDriver(QueryOperationType operation_type)
 
 auto AcceleratorLibrary::GetNodeCapacity(
     QueryOperationType operation_type,
-    std::vector<std::vector<int>> operation_parameters)
+    const std::vector<std::vector<int>>& operation_parameters)
     -> std::vector<int> {
   auto driver = GetDriver(operation_type);
   return driver->GetCapacityRequirement(operation_parameters);
+}
+
+auto AcceleratorLibrary::IsNodeConstrainedToFirstInPipeline(
+    QueryOperationType operation_type) -> bool {
+  auto driver = GetDriver(operation_type);
+  return driver->IsConstrainedToFirstInPipeline();
 }

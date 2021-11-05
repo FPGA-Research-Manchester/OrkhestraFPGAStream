@@ -86,7 +86,7 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
    */
   auto GetMultiChannelParams(bool is_input, int stream_index,
                              QueryOperationType operation_type,
-                             std::vector<std::vector<int>> operation_parameters)
+                             const std::vector<std::vector<int>>& operation_parameters)
       -> std::pair<int, int> override;
 
   /**
@@ -97,8 +97,17 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
    * @return Vector holding the functional capacity requirement values.
    */
   auto GetNodeCapacity(QueryOperationType operation_type,
-                       std::vector<std::vector<int>> operation_parameters)
+                       const std::vector<std::vector<int>>& operation_parameters)
       -> std::vector<int> override;
+
+  /**
+   * @brief Method to check if the module to execute this operation needs to get
+   * its input from the DMA.
+   * @param operation_type Operation type
+   * @return Boolean flag saying if it needs to be constrained position wise.
+   */
+  auto IsNodeConstrainedToFirstInPipeline(QueryOperationType operation_type)
+      -> bool override;
 
  private:
   auto GetDriver(QueryOperationType operation_type)
