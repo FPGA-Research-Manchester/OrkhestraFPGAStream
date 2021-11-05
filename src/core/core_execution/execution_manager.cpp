@@ -126,7 +126,7 @@ void ExecutionManager::SetupSchedulingData() {
 }
 
 void ExecutionManager::SetupSchedulingGraphAndConstrainedNodes(
-    std::vector<QueryNode*>& all_query_nodes,
+    const std::vector<QueryNode*>& all_query_nodes,
     std::map<std::string, SchedulingQueryNode>& current_scheduling_graph,
     AcceleratorLibraryInterface& hw_library,
     std::vector<std::string>& constrained_nodes_vector) {

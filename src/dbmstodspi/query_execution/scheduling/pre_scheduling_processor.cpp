@@ -55,7 +55,8 @@ auto PreSchedulingProcessor::GetMinRequirementsForFullyExecutingNode(
     std::string node_name,
     const std::map<std::string, SchedulingQueryNode>& graph,
     const std::map<QueryOperationType, OperationPRModules>& hw_library,
-    const std::vector<TableMetadata> data_tables) -> std::vector<int> {
+    const std::map<std::string, TableMetadata> data_tables)
+    -> std::vector<int> {
   return std::vector<int>();
 }
 
@@ -72,3 +73,22 @@ auto PreSchedulingProcessor::GetFittingBitstreamLocations(
     -> std::vector<std::vector<std::string>> {
   return std::vector<std::vector<std::string>>();
 }
+
+void PreSchedulingProcessor::AddNewTableToNextNodes(
+    std::map<std::string, SchedulingQueryNode>& graph, std::string node_name,
+    const std::vector<std::string>& table_names) {}
+
+auto PreSchedulingProcessor::GetWorstCaseProcessedTables(
+    const std::vector<std::string>& input_tables,
+    AcceleratorLibraryInterface& accelerator_library,
+    std::map<std::string, TableMetadata>& data_tables,
+    const std::vector<int>& min_capacity) -> std::vector<std::string> {
+  return std::vector<std::string>();
+}
+
+void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
+    const std::vector<std::string>& available_nodes,
+    std::map<std::string, SchedulingQueryNode>& graph,
+    const std::map<QueryOperationType, OperationPRModules>& hw_library,
+    std::map<std::string, TableMetadata>& data_tables,
+    AcceleratorLibraryInterface& accelerator_library) {}

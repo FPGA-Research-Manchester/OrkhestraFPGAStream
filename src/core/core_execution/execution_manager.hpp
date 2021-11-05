@@ -107,7 +107,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::unique_ptr<StateInterface> current_state_;
   bool busy_flag_ = false;
   // New TableMetadata variables.
-  std::vector<TableMetadata> current_tables_metadata_;
+  std::map<std::string, TableMetadata> current_tables_metadata_;
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
       memory_blocks_;
   std::map<std::string, SchedulingQueryNode> current_query_graph_;
@@ -137,7 +137,7 @@ class ExecutionManager : public ExecutionManagerInterface,
 
   // TODO: Move this to a different class
   static void SetupSchedulingGraphAndConstrainedNodes(
-      std::vector<QueryNode*>& all_query_nodes,
+      const std::vector<QueryNode*>& all_query_nodes,
       std::map<std::string, SchedulingQueryNode>& current_scheduling_graph,
       AcceleratorLibraryInterface& hw_library,
       std::vector<std::string>& constrained_nodes_vector);

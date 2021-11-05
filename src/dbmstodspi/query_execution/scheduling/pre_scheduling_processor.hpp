@@ -19,6 +19,7 @@ limitations under the License.
 #include <map>
 #include <vector>
 
+#include "accelerator_library_interface.hpp"
 #include "operation_types.hpp"
 #include "pr_module_data.hpp"
 #include "scheduling_query_node.hpp"
@@ -26,8 +27,9 @@ limitations under the License.
 
 using orkhestrafs::core_interfaces::hw_library::OperationPRModules;
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
-using orkhestrafs::dbmstodspi::SchedulingQueryNode;
 using orkhestrafs::core_interfaces::table_data::TableMetadata;
+using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
+using orkhestrafs::dbmstodspi::SchedulingQueryNode;
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -35,7 +37,7 @@ namespace orkhestrafs::dbmstodspi {
  * @brief Class to preprocess the graph to improve performance
  */
 class PreSchedulingProcessor {
- public:
+ private:
   /**
    * @brief Method to get the smallest capacity values from the HW library
    * @param hw_library Map of PR modules available for each operation
@@ -45,18 +47,13 @@ class PreSchedulingProcessor {
       const std::map<QueryOperationType, OperationPRModules>& hw_library)
       -> std::map<QueryOperationType, std::vector<int>>;
 
-  //def get_new_available_nodes(scheduled_node, past_nodes, all_nodes):
-  static auto GetNewAvailableNodesAfterSchedulingGivenNode(
-      std::string node_name, const std::vector<std::string>& past_nodes,
-      const std::map<std::string, SchedulingQueryNode>& graph)
-      -> std::vector<std::string>;
-
   // def get_min_requirements(current_node_name, graph, hw_library, data_tables)
   static auto GetMinRequirementsForFullyExecutingNode(
       std::string node_name,
       const std::map<std::string, SchedulingQueryNode>& graph,
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      const std::vector<TableMetadata> data_tables) -> std::vector<int>;
+      const std::map<std::string, TableMetadata> data_tables)
+      -> std::vector<int>;
 
   // def find_adequate_bitstreams(min_requirements, operation, hw_library)
   static auto FindAdequateBitstreams(
@@ -64,17 +61,44 @@ class PreSchedulingProcessor {
       const std::map<QueryOperationType, OperationPRModules>& hw_library)
       -> std::vector<std::string>;
 
-  // def get_fitting_bitstream_locations_based_on_list(list_of_fitting_bitstreams, start_locations)
+  // def
+  // get_fitting_bitstream_locations_based_on_list(list_of_fitting_bitstreams,
+  // start_locations)
   static auto GetFittingBitstreamLocations(
       const std::vector<std::string>& fitting_bitstreams,
       const std::vector<std::vector<std::string>>& start_locations)
       -> std::vector<std::vector<std::string>>;
 
+  // def get_worst_case_fully_processed_tables(input_tables,
+  // current_node_decorators, data_tables, min_capacity)
+  static auto GetWorstCaseProcessedTables(
+      const std::vector<std::string>& input_tables,
+      AcceleratorLibraryInterface& accelerator_library,
+      std::map<std::string, TableMetadata>& data_tables,
+      const std::vector<int>& min_capacity) -> std::vector<std::string>;
+
+  // TODO move to util
+  // def get_new_available_nodes(scheduled_node, past_nodes, all_nodes):
+  static auto GetNewAvailableNodesAfterSchedulingGivenNode(
+      std::string node_name, const std::vector<std::string>& past_nodes,
+      const std::map<std::string, SchedulingQueryNode>& graph)
+      -> std::vector<std::string>;
+
+  // TODO move to util
   // def add_new_table_to_next_nodes_in_place(all_nodes, node, table_names)
+  static void AddNewTableToNextNodes(
+      std::map<std::string, SchedulingQueryNode>& graph, std::string node_name,
+      const std::vector<std::string>& table_names);
 
-  // def get_worst_case_fully_processed_tables(input_tables, current_node_decorators, data_tables, min_capacity)
-
-  // def add_satisfying_bitstream_locations_to_graph(available_nodes, graph, hw_library, data_tables)
+ public:
+  // def add_satisfying_bitstream_locations_to_graph(available_nodes, graph,
+  // hw_library, data_tables)
+  static void AddSatisfyingBitstreamLocationsToGraph(
+      const std::vector<std::string>& available_nodes,
+      std::map<std::string, SchedulingQueryNode>& graph,
+      const std::map<QueryOperationType, OperationPRModules>& hw_library,
+      std::map<std::string, TableMetadata>& data_tables,
+      AcceleratorLibraryInterface& accelerator_library);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

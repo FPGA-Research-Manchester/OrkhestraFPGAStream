@@ -48,7 +48,7 @@ struct Config {
   std::map<ColumnDataType, double> data_sizes;
 
   // Data for the PR capable scheduler.
-  std::vector<TableMetadata> initial_all_tables_metadata;
+  std::map<std::string, TableMetadata> initial_all_tables_metadata;
   std::map<QueryOperationType, OperationPRModules> pr_hw_library;
 
   /// CSV data column separator character.

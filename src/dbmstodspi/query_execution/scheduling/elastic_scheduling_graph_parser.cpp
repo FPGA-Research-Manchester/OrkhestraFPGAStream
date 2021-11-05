@@ -20,5 +20,8 @@ using orkhestrafs::dbmstodspi::ElastiSchedulingGraphParser;
 
 void ElastiSchedulingGraphParser::PreprocessNodes(
     std::vector<std::shared_ptr<QueryNode>>& available_nodes) {
-    // Do nothing
+  // Do nothing
+
+  // Add pre_scheduling_processor step here but first of all get all the
+  // necessary data connected to here.
 }

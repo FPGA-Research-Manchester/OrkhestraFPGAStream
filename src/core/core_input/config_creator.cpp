@@ -94,8 +94,8 @@ auto ConfigCreator::CreateTablesData(
     const std::vector<
         std::map<std::string, std::variant<std::string, int,
                                            std::vector<std::vector<int>>>>>&
-        tables_data_in_string_form) -> std::vector<TableMetadata> {
-  std::vector<TableMetadata> resulting_table_meta_data;
+        tables_data_in_string_form) -> std::map<std::string, TableMetadata> {
+  std::map<std::string, TableMetadata> resulting_table_meta_data;
 
   std::string filename_field = "filename";
   std::string record_size_field = "record_size";
@@ -104,7 +104,7 @@ auto ConfigCreator::CreateTablesData(
 
   for (const auto& table_meta_data_map : tables_data_in_string_form) {
     TableMetadata current_table;
-    current_table.filename =
+    std::string filename =
         std::get<std::string>(table_meta_data_map.at(filename_field));
     current_table.record_count =
         std::get<int>(table_meta_data_map.at(record_count_field));
@@ -116,7 +116,7 @@ auto ConfigCreator::CreateTablesData(
                                          sorted_sequence.at(1)};
       current_table.sorted_status.push_back(current_sequence);
     }
-    resulting_table_meta_data.push_back(std::move(current_table));
+    resulting_table_meta_data.insert({filename, std::move(current_table)});
   }
   return resulting_table_meta_data;
 }
