@@ -55,3 +55,8 @@ void LinearSortSetup::SetupLinearSortModule(
 
   linear_sort_module.StartPrefetchingData();
 }
+
+auto LinearSortSetup::GetMinSortingRequirementsForTable(
+    const TableMetadata& table_data) -> std::vector<int> {
+  return {table_data.record_count};
+}

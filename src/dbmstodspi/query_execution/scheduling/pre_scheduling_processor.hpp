@@ -51,7 +51,7 @@ class PreSchedulingProcessor {
   static auto GetMinRequirementsForFullyExecutingNode(
       std::string node_name,
       const std::map<std::string, SchedulingQueryNode>& graph,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library,
+      AcceleratorLibraryInterface& accelerator_library,
       const std::map<std::string, TableMetadata> data_tables)
       -> std::vector<int>;
 
@@ -65,7 +65,7 @@ class PreSchedulingProcessor {
   // get_fitting_bitstream_locations_based_on_list(list_of_fitting_bitstreams,
   // start_locations)
   static auto GetFittingBitstreamLocations(
-      const std::vector<std::string>& fitting_bitstreams,
+      const std::vector<std::string>& fitting_bitstreams_names,
       const std::vector<std::vector<std::string>>& start_locations)
       -> std::vector<std::vector<std::string>>;
 
@@ -89,6 +89,12 @@ class PreSchedulingProcessor {
   static void AddNewTableToNextNodes(
       std::map<std::string, SchedulingQueryNode>& graph, std::string node_name,
       const std::vector<std::string>& table_names);
+
+  // TODO move to util
+  static auto GetCurrentNodeIndexesByName(
+      const std::map<std::string, SchedulingQueryNode>& graph,
+      std::string next_node_name, std::string current_node_name)
+      -> std::vector<std::pair<int, int>>;
 
  public:
   // def add_satisfying_bitstream_locations_to_graph(available_nodes, graph,

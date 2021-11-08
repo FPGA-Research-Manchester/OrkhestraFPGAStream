@@ -17,6 +17,7 @@ limitations under the License.
 #pragma once
 #include "acceleration_module_setup_interface.hpp"
 #include "linear_sort_interface.hpp"
+#include "sorting_module_setup.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -24,12 +25,15 @@ namespace orkhestrafs::dbmstodspi {
  * @brief Linear sort setup class which will calculate the configuration data to
  * setup the module
  */
-class LinearSortSetup : public AccelerationModuleSetupInterface {
+class LinearSortSetup : public virtual AccelerationModuleSetupInterface,
+                        public SortingModuleSetup {
  public:
   void SetupModule(AccelerationModule& acceleration_module,
                    const AcceleratedQueryNode& module_parameters) override;
   auto CreateModule(MemoryManagerInterface* memory_manager, int module_position)
       -> std::unique_ptr<AccelerationModule> override;
+  auto GetMinSortingRequirementsForTable(
+      const TableMetadata& table_data) -> std::vector<int> override;
   /**
    * @brief Setup linear sort module by giving the stream data to be sorted.
    * @param linear_sort_module Module instance to access the configuration

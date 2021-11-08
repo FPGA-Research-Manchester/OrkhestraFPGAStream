@@ -123,6 +123,8 @@ add_library(query_execution OBJECT
             fpga_managing/setup/acceleration_module_setup_interface.cpp
 		    fpga_managing/setup/decorators/first_module_setup.cpp
             fpga_managing/setup/decorators/first_module_setup.hpp
+		    fpga_managing/setup/decorators/sorting_module_setup.cpp
+		    fpga_managing/setup/decorators/sorting_module_setup.hpp
             scheduling/one_plan_node_scheduler.cpp
             scheduling/one_plan_node_scheduler.hpp
             scheduling/node_scheduler_interface.hpp

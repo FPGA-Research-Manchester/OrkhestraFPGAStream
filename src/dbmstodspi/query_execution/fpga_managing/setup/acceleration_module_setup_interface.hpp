@@ -83,6 +83,12 @@ class AccelerationModuleSetupInterface {
   virtual auto GetCapacityRequirement(
       std::vector<std::vector<int>> operation_parameters) -> std::vector<int>;
 
+  /**
+   * @brief Does the module sort the input stream?
+   * @return Boolean flag
+   */
+  virtual auto IsSortingInputTable() -> bool;
+
  protected:
   static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)
       -> int;

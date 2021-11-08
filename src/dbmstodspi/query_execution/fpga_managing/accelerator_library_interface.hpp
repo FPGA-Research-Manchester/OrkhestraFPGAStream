@@ -26,8 +26,10 @@ limitations under the License.
 #include "ila.hpp"
 #include "operation_types.hpp"
 #include "read_back_module.hpp"
+#include "table_data.hpp"
 
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
+using orkhestrafs::core_interfaces::table_data::TableMetadata;
 
 namespace orkhestrafs::dbmstodspi {
 /**
@@ -55,6 +57,11 @@ class AcceleratorLibraryInterface {
       -> std::vector<int> = 0;
   virtual auto IsNodeConstrainedToFirstInPipeline(
       QueryOperationType operation_type) -> bool = 0;
+  virtual auto IsOperationSorting(QueryOperationType operation_type)
+      -> bool = 0;
+  virtual auto GetMinSortingRequirements(QueryOperationType operation_type,
+                                         const TableMetadata& table_data)
+      -> std::vector<int> = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

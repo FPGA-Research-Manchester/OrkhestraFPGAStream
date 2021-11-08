@@ -16,8 +16,9 @@ limitations under the License.
 
 #pragma once
 #include "acceleration_module_setup_interface.hpp"
-#include "merge_sort_interface.hpp"
 #include "first_module_setup.hpp"
+#include "merge_sort_interface.hpp"
+#include "sorting_module_setup.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -25,7 +26,9 @@ namespace orkhestrafs::dbmstodspi {
  * @brief Class to calculate the configuration data and setup the merge sorting
  * acceleration.
  */
-class MergeSortSetup : public virtual AccelerationModuleSetupInterface, public FirstModuleSetup {
+class MergeSortSetup : public virtual AccelerationModuleSetupInterface,
+                       public FirstModuleSetup,
+                       public SortingModuleSetup {
  public:
   void SetupModule(AccelerationModule& acceleration_module,
                    const AcceleratedQueryNode& module_parameters) override;
@@ -36,6 +39,8 @@ class MergeSortSetup : public virtual AccelerationModuleSetupInterface, public F
   auto GetMultiChannelParams(bool is_input, int stream_index,
                              std::vector<std::vector<int>> operation_parameters)
       -> std::pair<int, int> override;
+  auto GetMinSortingRequirementsForTable(
+      const TableMetadata& table_data) -> std::vector<int> override;
   /**
    * @brief Calculate the correct configuration data and write the setup data
    * into the memory mapped registers.

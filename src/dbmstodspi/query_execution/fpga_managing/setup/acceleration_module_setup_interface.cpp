@@ -46,3 +46,7 @@ auto AccelerationModuleSetupInterface::GetCapacityRequirement(
     std::vector<std::vector<int>> operation_parameters) -> std::vector<int> {
   return {};
 }
+
+auto AccelerationModuleSetupInterface::IsSortingInputTable() -> bool {
+  return false;
+}

@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 #include "accelerator_library.hpp"
+#include "sorting_module_setup.hpp"
 
 #include <stdexcept>
 
@@ -98,3 +99,19 @@ auto AcceleratorLibrary::IsNodeConstrainedToFirstInPipeline(
   auto driver = GetDriver(operation_type);
   return driver->IsConstrainedToFirstInPipeline();
 }
+
+auto AcceleratorLibrary::IsOperationSorting(QueryOperationType operation_type) -> bool {
+  auto driver = GetDriver(operation_type);
+  return driver->IsSortingInputTable();
+}
+
+auto AcceleratorLibrary::GetMinSortingRequirements(QueryOperationType operation_type, const TableMetadata& table_data) -> std::vector<int> {
+  auto driver = dynamic_cast<SortingModuleSetup*>(GetDriver(operation_type));
+  if (driver) {
+    return driver->GetMinSortingRequirementsForTable(table_data);
+  }
+  else {
+    throw std::runtime_error("Non sorting operation given!");
+  }
+}
+

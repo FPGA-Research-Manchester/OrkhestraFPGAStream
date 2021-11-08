@@ -109,6 +109,20 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
   auto IsNodeConstrainedToFirstInPipeline(QueryOperationType operation_type)
       -> bool override;
 
+  /**
+   * @brief Check if the operation sorts the input table.
+   * @param operation_type Operation type enum
+   * @return Boolean flag
+   */
+  auto IsOperationSorting(QueryOperationType operation_type) -> bool override;
+
+  /**
+   * @brief Get minimum capacity requirements for a node to fully finish sorting. Throws an error if the operation can't sort
+   * @param table_data
+   * @return
+   */
+  auto GetMinSortingRequirements(QueryOperationType operation_type, const TableMetadata& table_data) -> std::vector<int> override;
+
  private:
   auto GetDriver(QueryOperationType operation_type)
       -> AccelerationModuleSetupInterface*;

@@ -140,3 +140,17 @@ auto MergeSortSetup::GetMultiChannelParams(
     return {max_channel_count, records_per_channel};
   }
 }
+
+auto MergeSortSetup::GetMinSortingRequirementsForTable(
+    const TableMetadata& table_data) -> std::vector<int> {
+  if (table_data.sorted_status.empty()) {
+    return {table_data.record_count};
+  } else {
+    int pos_of_last_sorted_element = table_data.sorted_status.back().start_position + table_data.sorted_status.back().length;
+    if (pos_of_last_sorted_element > table_data.record_count) {
+      throw std::runtime_error("Incorrect sorted meta data");
+    }
+    int unsorted_tail_length = table_data.record_count - pos_of_last_sorted_element;
+    return {static_cast<int>(table_data.sorted_status.size()) + unsorted_tail_length};
+  }
+}
