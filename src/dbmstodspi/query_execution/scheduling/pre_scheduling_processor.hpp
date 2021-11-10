@@ -75,26 +75,8 @@ class PreSchedulingProcessor {
       const std::vector<std::string>& input_tables,
       AcceleratorLibraryInterface& accelerator_library,
       std::map<std::string, TableMetadata>& data_tables,
-      const std::vector<int>& min_capacity) -> std::vector<std::string>;
-
-  // TODO move to util
-  // def get_new_available_nodes(scheduled_node, past_nodes, all_nodes):
-  static auto GetNewAvailableNodesAfterSchedulingGivenNode(
-      std::string node_name, const std::vector<std::string>& past_nodes,
-      const std::map<std::string, SchedulingQueryNode>& graph)
+      const std::vector<int>& min_capacity, QueryOperationType operation)
       -> std::vector<std::string>;
-
-  // TODO move to util
-  // def add_new_table_to_next_nodes_in_place(all_nodes, node, table_names)
-  static void AddNewTableToNextNodes(
-      std::map<std::string, SchedulingQueryNode>& graph, std::string node_name,
-      const std::vector<std::string>& table_names);
-
-  // TODO move to util
-  static auto GetCurrentNodeIndexesByName(
-      const std::map<std::string, SchedulingQueryNode>& graph,
-      std::string next_node_name, std::string current_node_name)
-      -> std::vector<std::pair<int, int>>;
 
  public:
   // def add_satisfying_bitstream_locations_to_graph(available_nodes, graph,

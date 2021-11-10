@@ -84,9 +84,9 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
    * extracted from
    * @return How many channels with how many records there are for this stream.
    */
-  auto GetMultiChannelParams(bool is_input, int stream_index,
-                             QueryOperationType operation_type,
-                             const std::vector<std::vector<int>>& operation_parameters)
+  auto GetMultiChannelParams(
+      bool is_input, int stream_index, QueryOperationType operation_type,
+      const std::vector<std::vector<int>>& operation_parameters)
       -> std::pair<int, int> override;
 
   /**
@@ -96,8 +96,9 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
    * @param operation_parameters Parameters to get the capacity from.
    * @return Vector holding the functional capacity requirement values.
    */
-  auto GetNodeCapacity(QueryOperationType operation_type,
-                       const std::vector<std::vector<int>>& operation_parameters)
+  auto GetNodeCapacity(
+      QueryOperationType operation_type,
+      const std::vector<std::vector<int>>& operation_parameters)
       -> std::vector<int> override;
 
   /**
@@ -117,11 +118,30 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
   auto IsOperationSorting(QueryOperationType operation_type) -> bool override;
 
   /**
-   * @brief Get minimum capacity requirements for a node to fully finish sorting. Throws an error if the operation can't sort
+   * @brief Get minimum capacity requirements for a node to fully finish
+   * sorting. Throws an error if the operation can't sort
    * @param table_data
    * @return
    */
-  auto GetMinSortingRequirements(QueryOperationType operation_type, const TableMetadata& table_data) -> std::vector<int> override;
+  auto GetMinSortingRequirements(QueryOperationType operation_type,
+                                 const TableMetadata& table_data)
+      -> std::vector<int> override;
+
+  /**
+   * @brief Method to get worst case tables where tables with new metadata
+   * values get created for calculating worst case scheduling plan.
+   * @param operation_type Operation type of the module
+   * @param min_capacity Minimum possible functional capacity the module library
+   * provides for this operation.
+   * @param input_tables Input tables to the module.
+   * @param data_tables Metadata of all tables.
+   * @return Map of metadata of returned tables.
+   */
+  auto AcceleratorLibrary::GetWorstCaseProcessedTables(
+      QueryOperationType operation_type, const std::vector<int>& min_capacity,
+      const std::vector<std::string>& input_tables,
+      const std::map<std::string, TableMetadata>& data_tables)
+      -> std::map<std::string, TableMetadata> override;
 
  private:
   auto GetDriver(QueryOperationType operation_type)

@@ -50,3 +50,16 @@ auto AccelerationModuleSetupInterface::GetCapacityRequirement(
 auto AccelerationModuleSetupInterface::IsSortingInputTable() -> bool {
   return false;
 }
+
+auto AccelerationModuleSetupInterface::GetWorstCaseProcessedTables(
+    const std::vector<int>& min_capacity,
+    const std::vector<std::string>& input_tables,
+    const std::map<std::string, TableMetadata>& data_tables)
+    -> std::map<std::string, TableMetadata> {
+  std::map<std::string, TableMetadata> resulting_tables;
+  for (const auto& input_table_name : input_tables) {
+    resulting_tables.insert(
+        {input_table_name, data_tables.at(input_table_name)});
+  }
+  return resulting_tables;
+}

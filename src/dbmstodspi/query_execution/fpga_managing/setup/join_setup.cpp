@@ -112,3 +112,26 @@ void JoinSetup::SetupTimeMultiplexer(JoinInterface& join_module,
     }
   }
 }
+
+// TODO: Should also check the node parameter to know what does the crossbar do.
+// Should also preserve the sorted status somehow.
+auto JoinSetup::GetWorstCaseProcessedTables(
+    const std::vector<int>& min_capacity,
+    const std::vector<std::string>& input_tables,
+    const std::map<std::string, TableMetadata>& data_tables)
+    -> std::map<std::string, TableMetadata> {
+  int max_record_count = 0;
+  int new_record_size = 0;
+  std::string new_table_name;
+  for (const auto& table_name : input_tables) {
+    new_record_size += data_tables.at(table_name).record_size;
+    if (data_tables.at(table_name).record_count > max_record_count) {
+      new_table_name = table_name;
+      max_record_count = data_tables.at(table_name).record_count;
+    }
+  }
+  std::map<std::string, TableMetadata> resulting_table;
+  resulting_table.insert({new_table_name + "_after_join",
+                          {new_record_size, max_record_count, {}}});
+  return resulting_table;
+}

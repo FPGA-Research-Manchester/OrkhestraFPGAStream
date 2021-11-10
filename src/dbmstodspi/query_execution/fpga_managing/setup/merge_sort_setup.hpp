@@ -19,6 +19,7 @@ limitations under the License.
 #include "first_module_setup.hpp"
 #include "merge_sort_interface.hpp"
 #include "sorting_module_setup.hpp"
+#include "blocking_sort_module_setup.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -28,7 +29,8 @@ namespace orkhestrafs::dbmstodspi {
  */
 class MergeSortSetup : public virtual AccelerationModuleSetupInterface,
                        public FirstModuleSetup,
-                       public SortingModuleSetup {
+                       public SortingModuleSetup,
+                       public BlockingSortModuleSetup {
  public:
   void SetupModule(AccelerationModule& acceleration_module,
                    const AcceleratedQueryNode& module_parameters) override;

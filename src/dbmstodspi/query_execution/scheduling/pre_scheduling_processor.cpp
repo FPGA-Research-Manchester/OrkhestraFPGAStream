@@ -19,7 +19,10 @@ limitations under the License.
 #include <algorithm>
 #include <stdexcept>
 
+#include "query_scheduling_helper.hpp"
+
 using orkhestrafs::dbmstodspi::PreSchedulingProcessor;
+using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
 auto PreSchedulingProcessor::GetMinimumCapacityValuesFromHWLibrary(
     const std::map<QueryOperationType, OperationPRModules>& hw_library)
@@ -45,27 +48,6 @@ auto PreSchedulingProcessor::GetMinimumCapacityValuesFromHWLibrary(
     }
   }
   return min_capacity_map;
-}
-
-auto PreSchedulingProcessor::GetNewAvailableNodesAfterSchedulingGivenNode(
-    std::string node_name, const std::vector<std::string>& past_nodes,
-    const std::map<std::string, SchedulingQueryNode>& graph)
-    -> std::vector<std::string> {
-  std::vector<std::string> potential_nodes = graph.at(node_name).after_nodes;
-  for (const auto& potential_node_name : graph.at(node_name).after_nodes) {
-    for (const auto& [previous_node_name, node_index] :
-         graph.at(potential_node_name).before_nodes) {
-      if (std::find(past_nodes.begin(), past_nodes.end(), previous_node_name) ==
-          past_nodes.end()) {
-        auto search = std::find(potential_nodes.begin(), potential_nodes.end(),
-                                previous_node_name);
-        if (search != potential_nodes.end()) {
-          potential_nodes.erase(search);
-        }
-      }
-    }
-  }
-  return potential_nodes;
 }
 
 auto PreSchedulingProcessor::GetMinRequirementsForFullyExecutingNode(
@@ -135,56 +117,32 @@ auto PreSchedulingProcessor::GetFittingBitstreamLocations(
   return fitting_bitstream_locations;
 }
 
-void PreSchedulingProcessor::AddNewTableToNextNodes(
-    std::map<std::string, SchedulingQueryNode>& graph, std::string node_name,
-    const std::vector<std::string>& table_names) {
-  for (const auto& next_node_name : graph.at(node_name).after_nodes) {
-    for (const auto& [current_node_index, current_stream_index] :
-         GetCurrentNodeIndexesByName(graph, next_node_name, node_name)) {
-      graph.at(next_node_name).data_tables.at(current_node_index) =
-          table_names.at(current_stream_index);
-    }
-  }
-}
-
-auto PreSchedulingProcessor::GetCurrentNodeIndexesByName(
-    const std::map<std::string, SchedulingQueryNode>& graph,
-    std::string next_node_name, std::string current_node_name)
-    -> std::vector<std::pair<int, int>> {
-  std::vector<std::pair<int, int>> resulting_indexes;
-  for (int potential_current_node_index = 0;
-       potential_current_node_index <
-       graph.at(next_node_name).before_nodes.size();
-       potential_current_node_index++) {
-    if (graph.at(next_node_name)
-            .before_nodes.at(potential_current_node_index)
-            .first == current_node_name) {
-      auto stream_index = graph.at(next_node_name)
-                              .before_nodes.at(potential_current_node_index)
-                              .second;
-      resulting_indexes.push_back({potential_current_node_index, stream_index});
-    }
-  }
-  if (resulting_indexes.empty()) {
-    throw std::runtime_error(
-        "No next nodes found with the expected dependency");
-  }
-  return resulting_indexes;
-}
-
 auto PreSchedulingProcessor::GetWorstCaseProcessedTables(
     const std::vector<std::string>& input_tables,
     AcceleratorLibraryInterface& accelerator_library,
     std::map<std::string, TableMetadata>& data_tables,
-    const std::vector<int>& min_capacity) -> std::vector<std::string> {
-  // For this method yh you can make the largest_input_is_output but while
-  // scheduling filter and join operations are a bit of a puzzle. During
+    const std::vector<int>& min_capacity, QueryOperationType operation)
+    -> std::vector<std::string> {
+  // Q: For this method yh you can make the largest_input_is_output but while
+  // scheduling filter and join operations are a bit of a puzzle. A: During
   // scheduling the worst case scenario tables are forwarded but it has to be
   // made sure that those tables are actually not used and will be updated.
 
-  // Also need to figure out how the new table names would work? Partial sort
-  // and blocking sort create new tables.
-  return std::vector<std::string>();
+  // Q: Also need to figure out how the new table names would work? Partial sort
+  // and blocking sort create new tables. A: These new table names are just used
+  // in scheduling preprocessing and in real scheduling won't be used as the
+  // same memory can be reused.
+
+  std::map<std::string, TableMetadata> new_tables =
+      accelerator_library.GetWorstCaseProcessedTables(
+          operation, min_capacity, input_tables, data_tables);
+
+  std::vector<std::string> table_names;
+  for (const auto& [key, _] : new_tables) {
+    table_names.push_back(key);
+  }
+  data_tables.merge(new_tables);
+  return table_names;
 }
 
 void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
@@ -193,5 +151,36 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     const std::map<QueryOperationType, OperationPRModules>& hw_library,
     std::map<std::string, TableMetadata>& data_tables,
     AcceleratorLibraryInterface& accelerator_library) {
-  // Finally add everything together.
+  std::vector<std::string> processed_nodes;
+  auto min_capacity = GetMinimumCapacityValuesFromHWLibrary(hw_library);
+
+  auto current_available_nodes = available_nodes;
+
+  while (!current_available_nodes.empty()) {
+    auto current_node_name = current_available_nodes.back();
+    current_available_nodes.pop_back();
+    auto new_available_nodes =
+        QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
+            current_node_name, processed_nodes, graph);
+    current_available_nodes.insert(current_available_nodes.end(),
+                                   new_available_nodes.begin(),
+                                   new_available_nodes.end());
+    auto min_requirements = GetMinRequirementsForFullyExecutingNode(
+        current_node_name, graph, accelerator_library, data_tables);
+    auto list_of_fitting_bitstreams = FindAdequateBitstreams(
+        min_requirements, graph.at(current_node_name).operation, hw_library);
+    if (!list_of_fitting_bitstreams.empty()) {
+      graph.at(current_node_name).satisfying_bitstreams =
+          GetFittingBitstreamLocations(
+              list_of_fitting_bitstreams,
+              hw_library.at(graph.at(current_node_name).operation)
+                  .starting_locations);
+    }
+    auto resulting_tables = GetWorstCaseProcessedTables(
+        graph.at(current_node_name).data_tables, accelerator_library,
+        data_tables, min_capacity.at(graph.at(current_node_name).operation),
+        graph.at(current_node_name).operation);
+    QuerySchedulingHelper::AddNewTableToNextNodes(graph, current_node_name,
+                                                  resulting_tables);
+  }
 }

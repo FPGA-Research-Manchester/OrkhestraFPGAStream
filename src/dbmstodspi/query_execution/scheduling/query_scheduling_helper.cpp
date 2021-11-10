@@ -35,8 +35,72 @@ auto QuerySchedulingHelper::FindNodePtrIndex(QueryNode* current_node,
     }
   }
   if (index == -1) {
-    throw std::runtime_error(
-        "No current node found!");
+    throw std::runtime_error("No current node found!");
   }
   return index;
+}
+
+// TODO: Check that it is sorted by the desired column.
+auto QuerySchedulingHelper::IsTableSorted(TableMetadata table_data) -> bool {
+  return table_data.sorted_status.size() == 1 &&
+         table_data.sorted_status.at(0).start_position == 0 &&
+         table_data.sorted_status.at(0).length == table_data.record_count;
+}
+
+void QuerySchedulingHelper::AddNewTableToNextNodes(
+    std::map<std::string, SchedulingQueryNode>& graph, std::string node_name,
+    const std::vector<std::string>& table_names) {
+  for (const auto& next_node_name : graph.at(node_name).after_nodes) {
+    for (const auto& [current_node_index, current_stream_index] :
+         GetCurrentNodeIndexesByName(graph, next_node_name, node_name)) {
+      graph.at(next_node_name).data_tables.at(current_node_index) =
+          table_names.at(current_stream_index);
+    }
+  }
+}
+
+auto QuerySchedulingHelper::GetCurrentNodeIndexesByName(
+    const std::map<std::string, SchedulingQueryNode>& graph,
+    std::string next_node_name, std::string current_node_name)
+    -> std::vector<std::pair<int, int>> {
+  std::vector<std::pair<int, int>> resulting_indexes;
+  for (int potential_current_node_index = 0;
+       potential_current_node_index <
+       graph.at(next_node_name).before_nodes.size();
+       potential_current_node_index++) {
+    if (graph.at(next_node_name)
+            .before_nodes.at(potential_current_node_index)
+            .first == current_node_name) {
+      auto stream_index = graph.at(next_node_name)
+                              .before_nodes.at(potential_current_node_index)
+                              .second;
+      resulting_indexes.push_back({potential_current_node_index, stream_index});
+    }
+  }
+  if (resulting_indexes.empty()) {
+    throw std::runtime_error(
+        "No next nodes found with the expected dependency");
+  }
+  return resulting_indexes;
+}
+
+auto QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
+    std::string node_name, const std::vector<std::string>& past_nodes,
+    const std::map<std::string, SchedulingQueryNode>& graph)
+    -> std::vector<std::string> {
+  std::vector<std::string> potential_nodes = graph.at(node_name).after_nodes;
+  for (const auto& potential_node_name : graph.at(node_name).after_nodes) {
+    for (const auto& [previous_node_name, node_index] :
+         graph.at(potential_node_name).before_nodes) {
+      if (std::find(past_nodes.begin(), past_nodes.end(), previous_node_name) ==
+          past_nodes.end()) {
+        auto search = std::find(potential_nodes.begin(), potential_nodes.end(),
+                                previous_node_name);
+        if (search != potential_nodes.end()) {
+          potential_nodes.erase(search);
+        }
+      }
+    }
+  }
+  return potential_nodes;
 }

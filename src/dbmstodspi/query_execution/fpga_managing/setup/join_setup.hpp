@@ -35,6 +35,11 @@ class JoinSetup : public AccelerationModuleSetupInterface {
                    const AcceleratedQueryNode& module_parameters) override;
   auto CreateModule(MemoryManagerInterface* memory_manager, int module_position)
       -> std::unique_ptr<AccelerationModule> override;
+  auto GetWorstCaseProcessedTables(
+      const std::vector<int>& min_capacity,
+      const std::vector<std::string>& input_tables,
+      const std::map<std::string, TableMetadata>& data_tables)
+      -> std::map<std::string, TableMetadata> override;
 
   /**
    * @brief Method to setup the join module.

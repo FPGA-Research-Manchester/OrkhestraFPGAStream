@@ -15,11 +15,15 @@ limitations under the License.
 */
 
 #pragma once
+#include <map>
 #include <vector>
 
 #include "accelerated_query_node.hpp"
 #include "acceleration_module.hpp"
 #include "stream_data_parameters.hpp"
+#include "table_data.hpp"
+
+using orkhestrafs::core_interfaces::table_data::TableMetadata;
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -79,7 +83,7 @@ class AccelerationModuleSetupInterface {
    * @brief Get capacity requirements for scheduling
    * @param operation_parameters Parameters for the operator
    * @return Vector of different capacity requirements.
-  */
+   */
   virtual auto GetCapacityRequirement(
       std::vector<std::vector<int>> operation_parameters) -> std::vector<int>;
 
@@ -88,6 +92,19 @@ class AccelerationModuleSetupInterface {
    * @return Boolean flag
    */
   virtual auto IsSortingInputTable() -> bool;
+
+  /**
+   * @brief Method to get worst case tables based on capacity and input tables.
+   * @param min_capacity Minimum functional capacity in the library.
+   * @param input_tables Input table names
+   * @param data_tables Metadata of all tables.
+   * @return Map of processed tables and their corresponding metadata.
+   */
+  virtual auto GetWorstCaseProcessedTables(
+      const std::vector<int>& min_capacity,
+      const std::vector<std::string>& input_tables,
+      const std::map<std::string, TableMetadata>& data_tables)
+      -> std::map<std::string, TableMetadata>;
 
  protected:
   static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)

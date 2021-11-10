@@ -62,6 +62,11 @@ class AcceleratorLibraryInterface {
   virtual auto GetMinSortingRequirements(QueryOperationType operation_type,
                                          const TableMetadata& table_data)
       -> std::vector<int> = 0;
+  virtual auto GetWorstCaseProcessedTables(
+      QueryOperationType operation_type, const std::vector<int>& min_capacity,
+      const std::vector<std::string>& input_tables,
+      const std::map<std::string, TableMetadata>& data_tables)
+      -> std::map<std::string, TableMetadata> = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi
