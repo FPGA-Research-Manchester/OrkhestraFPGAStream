@@ -16,15 +16,11 @@ limitations under the License.
 
 #pragma once
 
-#include <queue>
-#include <utility>
 #include <vector>
 
-#include "query_scheduling_data.hpp"
+#include "scheduling_data.hpp"
 
-using orkhestrafs::core_interfaces::query_scheduling_data::
-    ConfigurableModulesVector;
-using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
+using orkhestrafs::dbmstodspi::scheduling_data::ScheduledRun;
 
 namespace orkhestrafs::dbmstodspi {
 /**
@@ -35,14 +31,12 @@ class PlanEvaluatorInterface {
   virtual ~PlanEvaluatorInterface() = default;
   /**
    * @brief Get the best plan from the vector of fitting plans
-   * @param Vector of all of the plans consisting of different runs paired with the modules
-   * @return Best plan in a form of queue of runs
-  */
+   * @param available_plans All avaialable plans to choose from.
+   * @param min_run_count Minimum run count in a plan.
+   * @return Best plan
+   */
   virtual auto GetBestPlan(
-          std::vector<
-              std::vector<std::pair<ConfigurableModulesVector,
-                                    std::vector<std::shared_ptr<QueryNode>>>>>)
-          -> std::queue<std::pair<ConfigurableModulesVector,
-                                  std::vector<std::shared_ptr<QueryNode>>>> = 0;
+      std::vector<std::vector<ScheduledRun>> available_plans, int min_run_count)
+      -> std::vector<ScheduledRun> = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

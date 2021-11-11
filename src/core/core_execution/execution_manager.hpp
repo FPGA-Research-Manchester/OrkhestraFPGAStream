@@ -114,6 +114,10 @@ class ExecutionManager : public ExecutionManagerInterface,
 
   std::vector<std::string> current_available_nodes_;
   std::vector<std::string> nodes_constrained_to_first_;
+  std::vector<std::string> processed_nodes_;
+
+  
+
   // Variables used throughout different states.
   std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links_;
   std::map<std::string, std::map<int, MemoryReuseTargets>> current_reuse_links_;

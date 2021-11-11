@@ -15,9 +15,18 @@ limitations under the License.
 */
 
 #pragma once
-#include <set>
+#include "module_selection.hpp"
+#include "pr_module_data.hpp"
+#include "scheduled_module.hpp"
+#include "scheduling_data.hpp"
+#include "accelerator_library_interface.hpp"
 
-#include "node_scheduler_interface.hpp"
+using orkhestrafs::core_interfaces::hw_library::OperationPRModules;
+using orkhestrafs::dbmstodspi::ModuleSelection;
+using orkhestrafs::dbmstodspi::ScheduledModule;
+using orkhestrafs::dbmstodspi::scheduling_data::ExecutionPlanSchedulingData;
+using orkhestrafs::dbmstodspi::scheduling_data::ScheduledRun;
+using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -27,7 +36,28 @@ namespace orkhestrafs::dbmstodspi {
 class ElastiSchedulingGraphParser {
  public:
   static void PreprocessNodes(
-      std::vector<std::shared_ptr<QueryNode>>& available_nodes);
+      const std::vector<std::string>& available_nodes,
+      const std::map<QueryOperationType, OperationPRModules>& hw_library,
+      const std::vector<std::string>& processed_nodes,
+      std::map<std::string, SchedulingQueryNode>& graph,
+      std::map<std::string, TableMetadata>& data_tables,
+      AcceleratorLibraryInterface& accelerator_library);
+
+  static void PlaceNodesRecursively(
+      std::vector<std::string> starting_nodes,
+      std::vector<std::string> processed_nodes,
+      std::map<std::string, SchedulingQueryNode> graph,
+      ScheduledRun current_run, std::vector<ScheduledRun> current_plan,
+      std::map<std::vector<ScheduledRun>, ExecutionPlanSchedulingData>&
+          resulting_plan,
+      bool reduce_single_runs,
+      const std::map<QueryOperationType, OperationPRModules>& hw_library,
+      int& min_runs, std::map<std::string, TableMetadata> data_tables,
+      const std::vector<std::vector<ModuleSelection>>& heuristics,
+      std::pair<int, int>& statistics_counters,
+      const std::vector<std::string>& constrained_first_nodes,
+      std::vector<std::string> blocked_nodes,
+      std::vector<std::string> next_run_blocked_nodes);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

@@ -46,7 +46,23 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
           std::pair<ConfigurableModulesVector,
                     std::vector<std::shared_ptr<QueryNode>>>> override;
 
+  auto GetNextSetOfRuns(
+      std::vector<std::shared_ptr<QueryNode>> query_nodes,
+      const std::map<QueryOperationType, OperationPRModules> &hw_library,
+      const std::vector<std::string> &first_node_names,
+      std::vector<std::string> &starting_nodes,
+      std::vector<std::string> &processed_nodes,
+      std::map<std::string, SchedulingQueryNode> &graph,
+      AcceleratorLibraryInterface &drivers,
+      std::map<std::string, TableMetadata> &tables)
+      -> std::queue<
+          std::pair<ConfigurableModulesVector,
+                    std::vector<std::shared_ptr<QueryNode>>>> override;
+
  private:
+  static auto FindSharedPointerFromRootNodes(
+      std::string searched_node_name, std::shared_ptr<QueryNode> current_node)
+      -> std::shared_ptr<QueryNode>;
   std::unique_ptr<PlanEvaluatorInterface> plan_evaluator_;
 };
 }  // namespace orkhestrafs::dbmstodspi

@@ -146,23 +146,21 @@ auto PreSchedulingProcessor::GetWorstCaseProcessedTables(
 }
 
 void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
-    const std::vector<std::string>& available_nodes,
-    std::map<std::string, SchedulingQueryNode>& graph,
     const std::map<QueryOperationType, OperationPRModules>& hw_library,
+    std::map<std::string, SchedulingQueryNode>& graph,
     std::map<std::string, TableMetadata>& data_tables,
-    AcceleratorLibraryInterface& accelerator_library) {
-  std::vector<std::string> processed_nodes;
+    AcceleratorLibraryInterface& accelerator_library,
+    std::vector<std::string> available_nodes,
+    std::vector<std::string> processed_nodes) {
   auto min_capacity = GetMinimumCapacityValuesFromHWLibrary(hw_library);
 
-  auto current_available_nodes = available_nodes;
-
-  while (!current_available_nodes.empty()) {
-    auto current_node_name = current_available_nodes.back();
-    current_available_nodes.pop_back();
+  while (!available_nodes.empty()) {
+    auto current_node_name = available_nodes.back();
+    available_nodes.pop_back();
     auto new_available_nodes =
         QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
             current_node_name, processed_nodes, graph);
-    current_available_nodes.insert(current_available_nodes.end(),
+    available_nodes.insert(available_nodes.end(),
                                    new_available_nodes.begin(),
                                    new_available_nodes.end());
     auto min_requirements = GetMinRequirementsForFullyExecutingNode(

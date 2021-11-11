@@ -82,11 +82,12 @@ class PreSchedulingProcessor {
   // def add_satisfying_bitstream_locations_to_graph(available_nodes, graph,
   // hw_library, data_tables)
   static void AddSatisfyingBitstreamLocationsToGraph(
-      const std::vector<std::string>& available_nodes,
-      std::map<std::string, SchedulingQueryNode>& graph,
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
+      std::map<std::string, SchedulingQueryNode>& graph,
       std::map<std::string, TableMetadata>& data_tables,
-      AcceleratorLibraryInterface& accelerator_library);
+      AcceleratorLibraryInterface& accelerator_library,
+      std::vector<std::string> available_nodes,
+      std::vector<std::string> processed_nodes);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

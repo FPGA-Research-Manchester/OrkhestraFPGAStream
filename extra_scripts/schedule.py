@@ -417,7 +417,7 @@ def find_next_module_placement(all_nodes, all_plans, available_nodes, new_curren
 
     # Check new graph and old graph and if all of the nodes in the new graph are the same as the old graph then it's fine. Otherwise redo the new_graph!
     update_satisifying_bitstreams(
-        node, all_nodes, new_all_nodes, new_available_nodes, hw_library, data_tables, new_data_tables)
+        node, all_nodes, new_all_nodes, new_available_nodes, hw_library, data_tables, new_data_tables, new_past_nodes)
 
     # Update next_run_blocked
     new_next_run_blocked = get_new_blocked_nodes(
@@ -444,7 +444,7 @@ def create_new_available_nodes_lists(all_nodes, available_nodes, past_nodes, nod
 
 
 def update_satisifying_bitstreams(current_node, previous_all_nodes, new_all_nodes, new_available_nodes, hw_library,
-                                  old_data_tables, new_data_tables):
+                                  old_data_tables, new_data_tables, new_past_nodes):
     update_required = False
     for node_name in new_all_nodes.keys():
         if previous_all_nodes[node_name]["capacity"] != new_all_nodes[node_name]["capacity"]:
@@ -462,7 +462,7 @@ def update_satisifying_bitstreams(current_node, previous_all_nodes, new_all_node
                 break
     if update_required:
         add_satisfying_bitstream_locations_to_graph(
-            new_available_nodes.copy(), new_all_nodes, hw_library, new_data_tables)
+            new_available_nodes.copy(), new_all_nodes, hw_library, new_data_tables, new_past_nodes)
 
 
 def check_table_equality_of_given_node(previous_all_nodes, new_all_nodes, node_name, old_data_tables, new_data_tables):
@@ -744,8 +744,8 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
 
 # ----------- Preprocessing before scheduling util methods to find satisfying bitstreams -----------
 # No node skipping as we don't know which bitstream will be picked.
-def add_satisfying_bitstream_locations_to_graph(available_nodes, graph, hw_library, data_tables):
-    processed_nodes = []
+def add_satisfying_bitstream_locations_to_graph(available_nodes, graph, hw_library, data_tables, given_processed_nodes):
+    processed_nodes = given_processed_nodes.copy()
     min_capacity = get_minimum_capacity_values(hw_library)
 
     while available_nodes:

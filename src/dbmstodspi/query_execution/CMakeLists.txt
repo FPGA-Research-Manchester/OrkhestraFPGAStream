@@ -153,6 +153,10 @@ add_library(query_execution OBJECT
             scheduling/scheduling_query_node.hpp
             scheduling/query_scheduling_helper.hpp
             scheduling/query_scheduling_helper.cpp
+            scheduling/scheduled_module.hpp
+            scheduling/module_selection.cpp
+            scheduling/module_selection.hpp
+            scheduling/scheduling_data.hpp
             ${OS_DEPENDENT_MEMORY_BLOCK})
 
 target_include_directories(query_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} 
