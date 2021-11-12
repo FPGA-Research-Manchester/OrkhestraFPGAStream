@@ -18,9 +18,9 @@ limitations under the License.
 
 #include <vector>
 
-#include "scheduling_data.hpp"
+#include "scheduled_module.hpp"
 
-using orkhestrafs::dbmstodspi::scheduling_data::ScheduledRun;
+using orkhestrafs::dbmstodspi::ScheduledModule;
 
 namespace orkhestrafs::dbmstodspi {
 /**
@@ -36,7 +36,7 @@ class PlanEvaluatorInterface {
    * @return Best plan
    */
   virtual auto GetBestPlan(
-      std::vector<std::vector<ScheduledRun>> available_plans, int min_run_count)
-      -> std::vector<ScheduledRun> = 0;
+      std::vector<std::vector<std::vector<ScheduledModule>>> available_plans,
+      int min_run_count) -> std::vector<std::vector<ScheduledModule>> = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

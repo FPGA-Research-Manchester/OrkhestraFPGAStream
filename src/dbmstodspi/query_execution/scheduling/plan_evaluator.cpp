@@ -15,15 +15,12 @@ limitations under the License.
 */
 
 #include "plan_evaluator.hpp"
-#include "scheduling_data.hpp"
-
-using orkhestrafs::dbmstodspi::scheduling_data::ScheduledRun;
 
 using orkhestrafs::dbmstodspi::PlanEvaluator;
 
 auto PlanEvaluator::GetBestPlan(
-    std::vector<std::vector<ScheduledRun>> available_plans, int min_run_count)
-    -> std::vector<ScheduledRun> {
+    std::vector<std::vector<std::vector<ScheduledModule>>> available_plans,
+    int min_run_count) -> std::vector<std::vector<ScheduledModule>> {
   // TODO: ADD proper plan selection
   return available_plans.front();
 }

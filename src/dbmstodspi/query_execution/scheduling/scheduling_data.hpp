@@ -21,17 +21,13 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
-#include "scheduled_module.hpp"
 #include "scheduling_query_node.hpp"
 #include "table_data.hpp"
 
 using orkhestrafs::core_interfaces::table_data::TableMetadata;
-using orkhestrafs::dbmstodspi::ScheduledModule;
 using orkhestrafs::dbmstodspi::SchedulingQueryNode;
 
 namespace orkhestrafs::dbmstodspi::scheduling_data {
-
-using ScheduledRun = std::vector<std::pair<int, ScheduledModule>>;
 
 struct ExecutionPlanSchedulingData {
   std::vector<std::string> processed_nodes;
