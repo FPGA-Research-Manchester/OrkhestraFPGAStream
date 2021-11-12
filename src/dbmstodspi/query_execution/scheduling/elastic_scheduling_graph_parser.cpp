@@ -47,7 +47,32 @@ auto ElastiSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
     const std::map<std::string, SchedulingQueryNode>& graph,
     const std::vector<std::string>& constrained_first_nodes,
     const std::vector<std::string>& blocked_nodes) -> std::vector<std::string> {
-  return {};
+  auto resulting_nodes = available_nodes;
+  for (const auto& node_name : available_nodes) {
+    if (std::find(constrained_first_nodes.begin(),
+                  constrained_first_nodes.end(),
+                  node_name) != constrained_first_nodes.end()) {
+      for (const auto& module : current_run) {
+        for (const auto& [before_node_name, _] :
+             graph.at(node_name).before_nodes) {
+          if (module.node_name == before_node_name) {
+            resulting_nodes.erase(std::remove(resulting_nodes.begin(),
+                                              resulting_nodes.end(), node_name),
+                                  resulting_nodes.end());
+          }
+        }
+      }
+    }
+    auto operation = graph.at(node_name).operation;
+    // TODO: Check for first modules
+    if (std::find(blocked_nodes.begin(), blocked_nodes.end(), node_name) !=
+        blocked_nodes.end()) {
+      resulting_nodes.erase(std::remove(resulting_nodes.begin(),
+                                        resulting_nodes.end(), node_name),
+                            resulting_nodes.end());
+    }
+  }
+  return resulting_nodes;
 }
 
 auto ElastiSchedulingGraphParser::GetMinPositionInCurrentRun(

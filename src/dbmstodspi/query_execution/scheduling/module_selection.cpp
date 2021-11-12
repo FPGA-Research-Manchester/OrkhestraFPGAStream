@@ -55,7 +55,7 @@ auto ModuleSelection::SelectAll(
 auto ModuleSelection::SelectFirst(
     const std::vector<std::pair<int, ScheduledModule>>& available_placements)
     -> std::vector<std::pair<int, ScheduledModule>> {
-  int min_available_position = INT_MAX;
+  int min_available_position = std::numeric_limits<int>::max();
   for (const auto& placement : available_placements) {
     if (placement.second.position.first < min_available_position) {
       min_available_position = placement.second.position.first;
@@ -87,15 +87,15 @@ auto ModuleSelection::SelectLast(
       chosen_placements.push_back(placement);
     }
   }
-  /*auto it = std::unique(chosen_placements.begin(), chosen_placements.end());
-  chosen_placements.resize(std::distance(chosen_placements.begin(), it));*/
+  auto it = std::unique(chosen_placements.begin(), chosen_placements.end());
+  chosen_placements.resize(std::distance(chosen_placements.begin(), it));
   return chosen_placements;
 }
 
 auto ModuleSelection::SelectShortest(
     const std::vector<std::pair<int, ScheduledModule>>& available_placements)
     -> std::vector<std::pair<int, ScheduledModule>> {
-  int min_module_size = INT_MAX;
+  int min_module_size = std::numeric_limits<int>::max();
   for (const auto& placement : available_placements) {
     if (placement.second.position.second - placement.second.position.first + 1 <
         min_module_size) {
@@ -111,8 +111,8 @@ auto ModuleSelection::SelectShortest(
       chosen_placements.push_back(placement);
     }
   }
-  /*auto it = std::unique(chosen_placements.begin(), chosen_placements.end());
-  chosen_placements.resize(std::distance(chosen_placements.begin(), it));*/
+  auto it = std::unique(chosen_placements.begin(), chosen_placements.end());
+  chosen_placements.resize(std::distance(chosen_placements.begin(), it));
   return chosen_placements;
 }
 
@@ -134,7 +134,7 @@ auto ModuleSelection::SelectLongest(
       chosen_placements.push_back(placement);
     }
   }
-  /*auto it = std::unique(chosen_placements.begin(), chosen_placements.end());
-  chosen_placements.resize(std::distance(chosen_placements.begin(), it));*/
+  auto it = std::unique(chosen_placements.begin(), chosen_placements.end());
+  chosen_placements.resize(std::distance(chosen_placements.begin(), it));
   return chosen_placements;
 }

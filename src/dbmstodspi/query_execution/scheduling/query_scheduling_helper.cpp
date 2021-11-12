@@ -17,6 +17,7 @@ limitations under the License.
 #include "query_scheduling_helper.hpp"
 
 #include <stdexcept>
+#include <algorithm>
 
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 

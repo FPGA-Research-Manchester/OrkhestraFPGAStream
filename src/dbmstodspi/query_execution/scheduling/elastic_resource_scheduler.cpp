@@ -58,7 +58,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   std::map<std::vector<std::vector<ScheduledModule>>,
            ExecutionPlanSchedulingData>
       resulting_plans;
-  int min_runs = INT_MAX;
+  int min_runs = std::numeric_limits<int>::max();
   std::pair<int, int> placed_nodes_and_discarded_placements = {0, 0};
 
   // TODO: Get these from config.

@@ -137,7 +137,7 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
    * @param data_tables Metadata of all tables.
    * @return Map of metadata of returned tables.
    */
-  auto AcceleratorLibrary::GetWorstCaseProcessedTables(
+  auto GetWorstCaseProcessedTables(
       QueryOperationType operation_type, const std::vector<int>& min_capacity,
       const std::vector<std::string>& input_tables,
       const std::map<std::string, TableMetadata>& data_tables)
