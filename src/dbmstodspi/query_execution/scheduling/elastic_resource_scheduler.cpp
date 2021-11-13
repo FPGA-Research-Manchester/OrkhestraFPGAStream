@@ -73,7 +73,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
       std::move(starting_nodes), std::move(processed_nodes), std::move(graph),
       {}, {}, resulting_plans, reduce_single_runs, hw_library, min_runs, tables,
       default_heuristics, placed_nodes_and_discarded_placements,
-      first_node_names, {}, {});
+      first_node_names, {}, {}, drivers);
 
   std::vector<std::vector<std::vector<ScheduledModule>>> all_plans;
   for (const auto &[plan, _] : resulting_plans) {

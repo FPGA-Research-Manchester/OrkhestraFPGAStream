@@ -53,21 +53,38 @@ class ElastiSchedulingGraphParser {
       bool reduce_single_runs,
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
       int& min_runs, std::map<std::string, TableMetadata> data_tables,
-      const std::vector<std::vector<ModuleSelection>>& heuristics,
+      const std::pair<std::vector<std::vector<ModuleSelection>>,
+                      std::vector<std::vector<ModuleSelection>>>& heuristics,
       std::pair<int, int>& statistics_counters,
       const std::vector<std::string>& constrained_first_nodes,
       std::vector<std::string> blocked_nodes,
-      std::vector<std::string> next_run_blocked_nodes);
+      std::vector<std::string> next_run_blocked_nodes,
+      AcceleratorLibraryInterface& drivers);
 
  private:
+  static auto GetChosenModulePlacements(
+      std::string node_name,
+      const std::map<QueryOperationType, OperationPRModules>& hw_library,
+      std::pair<int, int>& statistics_counters,
+      QueryOperationType current_operation,
+      const std::vector<std::vector<ModuleSelection>>& heuristics,
+      int min_position, const std::vector<std::pair<int, int>>& taken_positions,
+      const std::vector<std::vector<std::string>>& bitstream_start_locations)
+      -> std::vector<std::pair<int, ScheduledModule>>;
+
+  static auto CurrentRunHasFirstModule(
+      const std::map<QueryOperationType, OperationPRModules>& hw_library,
+      const std::vector<ScheduledModule>& current_run, std::string node_name,
+      AcceleratorLibraryInterface& drivers) -> bool;
+
   static auto RemoveUnavailableNodesInThisRun(
       const std::vector<std::string>& available_nodes,
       const std::vector<ScheduledModule>& current_run,
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
       const std::map<std::string, SchedulingQueryNode>& graph,
       const std::vector<std::string>& constrained_first_nodes,
-      const std::vector<std::string>& blocked_nodes)
-      -> std::vector<std::string>;
+      const std::vector<std::string>& blocked_nodes,
+      AcceleratorLibraryInterface& drivers) -> std::vector<std::string>;
 
   static auto GetMinPositionInCurrentRun(
       const std::vector<ScheduledModule>& current_run, std::string node_name,
@@ -81,7 +98,8 @@ class ElastiSchedulingGraphParser {
       std::string node_name,
       const std::vector<std::pair<int, int>>& taken_positions,
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      const std::vector<std::vector<ModuleSelection>>& heuristics,
+      const std::pair<std::vector<std::vector<ModuleSelection>>,
+                      std::vector<std::vector<ModuleSelection>>>& heuristics,
       std::pair<int, int>& statistics_counters)
       -> std::vector<std::pair<int, ScheduledModule>>;
 
@@ -96,11 +114,13 @@ class ElastiSchedulingGraphParser {
       std::vector<ScheduledModule> current_run, std::string node_name,
       std::vector<std::string> processed_nodes, bool reduce_single_runs,
       int& min_runs, std::map<std::string, TableMetadata> data_tables,
-      const std::vector<std::vector<ModuleSelection>>& heuristics,
+      const std::pair<std::vector<std::vector<ModuleSelection>>,
+                      std::vector<std::vector<ModuleSelection>>>& heuristics,
       std::pair<int, int>& statistics_counters,
       const std::vector<std::string>& constrained_first_nodes,
       std::vector<std::string> blocked_nodes,
-      std::vector<std::string> next_run_blocked_nodes);
+      std::vector<std::string> next_run_blocked_nodes,
+      AcceleratorLibraryInterface& drivers);
 
   static auto UpdateGraph(
       std::map<std::string, SchedulingQueryNode> graph, std::string bitstream,

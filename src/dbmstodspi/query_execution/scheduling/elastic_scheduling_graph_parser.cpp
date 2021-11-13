@@ -40,13 +40,28 @@ void ElastiSchedulingGraphParser::PreprocessNodes(
       processed_nodes);
 }
 
+auto ElastiSchedulingGraphParser::CurrentRunHasFirstModule(
+    const std::map<QueryOperationType, OperationPRModules>& hw_library,
+    const std::vector<ScheduledModule>& current_run, std::string node_name,
+    AcceleratorLibraryInterface& drivers) -> bool {
+  for (const auto& scheduled_module : current_run) {
+    if (scheduled_module.node_name != node_name &&
+        drivers.IsNodeConstrainedToFirstInPipeline(
+            scheduled_module.operation_type)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 auto ElastiSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
     const std::vector<std::string>& available_nodes,
     const std::vector<ScheduledModule>& current_run,
     const std::map<QueryOperationType, OperationPRModules>& hw_library,
     const std::map<std::string, SchedulingQueryNode>& graph,
     const std::vector<std::string>& constrained_first_nodes,
-    const std::vector<std::string>& blocked_nodes) -> std::vector<std::string> {
+    const std::vector<std::string>& blocked_nodes,
+    AcceleratorLibraryInterface& drivers) -> std::vector<std::string> {
   auto resulting_nodes = available_nodes;
   for (const auto& node_name : available_nodes) {
     if (std::find(constrained_first_nodes.begin(),
@@ -63,8 +78,13 @@ auto ElastiSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
         }
       }
     }
-    auto operation = graph.at(node_name).operation;
-    // TODO: Check for first modules
+    if (drivers.IsNodeConstrainedToFirstInPipeline(
+            graph.at(node_name).operation) &&
+        CurrentRunHasFirstModule(hw_library, current_run, node_name, drivers)) {
+      resulting_nodes.erase(std::remove(resulting_nodes.begin(),
+                                        resulting_nodes.end(), node_name),
+                            resulting_nodes.end());
+    }
     if (std::find(blocked_nodes.begin(), blocked_nodes.end(), node_name) !=
         blocked_nodes.end()) {
       resulting_nodes.erase(std::remove(resulting_nodes.begin(),
@@ -78,13 +98,50 @@ auto ElastiSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
 auto ElastiSchedulingGraphParser::GetMinPositionInCurrentRun(
     const std::vector<ScheduledModule>& current_run, std::string node_name,
     const std::map<std::string, SchedulingQueryNode>& graph) -> int {
-  return 0;
+  std::vector<ScheduledModule> currently_scheduled_prereq_nodes;
+  for (const auto& [previous_node_name, _] : graph.at(node_name).before_nodes) {
+    for (const auto& module_placement : current_run) {
+      if (previous_node_name == module_placement.node_name) {
+        currently_scheduled_prereq_nodes.push_back(module_placement);
+      }
+    }
+  }
+  if (!currently_scheduled_prereq_nodes.empty()) {
+    int current_min = 0;
+    for (const auto& module_placement : currently_scheduled_prereq_nodes) {
+      if (module_placement.position.second > current_min) {
+        current_min = module_placement.position.second;
+      }
+    }
+    // Assuming current min isn't 0 or negative somehow.
+    return current_min + 1;
+  } else {
+    return 0;
+  }
 }
 
 auto ElastiSchedulingGraphParser::GetTakenColumns(
     const std::vector<ScheduledModule>& current_run)
     -> std::vector<std::pair<int, int>> {
-  return {};
+  std::vector<std::pair<int, int>> taken_columns;
+  for (const auto& module_placement : current_run) {
+    taken_columns.push_back(module_placement.position);
+  }
+  return taken_columns;
+}
+
+auto ElastiSchedulingGraphParser::GetChosenModulePlacements(
+    std::string node_name,
+    const std::map<QueryOperationType, OperationPRModules>& hw_library,
+    std::pair<int, int>& statistics_counters,
+    QueryOperationType current_operation,
+    const std::vector<std::vector<ModuleSelection>>& heuristics,
+    int min_position, const std::vector<std::pair<int, int>>& taken_positions,
+    const std::vector<std::vector<std::string>>& bitstream_start_locations)
+    -> std::vector<std::pair<int, ScheduledModule>> {
+  /*auto available_bitstreams = FindAllAvailableBItstreamsAfterMinPos(
+      current_operation, min_position, taken_positions, hw_library,
+      bitstream_start_locations);*/
 }
 
 auto ElastiSchedulingGraphParser::GetScheduledModulesForNodeAfterPos(
@@ -92,10 +149,26 @@ auto ElastiSchedulingGraphParser::GetScheduledModulesForNodeAfterPos(
     std::string node_name,
     const std::vector<std::pair<int, int>>& taken_positions,
     const std::map<QueryOperationType, OperationPRModules>& hw_library,
-    const std::vector<std::vector<ModuleSelection>>& heuristics,
+    const std::pair<std::vector<std::vector<ModuleSelection>>,
+                    std::vector<std::vector<ModuleSelection>>>& heuristics,
     std::pair<int, int>& statistics_counters)
     -> std::vector<std::pair<int, ScheduledModule>> {
-  return {};
+  auto current_operation = graph.at(node_name).operation;
+  std::vector<std::pair<int, ScheduledModule>> available_module_placements;
+  // Will never be empty but just in case
+  if (!graph.at(node_name).satisfying_bitstreams.empty()) {
+    available_module_placements = GetChosenModulePlacements(
+        node_name, hw_library, statistics_counters, current_operation,
+        heuristics.first, min_position, taken_positions,
+        graph.at(node_name).satisfying_bitstreams);
+  }
+  if (available_module_placements.empty()) {
+    available_module_placements = GetChosenModulePlacements(
+        node_name, hw_library, statistics_counters, current_operation,
+        heuristics.second, min_position, taken_positions,
+        hw_library.at(graph.at(node_name).operation).starting_locations);
+  }
+  return available_module_placements;
 }
 
 // TODO: check if you can make some inputs const and which ones references!
@@ -149,11 +222,13 @@ void ElastiSchedulingGraphParser::FindNextModulePlacement(
     std::vector<ScheduledModule> current_run, std::string node_name,
     std::vector<std::string> processed_nodes, bool reduce_single_runs,
     int& min_runs, std::map<std::string, TableMetadata> data_tables,
-    const std::vector<std::vector<ModuleSelection>>& heuristics,
+    const std::pair<std::vector<std::vector<ModuleSelection>>,
+                    std::vector<std::vector<ModuleSelection>>>& heuristics,
     std::pair<int, int>& statistics_counters,
     const std::vector<std::string>& constrained_first_nodes,
     std::vector<std::string> blocked_nodes,
-    std::vector<std::string> next_run_blocked_nodes) {
+    std::vector<std::string> next_run_blocked_nodes,
+    AcceleratorLibraryInterface& drivers) {
   auto [new_graph, new_tables, satisfied_requirements, skipped_node_names] =
       UpdateGraph(graph, module_placement.bitstream, data_tables, hw_library,
                   node_name, graph.at(node_name).capacity,
@@ -187,7 +262,7 @@ void ElastiSchedulingGraphParser::FindNextModulePlacement(
       new_available_nodes, new_processed_nodes, new_graph, current_run,
       current_plan, resulting_plan, reduce_single_runs, hw_library, min_runs,
       new_tables, heuristics, statistics_counters, constrained_first_nodes,
-      blocked_nodes, next_run_blocked_nodes);
+      blocked_nodes, next_run_blocked_nodes, drivers);
 }
 
 // TODO: The constants could be changed to be class variables.
@@ -202,18 +277,20 @@ void ElastiSchedulingGraphParser::PlaceNodesRecursively(
     bool reduce_single_runs,
     const std::map<QueryOperationType, OperationPRModules>& hw_library,
     int& min_runs, std::map<std::string, TableMetadata> data_tables,
-    const std::vector<std::vector<ModuleSelection>>& heuristics,
+    const std::pair<std::vector<std::vector<ModuleSelection>>,
+                    std::vector<std::vector<ModuleSelection>>>& heuristics,
     std::pair<int, int>& statistics_counters,
     const std::vector<std::string>& constrained_first_nodes,
     std::vector<std::string> blocked_nodes,
-    std::vector<std::string> next_run_blocked_nodes) {
+    std::vector<std::string> next_run_blocked_nodes,
+    AcceleratorLibraryInterface& drivers) {
   if (current_plan.size() <= min_runs) {
     if (!available_nodes.empty() &&
         !std::includes(available_nodes.begin(), available_nodes.end(),
                        blocked_nodes.begin(), blocked_nodes.end())) {
       auto available_nodes_in_this_run = RemoveUnavailableNodesInThisRun(
           available_nodes, current_run, hw_library, graph,
-          constrained_first_nodes, blocked_nodes);
+          constrained_first_nodes, blocked_nodes, drivers);
       for (const auto& node_name : available_nodes) {
         std::vector<std::pair<int, ScheduledModule>>
             available_module_placements;
@@ -232,12 +309,13 @@ void ElastiSchedulingGraphParser::PlaceNodesRecursively(
               auto new_current_run = current_run;
               new_current_run.insert(new_current_run.begin() + module_index,
                                      module_placement);
+              // TODO: HERE!
               FindNextModulePlacement(
                   graph, resulting_plan, available_nodes, current_plan,
                   hw_library, module_placement, new_current_run, node_name,
                   processed_nodes, reduce_single_runs, min_runs, data_tables,
                   heuristics, statistics_counters, constrained_first_nodes,
-                  blocked_nodes, next_run_blocked_nodes);
+                  blocked_nodes, next_run_blocked_nodes, drivers);
             }
           }
         }
@@ -254,7 +332,7 @@ void ElastiSchedulingGraphParser::PlaceNodesRecursively(
                 available_nodes, processed_nodes, graph, current_run,
                 current_plan, resulting_plan, reduce_single_runs, hw_library,
                 min_runs, data_tables, heuristics, statistics_counters,
-                constrained_first_nodes, new_blocked_nodes, {});
+                constrained_first_nodes, new_blocked_nodes, {}, drivers);
             return;
           }
 
@@ -273,7 +351,7 @@ void ElastiSchedulingGraphParser::PlaceNodesRecursively(
                   hw_library, module_placement, {module_placement}, node_name,
                   processed_nodes, reduce_single_runs, min_runs, data_tables,
                   heuristics, statistics_counters, constrained_first_nodes,
-                  new_blocked_nodes, {});
+                  new_blocked_nodes, {}, drivers);
             }
           } else {
             throw std::runtime_error(
