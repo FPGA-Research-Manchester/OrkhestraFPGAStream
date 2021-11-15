@@ -108,3 +108,22 @@ auto LinearSortSetup::GetWorstCaseProcessedTables(
   }
   return resulting_tables;
 }
+
+auto LinearSortSetup::UpdateDataTable(
+    const std::vector<int>& module_capacity,
+    const std::vector<std::string>& input_table_names,
+    const std::map<std::string, TableMetadata>& data_tables,
+    std::map<std::string, TableMetadata>& resulting_tables) -> bool {
+  if (input_table_names.size() != 1) {
+    throw std::runtime_error("Wrong number of tables!");
+  }
+  if (module_capacity.size() != 1) {
+    throw std::runtime_error("Wrong linear sort capacity given!");
+  }
+  auto current_table = data_tables.at(input_table_names.front());
+  auto new_sorted_sequence = GetSortedSequenceWithCapacity(
+      module_capacity.front(), current_table.record_count);
+  current_table.sorted_status = {new_sorted_sequence};
+  resulting_tables.at(input_table_names.front()) = current_table;
+  return true;
+}

@@ -375,8 +375,8 @@ def select_according_to_preferences(available_module_placements, module_placemen
     all_selected_placements = []  # For ORing together at the end
     for module_placement_clause in module_placement_selections:
         current_selected_placements = available_module_placements.copy()  # For ANDing together
-        for placement_selction_function in module_placement_clause:
-            current_selected_placements = placement_selction_function(
+        for placement_selection_function in module_placement_clause:
+            current_selected_placements = placement_selection_function(
                 current_selected_placements)
         all_selected_placements.append(current_selected_placements)
     chosen_module_placements = []
@@ -564,10 +564,7 @@ def update_node_data_tables(all_nodes, node, bitstream_capacity, current_node_de
                     new_sorted_sequences.append(current_sequences[sequence_i])
         current_table["sorted_sequences"] = tuple(new_sorted_sequences)
         new_data_tables[table_name] = current_table
-        if is_table_sorted(current_table, 0):
-            return True
-        else:
-            return False
+        return is_table_sorted(current_table, 0)
 
 
 def get_linear_sorter_sequences(bitstream_capacity, record_count):

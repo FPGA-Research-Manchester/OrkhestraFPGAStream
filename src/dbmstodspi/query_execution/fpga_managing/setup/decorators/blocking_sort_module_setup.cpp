@@ -15,8 +15,14 @@ limitations under the License.
 */
 
 #include "blocking_sort_module_setup.hpp"
-#include "query_scheduling_helper.hpp"
 
+#include <algorithm>
+#include <stdexcept>
+
+#include "query_scheduling_helper.hpp"
+#include "table_data.hpp"
+
+using orkhestrafs::core_interfaces::table_data::SortedSequence;
 using orkhestrafs::dbmstodspi::BlockingSortModuleSetup;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
@@ -37,4 +43,53 @@ auto BlockingSortModuleSetup::GetWorstCaseProcessedTables(
     }
   }
   return resuling_tables;
+}
+
+auto BlockingSortModuleSetup::UpdateDataTable(
+    const std::vector<int>& module_capacity,
+    const std::vector<std::string>& input_table_names,
+    const std::map<std::string, TableMetadata>& data_tables,
+    std::map<std::string, TableMetadata>& resulting_tables) -> bool {
+  if (input_table_names.size() != 1) {
+    throw std::runtime_error("Wrong number of tables!");
+  }
+  if (module_capacity.size() != 1) {
+    throw std::runtime_error("Wrong merge sort capacity given!");
+  }
+  auto table_name = input_table_names.front();
+  auto current_table = data_tables.at(table_name);
+  if (QuerySchedulingHelper::IsTableSorted(current_table)) {
+    throw std::runtime_error("Table is sorted already!");
+  }
+  std::vector<SortedSequence> new_sorted_sequences;
+  auto current_sequences = current_table.sorted_status;
+  if (current_sequences.empty()) {
+    new_sorted_sequences.push_back(
+        {0, std::min(module_capacity.front(), current_table.record_count)});
+  } else {
+    int new_sequence_length = 0;
+    for (int sequence_index = 0;
+         sequence_index < std::min(module_capacity.front(),
+                                   static_cast<int>(current_sequences.size()));
+         sequence_index++) {
+      new_sequence_length += current_sequences.at(sequence_index).length;
+    }
+    if (module_capacity.front() > current_sequences.size() &&
+        new_sequence_length < current_table.record_count) {
+      new_sequence_length += module_capacity.front() - current_sequences.size();
+      new_sequence_length =
+          std::min(new_sequence_length, current_table.record_count);
+    }
+    new_sorted_sequences.push_back({0, new_sequence_length});
+    if (new_sequence_length < current_table.record_count &&
+        module_capacity.front() < current_sequences.size()) {
+      for (int sequence_index = module_capacity.front();
+           sequence_index < current_sequences.size(); sequence_index++) {
+        new_sorted_sequences.push_back(current_sequences.at(sequence_index));
+      }
+    }
+  }
+  current_table.sorted_status = new_sorted_sequences;
+  resulting_tables.at(table_name) = current_table;
+  return QuerySchedulingHelper::IsTableSorted(current_table);
 }

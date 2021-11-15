@@ -106,6 +106,37 @@ class AccelerationModuleSetupInterface {
       const std::map<std::string, TableMetadata>& data_tables)
       -> std::map<std::string, TableMetadata>;
 
+  /**
+   * Method to update tables after operating on them for scheduling.
+   * @param module_capacity Capacity of the chosen module.
+   * @param input_table_names Input table names
+   * @param data_tables All tables
+   * @param resulting_tables Updated all tables map
+   * @return Boolean showing if the operation was substantial enough to satisfy
+   * the requirements.
+   */
+  virtual auto UpdateDataTable(
+      const std::vector<int>& module_capacity,
+      const std::vector<std::string>& input_table_names,
+      const std::map<std::string, TableMetadata>& data_tables,
+      std::map<std::string, TableMetadata>& resulting_tables) -> bool;
+
+  /**
+   * Does the input have to be sorted
+   * @return boolean flag.
+   */
+  virtual auto InputHasToBeSorted() -> bool;
+
+  /**
+   * Method to get output table names
+   * @param tables All table data
+   * @param table_names Input table names
+   * @return Output table names
+   */
+  virtual auto GetResultingTables(
+      const std::map<std::string, TableMetadata>& tables,
+      const std::vector<std::string>& table_names) -> std::vector<std::string>;
+
  protected:
   static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)
       -> int;

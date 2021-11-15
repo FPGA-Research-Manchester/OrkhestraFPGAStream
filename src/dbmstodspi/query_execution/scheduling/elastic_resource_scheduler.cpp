@@ -24,7 +24,7 @@ limitations under the License.
 #include "scheduling_data.hpp"
 
 using orkhestrafs::dbmstodspi::ElasticResourceNodeScheduler;
-using orkhestrafs::dbmstodspi::ElastiSchedulingGraphParser;
+using orkhestrafs::dbmstodspi::ElasticSchedulingGraphParser;
 
 auto ElasticResourceNodeScheduler::FindAcceleratedQueryNodeSets(
     std::vector<std::shared_ptr<QueryNode>> starting_nodes,
@@ -52,7 +52,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     std::map<std::string, TableMetadata> &tables)
     -> std::queue<std::pair<ConfigurableModulesVector,
                             std::vector<std::shared_ptr<QueryNode>>>> {
-  ElastiSchedulingGraphParser::PreprocessNodes(
+  ElasticSchedulingGraphParser::PreprocessNodes(
       starting_nodes, hw_library, processed_nodes, graph, tables, drivers);
 
   std::map<std::vector<std::vector<ScheduledModule>>,
@@ -63,13 +63,20 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
 
   // TODO: Get these from config.
   bool reduce_single_runs = true;
-  std::vector<std::vector<ModuleSelection>> default_heuristics;
-  default_heuristics.push_back({static_cast<std::string>("SHORTEST_AVAILABLE"),
-                                static_cast<std::string>("FIRST_AVAILABLE")});
-  default_heuristics.push_back({static_cast<std::string>("LONGEST_AVAILABLE"),
-                                static_cast<std::string>("FIRST_AVAILABLE")});
+  std::vector<std::vector<ModuleSelection>> satisfying_module_heuristics;
+  std::vector<std::vector<ModuleSelection>> all_module_heuristics;
+  satisfying_module_heuristics.push_back(
+      {static_cast<std::string>("SHORTEST_AVAILABLE"),
+       static_cast<std::string>("FIRST_AVAILABLE")});
+  all_module_heuristics.push_back(
+      {static_cast<std::string>("LONGEST_AVAILABLE"),
+       static_cast<std::string>("FIRST_AVAILABLE")});
+  std::pair<std::vector<std::vector<ModuleSelection>>,
+            std::vector<std::vector<ModuleSelection>>>
+      default_heuristics = {satisfying_module_heuristics,
+                            all_module_heuristics};
 
-  ElastiSchedulingGraphParser::PlaceNodesRecursively(
+  ElasticSchedulingGraphParser::PlaceNodesRecursively(
       std::move(starting_nodes), std::move(processed_nodes), std::move(graph),
       {}, {}, resulting_plans, reduce_single_runs, hw_library, min_runs, tables,
       default_heuristics, placed_nodes_and_discarded_placements,
@@ -89,20 +96,19 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   std::queue<std::pair<ConfigurableModulesVector,
                        std::vector<std::shared_ptr<QueryNode>>>>
       resulting_runs;
-  for (const auto& run : best_plan) {
+  for (const auto &run : best_plan) {
     ConfigurableModulesVector chosen_modules;
     std::vector<std::shared_ptr<QueryNode>> chosen_nodes;
     for (const auto &chosen_module : run) {
-      chosen_modules.emplace_back(
-          chosen_module.operation_type,
-          hw_library.at(chosen_module.operation_type)
-              .bitstream_map.at(chosen_module.bitstream)
-              .capacity);
+      chosen_modules.emplace_back(chosen_module.operation_type,
+                                  hw_library.at(chosen_module.operation_type)
+                                      .bitstream_map.at(chosen_module.bitstream)
+                                      .capacity);
 
       std::shared_ptr<QueryNode> chosen_node;
       for (const auto &node : query_nodes) {
-        chosen_node = FindSharedPointerFromRootNodes(
-            chosen_module.node_name, node);
+        chosen_node =
+            FindSharedPointerFromRootNodes(chosen_module.node_name, node);
         if (chosen_node != nullptr) {
           break;
         }

@@ -67,6 +67,19 @@ class AcceleratorLibraryInterface {
       const std::vector<std::string>& input_tables,
       const std::map<std::string, TableMetadata>& data_tables)
       -> std::map<std::string, TableMetadata> = 0;
+  virtual auto UpdateDataTable(
+      QueryOperationType operation_type,
+      const std::vector<int>& module_capacity,
+      const std::vector<std::string>& input_table_names,
+      const std::map<std::string, TableMetadata>& data_tables,
+      std::map<std::string, TableMetadata>& resulting_tables) -> bool = 0;
+  virtual auto IsInputSupposedToBeSorted(QueryOperationType operation_type)
+      -> bool = 0;
+  // TODO: This method needs improving
+  virtual auto GetResultingTables(
+      QueryOperationType operation, const std::vector<std::string>& table_names,
+      const std::map<std::string, TableMetadata>& tables)
+      -> std::vector<std::string> = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

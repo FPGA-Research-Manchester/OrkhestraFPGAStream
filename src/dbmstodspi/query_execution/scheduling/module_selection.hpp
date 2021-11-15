@@ -35,15 +35,14 @@ namespace orkhestrafs::dbmstodspi {
 class ModuleSelection {
  private:
   enum SelectionMode { kAll, kFirst, kLast, kShortest, kLongest };
-
-  SelectionMode value_;
-
-  std::map<std::string, SelectionMode> kToStringMap = {
+  const std::map<std::string, SelectionMode> kToStringMap = {
       {"ALL_AVAILABLE", SelectionMode::kAll},
       {"FIRST_AVAILABLE", SelectionMode::kFirst},
       {"LAST_AVAILABLE", SelectionMode::kLast},
       {"SHORTEST_AVAILABLE", SelectionMode::kShortest},
       {"LONGEST_AVAILABLE", SelectionMode::kLongest}};
+
+  SelectionMode value_;
 
   // TODO: Find a more beautiful way to do this as methods are not allowed with
   // enums in C.
@@ -67,7 +66,7 @@ class ModuleSelection {
   ModuleSelection(std::string selection_mode)
       : value_{kToStringMap.at(selection_mode)} {};
   auto SelectAccordingToMode(
-      const std::vector<std::pair<int, ScheduledModule>>& available_placements)
+      const std::vector<std::pair<int, ScheduledModule>>& available_placements) const
       -> std::vector<std::pair<int, ScheduledModule>>;
 };
 

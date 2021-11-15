@@ -24,7 +24,7 @@ using orkhestrafs::dbmstodspi::ModuleSelection;
 
 auto ModuleSelection::SelectAccordingToMode(
     const std::vector<std::pair<int, ScheduledModule>>& available_placements)
-    -> std::vector<std::pair<int, ScheduledModule>> {
+    const -> std::vector<std::pair<int, ScheduledModule>> {
   switch (value_) {
     case kAll:
       return SelectAll(available_placements);

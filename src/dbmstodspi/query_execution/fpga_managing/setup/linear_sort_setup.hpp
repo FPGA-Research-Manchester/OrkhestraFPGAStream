@@ -46,6 +46,11 @@ class LinearSortSetup : public virtual AccelerationModuleSetupInterface,
       const std::vector<std::string>& input_tables,
       const std::map<std::string, TableMetadata>& data_tables)
       -> std::map<std::string, TableMetadata> override;
+  auto UpdateDataTable(const std::vector<int>& module_capacity,
+                       const std::vector<std::string>& input_table_names,
+                       const std::map<std::string, TableMetadata>& data_tables,
+                       std::map<std::string, TableMetadata>& resulting_tables)
+      -> bool override;
   /**
    * @brief Setup linear sort module by giving the stream data to be sorted.
    * @param linear_sort_module Module instance to access the configuration

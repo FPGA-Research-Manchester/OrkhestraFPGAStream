@@ -135,3 +135,20 @@ auto JoinSetup::GetWorstCaseProcessedTables(
                           {new_record_size, max_record_count, {}}});
   return resulting_table;
 }
+
+auto JoinSetup::InputHasToBeSorted() -> bool { return true; }
+
+// Just pick the largest table name for now.
+auto JoinSetup::GetResultingTables(const std::map<std::string, TableMetadata>& tables,
+                        const std::vector<std::string>& table_names)
+    -> std::vector<std::string> {
+  std::string max_table_name = "";
+  int max_size = 0;
+  for (const auto& table_name : table_names) {
+    if (tables.at(table_name).record_count >= max_size) {
+      max_table_name = table_name;
+      max_size = tables.at(table_name).record_count;
+    }
+  }
+  return {max_table_name};
+}

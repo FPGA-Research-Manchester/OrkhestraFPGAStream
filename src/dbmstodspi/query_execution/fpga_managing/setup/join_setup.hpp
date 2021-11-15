@@ -40,6 +40,10 @@ class JoinSetup : public AccelerationModuleSetupInterface {
       const std::vector<std::string>& input_tables,
       const std::map<std::string, TableMetadata>& data_tables)
       -> std::map<std::string, TableMetadata> override;
+  auto InputHasToBeSorted() -> bool override;
+  auto GetResultingTables(const std::map<std::string, TableMetadata>& tables,
+                          const std::vector<std::string>& table_names)
+      -> std::vector<std::string> override;
 
   /**
    * @brief Method to setup the join module.

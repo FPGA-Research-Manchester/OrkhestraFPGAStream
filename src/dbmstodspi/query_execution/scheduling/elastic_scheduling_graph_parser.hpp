@@ -32,7 +32,7 @@ namespace orkhestrafs::dbmstodspi {
 /**
  * @brief Class to preprocess given nodes before scheduling.
  */
-class ElastiSchedulingGraphParser {
+class ElasticSchedulingGraphParser {
  public:
   static void PreprocessNodes(
       const std::vector<std::string>& available_nodes,
@@ -62,6 +62,57 @@ class ElastiSchedulingGraphParser {
       AcceleratorLibraryInterface& drivers);
 
  private:
+  static void UpdateNextNodeTables(
+      const std::map<std::string, SchedulingQueryNode>& graph,
+      std::string node_name,
+      std::map<std::string, SchedulingQueryNode>& new_graph,
+      std::vector<std::string> skipped_nodes,
+      const std::vector<std::string> resulting_tables);
+
+  static auto GetResultingTables(
+      const std::vector<std::string>& table_names,
+      AcceleratorLibraryInterface& drivers,
+      const std::map<std::string, TableMetadata>& tables,
+      QueryOperationType operation) -> std::vector<std::string>;
+
+  static void UpdateGraphCapacities(
+      const std::map<std::string, SchedulingQueryNode>& graph,
+      const std::vector<int>& missing_utility,
+      std::map<std::string, SchedulingQueryNode>& new_graph,
+      std::string node_name, bool is_node_fully_processed);
+
+  static auto FindMissingUtility(const std::vector<int>& bitstream_capacity,
+                                 std::vector<int>& missing_capacity,
+                                 const std::vector<int>& node_capacity) -> bool;
+
+  static auto CheckForSkippableSortOperations(
+      const std::map<std::string, SchedulingQueryNode>& new_graph,
+      const std::map<std::string, TableMetadata>& new_tables,
+      std::string node_name,
+      const std::map<QueryOperationType, OperationPRModules>& hw_library,
+      AcceleratorLibraryInterface& drivers) -> std::vector<std::string>;
+
+  static auto GetModuleIndex(
+      int start_location_index,
+      const std::vector<std::pair<int, int>>& taken_positions) -> int;
+
+  static void ReduceSelectionAccordingToHeuristics(
+      std::vector<std::pair<int, ScheduledModule>>& resulting_module_placements,
+      const std::vector<std::vector<ModuleSelection>>& heuristics);
+
+  static auto GetBitstreamEndFromLibrary(
+      int chosen_bitstream_index, int chosen_column_position,
+      QueryOperationType current_operation,
+      const std::map<QueryOperationType, OperationPRModules>& hw_library)
+      -> std::pair<std::string, int>;
+
+  static auto FindAllAvailableBitstreamsAfterMinPos(
+      QueryOperationType current_operation, int min_position,
+      const std::vector<std::pair<int, int>>& taken_positions,
+      const std::map<QueryOperationType, OperationPRModules>& hw_library,
+      const std::vector<std::vector<std::string>>& bitstream_start_locations)
+      -> std::vector<std::tuple<int, int, int>>;
+
   static auto GetChosenModulePlacements(
       std::string node_name,
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
@@ -123,19 +174,20 @@ class ElastiSchedulingGraphParser {
       AcceleratorLibraryInterface& drivers);
 
   static auto UpdateGraph(
-      std::map<std::string, SchedulingQueryNode> graph, std::string bitstream,
-      std::map<std::string, TableMetadata> data_tables,
+      const std::map<std::string, SchedulingQueryNode>& graph,
+      std::string bitstream,
+      const std::map<std::string, TableMetadata>& data_tables,
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      std::string node_name, std::vector<int> capacity,
-      QueryOperationType operation)
+      std::string node_name, const std::vector<int>& capacity,
+      QueryOperationType operation, AcceleratorLibraryInterface& drivers)
       -> std::tuple<std::map<std::string, SchedulingQueryNode>,
                     std::map<std::string, TableMetadata>, bool,
                     std::vector<std::string>>;
 
   static auto CreateNewAvailableNodes(
-      std::map<std::string, SchedulingQueryNode> graph,
-      std::vector<std::string> available_nodes,
-      std::vector<std::string> processed_nodes, std::string node_name,
+      const std::map<std::string, SchedulingQueryNode>& graph,
+      const std::vector<std::string>& available_nodes,
+      const std::vector<std::string>& processed_nodes, std::string node_name,
       bool satisfied_requirements)
       -> std::pair<std::vector<std::string>, std::vector<std::string>>;
 

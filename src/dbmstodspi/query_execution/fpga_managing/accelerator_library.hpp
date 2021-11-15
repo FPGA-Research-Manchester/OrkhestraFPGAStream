@@ -143,6 +143,42 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
       const std::map<std::string, TableMetadata>& data_tables)
       -> std::map<std::string, TableMetadata> override;
 
+  /**
+   * Method to update tables for scheduling
+   * @param operation_type Operation to update the tables.
+   * @param module_capacity Capacity of the chosen module
+   * @param input_table_names Input table names
+   * @param data_tables All table data
+   * @param resulting_tables Updated map
+   * @return Boolean showing if the update was substantial enough to move on.
+   */
+  auto UpdateDataTable(
+      QueryOperationType operation_type,
+      const std::vector<int>& module_capacity,
+      const std::vector<std::string>& input_table_names,
+      const std::map<std::string, TableMetadata>& data_tables,
+      std::map<std::string, TableMetadata>& resulting_tables) -> bool override;
+
+  /**
+   * Is the input table supposed to be sorted?
+   * @param operation_type Operation enum
+   * @return Boolean flag showing the requirement.
+   */
+  auto IsInputSupposedToBeSorted(QueryOperationType operation_type)
+      -> bool override;
+
+  /**
+   * Method to select the output tables given input tables.
+   * @param operation Operation enum
+   * @param table_names Input table names
+   * @param tables All table data
+   * @return Vector of output table names.
+   */
+  auto GetResultingTables(
+      QueryOperationType operation, const std::vector<std::string>& table_names,
+      const std::map<std::string, TableMetadata>& tables)
+      -> std::vector<std::string> override;
+
  private:
   auto GetDriver(QueryOperationType operation_type)
       -> AccelerationModuleSetupInterface*;

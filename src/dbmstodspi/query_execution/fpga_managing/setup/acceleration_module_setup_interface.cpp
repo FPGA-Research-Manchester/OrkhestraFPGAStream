@@ -16,6 +16,8 @@ limitations under the License.
 
 #include "acceleration_module_setup_interface.hpp"
 
+#include <stdexcept>
+
 using orkhestrafs::dbmstodspi::AccelerationModuleSetupInterface;
 
 auto AccelerationModuleSetupInterface::IsMultiChannelStream(
@@ -62,4 +64,26 @@ auto AccelerationModuleSetupInterface::GetWorstCaseProcessedTables(
         {input_table_name, data_tables.at(input_table_name)});
   }
   return resulting_tables;
+}
+
+auto AccelerationModuleSetupInterface::UpdateDataTable(
+    const std::vector<int>& module_capacity,
+    const std::vector<std::string>& input_table_names,
+    const std::map<std::string, TableMetadata>& data_tables,
+    std::map<std::string, TableMetadata>& resulting_tables) -> bool {
+  throw std::runtime_error("Not implemented!");
+}
+
+auto AccelerationModuleSetupInterface::InputHasToBeSorted() -> bool {
+  return false;
+}
+
+auto AccelerationModuleSetupInterface::GetResultingTables(
+    const std::map<std::string, TableMetadata>& tables,
+    const std::vector<std::string>& table_names) -> std::vector<std::string> {
+  // TODO: Eventually will be removed if a generator module exists.
+  if (table_names.empty()) {
+    throw std::runtime_error("No input data found");
+  }
+  return table_names;
 }

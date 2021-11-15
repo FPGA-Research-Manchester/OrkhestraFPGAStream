@@ -15,9 +15,10 @@ limitations under the License.
 */
 
 #include "accelerator_library.hpp"
-#include "sorting_module_setup.hpp"
 
 #include <stdexcept>
+
+#include "sorting_module_setup.hpp"
 
 using orkhestrafs::dbmstodspi::AcceleratorLibrary;
 
@@ -100,17 +101,19 @@ auto AcceleratorLibrary::IsNodeConstrainedToFirstInPipeline(
   return driver->IsConstrainedToFirstInPipeline();
 }
 
-auto AcceleratorLibrary::IsOperationSorting(QueryOperationType operation_type) -> bool {
+auto AcceleratorLibrary::IsOperationSorting(QueryOperationType operation_type)
+    -> bool {
   auto driver = GetDriver(operation_type);
   return driver->IsSortingInputTable();
 }
 
-auto AcceleratorLibrary::GetMinSortingRequirements(QueryOperationType operation_type, const TableMetadata& table_data) -> std::vector<int> {
+auto AcceleratorLibrary::GetMinSortingRequirements(
+    QueryOperationType operation_type, const TableMetadata& table_data)
+    -> std::vector<int> {
   auto driver = dynamic_cast<SortingModuleSetup*>(GetDriver(operation_type));
   if (driver) {
     return driver->GetMinSortingRequirementsForTable(table_data);
-  }
-  else {
+  } else {
     throw std::runtime_error("Non sorting operation given!");
   }
 }
@@ -125,3 +128,26 @@ auto AcceleratorLibrary::GetWorstCaseProcessedTables(
                                              data_tables);
 }
 
+auto AcceleratorLibrary::UpdateDataTable(
+    QueryOperationType operation_type, const std::vector<int>& module_capacity,
+    const std::vector<std::string>& input_table_names,
+    const std::map<std::string, TableMetadata>& data_tables,
+    std::map<std::string, TableMetadata>& resulting_tables) -> bool {
+  auto driver = GetDriver(operation_type);
+  return driver->UpdateDataTable(module_capacity, input_table_names,
+                                 data_tables, resulting_tables);
+}
+
+auto AcceleratorLibrary::IsInputSupposedToBeSorted(QueryOperationType operation_type)
+    -> bool {
+  auto driver = GetDriver(operation_type);
+  return driver->InputHasToBeSorted();
+}
+
+auto AcceleratorLibrary::GetResultingTables(
+    QueryOperationType operation, const std::vector<std::string>& table_names,
+    const std::map<std::string, TableMetadata>& tables)
+    -> std::vector<std::string> {
+  auto driver = GetDriver(operation);
+  return driver->GetResultingTables(tables, table_names);
+}
