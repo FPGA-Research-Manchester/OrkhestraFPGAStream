@@ -151,3 +151,9 @@ auto AcceleratorLibrary::GetResultingTables(
   auto driver = GetDriver(operation);
   return driver->GetResultingTables(tables, table_names);
 }
+
+auto AcceleratorLibrary::IsOperationReducingData(QueryOperationType operation)
+    -> bool {
+  auto driver = GetDriver(operation);
+  return driver->IsReducingData();
+}

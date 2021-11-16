@@ -80,6 +80,8 @@ class AcceleratorLibraryInterface {
       QueryOperationType operation, const std::vector<std::string>& table_names,
       const std::map<std::string, TableMetadata>& tables)
       -> std::vector<std::string> = 0;
+  virtual auto IsOperationReducingData(QueryOperationType operation)
+      -> bool = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

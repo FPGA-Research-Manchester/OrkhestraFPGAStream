@@ -336,9 +336,15 @@ auto QueryManager::ScheduleUnscheduledNodes(
                              std::vector<std::shared_ptr<QueryNode>>>>> {
   std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links;
 
+  // Add in all of the required parameters here.
+  // auto query_node_runs_queue = node_scheduler.GetNextSetOfRuns()
+  // Then make a new method to use these new parameters.
+  // Then change the other scheduler state to call the other method.
+
   auto query_node_runs_queue = node_scheduler.FindAcceleratedQueryNodeSets(
       std::move(unscheduled_root_nodes), config.accelerator_library,
       config.module_library, all_reuse_links);
+
   return {all_reuse_links, query_node_runs_queue};
 }
 

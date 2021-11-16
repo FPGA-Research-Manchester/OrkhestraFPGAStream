@@ -62,6 +62,13 @@ class ElasticSchedulingGraphParser {
       AcceleratorLibraryInterface& drivers);
 
  private:
+  static auto IsTableEqualForGivenNode(
+      const std::map<std::string, SchedulingQueryNode>& graph,
+      const std::map<std::string, SchedulingQueryNode>& new_graph,
+      std::string next_node_name,
+      const std::map<std::string, TableMetadata>& data_tables,
+      const std::map<std::string, TableMetadata>& new_tables) -> bool;
+
   static void UpdateNextNodeTables(
       const std::map<std::string, SchedulingQueryNode>& graph,
       std::string node_name,
@@ -192,20 +199,22 @@ class ElasticSchedulingGraphParser {
       -> std::pair<std::vector<std::string>, std::vector<std::string>>;
 
   static void UpdateSatisfyingBitstreamsList(
-      std::string node_name, std::map<std::string, SchedulingQueryNode> graph,
-      std::map<std::string, SchedulingQueryNode> new_graph,
-      std::vector<std::string> new_available_nodes,
+      std::string node_name,
+      const std::map<std::string, SchedulingQueryNode>& graph,
+      std::map<std::string, SchedulingQueryNode>& new_graph,
+      const std::vector<std::string>& new_available_nodes,
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      std::map<std::string, TableMetadata> data_tables,
-      std::map<std::string, TableMetadata> new_tables,
-      std::vector<std::string> new_processed_nodes);
+      const std::map<std::string, TableMetadata>& data_tables,
+      std::map<std::string, TableMetadata>& new_tables,
+      const std::vector<std::string>& new_processed_nodes,
+      AcceleratorLibraryInterface& drivers);
 
   static auto GetNewBlockedNodes(
-      std::vector<std::string> next_run_blocked_nodes,
+      const std::vector<std::string>& next_run_blocked_nodes,
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
       const ScheduledModule& module_placement,
-      std::map<std::string, SchedulingQueryNode> graph)
-      -> std::vector<std::string>;
+      const std::map<std::string, SchedulingQueryNode>& graph,
+      AcceleratorLibraryInterface& drivers) -> std::vector<std::string>;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

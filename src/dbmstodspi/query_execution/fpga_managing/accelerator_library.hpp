@@ -179,6 +179,14 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
       const std::map<std::string, TableMetadata>& tables)
       -> std::vector<std::string> override;
 
+  /**
+   * Method to check if the operation has a potential to reduce data size.
+   * @param operation Operation enum
+   * @return Boolean flag.
+   */
+  auto IsOperationReducingData(QueryOperationType operation)
+      -> bool override;
+
  private:
   auto GetDriver(QueryOperationType operation_type)
       -> AccelerationModuleSetupInterface*;

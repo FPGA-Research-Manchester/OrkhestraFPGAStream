@@ -17,6 +17,7 @@ limitations under the License.
 #pragma once
 #include "acceleration_module_setup_interface.hpp"
 #include "join_interface.hpp"
+#include "reducing_module_setup.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -24,7 +25,8 @@ namespace orkhestrafs::dbmstodspi {
  * @brief Class to calculate the join module configuration data and write the
  * data to the registers.
  */
-class JoinSetup : public AccelerationModuleSetupInterface {
+class JoinSetup : public virtual AccelerationModuleSetupInterface,
+                  public ReducingModuleSetup {
  private:
   static void SetupTimeMultiplexer(JoinInterface& join_module,
                                    int first_stream_size,

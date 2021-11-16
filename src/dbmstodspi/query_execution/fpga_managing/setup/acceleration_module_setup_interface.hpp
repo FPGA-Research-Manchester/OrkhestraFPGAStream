@@ -137,6 +137,12 @@ class AccelerationModuleSetupInterface {
       const std::map<std::string, TableMetadata>& tables,
       const std::vector<std::string>& table_names) -> std::vector<std::string>;
 
+  /**
+   * Is the module reducing data.
+   * @return Boolean flag for scheduling noting if the module can reduce data.
+   */
+  virtual auto IsReducingData() -> bool;
+
  protected:
   static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)
       -> int;

@@ -59,5 +59,5 @@ auto ExecutionManagerFactory::GetManager(const Config& config)
       std::make_unique<DataManager>(config.data_sizes, config.csv_separator,
                                     std::make_unique<CSVReader>()),
       std::make_unique<MemoryManager>(), std::move(actual_start_state),
-      std::make_unique<FPGADriverFactory>(), std::move(chosen_scheduler));
+      std::make_unique<FPGADriverFactory>(), std::move(secondary_scheduler));
 }

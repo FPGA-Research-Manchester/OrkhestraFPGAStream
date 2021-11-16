@@ -87,3 +87,7 @@ auto AccelerationModuleSetupInterface::GetResultingTables(
   }
   return table_names;
 }
+
+auto AccelerationModuleSetupInterface::IsReducingData() -> bool {
+  return false;
+}

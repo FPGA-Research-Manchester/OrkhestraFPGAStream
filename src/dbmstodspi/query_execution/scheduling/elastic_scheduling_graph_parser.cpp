@@ -25,7 +25,9 @@ limitations under the License.
 
 #include "pre_scheduling_processor.hpp"
 #include "query_scheduling_helper.hpp"
+#include "table_data.hpp"
 
+using orkhestrafs::core_interfaces::table_data::SortedSequence;
 using orkhestrafs::dbmstodspi::ElasticSchedulingGraphParser;
 using orkhestrafs::dbmstodspi::PreSchedulingProcessor;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
@@ -456,22 +458,101 @@ auto ElasticSchedulingGraphParser::CreateNewAvailableNodes(
   return {new_available_nodes, new_processed_nodes};
 }
 
+auto ElasticSchedulingGraphParser::IsTableEqualForGivenNode(
+    const std::map<std::string, SchedulingQueryNode>& graph,
+    const std::map<std::string, SchedulingQueryNode>& new_graph,
+    std::string node_name,
+    const std::map<std::string, TableMetadata>& data_tables,
+    const std::map<std::string, TableMetadata>& new_tables) -> bool {
+  for (int table_index = 0;
+       table_index < graph.at(node_name).data_tables.size(); table_index++) {
+    auto old_table_data =
+        data_tables.at(graph.at(node_name).data_tables.at(table_index));
+    auto new_table_data =
+        new_tables.at(new_graph.at(node_name).data_tables.at(table_index));
+    if (old_table_data.record_count != new_table_data.record_count &&
+        old_table_data.record_size != new_table_data.record_size &&
+        old_table_data.sorted_status.size() !=
+            new_table_data.sorted_status.size() &&
+        !std::equal(old_table_data.sorted_status.begin(),
+                    old_table_data.sorted_status.end(),
+                    new_table_data.sorted_status.begin(),
+                    [](const SortedSequence& l, const SortedSequence& r) {
+                      return l.length == r.length &&
+                             l.start_position == r.start_position;
+                    })) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void ElasticSchedulingGraphParser::UpdateSatisfyingBitstreamsList(
-    std::string node_name, std::map<std::string, SchedulingQueryNode> graph,
-    std::map<std::string, SchedulingQueryNode> new_graph,
-    std::vector<std::string> new_available_nodes,
+    std::string node_name,
+    const std::map<std::string, SchedulingQueryNode>& graph,
+    std::map<std::string, SchedulingQueryNode>& new_graph,
+    const std::vector<std::string>& new_available_nodes,
     const std::map<QueryOperationType, OperationPRModules>& hw_library,
-    std::map<std::string, TableMetadata> data_tables,
-    std::map<std::string, TableMetadata> new_tables,
-    std::vector<std::string> new_processed_nodes) {}
+    const std::map<std::string, TableMetadata>& data_tables,
+    std::map<std::string, TableMetadata>& new_tables,
+    const std::vector<std::string>& new_processed_nodes,
+    AcceleratorLibraryInterface& drivers) {
+  if (std::any_of(
+          new_graph.begin(), new_graph.end(), [&](const auto& map_entry) {
+            return graph.at(map_entry.first).capacity !=
+                       new_graph.at(map_entry.first).capacity ||
+                   !IsTableEqualForGivenNode(graph, new_graph, map_entry.first,
+                                             data_tables, new_tables);
+          })) {
+    PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
+        hw_library, new_graph, new_tables, drivers, new_available_nodes,
+        new_processed_nodes);
+  } else {
+    if (std::any_of(graph.at(node_name).after_nodes.begin(),
+                    graph.at(node_name).after_nodes.end(),
+                    [&](std::string next_node_name) {
+                      return !IsTableEqualForGivenNode(graph, new_graph,
+                                                       next_node_name,
+                                                       data_tables, new_tables);
+                    })) {
+      PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
+          hw_library, new_graph, new_tables, drivers, new_available_nodes,
+          new_processed_nodes);
+    }
+  }
+}
 
 auto ElasticSchedulingGraphParser::GetNewBlockedNodes(
-    std::vector<std::string> next_run_blocked_nodes,
+    const std::vector<std::string>& next_run_blocked_nodes,
     const std::map<QueryOperationType, OperationPRModules>& hw_library,
     const ScheduledModule& module_placement,
-    std::map<std::string, SchedulingQueryNode> graph)
-    -> std::vector<std::string> {
-  return {};
+    const std::map<std::string, SchedulingQueryNode>& graph,
+    AcceleratorLibraryInterface& drivers) -> std::vector<std::string> {
+  auto new_next_run_blocked_nodes = next_run_blocked_nodes;
+  if (std::find(next_run_blocked_nodes.begin(), next_run_blocked_nodes.end(),
+                module_placement.node_name) == next_run_blocked_nodes.end()) {
+    if (drivers.IsOperationSorting(module_placement.operation_type)) {
+      new_next_run_blocked_nodes.push_back(module_placement.node_name);
+      for (const auto& next_node_name :
+           graph.at(module_placement.node_name).after_nodes) {
+        if (std::find(next_run_blocked_nodes.begin(),
+                      next_run_blocked_nodes.end(),
+                      next_node_name) == next_run_blocked_nodes.end()) {
+          new_next_run_blocked_nodes.push_back(module_placement.node_name);
+        }
+      }
+    }
+  } else {
+    for (const auto& next_node_name :
+         graph.at(module_placement.node_name).after_nodes) {
+      if (std::find(next_run_blocked_nodes.begin(),
+                    next_run_blocked_nodes.end(),
+                    next_node_name) == next_run_blocked_nodes.end()) {
+        new_next_run_blocked_nodes.push_back(module_placement.node_name);
+      }
+    }
+  }
+  return new_next_run_blocked_nodes;
 }
 
 void ElasticSchedulingGraphParser::FindNextModulePlacement(
@@ -516,10 +597,10 @@ void ElasticSchedulingGraphParser::FindNextModulePlacement(
 
   UpdateSatisfyingBitstreamsList(node_name, graph, new_graph,
                                  new_available_nodes, hw_library, data_tables,
-                                 new_tables, new_processed_nodes);
+                                 new_tables, new_processed_nodes, drivers);
 
   auto new_next_run_blocked = GetNewBlockedNodes(
-      next_run_blocked_nodes, hw_library, module_placement, graph);
+      next_run_blocked_nodes, hw_library, module_placement, graph, drivers);
 
   PlaceNodesRecursively(
       new_available_nodes, new_processed_nodes, new_graph, current_run,
