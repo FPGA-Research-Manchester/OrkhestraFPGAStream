@@ -42,7 +42,7 @@ auto ElasticResourceNodeScheduler::FindAcceleratedQueryNodeSets(
 }
 
 auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
-    std::vector<std::shared_ptr<QueryNode>> query_nodes,
+    std::vector<std::shared_ptr<QueryNode>> &available_nodes,
     const std::map<QueryOperationType, OperationPRModules> &hw_library,
     const std::vector<std::string> &first_node_names,
     std::vector<std::string> &starting_nodes,
@@ -93,6 +93,8 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   graph = resulting_plans.at(best_plan).graph;
   tables = resulting_plans.at(best_plan).tables;
 
+  // TODO: move queue construction and available node modification to separate
+  // methods
   std::queue<std::pair<ConfigurableModulesVector,
                        std::vector<std::shared_ptr<QueryNode>>>>
       resulting_runs;
@@ -106,7 +108,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
                                       .capacity);
 
       std::shared_ptr<QueryNode> chosen_node;
-      for (const auto &node : query_nodes) {
+      for (const auto &node : available_nodes) {
         chosen_node =
             FindSharedPointerFromRootNodes(chosen_module.node_name, node);
         if (chosen_node != nullptr) {
@@ -120,6 +122,25 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     }
     resulting_runs.push({chosen_modules, chosen_nodes});
   }
+
+  // TODO: Code duplication here!
+  std::vector<std::shared_ptr<QueryNode>> new_available_nodes;
+  for (const auto& node_name : starting_nodes) {
+    std::shared_ptr<QueryNode> chosen_node;
+    for (const auto &node : available_nodes) {
+      chosen_node =
+          FindSharedPointerFromRootNodes(node_name, node);
+      if (chosen_node != nullptr) {
+        break;
+      }
+    }
+    if (chosen_node == nullptr) {
+      throw std::runtime_error("No corresponding node found!");
+    }
+    new_available_nodes.push_back(chosen_node);
+  }
+
+  available_nodes = new_available_nodes;
   return resulting_runs;
 }
 

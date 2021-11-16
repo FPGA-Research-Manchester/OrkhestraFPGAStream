@@ -328,7 +328,7 @@ void QueryManager::LoadNextBitstreamIfNew(
 }
 
 auto QueryManager::ScheduleNextSetOfNodes(
-    std::vector<std::shared_ptr<QueryNode>> query_nodes,
+    std::vector<std::shared_ptr<QueryNode>>& query_nodes,
     const std::vector<std::string>& first_node_names,
     std::vector<std::string>& starting_nodes,
     std::vector<std::string>& processed_nodes,
@@ -341,7 +341,7 @@ auto QueryManager::ScheduleNextSetOfNodes(
   // TODO: Problem with query nodes. They all get moved but only the scheduled
   // ones get returned. Need to return both
   return node_scheduler.GetNextSetOfRuns(
-      std::move(query_nodes), config.pr_hw_library, first_node_names,
+      query_nodes, config.pr_hw_library, first_node_names,
       starting_nodes, processed_nodes, graph, drivers, tables);
 }
 

@@ -51,7 +51,7 @@ class OnePlanNodeScheduler : public NodeSchedulerInterface {
                               std::vector<std::shared_ptr<QueryNode>>>> override;
 
   auto GetNextSetOfRuns(
-      std::vector<std::shared_ptr<QueryNode>> query_nodes,
+      std::vector<std::shared_ptr<QueryNode>>& query_nodes,
       const std::map<QueryOperationType, OperationPRModules> &hw_library,
       const std::vector<std::string> &first_node_names,
       std::vector<std::string> &starting_nodes,

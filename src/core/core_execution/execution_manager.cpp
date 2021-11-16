@@ -51,8 +51,11 @@ auto ExecutionManager::IsRunReadyForExecution() -> bool {
 }
 
 void ExecutionManager::ScheduleUnscheduledNodes() {
+  // TODO: Fix this to not be overwritten by the graph all the time!
+  current_available_node_pointers_ = unscheduled_graph_->ExportRootNodes();
+
   query_node_runs_queue_ = query_manager_->ScheduleNextSetOfNodes(
-      unscheduled_graph_->ExportRootNodes(), nodes_constrained_to_first_,
+      current_available_node_pointers_, nodes_constrained_to_first_,
       current_available_nodes_, processed_nodes_, current_query_graph_,
       current_tables_metadata_, *accelerator_library_, config_, *scheduler_);
 

@@ -187,7 +187,7 @@ class QueryManagerInterface {
    * @return Queue of sets of runs.
    */
   virtual auto ScheduleNextSetOfNodes(
-      std::vector<std::shared_ptr<QueryNode>> query_nodes,
+      std::vector<std::shared_ptr<QueryNode>>& query_nodes,
       const std::vector<std::string>& first_node_names,
       std::vector<std::string>& starting_nodes,
       std::vector<std::string>& processed_nodes,

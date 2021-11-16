@@ -116,6 +116,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::vector<std::string> nodes_constrained_to_first_;
   std::vector<std::string> processed_nodes_;
 
+  std::vector<std::shared_ptr<QueryNode>> current_available_node_pointers_;
   
 
   // Variables used throughout different states.
