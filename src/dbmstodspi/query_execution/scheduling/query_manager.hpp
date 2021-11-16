@@ -78,6 +78,17 @@ class QueryManager : public QueryManagerInterface {
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
           reuse_links,
       const std::vector<std::string>& scheduled_node_names) override;
+  auto ScheduleNextSetOfNodes(
+      std::vector<std::shared_ptr<QueryNode>> query_nodes,
+      const std::vector<std::string>& first_node_names,
+      std::vector<std::string>& starting_nodes,
+      std::vector<std::string>& processed_nodes,
+      std::map<std::string, SchedulingQueryNode>& graph,
+      std::map<std::string, TableMetadata>& tables,
+      AcceleratorLibraryInterface& drivers, Config config,
+      NodeSchedulerInterface& node_scheduler)
+      -> std::queue<std::pair<ConfigurableModulesVector,
+                             std::vector<std::shared_ptr<QueryNode>>>> override;
 
  private:
   static void CheckTableData(const DataManagerInterface* data_manager,

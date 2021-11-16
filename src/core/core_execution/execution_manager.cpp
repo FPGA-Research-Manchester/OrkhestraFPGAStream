@@ -51,10 +51,15 @@ auto ExecutionManager::IsRunReadyForExecution() -> bool {
 }
 
 void ExecutionManager::ScheduleUnscheduledNodes() {
-  auto nodes_and_links = query_manager_->ScheduleUnscheduledNodes(
-      unscheduled_graph_->ExportRootNodes(), config_, *scheduler_);
-  all_reuse_links_ = nodes_and_links.first;
-  query_node_runs_queue_ = nodes_and_links.second;
+  query_node_runs_queue_ = query_manager_->ScheduleNextSetOfNodes(
+      unscheduled_graph_->ExportRootNodes(), nodes_constrained_to_first_,
+      current_available_nodes_, processed_nodes_, current_query_graph_,
+      current_tables_metadata_, *accelerator_library_, config_, *scheduler_);
+
+//  auto nodes_and_links = query_manager_->ScheduleUnscheduledNodes(
+//      unscheduled_graph_->ExportRootNodes(), config_, *scheduler_);
+//  all_reuse_links_ = nodes_and_links.first;
+//  query_node_runs_queue_ = nodes_and_links.second;
 }
 void ExecutionManager::SetupNextRunData() {
   query_manager_->LoadNextBitstreamIfNew(

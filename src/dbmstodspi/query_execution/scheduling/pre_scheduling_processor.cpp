@@ -102,7 +102,7 @@ auto PreSchedulingProcessor::GetFittingBitstreamLocations(
   for (int location_index = 0; location_index < start_locations.size();
        location_index++) {
     fitting_bitstream_locations.push_back(start_locations.at(location_index));
-    for (int bitstream_index = start_locations.at(location_index).size();
+    for (int bitstream_index = start_locations.at(location_index).size() - 1;
          bitstream_index >= 0; bitstream_index--) {
       if (std::find(fitting_bitstreams_names.begin(),
                     fitting_bitstreams_names.end(),
@@ -123,16 +123,6 @@ auto PreSchedulingProcessor::GetWorstCaseProcessedTables(
     std::map<std::string, TableMetadata>& data_tables,
     const std::vector<int>& min_capacity, QueryOperationType operation)
     -> std::vector<std::string> {
-  // Q: For this method yh you can make the largest_input_is_output but while
-  // scheduling filter and join operations are a bit of a puzzle. A: During
-  // scheduling the worst case scenario tables are forwarded but it has to be
-  // made sure that those tables are actually not used and will be updated.
-
-  // Q: Also need to figure out how the new table names would work? Partial sort
-  // and blocking sort create new tables. A: These new table names are just used
-  // in scheduling preprocessing and in real scheduling won't be used as the
-  // same memory can be reused.
-
   std::map<std::string, TableMetadata> new_tables =
       accelerator_library.GetWorstCaseProcessedTables(
           operation, min_capacity, input_tables, data_tables);
@@ -160,9 +150,8 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     auto new_available_nodes =
         QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
             current_node_name, processed_nodes, graph);
-    available_nodes.insert(available_nodes.end(),
-                                   new_available_nodes.begin(),
-                                   new_available_nodes.end());
+    available_nodes.insert(available_nodes.end(), new_available_nodes.begin(),
+                           new_available_nodes.end());
     auto min_requirements = GetMinRequirementsForFullyExecutingNode(
         current_node_name, graph, accelerator_library, data_tables);
     auto list_of_fitting_bitstreams = FindAdequateBitstreams(

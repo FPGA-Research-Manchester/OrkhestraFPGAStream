@@ -7,5 +7,5 @@
 	"filename": "part0.01.csv",
 	"record_size": 44,
 	"record_count": 2000,
-	"sorted_status": []
+	"sorted_status": [[0, 2000]]
 }]

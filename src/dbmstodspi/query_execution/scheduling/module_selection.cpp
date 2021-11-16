@@ -123,7 +123,8 @@ auto ModuleSelection::SelectLongest(
   for (const auto& placement : available_placements) {
     if (placement.second.position.second - placement.second.position.first + 1 >
         max_module_size) {
-      max_module_size = placement.second.position.first;
+      max_module_size = placement.second.position.second -
+                        placement.second.position.first + 1;
     }
   }
   std::vector<std::pair<int, ScheduledModule>> chosen_placements;

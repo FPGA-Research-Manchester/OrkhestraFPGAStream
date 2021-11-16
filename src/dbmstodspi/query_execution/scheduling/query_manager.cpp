@@ -327,6 +327,24 @@ void QueryManager::LoadNextBitstreamIfNew(
       config.required_memory_space.at(bitstream_file_name));
 }
 
+auto QueryManager::ScheduleNextSetOfNodes(
+    std::vector<std::shared_ptr<QueryNode>> query_nodes,
+    const std::vector<std::string>& first_node_names,
+    std::vector<std::string>& starting_nodes,
+    std::vector<std::string>& processed_nodes,
+    std::map<std::string, SchedulingQueryNode>& graph,
+    std::map<std::string, TableMetadata>& tables,
+    AcceleratorLibraryInterface& drivers, Config config,
+    NodeSchedulerInterface& node_scheduler)
+    -> std::queue<std::pair<ConfigurableModulesVector,
+                            std::vector<std::shared_ptr<QueryNode>>>> {
+  // TODO: Problem with query nodes. They all get moved but only the scheduled
+  // ones get returned. Need to return both
+  return node_scheduler.GetNextSetOfRuns(
+      std::move(query_nodes), config.pr_hw_library, first_node_names,
+      starting_nodes, processed_nodes, graph, drivers, tables);
+}
+
 auto QueryManager::ScheduleUnscheduledNodes(
     std::vector<std::shared_ptr<QueryNode>> unscheduled_root_nodes,
     Config config, NodeSchedulerInterface& node_scheduler)
@@ -335,11 +353,6 @@ auto QueryManager::ScheduleUnscheduledNodes(
         std::queue<std::pair<ConfigurableModulesVector,
                              std::vector<std::shared_ptr<QueryNode>>>>> {
   std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links;
-
-  // Add in all of the required parameters here.
-  // auto query_node_runs_queue = node_scheduler.GetNextSetOfRuns()
-  // Then make a new method to use these new parameters.
-  // Then change the other scheduler state to call the other method.
 
   auto query_node_runs_queue = node_scheduler.FindAcceleratedQueryNodeSets(
       std::move(unscheduled_root_nodes), config.accelerator_library,

@@ -172,6 +172,31 @@ class QueryManagerInterface {
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
           reuse_links,
       const std::vector<std::string>& scheduled_node_names) = 0;
+
+  /**
+   * Method to schedule next set of nodes based on PR graph nodes.
+   * @param query_nodes Root query nodes
+   * @param first_node_names Node names which are constrained to first pos
+   * @param starting_nodes Available query node names
+   * @param processed_nodes Processed node names
+   * @param graph Graph of all node names
+   * @param tables Map of all tables
+   * @param drivers Driver library
+   * @param config Config values
+   * @param node_scheduler The scheduler object
+   * @return Queue of sets of runs.
+   */
+  virtual auto ScheduleNextSetOfNodes(
+      std::vector<std::shared_ptr<QueryNode>> query_nodes,
+      const std::vector<std::string>& first_node_names,
+      std::vector<std::string>& starting_nodes,
+      std::vector<std::string>& processed_nodes,
+      std::map<std::string, SchedulingQueryNode>& graph,
+      std::map<std::string, TableMetadata>& tables,
+      AcceleratorLibraryInterface& drivers, Config config,
+      NodeSchedulerInterface& node_scheduler)
+      -> std::queue<std::pair<ConfigurableModulesVector,
+                              std::vector<std::shared_ptr<QueryNode>>>> = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

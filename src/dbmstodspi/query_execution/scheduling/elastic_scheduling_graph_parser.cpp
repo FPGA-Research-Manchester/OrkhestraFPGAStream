@@ -143,7 +143,7 @@ auto ElasticSchedulingGraphParser::GetModuleIndex(
   if (start_location_index < taken_positions.at(0).first) {
     return 0;
   }
-  for (int module_index = taken_positions.size(); module_index >= 0;
+  for (int module_index = taken_positions.size() - 1; module_index >= 0;
        module_index--) {
     if (start_location_index > taken_positions.at(module_index).second) {
       return module_index + 1;
@@ -531,14 +531,14 @@ auto ElasticSchedulingGraphParser::GetNewBlockedNodes(
   auto new_next_run_blocked_nodes = next_run_blocked_nodes;
   if (std::find(next_run_blocked_nodes.begin(), next_run_blocked_nodes.end(),
                 module_placement.node_name) == next_run_blocked_nodes.end()) {
-    if (drivers.IsOperationSorting(module_placement.operation_type)) {
+    if (drivers.IsOperationReducingData(module_placement.operation_type)) {
       new_next_run_blocked_nodes.push_back(module_placement.node_name);
       for (const auto& next_node_name :
            graph.at(module_placement.node_name).after_nodes) {
         if (std::find(next_run_blocked_nodes.begin(),
                       next_run_blocked_nodes.end(),
                       next_node_name) == next_run_blocked_nodes.end()) {
-          new_next_run_blocked_nodes.push_back(module_placement.node_name);
+          new_next_run_blocked_nodes.push_back(next_node_name);
         }
       }
     }
@@ -548,7 +548,7 @@ auto ElasticSchedulingGraphParser::GetNewBlockedNodes(
       if (std::find(next_run_blocked_nodes.begin(),
                     next_run_blocked_nodes.end(),
                     next_node_name) == next_run_blocked_nodes.end()) {
-        new_next_run_blocked_nodes.push_back(module_placement.node_name);
+        new_next_run_blocked_nodes.push_back(next_node_name);
       }
     }
   }
@@ -606,7 +606,7 @@ void ElasticSchedulingGraphParser::FindNextModulePlacement(
       new_available_nodes, new_processed_nodes, new_graph, current_run,
       current_plan, resulting_plan, reduce_single_runs, hw_library, min_runs,
       new_tables, heuristics, statistics_counters, constrained_first_nodes,
-      blocked_nodes, next_run_blocked_nodes, drivers);
+      blocked_nodes, new_next_run_blocked, drivers);
 }
 
 // TODO: The constants could be changed to be class variables.
@@ -629,9 +629,11 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
     std::vector<std::string> next_run_blocked_nodes,
     AcceleratorLibraryInterface& drivers) {
   if (current_plan.size() <= min_runs) {
+    std::sort(blocked_nodes.begin(), blocked_nodes.end());
+    std::sort(available_nodes.begin(), available_nodes.end());
     if (!available_nodes.empty() &&
-        !std::includes(available_nodes.begin(), available_nodes.end(),
-                       blocked_nodes.begin(), blocked_nodes.end())) {
+        !std::includes(blocked_nodes.begin(), blocked_nodes.end(),
+                       available_nodes.begin(), available_nodes.end())) {
       auto available_nodes_in_this_run = RemoveUnavailableNodesInThisRun(
           available_nodes, current_run, hw_library, graph,
           constrained_first_nodes, blocked_nodes, drivers);
