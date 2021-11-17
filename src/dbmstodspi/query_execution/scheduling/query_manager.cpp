@@ -25,16 +25,20 @@ limitations under the License.
 #include "logger.hpp"
 #include "node_scheduler_interface.hpp"
 #include "query_acceleration_constants.hpp"
+#include "run_linker.hpp"
 #include "stream_data_parameters.hpp"
 #include "table_manager.hpp"
 #include "util.hpp"
+#include "table_data.hpp"
 
 using orkhestrafs::dbmstodspi::QueryManager;
+using orkhestrafs::dbmstodspi::RunLinker;
 using orkhestrafs::dbmstodspi::StreamDataParameters;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::query_acceleration_constants::kIOStreamParamDefs;
 using orkhestrafs::dbmstodspi::util::CreateReferenceVector;
+using orkhestrafs::core_interfaces::table_data::SortedSequence;
 
 auto QueryManager::GetCurrentLinks(
     const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
@@ -334,15 +338,16 @@ auto QueryManager::ScheduleNextSetOfNodes(
     std::vector<std::string>& processed_nodes,
     std::map<std::string, SchedulingQueryNode>& graph,
     std::map<std::string, TableMetadata>& tables,
-    AcceleratorLibraryInterface& drivers, Config config,
-    NodeSchedulerInterface& node_scheduler)
+    AcceleratorLibraryInterface& drivers, const Config& config,
+    NodeSchedulerInterface& node_scheduler,
+    std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links)
     -> std::queue<std::pair<ConfigurableModulesVector,
                             std::vector<std::shared_ptr<QueryNode>>>> {
-  // TODO: Problem with query nodes. They all get moved but only the scheduled
-  // ones get returned. Need to return both
-  return node_scheduler.GetNextSetOfRuns(
-      query_nodes, config.pr_hw_library, first_node_names,
-      starting_nodes, processed_nodes, graph, drivers, tables);
+  auto current_queue = node_scheduler.GetNextSetOfRuns(
+      query_nodes, config.pr_hw_library, first_node_names, starting_nodes,
+      processed_nodes, graph, drivers, tables);
+  return RunLinker::LinkPeripheralNodesFromGivenRuns(current_queue,
+                                                     all_reuse_links);
 }
 
 auto QueryManager::ScheduleUnscheduledNodes(
@@ -361,17 +366,17 @@ auto QueryManager::ScheduleUnscheduledNodes(
   return {all_reuse_links, query_node_runs_queue};
 }
 
-auto QueryManager::IsRunValid(std::vector<AcceleratedQueryNode> current_run)
-    -> bool {
-  for (const auto& node : current_run) {
-    if (!ElasticModuleChecker::IsRunValid(node.input_streams,
-                                          node.operation_type,
-                                          node.operation_parameters)) {
-      return false;
-    }
-  }
-  return true;
-}
+// auto QueryManager::IsRunValid(std::vector<AcceleratedQueryNode> current_run)
+//    -> bool {
+//  for (const auto& node : current_run) {
+//    if (!ElasticModuleChecker::IsRunValid(node.input_streams,
+//                                          node.operation_type,
+//                                          node.operation_parameters)) {
+//      return false;
+//    }
+//  }
+//  return true;
+//}
 
 void QueryManager::CheckTableData(const DataManagerInterface* data_manager,
                                   const TableData& expected_table,
@@ -556,7 +561,10 @@ void QueryManager::ExecuteAndProcessResults(
     std::map<std::string, std::vector<RecordSizeAndCount>>& output_stream_sizes,
     const std::map<std::string, std::vector<StreamResultParameters>>&
         result_parameters,
-    const std::vector<AcceleratedQueryNode>& execution_query_nodes) {
+    const std::vector<AcceleratedQueryNode>& execution_query_nodes,
+    std::map<std::string, TableMetadata>& scheduling_table_data,
+    const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links,
+    std::map<std::string, SchedulingQueryNode>& scheduling_graph) {
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
 
@@ -576,6 +584,86 @@ void QueryManager::ExecuteAndProcessResults(
 
   ProcessResults(data_manager, result_sizes, result_parameters,
                  output_memory_blocks, output_stream_sizes);
+
+  UpdateTableData(result_parameters, output_stream_sizes, scheduling_table_data,
+                  reuse_links, scheduling_graph);
+}
+
+void QueryManager::UpdateTableData(
+    const std::map<std::string, std::vector<StreamResultParameters>>&
+        result_parameters,
+    const std::map<std::string, std::vector<RecordSizeAndCount>>&
+        output_stream_sizes,
+    std::map<std::string, TableMetadata>& scheduling_table_data,
+    const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links,
+    std::map<std::string, SchedulingQueryNode>& scheduling_graph) {
+  // TODO: This needs to get tested!!!
+  for (const auto& [node_name, stream_parameters] : result_parameters) {
+    for (int stream_index = 0; stream_index < stream_parameters.size();
+         stream_index++) {
+      auto filename = stream_parameters.at(stream_index).filename;
+      TableMetadata current_data = {
+          output_stream_sizes.at(node_name).at(stream_index).first,
+          output_stream_sizes.at(node_name).at(stream_index).second,
+          {}};
+
+      // Just in case another table has to be created. Untested as the sorted
+      // status is a mess!
+      for (const auto& target : reuse_links.at(node_name).at(stream_index)) {
+        if (scheduling_graph.find(target.first) != scheduling_graph.end()) {
+          auto target_filename =
+              scheduling_graph.at(target.first).data_tables.at(target.second);
+          if (filename.empty()) {
+            scheduling_table_data.at(target_filename).record_count =
+                current_data.record_count;
+            scheduling_table_data.at(target_filename).record_size =
+                current_data.record_size;
+          } else {
+            if (const auto& [it, inserted] =
+                    scheduling_table_data.emplace(filename, current_data);
+                !inserted) {
+              scheduling_table_data.at(filename).record_count =
+                  current_data.record_count;
+              scheduling_table_data.at(filename).record_size =
+                  current_data.record_size;
+            } else {
+              scheduling_graph.at(target.first).data_tables.at(target.second) =
+                  filename;
+            }
+          }
+          auto next_node_data = scheduling_graph.at(target.first);
+          CropSortedStatus(scheduling_table_data,
+                           next_node_data.data_tables.at(target.second));
+          auto next_node_table = scheduling_table_data.at(
+              next_node_data.data_tables.at(target.second));
+        }
+      }
+    }
+  }
+}
+
+void QueryManager::CropSortedStatus(
+    std::map<std::string, TableMetadata>& scheduling_table_data,
+    std::string filename) {
+  auto current_data = scheduling_table_data.at(filename);
+  if (!current_data.sorted_status.empty()) {
+    if (current_data.sorted_status.back().start_position +
+            current_data.sorted_status.back().length >
+        current_data.record_count) {
+      std::vector<SortedSequence> cropped_sequences;
+      for (const auto& sequence : current_data.sorted_status) {
+        if (sequence.start_position + sequence.length <=
+            current_data.record_count) {
+          cropped_sequences.push_back(sequence);
+        } else if (sequence.start_position < current_data.record_count) {
+          cropped_sequences.push_back(
+              {sequence.start_position,
+               current_data.record_count - sequence.start_position});
+        }
+      }
+      scheduling_table_data.at(filename).sorted_status = cropped_sequences;
+    }
+  }
 }
 
 void QueryManager::AddQueryNodes(

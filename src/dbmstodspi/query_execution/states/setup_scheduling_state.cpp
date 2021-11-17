@@ -32,5 +32,5 @@ auto SetupSchedulingState::Execute(GraphProcessingFSMInterface* fsm)
     -> std::unique_ptr<StateInterface> {
   Log(LogLevel::kTrace, "Setup scheduling state");
   fsm->SetupSchedulingData();
-  return std::make_unique<DebugScheduleState>();
+  return std::make_unique<ScheduleState>();
 }

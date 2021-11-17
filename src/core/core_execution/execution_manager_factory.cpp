@@ -46,12 +46,12 @@ using orkhestrafs::dbmstodspi::SetupSchedulingState;
 
 auto ExecutionManagerFactory::GetManager(const Config& config)
     -> std::unique_ptr<ExecutionManagerInterface> {
-  auto chosen_scheduler = std::make_unique<OnePlanNodeScheduler>();
+  /*auto chosen_scheduler = std::make_unique<OnePlanNodeScheduler>();*/
   auto secondary_scheduler = std::make_unique<ElasticResourceNodeScheduler>(
       std::make_unique<PlanEvaluator>());
 
-  auto chosen_start_state = std::make_unique<ScheduleState>();
-  auto secondary_start_state = std::make_unique<DebugScheduleState>();
+  /*auto chosen_start_state = std::make_unique<ScheduleState>();
+  auto secondary_start_state = std::make_unique<DebugScheduleState>();*/
   auto actual_start_state = std::make_unique<SetupSchedulingState>();
 
   return std::make_unique<ExecutionManager>(

@@ -63,6 +63,10 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
   static auto FindSharedPointerFromRootNodes(
       std::string searched_node_name, std::shared_ptr<QueryNode> current_node)
       -> std::shared_ptr<QueryNode>;
+  static void RemoveUnnecessaryTables(
+      const std::map<std::string, SchedulingQueryNode> &graph,
+      std::map<std::string, TableMetadata> &tables);
+
   std::unique_ptr<PlanEvaluatorInterface> plan_evaluator_;
 };
 }  // namespace orkhestrafs::dbmstodspi

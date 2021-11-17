@@ -71,7 +71,7 @@ class GraphProcessingFSMInterface {
    * memory constraints could get violated.
    * @return Boolean flag showing if the run is valid.
    */
-  virtual auto IsRunValid() -> bool = 0;
+  //virtual auto IsRunValid() -> bool = 0;
   /**
    * @brief Execute the next run ready for execution.
    */

@@ -164,7 +164,7 @@ auto ElasticSchedulingGraphParser::FindAllAvailableBitstreamsAfterMinPos(
        start_location_index++) {
     for (const auto& bitstream_name :
          bitstream_start_locations.at(start_location_index)) {
-      auto bitstream_index =
+      int bitstream_index =
           std::find(hw_library.at(current_operation)
                         .starting_locations.at(start_location_index)
                         .begin(),

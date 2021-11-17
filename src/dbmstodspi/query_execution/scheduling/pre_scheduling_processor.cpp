@@ -169,5 +169,9 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
         graph.at(current_node_name).operation);
     QuerySchedulingHelper::AddNewTableToNextNodes(graph, current_node_name,
                                                   resulting_tables);
+    // TODO: Improve node removal!
+    /*if (min_requirements.size() == 1 && min_requirements.front() == 0) {
+      graph.erase(current_node_name);
+    }*/
   }
 }

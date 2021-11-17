@@ -41,6 +41,22 @@ auto ElasticResourceNodeScheduler::FindAcceleratedQueryNodeSets(
   return {};
 }
 
+void ElasticResourceNodeScheduler::RemoveUnnecessaryTables(
+    const std::map<std::string, SchedulingQueryNode> &graph,
+    std::map<std::string, TableMetadata> &tables) {
+  std::map<std::string, TableMetadata> resulting_tables;
+  for (const auto &[table_name, table_data] : tables) {
+    if (std::any_of(graph.begin(), graph.end(), [&](const auto &p) {
+          return std::find(p.second.data_tables.begin(),
+                           p.second.data_tables.end(),
+                           table_name) != p.second.data_tables.end();
+        })) {
+      resulting_tables.insert({table_name, table_data});
+    }
+  }
+  tables = resulting_tables;
+}
+
 auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     std::vector<std::shared_ptr<QueryNode>> &available_nodes,
     const std::map<QueryOperationType, OperationPRModules> &hw_library,
@@ -52,6 +68,8 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     std::map<std::string, TableMetadata> &tables)
     -> std::queue<std::pair<ConfigurableModulesVector,
                             std::vector<std::shared_ptr<QueryNode>>>> {
+  RemoveUnnecessaryTables(graph, tables);
+
   ElasticSchedulingGraphParser::PreprocessNodes(
       starting_nodes, hw_library, processed_nodes, graph, tables, drivers);
 
@@ -101,16 +119,18 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   for (const auto &run : best_plan) {
     ConfigurableModulesVector chosen_modules;
     std::vector<std::shared_ptr<QueryNode>> chosen_nodes;
-    for (const auto &chosen_module : run) {
-      chosen_modules.emplace_back(chosen_module.operation_type,
-                                  hw_library.at(chosen_module.operation_type)
-                                      .bitstream_map.at(chosen_module.bitstream)
-                                      .capacity);
+    for (int module_index = 0; module_index < run.size(); module_index++) {
+      // for (const auto &chosen_module : run) {
+      chosen_modules.emplace_back(
+          run.at(module_index).operation_type,
+          hw_library.at(run.at(module_index).operation_type)
+              .bitstream_map.at(run.at(module_index).bitstream)
+              .capacity);
 
       std::shared_ptr<QueryNode> chosen_node;
       for (const auto &node : available_nodes) {
-        chosen_node =
-            FindSharedPointerFromRootNodes(chosen_module.node_name, node);
+        chosen_node = FindSharedPointerFromRootNodes(
+            run.at(module_index).node_name, node);
         if (chosen_node != nullptr) {
           break;
         }
@@ -118,18 +138,21 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
       if (chosen_node == nullptr) {
         throw std::runtime_error("No corresponding node found!");
       }
-      chosen_nodes.push_back(chosen_node);
+      chosen_node->module_locations.push_back(module_index);
+      if (std::find(chosen_nodes.begin(), chosen_nodes.end(), chosen_node) ==
+          chosen_nodes.end()) {
+        chosen_nodes.push_back(chosen_node);
+      }
     }
     resulting_runs.push({chosen_modules, chosen_nodes});
   }
 
   // TODO: Code duplication here!
   std::vector<std::shared_ptr<QueryNode>> new_available_nodes;
-  for (const auto& node_name : starting_nodes) {
+  for (const auto &node_name : starting_nodes) {
     std::shared_ptr<QueryNode> chosen_node;
     for (const auto &node : available_nodes) {
-      chosen_node =
-          FindSharedPointerFromRootNodes(node_name, node);
+      chosen_node = FindSharedPointerFromRootNodes(node_name, node);
       if (chosen_node != nullptr) {
         break;
       }

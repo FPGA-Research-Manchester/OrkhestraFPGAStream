@@ -88,7 +88,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   auto IsARunScheduled() -> bool override;
   void SetupNextRunData() override;
   auto IsRunReadyForExecution() -> bool override;
-  auto IsRunValid() -> bool override;
+  /*auto IsRunValid() -> bool override;*/
   void ExecuteAndProcessResults() override;
   void PopAndPrintCurrentPlan() override;
   void SetupSchedulingData() override;
@@ -117,7 +117,6 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::vector<std::string> processed_nodes_;
 
   std::vector<std::shared_ptr<QueryNode>> current_available_node_pointers_;
-  
 
   // Variables used throughout different states.
   std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links_;

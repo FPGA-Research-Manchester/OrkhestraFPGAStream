@@ -22,6 +22,7 @@ limitations under the License.
 #include "merge_sort.hpp"
 #include "merge_sort_interface.hpp"
 #include "stream_parameter_calculator.hpp"
+#include "query_scheduling_helper.hpp"
 
 using orkhestrafs::dbmstodspi::MergeSortSetup;
 
@@ -29,6 +30,7 @@ using orkhestrafs::dbmstodspi::MergeSort;
 using orkhestrafs::dbmstodspi::MergeSortInterface;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
+using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
 void MergeSortSetup::SetupModule(
     AccelerationModule& acceleration_module,
@@ -146,6 +148,9 @@ auto MergeSortSetup::GetMinSortingRequirementsForTable(
   if (table_data.sorted_status.empty()) {
     return {table_data.record_count};
   } else {
+    if (QuerySchedulingHelper::IsTableSorted(table_data)) {
+      return {0};
+    }
     int pos_of_last_sorted_element = table_data.sorted_status.back().start_position + table_data.sorted_status.back().length;
     if (pos_of_last_sorted_element > table_data.record_count) {
       throw std::runtime_error("Incorrect sorted meta data");

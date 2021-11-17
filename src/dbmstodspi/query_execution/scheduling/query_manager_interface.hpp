@@ -33,6 +33,7 @@ limitations under the License.
 #include "query_scheduling_data.hpp"
 
 using orkhestrafs::core_interfaces::Config;
+using orkhestrafs::core_interfaces::MemoryBlockInterface;
 using orkhestrafs::core_interfaces::query_scheduling_data::
     ConfigurableModulesVector;
 using orkhestrafs::core_interfaces::query_scheduling_data::MemoryReuseTargets;
@@ -43,7 +44,6 @@ using orkhestrafs::core_interfaces::query_scheduling_data::
 using orkhestrafs::dbmstodspi::AcceleratedQueryNode;
 using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
 using orkhestrafs::dbmstodspi::FPGAManagerInterface;
-using orkhestrafs::core_interfaces::MemoryBlockInterface;
 using orkhestrafs::dbmstodspi::NodeSchedulerInterface;
 
 namespace orkhestrafs::dbmstodspi {
@@ -125,8 +125,8 @@ class QueryManagerInterface {
    * @param current_run Nodes ready for execution.
    * @return Boolean flag noting if the run is valid.
    */
-  virtual auto IsRunValid(std::vector<AcceleratedQueryNode> current_run)
-      -> bool = 0;
+  //virtual auto IsRunValid(std::vector<AcceleratedQueryNode> current_run)
+  //    -> bool = 0;
   /**
    * @brief Execute given nodes.
    * @param fpga_manager Manager to setup and operate modules.
@@ -135,6 +135,9 @@ class QueryManagerInterface {
    * @param output_stream_sizes Map for output stream size parameters.
    * @param result_parameters Saved parameters for result reading.
    * @param execution_query_nodes Nodes to execute
+   * @param scheduling_table_data Table sizes data for scheduling.
+   * @param reuse_links To find next nodes.
+   * @param scheduling_graph To update next nodes.
    */
   virtual void ExecuteAndProcessResults(
       FPGAManagerInterface* fpga_manager,
@@ -145,7 +148,10 @@ class QueryManagerInterface {
           output_stream_sizes,
       const std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
-      const std::vector<AcceleratedQueryNode>& execution_query_nodes) = 0;
+      const std::vector<AcceleratedQueryNode>& execution_query_nodes,
+      std::map<std::string, TableMetadata>& scheduling_table_data, 
+      const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links, 
+      std::map<std::string, SchedulingQueryNode>& scheduling_graph) = 0;
 
   /**
    * @brief Method to move reusable output memory blocks to input maps. And the
@@ -184,6 +190,7 @@ class QueryManagerInterface {
    * @param drivers Driver library
    * @param config Config values
    * @param node_scheduler The scheduler object
+   * @param all_reuse_links All links between runs.
    * @return Queue of sets of runs.
    */
   virtual auto ScheduleNextSetOfNodes(
@@ -193,8 +200,9 @@ class QueryManagerInterface {
       std::vector<std::string>& processed_nodes,
       std::map<std::string, SchedulingQueryNode>& graph,
       std::map<std::string, TableMetadata>& tables,
-      AcceleratorLibraryInterface& drivers, Config config,
-      NodeSchedulerInterface& node_scheduler)
+      AcceleratorLibraryInterface& drivers, const Config& config,
+      NodeSchedulerInterface& node_scheduler,
+      std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links)
       -> std::queue<std::pair<ConfigurableModulesVector,
                               std::vector<std::shared_ptr<QueryNode>>>> = 0;
 };
