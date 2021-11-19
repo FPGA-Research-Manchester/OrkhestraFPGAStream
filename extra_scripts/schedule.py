@@ -747,6 +747,7 @@ def add_satisfying_bitstream_locations_to_graph(available_nodes, graph, hw_libra
 
     while available_nodes:
         current_node_name = available_nodes.pop()
+        processed_nodes.append(current_node_name)
         available_nodes.extend(get_new_available_nodes(
             current_node_name, processed_nodes, graph))
         min_requirements = get_min_requirements(

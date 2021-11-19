@@ -86,7 +86,7 @@ class PreSchedulingProcessor {
       std::map<std::string, SchedulingQueryNode>& graph,
       std::map<std::string, TableMetadata>& data_tables,
       AcceleratorLibraryInterface& accelerator_library,
-      std::vector<std::string> available_nodes,
+      std::vector<std::string>& available_nodes,
       std::vector<std::string> processed_nodes);
 };
 

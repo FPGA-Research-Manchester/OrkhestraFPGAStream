@@ -12,7 +12,7 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 
-if (FPGA_AVAILABLE)
+if (ENABLE_FPGA)
 	file(GLOB OS_DEPENDENT_MEMORY_BLOCK "table_data/udma_memory_block.cpp" "table_data/udma_memory_block.hpp" "table_data/virtual_memory_block.hpp" "table_data/virtual_memory_block.cpp")
 else()
 	file(GLOB OS_DEPENDENT_MEMORY_BLOCK "table_data/virtual_memory_block.hpp" "table_data/virtual_memory_block.cpp")
@@ -174,6 +174,6 @@ target_include_directories(query_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 target_link_libraries(query_execution PRIVATE core_interfaces)
 target_link_libraries(query_execution PRIVATE util)
 
-if (_FPGA_AVAILABLE)
+if (ENABLE_FPGA)
 	target_link_libraries(query_execution PUBLIC fos)
 endif()

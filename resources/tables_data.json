@@ -8,4 +8,14 @@
 	"record_size": 44,
 	"record_count": 2000,
 	"sorted_status": [[0, 2000]]
+}, {
+	"filename": "lineitem0.1.csv",
+	"record_size": 38,
+	"record_count": 600572,
+	"sorted_status": []
+}, {
+	"filename": "part0.1.csv",
+	"record_size": 44,
+	"record_count": 20000,
+	"sorted_status": [[0, 20000]]
 }]

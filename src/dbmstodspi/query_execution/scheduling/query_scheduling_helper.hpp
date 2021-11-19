@@ -84,6 +84,15 @@ class QuerySchedulingHelper {
       const std::map<std::string, SchedulingQueryNode>& graph,
       std::string next_node_name, std::string current_node_name)
       -> std::vector<std::pair<int, int>>;
+
+  /**
+   * @brief Method to remove a node from the graph and adjust before and after
+   * nodes accordingly.
+   * @param graph All nodes
+   * @param node_name Name of the node to be removed.
+   */
+  static void RemoveNodeFromGraph(
+      std::map<std::string, SchedulingQueryNode>& graph, std::string node_name);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

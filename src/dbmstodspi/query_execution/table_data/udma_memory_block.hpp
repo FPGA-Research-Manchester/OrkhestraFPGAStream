@@ -20,6 +20,8 @@ limitations under the License.
 #include "memory_block_interface.hpp"
 #include "udma.h"
 
+using orkhestrafs::core_interfaces::MemoryBlockInterface;
+
 namespace orkhestrafs::dbmstodspi {
 
 /**

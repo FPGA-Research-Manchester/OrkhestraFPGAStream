@@ -35,7 +35,7 @@ namespace orkhestrafs::dbmstodspi {
 class ElasticSchedulingGraphParser {
  public:
   static void PreprocessNodes(
-      const std::vector<std::string>& available_nodes,
+      std::vector<std::string>& available_nodes,
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
       const std::vector<std::string>& processed_nodes,
       std::map<std::string, SchedulingQueryNode>& graph,
@@ -202,7 +202,7 @@ class ElasticSchedulingGraphParser {
       std::string node_name,
       const std::map<std::string, SchedulingQueryNode>& graph,
       std::map<std::string, SchedulingQueryNode>& new_graph,
-      const std::vector<std::string>& new_available_nodes,
+      std::vector<std::string>& new_available_nodes,
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
       const std::map<std::string, TableMetadata>& data_tables,
       std::map<std::string, TableMetadata>& new_tables,

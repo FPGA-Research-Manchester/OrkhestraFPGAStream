@@ -117,14 +117,15 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/TPCH_Q6_SF1.json 
     
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_Q19_SF001.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_Q19_SF01.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_Q19_SF1.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem0.01.csv 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/part0.01.csv
     
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark.pl
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_defs.zip 
-#${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem.zip 
-#${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/part.zip 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem.zip 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/part.zip 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/big_benchmark_config.ini 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/fast_benchmark_config.ini
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/slow_benchmark_config.ini

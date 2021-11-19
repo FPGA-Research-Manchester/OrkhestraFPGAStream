@@ -140,18 +140,21 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     std::map<std::string, SchedulingQueryNode>& graph,
     std::map<std::string, TableMetadata>& data_tables,
     AcceleratorLibraryInterface& accelerator_library,
-    std::vector<std::string> available_nodes,
+    std::vector<std::string>& available_nodes,
     std::vector<std::string> processed_nodes) {
+  auto current_available_nodes = available_nodes;
   auto min_capacity = GetMinimumCapacityValuesFromHWLibrary(hw_library);
 
-  while (!available_nodes.empty()) {
-    auto current_node_name = available_nodes.back();
-    available_nodes.pop_back();
+  while (!current_available_nodes.empty()) {
+    auto current_node_name = current_available_nodes.back();
+    current_available_nodes.pop_back();
+    processed_nodes.push_back(current_node_name);
     auto new_available_nodes =
         QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
             current_node_name, processed_nodes, graph);
-    available_nodes.insert(available_nodes.end(), new_available_nodes.begin(),
-                           new_available_nodes.end());
+    current_available_nodes.insert(current_available_nodes.end(),
+                                   new_available_nodes.begin(),
+                                   new_available_nodes.end());
     auto min_requirements = GetMinRequirementsForFullyExecutingNode(
         current_node_name, graph, accelerator_library, data_tables);
     auto list_of_fitting_bitstreams = FindAdequateBitstreams(
@@ -169,9 +172,22 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
         graph.at(current_node_name).operation);
     QuerySchedulingHelper::AddNewTableToNextNodes(graph, current_node_name,
                                                   resulting_tables);
-    // TODO: Improve node removal!
-    /*if (min_requirements.size() == 1 && min_requirements.front() == 0) {
-      graph.erase(current_node_name);
-    }*/
+
+    if (min_requirements.size() == 1 && min_requirements.front() == 0) {
+      if (std::find(available_nodes.begin(), available_nodes.end(),
+                    current_node_name) != available_nodes.end()) {
+        available_nodes.erase(
+            std::remove(available_nodes.begin(), available_nodes.end(),
+                        current_node_name),
+            available_nodes.end());
+        auto new_available_nodes =
+            QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
+                current_node_name, processed_nodes, graph);
+        available_nodes.insert(available_nodes.end(),
+                               new_available_nodes.begin(),
+                               new_available_nodes.end());
+      }
+      QuerySchedulingHelper::RemoveNodeFromGraph(graph, current_node_name);
+    }
   }
 }
