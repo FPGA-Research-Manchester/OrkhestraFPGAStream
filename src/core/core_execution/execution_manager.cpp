@@ -69,10 +69,10 @@ void ExecutionManager::ScheduleUnscheduledNodes() {
 void ExecutionManager::SetupNextRunData() {
   if (config_.accelerator_library.find(query_node_runs_queue_.front().first) ==
       config_.accelerator_library.end()) {
-    for (const auto& thing : query_node_runs_queue_.front().first) {
-      auto op_type = thing.operation_type;
-      auto module_params = thing.resource_elasticity_data;
-    }
+    //for (const auto& thing : query_node_runs_queue_.front().first) {
+    //  auto op_type = thing.operation_type;
+    //  auto module_params = thing.resource_elasticity_data;
+    //}
     throw std::runtime_error("Bitstream not found!"); 
   }
 

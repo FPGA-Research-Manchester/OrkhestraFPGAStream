@@ -598,6 +598,7 @@ void QueryManager::UpdateTableData(
     const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links,
     std::map<std::string, SchedulingQueryNode>& scheduling_graph) {
   // TODO: This needs to get tested!!!
+  // Also this is assuming that there always is a link. There might not be.
   for (const auto& [node_name, stream_parameters] : result_parameters) {
     for (int stream_index = 0; stream_index < stream_parameters.size();
          stream_index++) {
@@ -609,33 +610,35 @@ void QueryManager::UpdateTableData(
 
       // Just in case another table has to be created. Untested as the sorted
       // status is a mess!
-      for (const auto& target : reuse_links.at(node_name).at(stream_index)) {
-        if (scheduling_graph.find(target.first) != scheduling_graph.end()) {
-          auto target_filename =
-              scheduling_graph.at(target.first).data_tables.at(target.second);
-          if (filename.empty()) {
-            scheduling_table_data.at(target_filename).record_count =
-                current_data.record_count;
-            scheduling_table_data.at(target_filename).record_size =
-                current_data.record_size;
-          } else {
-            if (const auto& [it, inserted] =
-                    scheduling_table_data.emplace(filename, current_data);
-                !inserted) {
-              scheduling_table_data.at(filename).record_count =
+      if (reuse_links.find(node_name) != reuse_links.end()) {
+        for (const auto& target : reuse_links.at(node_name).at(stream_index)) {
+          if (scheduling_graph.find(target.first) != scheduling_graph.end()) {
+            auto target_filename =
+                scheduling_graph.at(target.first).data_tables.at(target.second);
+            if (filename.empty()) {
+              scheduling_table_data.at(target_filename).record_count =
                   current_data.record_count;
-              scheduling_table_data.at(filename).record_size =
+              scheduling_table_data.at(target_filename).record_size =
                   current_data.record_size;
             } else {
-              scheduling_graph.at(target.first).data_tables.at(target.second) =
-                  filename;
+              if (const auto& [it, inserted] =
+                      scheduling_table_data.emplace(filename, current_data);
+                  !inserted) {
+                scheduling_table_data.at(filename).record_count =
+                    current_data.record_count;
+                scheduling_table_data.at(filename).record_size =
+                    current_data.record_size;
+              } else {
+                scheduling_graph.at(target.first)
+                    .data_tables.at(target.second) = filename;
+              }
             }
+            auto next_node_data = scheduling_graph.at(target.first);
+            CropSortedStatus(scheduling_table_data,
+                             next_node_data.data_tables.at(target.second));
+            auto next_node_table = scheduling_table_data.at(
+                next_node_data.data_tables.at(target.second));
           }
-          auto next_node_data = scheduling_graph.at(target.first);
-          CropSortedStatus(scheduling_table_data,
-                           next_node_data.data_tables.at(target.second));
-          auto next_node_table = scheduling_table_data.at(
-              next_node_data.data_tables.at(target.second));
         }
       }
     }

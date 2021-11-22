@@ -138,7 +138,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
       if (chosen_node == nullptr) {
         throw std::runtime_error("No corresponding node found!");
       }
-      chosen_node->module_locations.push_back(module_index);
+      chosen_node->module_locations.push_back(module_index + 1);
       if (std::find(chosen_nodes.begin(), chosen_nodes.end(), chosen_node) ==
           chosen_nodes.end()) {
         chosen_nodes.push_back(chosen_node);

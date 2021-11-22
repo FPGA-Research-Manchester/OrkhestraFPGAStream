@@ -1,5 +1,5 @@
 {
-	"module_combinations": ["filter", "join", "single_merge", "linear_sort", "add", "mul", "sum", "empty", "double_merge", "sort_join_filter", "sort_join", "filter_join", "filter_sort", "add_mul", "add_mul_sum", "join_filter", "filter_sort_different", "sort_join_filter_different"],
+	"module_combinations": ["filter", "join", "single_merge", "linear_sort", "add", "mul", "sum", "empty", "double_merge", "sort_join_filter", "sort_join", "filter_join", "filter_sort", "add_mul", "add_mul_sum", "join_filter", "filter_sort_different", "sort_join_filter_different", "sort_join_filter_different_more"],
 	"filter": [{
 		"name": "kFilter",
 		"capacity": [32, 4]
@@ -51,6 +51,16 @@
     "sort_join_filter_different": [{
 		"name": "kMergeSort",
 		"capacity": [64]
+	}, {
+		"name": "kJoin",
+		"capacity": []
+	}, {
+		"name": "kFilter",
+		"capacity": [16, 4]
+	}],
+    "sort_join_filter_different_more": [{
+		"name": "kMergeSort",
+		"capacity": [32]
 	}, {
 		"name": "kJoin",
 		"capacity": []
@@ -122,6 +132,7 @@
 		"empty": "DSPI_empty",
 		"sort_join_filter": "DSPI_sort_join_filter",
         "sort_join_filter_different": "DSPI_sort_join_filter",
+        "sort_join_filter_different_more": "DSPI_sort_join_filter",
 		"sort_join": "missing",
 		"filter_join": "DSPI_filter_join",
 		"filter_sort": "DSPI_filtering_linear_sort",

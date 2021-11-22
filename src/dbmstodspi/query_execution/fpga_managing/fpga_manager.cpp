@@ -138,7 +138,7 @@ auto FPGAManager::RunQueryAcceleration()
   WaitForStreamsToFinish();
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-#ifdef _FPGA_AVAILABLE
+#ifdef FPGA_AVAILABLE
   ReadResultsFromRegisters();
 #endif
 
@@ -172,7 +172,7 @@ void FPGAManager::FindActiveStreams(
 void FPGAManager::WaitForStreamsToFinish() {
   dma_engine_->StartController(false, output_streams_active_status_);
 
-#ifdef _FPGA_AVAILABLE
+#ifdef FPGA_AVAILABLE
   while (!(dma_engine_->IsControllerFinished(true) &&
            dma_engine_->IsControllerFinished(false))) {
     // sleep(3);
