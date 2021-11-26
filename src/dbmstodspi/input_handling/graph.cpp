@@ -38,7 +38,9 @@ auto Graph::GetAllNodesPtrs() -> std::vector<QueryNode*> {
   for (const auto& node : root_nodes_) {
     all_nodes_vector.push_back(node.get());
     for (const auto& next_node : node->next_nodes) {
-      AddNextNodeToVector(next_node.get(), all_nodes_vector);
+      if (next_node) {
+        AddNextNodeToVector(next_node.get(), all_nodes_vector);
+      }
     }
   }
   return all_nodes_vector;

@@ -18,4 +18,9 @@
 	"record_size": 44,
 	"record_count": 20000,
 	"sorted_status": [[0, 20000]]
+}, {
+	"filename": "CAR_DATA.csv",
+	"record_size": 16,
+	"record_count": 1000,
+	"sorted_status": [[0, 1000]]
 }]

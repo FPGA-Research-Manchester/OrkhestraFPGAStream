@@ -320,9 +320,11 @@ auto ElasticSchedulingGraphParser::CheckForSkippableSortOperations(
   if (all_tables_sorted) {
     for (const auto& current_next_node_name :
          new_graph.at(node_name).after_nodes) {
-      if (drivers.IsOperationSorting(
-              new_graph.at(current_next_node_name).operation)) {
-        skipped_nodes.push_back(current_next_node_name);
+      if (!current_next_node_name.empty()) {
+        if (drivers.IsOperationSorting(
+                new_graph.at(current_next_node_name).operation)) {
+          skipped_nodes.push_back(current_next_node_name);
+        }
       }
     }
   }
@@ -511,7 +513,8 @@ void ElasticSchedulingGraphParser::UpdateSatisfyingBitstreamsList(
     if (std::any_of(graph.at(node_name).after_nodes.begin(),
                     graph.at(node_name).after_nodes.end(),
                     [&](std::string next_node_name) {
-                      return !IsTableEqualForGivenNode(graph, new_graph,
+                      return !next_node_name.empty() &&
+                             !IsTableEqualForGivenNode(graph, new_graph,
                                                        next_node_name,
                                                        data_tables, new_tables);
                     })) {
@@ -535,7 +538,8 @@ auto ElasticSchedulingGraphParser::GetNewBlockedNodes(
       new_next_run_blocked_nodes.push_back(module_placement.node_name);
       for (const auto& next_node_name :
            graph.at(module_placement.node_name).after_nodes) {
-        if (std::find(next_run_blocked_nodes.begin(),
+        if (!next_node_name.empty() &&
+            std::find(next_run_blocked_nodes.begin(),
                       next_run_blocked_nodes.end(),
                       next_node_name) == next_run_blocked_nodes.end()) {
           new_next_run_blocked_nodes.push_back(next_node_name);
@@ -545,7 +549,8 @@ auto ElasticSchedulingGraphParser::GetNewBlockedNodes(
   } else {
     for (const auto& next_node_name :
          graph.at(module_placement.node_name).after_nodes) {
-      if (std::find(next_run_blocked_nodes.begin(),
+      if (!next_node_name.empty() &&
+          std::find(next_run_blocked_nodes.begin(),
                     next_run_blocked_nodes.end(),
                     next_node_name) == next_run_blocked_nodes.end()) {
         new_next_run_blocked_nodes.push_back(next_node_name);

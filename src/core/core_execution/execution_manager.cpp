@@ -25,7 +25,6 @@ limitations under the License.
 using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
-
 void ExecutionManager::SetFinishedFlag() { busy_flag_ = false; }
 
 void ExecutionManager::Execute(
@@ -69,11 +68,11 @@ void ExecutionManager::ScheduleUnscheduledNodes() {
 void ExecutionManager::SetupNextRunData() {
   if (config_.accelerator_library.find(query_node_runs_queue_.front().first) ==
       config_.accelerator_library.end()) {
-    //for (const auto& thing : query_node_runs_queue_.front().first) {
+    // for (const auto& thing : query_node_runs_queue_.front().first) {
     //  auto op_type = thing.operation_type;
     //  auto module_params = thing.resource_elasticity_data;
     //}
-    throw std::runtime_error("Bitstream not found!"); 
+    throw std::runtime_error("Bitstream not found!");
   }
 
   query_manager_->LoadNextBitstreamIfNew(
@@ -108,7 +107,7 @@ void ExecutionManager::ExecuteAndProcessResults() {
                                    output_stream_sizes_, current_reuse_links_,
                                    scheduled_node_names_);
 }
-//auto ExecutionManager::IsRunValid() -> bool {
+// auto ExecutionManager::IsRunValid() -> bool {
 //  return query_manager_->IsRunValid(query_nodes_);
 //}
 
@@ -184,6 +183,8 @@ void ExecutionManager::AddSchedulingNodeToGraph(
   for (const auto& next_node : node->next_nodes) {
     if (next_node) {
       current_node.after_nodes.push_back(next_node->node_name);
+    } else {
+      current_node.after_nodes.push_back("");
     }
   }
   for (const auto& previous_node : node->previous_nodes) {
@@ -193,6 +194,8 @@ void ExecutionManager::AddSchedulingNodeToGraph(
           {previous_node_ptr->node_name,
            QuerySchedulingHelper::FindNodePtrIndex(node,
                                                    previous_node_ptr.get())});
+    } else {
+      current_node.before_nodes.push_back({"", -1});
     }
   }
   for (const auto& input_files : node->input_data_definition_files) {
@@ -216,6 +219,10 @@ void ExecutionManager::AddFirstModuleNodesToConstrainedList(
   };
 }
 
+// This check is looking at all the nodes if there are multiple identical before
+// streams.
+// TODO: Splitting nodes aren't supported at the moment anyway: 
+// after_nodes needs to be a vector of vectors!
 void ExecutionManager::AddSplittingNodesToConstrainedList(
     std::map<std::string, SchedulingQueryNode>& scheduling_graph,
     std::vector<std::string>& constrained_nodes) {
@@ -223,27 +230,31 @@ void ExecutionManager::AddSplittingNodesToConstrainedList(
   std::vector<std::pair<std::string, int>> splitting_streams;
   for (const auto& [node_name, node_parameters] : scheduling_graph) {
     for (const auto& previous_node_stream : node_parameters.before_nodes) {
-      if (std::find(all_stream_dependencies.begin(),
-                    all_stream_dependencies.end(),
-                    previous_node_stream) == all_stream_dependencies.end()) {
-        all_stream_dependencies.push_back(previous_node_stream);
-      } else if (std::find(splitting_streams.begin(), splitting_streams.end(),
-                           previous_node_stream) == splitting_streams.end()) {
-        splitting_streams.push_back(previous_node_stream);
+      if (previous_node_stream.second != -1) {
+        if (std::find(all_stream_dependencies.begin(),
+                      all_stream_dependencies.end(),
+                      previous_node_stream) == all_stream_dependencies.end()) {
+          all_stream_dependencies.push_back(previous_node_stream);
+        } else if (std::find(splitting_streams.begin(), splitting_streams.end(),
+                             previous_node_stream) == splitting_streams.end()) {
+          splitting_streams.push_back(previous_node_stream);
+        }
       }
     }
   }
   for (const auto& splitting_node_stream : splitting_streams) {
     for (const auto& potentially_constrained_node_name :
          scheduling_graph.at(splitting_node_stream.first).after_nodes) {
-      auto before_nodes_vector =
-          scheduling_graph.at(potentially_constrained_node_name).before_nodes;
-      if (std::find(before_nodes_vector.begin(), before_nodes_vector.end(),
-                    splitting_node_stream) != before_nodes_vector.end() &&
-          std::find(constrained_nodes.begin(), constrained_nodes.end(),
-                    potentially_constrained_node_name) ==
-              constrained_nodes.end()) {
-        constrained_nodes.push_back(potentially_constrained_node_name);
+      if (!potentially_constrained_node_name.empty()) {
+        auto before_nodes_vector =
+            scheduling_graph.at(potentially_constrained_node_name).before_nodes;
+        if (std::find(before_nodes_vector.begin(), before_nodes_vector.end(),
+                      splitting_node_stream) != before_nodes_vector.end() &&
+            std::find(constrained_nodes.begin(), constrained_nodes.end(),
+                      potentially_constrained_node_name) ==
+                constrained_nodes.end()) {
+          constrained_nodes.push_back(potentially_constrained_node_name);
+        }
       }
     }
   }
