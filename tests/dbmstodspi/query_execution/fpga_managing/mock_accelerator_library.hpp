@@ -26,6 +26,9 @@ using orkhestrafs::dbmstodspi::ILA;
 using orkhestrafs::dbmstodspi::ReadBackModule;
 
 class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
+ private:
+  using TableMap = std::map<std::string, TableMetadata>;
+
  public:
   MOCK_METHOD(void, SetupOperation,
               (const AcceleratedQueryNode& node_parameters), (override));
@@ -41,6 +44,39 @@ class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
   MOCK_METHOD((std::pair<int, int>), GetMultiChannelParams,
               (bool is_input, int stream_index,
                QueryOperationType operation_type,
-               std::vector<std::vector<int>> operation_parameters),
+               const std::vector<std::vector<int>>& operation_parameters),
               (override));
+  MOCK_METHOD((std::vector<int>), GetNodeCapacity,
+              (QueryOperationType operation_type,
+               const std::vector<std::vector<int>>& operation_parameters),
+              (override));
+  MOCK_METHOD((bool), IsNodeConstrainedToFirstInPipeline,
+              (QueryOperationType operation_type), (override));
+  MOCK_METHOD((bool), IsOperationSorting, (QueryOperationType operation_type),
+              (override));
+  MOCK_METHOD((std::vector<int>), GetMinSortingRequirements,
+              (QueryOperationType operation_type,
+               const TableMetadata& table_data),
+              (override));
+  MOCK_METHOD((TableMap), GetWorstCaseProcessedTables,
+              (QueryOperationType operation_type,
+               const std::vector<int>& min_capacity,
+               const std::vector<std::string>& input_tables,
+               const TableMap& data_tables),
+              (override));
+  MOCK_METHOD((bool), UpdateDataTable,
+              (QueryOperationType operation_type,
+               const std::vector<int>& module_capacity,
+               const std::vector<std::string>& input_table_names,
+               const TableMap& data_tables, TableMap& resulting_tables),
+              (override));
+  MOCK_METHOD((bool), IsInputSupposedToBeSorted,
+              (QueryOperationType operation_type), (override));
+  MOCK_METHOD((std::vector<std::string>), GetResultingTables,
+              (QueryOperationType operation,
+               const std::vector<std::string>& table_names,
+               const TableMap& tables),
+              (override));
+  MOCK_METHOD((bool), IsOperationReducingData,
+              (QueryOperationType operation_type), (override));
 };

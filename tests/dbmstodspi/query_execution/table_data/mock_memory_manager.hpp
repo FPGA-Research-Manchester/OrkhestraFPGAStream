@@ -22,7 +22,7 @@ limitations under the License.
 #include "memory_block_interface.hpp"
 #include "memory_manager_interface.hpp"
 
-using orkhestrafs::dbmstodspi::MemoryBlockInterface;
+using orkhestrafs::core_interfaces::MemoryBlockInterface;
 using orkhestrafs::dbmstodspi::MemoryManagerInterface;
 
 class MockMemoryManager : public MemoryManagerInterface {

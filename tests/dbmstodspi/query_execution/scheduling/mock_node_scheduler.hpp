@@ -35,6 +35,9 @@ class MockNodeScheduler : public NodeSchedulerInterface {
                std::map<int, std::vector<std::pair<std::string, int>>>>;
   using ModulesMap =
       std::map<QueryOperationType, std::vector<std::vector<int>>>;
+  using HWLibraryMap = std::map<QueryOperationType, OperationPRModules>;
+  using SchedulingNodeMap = std::map<std::string, SchedulingQueryNode>;
+  using TableMap = std::map<std::string, TableMetadata>;
 
  public:
   MOCK_METHOD(ResultingPlanQueue, FindAcceleratedQueryNodeSets,
@@ -42,5 +45,13 @@ class MockNodeScheduler : public NodeSchedulerInterface {
                const AcceleratorMap& supported_accelerator_bitstreams,
                const ModulesMap& existing_modules_library,
                LinkedNodesMap& linked_nodes),
+              (override));
+  MOCK_METHOD(ResultingPlanQueue, GetNextSetOfRuns,
+              (NodeVector & query_nodes, const HWLibraryMap& hw_library,
+               const std::vector<std::string>& first_node_names,
+               std::vector<std::string>& starting_nodes,
+               std::vector<std::string>& processed_nodes,
+               SchedulingNodeMap& graph, AcceleratorLibraryInterface& drivers,
+               TableMap& tables),
               (override));
 };

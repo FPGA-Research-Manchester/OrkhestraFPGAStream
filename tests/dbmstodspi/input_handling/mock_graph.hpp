@@ -26,4 +26,6 @@ class MockGraph : public ExecutionPlanGraphInterface {
   MOCK_METHOD(std::vector<std::shared_ptr<QueryNode>>, ExportRootNodes, (),
               (override));
   MOCK_METHOD(bool, IsEmpty, (), (override));
+  MOCK_METHOD(std::vector<QueryNode*>, GetRootNodesPtrs, (), (override));
+  MOCK_METHOD(std::vector<QueryNode*>, GetAllNodesPtrs, (), (override));
 };
