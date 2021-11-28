@@ -18,6 +18,7 @@ limitations under the License.
 #include <bitset>
 #include <vector>
 
+#include "acceleration_module_setup_interface.hpp"
 #include "addition_interface.hpp"
 
 namespace orkhestrafs::dbmstodspi {
@@ -25,7 +26,7 @@ namespace orkhestrafs::dbmstodspi {
 /**
  * @brief Class to calculate the Addition module setup.
  */
-class AdditionSetup {
+class AdditionSetup : public AccelerationModuleSetupInterface {
  private:
   static auto ReverseLiteralValues(std::vector<int> input_constant_values)
       -> std::array<std::pair<uint32_t, uint32_t>, 8>;
@@ -33,6 +34,11 @@ class AdditionSetup {
       std::vector<int> negation_specification) -> std::bitset<8>;
 
  public:
+  void SetupModule(AccelerationModule& acceleration_module,
+                   const AcceleratedQueryNode& module_parameters) override;
+  auto CreateModule(MemoryManagerInterface* memory_manager, int module_position)
+      -> std::unique_ptr<AccelerationModule> override;
+
   /**
    * @brief Method to setup the addition operation acceleration.
    *

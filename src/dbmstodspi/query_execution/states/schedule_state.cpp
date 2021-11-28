@@ -16,9 +16,8 @@ limitations under the License.
 
 #include "schedule_state.hpp"
 
-#include "node_scheduler.hpp"
-#include "setup_nodes_state.hpp"
 #include "logger.hpp"
+#include "setup_nodes_state.hpp"
 
 using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
 using orkhestrafs::dbmstodspi::ScheduleState;

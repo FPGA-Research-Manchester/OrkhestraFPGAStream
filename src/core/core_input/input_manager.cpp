@@ -27,5 +27,5 @@ auto InputManager::Parse(std::string input_filename,
   auto config = config_creator_.GetConfig(config_filename);
   auto graph = graph_creator_->MakeGraph(input_filename);
 
-  return std::make_pair(std::move(graph), config);
+  return std::make_pair(std::move(graph), std::move(config));
 }

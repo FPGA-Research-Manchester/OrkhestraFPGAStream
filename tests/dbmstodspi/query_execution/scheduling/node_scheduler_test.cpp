@@ -14,19 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "node_scheduler.hpp"
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <utility>
+
+#include "one_plan_node_scheduler.hpp"
 /// Good documentation for using matchers:
 /// https://github.com/google/googletest/blob/master/docs/reference/matchers.md
 namespace {
 
 using orkhestrafs::core_interfaces::query_scheduling_data::
     NodeOperationParameters;
-using orkhestrafs::dbmstodspi::NodeScheduler;
+using orkhestrafs::dbmstodspi::OnePlanNodeScheduler;
 using ModulesCombo = orkhestrafs::core_interfaces::query_scheduling_data::
     ConfigurableModulesVector;
 using Node = orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
@@ -80,6 +80,8 @@ class NodeSchedulerTest : public ::testing::Test {
   std::shared_ptr<Node> query_node_b_;
 
   NodeOperationParameters base_parameters_;
+
+  OnePlanNodeScheduler scheduler;
 };
 
 void CheckNodeFields(const std::vector<std::string>& input_files,
@@ -87,9 +89,9 @@ void CheckNodeFields(const std::vector<std::string>& input_files,
                      OpType operation,
                      const std::vector<std::shared_ptr<Node>>& next,
                      std::vector<std::weak_ptr<Node>> previous,
-                     const NodeOperationParameters& parameters, int location,
-                     const std::string& name, const std::vector<bool>& checks,
-                     Node comparable_node) {
+                     const NodeOperationParameters& parameters,
+                     std::vector<int> location, const std::string& name,
+                     const std::vector<bool>& checks, Node comparable_node) {
   EXPECT_THAT(comparable_node,
               testing::Field("input_files", &Node::input_data_definition_files,
                              input_files));
@@ -104,7 +106,7 @@ void CheckNodeFields(const std::vector<std::string>& input_files,
       comparable_node,
       testing::Field("parameters", &Node::operation_parameters, parameters));
   EXPECT_THAT(comparable_node,
-              testing::Field("location", &Node::module_location, location));
+              testing::Field("location", &Node::module_locations, location));
   EXPECT_THAT(comparable_node, testing::Field("name", &Node::node_name, name));
   EXPECT_THAT(comparable_node,
               testing::Field("checks", &Node::is_checked, checks));
@@ -123,18 +125,18 @@ void CheckNodeEquality(Node real_node, const Node& expected_node) {
       expected_node.input_data_definition_files,
       expected_node.output_data_definition_files, expected_node.operation_type,
       expected_node.next_nodes, expected_node.previous_nodes,
-      expected_node.operation_parameters, expected_node.module_location,
+      expected_node.operation_parameters, expected_node.module_locations,
       expected_node.node_name, expected_node.is_checked, std::move(real_node));
 }
 
 TEST_F(NodeSchedulerTest, MultipleAvailableNodesFindsCorrectNode) {
   auto expected_node = *query_node_a_;
-  expected_node.module_location = 1;
+  expected_node.module_locations = {1};
   ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}}};
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -154,14 +156,14 @@ TEST_F(NodeSchedulerTest, TwoNodesWereFoundWithDifferentRuns) {
 
   auto expected_first_node = *first_query;
   auto expected_second_node = *second_query;
-  expected_first_node.module_location = 1;
-  expected_second_node.module_location = 1;
+  expected_first_node.module_locations = {1};
+  expected_second_node.module_locations = {1};
   ModulesCombo expected_module_vector = {{first_query->operation_type, {}}};
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {first_query,
                                                        second_query};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -181,12 +183,12 @@ TEST_F(NodeSchedulerTest, TwoNodesWereFoundWithinTheSameRun) {
 
   auto expected_first_node = *query_node_a_;
   auto expected_second_node = *query_node_b_;
-  expected_first_node.module_location = 1;
-  expected_second_node.module_location = 2;
+  expected_first_node.module_locations = {1};
+  expected_second_node.module_locations = {2};
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_,
                                                        query_node_b_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -199,15 +201,15 @@ TEST_F(NodeSchedulerTest, TwoNodesWereFoundWithinTheSameRun) {
 TEST_F(NodeSchedulerTest, PassthroughNodeIsUsedInTheSameRun) {
   auto expected_first_node = *query_node_a_;
   auto expected_second_node = *passthrough_node_;
-  expected_first_node.module_location = 1;
-  expected_second_node.module_location = -1;
+  expected_first_node.module_locations = {1};
+  expected_second_node.module_locations = {};
 
   ModulesCombo expected_module_vector = {{query_node_a_->operation_type, {}}};
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_,
                                                        passthrough_node_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -223,9 +225,9 @@ TEST_F(NodeSchedulerTest, TwoPipelinedNodesWereFoundWithDifferentRuns) {
 
   auto expected_first_node = *query_node_a_;
   auto expected_second_node = *query_node_b_;
-  expected_first_node.module_location = 1;
+  expected_first_node.module_locations = {1};
   // expected_first_node.next_nodes = {nullptr};
-  expected_second_node.module_location = 1;
+  expected_second_node.module_locations = {1};
   expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
 
   // auto expected_filename = query_node_a_->node_name + "_0.csv";
@@ -238,7 +240,7 @@ TEST_F(NodeSchedulerTest, TwoPipelinedNodesWereFoundWithDifferentRuns) {
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -261,12 +263,12 @@ TEST_F(NodeSchedulerTest, TwoPipelinedNodesWereFoundWithinTheSameRun) {
 
   auto expected_first_node = *query_node_a_;
   auto expected_second_node = *query_node_b_;
-  expected_first_node.module_location = 1;
-  expected_second_node.module_location = 2;
+  expected_first_node.module_locations = {1};
+  expected_second_node.module_locations = {2};
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -289,9 +291,9 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfInputProjection) {
 
   auto expected_first_node = *query_node_a_;
   auto expected_second_node = *query_node_b_;
-  expected_first_node.module_location = 1;
+  expected_first_node.module_locations = {1};
   // expected_first_node.next_nodes = {nullptr};
-  expected_second_node.module_location = 1;
+  expected_second_node.module_locations = {1};
   expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
 
   // auto expected_filename = query_node_a_->node_name + "_0.csv";
@@ -304,7 +306,7 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfInputProjection) {
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -329,9 +331,9 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfOutputChecking) {
 
   auto expected_first_node = *query_node_a_;
   auto expected_second_node = *query_node_b_;
-  expected_first_node.module_location = 1;
+  expected_first_node.module_locations = {1};
   expected_first_node.next_nodes = {nullptr};
-  expected_second_node.module_location = 1;
+  expected_second_node.module_locations = {1};
   expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
 
   expected_second_node.input_data_definition_files = kDefaultFileNames;
@@ -342,7 +344,7 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfOutputChecking) {
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -367,9 +369,9 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfOutputProjection) {
 
   auto expected_first_node = *query_node_a_;
   auto expected_second_node = *query_node_b_;
-  expected_first_node.module_location = 1;
+  expected_first_node.module_locations = {1};
   // expected_first_node.next_nodes = {nullptr};
-  expected_second_node.module_location = 1;
+  expected_second_node.module_locations = {1};
   expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
 
   // auto expected_filename = query_node_a_->node_name + "_0.csv";
@@ -382,7 +384,7 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfOutputProjection) {
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -409,9 +411,9 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfIOProjection) {
 
   auto expected_first_node = *query_node_a_;
   auto expected_second_node = *query_node_b_;
-  expected_first_node.module_location = 1;
+  expected_first_node.module_locations = {1};
   // expected_first_node.next_nodes = {nullptr};
-  expected_second_node.module_location = 1;
+  expected_second_node.module_locations = {1};
   expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
 
   // auto expected_filename = query_node_a_->node_name + "_0.csv";
@@ -424,7 +426,7 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfIOProjection) {
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -453,9 +455,9 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfSecondOutputProjection) {
 
   auto expected_first_node = *query_node_a_;
   auto expected_second_node = *query_node_b_;
-  expected_first_node.module_location = 1;
+  expected_first_node.module_locations = {1};
   // expected_first_node.next_nodes = {nullptr, nullptr};
-  expected_second_node.module_location = 1;
+  expected_second_node.module_locations = {1};
   expected_second_node.previous_nodes = {std::weak_ptr<Node>()};
 
   expected_first_node.output_data_definition_files = {
@@ -472,7 +474,7 @@ TEST_F(NodeSchedulerTest, DifferentRunsBecauseOfSecondOutputProjection) {
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -508,14 +510,14 @@ TEST_F(NodeSchedulerTest, SameRunsDespiteIOProjection) {
 
   auto expected_first_node = *query_node_a_;
   auto expected_second_node = *query_node_b_;
-  expected_first_node.module_location = 1;
-  expected_second_node.module_location = 2;
+  expected_first_node.module_locations = {1};
+  expected_second_node.module_locations = {2};
   expected_first_node.output_data_definition_files = {
       query_node_a_->node_name + "_0.csv", ""};
 
   std::vector<std::shared_ptr<Node>> starting_nodes = {query_node_a_};
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -540,7 +542,7 @@ TEST_F(NodeSchedulerTest, LinkedNodesGetsUpdated) {
 
   expected_map.insert({query_node_a_->node_name, target_map});
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 
@@ -560,7 +562,7 @@ TEST_F(NodeSchedulerTest, LinkedNodesStaysSame) {
 
   auto expected_map = reuse_map_;
 
-  auto scheduling_results = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto scheduling_results = scheduler.FindAcceleratedQueryNodeSets(
       starting_nodes, base_supported_bitstreams_, base_existing_modules_,
       reuse_map_);
 

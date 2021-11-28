@@ -18,8 +18,8 @@ limitations under the License.
 
 #include <stdexcept>
 
-#include "setup_nodes_state.hpp"
 #include "logger.hpp"
+#include "setup_nodes_state.hpp"
 
 using orkhestrafs::dbmstodspi::ExecuteState;
 using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
@@ -31,12 +31,12 @@ using orkhestrafs::dbmstodspi::logging::LogLevel;
 auto ExecuteState::Execute(GraphProcessingFSMInterface* fsm)
     -> std::unique_ptr<StateInterface> {
   Log(LogLevel::kTrace, "Execute state");
-  if (fsm->IsRunReadyForExecution()) {
-    if (!fsm->IsRunValid()) {
-      // Fix stuff
-      throw std::runtime_error("Not implemented");
-    }
-  } else {
+  if (!fsm->IsRunReadyForExecution()) {
+  //  if (!fsm->IsRunValid()) {
+  //    // Fix stuff
+  //    throw std::runtime_error("Not implemented");
+  //  }
+  //} else {
     throw std::runtime_error("No nodes ready to execute!");
   }
 

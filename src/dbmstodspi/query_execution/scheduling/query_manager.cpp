@@ -16,22 +16,29 @@ limitations under the License.
 
 #include "query_manager.hpp"
 
+#include <algorithm>
+#include <stdexcept>
+
 #include "elastic_module_checker.hpp"
 #include "fpga_manager.hpp"
 #include "id_manager.hpp"
 #include "logger.hpp"
-#include "node_scheduler.hpp"
+#include "node_scheduler_interface.hpp"
 #include "query_acceleration_constants.hpp"
+#include "run_linker.hpp"
 #include "stream_data_parameters.hpp"
 #include "table_manager.hpp"
 #include "util.hpp"
+#include "table_data.hpp"
 
 using orkhestrafs::dbmstodspi::QueryManager;
+using orkhestrafs::dbmstodspi::RunLinker;
 using orkhestrafs::dbmstodspi::StreamDataParameters;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::query_acceleration_constants::kIOStreamParamDefs;
 using orkhestrafs::dbmstodspi::util::CreateReferenceVector;
+using orkhestrafs::core_interfaces::table_data::SortedSequence;
 
 auto QueryManager::GetCurrentLinks(
     const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
@@ -190,12 +197,17 @@ void QueryManager::AllocateInputMemoryBlocks(
 }
 
 auto QueryManager::CreateStreamParams(
+    bool is_input, const QueryNode& node,
+    AcceleratorLibraryInterface* accelerator_library,
     const std::vector<int>& stream_ids,
-    const std::vector<std::vector<int>>& node_parameters,
     const std::vector<std::unique_ptr<MemoryBlockInterface>>&
         allocated_memory_blocks,
     const std::vector<RecordSizeAndCount>& stream_sizes)
     -> std::vector<StreamDataParameters> {
+  auto node_parameters =
+      (is_input) ? node.operation_parameters.input_stream_parameters
+                 : node.operation_parameters.output_stream_parameters;
+
   std::vector<StreamDataParameters> parameters_for_acceleration;
 
   for (int stream_index = 0; stream_index < stream_ids.size(); stream_index++) {
@@ -213,6 +225,10 @@ auto QueryManager::CreateStreamParams(
       chunk_count = chunk_count_def.at(0);
     }
 
+    auto [channel_count, records_per_channel] =
+        accelerator_library->GetMultiChannelParams(
+            is_input, stream_index, node.operation_type,
+            node.operation_parameters.operation_parameters);
     StreamDataParameters current_stream_parameters = {
         stream_ids[stream_index],
         stream_sizes[stream_index].first,
@@ -220,15 +236,16 @@ auto QueryManager::CreateStreamParams(
         physical_address_ptr,
         node_parameters.at(stream_index * kIOStreamParamDefs.kStreamParamCount +
                            kIOStreamParamDefs.kProjectionOffset),
-        chunk_count};
+        chunk_count,
+        channel_count,
+        records_per_channel};
 
     parameters_for_acceleration.push_back(current_stream_parameters);
   }
-
   return parameters_for_acceleration;
 }
 
-void QueryManager::StoreStreamResultPrameters(
+void QueryManager::StoreStreamResultParameters(
     std::map<std::string, std::vector<StreamResultParameters>>&
         result_parameters,
     const std::vector<int>& stream_ids, const QueryNode& node,
@@ -249,6 +266,7 @@ void QueryManager::StoreStreamResultPrameters(
 
 auto QueryManager::SetupAccelerationNodesForExecution(
     DataManagerInterface* data_manager, MemoryManagerInterface* memory_manager,
+    AcceleratorLibraryInterface* accelerator_library,
     std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
         input_memory_blocks,
     std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
@@ -279,23 +297,29 @@ auto QueryManager::SetupAccelerationNodesForExecution(
         memory_manager, data_manager, input_memory_blocks[node->node_name],
         *node, output_stream_sizes, input_stream_sizes[node->node_name]);
 
-    auto input_params =
-        CreateStreamParams(input_ids[node->node_name],
-                           node->operation_parameters.input_stream_parameters,
-                           input_memory_blocks[node->node_name],
-                           input_stream_sizes[node->node_name]);
-    auto output_params =
-        CreateStreamParams(output_ids[node->node_name],
-                           node->operation_parameters.output_stream_parameters,
-                           output_memory_blocks[node->node_name],
-                           output_stream_sizes[node->node_name]);
+    auto input_params = CreateStreamParams(true, *node, accelerator_library,
+                                           input_ids[node->node_name],
+                                           input_memory_blocks[node->node_name],
+                                           input_stream_sizes[node->node_name]);
+    auto output_params = CreateStreamParams(
+        false, *node, accelerator_library, output_ids[node->node_name],
+        output_memory_blocks[node->node_name],
+        output_stream_sizes[node->node_name]);
 
-    query_nodes.push_back({std::move(input_params), std::move(output_params),
-                           node->operation_type, node->module_location,
-                           node->operation_parameters.operation_parameters});
-    StoreStreamResultPrameters(result_parameters, output_ids[node->node_name],
-                               *node, output_memory_blocks[node->node_name]);
+    AddQueryNodes(query_nodes, std::move(input_params),
+                  std::move(output_params), *node);
+
+    StoreStreamResultParameters(result_parameters, output_ids[node->node_name],
+                                *node, output_memory_blocks[node->node_name]);
   }
+
+  std::sort(query_nodes.begin(), query_nodes.end(),
+            [](AcceleratedQueryNode const& lhs,
+               AcceleratedQueryNode const& rhs) -> bool {
+              return lhs.operation_module_location <
+                     rhs.operation_module_location;
+            });
+
   return {query_nodes, result_parameters};
 }
 
@@ -307,32 +331,52 @@ void QueryManager::LoadNextBitstreamIfNew(
       config.required_memory_space.at(bitstream_file_name));
 }
 
+auto QueryManager::ScheduleNextSetOfNodes(
+    std::vector<std::shared_ptr<QueryNode>>& query_nodes,
+    const std::vector<std::string>& first_node_names,
+    std::vector<std::string>& starting_nodes,
+    std::vector<std::string>& processed_nodes,
+    std::map<std::string, SchedulingQueryNode>& graph,
+    std::map<std::string, TableMetadata>& tables,
+    AcceleratorLibraryInterface& drivers, const Config& config,
+    NodeSchedulerInterface& node_scheduler,
+    std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links)
+    -> std::queue<std::pair<ConfigurableModulesVector,
+                            std::vector<std::shared_ptr<QueryNode>>>> {
+  auto current_queue = node_scheduler.GetNextSetOfRuns(
+      query_nodes, config.pr_hw_library, first_node_names, starting_nodes,
+      processed_nodes, graph, drivers, tables);
+  return RunLinker::LinkPeripheralNodesFromGivenRuns(current_queue,
+                                                     all_reuse_links);
+}
+
 auto QueryManager::ScheduleUnscheduledNodes(
     std::vector<std::shared_ptr<QueryNode>> unscheduled_root_nodes,
-    Config config)
+    Config config, NodeSchedulerInterface& node_scheduler)
     -> std::pair<
         std::map<std::string, std::map<int, MemoryReuseTargets>>,
         std::queue<std::pair<ConfigurableModulesVector,
                              std::vector<std::shared_ptr<QueryNode>>>>> {
   std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links;
 
-  auto query_node_runs_queue = NodeScheduler::FindAcceleratedQueryNodeSets(
+  auto query_node_runs_queue = node_scheduler.FindAcceleratedQueryNodeSets(
       std::move(unscheduled_root_nodes), config.accelerator_library,
       config.module_library, all_reuse_links);
+
   return {all_reuse_links, query_node_runs_queue};
 }
 
-auto QueryManager::IsRunValid(std::vector<AcceleratedQueryNode> current_run)
-    -> bool {
-  for (const auto& node : current_run) {
-    if (!ElasticModuleChecker::IsRunValid(node.input_streams,
-                                          node.operation_type,
-                                          node.operation_parameters)) {
-      return false;
-    }
-  }
-  return true;
-}
+// auto QueryManager::IsRunValid(std::vector<AcceleratedQueryNode> current_run)
+//    -> bool {
+//  for (const auto& node : current_run) {
+//    if (!ElasticModuleChecker::IsRunValid(node.input_streams,
+//                                          node.operation_type,
+//                                          node.operation_parameters)) {
+//      return false;
+//    }
+//  }
+//  return true;
+//}
 
 void QueryManager::CheckTableData(const DataManagerInterface* data_manager,
                                   const TableData& expected_table,
@@ -462,11 +506,11 @@ void QueryManager::FreeMemoryBlocks(
   }
 
   for (const auto& [node_name, data_mapping] : reuse_links) {
-    for (const auto& [output_stream_index, targe_input_streams] :
+    for (const auto& [output_stream_index, target_input_streams] :
          data_mapping) {
-      if (targe_input_streams.size() == 1) {
-        auto target_node_name = targe_input_streams.at(0).first;
-        auto target_stream_index = targe_input_streams.at(0).second;
+      if (target_input_streams.size() == 1) {
+        auto target_node_name = target_input_streams.at(0).first;
+        auto target_stream_index = target_input_streams.at(0).second;
         removable_vectors.erase(
             std::remove(removable_vectors.begin(), removable_vectors.end(),
                         target_node_name),
@@ -478,7 +522,7 @@ void QueryManager::FreeMemoryBlocks(
             output_stream_sizes[node_name][output_stream_index];
       } else {
         for (const auto& [target_node_name, target_stream_index] :
-             targe_input_streams) {
+             target_input_streams) {
           removable_vectors.erase(
               std::remove(removable_vectors.begin(), removable_vectors.end(),
                           target_node_name),
@@ -517,7 +561,10 @@ void QueryManager::ExecuteAndProcessResults(
     std::map<std::string, std::vector<RecordSizeAndCount>>& output_stream_sizes,
     const std::map<std::string, std::vector<StreamResultParameters>>&
         result_parameters,
-    const std::vector<AcceleratedQueryNode>& execution_query_nodes) {
+    const std::vector<AcceleratedQueryNode>& execution_query_nodes,
+    std::map<std::string, TableMetadata>& scheduling_table_data,
+    const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links,
+    std::map<std::string, SchedulingQueryNode>& scheduling_graph) {
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
 
@@ -537,4 +584,145 @@ void QueryManager::ExecuteAndProcessResults(
 
   ProcessResults(data_manager, result_sizes, result_parameters,
                  output_memory_blocks, output_stream_sizes);
+
+  UpdateTableData(result_parameters, output_stream_sizes, scheduling_table_data,
+                  reuse_links, scheduling_graph);
+}
+
+void QueryManager::UpdateTableData(
+    const std::map<std::string, std::vector<StreamResultParameters>>&
+        result_parameters,
+    const std::map<std::string, std::vector<RecordSizeAndCount>>&
+        output_stream_sizes,
+    std::map<std::string, TableMetadata>& scheduling_table_data,
+    const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links,
+    std::map<std::string, SchedulingQueryNode>& scheduling_graph) {
+  // TODO: This needs to get tested!!!
+  // Also this is assuming that there always is a link. There might not be.
+  for (const auto& [node_name, stream_parameters] : result_parameters) {
+    for (int stream_index = 0; stream_index < stream_parameters.size();
+         stream_index++) {
+      auto filename = stream_parameters.at(stream_index).filename;
+      TableMetadata current_data = {
+          output_stream_sizes.at(node_name).at(stream_index).first,
+          output_stream_sizes.at(node_name).at(stream_index).second,
+          {}};
+
+      // Just in case another table has to be created. Untested as the sorted
+      // status is a mess!
+      if (reuse_links.find(node_name) != reuse_links.end()) {
+        for (const auto& target : reuse_links.at(node_name).at(stream_index)) {
+          if (scheduling_graph.find(target.first) != scheduling_graph.end()) {
+            auto target_filename =
+                scheduling_graph.at(target.first).data_tables.at(target.second);
+            if (filename.empty()) {
+              scheduling_table_data.at(target_filename).record_count =
+                  current_data.record_count;
+              scheduling_table_data.at(target_filename).record_size =
+                  current_data.record_size;
+            } else {
+              if (const auto& [it, inserted] =
+                      scheduling_table_data.emplace(filename, current_data);
+                  !inserted) {
+                scheduling_table_data.at(filename).record_count =
+                    current_data.record_count;
+                scheduling_table_data.at(filename).record_size =
+                    current_data.record_size;
+              } else {
+                scheduling_graph.at(target.first)
+                    .data_tables.at(target.second) = filename;
+              }
+            }
+            auto next_node_data = scheduling_graph.at(target.first);
+            CropSortedStatus(scheduling_table_data,
+                             next_node_data.data_tables.at(target.second));
+            auto next_node_table = scheduling_table_data.at(
+                next_node_data.data_tables.at(target.second));
+          }
+        }
+      }
+    }
+  }
+}
+
+void QueryManager::CropSortedStatus(
+    std::map<std::string, TableMetadata>& scheduling_table_data,
+    std::string filename) {
+  auto current_data = scheduling_table_data.at(filename);
+  if (!current_data.sorted_status.empty()) {
+    if (current_data.sorted_status.back().start_position +
+            current_data.sorted_status.back().length >
+        current_data.record_count) {
+      std::vector<SortedSequence> cropped_sequences;
+      for (const auto& sequence : current_data.sorted_status) {
+        if (sequence.start_position + sequence.length <=
+            current_data.record_count) {
+          cropped_sequences.push_back(sequence);
+        } else if (sequence.start_position < current_data.record_count) {
+          cropped_sequences.push_back(
+              {sequence.start_position,
+               current_data.record_count - sequence.start_position});
+        }
+      }
+      scheduling_table_data.at(filename).sorted_status = cropped_sequences;
+    }
+  }
+}
+
+void QueryManager::AddQueryNodes(
+    std::vector<AcceleratedQueryNode>& query_nodes_vector,
+    std::vector<StreamDataParameters>&& input_params,
+    std::vector<StreamDataParameters>&& output_params, const QueryNode& node) {
+  auto sorted_module_locations = node.module_locations;
+  std::sort(sorted_module_locations.begin(), sorted_module_locations.end());
+  auto no_io_input_params = input_params;
+  for (auto& stream_param : no_io_input_params) {
+    stream_param.physical_address = nullptr;
+  }
+  auto no_io_output_params = output_params;
+  for (auto& stream_param : no_io_output_params) {
+    stream_param.physical_address = nullptr;
+  }
+  if (sorted_module_locations.size() == 1) {
+    query_nodes_vector.push_back(
+        {std::move(input_params),
+         std::move(output_params),
+         node.operation_type,
+         sorted_module_locations.at(0),
+         {},
+         node.operation_parameters.operation_parameters});
+  } else if (node.operation_parameters.operation_parameters.empty()) {
+    // Multiple composed modules
+    for (int i = 0; i < sorted_module_locations.size(); i++) {
+      auto current_input = (i == 0) ? input_params : no_io_input_params;
+      auto current_output = (i == sorted_module_locations.size() - 1)
+                                ? output_params
+                                : no_io_output_params;
+      query_nodes_vector.push_back(
+          {current_input, current_output, node.operation_type,
+           sorted_module_locations.at(i), sorted_module_locations,
+           node.operation_parameters.operation_parameters});
+    }
+  } else {
+    // Multiple resource elastic modules.
+    auto all_module_params = node.operation_parameters.operation_parameters;
+    if (all_module_params.at(0).at(0) != sorted_module_locations.size()) {
+      throw std::runtime_error("Wrong parameters given!");
+    }
+    int offset = all_module_params.at(0).at(1);
+    for (int i = 0; i < sorted_module_locations.size(); i++) {
+      auto current_input = (i == 0) ? input_params : no_io_input_params;
+      auto current_output = (i == sorted_module_locations.size() - 1)
+                                ? output_params
+                                : no_io_output_params;
+      query_nodes_vector.push_back(
+          {current_input,
+           current_output,
+           node.operation_type,
+           sorted_module_locations.at(i),
+           sorted_module_locations,
+           {all_module_params.begin() + 1 + offset * i,
+            all_module_params.begin() + 1 + offset * (i + 1)}});
+    }
+  }
 }

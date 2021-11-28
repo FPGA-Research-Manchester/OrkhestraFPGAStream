@@ -20,6 +20,11 @@ limitations under the License.
 #include <string>
 #include <utility>
 #include <vector>
+#include <memory>
+
+#include "memory_block_interface.hpp"
+
+using orkhestrafs::core_interfaces::MemoryBlockInterface;
 
 namespace orkhestrafs::core_interfaces::table_data {
 
@@ -52,6 +57,24 @@ struct TableData {
                comparable_table.table_column_label_vector &&
            table_data_vector == comparable_table.table_data_vector;
   }
+};
+
+/**
+ * @brief Struct to hold information about a sorted sequence
+ */
+struct SortedSequence {
+  int start_position;
+  int length;
+  // TODO: add sorted by column
+};
+
+/**
+ * @brief Struct to hold information about a database table.
+ */
+struct TableMetadata {
+  int record_size;
+  int record_count;
+  std::vector<SortedSequence> sorted_status;
 };
 
 }  // namespace orkhestrafs::core_interfaces::table_data

@@ -23,14 +23,17 @@ limitations under the License.
 #include <utility>
 
 #include "accelerated_query_node.hpp"
+#include "accelerator_library_interface.hpp"
 #include "config.hpp"
 #include "data_manager_interface.hpp"
 #include "fpga_manager_interface.hpp"
 #include "memory_block_interface.hpp"
 #include "memory_manager_interface.hpp"
+#include "node_scheduler_interface.hpp"
 #include "query_scheduling_data.hpp"
 
 using orkhestrafs::core_interfaces::Config;
+using orkhestrafs::core_interfaces::MemoryBlockInterface;
 using orkhestrafs::core_interfaces::query_scheduling_data::
     ConfigurableModulesVector;
 using orkhestrafs::core_interfaces::query_scheduling_data::MemoryReuseTargets;
@@ -39,8 +42,9 @@ using orkhestrafs::core_interfaces::query_scheduling_data::RecordSizeAndCount;
 using orkhestrafs::core_interfaces::query_scheduling_data::
     StreamResultParameters;
 using orkhestrafs::dbmstodspi::AcceleratedQueryNode;
+using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
 using orkhestrafs::dbmstodspi::FPGAManagerInterface;
-using orkhestrafs::dbmstodspi::MemoryBlockInterface;
+using orkhestrafs::dbmstodspi::NodeSchedulerInterface;
 
 namespace orkhestrafs::dbmstodspi {
 /**
@@ -67,6 +71,7 @@ class QueryManagerInterface {
    * @brief Method to create nodes for execution from scheduled nodes.
    * @param data_manager Manager to handle table data and different data types.
    * @param memory_manager Manager to handle memory blocks.
+   * @param accelerator_library Library of accelerators and their drivers.
    * @param input_memory_blocks Memory for input streams.
    * @param output_memory_blocks Memory for output streams.
    * @param input_stream_sizes Map for input stream size parameters.
@@ -78,6 +83,7 @@ class QueryManagerInterface {
   virtual auto SetupAccelerationNodesForExecution(
       DataManagerInterface* data_manager,
       MemoryManagerInterface* memory_manager,
+      AcceleratorLibraryInterface* accelerator_library,
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
           input_memory_blocks,
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
@@ -109,7 +115,7 @@ class QueryManagerInterface {
    */
   virtual auto ScheduleUnscheduledNodes(
       std::vector<std::shared_ptr<QueryNode>> unscheduled_root_nodes,
-      Config config)
+      Config config, NodeSchedulerInterface& node_scheduler)
       -> std::pair<
           std::map<std::string, std::map<int, MemoryReuseTargets>>,
           std::queue<std::pair<ConfigurableModulesVector,
@@ -119,8 +125,8 @@ class QueryManagerInterface {
    * @param current_run Nodes ready for execution.
    * @return Boolean flag noting if the run is valid.
    */
-  virtual auto IsRunValid(std::vector<AcceleratedQueryNode> current_run)
-      -> bool = 0;
+  //virtual auto IsRunValid(std::vector<AcceleratedQueryNode> current_run)
+  //    -> bool = 0;
   /**
    * @brief Execute given nodes.
    * @param fpga_manager Manager to setup and operate modules.
@@ -129,6 +135,9 @@ class QueryManagerInterface {
    * @param output_stream_sizes Map for output stream size parameters.
    * @param result_parameters Saved parameters for result reading.
    * @param execution_query_nodes Nodes to execute
+   * @param scheduling_table_data Table sizes data for scheduling.
+   * @param reuse_links To find next nodes.
+   * @param scheduling_graph To update next nodes.
    */
   virtual void ExecuteAndProcessResults(
       FPGAManagerInterface* fpga_manager,
@@ -139,7 +148,10 @@ class QueryManagerInterface {
           output_stream_sizes,
       const std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
-      const std::vector<AcceleratedQueryNode>& execution_query_nodes) = 0;
+      const std::vector<AcceleratedQueryNode>& execution_query_nodes,
+      std::map<std::string, TableMetadata>& scheduling_table_data, 
+      const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links, 
+      std::map<std::string, SchedulingQueryNode>& scheduling_graph) = 0;
 
   /**
    * @brief Method to move reusable output memory blocks to input maps. And the
@@ -166,6 +178,33 @@ class QueryManagerInterface {
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
           reuse_links,
       const std::vector<std::string>& scheduled_node_names) = 0;
+
+  /**
+   * Method to schedule next set of nodes based on PR graph nodes.
+   * @param query_nodes Root query nodes
+   * @param first_node_names Node names which are constrained to first pos
+   * @param starting_nodes Available query node names
+   * @param processed_nodes Processed node names
+   * @param graph Graph of all node names
+   * @param tables Map of all tables
+   * @param drivers Driver library
+   * @param config Config values
+   * @param node_scheduler The scheduler object
+   * @param all_reuse_links All links between runs.
+   * @return Queue of sets of runs.
+   */
+  virtual auto ScheduleNextSetOfNodes(
+      std::vector<std::shared_ptr<QueryNode>>& query_nodes,
+      const std::vector<std::string>& first_node_names,
+      std::vector<std::string>& starting_nodes,
+      std::vector<std::string>& processed_nodes,
+      std::map<std::string, SchedulingQueryNode>& graph,
+      std::map<std::string, TableMetadata>& tables,
+      AcceleratorLibraryInterface& drivers, const Config& config,
+      NodeSchedulerInterface& node_scheduler,
+      std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links)
+      -> std::queue<std::pair<ConfigurableModulesVector,
+                              std::vector<std::shared_ptr<QueryNode>>>> = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

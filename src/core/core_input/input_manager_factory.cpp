@@ -20,10 +20,10 @@ limitations under the License.
 
 #include "config_creator.hpp"
 #include "graph_creator.hpp"
+#include "graph_creator_interface.hpp"
 #include "input_config_reader.hpp"
 #include "input_manager.hpp"
 #include "rapidjson_reader.hpp"
-#include "graph_creator_interface.hpp"
 
 using orkhestrafs::core::core_input::ConfigCreator;
 using orkhestrafs::core::core_input::InputManager;

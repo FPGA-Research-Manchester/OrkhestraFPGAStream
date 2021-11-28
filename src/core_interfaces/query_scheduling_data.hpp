@@ -61,7 +61,7 @@ struct QueryNode {
   /// Operation parameters to configure the streams with modules.
   NodeOperationParameters operation_parameters;
   /// Location of the module to be processing this node
-  int module_location = -1;
+  std::vector<int> module_locations;
   /// Name of the node for automatic file naming
   std::string node_name;
   /// Flag vector setting stream results to be checked
@@ -84,7 +84,7 @@ struct QueryNode {
            operation_type == rhs.operation_type &&
            next_nodes == rhs.next_nodes &&
            operation_parameters == rhs.operation_parameters &&
-           module_location == rhs.module_location &&
+           module_locations == rhs.module_locations &&
            node_name == rhs.node_name && is_checked == rhs.is_checked;
   }
 

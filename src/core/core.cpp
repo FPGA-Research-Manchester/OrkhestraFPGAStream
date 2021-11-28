@@ -27,11 +27,11 @@ using orkhestrafs::core::Core;
 using orkhestrafs::core::core_execution::ExecutionManagerFactory;
 using orkhestrafs::core::core_input::InputManagerFactory;
 
-void Core::Run(std::string input_filename,
-                                   std::string config_filename) {
+void Core::Run(std::string input_filename, std::string config_filename) {
   // Could be done as a one liner but additional future logic is expected here
   // to be passed to the factories.
   auto input = InputManagerFactory::GetManager()->Parse(
       std::move(input_filename), std::move(config_filename));
-  ExecutionManagerFactory::GetManager(input.second)->Execute(std::move(input.first));
+  ExecutionManagerFactory::GetManager(input.second)
+      ->Execute(std::move(input.first));
 }

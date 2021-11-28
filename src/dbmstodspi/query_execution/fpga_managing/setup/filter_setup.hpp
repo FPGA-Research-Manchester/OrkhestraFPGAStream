@@ -18,7 +18,9 @@ limitations under the License.
 #include <string>
 #include <vector>
 
+#include "acceleration_module_setup_interface.hpp"
 #include "filter_interface.hpp"
+#include "reducing_module_setup.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -26,8 +28,17 @@ namespace orkhestrafs::dbmstodspi {
  * @brief Filter setup class which calculates the correct configuration data to
  * be written into the filter configuration registers.
  */
-class FilterSetup {
+class FilterSetup : public virtual AccelerationModuleSetupInterface,
+                    public ReducingModuleSetup {
  public:
+  void SetupModule(AccelerationModule& acceleration_module,
+                   const AcceleratedQueryNode& module_parameters) override;
+  auto CreateModule(MemoryManagerInterface* memory_manager, int module_position)
+      -> std::unique_ptr<AccelerationModule> override;
+  auto GetCapacityRequirement(
+      std::vector<std::vector<int>> operation_parameters)
+      -> std::vector<int> override;
+
   /**
    * @brief Setup filter module according to the input and output streams and
    * the given operation parameters.
@@ -52,6 +63,16 @@ class FilterSetup {
       const std::vector<std::vector<int>>& operation_parameters);
 
  private:
+  static const int kChunkIdIndex = 0;
+  static const int kDataPositionIndex = 1;
+  static const int kComparisonCountIndex = 2;
+  static const int kNumberOfParameterVectors = 4;
+
+  static const int kCompareFunctionOffset = 1;
+  static const int kCompareRefgerenceValuesOffset = 2;
+  static const int kLiteralTypeOffset = 3;
+  static const int kDNFClauseIdsOffset = 4;
+
   struct FilterComparison {
     module_config_values::FilterCompareFunctions compare_function;
     std::vector<int> compare_reference_values;

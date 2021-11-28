@@ -16,7 +16,34 @@ limitations under the License.
 
 #include "aggregation_sum_setup.hpp"
 
+#include "aggregation_sum.hpp"
+#include "aggregation_sum_interface.hpp"
+#include "logger.hpp"
+
 using orkhestrafs::dbmstodspi::AggregationSumSetup;
+
+using orkhestrafs::dbmstodspi::AggregationSum;
+using orkhestrafs::dbmstodspi::AggregationSumInterface;
+using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
+
+void AggregationSumSetup::SetupModule(
+    AccelerationModule& acceleration_module,
+    const AcceleratedQueryNode& module_parameters) {
+  Log(LogLevel::kInfo,
+      "Configuring sum on pos " +
+          std::to_string(module_parameters.operation_module_location));
+  AggregationSumSetup::SetupAggregationSum(
+      dynamic_cast<AggregationSumInterface&>(acceleration_module),
+      module_parameters.input_streams[0].stream_id,
+      module_parameters.operation_parameters);
+}
+
+auto AggregationSumSetup::CreateModule(MemoryManagerInterface* memory_manager,
+                                       int module_postion)
+    -> std::unique_ptr<AccelerationModule> {
+  return std::make_unique<AggregationSum>(memory_manager, module_postion);
+}
 
 void AggregationSumSetup::SetupAggregationSum(
     AggregationSumInterface& aggregation_module, int stream_id,

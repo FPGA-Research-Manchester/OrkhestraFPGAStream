@@ -339,8 +339,13 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 
+#CLion
+
+cmake-build-debug/
+
 # Custom added
 /out
 /run-clang-tidy.py
-/resources/benchmark/part.zip
-/resources/benchmark/lineitem.zip
+**/part.zip
+**/lineitem.zip
+

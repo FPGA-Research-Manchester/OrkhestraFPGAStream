@@ -47,22 +47,22 @@ limitations under the License.
 #include "query_acceleration_constants.hpp"
 
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
+using orkhestrafs::dbmstodspi::AcceleratedQueryNode;
 using orkhestrafs::dbmstodspi::FPGAManager;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 
 void FPGAManager::SetupQueryAcceleration(
     const std::vector<AcceleratedQueryNode>& query_nodes) {
-  // Doesn't reset configuration. Unused modules should be configured to be
-  // unused.
-  dma_engine_.GlobalReset();
+  // TODO: Doesn't reset configuration. Unused modules should be configured to
+  // be unused.
+  dma_engine_->GlobalReset();
   read_back_modules_.clear();
   read_back_parameters_.clear();
 
-  // ila_module_ = std::make_optional (ILA(memory_manager_));
-  /*if (ila_module_) {
-    ila_module_.value().startAxiILA();
-  }*/
+  // if (ila_module_) {
+  //  ila_module_->StartAxiILA();
+  //}
 
   std::vector<StreamDataParameters> input_streams;
   std::vector<StreamDataParameters> output_streams;
@@ -78,123 +78,28 @@ void FPGAManager::SetupQueryAcceleration(
   }
 
   // MISSING PIECE OF LOGIC HERE...
-  // TODO(Kaspar): Need to check for stream specification validity and
-  // intermediate stream specifications have to be merged with the IO stream
-  // specs.
+  // TODO(Kaspar): Need to check for stream specification validity.
 
   if (input_streams.empty() || output_streams.empty()) {
     throw std::runtime_error("Input or output streams missing!");
   }
-  DMASetup::SetupDMAModule(dma_engine_, input_streams, true);
-  DMASetup::SetupDMAModule(dma_engine_, output_streams, false);
+  dma_setup_.SetupDMAModule(*dma_engine_, input_streams, output_streams);
 
-  FPGAManager::dma_engine_.StartController(
-      true, FPGAManager::input_streams_active_status_);
+  dma_engine_->StartController(true, input_streams_active_status_);
 
   if (ila_module_) {
-    ila_module_.value().StartILAs();
+    ila_module_->StartILAs();
   }
 
   for (const auto& query_node : query_nodes) {
-    // TODO(Kaspar): For each of the operations different properties have to be
-    // written down to add classifications. The operation_parameters can be
-    // generalised based on classifiactions
-
-    // Assumptions are taken that the input and output streams are defined
-    // correctly and that the correct amount of streams have been given for each
-    // operation.
-
-    // Make it possible to configure a module to be unused.
-    auto log_level = LogLevel::kInfo;
-    switch (query_node.operation_type) {
-      case QueryOperationType::kFilter: {
-        Log(log_level,
-            "Configuring filter on pos " +
-                std::to_string(query_node.operation_module_location));
-        Filter filter_module(memory_manager_,
-                             query_node.operation_module_location);
-        FilterSetup::SetupFilterModule(filter_module,
-                                       query_node.input_streams[0].stream_id,
-                                       query_node.output_streams[0].stream_id,
-                                       query_node.operation_parameters);
-        break;
-      }
-      case QueryOperationType::kJoin: {
-        Log(log_level,
-            "Configuring join on pos " +
-                std::to_string(query_node.operation_module_location));
-        Join join_module(memory_manager_, query_node.operation_module_location);
-        JoinSetup::SetupJoinModule(
-            join_module, query_node.input_streams[0].stream_id,
-            GetStreamRecordSize(query_node.input_streams[0]),
-            query_node.input_streams[1].stream_id,
-            GetStreamRecordSize(query_node.input_streams[1]),
-            query_node.output_streams[0].stream_id,
-            query_node.output_streams[0].input_chunks_per_record,
-            query_node.operation_parameters.at(0).at(0));
-        break;
-      }
-      case QueryOperationType::kMergeSort: {
-        Log(log_level,
-            "Configuring merge sort on pos " +
-                std::to_string(query_node.operation_module_location));
-        MergeSort merge_sort_module(memory_manager_,
-                                    query_node.operation_module_location);
-        MergeSortSetup::SetupMergeSortModule(
-            merge_sort_module, query_node.input_streams[0].stream_id,
-            GetStreamRecordSize(query_node.input_streams[0]), 0, true);
-        /*MergeSort merge_sort_module1(
-            memory_manager_, query_node.operation_module_location+1);
-        MergeSortSetup::SetupMergeSortModule(
-            merge_sort_module1, query_node.input_streams[0].stream_id,
-            GetStreamRecordSize(query_node.input_streams[0]), 64, false);*/
-        break;
-      }
-      case QueryOperationType::kLinearSort: {
-        Log(log_level,
-            "Configuring linear sort on pos " +
-                std::to_string(query_node.operation_module_location));
-        LinearSort linear_sort_module(memory_manager_,
-                                      query_node.operation_module_location);
-        LinearSortSetup::SetupLinearSortModule(
-            linear_sort_module, query_node.input_streams[0].stream_id,
-            GetStreamRecordSize(query_node.input_streams[0]));
-        break;
-      }
-      case QueryOperationType::kAddition: {
-        Log(log_level,
-            "Configuring addition on pos " +
-                std::to_string(query_node.operation_module_location));
-        Addition addition_module(memory_manager_,
-                                 query_node.operation_module_location);
-        AdditionSetup::SetupAdditionModule(
-            addition_module, query_node.input_streams[0].stream_id,
-            query_node.operation_parameters);
-        break;
-      }
-      case QueryOperationType::kMultiplication: {
-        Log(log_level,
-            "Configuring multiplication on pos " +
-                std::to_string(query_node.operation_module_location));
-        Multiplication multiplication_module(
-            memory_manager_, query_node.operation_module_location);
-        MultiplicationSetup::SetupMultiplicationModule(
-            multiplication_module, {query_node.input_streams[0].stream_id},
-            query_node.operation_parameters);
-        break;
-      }
-      case QueryOperationType::kAggregationSum: {
-        Log(log_level,
-            "Configuring sum on pos " +
-                std::to_string(query_node.operation_module_location));
-        auto aggregation_module = std::make_unique<AggregationSum>(
-            memory_manager_, query_node.operation_module_location);
-        AggregationSumSetup::SetupAggregationSum(
-            *aggregation_module, query_node.input_streams[0].stream_id,
-            query_node.operation_parameters);
-        read_back_modules_.push_back(std::move(aggregation_module));
+    module_library_->SetupOperation(query_node);
+    auto readback_modules = module_library_->ExportLastModulesIfReadback();
+    if (!readback_modules.empty()) {
+      for (int i = 0; i < readback_modules.size(); i++) {
+        read_back_modules_.push_back(std::move(readback_modules.at(i)));
+        // Don't know how this will work out with combined readback modules as
+        // we don't have any at the moment.
         read_back_parameters_.push_back(query_node.operation_parameters.at(1));
-        break;
       }
     }
   }
@@ -209,19 +114,7 @@ void FPGAManager::FindIOStreams(
         stream_status_array) {
   for (const auto& current_stream : all_streams) {
     if (current_stream.physical_address) {
-      if (is_multichannel_stream) {
-        // Assumption is that there is only one multichannel stream in this node
-        // which gets the multi channel parameters
-        found_streams.push_back(
-            {current_stream.stream_id, current_stream.stream_record_size,
-             current_stream.stream_record_count,
-             current_stream.physical_address,
-             current_stream.stream_specification,
-             current_stream.input_chunks_per_record, operation_parameters[0][0],
-             operation_parameters[0][1]});
-      } else {
-        found_streams.push_back(current_stream);
-      }
+      found_streams.push_back(current_stream);
       stream_status_array[current_stream.stream_id] = true;
     }
   }
@@ -245,7 +138,7 @@ auto FPGAManager::RunQueryAcceleration()
   WaitForStreamsToFinish();
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-#ifdef _FPGA_AVAILABLE
+#ifdef FPGA_AVAILABLE
   ReadResultsFromRegisters();
 #endif
 
@@ -277,36 +170,32 @@ void FPGAManager::FindActiveStreams(
 }
 
 void FPGAManager::WaitForStreamsToFinish() {
-  FPGAManager::dma_engine_.StartController(
-      false, FPGAManager::output_streams_active_status_);
+  dma_engine_->StartController(false, output_streams_active_status_);
 
-#ifdef _FPGA_AVAILABLE
-  while (!(FPGAManager::dma_engine_.IsControllerFinished(true) &&
-           FPGAManager::dma_engine_.IsControllerFinished(false))) {
+#ifdef FPGA_AVAILABLE
+  while (!(dma_engine_->IsControllerFinished(true) &&
+           dma_engine_->IsControllerFinished(false))) {
     // sleep(3);
     // std::cout << "Processing..." << std::endl;
     // std::cout << "Input:"
-    //          << FPGAManager::dma_engine_.IsInputControllerFinished()
+    //          << dma_engine_.IsInputControllerFinished()
     //          << std::endl;
     // std::cout << "Output:"
-    //          << FPGAManager::dma_engine_.IsOutputControllerFinished()
+    //          << dma_engine_.IsOutputControllerFinished()
     //          << std::endl;
   }
 #endif
 }
 
 void FPGAManager::ReadResultsFromRegisters() {
-  if (!FPGAManager::read_back_modules_.empty()) {
+  if (!read_back_modules_.empty()) {
     // Assuming there are equal number of read back modules and parameters
-    for (int module_index = 0;
-         module_index < FPGAManager::read_back_modules_.size();
+    for (int module_index = 0; module_index < read_back_modules_.size();
          module_index++) {
-      for (auto const& position :
-           FPGAManager::read_back_parameters_.at(module_index)) {
+      for (auto const& position : read_back_parameters_.at(module_index)) {
         std::cout << "SUM: " << std::fixed << std::setprecision(2)
                   << ReadModuleResultRegisters(
-                         std::move(
-                             FPGAManager::read_back_modules_.at(module_index)),
+                         std::move(read_back_modules_.at(module_index)),
                          position)
                   << std::endl;
       }
@@ -319,14 +208,14 @@ auto FPGAManager::GetResultingStreamSizes(
     const std::vector<int>& active_output_stream_ids)
     -> std::array<int, query_acceleration_constants::kMaxIOStreamCount> {
   for (auto stream_id : active_input_stream_ids) {
-    FPGAManager::input_streams_active_status_[stream_id] = false;
+    input_streams_active_status_[stream_id] = false;
   }
   std::array<int, query_acceleration_constants::kMaxIOStreamCount>
       result_sizes{};
   for (auto stream_id : active_output_stream_ids) {
-    FPGAManager::output_streams_active_status_[stream_id] = false;
+    output_streams_active_status_[stream_id] = false;
     result_sizes[stream_id] =
-        dma_engine_.GetControllerStreamSize(false, stream_id);
+        dma_engine_->GetControllerStreamSize(false, stream_id);
   }
   return result_sizes;
 }
@@ -334,42 +223,30 @@ auto FPGAManager::GetResultingStreamSizes(
 void FPGAManager::PrintDebuggingData() {
 #ifdef _FPGA_AVAILABLE
   auto log_level = LogLevel::kDebug;
-  Log(log_level,
-      "Runtime: " + std::to_string(FPGAManager::dma_engine_.GetRuntime()));
-  Log(log_level,
-      "ValidReadCount: " +
-          std::to_string(FPGAManager::dma_engine_.GetValidReadCyclesCount()));
-  Log(log_level,
-      "ValidWriteCount: " +
-          std::to_string(FPGAManager::dma_engine_.GetValidWriteCyclesCount()));
-  if (FPGAManager::ila_module_) {
+  Log(log_level, "Runtime: " + std::to_string(dma_engine_->GetRuntime()));
+  Log(log_level, "ValidReadCount: " +
+                     std::to_string(dma_engine_->GetValidReadCyclesCount()));
+  Log(log_level, "ValidWriteCount: " +
+                     std::to_string(dma_engine_->GetValidWriteCyclesCount()));
+  if (ila_module_) {
     std::cout << "======================================================ILA 0 "
                  "DATA ======================================================="
               << std::endl;
-    FPGAManager::ila_module_.value().PrintILAData(0, 2048);
+    ila_module_->PrintILAData(0, 2048);
     std::cout << "======================================================ILA 1 "
                  "DATA ======================================================="
               << std::endl;
-    FPGAManager::ila_module_.value().PrintILAData(1, 2048);
+    ila_module_->PrintILAData(1, 2048);
     std::cout << "======================================================ILA 2 "
                  "DATA ======================================================="
               << std::endl;
-    FPGAManager::ila_module_.value().PrintDMAILAData(2048);
+    ila_module_->PrintDMAILAData(2048);
   }
 #endif
 }
 
-auto FPGAManager::GetStreamRecordSize(
-    const StreamDataParameters& stream_parameters) -> int {
-  if (stream_parameters.stream_specification.empty()) {
-    return stream_parameters.stream_record_size;
-  }
-  return stream_parameters.stream_specification.size();
-}
-
 auto FPGAManager::ReadModuleResultRegisters(
-    std::unique_ptr<ReadBackModuleInterface> read_back_module, int position)
-    -> double {
+    std::unique_ptr<ReadBackModule> read_back_module, int position) -> double {
   // Reversed reading because the data is reversed.
   uint32_t high_bits = read_back_module->ReadResult(
       ((query_acceleration_constants::kDatapathWidth - 1) - position * 2));

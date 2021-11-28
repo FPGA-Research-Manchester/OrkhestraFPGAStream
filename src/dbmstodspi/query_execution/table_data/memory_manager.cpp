@@ -22,16 +22,16 @@ limitations under the License.
 
 #include "logger.hpp"
 
-#ifdef _FPGA_AVAILABLE
+#ifdef FPGA_AVAILABLE
 #include "mmio.h"
 #include "udma_memory_block.hpp"
 #else
 #include "virtual_memory_block.hpp"
 #endif
 
+using orkhestrafs::dbmstodspi::MemoryManager;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
-using orkhestrafs::dbmstodspi::MemoryManager;
 
 MemoryManager::~MemoryManager() = default;
 
@@ -39,7 +39,7 @@ void MemoryManager::LoadBitstreamIfNew(const std::string& bitstream_name,
                                        const int register_space_size) {
   if (bitstream_name != loaded_bitstream_ ||
       register_space_size != loaded_register_space_size_) {
-#ifdef _FPGA_AVAILABLE
+#ifdef FPGA_AVAILABLE
     Log(LogLevel::kDebug, "Loading " + bitstream_name);
 
     std::chrono::steady_clock::time_point begin =
@@ -85,7 +85,7 @@ auto MemoryManager::GetVirtualRegisterAddress(int offset)
   if (!loaded_register_space_size_) {
     throw std::runtime_error("No bitstream loaded!");
   }
-#ifdef _FPGA_AVAILABLE
+#ifdef FPGA_AVAILABLE
   return &(register_memory_block_[offset / 4]);
 #else
   return &(register_space_[offset]);
@@ -97,7 +97,7 @@ auto MemoryManager::AllocateMemoryBlock()
   if (memory_block_count_++ >= kMaxPossibleAllocations) {
     throw std::runtime_error("Can't allocate any more memory!");
   }
-#ifdef _FPGA_AVAILABLE
+#ifdef FPGA_AVAILABLE
   return std::make_unique<UDMAMemoryBlock>(
       udma_repo_.device(memory_block_count_ - 1));
 #else
@@ -114,7 +114,7 @@ void MemoryManager::SetFPGATo300MHz() { SetFPGAClockSpeed(0x10500); }
 void MemoryManager::SetFPGATo100MHz() { SetFPGAClockSpeed(0x10F00); }
 
 void MemoryManager::SetFPGAClockSpeed(int speed_value) {
-#ifdef _FPGA_AVAILABLE
+#ifdef FPGA_AVAILABLE
   auto clock_memory_map = mmioGetMmap("/dev/mem", 0xFF5E0000, 1024);
   if (clock_memory_map.fd == -1)
     throw std::runtime_error("Failed to mmap clock area");
@@ -129,6 +129,34 @@ void MemoryManager::SetFPGAClockSpeed(int speed_value) {
   *pl_clk0 = value;
   value = value | 0x01000000;
   *pl_clk0 = value;
+#else
+  throw std::runtime_error("NoFPGAConnected!");
+#endif
+}
+
+void MemoryManager::UnSetPCAP() {
+#ifdef FPGA_AVAILABLE
+  auto pcap_memory_map = mmioGetMmap("/dev/mem", 0xFFCA3000, 256);
+  if (pcap_memory_map.fd == -1)
+    throw std::runtime_error("Failed to mmap clock area");
+  auto pcap_area_pointer = (uint32_t*)pcap_memory_map.mmap;
+
+  volatile uint32_t* pcap_ptr = &(pcap_area_pointer[8 / 4]);
+  uint32_t pcap_value = *pcap_ptr;
+  pcap_value &= ~(1 << 0);
+  *pcap_ptr = pcap_value;
+
+  pcap_value = *pcap_ptr;
+  auto mask_value = 0x00000001;
+  pcap_value = mask_value & pcap_value;
+
+  if ((pcap_value != 0x00000000)) {
+    throw std::runtime_error(
+        "PCAP_CTRL[0] was not cleared.  Bit[0] should be 0: " +
+        std::to_string(pcap_value));
+  } else {
+    Log(LogLevel::kDebug, "PCAP is disabled, ICAP is enabled");
+  }
 #else
   throw std::runtime_error("NoFPGAConnected!");
 #endif

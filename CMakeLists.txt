@@ -32,11 +32,9 @@ include(FetchContent)
 if (ENABLE_TESTS)
     include(CTest)
 endif()
-
-if (NOT WIN32)
+if (ENABLE_FPGA)
     add_subdirectory(src/fos)
-    # Assuming that dev work isn't done on a unix machine
-    add_definitions (-D_FPGA_AVAILABLE)
+    add_definitions(-DFPGA_AVAILABLE)
 endif()
 
 # Global dependency

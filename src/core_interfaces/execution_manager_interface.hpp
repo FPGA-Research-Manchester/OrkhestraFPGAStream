@@ -33,10 +33,10 @@ class ExecutionManagerInterface {
   virtual ~ExecutionManagerInterface() = default;
   /**
    * @brief Method to execute the operation nodes in the given graph.
-   * @param execution_grpah Graph representing operation nodes and their
+   * @param execution_graph Graph representing operation nodes and their
    * dependencies.
    */
   virtual void Execute(
-      std::unique_ptr<ExecutionPlanGraphInterface> execution_grpah) = 0;
+      std::unique_ptr<ExecutionPlanGraphInterface> execution_graph) = 0;
 };
 }  // namespace orkhestrafs::core_interfaces

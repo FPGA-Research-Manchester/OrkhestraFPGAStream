@@ -14,14 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "fpga_manager_factory.hpp"
+#pragma once
 
-#include "fpga_manager.hpp"
+#include "acceleration_module_setup_interface.hpp"
 
-using orkhestrafs::dbmstodspi::FPGAManagerFactory;
+namespace orkhestrafs::dbmstodspi {
 
-auto FPGAManagerFactory::CreateFPGAManager(
-    MemoryManagerInterface* memory_manager)
-    -> std::unique_ptr<FPGAManagerInterface> {
-  return std::make_unique<FPGAManager>(memory_manager);
-}
+/**
+ * @brief Class for noting which module has to get it's input form the DMA.
+ */
+class FirstModuleSetup : public virtual AccelerationModuleSetupInterface {
+ public:
+  auto IsConstrainedToFirstInPipeline() -> bool override;
+};
+}  // namespace orkhestrafs::dbmstodspi

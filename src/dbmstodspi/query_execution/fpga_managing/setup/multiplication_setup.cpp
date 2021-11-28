@@ -16,7 +16,34 @@ limitations under the License.
 
 #include "multiplication_setup.hpp"
 
+#include "logger.hpp"
+#include "multiplication.hpp"
+#include "multiplication_interface.hpp"
+
 using orkhestrafs::dbmstodspi::MultiplicationSetup;
+
+using orkhestrafs::dbmstodspi::Multiplication;
+using orkhestrafs::dbmstodspi::MultiplicationInterface;
+using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
+
+void MultiplicationSetup::SetupModule(
+    AccelerationModule& acceleration_module,
+    const AcceleratedQueryNode& module_parameters) {
+  Log(LogLevel::kInfo,
+      "Configuring multiplication on pos " +
+          std::to_string(module_parameters.operation_module_location));
+  MultiplicationSetup::SetupMultiplicationModule(
+      dynamic_cast<MultiplicationInterface&>(acceleration_module),
+      {module_parameters.input_streams[0].stream_id},
+      module_parameters.operation_parameters);
+}
+
+auto MultiplicationSetup::CreateModule(MemoryManagerInterface* memory_manager,
+                                       int module_postion)
+    -> std::unique_ptr<AccelerationModule> {
+  return std::make_unique<Multiplication>(memory_manager, module_postion);
+}
 
 void MultiplicationSetup::SetupMultiplicationModule(
     MultiplicationInterface& multiplication_module,

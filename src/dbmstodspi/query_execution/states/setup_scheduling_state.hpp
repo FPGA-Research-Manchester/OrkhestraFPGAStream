@@ -16,24 +16,19 @@ limitations under the License.
 
 #pragma once
 
-#include <cstdint>
+#include "state_interface.hpp"
+
+using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
 
 namespace orkhestrafs::dbmstodspi {
-
 /**
- * @brief Interface class for modules which need to get it's result read from
- * the configuration registers.
+ * @brief State for setting up nodes.
  */
-class ReadBackModuleInterface {
+class SetupSchedulingState : public StateInterface {
  public:
-  virtual ~ReadBackModuleInterface() = default;
+  ~SetupSchedulingState() override = default;
 
-  /**
-   * @brief Read the result of the module.
-   * @param data_position Bus index of the interface to read from.
-   * @return 32 bit value written in the result register of the module.
-  */
-  virtual auto ReadResult(int data_position) -> uint32_t = 0;
+  auto Execute(GraphProcessingFSMInterface* fsm)
+      -> std::unique_ptr<StateInterface> override;
 };
-
 }  // namespace orkhestrafs::dbmstodspi

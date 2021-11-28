@@ -79,5 +79,15 @@ class RapidJSONReader : public JSONReaderInterface {
   auto ReadInputDefinition(std::string json_filename)
       -> std::map<std::string,
                   JSONReaderInterface::InputNodeParameters> override;
+
+  /**
+   * @brief Method to read table meta data.
+   * @param json_filename JSON file
+   * @return Return table sizes and sorted statuses of currently available tables.
+   */
+  auto ReadAllTablesData(std::string json_filename)
+      -> std::vector<TableMetaDataStringMap> override;
+
+  auto ReadHWLibraryData(std::string json_filename) -> HWLibraryStringMap override;
 };
 }  // namespace orkhestrafs::dbmstodspi

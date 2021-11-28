@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright 2021 University of Manchester
 
 Licensed under the Apache License, Version 2.0(the "License");
@@ -14,12 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "execution_manager.hpp"
+#pragma once
 
-using orkhestrafs::core::core_execution::ExecutionManager;
+#include "acceleration_module_setup_interface.hpp"
 
-std::vector<std::string> ExecutionManager::Execute(
-    std::pair<std::unique_ptr<ExecutionPlanGraphInterface>, Config>
-        execution_input) {
-  return {execution_input.first->exportData()};
-}
+namespace orkhestrafs::dbmstodspi {
+
+/**
+ * @brief Class for noting which module can reduce data.
+ */
+class ReducingModuleSetup : public virtual AccelerationModuleSetupInterface {
+ public:
+  auto IsReducingData() -> bool override;
+};
+}  // namespace orkhestrafs::dbmstodspi

@@ -36,6 +36,9 @@ class MockQueryManager : public QueryManagerInterface {
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>;
   using MappedRecordSizes =
       std::map<std::string, std::vector<RecordSizeAndCount>>;
+  using TableMap = std::map<std::string, TableMetadata>;
+  using SchedulingNodeMap = std::map<std::string, SchedulingQueryNode>;
+  using QueryNodeVector = std::vector<std::shared_ptr<QueryNode>>;
 
  public:
   MOCK_METHOD(
@@ -47,6 +50,7 @@ class MockQueryManager : public QueryManagerInterface {
       ExecutionReadyNodes, SetupAccelerationNodesForExecution,
       (DataManagerInterface * data_manager,
        MemoryManagerInterface* memory_manager,
+       AcceleratorLibraryInterface* accelerator_library,
        MappedMemoryBlocks& input_memory_blocks,
        MappedMemoryBlocks& output_memory_blocks,
        MappedRecordSizes& input_stream_sizes,
@@ -59,17 +63,19 @@ class MockQueryManager : public QueryManagerInterface {
               (override));
   MOCK_METHOD(ScheduledNodes, ScheduleUnscheduledNodes,
               (std::vector<std::shared_ptr<QueryNode>> unscheduled_root_nodes,
-               Config config),
+               Config config, NodeSchedulerInterface& node_scheduler),
               (override));
-  MOCK_METHOD(bool, IsRunValid, (std::vector<AcceleratedQueryNode> current_run),
-              (override));
+  /*MOCK_METHOD(bool, IsRunValid, (std::vector<AcceleratedQueryNode>
+     current_run), (override));*/
   MOCK_METHOD(void, ExecuteAndProcessResults,
               (FPGAManagerInterface * fpga_manager,
                const DataManagerInterface* data_manager,
                MappedMemoryBlocks& output_memory_blocks,
                MappedRecordSizes& output_stream_sizes,
                const MappedResultParameters& result_parameters,
-               const std::vector<AcceleratedQueryNode>& execution_query_nodes),
+               const std::vector<AcceleratedQueryNode>& execution_query_nodes,
+               TableMap& scheduling_table_data, const ReuseLinks& reuse_links,
+               SchedulingNodeMap& scheduling_graph),
               (override));
   MOCK_METHOD(void, FreeMemoryBlocks,
               (MemoryManagerInterface * memory_manager,
@@ -80,4 +86,15 @@ class MockQueryManager : public QueryManagerInterface {
                const ReuseLinks& reuse_links,
                const std::vector<std::string>& scheduled_node_names),
               (override));
+  MOCK_METHOD(
+      (std::queue<std::pair<ConfigurableModulesVector, QueryNodeVector>>),
+      ScheduleNextSetOfNodes,
+      (QueryNodeVector & query_nodes,
+       const std::vector<std::string>& first_node_names,
+       std::vector<std::string>& starting_nodes,
+       std::vector<std::string>& processed_nodes, SchedulingNodeMap& graph,
+       TableMap& tables, AcceleratorLibraryInterface& drivers,
+       const Config& config, NodeSchedulerInterface& node_scheduler,
+       ReuseLinks& all_reuse_links),
+      (override));
 };

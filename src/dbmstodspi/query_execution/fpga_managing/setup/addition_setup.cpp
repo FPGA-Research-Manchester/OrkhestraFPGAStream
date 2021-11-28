@@ -16,7 +16,33 @@ limitations under the License.
 
 #include "addition_setup.hpp"
 
+#include "addition.hpp"
+#include "addition_interface.hpp"
+#include "logger.hpp"
+
 using orkhestrafs::dbmstodspi::AdditionSetup;
+
+using orkhestrafs::dbmstodspi::Addition;
+using orkhestrafs::dbmstodspi::AdditionInterface;
+using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
+
+void AdditionSetup::SetupModule(AccelerationModule& acceleration_module,
+                                const AcceleratedQueryNode& module_parameters) {
+  Log(LogLevel::kInfo,
+      "Configuring addition on pos " +
+          std::to_string(module_parameters.operation_module_location));
+  AdditionSetup::SetupAdditionModule(
+      dynamic_cast<AdditionInterface&>(acceleration_module),
+      module_parameters.input_streams[0].stream_id,
+      module_parameters.operation_parameters);
+}
+
+auto AdditionSetup::CreateModule(MemoryManagerInterface* memory_manager,
+                                 int module_postion)
+    -> std::unique_ptr<AccelerationModule> {
+  return std::make_unique<Addition>(memory_manager, module_postion);
+}
 
 void AdditionSetup::SetupAdditionModule(
     AdditionInterface& addition_module, int stream_id,
@@ -29,8 +55,7 @@ void AdditionSetup::SetupAdditionModule(
 }
 
 // Assuming input vectors are correct size!
-auto AdditionSetup::ReverseLiteralValues(
-    std::vector<int> input_constant_values)
+auto AdditionSetup::ReverseLiteralValues(std::vector<int> input_constant_values)
     -> std::array<std::pair<uint32_t, uint32_t>, 8> {
   std::array<std::pair<uint32_t, uint32_t>, 8> literal_values;
   for (int i = literal_values.size() - 1; i >= 0; i--) {

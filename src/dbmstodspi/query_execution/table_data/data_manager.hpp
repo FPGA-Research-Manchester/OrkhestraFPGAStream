@@ -28,7 +28,7 @@ limitations under the License.
 
 using orkhestrafs::core_interfaces::table_data::ColumnDataType;
 using orkhestrafs::core_interfaces::table_data::TableData;
-using orkhestrafs::dbmstodspi::MemoryBlockInterface;
+using orkhestrafs::core_interfaces::MemoryBlockInterface;
 
 namespace orkhestrafs::dbmstodspi {
 

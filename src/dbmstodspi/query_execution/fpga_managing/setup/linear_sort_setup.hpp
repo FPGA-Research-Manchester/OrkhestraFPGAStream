@@ -15,7 +15,12 @@ limitations under the License.
 */
 
 #pragma once
+#include "acceleration_module_setup_interface.hpp"
 #include "linear_sort_interface.hpp"
+#include "sorting_module_setup.hpp"
+#include "table_data.hpp"
+
+using orkhestrafs::core_interfaces::table_data::SortedSequence;
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -23,9 +28,29 @@ namespace orkhestrafs::dbmstodspi {
  * @brief Linear sort setup class which will calculate the configuration data to
  * setup the module
  */
-class LinearSortSetup {
+class LinearSortSetup : public virtual AccelerationModuleSetupInterface,
+                        public SortingModuleSetup {
  private:
+  auto GetSortedSequenceWithCapacity(int bitstream_capacity, int record_count)
+      -> std::vector<SortedSequence>;
+
  public:
+  void SetupModule(AccelerationModule& acceleration_module,
+                   const AcceleratedQueryNode& module_parameters) override;
+  auto CreateModule(MemoryManagerInterface* memory_manager, int module_position)
+      -> std::unique_ptr<AccelerationModule> override;
+  auto GetMinSortingRequirementsForTable(const TableMetadata& table_data)
+      -> std::vector<int> override;
+  auto GetWorstCaseProcessedTables(
+      const std::vector<int>& min_capacity,
+      const std::vector<std::string>& input_tables,
+      const std::map<std::string, TableMetadata>& data_tables)
+      -> std::map<std::string, TableMetadata> override;
+  auto UpdateDataTable(const std::vector<int>& module_capacity,
+                       const std::vector<std::string>& input_table_names,
+                       const std::map<std::string, TableMetadata>& data_tables,
+                       std::map<std::string, TableMetadata>& resulting_tables)
+      -> bool override;
   /**
    * @brief Setup linear sort module by giving the stream data to be sorted.
    * @param linear_sort_module Module instance to access the configuration

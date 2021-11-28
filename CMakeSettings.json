@@ -10,7 +10,6 @@
       "cmakeCommandArgs": "-DENABLE_TESTS=True",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
-      "variables": [],
       "clangTidyChecks": "-*,modernize-*,google-*,cppcoreguidelines-*,bugprone-*,readability-*,misc-*,performance-*,portability-*",
       "enableMicrosoftCodeAnalysis": false,
       "enableClangTidyCodeAnalysis": true
@@ -33,8 +32,7 @@
       "rsyncCommandArgs": "-t --delete --delete-excluded",
       "remoteCopyBuildOutput": false,
       "remoteCopySourcesMethod": "rsync",
-      "addressSanitizerRuntimeFlags": "detect_leaks=0",
-      "variables": []
+      "addressSanitizerRuntimeFlags": "detect_leaks=0"
     },
     {
       "name": "Remote ZCU102 FOS",
@@ -42,7 +40,7 @@
       "configurationType": "Debug",
       "cmakeExecutable": "cmake",
       "remoteCopySourcesExclusionList": [ ".vs", ".git", "out" ],
-      "cmakeCommandArgs": "-DENABLE_TESTS=False",
+      "cmakeCommandArgs": "-DENABLE_TESTS=False -DENABLE_FPGA=True",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "linux_arm" ],
@@ -54,8 +52,7 @@
       "rsyncCommandArgs": "-t --delete --delete-excluded",
       "remoteCopyBuildOutput": false,
       "remoteCopySourcesMethod": "rsync",
-      "addressSanitizerRuntimeFlags": "detect_leaks=0",
-      "variables": []
+      "addressSanitizerRuntimeFlags": "detect_leaks=0"
     },
     {
       "name": "Remote ZCU102 FOS w/ tests",
@@ -75,8 +72,7 @@
       "rsyncCommandArgs": "-t --delete --delete-excluded",
       "remoteCopyBuildOutput": false,
       "remoteCopySourcesMethod": "rsync",
-      "addressSanitizerRuntimeFlags": "detect_leaks=0",
-      "variables": []
+      "addressSanitizerRuntimeFlags": "detect_leaks=0"
     }
   ]
 }

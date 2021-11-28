@@ -16,10 +16,40 @@ limitations under the License.
 
 #include "join_setup.hpp"
 
+#include "join.hpp"
+#include "join_interface.hpp"
+#include "logger.hpp"
 #include "query_acceleration_constants.hpp"
 #include "stream_parameter_calculator.hpp"
 
 using orkhestrafs::dbmstodspi::JoinSetup;
+
+using orkhestrafs::dbmstodspi::Join;
+using orkhestrafs::dbmstodspi::JoinInterface;
+using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
+
+void JoinSetup::SetupModule(AccelerationModule& acceleration_module,
+                            const AcceleratedQueryNode& module_parameters) {
+  Log(LogLevel::kInfo,
+      "Configuring join on pos " +
+          std::to_string(module_parameters.operation_module_location));
+  JoinSetup::SetupJoinModule(
+      dynamic_cast<JoinInterface&>(acceleration_module),
+      module_parameters.input_streams[0].stream_id,
+      GetStreamRecordSize(module_parameters.input_streams[0]),
+      module_parameters.input_streams[1].stream_id,
+      GetStreamRecordSize(module_parameters.input_streams[1]),
+      module_parameters.output_streams[0].stream_id,
+      module_parameters.output_streams[0].input_chunks_per_record,
+      module_parameters.operation_parameters.at(0).at(0));
+}
+
+auto JoinSetup::CreateModule(MemoryManagerInterface* memory_manager,
+                             int module_postion)
+    -> std::unique_ptr<AccelerationModule> {
+  return std::make_unique<Join>(memory_manager, module_postion);
+}
 
 void JoinSetup::SetupJoinModule(JoinInterface& join_module,
                                 int first_input_stream_id,
@@ -81,4 +111,44 @@ void JoinSetup::SetupTimeMultiplexer(JoinInterface& join_module,
       }
     }
   }
+}
+
+// TODO: Should also check the node parameter to know what does the crossbar do.
+// Should also preserve the sorted status somehow.
+auto JoinSetup::GetWorstCaseProcessedTables(
+    const std::vector<int>& min_capacity,
+    const std::vector<std::string>& input_tables,
+    const std::map<std::string, TableMetadata>& data_tables)
+    -> std::map<std::string, TableMetadata> {
+  int max_record_count = 0;
+  int new_record_size = 0;
+  std::string new_table_name;
+  for (const auto& table_name : input_tables) {
+    new_record_size += data_tables.at(table_name).record_size;
+    if (data_tables.at(table_name).record_count > max_record_count) {
+      new_table_name = table_name;
+      max_record_count = data_tables.at(table_name).record_count;
+    }
+  }
+  std::map<std::string, TableMetadata> resulting_table;
+  resulting_table.insert({new_table_name + "_after_join",
+                          {new_record_size, max_record_count, {}}});
+  return resulting_table;
+}
+
+auto JoinSetup::InputHasToBeSorted() -> bool { return true; }
+
+// Just pick the largest table name for now.
+auto JoinSetup::GetResultingTables(const std::map<std::string, TableMetadata>& tables,
+                        const std::vector<std::string>& table_names)
+    -> std::vector<std::string> {
+  std::string max_table_name = "";
+  int max_size = 0;
+  for (const auto& table_name : table_names) {
+    if (tables.at(table_name).record_count >= max_size) {
+      max_table_name = table_name;
+      max_size = tables.at(table_name).record_count;
+    }
+  }
+  return {max_table_name};
 }

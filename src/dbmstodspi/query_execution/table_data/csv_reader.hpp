@@ -24,7 +24,7 @@ namespace orkhestrafs::dbmstodspi {
  * @brief Class to read given CSV data files row by row either as string data or
  * 32bit integer data.
  */
-class CSVReader : public CSVReaderInterface{
+class CSVReader : public CSVReaderInterface {
  private:
   /**
    * @brief Check if the given memory block is large enough for the data in the
@@ -57,7 +57,7 @@ class CSVReader : public CSVReaderInterface{
    * @return String data vector
    */
   auto ReadTableData(const std::string& filename, char separator,
-                            int& rows_already_read)
+                     int& rows_already_read)
       -> std::vector<std::vector<std::string>> override;
   /**
    * @brief Write data directly from filesystem to given memory block.

@@ -24,7 +24,7 @@ limitations under the License.
 namespace orkhestrafs::dbmstodspi {
 /**
  * @brief Implemented by #FPGAManager
-*/
+ */
 class FPGAManagerInterface {
  public:
   virtual ~FPGAManagerInterface() = default;

@@ -15,26 +15,16 @@ limitations under the License.
 */
 
 #pragma once
-#include <memory>
-#include <queue>
 #include <set>
-#include <utility>
-#include <vector>
 
-#include "operation_types.hpp"
-#include "query_scheduling_data.hpp"
-
-using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
-using orkhestrafs::core_interfaces::query_scheduling_data::
-    ConfigurableModulesVector;
-using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
+#include "node_scheduler_interface.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 
 /**
  * @brief Class to schedule nodes to groups of different FPGA runs.
  */
-class NodeScheduler {
+class OnePlanNodeScheduler : public NodeSchedulerInterface {
  public:
   /**
    * @brief Find groups of accelerated query nodes which can be run in the same
@@ -48,7 +38,7 @@ class NodeScheduler {
    * @return Queue of groups of accelerated query
    * nodes to be accelerated next.
    */
-  static auto FindAcceleratedQueryNodeSets(
+  auto FindAcceleratedQueryNodeSets(
       std::vector<std::shared_ptr<QueryNode>> starting_nodes,
       const std::map<ConfigurableModulesVector, std::string>
           &supported_accelerator_bitstreams,
@@ -58,7 +48,20 @@ class NodeScheduler {
                std::map<int, std::vector<std::pair<std::string, int>>>>
           &linked_nodes)
       -> std::queue<std::pair<ConfigurableModulesVector,
-                              std::vector<std::shared_ptr<QueryNode>>>>;
+                              std::vector<std::shared_ptr<QueryNode>>>> override;
+
+  auto GetNextSetOfRuns(
+      std::vector<std::shared_ptr<QueryNode>>& query_nodes,
+      const std::map<QueryOperationType, OperationPRModules> &hw_library,
+      const std::vector<std::string> &first_node_names,
+      std::vector<std::string> &starting_nodes,
+      std::vector<std::string> &processed_nodes,
+      std::map<std::string, SchedulingQueryNode> &graph,
+      AcceleratorLibraryInterface &drivers,
+      std::map<std::string, TableMetadata> &tables)
+      -> std::queue<
+          std::pair<ConfigurableModulesVector,
+                    std::vector<std::shared_ptr<QueryNode>>>> override;
 
  private:
   static void CheckExternalLinks(

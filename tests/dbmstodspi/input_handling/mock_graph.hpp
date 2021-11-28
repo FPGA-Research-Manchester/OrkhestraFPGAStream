@@ -16,15 +16,16 @@ limitations under the License.
 
 #pragma once
 
-#include "gmock/gmock.h"
 #include "execution_plan_graph_interface.hpp"
+#include "gmock/gmock.h"
 
 using orkhestrafs::core_interfaces::ExecutionPlanGraphInterface;
 
 class MockGraph : public ExecutionPlanGraphInterface {
  public:
-
-  MOCK_METHOD(std::vector<std::shared_ptr<QueryNode>>, ExportRootNodes,
-              (), (override));
+  MOCK_METHOD(std::vector<std::shared_ptr<QueryNode>>, ExportRootNodes, (),
+              (override));
   MOCK_METHOD(bool, IsEmpty, (), (override));
+  MOCK_METHOD(std::vector<QueryNode*>, GetRootNodesPtrs, (), (override));
+  MOCK_METHOD(std::vector<QueryNode*>, GetAllNodesPtrs, (), (override));
 };

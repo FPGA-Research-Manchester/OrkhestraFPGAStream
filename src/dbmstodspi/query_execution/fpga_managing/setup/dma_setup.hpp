@@ -20,7 +20,7 @@ limitations under the License.
 
 #include "dma.hpp"
 #include "dma_setup_data.hpp"
-#include "stream_data_parameters.hpp"
+#include "dma_setup_interface.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -28,8 +28,27 @@ namespace orkhestrafs::dbmstodspi {
  * @brief Class to setup DMA configuration data and write the data into the DMA
  * registers.
  */
-class DMASetup {
+class DMASetup : public DMASetupInterface {
  public:
+  /**
+   * @brief Method to setup both input and output streams.
+   * @param dma_module Module to access registers.
+   * @param input_streams Input stream parameters.
+   * @param output_streams Output stream parameters.
+   */
+  void SetupDMAModule(
+      DMAInterface &dma_module,
+      const std::vector<StreamDataParameters> &input_streams,
+      const std::vector<StreamDataParameters> &output_streams) override;
+  /**
+   * @brief Method to create a DMA module
+   * @param memory_manager Manager to access register space
+   * @return Smart pointer to the DMA module.
+   */
+  auto CreateDMAModule(MemoryManagerInterface *memory_manager)
+      -> std::unique_ptr<DMAInterface> override;
+
+ private:
   /**
    * @brief Based on the input stream parameters calculate DMA setup data and
    * then write the configuration data to the memory mapped registers.
@@ -40,11 +59,9 @@ class DMASetup {
    * @param is_input_stream Boolean saying if the given streams are input or
    * output streams.
    */
-  static void SetupDMAModule(DMAInterface &dma_engine,
-                             const std::vector<StreamDataParameters> &streams,
-                             bool is_input_stream);
-
- private:
+  static void SetupDMAModuleDirection(
+      DMAInterface &dma_engine,
+      const std::vector<StreamDataParameters> &streams, bool is_input_stream);
   static auto CalculateMultiChannelStreamRecordCountPerChannel(
       int stream_record_count, int max_channel_count, int record_size) -> int;
   static void SetUpDMAIOStream(const DMASetupData &stream_setup_data,

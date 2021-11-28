@@ -1,8 +1,12 @@
 {
-	"module_combinations": ["filter", "join", "single_merge", "linear_sort", "add", "mul", "sum", "empty", "double_merge", "sort_join_filter", "sort_join", "filter_join", "filter_sort", "add_mul", "add_mul_sum", "join_filter"],
+	"module_combinations": ["filter", "join", "single_merge", "linear_sort", "add", "mul", "sum", "empty", "double_merge", "sort_join_filter", "sort_join", "filter_join", "filter_sort", "add_mul", "add_mul_sum", "join_filter", "filter_sort_different", "sort_join_filter_different", "sort_join_filter_different_more", "filter_different"],
 	"filter": [{
 		"name": "kFilter",
 		"capacity": [32, 4]
+	}],
+    "filter_different": [{
+		"name": "kFilter",
+		"capacity": [8, 1]
 	}],
 	"join": [{
 		"name": "kJoin",
@@ -48,6 +52,26 @@
 		"name": "kFilter",
 		"capacity": [32, 4]
 	}],
+    "sort_join_filter_different": [{
+		"name": "kMergeSort",
+		"capacity": [64]
+	}, {
+		"name": "kJoin",
+		"capacity": []
+	}, {
+		"name": "kFilter",
+		"capacity": [16, 4]
+	}],
+    "sort_join_filter_different_more": [{
+		"name": "kMergeSort",
+		"capacity": [32]
+	}, {
+		"name": "kJoin",
+		"capacity": []
+	}, {
+		"name": "kFilter",
+		"capacity": [16, 4]
+	}],
 	"sort_join": [{
 		"name": "kMergeSort",
 		"capacity": [64]
@@ -65,6 +89,13 @@
 	"filter_sort": [{
 		"name": "kFilter",
 		"capacity": [32, 4]
+	}, {
+		"name": "kLinearSort",
+		"capacity": [1024]
+	}],
+    "filter_sort_different": [{
+		"name": "kFilter",
+		"capacity": [16, 2]
 	}, {
 		"name": "kLinearSort",
 		"capacity": [1024]
@@ -95,6 +126,7 @@
 	}],
 	"accelerators": {
 		"filter": "DSPI_filtering",
+    "filter_different": "DSPI_filtering",
 		"join": "DSPI_joining",
 		"single_merge": "DSPI_merge_sorting",
 		"double_merge": "DSPI_double_merge_sorting",
@@ -104,11 +136,14 @@
 		"sum": "DSPI_aggregation_sum",
 		"empty": "DSPI_empty",
 		"sort_join_filter": "DSPI_sort_join_filter",
+    "sort_join_filter_different": "DSPI_sort_join_filter",
+    "sort_join_filter_different_more": "DSPI_sort_join_filter",
 		"sort_join": "missing",
 		"filter_join": "DSPI_filter_join",
 		"filter_sort": "DSPI_filtering_linear_sort",
+    "filter_sort_different": "DSPI_filtering_linear_sort",
 		"add_mul_sum": "DSPI_add_mul_sum",
 		"add_mul": "missing",
-        "join_filter": "DSPI_join_filter"
+    "join_filter": "DSPI_join_filter"
 	}
 }

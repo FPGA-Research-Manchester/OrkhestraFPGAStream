@@ -23,17 +23,14 @@ using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
 
 class MockGraphProcessingFSM : public GraphProcessingFSMInterface {
  public:
-
-  MOCK_METHOD(void, SetFinishedFlag,
-              (), (override));
+  MOCK_METHOD(void, SetFinishedFlag, (), (override));
   MOCK_METHOD(bool, IsUnscheduledNodesGraphEmpty, (), (override));
-  MOCK_METHOD(void, ScheduleUnscheduledNodes, (),
-              (override));
-  MOCK_METHOD(bool, IsARunScheduled,
-              (),
-              (override));
+  MOCK_METHOD(void, ScheduleUnscheduledNodes, (), (override));
+  MOCK_METHOD(bool, IsARunScheduled, (), (override));
   MOCK_METHOD(void, SetupNextRunData, (), (override));
   MOCK_METHOD(bool, IsRunReadyForExecution, (), (override));
-  MOCK_METHOD(bool, IsRunValid, (), (override));
+  //MOCK_METHOD(bool, IsRunValid, (), (override));
   MOCK_METHOD(void, ExecuteAndProcessResults, (), (override));
+  MOCK_METHOD(void, PopAndPrintCurrentPlan, (), (override));
+  MOCK_METHOD(void, SetupSchedulingData, (), (override));
 };

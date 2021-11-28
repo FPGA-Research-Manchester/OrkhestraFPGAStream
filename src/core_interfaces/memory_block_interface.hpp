@@ -17,7 +17,7 @@ limitations under the License.
 #pragma once
 #include <cstdint>
 
-namespace orkhestrafs::dbmstodspi {
+namespace orkhestrafs::core_interfaces {
 
 /**
  * @brief Interface class for accessing DDR memory where the table data is

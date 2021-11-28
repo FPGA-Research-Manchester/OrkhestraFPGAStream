@@ -18,24 +18,23 @@ limitations under the License.
 
 #include <memory>
 
-#include "memory_manager_interface.hpp"
+#include "accelerator_library_interface.hpp"
 #include "fpga_manager_interface.hpp"
+#include "memory_manager_interface.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 
 /**
- * @brief Class to create FPGA managers with the desired driver sets
+ * @brief Interface class for describing classes which can create driver
+ * objects.
  */
-class FPGAManagerFactory {
+class FPGADriverFactoryInterface {
  public:
-  /**
-   * @brief Factory method to create FPGA managers.
-   * @param memory_manager Pointer to the memory manager for writing to memory
-   * mapped registers.
-   * @return FPGA manager object to execute the FPGA.
-   */
-  static auto CreateFPGAManager(MemoryManagerInterface* memory_manager)
-      -> std::unique_ptr<FPGAManagerInterface>;
+  virtual ~FPGADriverFactoryInterface() = default;
+  virtual auto CreateFPGAManager(AcceleratorLibraryInterface* driver_library)
+      -> std::unique_ptr<FPGAManagerInterface> = 0;
+  virtual auto CreateAcceleratorLibrary(MemoryManagerInterface* memory_manager)
+      -> std::unique_ptr<AcceleratorLibraryInterface> = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi
