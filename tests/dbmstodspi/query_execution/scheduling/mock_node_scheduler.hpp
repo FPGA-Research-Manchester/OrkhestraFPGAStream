@@ -26,9 +26,6 @@ class MockNodeScheduler : public NodeSchedulerInterface {
   using NodeVector = std::vector<std::shared_ptr<QueryNode>>;
   using ResultingPlanQueue =
       std::queue<std::pair<ConfigurableModulesVector, NodeVector>>;
-  using LinkedNodesMap =
-      std::map<std::string,
-               std::map<int, std::vector<std::pair<std::string, int>>>>;
   using AcceleratorMap = std::map<ConfigurableModulesVector, std::string>;
   using LinkedNodesMap =
       std::map<std::string,
