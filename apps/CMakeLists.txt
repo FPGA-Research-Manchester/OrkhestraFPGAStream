@@ -131,7 +131,26 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/slow_benchmark_config.ini
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/tables_data.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/pr_hw_library.json)
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/pr_hw_library.json
+    
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/partial_Filter.bin
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/partial_Filter.json
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/partial_RTM_94.bin
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/partial_RTM_94.json
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/partial_TAA_64.bin
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/partial_TAA_64.json
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/partial_TAA_91.bin
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/partial_TAA_91.json
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/partial_TAA_94.bin
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/partial_TAA_94.json
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/static.bin
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/static.json
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/static_cheat.bin
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/static_cheat.json
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/staticwithILA.bin
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/staticwithILA.json
+
+    ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/setupUdma.pl)
 
 add_executable (OrkhestraFPGAStream main.cpp ${data})
 
