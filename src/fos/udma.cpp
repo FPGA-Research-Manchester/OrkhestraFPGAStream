@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-const std::string sysfsRoot = "/sys/class/udmabuf";
+const std::string sysfsRoot = "/sys/class/u-dma-buf";
 const std::string devfsRoot = "/dev";
 
 // reads hex or dec int from file
