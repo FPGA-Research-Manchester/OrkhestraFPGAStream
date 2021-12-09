@@ -56,4 +56,7 @@ class MockDataManager : public DataManagerInterface {
   MOCK_METHOD(void, WriteTableData,
               (const TableData& table_data, const std::string& filename),
               (const, override));
+  MOCK_METHOD(void, WriteRawTableData,
+              (const TableData& table_data, const std::string& filename),
+              (const, override));
 };

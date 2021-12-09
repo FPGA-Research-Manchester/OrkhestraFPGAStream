@@ -26,9 +26,9 @@ limitations under the License.
 #include "csv_reader_interface.hpp"
 #include "data_manager_interface.hpp"
 
+using orkhestrafs::core_interfaces::MemoryBlockInterface;
 using orkhestrafs::core_interfaces::table_data::ColumnDataType;
 using orkhestrafs::core_interfaces::table_data::TableData;
-using orkhestrafs::core_interfaces::MemoryBlockInterface;
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -103,6 +103,15 @@ class DataManager : public DataManagerInterface {
    */
   void WriteTableData(const TableData& table_data,
                       const std::string& filename) const override;
+
+  /**
+   * @brief Method to write the table in integers into a file with the given
+   * filename.
+   * @param table_data Data to be written to the file.
+   * @param filename Name of the file to be written to.
+   */
+  void WriteRawTableData(const TableData& table_data,
+                         const std::string& filename) const override;
 
  private:
   /// CSV reader object to read data with.

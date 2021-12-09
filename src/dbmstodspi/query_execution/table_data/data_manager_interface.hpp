@@ -26,9 +26,9 @@ limitations under the License.
 #include "memory_block_interface.hpp"
 #include "table_data.hpp"
 
+using orkhestrafs::core_interfaces::MemoryBlockInterface;
 using orkhestrafs::core_interfaces::table_data::ColumnDataType;
 using orkhestrafs::core_interfaces::table_data::TableData;
-using orkhestrafs::core_interfaces::MemoryBlockInterface;
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -57,6 +57,9 @@ class DataManagerInterface {
 
   virtual void WriteTableData(const TableData& table_data,
                               const std::string& filename) const = 0;
+
+  virtual void WriteRawTableData(const TableData& table_data,
+                                 const std::string& filename) const = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi
