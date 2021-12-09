@@ -77,4 +77,5 @@ class MockDMA : public DMAInterface {
   MOCK_METHOD(volatile uint64_t, GetValidWriteCyclesCount, (), (override));
 
   MOCK_METHOD(void, GlobalReset, (), (override));
+  MOCK_METHOD(void, DecoupleFromPRRegin, (), (override));
 };

@@ -217,6 +217,13 @@ class DMA : public AccelerationModule, public DMAInterface {
    */
   void GlobalReset() override;
 
+  /**
+   * @brief Method to decouple the DMA from the PR region for partial reconfiguration.
+   * 
+   * To renable the connection global reset has to be used.
+   */
+  void DecoupleFromPRRegion() override;
+
   const int kResetDuration_ = 8;
 };
 

@@ -19,7 +19,7 @@ limitations under the License.
 #include <iostream>
 #include <stdexcept>
 
-#ifdef _FPGA_AVAILABLE
+#ifdef FPGA_AVAILABLE
 #include <unistd.h>
 #endif
 
@@ -172,6 +172,11 @@ void FPGAManager::FindActiveStreams(
 void FPGAManager::WaitForStreamsToFinish() {
   dma_engine_->StartController(false, output_streams_active_status_);
 
+  /*auto test = dma_engine_->IsControllerFinished(true);
+  auto test1 = dma_engine_->IsControllerFinished(true);
+  auto test2 = dma_engine_->IsControllerFinished(false);
+  auto test3 = dma_engine_->IsControllerFinished(false);*/
+
 #ifdef FPGA_AVAILABLE
   while (!(dma_engine_->IsControllerFinished(true) &&
            dma_engine_->IsControllerFinished(false))) {
@@ -221,7 +226,7 @@ auto FPGAManager::GetResultingStreamSizes(
 }
 
 void FPGAManager::PrintDebuggingData() {
-#ifdef _FPGA_AVAILABLE
+#ifdef FPGA_AVAILABLE
   auto log_level = LogLevel::kDebug;
   Log(log_level, "Runtime: " + std::to_string(dma_engine_->GetRuntime()));
   Log(log_level, "ValidReadCount: " +

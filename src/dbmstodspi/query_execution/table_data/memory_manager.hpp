@@ -85,6 +85,11 @@ class MemoryManager : public MemoryManagerInterface {
   void FreeMemoryBlock(
       std::unique_ptr<MemoryBlockInterface> memory_block_pointer) override;
 
+  // Quick methods to do PR loading.
+  void LoadStatic() override;
+  void LoadPartialBitstream(const std::string& bitstream_name,
+                            DMAInterface& dma_engine) override;
+
  private:
   auto AllocateMemoryBlock() -> std::unique_ptr<MemoryBlockInterface> override;
   static void SetFPGAClockSpeed(int speed_value);

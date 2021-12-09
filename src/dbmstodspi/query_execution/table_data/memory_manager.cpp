@@ -25,6 +25,7 @@ limitations under the License.
 #ifdef FPGA_AVAILABLE
 #include "mmio.h"
 #include "udma_memory_block.hpp"
+#include "fpga.h"
 #else
 #include "virtual_memory_block.hpp"
 #endif
@@ -34,6 +35,55 @@ using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 
 MemoryManager::~MemoryManager() = default;
+
+void MemoryManager::LoadStatic() {
+#ifdef FPGA_AVAILABLE
+  const int register_space_size = 10 * 1024 * 1024;
+
+  Log(LogLevel::kDebug, "Loading static");
+
+  std::chrono::steady_clock::time_point begin =
+      std::chrono::steady_clock::now();
+
+  acceleration_instance_ =
+      pr_manager_.fpgaLoadStatic("static", register_space_size);
+
+  register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
+
+  // SetFPGATo300MHz();
+  SetFPGATo100MHz();
+
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  Log(LogLevel::kInfo,
+      "Extra config time = " +
+          std::to_string(
+              std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
+                  .count()) +
+          "[ms]");
+  Log(LogLevel::kDebug, "Static loaded!");
+
+  loaded_register_space_size_ = register_space_size;
+  loaded_bitstream_ = "static";
+#else
+  throw std::runtime_error("Can't load anything!");
+#endif
+}
+
+void MemoryManager::LoadPartialBitstream(const std::string& bitstream_name,
+                                         DMAInterface& dma_engine) {
+#ifdef FPGA_AVAILABLE
+  dma_engine.DecoupleFromPRRegion();
+  FPGAManager fpga_manager(0);
+  
+  //fpga_manager.loadPartial("partial_RTM_94.bin");
+  //fpga_manager.loadPartial("partial_TAA_91.bin");
+  fpga_manager.loadPartial("partial_Filter.bin");
+  //fpga_manager.loadPartial("partial_TAA_64.bin");
+  //fpga_manager.loadPartial("partial_TAA_94.bin");
+#else
+  throw std::runtime_error("Can't load anything!");
+#endif
+}
 
 void MemoryManager::LoadBitstreamIfNew(const std::string& bitstream_name,
                                        const int register_space_size) {

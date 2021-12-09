@@ -77,6 +77,7 @@ class DMAInterface {
   virtual auto GetValidWriteCyclesCount() -> volatile uint64_t = 0;
 
   virtual void GlobalReset() = 0;
+  virtual void DecoupleFromPRRegion() = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

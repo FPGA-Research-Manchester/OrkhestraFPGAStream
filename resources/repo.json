@@ -14,6 +14,13 @@
     "DSPI_aggregation_sum",
     "DSPI_add_mul_sum",
     "DSPI_big_merge_sorting",
-    "DSPI_join_filter"
+    "DSPI_join_filter",
+    "partial_Filter",
+    "partial_TAA_91",
+    "partial_TAA_94",
+    "partial_TAA_64",
+    "partial_RTM_94",
+    "static",
+    "static_cheat"
   ]
 }

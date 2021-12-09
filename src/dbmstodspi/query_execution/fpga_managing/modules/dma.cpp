@@ -195,3 +195,5 @@ auto DMA::GetValidWriteCyclesCount() -> volatile uint64_t {
 void DMA::GlobalReset() {
   AccelerationModule::WriteToModule(8, kResetDuration_);
 }
+
+void DMA::DecoupleFromPRRegion() { AccelerationModule::WriteToModule(12, 1); }

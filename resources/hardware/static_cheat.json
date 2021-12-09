@@ -1,0 +1,11 @@
+{
+  "name": "static_cheat",
+  "address": "0xa0000000",
+  "bitfiles": [
+    {
+      "name": "static_cheat.bin",
+      "region": "full"
+    }
+  ],
+  "registers": []
+}
