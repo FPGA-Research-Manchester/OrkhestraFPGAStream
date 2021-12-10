@@ -1,0 +1,39 @@
+{
+    "node0": {
+        "operation": "Filter",
+        "capacity": [
+            2,
+            0
+        ],
+        "before": [
+            [
+                "",
+                -1
+            ]
+        ],
+        "after": [
+            "node1"
+        ],
+        "tables": [
+            "table_0"
+        ],
+        "satisfying_bitstreams": []
+    },
+    "node1": {
+        "operation": "Addition",
+        "capacity": [],
+        "before": [
+            [
+                "node0",
+                0
+            ]
+        ],
+        "after": [
+            ""
+        ],
+        "tables": [
+            ""
+        ],
+        "satisfying_bitstreams": []
+    }
+}

@@ -18,6 +18,7 @@ from typing import Tuple
 from sys import maxsize
 from enum import Enum
 from time import perf_counter
+import json
 
 
 # ----------- Module Placement Struct -----------
@@ -1201,10 +1202,42 @@ def main():
     # find_plans_and_print(["first"], test_graph,
     #                      resource_string, test_hw, tables, [], default_selection)
 
+    # Hardcoded quick and dirty input parsing
+    with open('input_graph.json') as graph_json:
+        input_graph = json.load(graph_json)
+
+    starting_nodes = []
+    processed_input_graph = {}
+    for node_name, node_parameters in input_graph.items():
+        before_list = [
+            tuple(value) for value in node_parameters["before"] if value != ["", -1]]
+        if (len(before_list) != len(node_parameters["before"])):
+            starting_nodes.append(node_name)
+        after_list = [
+            value for value in node_parameters["after"] if value != ""]
+        processed_input_graph[node_name] = {"operation": node_parameters["operation"], "capacity": tuple(node_parameters["capacity"]), "before": tuple(before_list), "after": tuple(after_list),
+                                            "tables": node_parameters["tables"], "satisfying_bitstreams": node_parameters["satisfying_bitstreams"]}
+        # print(node_name)
+        # print(node_parameters)
+
+    with open('input_tables.json') as table_json:
+        input_tables = json.load(table_json)
+
+    processed_input_tables = {}
+    for table_name, table_parameters in input_tables.items():
+        processed_input_tables[table_name] = {
+            "record_count": table_parameters["record_count"], "sorted_sequences": tuple(table_parameters["sorted_sequences"])}
+        # print(table_name)
+        # print(table_parameters)
+
+    find_plans_and_print(starting_nodes, processed_input_graph,
+                         resource_string, hw_library, processed_input_tables, [], default_selection)
+
 
 if __name__ == '__main__':
     main()
     # Missing parts:
+    # 1. Need to fix null before and after connections. Like a join can have 1. null and 2. Real node inputs
     # 2. Backwards paths
     # Optimisation rules:
     #   Reordering
