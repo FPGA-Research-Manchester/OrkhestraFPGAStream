@@ -151,10 +151,13 @@ def get_new_available_nodes(scheduled_node, past_nodes, all_nodes):
     potential_nodes = list(all_nodes[scheduled_node]["after"])
     new_available_nodes = potential_nodes.copy()
     for potential_node in potential_nodes:
-        for previous_node, _ in all_nodes[potential_node]["before"]:
-            if previous_node not in past_nodes and previous_node in new_available_nodes:
-                new_available_nodes.remove(potential_node)
-    return new_available_nodes
+        if potential_node != "":
+            for previous_node, stream_index in all_nodes[potential_node]["before"]:
+                if stream_index != -1 and previous_node not in past_nodes and previous_node in new_available_nodes:
+                    new_available_nodes.remove(potential_node)
+
+    processed_new_available_nodes = [node for node in new_available_nodes if node != ""]
+    return processed_new_available_nodes
 
 
 # ----------- Main recursive loop -----------
@@ -239,8 +242,8 @@ def remove_unavailable_nodes_in_this_run(available_nodes, current_run, hw_librar
     for node in available_nodes:
         if node in first_nodes:
             for module in current_run:
-                for before_node_name, _ in all_nodes[node]["before"]:
-                    if module.node_name == before_node_name and node in available_nodes_for_this_run:
+                for before_node_name, stream_index in all_nodes[node]["before"]:
+                    if stream_index != -1 and module.node_name == before_node_name and node in available_nodes_for_this_run:
                         available_nodes_for_this_run.remove(node)
         operation = all_nodes[node]["operation"]
         if "first_module" in hw_library[operation]["decorators"] \
@@ -457,10 +460,11 @@ def update_satisfying_bitstreams(current_node, previous_all_nodes, new_all_nodes
             break
     if not update_required:
         for next_node in previous_all_nodes[current_node]["after"]:
-            update_required = check_table_equality_of_given_node(
-                previous_all_nodes, new_all_nodes, next_node, old_data_tables, new_data_tables)
-            if update_required:
-                break
+            if next_node != "":
+                update_required = check_table_equality_of_given_node(
+                    previous_all_nodes, new_all_nodes, next_node, old_data_tables, new_data_tables)
+                if update_required:
+                    break
     if update_required:
         add_satisfying_bitstream_locations_to_graph(
             new_available_nodes.copy(), new_all_nodes, hw_library, new_data_tables, new_past_nodes)
@@ -479,13 +483,13 @@ def get_new_blocked_nodes(next_run_blocked, hw_library, module_placement, all_no
     if module_placement.node_name not in next_run_blocked:
         if "reducing" in hw_library[module_placement.operation]["decorators"]:
             new_next_run_blocked.append(module_placement.node_name)
-            for next_node_names in all_nodes[module_placement.node_name]["after"]:
-                if next_node_names not in next_run_blocked:
-                    new_next_run_blocked.append(next_node_names)
+            for next_node_name in all_nodes[module_placement.node_name]["after"]:
+                if next_node_name != "" and next_node_name not in next_run_blocked:
+                    new_next_run_blocked.append(next_node_name)
     else:
-        for next_node_names in all_nodes[module_placement.node_name]["after"]:
-            if next_node_names not in next_run_blocked:
-                new_next_run_blocked.append(next_node_names)
+        for next_node_name in all_nodes[module_placement.node_name]["after"]:
+            if next_node_name != "" and next_node_name not in next_run_blocked:
+                new_next_run_blocked.append(next_node_name)
     return new_next_run_blocked
 
 
@@ -598,7 +602,7 @@ def check_for_skippable_sort_operations(new_all_nodes, new_data_tables, node, hw
     # TODO: For now just remove the next sorting operation - Not entirely correct for the final product.
     if all_tables_sorted:
         for current_next_node_name in new_all_nodes[node]["after"]:
-            if "sorting" in hw_library[new_all_nodes[current_next_node_name]["operation"]]["decorators"]:
+            if current_next_node_name != "" and "sorting" in hw_library[new_all_nodes[current_next_node_name]["operation"]]["decorators"]:
                 skipped_nodes.append(current_next_node_name)
     return skipped_nodes
 
@@ -666,8 +670,9 @@ def update_next_node_tables(all_nodes, node, new_all_nodes, skipped_nodes, resul
 
 def add_new_table_to_next_nodes(all_nodes, new_all_nodes, node, table_names):
     for next_node in new_all_nodes[node]["after"]:
-        new_all_nodes[next_node] = all_nodes[next_node].copy()
-        new_all_nodes[next_node]["tables"] = all_nodes[next_node]["tables"].copy()
+        if (next_node != ""):
+            new_all_nodes[next_node] = all_nodes[next_node].copy()
+            new_all_nodes[next_node]["tables"] = all_nodes[next_node]["tables"].copy()
 
     add_new_table_to_next_nodes_in_place(new_all_nodes, node, table_names)
 
@@ -699,6 +704,7 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
     # Prepare first_nodes
     first_nodes = get_first_nodes_from_saved_nodes(saved_nodes, graph)
     add_all_first_modules_nodes_to_list(first_nodes, graph, hw_library)
+    # Currently not possible to find any with valid graphs
     add_all_splitting_modules_nodes_to_list(first_nodes, graph)
 
     # Put this into a while (starting_nodes)
@@ -888,14 +894,14 @@ def get_worst_case_fully_processed_tables(input_tables, current_node_decorators,
 
 def add_new_table_to_next_nodes_in_place(all_nodes, node, table_names):
     for next_node in all_nodes[node]["after"]:
+        if (next_node != ""):
+            # Get index
+            current_node_indexes = get_current_node_index(
+                all_nodes, next_node, node)
 
-        # Get index
-        current_node_indexes = get_current_node_index(
-            all_nodes, next_node, node)
-
-        for node_table_index, current_node_stream_index in current_node_indexes:
-            # Assuming it is large enough!
-            all_nodes[next_node]["tables"][node_table_index] = table_names[current_node_stream_index]
+            for node_table_index, current_node_stream_index in current_node_indexes:
+                # Assuming it is large enough!
+                all_nodes[next_node]["tables"][node_table_index] = table_names[current_node_stream_index]
 
 
 # ----------- Preprocessing before scheduling util methods to find breaking nodes -----------
@@ -903,7 +909,7 @@ def get_first_nodes_from_saved_nodes(saved_nodes, graph):
     first_nodes = []
     for saved_node in saved_nodes:
         for first_node in graph[saved_node]["after"]:
-            if first_node not in first_nodes:
+            if first_node != "" and first_node not in first_nodes:
                 first_nodes.append(first_node)
     return first_nodes
 
@@ -919,13 +925,14 @@ def add_all_splitting_modules_nodes_to_list(first_nodes, graph):
     splitting_streams = []
     for node_name in graph.keys():
         for previous_node in graph[node_name]["before"]:
-            if previous_node not in all_stream_dependencies:
-                all_stream_dependencies.append(previous_node)
-            elif previous_node not in splitting_streams:
-                splitting_streams.append(previous_node)
+            if previous_node[1] != -1:
+                if previous_node not in all_stream_dependencies:
+                    all_stream_dependencies.append(previous_node)
+                elif previous_node not in splitting_streams:
+                    splitting_streams.append(previous_node)
     for splitting_node in splitting_streams:
         for node in graph[splitting_node[0]]["after"]:
-            if splitting_node in graph[node]["before"] and node not in first_nodes:
+            if node != "" and splitting_node in graph[node]["before"] and node not in first_nodes:
                 first_nodes.append(node)
 
 
@@ -1127,22 +1134,22 @@ def main():
 
     # == Graphs ==
     graph = {
-        "A": {"operation": "Addition", "capacity": (), "before": (), "after": ("B",),
+        "A": {"operation": "Addition", "capacity": (), "before": (("", -1),), "after": ("B",),
               "tables": ["test_table"], "satisfying_bitstreams": []},
-        "B": {"operation": "Multiplier", "capacity": (), "before": (("A", 0),), "after": (), "tables": [""],
+        "B": {"operation": "Multiplier", "capacity": (), "before": (("A", 0),), "after": (""), "tables": [""],
               "satisfying_bitstreams": []},
-        "C": {"operation": "Global Sum", "capacity": (), "before": (), "after": (), "tables": ["test_table2"],
+        "C": {"operation": "Global Sum", "capacity": (), "before": (("", -1),), "after": (""), "tables": ["test_table2"],
               "satisfying_bitstreams": []}
     }
     # Double duplication for this actually. Duplicated once for 6 CMPs and once double for 12 CMPs - 2nd Filter
     q19_graph = {
-        "FirstFilter": {"operation": "Filter", "capacity": (4, 2), "before": (), "after": ("LinSort",),
+        "FirstFilter": {"operation": "Filter", "capacity": (4, 2), "before": (("", -1),), "after": ("LinSort",),
                         "tables": ["test_table"], "satisfying_bitstreams": []},
         "LinSort": {"operation": "Linear Sort", "capacity": (), "before": (("FirstFilter", 0),),
                     "after": ("MergeSort",), "tables": [""], "satisfying_bitstreams": []},
         "MergeSort": {"operation": "Merge Sort", "capacity": (), "before": (("LinSort", 0),), "after": ("Join",),
                       "tables": [""], "satisfying_bitstreams": []},
-        "Join": {"operation": "Merge Join", "capacity": (), "before": (("MergeSort", 0),), "after": ("SecondFilter",),
+        "Join": {"operation": "Merge Join", "capacity": (), "before": (("MergeSort", 0), ("", -1)), "after": ("SecondFilter",),
                  "tables": ["", "test_table2"], "satisfying_bitstreams": []},
         "SecondFilter": {"operation": "Filter", "capacity": (12, 4), "before": (("Join", 0),), "after": ("Add",),
                          "tables": [""], "satisfying_bitstreams": []},
@@ -1150,30 +1157,30 @@ def main():
                 "tables": [""], "satisfying_bitstreams": []},
         "Mul": {"operation": "Multiplier", "capacity": (), "before": (("Add", 0),), "after": ("Sum",), "tables": [""],
                 "satisfying_bitstreams": []},
-        "Sum": {"operation": "Global Sum", "capacity": (), "before": (("Mul", 0),), "after": (), "tables": [""],
+        "Sum": {"operation": "Global Sum", "capacity": (), "before": (("Mul", 0),), "after": (""), "tables": [""],
                 "satisfying_bitstreams": []}
     }
     capacity_test = {
-        "FirstFilter": {"operation": "Filter", "capacity": (4, 2), "before": (), "after": ("LinSort",),
+        "FirstFilter": {"operation": "Filter", "capacity": (4, 2), "before": (("", -1),), "after": ("LinSort",),
                         "tables": ["test_table2"], "satisfying_bitstreams": []},
         "LinSort": {"operation": "Linear Sort", "capacity": (), "before": (("FirstFilter", 0),), "after": ("Sum",),
                     "tables": [""], "satisfying_bitstreams": []},
-        "Sum": {"operation": "Global Sum", "capacity": (), "before": (("LinSort", 0),), "after": (), "tables": [""],
+        "Sum": {"operation": "Global Sum", "capacity": (), "before": (("LinSort", 0),), "after": (""), "tables": [""],
                 "satisfying_bitstreams": []}
     }
     filter_test = {
-        "LinSort": {"operation": "Linear Sort", "capacity": (), "before": (), "after": ("MergeSort",),
+        "LinSort": {"operation": "Linear Sort", "capacity": (), "before": (("", -1),), "after": ("MergeSort",),
                     "tables": ["huge_table"], "satisfying_bitstreams": []},
-        "MergeSort": {"operation": "Merge Sort", "capacity": (), "before": (("LinSort", 0),), "after": (),
+        "MergeSort": {"operation": "Merge Sort", "capacity": (), "before": (("LinSort", 0),), "after": (""),
                       "tables": [""], "satisfying_bitstreams": []}}
     test_graph = {
-        "first": {"operation": "thing", "capacity": (), "before": (), "after": ("secondA", "secondB", "secondC"),
+        "first": {"operation": "thing", "capacity": (), "before": (("", -1),), "after": ("secondA", "secondB", "secondC"),
                   "tables": ["test_table", "test_table2"], "satisfying_bitstreams": []},
-        "secondA": {"operation": "thing", "capacity": (), "before": (("first", 0),), "after": (),
+        "secondA": {"operation": "thing", "capacity": (), "before": (("first", 0),), "after": (""),
                     "tables": [""], "satisfying_bitstreams": []},
-        "secondB": {"operation": "thing", "capacity": (), "before": (("first", 0),), "after": (),
+        "secondB": {"operation": "thing", "capacity": (), "before": (("first", 0),), "after": (""),
                     "tables": [""], "satisfying_bitstreams": []},
-        "secondC": {"operation": "thing", "capacity": (), "before": (("first", 1),), "after": (),
+        "secondC": {"operation": "thing", "capacity": (), "before": (("first", 1),), "after": (""),
                     "tables": [""], "satisfying_bitstreams": []}}
 
     # == TABLES ==
@@ -1210,12 +1217,10 @@ def main():
     processed_input_graph = {}
     for node_name, node_parameters in input_graph.items():
         before_list = [
-            tuple(value) for value in node_parameters["before"] if value != ["", -1]]
-        if (len(before_list) != len(node_parameters["before"])):
+            tuple(value) for value in node_parameters["before"]]
+        if any(before_node[1] == -1 for before_node in node_parameters["before"]):
             starting_nodes.append(node_name)
-        after_list = [
-            value for value in node_parameters["after"] if value != ""]
-        processed_input_graph[node_name] = {"operation": node_parameters["operation"], "capacity": tuple(node_parameters["capacity"]), "before": tuple(before_list), "after": tuple(after_list),
+        processed_input_graph[node_name] = {"operation": node_parameters["operation"], "capacity": tuple(node_parameters["capacity"]), "before": tuple(before_list), "after": tuple(node_parameters["after"]),
                                             "tables": node_parameters["tables"], "satisfying_bitstreams": node_parameters["satisfying_bitstreams"]}
         # print(node_name)
         # print(node_parameters)
