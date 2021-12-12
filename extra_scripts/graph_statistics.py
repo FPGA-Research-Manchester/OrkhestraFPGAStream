@@ -18,18 +18,39 @@ import numpy as np
 
 
 def count_node_operator(query_dicts, input_graph, query_name, current_node_name):
+    current_operation = input_graph[current_node_name]["operation"]
     query_dicts[query_name]["node_names"].add(current_node_name)
-    query_dicts[query_name]["operation_stats"][input_graph[current_node_name]
-                                               ["operation"]] += 1
+    query_dicts[query_name]["operation_counts"][current_operation] += 1
+    for table_name in input_graph[current_node_name]["tables"]:
+        if table_name != "":
+            query_dicts[query_name]["table_names"].add(table_name)
+    if input_graph[current_node_name]["capacity"]:
+        if current_operation in query_dicts[query_name]["operation_capacities"].keys():
+            query_dicts[query_name]["operation_capacities"][current_operation].append(
+                input_graph[current_node_name]["capacity"])
+        else:
+            query_dicts[query_name]["operation_capacities"][current_operation] = [
+                input_graph[current_node_name]["capacity"]]
     for next_node_name, stream_index in input_graph[current_node_name]["before"]:
         if stream_index != -1:
             count_node_operator(query_dicts, input_graph,
                                 query_name, next_node_name)
 
 
+def print_stats(array_of_data):
+    print(f'Mean: {np.mean(array_of_data)}')
+    print(f'Std dev: {np.std(array_of_data)}')
+    print(f'Min: {np.min(array_of_data)}')
+    print(f'Max: {np.max(array_of_data)}')
+    print()
+
+
 def main():
     with open('input_graph.json') as graph_json:
         input_graph = json.load(graph_json)
+
+    with open('input_tables.json') as table_json:
+        input_tables = json.load(table_json)
 
     # First count global statistics for each operation
     global_operation_counters = dict()
@@ -45,8 +66,8 @@ def main():
 
     # Since all queries end with a single graph we first find all of these finishing nodes and then start adding node names to the queries
     for query_name in end_node_names:
-        query_dicts[query_name] = {"node_names": set(), "operation_stats": dict.fromkeys(
-            global_operation_counters.keys(), 0)}
+        query_dicts[query_name] = {"node_names": set(), "operation_counts": dict.fromkeys(
+            global_operation_counters.keys(), 0), "operation_capacities": dict(), "table_names": set()}
 
     # Then I can go through all of the queries and note down all of their corresponding nodes and collect query specific stats.
     for query_name in query_dicts.keys():
@@ -54,28 +75,45 @@ def main():
 
     print(f'Number of queries: {len(query_dicts.keys())}')
     print(f'All queries: {query_dicts}')
+    print(f'All tables: {input_tables}')
     print()
 
     for operation in global_operation_counters.keys():
 
         current_counters = []
+        capacities = []
         for query_name in query_dicts.keys():
             current_counters.append(
-                query_dicts[query_name]["operation_stats"][operation])
-        print(f'{operation}:')
-        print(f'Mean: {np.mean(current_counters)}')
-        print(f'Std dev: {np.std(current_counters)}')
-        print(f'Min: {np.min(current_counters)}')
-        print(f'Max: {np.max(current_counters)}')
-        print()
+                query_dicts[query_name]["operation_counts"][operation])
+            if operation in query_dicts[query_name]["operation_capacities"]:
+                for operation_instance_i in range(len(query_dicts[query_name]["operation_capacities"][operation])):
+                    for capacity_parameter_i in range(len(query_dicts[query_name]["operation_capacities"][operation][operation_instance_i])):
+                        if len(capacities) <= capacity_parameter_i:
+                            capacities.append([query_dicts[query_name]["operation_capacities"]
+                                              [operation][operation_instance_i][capacity_parameter_i]])
+                        else:
+                            capacities[capacity_parameter_i].append(
+                                query_dicts[query_name]["operation_capacities"][operation][operation_instance_i][capacity_parameter_i])
+        print(f'Global {operation} count statistics:')
+        print_stats(current_counters)
+        if capacities:
+            for i in range(len(capacities)):
+                print(f'Global {operation} {i} capacity parameter statistics:')
+                print_stats(capacities[i])
 
-    # Doing nothing with tables at the moment.
-    # with open('input_tables.json') as table_json:
-    #     input_tables = json.load(table_json)
+    table_sizes = []
+    for table_name, table_parameters in input_tables.items():
+        table_sizes.append(table_parameters["record_count"])
 
-    # for table_name, table_parameters in input_tables.items():
-    #     print(table_name)
-    #     print(table_parameters)
+    print(f'Global table size statistics:')
+    print_stats(table_sizes)
+
+    table_counts = []
+    for query_name in query_dicts.keys():
+        table_counts.append(len(query_dicts[query_name]["table_names"]))
+
+    print(f'Global table count statistics:')
+    print_stats(table_counts)
 
 
 if __name__ == '__main__':
