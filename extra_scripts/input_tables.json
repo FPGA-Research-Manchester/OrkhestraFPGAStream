@@ -1,6 +1,22 @@
 {
     "table_0": {
-        "record_count": 5782,
+        "record_count": 3545,
+        "sorted_sequences": []
+    },
+    "table_1": {
+        "record_count": 4513,
+        "sorted_sequences": []
+    },
+    "table_2": {
+        "record_count": 5088,
+        "sorted_sequences": []
+    },
+    "table_3": {
+        "record_count": 4518,
+        "sorted_sequences": []
+    },
+    "table_4": {
+        "record_count": 3750,
         "sorted_sequences": []
     }
 }

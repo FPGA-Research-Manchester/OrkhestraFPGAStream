@@ -14,6 +14,7 @@
 
 
 import numpy as np
+import random
 from enum import Enum
 import json
 
@@ -30,41 +31,37 @@ node_counter = 0
 table_counter = 0
 
 
-def random_selection(integer_limit):
-    return np.random.randint(integer_limit)
-
-
-def get_filter(current_graph, before_nodes, current_join_nodes):
+def get_filter(current_graph, before_nodes, current_join_nodes, filter_chance, leave_empty_join_chance, filter_lower_bound, filter_upper_bound):
     global node_counter
-    if (random_selection(2)):
+    if (random.random() < filter_chance):
         table_list = check_for_dependency(current_graph, before_nodes)
-        current_graph["node" + str(node_counter)] = {"operation": "Filter", "capacity": [random_selection(10), random_selection(
-            10)], "before": before_nodes.copy(), "after": [], "tables": table_list, "satisfying_bitstreams": []}
+        current_graph["node" + str(node_counter)] = {"operation": "Filter", "capacity": [int(value) for value in np.random.randint(
+            filter_lower_bound, filter_upper_bound)], "before": before_nodes.copy(), "after": [], "tables": table_list, "satisfying_bitstreams": []}
         # Assuming len is 1
         before_nodes[0] = ["node" + str(node_counter), 0]
         node_counter += 1
-        if(current_join_nodes and random_selection(2)):
+        if(current_join_nodes and random.random() >= leave_empty_join_chance):
             removed_element = current_join_nodes.pop(
-                random_selection(len(current_join_nodes)))
-            current_graph[before_nodes[0]]["after"].append(
+                np.random.randint(len(current_join_nodes)))
+            current_graph[before_nodes[0][0]]["after"].append(
                 removed_element)
             current_graph[removed_element]["before"].append(
-                [before_nodes[0], 0])
+                [before_nodes[0][0], 0])
             current_graph[removed_element]["tables"].append("")
             return State.finish
     return State.join
 
 
-def get_join(current_graph, before_nodes, next_join_nodes):
+def get_join(current_graph, before_nodes, next_join_nodes, join_chance):
     global table_counter
     global node_counter
-    if (random_selection(2)):
+    if (random.random() < join_chance):
         table_list = check_for_dependency(current_graph, before_nodes)
         current_graph["node" + str(node_counter)] = {"operation": "Linear Sort", "capacity": [], "before": before_nodes.copy(), "after": [
             "node" + str(node_counter+1)], "tables": table_list, "satisfying_bitstreams": []}
         node_counter += 1
         current_graph["node" + str(node_counter)] = {"operation": "Merge Sort", "capacity": [], "before": [["node" + str(
-            node_counter-1), 0]], "after": ["node" + str(node_counter+1)], "tables": [""], "satisfying_bitstreams": []}
+            node_counter-1), 0]], "after": ["node" + str(node_counter+3)], "tables": [""], "satisfying_bitstreams": []}
         node_counter += 1
 
         next_join_nodes.append("node" + str(node_counter))
@@ -84,13 +81,12 @@ def get_join(current_graph, before_nodes, next_join_nodes):
     return State.arithmetic
 
 
-def get_arithmetic(current_graph, before_nodes):
+def get_arithmetic(current_graph, before_nodes, arithmetic_chance, multiplier_chance):
     global node_counter
-    if (random_selection(2)):
+    if (random.random() < arithmetic_chance):
         table_list = check_for_dependency(current_graph, before_nodes)
-        operation = "Multiplier"
-        if (random_selection(2)):
-            operation = "Addition"
+        operation = str(np.random.choice(["Multiplier", "Addition"], 1, p=[
+            multiplier_chance, 1-multiplier_chance])[0])
         current_graph["node" + str(node_counter)] = {"operation": operation, "capacity": [
         ], "before": before_nodes.copy(), "after": [], "tables": table_list, "satisfying_bitstreams": []}
         # Assuming len is 1
@@ -100,9 +96,9 @@ def get_arithmetic(current_graph, before_nodes):
     return State.aggregation
 
 
-def get_aggregation(current_graph, before_nodes):
+def get_aggregation(current_graph, before_nodes, aggregation_chance):
     global node_counter
-    if (random_selection(2)):
+    if (random.random() < aggregation_chance):
         table_list = check_for_dependency(current_graph, before_nodes)
         current_graph["node" + str(node_counter)] = {"operation": "Global Sum", "capacity": [
         ], "before": before_nodes.copy(), "after": [], "tables": table_list, "satisfying_bitstreams": []}
@@ -127,7 +123,23 @@ def check_for_dependency(current_graph, before_nodes):
 
 
 def main():
-    query_count = 1
+
+    filter_chance = 0.5
+    filter_first_lower_bound = 1
+    filter_second_lower_bount = 10
+    filter_first_upper_bount = 5
+    filter_second_upper_bound = 20
+    filter_lower_bound = [filter_first_lower_bound, filter_second_lower_bount]
+    filter_upper_bound = [filter_first_upper_bount, filter_second_upper_bound]
+    leave_empty_join_chance = 0.5
+    join_chance = 0.5
+    arithmetic_chance = 0.5
+    aggregation_chance = 0.5
+    multiplier_chance = 0.5
+    query_count = 3
+    table_size_lower_bound = 10
+    table_size_upper_bound = 10000
+
     current_graph = {}
     current_join_nodes = []
     for i in range(query_count):
@@ -138,14 +150,16 @@ def main():
             # Simple classless FSM for now
             if (current_state == State.filter):
                 current_state = get_filter(
-                    current_graph, before_nodes, current_join_nodes)
+                    current_graph, before_nodes, current_join_nodes, filter_chance, leave_empty_join_chance, filter_lower_bound, filter_upper_bound)
             elif (current_state == State.join):
                 current_state = get_join(
-                    current_graph, before_nodes, next_join_nodes)
+                    current_graph, before_nodes, next_join_nodes, join_chance)
             elif (current_state == State.arithmetic):
-                current_state = get_arithmetic(current_graph, before_nodes)
+                current_state = get_arithmetic(
+                    current_graph, before_nodes, arithmetic_chance, multiplier_chance)
             elif (current_state == State.aggregation):
-                current_state = get_aggregation(current_graph, before_nodes)
+                current_state = get_aggregation(
+                    current_graph, before_nodes, aggregation_chance)
         current_join_nodes.extend(next_join_nodes)
         if (before_nodes[0] != ["", -1] and not current_graph[before_nodes[0][0]]["after"]):
             current_graph[before_nodes[0][0]]["after"].append("")
@@ -163,7 +177,7 @@ def main():
     table_data = {}
     for i in range(table_counter):
         table_data["table_" +
-                   str(i)] = {"record_count": random_selection(10000), "sorted_sequences": []}
+                   str(i)] = {"record_count": np.random.randint(table_size_lower_bound, table_size_upper_bound), "sorted_sequences": []}
 
     with open('input_tables.json', 'w', encoding='utf-8') as table_json:
         json.dump(table_data, table_json, ensure_ascii=False, indent=4)

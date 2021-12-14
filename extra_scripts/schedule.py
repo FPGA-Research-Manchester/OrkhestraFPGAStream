@@ -19,6 +19,7 @@ from sys import maxsize
 from enum import Enum
 from time import perf_counter
 import json
+import copy
 
 
 # ----------- Module Placement Struct -----------
@@ -153,10 +154,11 @@ def get_new_available_nodes(scheduled_node, past_nodes, all_nodes):
     for potential_node in potential_nodes:
         if potential_node != "":
             for previous_node, stream_index in all_nodes[potential_node]["before"]:
-                if stream_index != -1 and previous_node not in past_nodes and previous_node in new_available_nodes:
+                if stream_index != -1 and previous_node not in past_nodes and potential_node in new_available_nodes:
                     new_available_nodes.remove(potential_node)
 
-    processed_new_available_nodes = [node for node in new_available_nodes if node != ""]
+    processed_new_available_nodes = [
+        node for node in new_available_nodes if node != ""]
     return processed_new_available_nodes
 
 
@@ -230,7 +232,7 @@ def place_nodes_recursively(available_nodes, past_nodes, all_nodes, current_run,
             current_plan.append(tuple(current_run))
             if tuple(current_plan) not in all_plans:
                 all_plans[tuple(current_plan)] = {
-                    "next_nodes": available_nodes, "graph": all_nodes, "tables": data_tables, "past_nodes": past_nodes}
+                    "next_nodes": available_nodes.copy(), "graph": all_nodes.copy(), "tables": data_tables.copy(), "past_nodes": past_nodes.copy()}
                 if len(current_plan) < current_min_runs_ptr[0]:
                     current_min_runs_ptr[0] = len(current_plan)
 
@@ -466,12 +468,24 @@ def update_satisfying_bitstreams(current_node, previous_all_nodes, new_all_nodes
                 if update_required:
                     break
     if update_required:
+        current_tables = []
+        for node_check in previous_all_nodes.keys():
+            current_tables.append(
+                previous_all_nodes[node_check]["tables"].copy())
         add_satisfying_bitstream_locations_to_graph(
             new_available_nodes.copy(), new_all_nodes, hw_library, new_data_tables, new_past_nodes)
+        new_tables = []
+        for node_check in previous_all_nodes.keys():
+            new_tables.append(previous_all_nodes[node_check]["tables"].copy())
+        for table_i in range(len(new_tables)):
+            if new_tables[table_i] != current_tables[table_i]:
+                raise ValueError("Something went wrong!")
 
 
 def check_table_equality_of_given_node(previous_all_nodes, new_all_nodes, node_name, old_data_tables, new_data_tables):
     for table_index in range(len(previous_all_nodes[node_name]["tables"])):
+        old_table_name = previous_all_nodes[node_name]["tables"][table_index]
+        new_table_name = new_all_nodes[node_name]["tables"][table_index]
         if old_data_tables[previous_all_nodes[node_name]["tables"][table_index]] != new_data_tables[
                 new_all_nodes[node_name]["tables"][table_index]]:
             return True
@@ -499,6 +513,9 @@ def update_all_nodes(all_nodes, bitstream, data_tables, hw_library, node, node_c
     bitstream_capacity = hw_library[operation]["bitstreams"][bitstream]["capacity"]
     missing_utility = []
     new_all_nodes = all_nodes.copy()
+    for new_node in new_all_nodes.keys():
+        new_all_nodes[new_node] = all_nodes[new_node].copy()
+        new_all_nodes[new_node]["tables"] = all_nodes[new_node]["tables"].copy()
     new_data_tables = data_tables.copy()
     skipped_nodes = []
     if "sorting" in hw_library[operation]["decorators"]:
@@ -669,10 +686,10 @@ def update_next_node_tables(all_nodes, node, new_all_nodes, skipped_nodes, resul
 
 
 def add_new_table_to_next_nodes(all_nodes, new_all_nodes, node, table_names):
-    for next_node in new_all_nodes[node]["after"]:
-        if (next_node != ""):
-            new_all_nodes[next_node] = all_nodes[next_node].copy()
-            new_all_nodes[next_node]["tables"] = all_nodes[next_node]["tables"].copy()
+    # for next_node in new_all_nodes[node]["after"]:
+    #     if (next_node != ""):
+    #         new_all_nodes[next_node] = all_nodes[next_node].copy()
+    #         new_all_nodes[next_node]["tables"] = all_nodes[next_node]["tables"].copy()
 
     add_new_table_to_next_nodes_in_place(new_all_nodes, node, table_names)
 
@@ -688,9 +705,40 @@ def get_current_node_index(new_all_nodes, next_node, node_name):
     return current_node_indexes
 
 
+def find_reducing_nodes(graph, hw_library):
+    reducing_nodes = set()
+    for node_name in graph.keys():
+        operation = graph[node_name]["operation"]
+        if "reducing" in hw_library[operation]["decorators"]:
+            reducing_nodes.add(node_name)
+    return reducing_nodes
+
+
+def reduce_table_sizes(node_name, starting_nodes, original_graph, current_graph, data_tables, selectivity):
+    if node_name in starting_nodes:
+        # TODO: For simplicity this reduces all tables but the correct table should be found out instead!
+        for table in current_graph[node_name]["tables"]:
+            if table != "":
+                data_tables[table]["record_count"] = int(data_tables[table]["record_count"] * selectivity)
+                print(f'Reduced:{table} from {node_name}')
+                new_sequences = []
+                for sequence in data_tables[table]["sorted_sequences"]:
+                    if sequence[0] <= data_tables[table]["record_count"]:
+                        new_sequence = list(sequence)
+                        if sequence[0] + sequence[1] > data_tables[table]["record_count"]:
+                            new_sequence[1] = data_tables[table]["record_count"] - sequence[0]
+                        new_sequences.append(tuple(new_sequence))
+                data_tables[table]["sorted_sequences"] = tuple(new_sequences)
+
+    # Potentially else needed here!
+    for next_node in original_graph[node_name]["after"]:
+        if next_node != "":
+            reduce_table_sizes(next_node, starting_nodes, original_graph, current_graph, data_tables, selectivity)
+
+
 # ----------- Main scheduling function to find the plans and statistics -----------
 def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, data_tables, saved_nodes,
-                         module_placement_selections):
+                         module_placement_selections, selectivity):
     # print_node_placement_permutations(starting_nodes, graph)
     # print(f"{FancyText.UNDERLINE}Plans with placed modules below:{FancyText.END}")
     # Now with string match checks
@@ -706,6 +754,9 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
     add_all_first_modules_nodes_to_list(first_nodes, graph, hw_library)
     # Currently not possible to find any with valid graphs
     add_all_splitting_modules_nodes_to_list(first_nodes, graph)
+
+    reducing_nodes = find_reducing_nodes(graph, hw_library)
+    original_graph = copy.deepcopy(graph)
 
     # Put this into a while (starting_nodes)
     while starting_nodes:
@@ -736,11 +787,18 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
 
         chosen_plan = choose_best_plan(
             list(resulting_plans.keys()), min_runs_pointer[0])
-        # print(f"Chosen plan: {chosen_plan}")
+
         past_nodes = resulting_plans[chosen_plan]["past_nodes"]
         starting_nodes = resulting_plans[chosen_plan]["next_nodes"]
         graph = resulting_plans[chosen_plan]["graph"]
         data_tables = resulting_plans[chosen_plan]["tables"]
+
+        for run in chosen_plan:
+            for placed_module in run:
+                if placed_module.node_name in reducing_nodes:
+                    reducing_nodes.remove(placed_module.node_name)
+                    reduce_table_sizes(
+                        placed_module.node_name, starting_nodes, original_graph, graph, data_tables, selectivity)
 
     stop_time = perf_counter()
     print(f"Elapsed time of the scheduler: {stop_time - start_time:.3f}s")
@@ -1191,6 +1249,8 @@ def main():
         "huge_table": {"record_count": 210000, "sorted_sequences": ((0, 10, 0), (10, 20, 0),)}
     }
 
+    selectivity = 0.5
+
     # First selection is for fitting, the second selection for the rest
     default_selection = ([[ModuleSelection.SHORTEST, ModuleSelection.FIRST_AVAILABLE]], [
         [ModuleSelection.LONGEST, ModuleSelection.FIRST_AVAILABLE]])
@@ -1203,9 +1263,9 @@ def main():
     # find_plans_and_print(filter_test_nodes, filter_test,
     #                      resource_string, hw_library, tables, [], default_selection)
     #
-    q19_starting_nodes = ["FirstFilter"]
-    find_plans_and_print(q19_starting_nodes, q19_graph,
-                         resource_string, hw_library, tables, [], default_selection)
+    # q19_starting_nodes = ["FirstFilter"]
+    # find_plans_and_print(q19_starting_nodes, q19_graph,
+    #                      resource_string, hw_library, tables, [], default_selection, selectivity)
     # find_plans_and_print(["first"], test_graph,
     #                      resource_string, test_hw, tables, [], default_selection)
 
@@ -1236,14 +1296,13 @@ def main():
         # print(table_parameters)
 
     find_plans_and_print(starting_nodes, processed_input_graph,
-                         resource_string, hw_library, processed_input_tables, [], default_selection)
+                         resource_string, hw_library, processed_input_tables, [], default_selection, selectivity)
 
 
 if __name__ == '__main__':
     main()
     # Missing parts:
-    # 1. Need to fix null before and after connections. Like a join can have 1. null and 2. Real node inputs
-    # 2. Backwards paths
+    # 1. Backwards paths
     # Optimisation rules:
     #   Reordering
     #   Data duplication for filters
