@@ -46,7 +46,7 @@ void MemoryManager::LoadStatic() {
       std::chrono::steady_clock::now();
 
   acceleration_instance_ =
-      pr_manager_.fpgaLoadStatic("static", register_space_size);
+      pr_manager_.fpgaLoadStatic("cheat_5", register_space_size);
 
   register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
 
@@ -69,15 +69,23 @@ void MemoryManager::LoadStatic() {
 #endif
 }
 
-void MemoryManager::LoadPartialBitstream(const std::string& bitstream_name,
+void MemoryManager::LoadPartialBitstream(const std::vector<std::string>& bitstream_name,
                                          DMAInterface& dma_engine) {
 #ifdef FPGA_AVAILABLE
   dma_engine.DecoupleFromPRRegion();
   FPGAManager fpga_manager(0);
   
+  /*for (const auto& name : bitstream_name) {
+    fpga_manager.loadPartial(name);
+  }*/
+
+  //fpga_manager.loadPartial("RT_95.bin");
+  //fpga_manager.loadPartial("RT_92.bin");
+  //fpga_manager.loadPartial("TAA_89.bin");
+
   //fpga_manager.loadPartial("partial_RTM_94.bin");
   //fpga_manager.loadPartial("partial_TAA_91.bin");
-  fpga_manager.loadPartial("partial_Filter.bin");
+  //fpga_manager.loadPartial("partial_Filter.bin");
   //fpga_manager.loadPartial("partial_TAA_64.bin");
   //fpga_manager.loadPartial("partial_TAA_94.bin");
 #else

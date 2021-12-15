@@ -81,7 +81,7 @@ void ExecutionManager::SetupNextRunData() {
       config_);*/
   memory_manager_->LoadStatic();
   auto thing = accelerator_library_->GetDMAModule();
-  memory_manager_->LoadPartialBitstream("blabla", *thing);
+  memory_manager_->LoadPartialBitstream(config_.temp, *thing);
 
   auto next_scheduled_run_nodes = PopNextScheduledRun();
 

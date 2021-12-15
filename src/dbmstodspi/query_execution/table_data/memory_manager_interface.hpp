@@ -18,6 +18,7 @@ limitations under the License.
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "memory_block_interface.hpp"
 
@@ -44,7 +45,8 @@ class MemoryManagerInterface {
   virtual void FreeMemoryBlock(
       std::unique_ptr<MemoryBlockInterface> memory_block_pointer) = 0;
   virtual void LoadStatic() = 0;
-  virtual void LoadPartialBitstream(const std::string& bitstream_name,
+  virtual void LoadPartialBitstream(
+      const std::vector<std::string>& bitstream_name,
                                     DMAInterface& dma_engine) = 0;
 
  private:

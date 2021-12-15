@@ -87,7 +87,7 @@ class MemoryManager : public MemoryManagerInterface {
 
   // Quick methods to do PR loading.
   void LoadStatic() override;
-  void LoadPartialBitstream(const std::string& bitstream_name,
+  void LoadPartialBitstream(const std::vector<std::string>& bitstream_name,
                             DMAInterface& dma_engine) override;
 
  private:

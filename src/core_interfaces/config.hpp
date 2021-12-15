@@ -53,5 +53,7 @@ struct Config {
 
   /// CSV data column separator character.
   char csv_separator;
+
+  std::vector<std::string> temp;
 };
 }  // namespace orkhestrafs::core_interfaces
