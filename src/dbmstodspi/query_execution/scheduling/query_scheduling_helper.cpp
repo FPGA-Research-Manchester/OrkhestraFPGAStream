@@ -116,6 +116,9 @@ auto QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
   return potential_nodes;
 }
 
+// This needs redoing as after_nodes can't really be empty and with multiple
+// outputs the previous node has to send a single output to multiple nodes which
+// isn't possible currently.
 void QuerySchedulingHelper::RemoveNodeFromGraph(
     std::map<std::string, SchedulingQueryNode>& graph, std::string node_name) {
   if (graph.at(node_name).after_nodes.empty()) {

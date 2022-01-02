@@ -507,44 +507,47 @@ void ElasticSchedulingGraphParser::UpdateSatisfyingBitstreamsList(
                                              data_tables, new_tables);
           })) {
 
-    // For performance remove these checks!
-    std::vector<std::vector<std::string>> previous_tables;
+    // For performance remove these checks! These checks don't work anyways as tables can be changed with node removal.
+    /*std::vector<std::vector<std::string>> previous_tables;
     for (const auto& [_, node] : graph) {
       previous_tables.push_back(node.data_tables);
-    }
+    }*/
     PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
         hw_library, new_graph, new_tables, drivers, new_available_nodes,
         new_processed_nodes);
-    std::vector<std::vector<std::string>> current_tables;
+    /*std::vector<std::vector<std::string>> current_tables;
     for (const auto& [_, node] : graph) {
       current_tables.push_back(node.data_tables);
     }
     if (previous_tables != current_tables) {
       throw std::runtime_error("Something went wrong!");
-    }
+    }*/
   } else {
     if (std::any_of(graph.at(node_name).after_nodes.begin(),
                     graph.at(node_name).after_nodes.end(),
                     [&](std::string next_node_name) {
-                      return !next_node_name.empty() &&
-                             !IsTableEqualForGivenNode(graph, new_graph,
-                                                       next_node_name,
-                                                       data_tables, new_tables);
+                      return (!next_node_name.empty() &&
+                              new_graph.find(next_node_name) ==
+                                  new_graph.end()) ||
+                             (!next_node_name.empty() &&
+                              !IsTableEqualForGivenNode(
+                                  graph, new_graph, next_node_name, data_tables,
+                                  new_tables));
                     })) {
-      std::vector<std::vector<std::string>> previous_tables;
+      /*std::vector<std::vector<std::string>> previous_tables;
       for (const auto& [_, node] : graph) {
         previous_tables.push_back(node.data_tables);
-      }
+      }*/
       PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
           hw_library, new_graph, new_tables, drivers, new_available_nodes,
           new_processed_nodes);
-      std::vector<std::vector<std::string>> current_tables;
+      /*std::vector<std::vector<std::string>> current_tables;
       for (const auto& [_, node] : graph) {
         current_tables.push_back(node.data_tables);
       }
       if (previous_tables != current_tables) {
         throw std::runtime_error("Something went wrong!");
-      }
+      }*/
     }
   }
 }
