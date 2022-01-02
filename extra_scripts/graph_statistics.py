@@ -15,6 +15,7 @@
 
 import json
 import numpy as np
+import sys
 
 
 def count_node_operator(query_dicts, input_graph, query_name, current_node_name):
@@ -37,19 +38,21 @@ def count_node_operator(query_dicts, input_graph, query_name, current_node_name)
                                 query_name, next_node_name)
 
 
-def print_stats(array_of_data):
-    print(f'Mean: {np.mean(array_of_data)}')
-    print(f'Std dev: {np.std(array_of_data)}')
-    print(f'Min: {np.min(array_of_data)}')
-    print(f'Max: {np.max(array_of_data)}')
-    print()
+def print_stats(array_of_data, stats_list):
+    #print(f'Mean: {np.mean(array_of_data)}')
+    #print(f'Std dev: {np.std(array_of_data)}')
+    #print(f'Min: {np.min(array_of_data)}')
+    #print(f'Max: {np.max(array_of_data)}')
+    #print()
+    stats_list.extend([np.mean(array_of_data), np.std(
+        array_of_data), np.min(array_of_data), np.max(array_of_data)])
 
 
-def main():
-    with open('input_graph.json') as graph_json:
+def main(argv):
+    with open(argv[1]) as graph_json:
         input_graph = json.load(graph_json)
 
-    with open('input_tables.json') as table_json:
+    with open(argv[2]) as table_json:
         input_tables = json.load(table_json)
 
     # First count global statistics for each operation
@@ -62,7 +65,14 @@ def main():
         if len(node_parameters["after"]) == 1 and node_parameters["after"][0] == "":
             end_node_names.add(node_name)
 
+    stats_list = []
+    operator_list = ["Filter", "Linear Sort", "Merge Sort",
+                     "Merge Join", "Addition", "Multiplier", "Global Sum"]
+
     print(f'Global operator counts: {global_operation_counters}')
+
+    for operator in operator_list:
+        stats_list.append(global_operation_counters.get(operator, 0))
 
     # Since all queries end with a single graph we first find all of these finishing nodes and then start adding node names to the queries
     for query_name in end_node_names:
@@ -78,43 +88,55 @@ def main():
     print(f'All tables: {input_tables}')
     print()
 
-    for operation in global_operation_counters.keys():
+    stats_list.append(len(query_dicts.keys()))
 
-        current_counters = []
-        capacities = []
-        for query_name in query_dicts.keys():
-            current_counters.append(
-                query_dicts[query_name]["operation_counts"][operation])
-            if operation in query_dicts[query_name]["operation_capacities"]:
-                for operation_instance_i in range(len(query_dicts[query_name]["operation_capacities"][operation])):
-                    for capacity_parameter_i in range(len(query_dicts[query_name]["operation_capacities"][operation][operation_instance_i])):
-                        if len(capacities) <= capacity_parameter_i:
-                            capacities.append([query_dicts[query_name]["operation_capacities"]
-                                              [operation][operation_instance_i][capacity_parameter_i]])
-                        else:
-                            capacities[capacity_parameter_i].append(
-                                query_dicts[query_name]["operation_capacities"][operation][operation_instance_i][capacity_parameter_i])
-        print(f'Global {operation} count statistics:')
-        print_stats(current_counters)
-        if capacities:
-            for i in range(len(capacities)):
-                print(f'Global {operation} {i} capacity parameter statistics:')
-                print_stats(capacities[i])
+    for operation in operator_list:
+        if operation in global_operation_counters:
+            current_counters = []
+            capacities = []
+            for query_name in query_dicts.keys():
+                current_counters.append(
+                    query_dicts[query_name]["operation_counts"][operation])
+                if operation in query_dicts[query_name]["operation_capacities"]:
+                    for operation_instance_i in range(len(query_dicts[query_name]["operation_capacities"][operation])):
+                        for capacity_parameter_i in range(len(query_dicts[query_name]["operation_capacities"][operation][operation_instance_i])):
+                            if len(capacities) <= capacity_parameter_i:
+                                capacities.append([query_dicts[query_name]["operation_capacities"]
+                                                   [operation][operation_instance_i][capacity_parameter_i]])
+                            else:
+                                capacities[capacity_parameter_i].append(
+                                    query_dicts[query_name]["operation_capacities"][operation][operation_instance_i][capacity_parameter_i])
+            #print(f'Global {operation} count statistics:')
+            print_stats(current_counters, stats_list)
+            if capacities:
+                for i in range(len(capacities)):
+                    #print(
+                    #    f'Global {operation} {i} capacity parameter statistics:')
+                    print_stats(capacities[i], stats_list)
+        else:
+            stats_list.extend([0, 0, 0, 0])
+            if operation == "Filter":
+                stats_list.extend([0, 0, 0, 0, 0, 0, 0, 0])
 
     table_sizes = []
     for table_name, table_parameters in input_tables.items():
         table_sizes.append(table_parameters["record_count"])
 
-    print(f'Global table size statistics:')
-    print_stats(table_sizes)
+    #print(f'Global table size statistics:')
+    print_stats(table_sizes, stats_list)
 
     table_counts = []
     for query_name in query_dicts.keys():
         table_counts.append(len(query_dicts[query_name]["table_names"]))
 
-    print(f'Global table count statistics:')
-    print_stats(table_counts)
+    #print(f'Global table count statistics:')
+    print_stats(table_counts, stats_list)
+
+    converted_list = [str(element) for element in stats_list]
+    with open(argv[0], "a") as stats_file:
+        stats_file.write(",")
+        stats_file.write(",".join(converted_list))
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])

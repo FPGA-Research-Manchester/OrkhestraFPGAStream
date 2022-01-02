@@ -17,6 +17,7 @@ import numpy as np
 import random
 from enum import Enum
 import json
+import sys
 
 
 class State(Enum):
@@ -122,23 +123,48 @@ def check_for_dependency(current_graph, before_nodes):
     return table_list
 
 
-def main():
+def main(argv):
 
-    filter_chance = 0.5
-    filter_first_lower_bound = 1
-    filter_second_lower_bount = 10
-    filter_first_upper_bount = 5
-    filter_second_upper_bound = 20
-    filter_lower_bound = [filter_first_lower_bound, filter_second_lower_bount]
-    filter_upper_bound = [filter_first_upper_bount, filter_second_upper_bound]
-    leave_empty_join_chance = 0.5
-    join_chance = 0.5
-    arithmetic_chance = 0.5
-    aggregation_chance = 0.5
-    multiplier_chance = 0.5
-    query_count = 3
-    table_size_lower_bound = 10
-    table_size_upper_bound = 10000
+    # Hardcoded for now
+    with open(argv[0], "r") as stats_file:
+        last_line = stats_file.readlines()[-1]
+        values = last_line.split(',')
+        if len(values) < 12:
+            raise ValueError("Incorrect input")
+
+        filter_chance = float(values[0])
+        filter_first_lower_bound = int(values[1])
+        filter_second_lower_bount = int(values[2])
+        filter_first_upper_bount = int(values[3])
+        filter_second_upper_bound = int(values[4])
+        filter_lower_bound = [
+            filter_first_lower_bound, filter_second_lower_bount]
+        filter_upper_bound = [
+            filter_first_upper_bount, filter_second_upper_bound]
+        leave_empty_join_chance = float(values[5])
+        join_chance = float(values[6])
+        arithmetic_chance = float(values[7])
+        aggregation_chance = float(values[8])
+        multiplier_chance = float(values[9])
+        query_count = int(values[10])
+        table_size_lower_bound = int(values[11])
+        table_size_upper_bound = int(values[12])
+
+    # filter_chance = 0.5
+    # filter_first_lower_bound = 1
+    # filter_second_lower_bount = 10
+    # filter_first_upper_bount = 5
+    # filter_second_upper_bound = 20
+    # filter_lower_bound = [filter_first_lower_bound, filter_second_lower_bount]
+    # filter_upper_bound = [filter_first_upper_bount, filter_second_upper_bound]
+    # leave_empty_join_chance = 0.5
+    # join_chance = 0.5
+    # arithmetic_chance = 0.5
+    # aggregation_chance = 0.5
+    # multiplier_chance = 0.5
+    # query_count = 3
+    # table_size_lower_bound = 10
+    # table_size_upper_bound = 10000
 
     current_graph = {}
     current_join_nodes = []
@@ -171,7 +197,7 @@ def main():
         table_counter += 1
         current_graph[node]["before"].append(["", -1])
 
-    with open('input_graph.json', 'w', encoding='utf-8') as graph_json:
+    with open(argv[1], 'w', encoding='utf-8') as graph_json:
         json.dump(current_graph, graph_json, ensure_ascii=False, indent=4)
 
     table_data = {}
@@ -179,9 +205,9 @@ def main():
         table_data["table_" +
                    str(i)] = {"record_count": np.random.randint(table_size_lower_bound, table_size_upper_bound), "sorted_sequences": []}
 
-    with open('input_tables.json', 'w', encoding='utf-8') as table_json:
+    with open(argv[2], 'w', encoding='utf-8') as table_json:
         json.dump(table_data, table_json, ensure_ascii=False, indent=4)
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])

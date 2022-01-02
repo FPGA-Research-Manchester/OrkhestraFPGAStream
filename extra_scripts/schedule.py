@@ -20,6 +20,7 @@ from enum import Enum
 from time import perf_counter
 import json
 import copy
+import sys
 
 
 # ----------- Module Placement Struct -----------
@@ -463,8 +464,11 @@ def update_satisfying_bitstreams(current_node, previous_all_nodes, new_all_nodes
     if not update_required:
         for next_node in previous_all_nodes[current_node]["after"]:
             if next_node != "":
-                update_required = check_table_equality_of_given_node(
-                    previous_all_nodes, new_all_nodes, next_node, old_data_tables, new_data_tables)
+                if next_node not in new_all_nodes:
+                    update_required = True
+                else:
+                    update_required = check_table_equality_of_given_node(
+                        previous_all_nodes, new_all_nodes, next_node, old_data_tables, new_data_tables)
                 if update_required:
                     break
     if update_required:
@@ -473,7 +477,7 @@ def update_satisfying_bitstreams(current_node, previous_all_nodes, new_all_nodes
             current_tables.append(
                 previous_all_nodes[node_check]["tables"].copy())
         add_satisfying_bitstream_locations_to_graph(
-            new_available_nodes.copy(), new_all_nodes, hw_library, new_data_tables, new_past_nodes)
+            new_available_nodes, new_all_nodes, hw_library, new_data_tables, new_past_nodes)
         new_tables = []
         for node_check in previous_all_nodes.keys():
             new_tables.append(previous_all_nodes[node_check]["tables"].copy())
@@ -484,8 +488,8 @@ def update_satisfying_bitstreams(current_node, previous_all_nodes, new_all_nodes
 
 def check_table_equality_of_given_node(previous_all_nodes, new_all_nodes, node_name, old_data_tables, new_data_tables):
     for table_index in range(len(previous_all_nodes[node_name]["tables"])):
-        old_table_name = previous_all_nodes[node_name]["tables"][table_index]
-        new_table_name = new_all_nodes[node_name]["tables"][table_index]
+        # old_table_name = previous_all_nodes[node_name]["tables"][table_index]
+        # new_table_name = new_all_nodes[node_name]["tables"][table_index]
         if old_data_tables[previous_all_nodes[node_name]["tables"][table_index]] != new_data_tables[
                 new_all_nodes[node_name]["tables"][table_index]]:
             return True
@@ -719,7 +723,8 @@ def reduce_table_sizes(node_name, starting_nodes, original_graph, current_graph,
         # TODO: For simplicity this reduces all tables but the correct table should be found out instead!
         for table in current_graph[node_name]["tables"]:
             if table != "":
-                data_tables[table]["record_count"] = int(data_tables[table]["record_count"] * selectivity)
+                data_tables[table]["record_count"] = int(
+                    data_tables[table]["record_count"] * selectivity)
                 print(f'Reduced:{table} from {node_name}')
                 new_sequences = []
                 for sequence in data_tables[table]["sorted_sequences"]:
@@ -733,7 +738,8 @@ def reduce_table_sizes(node_name, starting_nodes, original_graph, current_graph,
     # Potentially else needed here!
     for next_node in original_graph[node_name]["after"]:
         if next_node != "":
-            reduce_table_sizes(next_node, starting_nodes, original_graph, current_graph, data_tables, selectivity)
+            reduce_table_sizes(next_node, starting_nodes, original_graph,
+                               current_graph, data_tables, selectivity)
 
 
 # ----------- Main scheduling function to find the plans and statistics -----------
@@ -758,6 +764,13 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
     reducing_nodes = find_reducing_nodes(graph, hw_library)
     original_graph = copy.deepcopy(graph)
 
+    # Change this to list later
+    plan_count = 0
+    placed_nodes = 0
+    run_count = 0
+    discarded_placements = 0
+    plans_chosen = 0
+
     # Put this into a while (starting_nodes)
     while starting_nodes:
         resulting_plans = dict()
@@ -768,22 +781,28 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
 
         # Find satisfying bitstreams
         add_satisfying_bitstream_locations_to_graph(
-            starting_nodes.copy(), graph, hw_library, data_tables, past_nodes)
+            starting_nodes, graph, hw_library, data_tables, past_nodes)
         # Start the main recursive method
         place_nodes_recursively(starting_nodes, past_nodes, graph, current_run, current_plan, resulting_plans, True,
                                 hw_library, min_runs_pointer, data_tables, module_placement_selections,
                                 skipped_placements_stat_pointer, first_nodes, blocked_nodes, next_run_blocked_nodes)
 
-        print(f"Number of full plans generated: {len(resulting_plans)}")
-        print(
-            f"Number of nodes placed to runs: {skipped_placements_stat_pointer[1]}")
-        print(
-            f"Number of module placements discarded: {skipped_placements_stat_pointer[0]}")
-        print(
-            f"Number of discarded placements per node: {skipped_placements_stat_pointer[0] / skipped_placements_stat_pointer[1]:.3f}")
-        print_statistics(resulting_plans)
-        print_all_runs_using_less_runs_than(
-            resulting_plans, min_runs_pointer[0] + 1, resource_string)
+        # print(f"Number of full plans generated: {len(resulting_plans)}")
+        # print(
+        #     f"Number of nodes placed to runs: {skipped_placements_stat_pointer[1]}")
+        # print(
+        #     f"Number of module placements discarded: {skipped_placements_stat_pointer[0]}")
+        # print(
+        #     f"Number of discarded placements per node: {skipped_placements_stat_pointer[0] / skipped_placements_stat_pointer[1]:.3f}")
+        # print_statistics(resulting_plans)
+        # print_all_runs_using_less_runs_than(
+        #     resulting_plans, min_runs_pointer[0] + 1, resource_string)
+
+        plan_count += len(resulting_plans)
+        placed_nodes += skipped_placements_stat_pointer[1]
+        discarded_placements += skipped_placements_stat_pointer[0]
+        plans_chosen += 1
+        run_count += min_runs_pointer[0]
 
         chosen_plan = choose_best_plan(
             list(resulting_plans.keys()), min_runs_pointer[0])
@@ -803,17 +822,23 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
     stop_time = perf_counter()
     print(f"Elapsed time of the scheduler: {stop_time - start_time:.3f}s")
 
+    stats_list = [plan_count, placed_nodes, discarded_placements,
+                  plans_chosen, run_count, stop_time - start_time]
+    converted_list = [str(element) for element in stats_list]
+    return converted_list
+
 
 # ----------- Preprocessing before scheduling util methods to find satisfying bitstreams -----------
 # No node skipping as we don't know which bitstream will be picked.
 def add_satisfying_bitstream_locations_to_graph(available_nodes, graph, hw_library, data_tables, given_processed_nodes):
+    current_available_nodes = available_nodes.copy()
     processed_nodes = given_processed_nodes.copy()
     min_capacity = get_minimum_capacity_values(hw_library)
 
-    while available_nodes:
-        current_node_name = available_nodes.pop()
+    while current_available_nodes:
+        current_node_name = current_available_nodes.pop()
         processed_nodes.append(current_node_name)
-        available_nodes.extend(get_new_available_nodes(
+        current_available_nodes.extend(get_new_available_nodes(
             current_node_name, processed_nodes, graph))
         min_requirements = get_min_requirements(
             current_node_name, graph, hw_library, data_tables)
@@ -832,6 +857,45 @@ def add_satisfying_bitstream_locations_to_graph(available_nodes, graph, hw_libra
                                                                  min_capacity[graph[current_node_name]["operation"]])
         add_new_table_to_next_nodes_in_place(
             graph, current_node_name, resulting_tables)
+
+        if len(min_requirements) == 1 and min_requirements[0] == 0:
+            if current_node_name in available_nodes:
+                available_nodes.remove(current_node_name)
+                available_nodes.extend(get_new_available_nodes(
+                    current_node_name, processed_nodes, graph))
+            remove_from_graph(graph, current_node_name)
+
+
+def remove_from_graph(graph, current_node_name):
+    # Before node check has to put in as well. Can't quite handle multiple inputs
+    # And also check how many inputs or how many outputs.
+    # Hardcoded for 1 in 1 out at the moment.
+    after_node = graph[current_node_name]["after"][0]
+    before_node_data = graph[current_node_name]["before"][0]
+    if after_node == "" and before_node_data == ("", -1):
+        pass
+    elif after_node == "":
+        if before_node_data[0] in graph:
+            new_after_nodes = list(graph[before_node_data[0]]["after"])
+            new_after_nodes[before_node_data[1]] = after_node
+            graph[before_node_data[0]]["after"] = tuple(new_after_nodes)
+    elif before_node_data == ("", -1):
+        index = get_current_node_index(
+            graph, after_node, current_node_name)[0][0]
+        new_before_nodes = list(graph[after_node]["before"])
+        new_before_nodes[index] = before_node_data
+        graph[after_node]["before"] = tuple(new_before_nodes)
+    else:
+        if before_node_data[0] in graph:
+            new_after_nodes = list(graph[before_node_data[0]]["after"])
+            new_after_nodes[before_node_data[1]] = after_node
+            graph[before_node_data[0]]["after"] = tuple(new_after_nodes)
+        index = get_current_node_index(
+            graph, after_node, current_node_name)[0][0]
+        new_before_nodes = list(graph[after_node]["before"])
+        new_before_nodes[index] = before_node_data
+        graph[after_node]["before"] = tuple(new_before_nodes)
+    del graph[current_node_name]
 
 
 def get_minimum_capacity_values(hw_library):
@@ -867,6 +931,8 @@ def get_min_requirements(current_node_name, graph, hw_library, data_tables):
             if not current_table_sorted_sequences:
                 return (data_tables[tables_to_be_sorted[0]]["record_count"],)
             else:
+                if is_table_sorted(data_tables[tables_to_be_sorted[0]], 0):
+                    return (0,)
                 pos_of_last_sorted_element = current_table_sorted_sequences[-1][0] + \
                     current_table_sorted_sequences[-1][1]
                 if pos_of_last_sorted_element > data_tables[tables_to_be_sorted[0]]["record_count"]:
@@ -1087,7 +1153,7 @@ def choose_best_plan(all_unique_plans, smallest_run_count):
 
 
 # ----------- MAIN -----------
-def main():
+def main(argv):
     resource_string = "MMDMDBMMDBMMDMDBMMDBMMDMDBMMDBM"
     # == HARDWARE ==
     hw_library = {
@@ -1249,8 +1315,6 @@ def main():
         "huge_table": {"record_count": 210000, "sorted_sequences": ((0, 10, 0), (10, 20, 0),)}
     }
 
-    selectivity = 0.5
-
     # First selection is for fitting, the second selection for the rest
     default_selection = ([[ModuleSelection.SHORTEST, ModuleSelection.FIRST_AVAILABLE]], [
         [ModuleSelection.LONGEST, ModuleSelection.FIRST_AVAILABLE]])
@@ -1270,7 +1334,7 @@ def main():
     #                      resource_string, test_hw, tables, [], default_selection)
 
     # Hardcoded quick and dirty input parsing
-    with open('input_graph.json') as graph_json:
+    with open(argv[1]) as graph_json:
         input_graph = json.load(graph_json)
 
     starting_nodes = []
@@ -1285,7 +1349,7 @@ def main():
         # print(node_name)
         # print(node_parameters)
 
-    with open('input_tables.json') as table_json:
+    with open(argv[2]) as table_json:
         input_tables = json.load(table_json)
 
     processed_input_tables = {}
@@ -1295,12 +1359,23 @@ def main():
         # print(table_name)
         # print(table_parameters)
 
-    find_plans_and_print(starting_nodes, processed_input_graph,
+    with open(argv[0], "r") as file:
+        for last_line in file:
+            pass
+    values = last_line.split(',')
+
+    selectivity = float(values[-1])
+
+    converted_list = find_plans_and_print(starting_nodes, processed_input_graph,
                          resource_string, hw_library, processed_input_tables, [], default_selection, selectivity)
+
+    with open(argv[0], "a") as stats_file:
+        stats_file.write(",")
+        stats_file.write(",".join(converted_list))
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
     # Missing parts:
     # 1. Backwards paths
     # Optimisation rules:
