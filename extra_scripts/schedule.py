@@ -167,8 +167,8 @@ def get_new_available_nodes(scheduled_node, past_nodes, all_nodes):
 def place_nodes_recursively(available_nodes, past_nodes, all_nodes, current_run, current_plan,
                             all_plans, reduce_single_runs, hw_library, current_min_runs_ptr,
                             data_tables, module_placement_selections, skipped_placements_stat_ptr, first_nodes,
-                            blocked_nodes, next_run_blocked):
-    if len(current_plan) <= current_min_runs_ptr[0]:
+                            blocked_nodes, next_run_blocked, current_start_time, trigger_timeout, time_limit):
+    if len(current_plan) <= current_min_runs_ptr[0] and not trigger_timeout[0]:
         if available_nodes and not set(available_nodes).issubset(set(blocked_nodes)):
             available_nodes_in_this_run = remove_unavailable_nodes_in_this_run(
                 available_nodes, current_run, hw_library, all_nodes, first_nodes, blocked_nodes)
@@ -193,7 +193,7 @@ def place_nodes_recursively(available_nodes, past_nodes, all_nodes, current_run,
                                                        module_placement, new_current_run, node, past_nodes,
                                                        reduce_single_runs, current_min_runs_ptr, data_tables,
                                                        module_placement_selections, skipped_placements_stat_ptr,
-                                                       first_nodes, blocked_nodes, next_run_blocked)
+                                                       first_nodes, blocked_nodes, next_run_blocked, current_start_time, trigger_timeout, time_limit)
                 if (not available_module_placements or not reduce_single_runs) and node not in blocked_nodes:
                     # Check if current run contains reducing module. If so then add the node to blocked nodes and do nothing. (for now - needs further testing)
                     new_next_run_blocked = []
@@ -204,7 +204,7 @@ def place_nodes_recursively(available_nodes, past_nodes, all_nodes, current_run,
                         place_nodes_recursively(available_nodes, past_nodes, all_nodes, current_run, current_plan,
                                                 all_plans, reduce_single_runs, hw_library, current_min_runs_ptr,
                                                 data_tables, module_placement_selections, skipped_placements_stat_ptr,
-                                                first_nodes, new_blocked_nodes, new_next_run_blocked)
+                                                first_nodes, new_blocked_nodes, new_next_run_blocked, current_start_time, trigger_timeout, time_limit)
                         return
 
                     # Schedule current run and place node in next run
@@ -223,7 +223,7 @@ def place_nodes_recursively(available_nodes, past_nodes, all_nodes, current_run,
                                                            module_placement], node, past_nodes,
                                                        reduce_single_runs, current_min_runs_ptr, data_tables,
                                                        module_placement_selections, skipped_placements_stat_ptr,
-                                                       first_nodes, new_blocked_nodes, new_next_run_blocked)
+                                                       first_nodes, new_blocked_nodes, new_next_run_blocked, current_start_time, trigger_timeout, time_limit)
                     else:
                         raise ValueError(
                             "Something went wrong - Should be able to place nodes in an empty run!")
@@ -236,6 +236,8 @@ def place_nodes_recursively(available_nodes, past_nodes, all_nodes, current_run,
                     "next_nodes": available_nodes.copy(), "graph": all_nodes.copy(), "tables": data_tables.copy(), "past_nodes": past_nodes.copy()}
                 if len(current_plan) < current_min_runs_ptr[0]:
                     current_min_runs_ptr[0] = len(current_plan)
+            if (perf_counter() - current_start_time > time_limit):
+                trigger_timeout[0] = True
 
 
 # ----------- Find nodes available for current run -----------
@@ -398,7 +400,7 @@ def select_according_to_preferences(available_module_placements, module_placemen
 def find_next_module_placement(all_nodes, all_plans, available_nodes, new_current_plan, hw_library, module_placement,
                                new_current_run, node, past_nodes, reduce_single_runs, current_min_runs, data_tables,
                                module_placement_selections, skipped_placements, first_nodes, blocked_nodes,
-                               next_run_blocked):
+                               next_run_blocked, current_start_time, trigger_timeout, time_limit):
     # Check requirements and utility and update all nodes accordingly no matter if the node is removed or not.
     new_all_nodes, new_data_tables, satisfies_requirements, skipped_nodes = update_all_nodes(all_nodes,
                                                                                              module_placement.bitstream,
@@ -435,7 +437,7 @@ def find_next_module_placement(all_nodes, all_plans, available_nodes, new_curren
                             new_all_nodes, new_current_run.copy(), new_current_plan.copy(),
                             all_plans, reduce_single_runs, hw_library, current_min_runs,
                             new_data_tables, module_placement_selections, skipped_placements, first_nodes,
-                            blocked_nodes, new_next_run_blocked)
+                            blocked_nodes, new_next_run_blocked, current_start_time, trigger_timeout, time_limit)
 
 
 # Update node availability based on current selection satisfiability
@@ -744,7 +746,7 @@ def reduce_table_sizes(node_name, starting_nodes, original_graph, current_graph,
 
 # ----------- Main scheduling function to find the plans and statistics -----------
 def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, data_tables, saved_nodes,
-                         module_placement_selections, selectivity):
+                         module_placement_selections, selectivity, time_limit):
     # print_node_placement_permutations(starting_nodes, graph)
     # print(f"{FancyText.UNDERLINE}Plans with placed modules below:{FancyText.END}")
     # Now with string match checks
@@ -753,7 +755,7 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
     current_run = []
     current_plan = []
 
-    start_time = perf_counter()
+    overall_start_time = perf_counter()
 
     # Prepare first_nodes
     first_nodes = get_first_nodes_from_saved_nodes(saved_nodes, graph)
@@ -770,6 +772,7 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
     run_count = 0
     discarded_placements = 0
     plans_chosen = 0
+    timeouts = 0
 
     # Put this into a while (starting_nodes)
     while starting_nodes:
@@ -778,14 +781,16 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
         skipped_placements_stat_pointer = [0, 0]
         blocked_nodes = []
         next_run_blocked_nodes = []
+        trigger_timeout = [False]
 
         # Find satisfying bitstreams
         add_satisfying_bitstream_locations_to_graph(
             starting_nodes, graph, hw_library, data_tables, past_nodes)
         # Start the main recursive method
+        current_start_time = perf_counter()
         place_nodes_recursively(starting_nodes, past_nodes, graph, current_run, current_plan, resulting_plans, True,
                                 hw_library, min_runs_pointer, data_tables, module_placement_selections,
-                                skipped_placements_stat_pointer, first_nodes, blocked_nodes, next_run_blocked_nodes)
+                                skipped_placements_stat_pointer, first_nodes, blocked_nodes, next_run_blocked_nodes, current_start_time, trigger_timeout, time_limit)
 
         # print(f"Number of full plans generated: {len(resulting_plans)}")
         # print(
@@ -804,6 +809,9 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
         plans_chosen += 1
         run_count += min_runs_pointer[0]
 
+        if (trigger_timeout[0]):
+            timeouts += 1
+
         chosen_plan = choose_best_plan(
             list(resulting_plans.keys()), min_runs_pointer[0])
 
@@ -819,11 +827,12 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
                     reduce_table_sizes(
                         placed_module.node_name, starting_nodes, original_graph, graph, data_tables, selectivity)
 
-    stop_time = perf_counter()
-    print(f"Elapsed time of the scheduler: {stop_time - start_time:.3f}s")
+    overall_stop_time = perf_counter()
+    print(
+        f"Elapsed time of the scheduler: {overall_stop_time - overall_start_time:.3f}s")
 
     stats_list = [plan_count, placed_nodes, discarded_placements,
-                  plans_chosen, run_count, stop_time - start_time]
+                  plans_chosen, run_count, overall_stop_time - overall_start_time, timeouts]
     converted_list = [str(element) for element in stats_list]
     return converted_list
 
@@ -1364,10 +1373,11 @@ def main(argv):
             pass
     values = last_line.split(',')
 
-    selectivity = float(values[-1])
+    selectivity = float(values[-2])
+    time_limit = float(values[-1])
 
     converted_list = find_plans_and_print(starting_nodes, processed_input_graph,
-                         resource_string, hw_library, processed_input_tables, [], default_selection, selectivity)
+                                          resource_string, hw_library, processed_input_tables, [], default_selection, selectivity, time_limit)
 
     with open(argv[0], "a") as stats_file:
         stats_file.write(",")

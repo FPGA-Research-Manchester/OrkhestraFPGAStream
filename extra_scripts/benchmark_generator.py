@@ -168,27 +168,28 @@ def main(argv):
 
     current_graph = {}
     current_join_nodes = []
-    for i in range(query_count):
-        next_join_nodes = []
-        before_nodes = [["", -1]]
-        current_state = State.filter
-        while (current_state != State.finish):
-            # Simple classless FSM for now
-            if (current_state == State.filter):
-                current_state = get_filter(
-                    current_graph, before_nodes, current_join_nodes, filter_chance, leave_empty_join_chance, filter_lower_bound, filter_upper_bound)
-            elif (current_state == State.join):
-                current_state = get_join(
-                    current_graph, before_nodes, next_join_nodes, join_chance)
-            elif (current_state == State.arithmetic):
-                current_state = get_arithmetic(
-                    current_graph, before_nodes, arithmetic_chance, multiplier_chance)
-            elif (current_state == State.aggregation):
-                current_state = get_aggregation(
-                    current_graph, before_nodes, aggregation_chance)
-        current_join_nodes.extend(next_join_nodes)
-        if (before_nodes[0] != ["", -1] and not current_graph[before_nodes[0][0]]["after"]):
-            current_graph[before_nodes[0][0]]["after"].append("")
+    while not current_graph:
+        for i in range(query_count):
+            next_join_nodes = []
+            before_nodes = [["", -1]]
+            current_state = State.filter
+            while (current_state != State.finish):
+                # Simple classless FSM for now
+                if (current_state == State.filter):
+                    current_state = get_filter(
+                        current_graph, before_nodes, current_join_nodes, filter_chance, leave_empty_join_chance, filter_lower_bound, filter_upper_bound)
+                elif (current_state == State.join):
+                    current_state = get_join(
+                        current_graph, before_nodes, next_join_nodes, join_chance)
+                elif (current_state == State.arithmetic):
+                    current_state = get_arithmetic(
+                        current_graph, before_nodes, arithmetic_chance, multiplier_chance)
+                elif (current_state == State.aggregation):
+                    current_state = get_aggregation(
+                        current_graph, before_nodes, aggregation_chance)
+            current_join_nodes.extend(next_join_nodes)
+            if (before_nodes[0] != ["", -1] and not current_graph[before_nodes[0][0]]["after"]):
+                current_graph[before_nodes[0][0]]["after"].append("")
 
     # For all current join fix the table
     global table_counter
