@@ -29,7 +29,7 @@ class ScheduledModule:
     node_name: str
     operation: str
     bitstream: str
-    position: Tuple[int, int]
+    position: Tuple[int, int]  # start and end pos (inclusive)
 
 
 # ----------- Pretty Print Strings -----------
@@ -727,7 +727,7 @@ def reduce_table_sizes(node_name, starting_nodes, original_graph, current_graph,
             if table != "":
                 data_tables[table]["record_count"] = int(
                     data_tables[table]["record_count"] * selectivity)
-                print(f'Reduced:{table} from {node_name}')
+                # print(f'Reduced:{table} from {node_name}')
                 new_sequences = []
                 for sequence in data_tables[table]["sorted_sequences"]:
                     if sequence[0] <= data_tables[table]["record_count"]:
@@ -746,7 +746,7 @@ def reduce_table_sizes(node_name, starting_nodes, original_graph, current_graph,
 
 # ----------- Main scheduling function to find the plans and statistics -----------
 def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, data_tables, saved_nodes,
-                         module_placement_selections, selectivity, time_limit):
+                         module_placement_selections, selectivity, time_limit, utilites_scaler, frames_written_scaler, utility_per_frame_scaler):
     # print_node_placement_permutations(starting_nodes, graph)
     # print(f"{FancyText.UNDERLINE}Plans with placed modules below:{FancyText.END}")
     # Now with string match checks
@@ -773,6 +773,10 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
     discarded_placements = 0
     plans_chosen = 0
     timeouts = 0
+    overall_utility = 0
+    overall_frames_written = 0
+
+    current_configuration = []
 
     # Put this into a while (starting_nodes)
     while starting_nodes:
@@ -812,8 +816,13 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
         if (trigger_timeout[0]):
             timeouts += 1
 
-        chosen_plan = choose_best_plan(
-            list(resulting_plans.keys()), min_runs_pointer[0])
+        chosen_plan, chosen_utility, chosen_frames_written, score = choose_best_plan(
+            list(resulting_plans.keys()), min_runs_pointer[0], current_configuration, resource_string, utilites_scaler, frames_written_scaler, utility_per_frame_scaler)
+
+        current_configuration = chosen_plan[-1]
+
+        overall_utility += chosen_utility
+        overall_frames_written += chosen_frames_written
 
         past_nodes = resulting_plans[chosen_plan]["past_nodes"]
         starting_nodes = resulting_plans[chosen_plan]["next_nodes"]
@@ -829,10 +838,10 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
 
     overall_stop_time = perf_counter()
     print(
-        f"Elapsed time of the scheduler: {overall_stop_time - overall_start_time:.3f}s")
+        f"Elapsed time of the scheduler: {overall_stop_time - overall_start_time:.3f}s (score: {score * 100:.2f}%)")
 
     stats_list = [plan_count, placed_nodes, discarded_placements,
-                  plans_chosen, run_count, overall_stop_time - overall_start_time, timeouts]
+                  plans_chosen, run_count, overall_stop_time - overall_start_time, timeouts, overall_utility, overall_frames_written, overall_utility/overall_frames_written, score]
     converted_list = [str(element) for element in stats_list]
     return converted_list
 
@@ -1136,32 +1145,121 @@ def print_node_placement_permutations(available_nodes, all_nodes):
 
 
 # --------- Choose best plan ----------------
-def choose_best_plan(all_unique_plans, smallest_run_count):
+
+def find_utility(plan):
+    return 1/len(plan)
+
+
+def find_frames_written(plan, current_configuration, resource_string):
+    frames_written = find_frames_written_for_configuration(
+        plan[0], current_configuration, resource_string)
+    for run_i in range(len(plan) - 1):
+        frames_written += find_frames_written_for_configuration(
+            plan[run_i+1], plan[run_i], resource_string)
+    return frames_written
+
+
+def find_frames_written_for_configuration(next_configuration, current_configuration, resource_string):
+    cost_of_columns = {'M': 216, 'D': 200, 'B': 196}
+    written_frames = [0] * len(resource_string)
+    fully_written_frames = []
+    for column in resource_string:
+        fully_written_frames.append(cost_of_columns[column])
+    reduced_next_config = list(next_configuration)
+    reduced_current_config = list(current_configuration)
+    for next_module in next_configuration:
+        for cur_module in current_configuration:
+            if cur_module.operation == next_module.operation and cur_module.bitstream == next_module.bitstream and cur_module.position == next_module.position:
+                reduced_next_config.remove(next_module)
+                reduced_current_config.remove(cur_module)
+
+    find_new_written_frames(fully_written_frames,
+                            written_frames, reduced_next_config)
+    find_new_written_frames(fully_written_frames,
+                            written_frames, reduced_current_config)
+    return (sum(written_frames))
+
+
+def find_new_written_frames(fully_written_frames, written_frames, configuration):
+    for module in configuration:
+        for column_i in range(module.position[0], module.position[1] + 1):
+            written_frames[column_i] = fully_written_frames[column_i]
+
+
+def max_utility_per_frames(all_unique_plans, last_configuration, resource_string, utilites_scaler, frames_written_scaler, utility_per_frame_scaler):
+    utilites = []
+    frames_written = []
+    for plan_i in range(len(all_unique_plans)):
+        utilites.append(find_utility(all_unique_plans[plan_i]))
+        frames_written.append(
+            find_frames_written(all_unique_plans[plan_i], last_configuration, resource_string))
+        if (frames_written[plan_i] == 0):
+            print(all_unique_plans[plan_i], last_configuration)
+            raise ValueError("No frames written!")
+    utility_per_frame = []
+    for plan_i in range(len(all_unique_plans)):
+        utility_per_frame.append(utilites[plan_i]/frames_written[plan_i])
+    max_plan_i, score = find_best_scoring_plan(
+        utilites, utilites_scaler, frames_written, frames_written_scaler, utility_per_frame, utility_per_frame_scaler)
+    return (all_unique_plans[max_plan_i], utilites[max_plan_i], frames_written[max_plan_i], score)
+
+
+def find_best_scoring_plan(utilites, utilites_scaler, frames_written, frames_written_scaler, utility_per_frame, utility_per_frame_scaler):
+    utilites_norm = [float(i)/max(utilites) for i in utilites]
+    frames_norm = [float(i)/max(frames_written) for i in frames_written]
+    utilites_per_frames_norm = [
+        float(i)/max(utility_per_frame) for i in utility_per_frame]
+    scores = []
+    for plan_i in range(len(utilites_norm)):
+        scores.append(utilites_norm[plan_i] * utilites_scaler + frames_norm[plan_i] *
+                      frames_written_scaler + utilites_per_frames_norm[plan_i] * utility_per_frame_scaler)
+    return scores.index(max(scores)), max(scores)
+
+
+def choose_best_plan(all_unique_plans, smallest_run_count, last_configuration, resource_string, utilites_scaler, frames_written_scaler, utility_per_frame_scaler):
+    #best_plan = min_runs_max_nodes_min_columns(all_unique_plans,smallest_run_count)
+    best_plan = max_utility_per_frames(
+        all_unique_plans, last_configuration, resource_string, utilites_scaler, frames_written_scaler, utility_per_frame_scaler)
+    if not best_plan:
+        raise ValueError("No best plan chosen!")
+    return best_plan
+
+
+# For later comparison - to check if the plans differ? and how big is the difference of utility_per_frames
+# This algo doesn't really make much sense. Why max nodes? Just performance wise fastest I guess?
+def min_runs_max_nodes_min_columns(all_plans, smallest_run_count):
     best_plan = None
     max_nodes_in_min_plan = 0
     min_configured_rows_in_min_plan = 0
-    for plan_i in range(len(all_unique_plans)):
-        if len(all_unique_plans[plan_i]) == smallest_run_count:
+    for plan_i in range(len(all_plans)):
+        if len(all_plans[plan_i]) == smallest_run_count:
             configured_rows = 0
             unique_node_names = set()
-            for run_i in range(len(all_unique_plans[plan_i])):
-                for module in all_unique_plans[plan_i][run_i]:
+            for run_i in range(len(all_plans[plan_i])):
+                for module in all_plans[plan_i][run_i]:
                     unique_node_names.add(module.node_name)
                     configured_rows += module.position[1] - \
                         module.position[0] + 1
             if len(unique_node_names) > max_nodes_in_min_plan:
                 max_nodes_in_min_plan = len(unique_node_names)
                 min_configured_rows_in_min_plan = configured_rows
-                best_plan = all_unique_plans[plan_i]
+                best_plan = all_plans[plan_i]
             elif len(unique_node_names) == max_nodes_in_min_plan and configured_rows < min_configured_rows_in_min_plan:
                 min_configured_rows_in_min_plan = configured_rows
-                best_plan = all_unique_plans[plan_i]
-    if not best_plan:
-        raise ValueError("No best plan chosen!")
+                best_plan = all_plans[plan_i]
     return best_plan
 
 
+def max_utility():
+    pass
+
+
+def min_frames_written():
+    pass
+
 # ----------- MAIN -----------
+
+
 def main(argv):
     resource_string = "MMDMDBMMDBMMDMDBMMDBMMDMDBMMDBM"
     # == HARDWARE ==
@@ -1373,11 +1471,14 @@ def main(argv):
             pass
     values = last_line.split(',')
 
-    selectivity = float(values[-2])
-    time_limit = float(values[-1])
+    selectivity = float(values[-5])
+    time_limit = float(values[-4])
+    utility_scaler = float(values[-3])
+    frame_scaler = float(values[-2])
+    utility_per_frame_scaler = float(values[-1])
 
     converted_list = find_plans_and_print(starting_nodes, processed_input_graph,
-                                          resource_string, hw_library, processed_input_tables, [], default_selection, selectivity, time_limit)
+                                          resource_string, hw_library, processed_input_tables, [], default_selection, selectivity, time_limit, utility_scaler, frame_scaler, utility_per_frame_scaler)
 
     with open(argv[0], "a") as stats_file:
         stats_file.write(",")

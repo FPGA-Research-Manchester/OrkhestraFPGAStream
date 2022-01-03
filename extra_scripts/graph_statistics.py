@@ -43,7 +43,7 @@ def print_stats(array_of_data, stats_list):
     #print(f'Std dev: {np.std(array_of_data)}')
     #print(f'Min: {np.min(array_of_data)}')
     #print(f'Max: {np.max(array_of_data)}')
-    #print()
+    # print()
     stats_list.extend([np.mean(array_of_data), np.std(
         array_of_data), np.min(array_of_data), np.max(array_of_data)])
 
@@ -69,10 +69,13 @@ def main(argv):
     operator_list = ["Filter", "Linear Sort", "Merge Sort",
                      "Merge Join", "Addition", "Multiplier", "Global Sum"]
 
-    print(f'Global operator counts: {global_operation_counters}')
+    # print(f'Global operator counts: {global_operation_counters}')
 
+    node_count = 0
     for operator in operator_list:
+        node_count += global_operation_counters.get(operator, 0)
         stats_list.append(global_operation_counters.get(operator, 0))
+    stats_list.append(node_count)
 
     # Since all queries end with a single graph we first find all of these finishing nodes and then start adding node names to the queries
     for query_name in end_node_names:
@@ -83,10 +86,16 @@ def main(argv):
     for query_name in query_dicts.keys():
         count_node_operator(query_dicts, input_graph, query_name, query_name)
 
-    print(f'Number of queries: {len(query_dicts.keys())}')
-    print(f'All queries: {query_dicts}')
-    print(f'All tables: {input_tables}')
-    print()
+    print(
+        f'Number of queries & node count: {len(query_dicts.keys())}, {node_count}')
+    # print(f'All queries: {query_dicts}')
+    # print(f'All tables: {input_tables}')
+    # print()
+
+    node_counts = []
+    for query_name in query_dicts.keys():
+        node_counts.append(len(query_dicts[query_name]["node_names"]))
+    print_stats(node_counts, stats_list)
 
     stats_list.append(len(query_dicts.keys()))
 
@@ -110,7 +119,7 @@ def main(argv):
             print_stats(current_counters, stats_list)
             if capacities:
                 for i in range(len(capacities)):
-                    #print(
+                    # print(
                     #    f'Global {operation} {i} capacity parameter statistics:')
                     print_stats(capacities[i], stats_list)
         else:
