@@ -1193,9 +1193,9 @@ def max_utility_per_frames(all_unique_plans, last_configuration, resource_string
         utilites.append(find_utility(all_unique_plans[plan_i]))
         frames_written.append(
             find_frames_written(all_unique_plans[plan_i], last_configuration, resource_string))
+        # Plans with no frames written will be heavily preferred. Perhaps too heavily?
         if (frames_written[plan_i] == 0):
-            print(all_unique_plans[plan_i], last_configuration)
-            raise ValueError("No frames written!")
+            frames_written[plan_i] = 0.1
     utility_per_frame = []
     for plan_i in range(len(all_unique_plans)):
         utility_per_frame.append(utilites[plan_i]/frames_written[plan_i])
@@ -1205,8 +1205,10 @@ def max_utility_per_frames(all_unique_plans, last_configuration, resource_string
 
 
 def find_best_scoring_plan(utilites, utilites_scaler, frames_written, frames_written_scaler, utility_per_frame, utility_per_frame_scaler):
+    minimised_frames_written = [1/i for i in frames_written]
     utilites_norm = [float(i)/max(utilites) for i in utilites]
-    frames_norm = [float(i)/max(frames_written) for i in frames_written]
+    frames_norm = [float(i)/max(minimised_frames_written)
+                   for i in minimised_frames_written]
     utilites_per_frames_norm = [
         float(i)/max(utility_per_frame) for i in utility_per_frame]
     scores = []
@@ -1218,10 +1220,18 @@ def find_best_scoring_plan(utilites, utilites_scaler, frames_written, frames_wri
 
 def choose_best_plan(all_unique_plans, smallest_run_count, last_configuration, resource_string, utilites_scaler, frames_written_scaler, utility_per_frame_scaler):
     #best_plan = min_runs_max_nodes_min_columns(all_unique_plans,smallest_run_count)
+
+    cost_evaluation_start = perf_counter()
+
     best_plan = max_utility_per_frames(
         all_unique_plans, last_configuration, resource_string, utilites_scaler, frames_written_scaler, utility_per_frame_scaler)
     if not best_plan:
         raise ValueError("No best plan chosen!")
+
+    stop_time = perf_counter()
+    print(
+        f"Time spent on cost evaluation : {stop_time - cost_evaluation_start:.3f}s")
+
     return best_plan
 
 
