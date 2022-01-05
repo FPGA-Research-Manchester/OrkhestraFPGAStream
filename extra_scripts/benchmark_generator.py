@@ -149,7 +149,8 @@ def main(argv):
         query_count = int(values[10])
         table_size_lower_bound = int(values[11])
         table_size_upper_bound = int(values[12])
-        node_hard_limit = int(values[13])
+        node_max_limit = int(values[13])
+        node_min_limit = int(values[14])
 
     # filter_chance = 0.5
     # filter_first_lower_bound = 1
@@ -169,12 +170,12 @@ def main(argv):
 
     current_graph = {}
     current_join_nodes = []
-    while not current_graph:
+    while len(current_graph.keys()) < node_min_limit:
         for i in range(query_count):
             next_join_nodes = []
             before_nodes = [["", -1]]
             current_state = State.filter
-            while (current_state != State.finish and len(current_graph.keys()) < node_hard_limit):
+            while (current_state != State.finish and len(current_graph.keys()) < node_max_limit):
                 # Simple classless FSM for now
                 if (current_state == State.filter):
                     current_state = get_filter(
