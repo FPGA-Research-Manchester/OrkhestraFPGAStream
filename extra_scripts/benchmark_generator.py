@@ -125,7 +125,6 @@ def check_for_dependency(current_graph, before_nodes):
 
 def main(argv):
 
-    # Hardcoded for now
     with open(argv[0], "r") as stats_file:
         last_line = stats_file.readlines()[-1]
         values = last_line.split(',')
