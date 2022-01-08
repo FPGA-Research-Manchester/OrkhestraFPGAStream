@@ -150,13 +150,13 @@ def place_nodes_recursively_no_placement_check(available_nodes, past_nodes, all_
 
 # Util function to find new available nodes which have all of their prereq nodes in the past nodes list
 def get_new_available_nodes(scheduled_node, past_nodes, all_nodes):
-    potential_nodes = list(all_nodes[scheduled_node]["after"])
+    potential_nodes = set(all_nodes[scheduled_node]["after"])
     new_available_nodes = potential_nodes.copy()
     for potential_node in potential_nodes:
         if potential_node != "":
             for previous_node, stream_index in all_nodes[potential_node]["before"]:
-                if stream_index != -1 and previous_node not in past_nodes and potential_node in new_available_nodes:
-                    new_available_nodes.remove(potential_node)
+                if stream_index != -1 and previous_node not in past_nodes:
+                    new_available_nodes.discard(potential_node)
 
     processed_new_available_nodes = [
         node for node in new_available_nodes if node != ""]
@@ -245,6 +245,9 @@ def place_nodes_recursively(available_nodes, past_nodes, all_nodes, current_run,
                     current_min_runs_ptr[0] = len(current_plan)
             if (perf_counter() - current_start_time > time_limit):
                 trigger_timeout[0] = True
+    elif not trigger_timeout[0]:
+        if (perf_counter() - current_start_time > time_limit):
+            trigger_timeout[0] = True
 
 
 # ----------- Find nodes available for current run -----------
@@ -901,8 +904,10 @@ def add_satisfying_bitstream_locations_to_graph(available_nodes, graph, hw_libra
         if len(min_requirements) == 1 and min_requirements[0] == 0:
             if current_node_name in available_nodes:
                 available_nodes.remove(current_node_name)
+                temp_past_nodes = processed_nodes.copy()
+                temp_past_nodes.add(current_node_name)
                 available_nodes.update(get_new_available_nodes(
-                    current_node_name, processed_nodes, graph))
+                    current_node_name, temp_past_nodes, graph))
             remove_from_graph(graph, current_node_name)
 
 
@@ -910,6 +915,8 @@ def remove_from_graph(graph, current_node_name):
     # Before node check has to put in as well. Can't quite handle multiple inputs
     # And also check how many inputs or how many outputs.
     # Hardcoded for 1 in 1 out at the moment.
+    if (len(graph[current_node_name]["after"]) != 1 or len(graph[current_node_name]["before"]) != 1):
+        raise ValueError("Not implemented")
     after_node = graph[current_node_name]["after"][0]
     before_node_data = graph[current_node_name]["before"][0]
     if after_node == "" and before_node_data == ("", -1):
@@ -919,6 +926,8 @@ def remove_from_graph(graph, current_node_name):
             new_after_nodes = list(graph[before_node_data[0]]["after"])
             new_after_nodes[before_node_data[1]] = after_node
             graph[before_node_data[0]]["after"] = tuple(new_after_nodes)
+        # else:
+        #     print("Warn: No previous node found!")
     elif before_node_data == ("", -1):
         index = get_current_node_index(
             graph, after_node, current_node_name)[0][0]
@@ -930,6 +939,8 @@ def remove_from_graph(graph, current_node_name):
             new_after_nodes = list(graph[before_node_data[0]]["after"])
             new_after_nodes[before_node_data[1]] = after_node
             graph[before_node_data[0]]["after"] = tuple(new_after_nodes)
+        # else:
+        #     print("Warn: No previous node found!")
         index = get_current_node_index(
             graph, after_node, current_node_name)[0][0]
         new_before_nodes = list(graph[after_node]["before"])
