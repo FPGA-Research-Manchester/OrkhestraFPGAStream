@@ -22,25 +22,45 @@ if (not defined $table_filename) {
 open(my $stats_file, ">>$stats_filename");
 print $stats_file "$header";
 
+# my @repeat_runs = (1..5);
+# my @filter_chance = (0.3,0.2);
+# my @table_low = (100,10000);
+# my @table_upper = (10000,1000000);
+# my @filter_dnf_low = (1,10);
+# my @filter_dnf_high = (8,16);
+# my @filter_comp_low = (1,4);
+# my @filter_comp_high = (4,8);
+# my @leave_empty_join = (0.75,0.25,0);
+# my @join_chance = (0.3,0.2);
+# my @arithmetic_chance = (0.3,0.2);
+# my @generator_query_count = (4,3);
+# my @selectivity = (0.75,0.5,0.25,0.1);
+# my @timeouts = (0.01,0.1,0.5,1,2,3);
+# my $max_node_limit = 7;
+# my $min_node_limit = 4;
+# my $equal_scaler = 0.33;
+# my $preferred_scaler = 0.34;
+# my @heuristic_choice = (4,0,1,2,3);
+
 my @repeat_runs = (1..5);
-my @filter_chance = (0.3,0.2);
-my @table_low = (100,10000);
-my @table_upper = (10000,1000000);
+my @filter_chance = (0.5,0.4);
+my @table_low = (100);
+my @table_upper = (10000);
 my @filter_dnf_low = (1,10);
 my @filter_dnf_high = (8,16);
 my @filter_comp_low = (1,4);
 my @filter_comp_high = (4,8);
 my @leave_empty_join = (0.75,0.25,0);
-my @join_chance = (0.3,0.2);
-my @arithmetic_chance = (0.3,0.2);
-my @generator_query_count = (4,3);
+my @join_chance = (0.5,0.4);
+my @arithmetic_chance = (0.5,0.4);
+my @generator_query_count = (2,1);
 my @selectivity = (0.75,0.5,0.25,0.1);
-my @timeouts = (0.01,0.1,0.5,1,2,3);
-my $max_node_limit = 30;
+my @timeouts = (400);
+my $max_node_limit = 7;
 my $min_node_limit = 5;
-my $equal_scaler = 0.33;
-my $preferred_scaler = 0.34;
-my @heuristic_choice = (0,1,2,3);
+my $equal_scaler = 0;
+my $preferred_scaler = 1;
+my @heuristic_choice = (4,0,1,2,3);
 
 for my $run_i (@repeat_runs){
 	for my $filter_c (@filter_chance){
@@ -53,19 +73,20 @@ for my $run_i (@repeat_runs){
                                 open($stats_file, ">>$stats_filename");
                                 print $stats_file "\n$filter_c,$filter_dnf_low[$filter_size_i],$filter_comp_low[$filter_size_i],$filter_dnf_high[$filter_size_i],$filter_comp_high[$filter_size_i],$empty_j,$join_c,$arith_c,$arith_c,0.5,$query_c,$table_low[$table_size_i],$table_upper[$table_size_i],$max_node_limit,$min_node_limit";
                                 close $stats_file;
-                                my $ret1 = system("python benchmark_generator.py $stats_filename $graph_filename $table_filename");
-                                my $ret2 = system("python graph_statistics.py $stats_filename $graph_filename $table_filename");
+                                my $query_generation = system("python benchmark_generator.py $stats_filename $graph_filename $table_filename");
+                                my $stats_generation = system("python graph_statistics.py $stats_filename $graph_filename $table_filename");
                                 tie *BW, 'File::ReadBackwards', $stats_filename or
                                     die "can't read $stats_filename $!" ;
                                 my $generated_query = <BW>;
                                 close BW;
-                                for(my $j = 0; $j <= $#selectivity; $j++){
-                                    for(my $i = 0; $i <= $#timeouts; $i++){
-                                        for(my $k = 0; $k <= $#heuristic_choice; $k++){
+                                my $scheduling_return = 0;
+                                for(my $j = 0; $j <= $#selectivity and $scheduling_return == 0; $j++){
+                                    for(my $i = 0; $i <= $#timeouts and $scheduling_return == 0; $i++){
+                                        for(my $k = 0; $k <= $#heuristic_choice and $scheduling_return == 0; $k++){
                                             open($stats_file, ">>$stats_filename");
                                             print $stats_file ",$selectivity[$j],$timeouts[$i],$heuristic_choice[$k],$equal_scaler,$equal_scaler,$preferred_scaler";
                                             close $stats_file;
-                                            my $ret3 = system("python schedule.py $stats_filename $graph_filename $table_filename");
+                                            $scheduling_return = system("python schedule.py $stats_filename $graph_filename $table_filename");
                                             if (!($i == $#timeouts and $j == $#selectivity and $k == $#heuristic_choice)){
                                                 open($stats_file, ">>$stats_filename");
                                                 print $stats_file "\n$generated_query";

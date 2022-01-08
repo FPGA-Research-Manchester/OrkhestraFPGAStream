@@ -168,6 +168,9 @@ def place_nodes_recursively(available_nodes, past_nodes, all_nodes, current_run,
                             all_plans, reduce_single_runs, hw_library, current_min_runs_ptr,
                             data_tables, module_placement_selections, skipped_placements_stat_ptr, first_nodes,
                             blocked_nodes, next_run_blocked, current_start_time, trigger_timeout, time_limit, use_max_runs_cap):
+    if trigger_timeout[0]:
+        raise ValueError(
+            f"Timeout: {perf_counter() - current_start_time:.3f}s")
     if not (len(current_plan) > current_min_runs_ptr[0] and use_max_runs_cap) and not trigger_timeout[0]:
         if available_nodes and not available_nodes.issubset(blocked_nodes):
             available_nodes_in_this_run = remove_unavailable_nodes_in_this_run(
@@ -308,15 +311,15 @@ def get_scheduled_modules_for_node_after_pos(all_nodes, min_position, node, take
                                              module_placement_selections, skipped_placements):
     current_operation = all_nodes[node]["operation"]
     available_module_placements = []
-    if all_nodes[node]["satisfying_bitstreams"]:
+    if all_nodes[node]["satisfying_bitstreams"] and len(module_placement_selections) != 1:
         available_module_placements = get_chosen_module_placements(
             node, hw_library, skipped_placements, current_operation, module_placement_selections[
-                0], min_position,
+                1], min_position,
             taken_columns, all_nodes[node]["satisfying_bitstreams"])
     if not available_module_placements:
         available_module_placements = get_chosen_module_placements(
             node, hw_library, skipped_placements, current_operation, module_placement_selections[
-                1], min_position,
+                0], min_position,
             taken_columns, hw_library[current_operation]["start_locations"])
     return available_module_placements
 
@@ -1469,9 +1472,13 @@ def main(argv):
     }
 
     # First selection is for fitting, the second selection for the rest
-    heuristics = [([[ModuleSelection.SHORTEST, ModuleSelection.FIRST_AVAILABLE]], [
-        [ModuleSelection.LONGEST, ModuleSelection.FIRST_AVAILABLE]]), ([[ModuleSelection.SHORTEST]], [
-            [ModuleSelection.LONGEST]]), ([[ModuleSelection.SHORTEST]], [[ModuleSelection.LONGEST]]), ([[ModuleSelection.ALL_AVAILABLE]], [[ModuleSelection.ALL_AVAILABLE]])]
+    heuristics = [
+        ([[ModuleSelection.LONGEST, ModuleSelection.FIRST_AVAILABLE]], [
+         [ModuleSelection.SHORTEST, ModuleSelection.FIRST_AVAILABLE]]),
+        ([[ModuleSelection.LONGEST]], [[ModuleSelection.SHORTEST]]),
+        ([[ModuleSelection.LONGEST]], [[ModuleSelection.SHORTEST]]),
+        ([[ModuleSelection.ALL_AVAILABLE]], [[ModuleSelection.ALL_AVAILABLE]]),
+        ([[ModuleSelection.ALL_AVAILABLE]],)]
     default_selection = ([[ModuleSelection.SHORTEST]], [
         [ModuleSelection.LONGEST]])
     # starting_nodes = ["A", "C"]
@@ -1528,7 +1535,7 @@ def main(argv):
 
     disallow_empty_runs = True
     use_max_runs_cap = True
-    if heuristic == 2 or heuristic == 3:
+    if heuristic == 2 or heuristic == 3 or heuristic == 4:
         disallow_empty_runs = False
         use_max_runs_cap = False
 
