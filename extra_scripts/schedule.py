@@ -168,9 +168,9 @@ def place_nodes_recursively(available_nodes, past_nodes, all_nodes, current_run,
                             all_plans, reduce_single_runs, hw_library, current_min_runs_ptr,
                             data_tables, module_placement_selections, skipped_placements_stat_ptr, first_nodes,
                             blocked_nodes, next_run_blocked, current_start_time, trigger_timeout, time_limit, use_max_runs_cap):
-    if trigger_timeout[0]:
-        raise ValueError(
-            f"Timeout: {perf_counter() - current_start_time:.3f}s")
+    # if trigger_timeout[0]:
+    #     raise ValueError(
+    #         f"Timeout: {perf_counter() - current_start_time:.3f}s")
     if not (len(current_plan) > current_min_runs_ptr[0] and use_max_runs_cap) and not trigger_timeout[0]:
         if available_nodes and not available_nodes.issubset(blocked_nodes):
             available_nodes_in_this_run = remove_unavailable_nodes_in_this_run(

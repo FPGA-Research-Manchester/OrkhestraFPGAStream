@@ -22,45 +22,45 @@ if (not defined $table_filename) {
 open(my $stats_file, ">>$stats_filename");
 print $stats_file "$header";
 
-# my @repeat_runs = (1..5);
-# my @filter_chance = (0.3,0.2);
-# my @table_low = (100,10000);
-# my @table_upper = (10000,1000000);
-# my @filter_dnf_low = (1,10);
-# my @filter_dnf_high = (8,16);
-# my @filter_comp_low = (1,4);
-# my @filter_comp_high = (4,8);
-# my @leave_empty_join = (0.75,0.25,0);
-# my @join_chance = (0.3,0.2);
-# my @arithmetic_chance = (0.3,0.2);
-# my @generator_query_count = (4,3);
-# my @selectivity = (0.75,0.5,0.25,0.1);
-# my @timeouts = (0.01,0.1,0.5,1,2,3);
-# my $max_node_limit = 7;
-# my $min_node_limit = 4;
-# my $equal_scaler = 0.33;
-# my $preferred_scaler = 0.34;
-# my @heuristic_choice = (4,0,1,2,3);
-
 my @repeat_runs = (1..5);
-my @filter_chance = (0.5,0.4);
-my @table_low = (100);
-my @table_upper = (10000);
+my @filter_chance = (0.4,0.2);
+my @table_low = (1000,100000);
+my @table_upper = (100000,10000000);
 my @filter_dnf_low = (1,10);
 my @filter_dnf_high = (8,16);
 my @filter_comp_low = (1,4);
 my @filter_comp_high = (4,8);
 my @leave_empty_join = (0.75,0.25,0);
-my @join_chance = (0.5,0.4);
-my @arithmetic_chance = (0.5,0.4);
-my @generator_query_count = (2,1);
+my @join_chance = (0.4,0.2);
+my @arithmetic_chance = (0.4,0.2);
+my @generator_query_count = (4,3);
 my @selectivity = (0.75,0.5,0.25,0.1);
-my @timeouts = (400);
-my $max_node_limit = 7;
-my $min_node_limit = 5;
+my @timeouts = (0.01,0.1,0.2,0.4,0.6,0.8,1,2,3);
+my $max_node_limit = 25;
+my $min_node_limit = 12;
 my $equal_scaler = 0;
 my $preferred_scaler = 1;
 my @heuristic_choice = (4,0,1,2,3);
+
+# my @repeat_runs = (1..5);
+# my @filter_chance = (0.5,0.4);
+# my @table_low = (100);
+# my @table_upper = (10000);
+# my @filter_dnf_low = (1,10);
+# my @filter_dnf_high = (8,16);
+# my @filter_comp_low = (1,4);
+# my @filter_comp_high = (4,8);
+# my @leave_empty_join = (0.75,0.25,0);
+# my @join_chance = (0.5,0.4);
+# my @arithmetic_chance = (0.5,0.4);
+# my @generator_query_count = (2,1);
+# my @selectivity = (0.75,0.5,0.25,0.1);
+# my @timeouts = (400);
+# my $max_node_limit = 7;
+# my $min_node_limit = 5;
+# my $equal_scaler = 0;
+# my $preferred_scaler = 1;
+# my @heuristic_choice = (4,0,1,2,3);
 
 for my $run_i (@repeat_runs){
 	for my $filter_c (@filter_chance){
