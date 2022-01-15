@@ -66,7 +66,9 @@ def read_rows(csvfile, x_key, series_key, y_values, all_stats, id_key, query_fil
     reader = csv.DictReader(csvfile)
     rowbuffer = []
     last_id_value = 0
+    lastrow = None
     for row in reader:
+        lastrow = row
         if row[id_key] != last_id_value:
             if rowbuffer:
                 if all(query_filter_func(rowbuffer, row, query_filter_key)):
@@ -89,6 +91,23 @@ def read_rows(csvfile, x_key, series_key, y_values, all_stats, id_key, query_fil
             rowbuffer = []
             last_id_value = row[id_key]
         rowbuffer.append(row)
+    if all(query_filter_func(rowbuffer, lastrow, query_filter_key)):
+        for buffered_row in rowbuffer:
+            if splitting_values:
+                for splitting_value_i in range(len(splitting_values)):
+                    if float(buffered_row[splitting_key]) <= splitting_values[splitting_value_i]:
+                        if row_filter_func(buffered_row, row_filter_key):
+                            save_y_values(x_key, series_key, y_values,
+                                          all_stats[splitting_value_i], buffered_row)
+                            break
+                    if splitting_value_i == len(splitting_values) - 1:
+                        if row_filter_func(buffered_row, row_filter_key):
+                            save_y_values(x_key, series_key, y_values,
+                                          all_stats[splitting_value_i + 1], buffered_row)
+            else:
+                if row_filter_func(buffered_row, row_filter_key):
+                    save_y_values(x_key, series_key, y_values,
+                                  all_stats[0], buffered_row)
 
 
 def read_and_write_stats(stats_file_name, series_names, function_dict, y_keys, x_values, x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key, splitting_key="", splitting_values=[]):
@@ -138,9 +157,9 @@ def main(argv):
         "Count": lambda stats_dict, value_name: len(stats_dict[value_name]),
         "Std Error": lambda stats_dict, value_name: np.std(stats_dict[value_name])/math.sqrt(len(stats_dict[value_name]))}
 
-    check_completed_runs(series_names, function_dict, "perf_counts.csv")
-    # check_all_runs(series_names, function_dict, "counts.csv")
-    # check_timeout_runs(series_names, function_dict, "timeout_counts.csv")
+    # check_completed_runs(series_names, function_dict, "perf_counts.csv")
+    check_all_runs(series_names, function_dict, "counts.csv")
+    check_timeout_runs(series_names, function_dict, "timeout_counts.csv")
 
 
 def create_clean_stats(orig_stats_file_name, clean_stats_file_name, rowbuffer, last_id_value, id_key, valid_key, filter_func, filter_key):
@@ -150,20 +169,26 @@ def create_clean_stats(orig_stats_file_name, clean_stats_file_name, rowbuffer, l
             writer = csv.DictWriter(
                 clean_csvfile, fieldnames=reader.fieldnames)
             writer.writeheader()
+            lastrow = None
             for row in reader:
+                lastrow = row
                 if row[id_key] != last_id_value:
                     if rowbuffer:
                         if all(buffered_row[valid_key] for buffered_row in rowbuffer) and all(filter_func(rowbuffer, row, filter_key)):
                             for buffered_row in rowbuffer:
-                                buffered_row["time_limit"] = 400
+                                # buffered_row["time_limit"] = 400
                                 writer.writerow(buffered_row)
                     rowbuffer = []
                     last_id_value = row[id_key]
                 rowbuffer.append(row)
+            if all(buffered_row[valid_key] for buffered_row in rowbuffer) and all(filter_func(rowbuffer, lastrow, filter_key)):
+                for buffered_row in rowbuffer:
+                    # buffered_row["time_limit"] = 400
+                    writer.writerow(buffered_row)
 
 
 def check_all_runs(series_names, function_dict, counts_filename):
-    orig_stats_file_name = "stats_all.csv"
+    orig_stats_file_name = "stats_all_more_gathered.csv"
     clean_stats_file_name = "clean_" + orig_stats_file_name
     rowbuffer = []
     last_id_value = 0
@@ -180,7 +205,6 @@ def check_all_runs(series_names, function_dict, counts_filename):
     series_key = 'heuristic'
     selected_functions = ["Avg", "Std Dev", "Count", "Std Error"]
     id_key = "table_size_std_dev"
-
     y_keys = ["frames_written"]
     x_values = [0.1, 0.25, 0.5, 0.75]
     x_key = 'selectivity'
@@ -200,7 +224,7 @@ def check_all_runs(series_names, function_dict, counts_filename):
 
 
 def check_timeout_runs(series_names, function_dict, counts_filename):
-    orig_stats_file_name = "stats_all.csv"
+    orig_stats_file_name = "stats_all_more_gathered.csv"
     clean_stats_file_name = "timeout_clean_" + orig_stats_file_name
     rowbuffer = []
     last_id_value = 0
@@ -219,7 +243,7 @@ def check_timeout_runs(series_names, function_dict, counts_filename):
     # Should come from argv
     y_keys = ["timeouts", "utility", "frames_written",
               "utility_per_frames", "placed_nodes"]
-    x_values = [0.01, 0.1, 0.5, 1, 2, 3]
+    x_values = [0.01, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 2, 3]
     x_key = 'time_limit'
     # series_values = [0, 1, 2, 3]
     series_values = [0, 1, 2, 3, 4]
@@ -261,7 +285,7 @@ def check_timeout_runs(series_names, function_dict, counts_filename):
 
 
 def check_completed_runs(series_names, function_dict, counts_filename):
-    orig_stats_file_name = "stats_perf5_thing.csv"
+    orig_stats_file_name = "completed_all_stats_gathered.csv"
     clean_stats_file_name = "clean_" + orig_stats_file_name
     rowbuffer = []
     last_id_value = 0
