@@ -511,18 +511,20 @@ def check_table_equality_of_given_node(previous_all_nodes, new_all_nodes, node_n
     return False
 
 
+def find_data_sensitive_node_names(node_name, all_nodes, new_next_run_blocked):
+    for next_node_name in all_nodes[node_name]["after"]:
+        if next_node_name != "":
+            if all_nodes[next_node_name]["operation"] == "Merge Sort":
+                new_next_run_blocked.add(next_node_name)
+            find_data_sensitive_node_names(
+                next_node_name, all_nodes, new_next_run_blocked)
+
+
 def get_new_blocked_nodes(next_run_blocked, hw_library, module_placement, all_nodes):
     new_next_run_blocked = next_run_blocked.copy()
-    if module_placement.node_name not in next_run_blocked:
-        if "reducing" in hw_library[module_placement.operation]["decorators"]:
-            new_next_run_blocked.add(module_placement.node_name)
-            for next_node_name in all_nodes[module_placement.node_name]["after"]:
-                if next_node_name != "" and next_node_name not in next_run_blocked:
-                    new_next_run_blocked.add(next_node_name)
-    else:
-        for next_node_name in all_nodes[module_placement.node_name]["after"]:
-            if next_node_name != "" and next_node_name not in next_run_blocked:
-                new_next_run_blocked.add(next_node_name)
+    if "reducing" in hw_library[module_placement.operation]["decorators"]:
+        find_data_sensitive_node_names(
+            module_placement.node_name, all_nodes, new_next_run_blocked)
     return new_next_run_blocked
 
 
@@ -835,7 +837,7 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
             timeouts += 1
 
         best_plan, cost_evaluation_time = choose_best_plan(
-            list(resulting_plans.keys()), min_runs_pointer[0], current_configuration, resource_string, utilites_scaler, frames_written_scaler, utility_per_frame_scaler)
+            list(resulting_plans.keys()), min_runs_pointer[0], current_configuration, resource_string, utilites_scaler, frames_written_scaler, utility_per_frame_scaler, resulting_plans)
 
         overall_cost_evaluation_time += cost_evaluation_time
         chosen_plan, chosen_utility, chosen_frames_written, score = best_plan
@@ -845,7 +847,8 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
         # print(
         #     f"Util - {chosen_utility}, Frames - {chosen_frames_written}, Score - {score}")
 
-        current_configuration = chosen_plan[-1]
+        # current_configuration = chosen_plan[-1]
+        current_configuration = resulting_plans[chosen_plan]["last_configuration"]
         overall_runs += len(chosen_plan)
         overall_frames_written += chosen_frames_written
         overall_score += score
@@ -1187,12 +1190,13 @@ def find_utility(plan):
 
 
 def find_frames_written(plan, current_configuration, resource_string):
-    frames_written = find_frames_written_for_configuration(
+    overall_frames_written, new_config = find_frames_written_for_configuration(
         plan[0], current_configuration, resource_string)
     for run_i in range(len(plan) - 1):
-        frames_written += find_frames_written_for_configuration(
-            plan[run_i+1], plan[run_i], resource_string)
-    return frames_written
+        frames_written, new_config = find_frames_written_for_configuration(
+            plan[run_i+1], new_config, resource_string)
+        overall_frames_written += frames_written
+    return overall_frames_written, new_config
 
 
 def find_frames_written_for_configuration(next_configuration, current_configuration, resource_string):
@@ -1209,11 +1213,16 @@ def find_frames_written_for_configuration(next_configuration, current_configurat
                 reduced_next_config.remove(next_module)
                 reduced_current_config.remove(cur_module)
 
+    left_over_config = [
+        module for module in current_configuration if module not in reduced_current_config]
+    left_over_config.extend(reduced_next_config)
+
     find_new_written_frames(fully_written_frames,
                             written_frames, reduced_next_config)
     find_new_written_frames(fully_written_frames,
                             written_frames, reduced_current_config)
-    return (sum(written_frames))
+
+    return (sum(written_frames), tuple(left_over_config))
 
 
 def find_new_written_frames(fully_written_frames, written_frames, configuration):
@@ -1222,13 +1231,16 @@ def find_new_written_frames(fully_written_frames, written_frames, configuration)
             written_frames[column_i] = fully_written_frames[column_i]
 
 
-def max_utility_per_frames(all_unique_plans, last_configuration, resource_string, utilites_scaler, frames_written_scaler, utility_per_frame_scaler):
+def max_utility_per_frames(all_unique_plans, last_configuration, resource_string, utilites_scaler, frames_written_scaler, utility_per_frame_scaler, plan_metadata):
     utilites = []
     frames_written = []
     for plan_i in range(len(all_unique_plans)):
         utilites.append(find_utility(all_unique_plans[plan_i]))
-        frames_written.append(
-            find_frames_written(all_unique_plans[plan_i], last_configuration, resource_string))
+        frames_written_last, new_config = find_frames_written(
+            all_unique_plans[plan_i], last_configuration, resource_string)
+        frames_written.append(frames_written_last)
+        plan_metadata[all_unique_plans[plan_i]
+                      ]["last_configuration"] = new_config
         # Plans with no frames written will be heavily preferred. Perhaps too heavily?
         if (frames_written[plan_i] == 0):
             frames_written[plan_i] = 0.1
@@ -1257,13 +1269,13 @@ def find_best_scoring_plan(utilites, utilites_scaler, frames_written, frames_wri
     return scores.index(max(scores)), max(scores)
 
 
-def choose_best_plan(all_unique_plans, smallest_run_count, last_configuration, resource_string, utilites_scaler, frames_written_scaler, utility_per_frame_scaler):
+def choose_best_plan(all_unique_plans, smallest_run_count, last_configuration, resource_string, utilites_scaler, frames_written_scaler, utility_per_frame_scaler, plan_metadata):
     #best_plan = min_runs_max_nodes_min_columns(all_unique_plans,smallest_run_count)
 
     cost_evaluation_start = perf_counter()
 
     best_plan = max_utility_per_frames(
-        all_unique_plans, last_configuration, resource_string, utilites_scaler, frames_written_scaler, utility_per_frame_scaler)
+        all_unique_plans, last_configuration, resource_string, utilites_scaler, frames_written_scaler, utility_per_frame_scaler, plan_metadata)
     if not best_plan:
         raise ValueError("No best plan chosen!")
 
