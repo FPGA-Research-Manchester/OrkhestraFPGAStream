@@ -151,6 +151,10 @@ def main(argv):
         node_max_limit = int(values[13])
         node_min_limit = int(values[14])
 
+    # Hard coded for now
+    table_recod_size_lower_bound = 8
+    table_recod_size_upper_bound = 24
+
     # filter_chance = 0.5
     # filter_first_lower_bound = 1
     # filter_second_lower_bount = 10
@@ -205,7 +209,7 @@ def main(argv):
     table_data = {}
     for i in range(table_counter):
         table_data["table_" +
-                   str(i)] = {"record_count": np.random.randint(table_size_lower_bound, table_size_upper_bound), "sorted_sequences": []}
+                   str(i)] = {"record_count": np.random.randint(table_size_lower_bound, table_size_upper_bound), "record_size": np.random.randint(table_recod_size_lower_bound, table_recod_size_upper_bound), "sorted_sequences": []}
 
     with open(argv[2], 'w', encoding='utf-8') as table_json:
         json.dump(table_data, table_json, ensure_ascii=False, indent=4)
