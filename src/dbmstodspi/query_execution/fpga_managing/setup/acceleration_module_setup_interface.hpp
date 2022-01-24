@@ -143,6 +143,13 @@ class AccelerationModuleSetupInterface {
    */
   virtual auto IsReducingData() -> bool;
 
+  /**
+   * Is the module sensitive to input data sizes.
+   * @return Boolean flag for scheduling noting if the module is resource elastic.
+   */
+  virtual auto IsDataSensitive() -> bool;
+  
+
  protected:
   static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)
       -> int;

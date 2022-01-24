@@ -187,6 +187,13 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
   auto IsOperationReducingData(QueryOperationType operation)
       -> bool override;
 
+  /**
+   * Method to check if the operation is data sensive and requires precise input data.
+   * @param operation Operation enum
+   * @return Boolean flag.
+   */
+  auto IsOperationDataSensitive(QueryOperationType operation) -> bool override;
+
  private:
   auto GetDriver(QueryOperationType operation_type)
       -> AccelerationModuleSetupInterface*;

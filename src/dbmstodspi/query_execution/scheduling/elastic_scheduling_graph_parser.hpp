@@ -215,6 +215,12 @@ class ElasticSchedulingGraphParser {
       const ScheduledModule& module_placement,
       const std::map<std::string, SchedulingQueryNode>& graph,
       AcceleratorLibraryInterface& drivers) -> std::vector<std::string>;
+
+  static void FindDataSensitiveNodeNames(
+      const std::string& node_name,
+      const std::map<std::string, SchedulingQueryNode>& graph,
+      std::vector<std::string>& new_next_run_blocked_nodes,
+      AcceleratorLibraryInterface& drivers);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

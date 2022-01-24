@@ -180,9 +180,11 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
             std::remove(available_nodes.begin(), available_nodes.end(),
                         current_node_name),
             available_nodes.end());
+        auto processed_nodes_with_deleted_nodes = processed_nodes;
+        processed_nodes_with_deleted_nodes.push_back(current_node_name);
         auto new_available_nodes =
             QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
-                current_node_name, processed_nodes, graph);
+                current_node_name, processed_nodes_with_deleted_nodes, graph);
         available_nodes.insert(available_nodes.end(),
                                new_available_nodes.begin(),
                                new_available_nodes.end());

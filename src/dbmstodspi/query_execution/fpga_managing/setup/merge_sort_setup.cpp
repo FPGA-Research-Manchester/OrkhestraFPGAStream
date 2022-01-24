@@ -159,3 +159,7 @@ auto MergeSortSetup::GetMinSortingRequirementsForTable(
     return {static_cast<int>(table_data.sorted_status.size()) + unsorted_tail_length};
   }
 }
+
+auto MergeSortSetup::IsDataSensitive() -> bool {
+  return true;
+}
