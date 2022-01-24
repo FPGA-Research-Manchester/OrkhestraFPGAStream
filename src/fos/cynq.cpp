@@ -12,6 +12,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <string>
+
 namespace fs = std::filesystem;
 
 FPGAManager fpga0(0);
@@ -552,6 +554,27 @@ StaticAccelInst PRManager::fpgaLoadStatic(std::string name, int register_space_s
     inst.bitstream  = bs;
     inst.prmanager = this;
     fpga0.loadFull(bs->bitstream);
+
+    //std::string readbackFile = "readback.bin";
+
+    //std::cout << "Beginning config read..." << std::endl;
+    //std::vector<char> configdata = fpga0.readbackConfig();
+    //std::cout << "Done! Read " << configdata.size() << " bytes" << std::endl;
+    //if (true) {
+    //  std::cout << "Config data is: " << std::endl;
+    //  std::cout << std::string(configdata.begin(), configdata.end())
+    //            << std::endl;
+    //}
+
+    //std::cout << "Beginning image read..." << std::endl;
+    //std::vector<char> imagedata = fpga0.readbackImage();
+    //std::cout << "Done! Read " << imagedata.size() << " bytes" << std::endl;
+    //if (true) {
+    //  std::cout << "Writing readback data to " << readbackFile << std::endl;
+    //  std::ofstream readbackOut(readbackFile);
+    //  std::copy(imagedata.cbegin(), imagedata.cend(),
+    //            std::ostreambuf_iterator<char>(readbackOut));
+    //}
     
     accelMap = mmioGetMmap("/dev/mem", acc.address, register_space_size);
     if (accelMap.fd == -1)
@@ -588,6 +611,7 @@ void PRManager::importDefs() {
   //importShell(json["shell"]);
   for (auto &accelname : json["accelerators"])
     try {
+      std::string thing = accelname;
       importAccel(accelname);
     } catch (std::runtime_error& e) {
       std::cerr << "Failed to import accel: " << accelname << std::endl;

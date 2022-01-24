@@ -17,6 +17,10 @@ limitations under the License.
 #include "acceleration_module.hpp"
 
 #include <sstream>
+#ifdef FPGA_AVAILABLE
+#include <unistd.h>
+#endif
+
 
 #include "logger.hpp"
 
@@ -48,6 +52,10 @@ void AccelerationModule::WriteToModule(
        << " Address: " << module_internal_address << " Data: " << write_data;
     Log(log_level, ss.str());
   }
+//Uncomment to add an additional wait after writes
+//#ifdef FPGA_AVAILABLE
+//  usleep(100);
+//#endif
   *register_address = write_data;
 }
 

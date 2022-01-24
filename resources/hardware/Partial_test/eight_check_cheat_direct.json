@@ -1,0 +1,11 @@
+{
+  "name": "eight_check_cheat_direct",
+  "address": "0xa0000000",
+  "bitfiles": [
+    {
+      "name": "eight_check_cheat_direct.bin",
+      "region": "full"
+    }
+  ],
+  "registers": []
+}

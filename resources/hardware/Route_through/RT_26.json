@@ -1,0 +1,11 @@
+{
+  "name": "RT_26",
+  "address": "0xa0000000",
+  "bitfiles": [
+    {
+      "name": "RT_26.bin",
+      "region": "full"
+    }
+  ],
+  "registers": []
+}

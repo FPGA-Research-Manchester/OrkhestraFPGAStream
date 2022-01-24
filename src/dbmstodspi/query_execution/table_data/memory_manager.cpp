@@ -46,11 +46,13 @@ void MemoryManager::LoadStatic() {
       std::chrono::steady_clock::now();
 
   acceleration_instance_ =
-      pr_manager_.fpgaLoadStatic("cheat_5", register_space_size);
+      pr_manager_.fpgaLoadStatic("eight_static", register_space_size);
+  /*acceleration_instance_ =
+      pr_manager_.fpgaLoadStatic("DSPI_filtering", register_space_size);*/
 
   register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
 
-  // SetFPGATo300MHz();
+  //SetFPGATo300MHz();
   SetFPGATo100MHz();
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
@@ -75,19 +77,9 @@ void MemoryManager::LoadPartialBitstream(const std::vector<std::string>& bitstre
   dma_engine.DecoupleFromPRRegion();
   FPGAManager fpga_manager(0);
   
-  /*for (const auto& name : bitstream_name) {
+  for (const auto& name : bitstream_name) {
     fpga_manager.loadPartial(name);
-  }*/
-
-  //fpga_manager.loadPartial("RT_95.bin");
-  //fpga_manager.loadPartial("RT_92.bin");
-  //fpga_manager.loadPartial("TAA_89.bin");
-
-  //fpga_manager.loadPartial("partial_RTM_94.bin");
-  //fpga_manager.loadPartial("partial_TAA_91.bin");
-  //fpga_manager.loadPartial("partial_Filter.bin");
-  //fpga_manager.loadPartial("partial_TAA_64.bin");
-  //fpga_manager.loadPartial("partial_TAA_94.bin");
+  }
 #else
   throw std::runtime_error("Can't load anything!");
 #endif

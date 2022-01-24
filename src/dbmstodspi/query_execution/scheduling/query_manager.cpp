@@ -144,6 +144,10 @@ void QueryManager::AllocateOutputMemoryBlocks(
     if (!node.next_nodes[stream_index]) {
       output_memory_blocks[stream_index] =
           std::move(memory_manager->GetAvailableMemoryBlock());
+      // Uncomment to check overwriting.
+      /*for (int i = 0; i < 100000; i++) {
+        output_memory_blocks[stream_index]->GetVirtualAddress()[i] = -1;
+      }*/
     }
     output_stream_sizes[stream_index].first = GetRecordSizeFromParameters(
         data_manager, node.operation_parameters.output_stream_parameters,
