@@ -34,6 +34,7 @@ struct ExecutionPlanSchedulingData {
   std::vector<std::string> available_nodes;
   std::map<std::string, SchedulingQueryNode> graph;
   std::map<std::string, TableMetadata> tables;
+  int streamed_data_size;
 };
 
 }  // namespace orkhestrafs::dbmstodspi::scheduling_data

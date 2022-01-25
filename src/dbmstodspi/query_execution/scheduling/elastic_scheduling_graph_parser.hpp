@@ -15,13 +15,13 @@ limitations under the License.
 */
 
 #pragma once
+#include <chrono>
+
 #include "accelerator_library_interface.hpp"
 #include "module_selection.hpp"
 #include "pr_module_data.hpp"
 #include "scheduled_module.hpp"
 #include "scheduling_data.hpp"
-
-#include <chrono>
 
 using orkhestrafs::core_interfaces::hw_library::OperationPRModules;
 using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
@@ -61,12 +61,18 @@ class ElasticSchedulingGraphParser {
       const std::vector<std::string>& constrained_first_nodes,
       std::vector<std::string> blocked_nodes,
       std::vector<std::string> next_run_blocked_nodes,
-      AcceleratorLibraryInterface& drivers, 
+      AcceleratorLibraryInterface& drivers,
       const std::chrono::system_clock::time_point& time_limit,
-      bool& trigger_timeout,
-      const bool use_max_runs_cap);
+      bool& trigger_timeout, const bool use_max_runs_cap,
+      int streamed_data_size);
 
  private:
+  static auto GetNewStreamedDataSize(
+      const std::vector<ScheduledModule>& current_run,
+      const std::string& node_name,
+      const std::map<std::string, TableMetadata>& data_tables,
+      const std::map<std::string, SchedulingQueryNode>& graph) -> int;
+
   static auto IsTableEqualForGivenNode(
       const std::map<std::string, SchedulingQueryNode>& graph,
       const std::map<std::string, SchedulingQueryNode>& new_graph,
@@ -183,10 +189,10 @@ class ElasticSchedulingGraphParser {
       const std::vector<std::string>& constrained_first_nodes,
       std::vector<std::string> blocked_nodes,
       std::vector<std::string> next_run_blocked_nodes,
-      AcceleratorLibraryInterface& drivers, 
+      AcceleratorLibraryInterface& drivers,
       const std::chrono::system_clock::time_point& time_limit,
-      bool& trigger_timeout,
-      const bool use_max_runs_cap);
+      bool& trigger_timeout, const bool use_max_runs_cap,
+      int streamed_data_size);
 
   static auto UpdateGraph(
       const std::map<std::string, SchedulingQueryNode>& graph,

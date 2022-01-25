@@ -72,7 +72,7 @@ struct SortedSequence {
  * @brief Struct to hold information about a database table.
  */
 struct TableMetadata {
-  int record_size;
+  int record_size; //words
   int record_count;
   std::vector<SortedSequence> sorted_status;
 };

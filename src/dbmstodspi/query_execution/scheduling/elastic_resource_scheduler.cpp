@@ -17,14 +17,13 @@ limitations under the License.
 #include "elastic_resource_scheduler.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <limits>
 #include <stdexcept>
-#include <chrono>
 
 #include "elastic_scheduling_graph_parser.hpp"
-#include "scheduling_data.hpp"
-
 #include "logger.hpp"
+#include "scheduling_data.hpp"
 
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
@@ -89,8 +88,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   auto trigger_timeout = false;
   std::vector<std::vector<ModuleSelection>> shortest_first_module_heuristics;
   std::vector<std::vector<ModuleSelection>> longest_first_module_heuristics;
-  std::vector<std::vector<ModuleSelection>>
-      shortest_module_heuristics;
+  std::vector<std::vector<ModuleSelection>> shortest_module_heuristics;
   std::vector<std::vector<ModuleSelection>> longest_module_heuristics;
   std::vector<std::vector<ModuleSelection>> all_modules_heuristics;
   shortest_first_module_heuristics.push_back(
@@ -108,7 +106,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
                         std::vector<std::vector<ModuleSelection>>>>
       heuristic_choices = {
           {shortest_first_module_heuristics, longest_first_module_heuristics},
-          {shortest_module_heuristics, longest_module_heuristics}, 
+          {shortest_module_heuristics, longest_module_heuristics},
           {all_modules_heuristics, all_modules_heuristics},
           {{}, all_modules_heuristics}};
 
@@ -118,28 +116,48 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   bool use_max_runs_cap = true;
   int heuristic_choice = 0;
 
-  auto time_limit = std::chrono::system_clock::now() +
-                    std::chrono::milliseconds(int(time_limit_duration_in_seconds * 1000));
+  auto time_limit =
+      std::chrono::system_clock::now() +
+      std::chrono::milliseconds(int(time_limit_duration_in_seconds * 1000));
 
   try {
     ElasticSchedulingGraphParser::PlaceNodesRecursively(
         std::move(starting_nodes), std::move(processed_nodes), std::move(graph),
         {}, {}, resulting_plans, reduce_single_runs, hw_library, min_runs,
         tables, heuristic_choices.at(heuristic_choice),
-        placed_nodes_and_discarded_placements,
-        first_node_names, {}, {}, drivers, time_limit, trigger_timeout,
-        use_max_runs_cap);
+        placed_nodes_and_discarded_placements, first_node_names, {}, {},
+        drivers, time_limit, trigger_timeout, use_max_runs_cap, 0);
   } catch (std::runtime_error &e) {
-    Log(LogLevel::kInfo,
-        "Timeout of " + std::to_string(time_limit_duration_in_seconds) + " seconds hit by the scheduler.");
+    Log(LogLevel::kInfo, "Timeout of " +
+                             std::to_string(time_limit_duration_in_seconds) +
+                             " seconds hit by the scheduler.");
   }
-  
+
   Log(LogLevel::kTrace, "Choosing best plan.");
   std::vector<std::vector<std::vector<ScheduledModule>>> all_plans;
   for (const auto &[plan, _] : resulting_plans) {
     all_plans.push_back(plan);
   }
-  auto best_plan = plan_evaluator_->GetBestPlan(all_plans, min_runs);
+
+  std::vector<ScheduledModule> last_configuration = {};
+  std::string resource_string = "MMDMDBMMDBMMDMDBMMDBMMDMDBMMDBM";
+  // Not used actually
+  double utilites_scaler = 1;
+  double config_written_scaler = 1;
+  double utility_per_frame_scaler = 1;
+  // resulting_plans
+  int frame_size = 372;
+  std::map<char, int> cost_of_columns = {{'M', 216 * frame_size},
+                                         {'D', 200 * frame_size},
+                                         {'B', 196 * frame_size}};
+  double streaming_speed = 4800000000;
+  double configuration_speed = 66000000;
+
+  // TODO: Save new_last_config
+  auto [best_plan, new_last_config] = plan_evaluator_->GetBestPlan(
+      all_plans, min_runs, last_configuration, resource_string, utilites_scaler,
+      config_written_scaler, utility_per_frame_scaler, resulting_plans,
+      cost_of_columns, streaming_speed, configuration_speed);
   Log(LogLevel::kTrace, "Creating module queue.");
   starting_nodes = resulting_plans.at(best_plan).available_nodes;
   processed_nodes = resulting_plans.at(best_plan).processed_nodes;
