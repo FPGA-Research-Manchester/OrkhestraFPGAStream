@@ -29,7 +29,7 @@ auto QuerySchedulingHelper::FindNodePtrIndex(QueryNode* current_node,
     if (potential_current_node != nullptr &&
         potential_current_node.get() == current_node) {
       if (index != -1) {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Currently can't support the same module taking multiple inputs "
             "from another module!");
       }
@@ -38,7 +38,7 @@ auto QuerySchedulingHelper::FindNodePtrIndex(QueryNode* current_node,
     counter++;
   }
   if (index == -1) {
-    throw std::runtime_error("No current node found!");
+    throw std::logic_error("No current node found!");
   }
   return index;
 }
@@ -83,7 +83,7 @@ auto QuerySchedulingHelper::GetCurrentNodeIndexesByName(
     }
   }
   if (resulting_indexes.empty()) {
-    throw std::runtime_error(
+    throw std::logic_error(
         "No next nodes found with the expected dependency");
   }
   return resulting_indexes;
@@ -123,7 +123,8 @@ void QuerySchedulingHelper::RemoveNodeFromGraph(
   // We just support one in and one out currently.
   if (graph.at(node_name).before_nodes.size() != 1 ||
       graph.at(node_name).after_nodes.size() != 1) {
-    throw std::runtime_error("Only nodes with one input and one output are supported!");
+    throw std::logic_error(
+        "Only nodes with one input and one output are supported!");
   }
 
   auto before_node = graph.at(node_name).before_nodes.front();

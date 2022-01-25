@@ -21,6 +21,8 @@ limitations under the License.
 #include "scheduled_module.hpp"
 #include "scheduling_data.hpp"
 
+#include <chrono>
+
 using orkhestrafs::core_interfaces::hw_library::OperationPRModules;
 using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
 using orkhestrafs::dbmstodspi::ModuleSelection;
@@ -59,7 +61,10 @@ class ElasticSchedulingGraphParser {
       const std::vector<std::string>& constrained_first_nodes,
       std::vector<std::string> blocked_nodes,
       std::vector<std::string> next_run_blocked_nodes,
-      AcceleratorLibraryInterface& drivers);
+      AcceleratorLibraryInterface& drivers, 
+      const std::chrono::system_clock::time_point& time_limit,
+      bool& trigger_timeout,
+      const bool use_max_runs_cap);
 
  private:
   static auto IsTableEqualForGivenNode(
@@ -178,7 +183,10 @@ class ElasticSchedulingGraphParser {
       const std::vector<std::string>& constrained_first_nodes,
       std::vector<std::string> blocked_nodes,
       std::vector<std::string> next_run_blocked_nodes,
-      AcceleratorLibraryInterface& drivers);
+      AcceleratorLibraryInterface& drivers, 
+      const std::chrono::system_clock::time_point& time_limit,
+      bool& trigger_timeout,
+      const bool use_max_runs_cap);
 
   static auto UpdateGraph(
       const std::map<std::string, SchedulingQueryNode>& graph,

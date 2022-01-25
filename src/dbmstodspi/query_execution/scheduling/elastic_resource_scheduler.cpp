@@ -19,9 +19,15 @@ limitations under the License.
 #include <algorithm>
 #include <limits>
 #include <stdexcept>
+#include <chrono>
 
 #include "elastic_scheduling_graph_parser.hpp"
 #include "scheduling_data.hpp"
+
+#include "logger.hpp"
+
+using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
 
 using orkhestrafs::dbmstodspi::ElasticResourceNodeScheduler;
 using orkhestrafs::dbmstodspi::ElasticSchedulingGraphParser;
@@ -68,44 +74,73 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     std::map<std::string, TableMetadata> &tables)
     -> std::queue<std::pair<ConfigurableModulesVector,
                             std::vector<std::shared_ptr<QueryNode>>>> {
+  Log(LogLevel::kTrace, "Scheduling preprocessing.");
   RemoveUnnecessaryTables(graph, tables);
 
   ElasticSchedulingGraphParser::PreprocessNodes(
       starting_nodes, hw_library, processed_nodes, graph, tables, drivers);
-
+  Log(LogLevel::kTrace, "Starting main scheduling loop.");
   std::map<std::vector<std::vector<ScheduledModule>>,
            ExecutionPlanSchedulingData>
       resulting_plans;
   int min_runs = std::numeric_limits<int>::max();
   std::pair<int, int> placed_nodes_and_discarded_placements = {0, 0};
 
-  // TODO: Get these from config.
-  bool reduce_single_runs = true;
-  std::vector<std::vector<ModuleSelection>> satisfying_module_heuristics;
-  std::vector<std::vector<ModuleSelection>> all_module_heuristics;
-  satisfying_module_heuristics.push_back(
+  auto trigger_timeout = false;
+  std::vector<std::vector<ModuleSelection>> shortest_first_module_heuristics;
+  std::vector<std::vector<ModuleSelection>> longest_first_module_heuristics;
+  std::vector<std::vector<ModuleSelection>>
+      shortest_module_heuristics;
+  std::vector<std::vector<ModuleSelection>> longest_module_heuristics;
+  std::vector<std::vector<ModuleSelection>> all_modules_heuristics;
+  shortest_first_module_heuristics.push_back(
       {static_cast<std::string>("SHORTEST_AVAILABLE"),
        static_cast<std::string>("FIRST_AVAILABLE")});
-  all_module_heuristics.push_back(
+  longest_first_module_heuristics.push_back(
       {static_cast<std::string>("LONGEST_AVAILABLE"),
        static_cast<std::string>("FIRST_AVAILABLE")});
-  std::pair<std::vector<std::vector<ModuleSelection>>,
-            std::vector<std::vector<ModuleSelection>>>
-      default_heuristics = {satisfying_module_heuristics,
-                            all_module_heuristics};
+  shortest_module_heuristics.push_back(
+      {static_cast<std::string>("SHORTEST_AVAILABLE")});
+  longest_module_heuristics.push_back(
+      {static_cast<std::string>("LONGEST_AVAILABLE")});
+  all_modules_heuristics.push_back({static_cast<std::string>("ALL_AVAILABLE")});
+  std::vector<std::pair<std::vector<std::vector<ModuleSelection>>,
+                        std::vector<std::vector<ModuleSelection>>>>
+      heuristic_choices = {
+          {shortest_first_module_heuristics, longest_first_module_heuristics},
+          {shortest_module_heuristics, longest_module_heuristics}, 
+          {all_modules_heuristics, all_modules_heuristics},
+          {{}, all_modules_heuristics}};
 
-  ElasticSchedulingGraphParser::PlaceNodesRecursively(
-      std::move(starting_nodes), std::move(processed_nodes), std::move(graph),
-      {}, {}, resulting_plans, reduce_single_runs, hw_library, min_runs, tables,
-      default_heuristics, placed_nodes_and_discarded_placements,
-      first_node_names, {}, {}, drivers);
+  // Have to get from config or calculate
+  double time_limit_duration_in_seconds = 3.0;
+  bool reduce_single_runs = true;
+  bool use_max_runs_cap = true;
+  int heuristic_choice = 0;
 
+  auto time_limit = std::chrono::system_clock::now() +
+                    std::chrono::milliseconds(int(time_limit_duration_in_seconds * 1000));
+
+  try {
+    ElasticSchedulingGraphParser::PlaceNodesRecursively(
+        std::move(starting_nodes), std::move(processed_nodes), std::move(graph),
+        {}, {}, resulting_plans, reduce_single_runs, hw_library, min_runs,
+        tables, heuristic_choices.at(heuristic_choice),
+        placed_nodes_and_discarded_placements,
+        first_node_names, {}, {}, drivers, time_limit, trigger_timeout,
+        use_max_runs_cap);
+  } catch (std::runtime_error &e) {
+    Log(LogLevel::kInfo,
+        "Timeout of " + std::to_string(time_limit_duration_in_seconds) + " seconds hit by the scheduler.");
+  }
+  
+  Log(LogLevel::kTrace, "Choosing best plan.");
   std::vector<std::vector<std::vector<ScheduledModule>>> all_plans;
   for (const auto &[plan, _] : resulting_plans) {
     all_plans.push_back(plan);
   }
   auto best_plan = plan_evaluator_->GetBestPlan(all_plans, min_runs);
-
+  Log(LogLevel::kTrace, "Creating module queue.");
   starting_nodes = resulting_plans.at(best_plan).available_nodes;
   processed_nodes = resulting_plans.at(best_plan).processed_nodes;
   graph = resulting_plans.at(best_plan).graph;
@@ -162,7 +197,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     }
     new_available_nodes.push_back(chosen_node);
   }
-
+  Log(LogLevel::kTrace, "Execution plan made!");
   available_nodes = new_available_nodes;
   return resulting_runs;
 }

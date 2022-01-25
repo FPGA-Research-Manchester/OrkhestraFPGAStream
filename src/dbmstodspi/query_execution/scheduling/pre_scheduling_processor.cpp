@@ -59,7 +59,7 @@ auto PreSchedulingProcessor::GetMinRequirementsForFullyExecutingNode(
   if (accelerator_library.IsOperationSorting(graph.at(node_name).operation)) {
     auto tables_to_be_sorted = graph.at(node_name).data_tables;
     if (tables_to_be_sorted.size() != 1) {
-      throw std::runtime_error(
+      throw std::logic_error(
           "Currently sorters only support one input table!");
     }
     return accelerator_library.GetMinSortingRequirements(
