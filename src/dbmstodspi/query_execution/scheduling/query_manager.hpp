@@ -95,6 +95,16 @@ class QueryManager : public QueryManagerInterface {
       -> std::queue<
           std::pair<ConfigurableModulesVector,
                     std::vector<std::shared_ptr<QueryNode>>>> override;
+  void LoadInitialStaticBitstream(
+      MemoryManagerInterface* memory_manager) override;
+
+  void LoadEmptyRoutingPRRegion(
+      MemoryManagerInterface* memory_manager,
+      AcceleratorLibraryInterface& driver_library) override;
+
+  void LoadPRBitstreams(MemoryManagerInterface* memory_manager,
+                        const std::vector<std::string>& bitstream_names,
+                        AcceleratorLibraryInterface& driver_library) override;
 
  private:
   static void CheckTableData(const DataManagerInterface* data_manager,

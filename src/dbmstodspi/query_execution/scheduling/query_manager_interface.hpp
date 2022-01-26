@@ -125,7 +125,7 @@ class QueryManagerInterface {
    * @param current_run Nodes ready for execution.
    * @return Boolean flag noting if the run is valid.
    */
-  //virtual auto IsRunValid(std::vector<AcceleratedQueryNode> current_run)
+  // virtual auto IsRunValid(std::vector<AcceleratedQueryNode> current_run)
   //    -> bool = 0;
   /**
    * @brief Execute given nodes.
@@ -149,8 +149,9 @@ class QueryManagerInterface {
       const std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
       const std::vector<AcceleratedQueryNode>& execution_query_nodes,
-      std::map<std::string, TableMetadata>& scheduling_table_data, 
-      const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links, 
+      std::map<std::string, TableMetadata>& scheduling_table_data,
+      const std::map<std::string, std::map<int, MemoryReuseTargets>>&
+          reuse_links,
       std::map<std::string, SchedulingQueryNode>& scheduling_graph) = 0;
 
   /**
@@ -205,6 +206,36 @@ class QueryManagerInterface {
       std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links)
       -> std::queue<std::pair<ConfigurableModulesVector,
                               std::vector<std::shared_ptr<QueryNode>>>> = 0;
+
+  /**
+   * @brief Load the initial static system
+   * @param memory_manager Memory manager for accessing the FPGA and loading the
+   * bitstream.
+   */
+  virtual void LoadInitialStaticBitstream(
+      MemoryManagerInterface* memory_manager) = 0;
+
+  /**
+   * @brief Load the empty PR region routing wires
+   * @param memory_manager Memory manager for accessing the FPGA and loading the
+   * bitstream.
+   * @param driver_library To get the DMA module to decouple from the PR region.
+   */
+  virtual void LoadEmptyRoutingPRRegion(
+      MemoryManagerInterface* memory_manager,
+      AcceleratorLibraryInterface& driver_library) = 0;
+
+  /**
+   * @brief Load PR bitstreams
+   * @param memory_manager Memory manager for accessing the FPGA and loading the
+   * bitstream.
+   * @param bitstream_names Bitstreams to load
+   * @param driver_library To get the DMA module to decouple from the PR region.
+   */
+  virtual void LoadPRBitstreams(
+      MemoryManagerInterface* memory_manager,
+      const std::vector<std::string>& bitstream_names,
+      AcceleratorLibraryInterface& driver_library) = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

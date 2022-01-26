@@ -46,9 +46,9 @@ void MemoryManager::LoadStatic() {
       std::chrono::steady_clock::now();
 
   acceleration_instance_ =
-      pr_manager_.fpgaLoadStatic("eight_static", register_space_size);
+      pr_manager_.fpgaLoadStatic("nine_different_region_cheat", register_space_size);
   /*acceleration_instance_ =
-      pr_manager_.fpgaLoadStatic("DSPI_filtering", register_space_size);*/
+      pr_manager_.fpgaLoadStatic("normal_filter", register_space_size);*/
 
   register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
 
@@ -74,6 +74,10 @@ void MemoryManager::LoadStatic() {
 void MemoryManager::LoadPartialBitstream(const std::vector<std::string>& bitstream_name,
                                          DMAInterface& dma_engine) {
 #ifdef FPGA_AVAILABLE
+  if (loaded_bitstream_ != "static") {
+    throw std::runtime_error("Can't load partial bitstreams without static!");
+  }
+
   dma_engine.DecoupleFromPRRegion();
   FPGAManager fpga_manager(0);
   

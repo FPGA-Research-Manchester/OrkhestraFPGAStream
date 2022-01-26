@@ -58,12 +58,6 @@ void ExecutionManager::ScheduleUnscheduledNodes() {
       current_available_nodes_, processed_nodes_, current_query_graph_,
       current_tables_metadata_, *accelerator_library_, config_, *scheduler_,
       all_reuse_links_);
-
-  // Old one plan scheduler
-  //  auto nodes_and_links = query_manager_->ScheduleUnscheduledNodes(
-  //      unscheduled_graph_->ExportRootNodes(), config_, *scheduler_);
-  //  all_reuse_links_ = nodes_and_links.first;
-  //  query_node_runs_queue_ = nodes_and_links.second;
 }
 void ExecutionManager::SetupNextRunData() {
   if (config_.accelerator_library.find(query_node_runs_queue_.front().first) ==
@@ -75,14 +69,13 @@ void ExecutionManager::SetupNextRunData() {
     throw std::runtime_error("Bitstream not found!");
   }
 
-  query_manager_->LoadNextBitstreamIfNew(
+  /*query_manager_->LoadNextBitstreamIfNew(
       memory_manager_.get(),
       config_.accelerator_library.at(query_node_runs_queue_.front().first),
-      config_);
+      config_);*/
   // Not ready yet.
-  /*memory_manager_->LoadStatic();
-  auto thing = accelerator_library_->GetDMAModule();
-  memory_manager_->LoadPartialBitstream(config_.temp, *thing);*/
+  /*query_manager_->LoadPRBitstreams(memory_manager_.get(), config_.temp,
+   *accelerator_library_.get());*/
 
   auto next_scheduled_run_nodes = PopNextScheduledRun();
 
@@ -138,6 +131,12 @@ void ExecutionManager::PopAndPrintCurrentPlan() {
 }
 
 void ExecutionManager::SetupSchedulingData() {
+  // TODO: The static bitstream loading should be moved to a different state!
+  query_manager_->LoadInitialStaticBitstream(memory_manager_.get());
+  // The empty routing should be part of the static really.
+  /*query_manager_->LoadEmptyRoutingPRRegion(memory_manager_.get(),
+                                           *accelerator_library_.get());*/
+
   current_tables_metadata_ = config_.initial_all_tables_metadata;
 
   for (const auto& node : unscheduled_graph_->GetRootNodesPtrs()) {
@@ -226,7 +225,7 @@ void ExecutionManager::AddFirstModuleNodesToConstrainedList(
 
 // This check is looking at all the nodes if there are multiple identical before
 // streams.
-// TODO: Splitting nodes aren't supported at the moment anyway: 
+// TODO: Splitting nodes aren't supported at the moment anyway:
 // after_nodes needs to be a vector of vectors!
 void ExecutionManager::AddSplittingNodesToConstrainedList(
     std::map<std::string, SchedulingQueryNode>& scheduling_graph,

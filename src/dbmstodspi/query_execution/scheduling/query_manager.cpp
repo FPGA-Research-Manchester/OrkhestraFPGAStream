@@ -27,10 +27,11 @@ limitations under the License.
 #include "query_acceleration_constants.hpp"
 #include "run_linker.hpp"
 #include "stream_data_parameters.hpp"
+#include "table_data.hpp"
 #include "table_manager.hpp"
 #include "util.hpp"
-#include "table_data.hpp"
 
+using orkhestrafs::core_interfaces::table_data::SortedSequence;
 using orkhestrafs::dbmstodspi::QueryManager;
 using orkhestrafs::dbmstodspi::RunLinker;
 using orkhestrafs::dbmstodspi::StreamDataParameters;
@@ -38,7 +39,6 @@ using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::query_acceleration_constants::kIOStreamParamDefs;
 using orkhestrafs::dbmstodspi::util::CreateReferenceVector;
-using orkhestrafs::core_interfaces::table_data::SortedSequence;
 
 auto QueryManager::GetCurrentLinks(
     const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
@@ -333,6 +333,33 @@ void QueryManager::LoadNextBitstreamIfNew(
   return memory_manager->LoadBitstreamIfNew(
       bitstream_file_name,
       config.required_memory_space.at(bitstream_file_name));
+}
+
+void QueryManager::LoadInitialStaticBitstream(
+    MemoryManagerInterface* memory_manager) {
+  memory_manager->LoadStatic();
+}
+
+void QueryManager::LoadEmptyRoutingPRRegion(
+    MemoryManagerInterface* memory_manager,
+    AcceleratorLibraryInterface& driver_library) {
+  std::vector<std::string> empty_pr_region = {
+      "RT_95.bin", "RT_92.bin", "RT_89.bin", "RT_86.bin", "RT_83.bin",
+      "RT_80.bin", "RT_77.bin", "RT_74.bin", "RT_71.bin", "RT_68.bin",
+      "RT_65.bin", "RT_62.bin", "RT_59.bin", "RT_56.bin", "RT_53.bin",
+      "RT_50.bin", "RT_47.bin", "RT_44.bin", "RT_41.bin", "RT_38.bin",
+      "RT_35.bin", "RT_32.bin", "RT_29.bin", "RT_26.bin", "RT_23.bin",
+      "RT_20.bin", "RT_17.bin", "RT_14.bin", "RT_11.bin", "RT_8.bin",
+      "RT_5.bin",  "TAA_2.bin"};
+  LoadPRBitstreams(memory_manager, empty_pr_region, driver_library);
+}
+
+void QueryManager::LoadPRBitstreams(
+    MemoryManagerInterface* memory_manager,
+    const std::vector<std::string>& bitstream_names,
+    AcceleratorLibraryInterface& driver_library) {
+  auto dma_module = driver_library.GetDMAModule();
+  memory_manager->LoadPartialBitstream(bitstream_names, *dma_module);
 }
 
 auto QueryManager::ScheduleNextSetOfNodes(
