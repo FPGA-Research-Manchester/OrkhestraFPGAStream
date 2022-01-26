@@ -76,6 +76,25 @@ class MockDMA : public DMAInterface {
   MOCK_METHOD(volatile uint64_t, GetValidReadCyclesCount, (), (override));
   MOCK_METHOD(volatile uint64_t, GetValidWriteCyclesCount, (), (override));
 
+  MOCK_METHOD(volatile uint32_t, GetInputActiveDataCycles, (), (override));
+  MOCK_METHOD(volatile uint32_t, GetInputActiveDataLastCycles, (), (override));
+  MOCK_METHOD(volatile uint32_t, GetInputActiveControlCycles, (), (override));
+  MOCK_METHOD(volatile uint32_t, GetInputActiveControlLastCycles, (),
+              (override));
+  MOCK_METHOD(volatile uint32_t, GetInputActiveEndOfStreamCycles, (),
+              (override));
+  MOCK_METHOD(volatile uint32_t, GetOutputActiveDataLastCycles, (), (override));
+  MOCK_METHOD(volatile uint32_t, GetOutputActiveControlCycles, (), (override));
+  MOCK_METHOD(volatile uint32_t, GetOutputActiveDataCycles, (), (override));
+  MOCK_METHOD(volatile uint32_t, GetOutputActiveControlLastCycles, (),
+              (override));
+  MOCK_METHOD(volatile uint32_t, GetOutputActiveEndOfStreamCycles, (),
+              (override));
+  MOCK_METHOD(volatile uint32_t, GetInputActiveInstructionCycles, (),
+              (override));
+  MOCK_METHOD(volatile uint32_t, GetOutputActiveInstructionCycles, (),
+              (override));
+
   MOCK_METHOD(void, GlobalReset, (), (override));
-  MOCK_METHOD(void, DecoupleFromPRRegin, (), (override));
+  MOCK_METHOD(void, DecoupleFromPRRegion, (), (override));
 };

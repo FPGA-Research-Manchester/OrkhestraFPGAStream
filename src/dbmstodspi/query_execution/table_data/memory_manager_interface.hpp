@@ -25,6 +25,7 @@ limitations under the License.
 #include "dma_interface.hpp"
 
 using orkhestrafs::core_interfaces::MemoryBlockInterface;
+using orkhestrafs::dbmstodspi::DMAInterface;
 
 namespace orkhestrafs::dbmstodspi {
 

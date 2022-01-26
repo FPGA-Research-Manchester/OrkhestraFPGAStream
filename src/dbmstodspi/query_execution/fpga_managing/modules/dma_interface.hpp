@@ -76,6 +76,19 @@ class DMAInterface {
   virtual auto GetValidReadCyclesCount() -> volatile uint64_t = 0;
   virtual auto GetValidWriteCyclesCount() -> volatile uint64_t = 0;
 
+  virtual auto GetInputActiveDataCycles() -> volatile uint32_t = 0;
+  virtual auto GetInputActiveDataLastCycles() -> volatile uint32_t = 0;
+  virtual auto GetInputActiveControlCycles() -> volatile uint32_t = 0;
+  virtual auto GetInputActiveControlLastCycles() -> volatile uint32_t = 0;
+  virtual auto GetInputActiveEndOfStreamCycles() -> volatile uint32_t = 0;
+  virtual auto GetOutputActiveDataCycles() -> volatile uint32_t = 0;
+  virtual auto GetOutputActiveDataLastCycles() -> volatile uint32_t = 0;
+  virtual auto GetOutputActiveControlCycles() -> volatile uint32_t = 0;
+  virtual auto GetOutputActiveControlLastCycles() -> volatile uint32_t = 0;
+  virtual auto GetOutputActiveEndOfStreamCycles() -> volatile uint32_t = 0;
+  virtual auto GetInputActiveInstructionCycles() -> volatile uint32_t = 0;
+  virtual auto GetOutputActiveInstructionCycles() -> volatile uint32_t = 0;
+
   virtual void GlobalReset() = 0;
   virtual void DecoupleFromPRRegion() = 0;
 };

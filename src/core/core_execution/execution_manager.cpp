@@ -75,13 +75,14 @@ void ExecutionManager::SetupNextRunData() {
     throw std::runtime_error("Bitstream not found!");
   }
 
-  /*query_manager_->LoadNextBitstreamIfNew(
+  query_manager_->LoadNextBitstreamIfNew(
       memory_manager_.get(),
       config_.accelerator_library.at(query_node_runs_queue_.front().first),
-      config_);*/
-  memory_manager_->LoadStatic();
+      config_);
+  // Not ready yet.
+  /*memory_manager_->LoadStatic();
   auto thing = accelerator_library_->GetDMAModule();
-  memory_manager_->LoadPartialBitstream(config_.temp, *thing);
+  memory_manager_->LoadPartialBitstream(config_.temp, *thing);*/
 
   auto next_scheduled_run_nodes = PopNextScheduledRun();
 

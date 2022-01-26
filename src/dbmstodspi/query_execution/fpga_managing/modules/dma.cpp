@@ -192,6 +192,44 @@ auto DMA::GetValidWriteCyclesCount() -> volatile uint64_t {
   return ((static_cast<uint64_t>(high)) << 32) | (static_cast<uint64_t>(low));
 }
 
+auto DMA::GetInputActiveDataCycles() -> volatile uint32_t {
+  return AccelerationModule::ReadFromModule(0x8020);
+}
+auto DMA::GetInputActiveDataLastCycles() -> volatile uint32_t{
+  return AccelerationModule::ReadFromModule(0x8024);
+}
+auto DMA::GetInputActiveControlCycles() -> volatile uint32_t{
+  return AccelerationModule::ReadFromModule(0x8028);
+}
+auto DMA::GetInputActiveControlLastCycles() -> volatile uint32_t{
+  return AccelerationModule::ReadFromModule(0x802C);
+}
+auto DMA::GetInputActiveEndOfStreamCycles() -> volatile uint32_t{
+  return AccelerationModule::ReadFromModule(0x8030);
+}
+auto DMA::GetOutputActiveDataCycles() -> volatile uint32_t{
+  return AccelerationModule::ReadFromModule(0x8040);
+}
+auto DMA::GetOutputActiveDataLastCycles() -> volatile uint32_t{
+  return AccelerationModule::ReadFromModule(0x8044);
+}
+auto DMA::GetOutputActiveControlCycles() -> volatile uint32_t{
+  return AccelerationModule::ReadFromModule(0x8048);
+}
+auto DMA::GetOutputActiveControlLastCycles() -> volatile uint32_t{
+  return AccelerationModule::ReadFromModule(0x804C);
+}
+auto DMA::GetOutputActiveEndOfStreamCycles() -> volatile uint32_t{
+  return AccelerationModule::ReadFromModule(0x8050);
+}
+auto DMA::GetInputActiveInstructionCycles() -> volatile uint32_t{
+  return AccelerationModule::ReadFromModule(0x8060);
+}
+auto DMA::GetOutputActiveInstructionCycles() -> volatile uint32_t{
+  return AccelerationModule::ReadFromModule(0x8070);
+}
+
+
 void DMA::GlobalReset() {
   AccelerationModule::WriteToModule(8, kResetDuration_);
 }

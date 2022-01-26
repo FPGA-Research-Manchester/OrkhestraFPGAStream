@@ -137,6 +137,8 @@ add_library(query_execution OBJECT
             scheduling/plan_evaluator_interface.hpp
             scheduling/plan_evaluator.cpp
             scheduling/plan_evaluator.hpp
+            scheduling/simple_plan_evaluator.cpp
+            scheduling/simple_plan_evaluator.hpp
             scheduling/run_linker.cpp
             scheduling/run_linker.hpp
             scheduling/elastic_scheduling_graph_parser.cpp
