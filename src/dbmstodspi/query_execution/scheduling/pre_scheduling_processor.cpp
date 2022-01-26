@@ -59,7 +59,7 @@ auto PreSchedulingProcessor::GetMinRequirementsForFullyExecutingNode(
   if (accelerator_library.IsOperationSorting(graph.at(node_name).operation)) {
     auto tables_to_be_sorted = graph.at(node_name).data_tables;
     if (tables_to_be_sorted.size() != 1) {
-      throw std::runtime_error(
+      throw std::logic_error(
           "Currently sorters only support one input table!");
     }
     return accelerator_library.GetMinSortingRequirements(
@@ -180,9 +180,11 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
             std::remove(available_nodes.begin(), available_nodes.end(),
                         current_node_name),
             available_nodes.end());
+        auto processed_nodes_with_deleted_nodes = processed_nodes;
+        processed_nodes_with_deleted_nodes.push_back(current_node_name);
         auto new_available_nodes =
             QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
-                current_node_name, processed_nodes, graph);
+                current_node_name, processed_nodes_with_deleted_nodes, graph);
         available_nodes.insert(available_nodes.end(),
                                new_available_nodes.begin(),
                                new_available_nodes.end());

@@ -91,3 +91,9 @@ auto AccelerationModuleSetupInterface::GetResultingTables(
 auto AccelerationModuleSetupInterface::IsReducingData() -> bool {
   return false;
 }
+
+auto AccelerationModuleSetupInterface::IsDataSensitive() -> bool {
+  return false;
+}
+
+

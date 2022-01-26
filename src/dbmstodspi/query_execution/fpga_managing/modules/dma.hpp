@@ -209,6 +209,20 @@ class DMA : public AccelerationModule, public DMAInterface {
    */
   auto GetValidWriteCyclesCount() -> volatile uint64_t override;
 
+  ///Debug methods
+  auto GetInputActiveDataCycles() -> volatile uint32_t override;
+  auto GetInputActiveDataLastCycles() -> volatile uint32_t override;
+  auto GetInputActiveControlCycles() -> volatile uint32_t override;
+  auto GetInputActiveControlLastCycles() -> volatile uint32_t override;
+  auto GetInputActiveEndOfStreamCycles() -> volatile uint32_t override;
+  auto GetOutputActiveDataCycles() -> volatile uint32_t override;
+  auto GetOutputActiveDataLastCycles() -> volatile uint32_t override;
+  auto GetOutputActiveControlCycles() -> volatile uint32_t override;
+  auto GetOutputActiveControlLastCycles() -> volatile uint32_t override;
+  auto GetOutputActiveEndOfStreamCycles() -> volatile uint32_t override;
+  auto GetInputActiveInstructionCycles() -> volatile uint32_t override;
+  auto GetOutputActiveInstructionCycles() -> volatile uint32_t override;
+
   /**
    * @brief Method to write to the reset register to reset all configured
    * modules including the DMA.
@@ -216,6 +230,13 @@ class DMA : public AccelerationModule, public DMAInterface {
    * The reset signal will be high for 8 clock cycles.
    */
   void GlobalReset() override;
+
+  /**
+   * @brief Method to decouple the DMA from the PR region for partial reconfiguration.
+   * 
+   * To renable the connection global reset has to be used.
+   */
+  void DecoupleFromPRRegion() override;
 
   const int kResetDuration_ = 8;
 };

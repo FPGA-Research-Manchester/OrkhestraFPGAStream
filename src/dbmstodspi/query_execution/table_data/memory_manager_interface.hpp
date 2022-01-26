@@ -18,10 +18,14 @@ limitations under the License.
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "memory_block_interface.hpp"
 
+#include "dma_interface.hpp"
+
 using orkhestrafs::core_interfaces::MemoryBlockInterface;
+using orkhestrafs::dbmstodspi::DMAInterface;
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -41,6 +45,10 @@ class MemoryManagerInterface {
       -> std::unique_ptr<MemoryBlockInterface> = 0;
   virtual void FreeMemoryBlock(
       std::unique_ptr<MemoryBlockInterface> memory_block_pointer) = 0;
+  virtual void LoadStatic() = 0;
+  virtual void LoadPartialBitstream(
+      const std::vector<std::string>& bitstream_name,
+                                    DMAInterface& dma_engine) = 0;
 
  private:
   virtual auto AllocateMemoryBlock()

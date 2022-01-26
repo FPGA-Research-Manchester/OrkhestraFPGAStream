@@ -79,6 +79,11 @@ void ExecutionManager::SetupNextRunData() {
       memory_manager_.get(),
       config_.accelerator_library.at(query_node_runs_queue_.front().first),
       config_);
+  // Not ready yet.
+  /*memory_manager_->LoadStatic();
+  auto thing = accelerator_library_->GetDMAModule();
+  memory_manager_->LoadPartialBitstream(config_.temp, *thing);*/
+
   auto next_scheduled_run_nodes = PopNextScheduledRun();
 
   for (const auto& node : next_scheduled_run_nodes) {

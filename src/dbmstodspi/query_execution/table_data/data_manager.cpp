@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <sstream>
 #include <stdexcept>
 
@@ -154,6 +155,28 @@ void DataManager::WriteTableData(const TableData& table_data,
       }
       output_file << std::endl;
     }
+    output_file.close();
+  } else {
+    throw std::runtime_error("Can't open " + filename);
+  }
+}
+
+void DataManager::WriteRawTableData(const TableData& table_data,
+                                    const std::string& filename) const {
+  auto row_size =
+      std::accumulate(table_data.table_column_label_vector.begin(),
+                      table_data.table_column_label_vector.end(), 0,
+                      [](int sum, auto column) { return column.second + sum; });
+
+  std::ofstream output_file(filename, std::ios::trunc);
+  if (output_file.is_open()) {
+    for (int i = 0; i < table_data.table_data_vector.size(); i++) {
+      if (i % row_size == 0) {
+        output_file << std::endl;
+      }
+      output_file << table_data.table_data_vector.at(i) << " ";
+    }
+    output_file << std::endl;
     output_file.close();
   } else {
     throw std::runtime_error("Can't open " + filename);

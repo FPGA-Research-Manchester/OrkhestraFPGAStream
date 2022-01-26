@@ -19,6 +19,9 @@ limitations under the License.
 #include <algorithm>
 #include <vector>
 
+#include <sstream>
+#include <iostream>
+
 #include "pr_module_data.hpp"
 #include "query_scheduling_data.hpp"
 #include "table_data.hpp"
@@ -39,6 +42,8 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string table_metadata = "TABLE_METADATA";
   std::string hw_library = "HW_LIBRARY";
 
+  std::string temp = "TEMP";
+
   // repo.json is hardcoded for now.
 
   auto config_values = config_reader_->ParseInputConfig(config_filename);
@@ -47,6 +52,14 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
       config_values[configurations_library]);
 
   Config config;
+
+  std::stringstream ss(config_values[temp]);
+
+  std::string s;
+  while (std::getline(ss, s, ',')) {
+    config.temp.push_back(s);
+  }
+
   config.accelerator_library =
       ConvertStringMapToQueryOperations(accelerator_library_data);
   config.module_library =

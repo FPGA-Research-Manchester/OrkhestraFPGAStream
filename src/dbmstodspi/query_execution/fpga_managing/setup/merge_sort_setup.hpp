@@ -41,6 +41,7 @@ class MergeSortSetup : public virtual AccelerationModuleSetupInterface,
   auto GetMultiChannelParams(bool is_input, int stream_index,
                              std::vector<std::vector<int>> operation_parameters)
       -> std::pair<int, int> override;
+  auto IsDataSensitive() -> bool override;
   auto GetMinSortingRequirementsForTable(
       const TableMetadata& table_data) -> std::vector<int> override;
   /**

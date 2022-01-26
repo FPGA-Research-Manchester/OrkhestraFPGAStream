@@ -60,6 +60,11 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
                     std::vector<std::shared_ptr<QueryNode>>>> override;
 
  private:
+  static auto CalculateTimeLimit(
+      const std::map<std::string, SchedulingQueryNode> &graph,
+      const std::map<std::string, TableMetadata> &data_tables,
+      double config_speed, double streaming_speed,
+      const std::map<QueryOperationType, int> &operation_costs) -> double;
   static auto FindSharedPointerFromRootNodes(
       std::string searched_node_name, std::shared_ptr<QueryNode> current_node)
       -> std::shared_ptr<QueryNode>;

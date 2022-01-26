@@ -29,7 +29,7 @@ auto QuerySchedulingHelper::FindNodePtrIndex(QueryNode* current_node,
     if (potential_current_node != nullptr &&
         potential_current_node.get() == current_node) {
       if (index != -1) {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Currently can't support the same module taking multiple inputs "
             "from another module!");
       }
@@ -38,7 +38,7 @@ auto QuerySchedulingHelper::FindNodePtrIndex(QueryNode* current_node,
     counter++;
   }
   if (index == -1) {
-    throw std::runtime_error("No current node found!");
+    throw std::logic_error("No current node found!");
   }
   return index;
 }
@@ -83,7 +83,7 @@ auto QuerySchedulingHelper::GetCurrentNodeIndexesByName(
     }
   }
   if (resulting_indexes.empty()) {
-    throw std::runtime_error(
+    throw std::logic_error(
         "No next nodes found with the expected dependency");
   }
   return resulting_indexes;
@@ -116,44 +116,46 @@ auto QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
   return potential_nodes;
 }
 
+// TODO: This needs improving to support multi inputs and outputs
 void QuerySchedulingHelper::RemoveNodeFromGraph(
     std::map<std::string, SchedulingQueryNode>& graph, std::string node_name) {
-  if (graph.at(node_name).after_nodes.empty()) {
-    graph.erase(node_name);
-    for (const auto& [previous_node_name, stream_index] :
-         graph.at(node_name).before_nodes) {
-      if (!previous_node_name.empty()) {
-        graph.at(previous_node_name).after_nodes.at(stream_index) = "";
-      }
-    }
-  } else if (graph.at(node_name).before_nodes.size() > 1) {
-    throw std::runtime_error("Can't remove node with multiple inputs!");
-  } else {
-    for (int stream_index = 0;
-         stream_index < graph.at(node_name).after_nodes.size();
-         stream_index++) {
-      auto next_node_name = graph.at(node_name).after_nodes.at(stream_index);
-      if (!next_node_name.empty()) {
-        std::pair<std::string, int> current_link = {node_name, stream_index};
-        auto search = std::find(graph.at(next_node_name).before_nodes.begin(),
-                                graph.at(next_node_name).before_nodes.end(),
-                                current_link);
-        if (search == graph.at(next_node_name).before_nodes.end()) {
-          throw std::runtime_error("Node linking error!");
-        } else {
-          auto previous_node_name =
-              graph.at(node_name).before_nodes.front().first;
-          search->first = previous_node_name;
-          search->second = graph.at(node_name).before_nodes.front().second;
-          if (graph.find(previous_node_name) != graph.end()) {
-            graph.at(previous_node_name)
-                .after_nodes.at(
-                    graph.at(node_name).before_nodes.front().second) =
-                next_node_name;
-          }
-        }
-      }
-    }
-    graph.erase(node_name);
+
+  // We just support one in and one out currently.
+  if (graph.at(node_name).before_nodes.size() != 1 ||
+      graph.at(node_name).after_nodes.size() != 1) {
+    throw std::logic_error(
+        "Only nodes with one input and one output are supported!");
   }
+
+  auto before_node = graph.at(node_name).before_nodes.front();
+  auto after_node = graph.at(node_name).after_nodes.front();
+  // TODO: No need for the temp copies.
+  if (after_node.empty() && before_node.second == -1) {
+    // Do nothing
+  } else if (after_node.empty()) {
+    if (graph.find(before_node.first) != graph.end()) {
+      auto new_after_nodes = graph.at(before_node.first).after_nodes;
+      new_after_nodes.at(before_node.second) = after_node;
+      graph.at(before_node.first).after_nodes = new_after_nodes;
+    }
+  } else if (before_node.second == -1) {
+    int index =
+        GetCurrentNodeIndexesByName(graph, after_node, node_name).front().first;
+    auto new_before_nodes = graph.at(after_node).before_nodes;
+    new_before_nodes.at(index) = before_node;
+    graph.at(after_node).before_nodes = new_before_nodes;
+  } else {
+    if (graph.find(before_node.first) != graph.end()) {
+      auto new_after_nodes = graph.at(before_node.first).after_nodes;
+      new_after_nodes.at(before_node.second) = after_node;
+      graph.at(before_node.first).after_nodes = new_after_nodes;
+    }
+    int index =
+        GetCurrentNodeIndexesByName(graph, after_node, node_name).front().first;
+    auto new_before_nodes = graph.at(after_node).before_nodes;
+    new_before_nodes.at(index) = before_node;
+    graph.at(after_node).before_nodes = new_before_nodes;
+  }
+
+  graph.erase(node_name);
 }

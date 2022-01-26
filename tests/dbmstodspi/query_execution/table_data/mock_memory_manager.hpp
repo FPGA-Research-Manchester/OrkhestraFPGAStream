@@ -30,7 +30,7 @@ class MockMemoryManager : public MemoryManagerInterface {
   void FreeMemoryBlock(
       std::unique_ptr<MemoryBlockInterface> memory_block_pointer) override {
     return MockFreeMemoryBlock(memory_block_pointer.get());
-  }
+  };
 
   MOCK_METHOD(std::unique_ptr<MemoryBlockInterface>, GetAvailableMemoryBlock,
               (), (override));
@@ -40,7 +40,12 @@ class MockMemoryManager : public MemoryManagerInterface {
               (override));
   MOCK_METHOD(void, LoadBitstreamIfNew,
               (const std::string& bitstream_name,
-               const int register_space_size),
+               int register_space_size),
+              (override));
+  MOCK_METHOD(void, LoadStatic, (), (override));
+  MOCK_METHOD(void, LoadPartialBitstream,
+              (const std::vector<std::string>& bitstream_name,
+               DMAInterface& dma_engine),
               (override));
 
  private:

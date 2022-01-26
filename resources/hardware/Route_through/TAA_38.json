@@ -1,0 +1,11 @@
+{
+    "name": "TAA_38",
+    "address": "0xa0000000",
+    "bitfiles": [
+        {
+            "name": "TAA_38.bin",
+            "region": "full"
+        }
+    ],
+    "registers": []
+}

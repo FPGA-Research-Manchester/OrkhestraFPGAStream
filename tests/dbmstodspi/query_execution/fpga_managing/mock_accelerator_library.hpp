@@ -79,4 +79,6 @@ class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
               (override));
   MOCK_METHOD((bool), IsOperationReducingData,
               (QueryOperationType operation_type), (override));
+  MOCK_METHOD((bool), IsOperationDataSensitive,
+              (QueryOperationType operation_type), (override));
 };

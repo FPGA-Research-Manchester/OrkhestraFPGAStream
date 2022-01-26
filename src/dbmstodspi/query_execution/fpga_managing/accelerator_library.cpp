@@ -157,3 +157,9 @@ auto AcceleratorLibrary::IsOperationReducingData(QueryOperationType operation)
   auto driver = GetDriver(operation);
   return driver->IsReducingData();
 }
+
+auto AcceleratorLibrary::IsOperationDataSensitive(QueryOperationType operation)
+    -> bool {
+  auto driver = GetDriver(operation);
+  return driver->IsDataSensitive();
+}

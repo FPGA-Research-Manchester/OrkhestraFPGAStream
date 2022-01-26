@@ -82,6 +82,8 @@ class AcceleratorLibraryInterface {
       -> std::vector<std::string> = 0;
   virtual auto IsOperationReducingData(QueryOperationType operation)
       -> bool = 0;
+  virtual auto IsOperationDataSensitive(QueryOperationType operation)
+      -> bool = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

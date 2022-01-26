@@ -138,7 +138,7 @@ auto ElasticSchedulingGraphParser::GetModuleIndex(
     int start_location_index,
     const std::vector<std::pair<int, int>>& taken_positions) -> int {
   if (taken_positions.empty()) {
-    throw std::runtime_error("Taken positions can't be empty!");
+    throw std::logic_error("Taken positions can't be empty!");
   }
   if (start_location_index < taken_positions.at(0).first) {
     return 0;
@@ -289,8 +289,8 @@ auto ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPos(
     -> std::vector<std::pair<int, ScheduledModule>> {
   auto current_operation = graph.at(node_name).operation;
   std::vector<std::pair<int, ScheduledModule>> available_module_placements;
-  // Will never be empty but just in case
-  if (!graph.at(node_name).satisfying_bitstreams.empty()) {
+  if (!graph.at(node_name).satisfying_bitstreams.empty() &&
+      !heuristics.first.empty()) {
     available_module_placements = GetChosenModulePlacements(
         node_name, hw_library, statistics_counters, current_operation,
         heuristics.first, min_position, taken_positions,
@@ -337,7 +337,7 @@ auto ElasticSchedulingGraphParser::FindMissingUtility(
     -> bool {
   bool is_node_fully_processed = true;
   if (bitstream_capacity.size() != node_capacity.size()) {
-    throw std::runtime_error("Capacity parameters don't match!");
+    throw std::logic_error("Capacity parameters don't match!");
   }
   for (int capacity_parameter_index = 0;
        capacity_parameter_index < bitstream_capacity.size();
@@ -377,7 +377,7 @@ auto ElasticSchedulingGraphParser::GetResultingTables(
   if (drivers.IsInputSupposedToBeSorted(operation)) {
     for (const auto& table_name : table_names) {
       if (!QuerySchedulingHelper::IsTableSorted(tables.at(table_name))) {
-        throw std::runtime_error("Table should be sorted!");
+        throw std::logic_error("Table should be sorted!");
       }
     }
   }
@@ -506,21 +506,65 @@ void ElasticSchedulingGraphParser::UpdateSatisfyingBitstreamsList(
                    !IsTableEqualForGivenNode(graph, new_graph, map_entry.first,
                                              data_tables, new_tables);
           })) {
+    // For performance remove these checks! These checks don't work anyways as
+    // tables can be changed with node removal.
+    /*std::vector<std::vector<std::string>> previous_tables;
+    for (const auto& [_, node] : graph) {
+      previous_tables.push_back(node.data_tables);
+    }*/
     PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
         hw_library, new_graph, new_tables, drivers, new_available_nodes,
         new_processed_nodes);
+    /*std::vector<std::vector<std::string>> current_tables;
+    for (const auto& [_, node] : graph) {
+      current_tables.push_back(node.data_tables);
+    }
+    if (previous_tables != current_tables) {
+      throw std::runtime_error("Something went wrong!");
+    }*/
   } else {
-    if (std::any_of(graph.at(node_name).after_nodes.begin(),
-                    graph.at(node_name).after_nodes.end(),
-                    [&](std::string next_node_name) {
-                      return !next_node_name.empty() &&
-                             !IsTableEqualForGivenNode(graph, new_graph,
-                                                       next_node_name,
-                                                       data_tables, new_tables);
-                    })) {
+    if (std::any_of(
+            graph.at(node_name).after_nodes.begin(),
+            graph.at(node_name).after_nodes.end(),
+            [&](std::string next_node_name) {
+              return (!next_node_name.empty() &&
+                      new_graph.find(next_node_name) == new_graph.end()) ||
+                     (!next_node_name.empty() &&
+                      !IsTableEqualForGivenNode(graph, new_graph,
+                                                next_node_name, data_tables,
+                                                new_tables));
+            })) {
+      /*std::vector<std::vector<std::string>> previous_tables;
+      for (const auto& [_, node] : graph) {
+        previous_tables.push_back(node.data_tables);
+      }*/
       PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
           hw_library, new_graph, new_tables, drivers, new_available_nodes,
           new_processed_nodes);
+      /*std::vector<std::vector<std::string>> current_tables;
+      for (const auto& [_, node] : graph) {
+        current_tables.push_back(node.data_tables);
+      }
+      if (previous_tables != current_tables) {
+        throw std::runtime_error("Something went wrong!");
+      }*/
+    }
+  }
+}
+
+void ElasticSchedulingGraphParser::FindDataSensitiveNodeNames(
+    const std::string& node_name,
+    const std::map<std::string, SchedulingQueryNode>& graph,
+    std::vector<std::string>& new_next_run_blocked_nodes,
+    AcceleratorLibraryInterface& drivers) {
+  for (const auto& next_node_name : graph.at(node_name).after_nodes) {
+    if (!next_node_name.empty()) {
+      if (drivers.IsOperationDataSensitive(
+              graph.at(next_node_name).operation)) {
+        new_next_run_blocked_nodes.push_back(next_node_name);
+      }
+      FindDataSensitiveNodeNames(next_node_name, graph,
+                                 new_next_run_blocked_nodes, drivers);
     }
   }
 }
@@ -532,30 +576,9 @@ auto ElasticSchedulingGraphParser::GetNewBlockedNodes(
     const std::map<std::string, SchedulingQueryNode>& graph,
     AcceleratorLibraryInterface& drivers) -> std::vector<std::string> {
   auto new_next_run_blocked_nodes = next_run_blocked_nodes;
-  if (std::find(next_run_blocked_nodes.begin(), next_run_blocked_nodes.end(),
-                module_placement.node_name) == next_run_blocked_nodes.end()) {
-    if (drivers.IsOperationReducingData(module_placement.operation_type)) {
-      new_next_run_blocked_nodes.push_back(module_placement.node_name);
-      for (const auto& next_node_name :
-           graph.at(module_placement.node_name).after_nodes) {
-        if (!next_node_name.empty() &&
-            std::find(next_run_blocked_nodes.begin(),
-                      next_run_blocked_nodes.end(),
-                      next_node_name) == next_run_blocked_nodes.end()) {
-          new_next_run_blocked_nodes.push_back(next_node_name);
-        }
-      }
-    }
-  } else {
-    for (const auto& next_node_name :
-         graph.at(module_placement.node_name).after_nodes) {
-      if (!next_node_name.empty() &&
-          std::find(next_run_blocked_nodes.begin(),
-                    next_run_blocked_nodes.end(),
-                    next_node_name) == next_run_blocked_nodes.end()) {
-        new_next_run_blocked_nodes.push_back(next_node_name);
-      }
-    }
+  if (drivers.IsOperationReducingData(module_placement.operation_type)) {
+    FindDataSensitiveNodeNames(module_placement.node_name, graph,
+                               new_next_run_blocked_nodes, drivers);
   }
   return new_next_run_blocked_nodes;
 }
@@ -577,7 +600,10 @@ void ElasticSchedulingGraphParser::FindNextModulePlacement(
     const std::vector<std::string>& constrained_first_nodes,
     std::vector<std::string> blocked_nodes,
     std::vector<std::string> next_run_blocked_nodes,
-    AcceleratorLibraryInterface& drivers) {
+    AcceleratorLibraryInterface& drivers,
+    const std::chrono::system_clock::time_point& time_limit,
+    bool& trigger_timeout, const bool use_max_runs_cap,
+    int streamed_data_size) {
   auto [new_graph, new_tables, satisfied_requirements, skipped_node_names] =
       UpdateGraph(graph, module_placement.bitstream, data_tables, hw_library,
                   node_name, graph.at(node_name).capacity,
@@ -590,7 +616,7 @@ void ElasticSchedulingGraphParser::FindNextModulePlacement(
   for (const auto& skipped_node_name : skipped_node_names) {
     if (std::find(new_available_nodes.begin(), new_available_nodes.end(),
                   skipped_node_name) == new_available_nodes.end()) {
-      throw std::runtime_error("Skipped nodes marked in the wrong order!");
+      throw std::logic_error("Skipped nodes marked in the wrong order!");
     } else {
       auto new_nodes_pair = CreateNewAvailableNodes(
           graph, new_available_nodes, new_processed_nodes, skipped_node_name,
@@ -611,7 +637,38 @@ void ElasticSchedulingGraphParser::FindNextModulePlacement(
       new_available_nodes, new_processed_nodes, new_graph, current_run,
       current_plan, resulting_plan, reduce_single_runs, hw_library, min_runs,
       new_tables, heuristics, statistics_counters, constrained_first_nodes,
-      blocked_nodes, new_next_run_blocked, drivers);
+      blocked_nodes, new_next_run_blocked, drivers, time_limit, trigger_timeout,
+      use_max_runs_cap, streamed_data_size);
+}
+
+auto ElasticSchedulingGraphParser::GetNewStreamedDataSize(
+    const std::vector<ScheduledModule>& current_run,
+    const std::string& node_name,
+    const std::map<std::string, TableMetadata>& data_tables,
+    const std::map<std::string, SchedulingQueryNode>& graph) -> int {
+  std::vector<std::string> before_node_names;
+  for (const auto& before_stream : graph.at(node_name).before_nodes) {
+    before_node_names.push_back(before_stream.first);
+  }
+  auto required_tables = graph.at(node_name).data_tables;
+  for (const auto& placement : current_run) {
+    auto before_node_search =
+        std::find(before_node_names.begin(), before_node_names.end(),
+                  placement.node_name);
+    if (before_node_search != before_node_names.end()) {
+      required_tables[before_node_search - before_node_names.begin()] = "";
+    }
+  }
+
+  int streamed_data_size = 0;
+  for (const auto& table_name : required_tables) {
+    if (!table_name.empty()) {
+      // Record size is in 4 byte words
+      streamed_data_size += data_tables.at(table_name).record_count *
+                            data_tables.at(table_name).record_size * 4;
+    }
+  }
+  return streamed_data_size;
 }
 
 // TODO: The constants could be changed to be class variables.
@@ -632,8 +689,15 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
     const std::vector<std::string>& constrained_first_nodes,
     std::vector<std::string> blocked_nodes,
     std::vector<std::string> next_run_blocked_nodes,
-    AcceleratorLibraryInterface& drivers) {
-  if (current_plan.size() <= min_runs) {
+    AcceleratorLibraryInterface& drivers,
+    const std::chrono::system_clock::time_point& time_limit,
+    bool& trigger_timeout, const bool use_max_runs_cap,
+    int streamed_data_size) {
+  if (trigger_timeout) {
+    throw std::runtime_error("Timeout");
+  }
+  if (!(current_plan.size() > min_runs && use_max_runs_cap) &&
+      !trigger_timeout) {
     std::sort(blocked_nodes.begin(), blocked_nodes.end());
     std::sort(available_nodes.begin(), available_nodes.end());
     if (!available_nodes.empty() &&
@@ -642,83 +706,103 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
       auto available_nodes_in_this_run = RemoveUnavailableNodesInThisRun(
           available_nodes, current_run, hw_library, graph,
           constrained_first_nodes, blocked_nodes, drivers);
+      std::vector<std::pair<int, ScheduledModule>> available_module_placements;
       for (const auto& node_name : available_nodes) {
-        std::vector<std::pair<int, ScheduledModule>>
-            available_module_placements;
         if (std::find(available_nodes_in_this_run.begin(),
                       available_nodes_in_this_run.end(),
                       node_name) != available_nodes_in_this_run.end()) {
           auto min_position =
               GetMinPositionInCurrentRun(current_run, node_name, graph);
           auto taken_positions = GetTakenColumns(current_run);
-          available_module_placements = GetScheduledModulesForNodeAfterPos(
-              graph, min_position, node_name, taken_positions, hw_library,
-              heuristics, statistics_counters);
+          auto new_available_module_placements =
+              GetScheduledModulesForNodeAfterPos(
+                  graph, min_position, node_name, taken_positions, hw_library,
+                  heuristics, statistics_counters);
+          available_module_placements.insert(
+              available_module_placements.end(),
+              new_available_module_placements.begin(),
+              new_available_module_placements.end());
           if (!available_module_placements.empty()) {
             for (const auto& [module_index, module_placement] :
                  available_module_placements) {
               auto new_current_run = current_run;
               new_current_run.insert(new_current_run.begin() + module_index,
                                      module_placement);
+              streamed_data_size += GetNewStreamedDataSize(
+                  current_run, module_placement.node_name, data_tables, graph);
               FindNextModulePlacement(
                   graph, resulting_plan, available_nodes, current_plan,
                   hw_library, module_placement, new_current_run, node_name,
                   processed_nodes, reduce_single_runs, min_runs, data_tables,
                   heuristics, statistics_counters, constrained_first_nodes,
-                  blocked_nodes, next_run_blocked_nodes, drivers);
+                  blocked_nodes, next_run_blocked_nodes, drivers, time_limit,
+                  trigger_timeout, use_max_runs_cap, streamed_data_size);
             }
           }
         }
-        if ((available_module_placements.empty() || !reduce_single_runs) &&
-            std::find(blocked_nodes.begin(), blocked_nodes.end(), node_name) ==
-                blocked_nodes.end()) {
-          auto new_blocked_nodes = blocked_nodes;
-          new_blocked_nodes.insert(new_blocked_nodes.end(),
-                                   next_run_blocked_nodes.begin(),
-                                   next_run_blocked_nodes.end());
-          if (std::find(new_blocked_nodes.begin(), new_blocked_nodes.end(),
-                        node_name) != new_blocked_nodes.end()) {
-            PlaceNodesRecursively(
-                available_nodes, processed_nodes, graph, current_run,
-                current_plan, resulting_plan, reduce_single_runs, hw_library,
-                min_runs, data_tables, heuristics, statistics_counters,
-                constrained_first_nodes, new_blocked_nodes, {}, drivers);
-            return;
-          }
-
-          auto new_current_plan = current_plan;
-          if (!current_run.empty()) {
-            new_current_plan.push_back(current_run);
-          }
-          available_module_placements = GetScheduledModulesForNodeAfterPos(
-              graph, 0, node_name, {}, hw_library, heuristics,
-              statistics_counters);
-          if (!available_module_placements.empty()) {
-            for (const auto& [_, module_placement] :
-                 available_module_placements) {
-              FindNextModulePlacement(
-                  graph, resulting_plan, available_nodes, new_current_plan,
-                  hw_library, module_placement, {module_placement}, node_name,
-                  processed_nodes, reduce_single_runs, min_runs, data_tables,
-                  heuristics, statistics_counters, constrained_first_nodes,
-                  new_blocked_nodes, {}, drivers);
+      }
+      if ((available_module_placements.empty() || !reduce_single_runs) &&
+          !current_run.empty()) {
+        for (const auto& node_name : available_nodes) {
+          if (std::find(blocked_nodes.begin(), blocked_nodes.end(),
+                        node_name) == blocked_nodes.end()) {
+            auto new_blocked_nodes = blocked_nodes;
+            new_blocked_nodes.insert(new_blocked_nodes.end(),
+                                     next_run_blocked_nodes.begin(),
+                                     next_run_blocked_nodes.end());
+            if (std::find(new_blocked_nodes.begin(), new_blocked_nodes.end(),
+                          node_name) != new_blocked_nodes.end()) {
+              PlaceNodesRecursively(
+                  available_nodes, processed_nodes, graph, current_run,
+                  current_plan, resulting_plan, reduce_single_runs, hw_library,
+                  min_runs, data_tables, heuristics, statistics_counters,
+                  constrained_first_nodes, new_blocked_nodes, {}, drivers,
+                  time_limit, trigger_timeout, use_max_runs_cap,
+                  streamed_data_size);
+              return;
             }
-          } else {
-            throw std::runtime_error(
-                "Should be able to place nodes in an empty run!");
+
+            auto new_current_plan = current_plan;
+            if (!current_run.empty()) {
+              new_current_plan.push_back(current_run);
+            }
+            available_module_placements = GetScheduledModulesForNodeAfterPos(
+                graph, 0, node_name, {}, hw_library, heuristics,
+                statistics_counters);
+            if (!available_module_placements.empty()) {
+              for (const auto& [_, module_placement] :
+                   available_module_placements) {
+                streamed_data_size += GetNewStreamedDataSize(
+                    current_run, node_name, data_tables, graph);
+                FindNextModulePlacement(
+                    graph, resulting_plan, available_nodes, new_current_plan,
+                    hw_library, module_placement, {module_placement}, node_name,
+                    processed_nodes, reduce_single_runs, min_runs, data_tables,
+                    heuristics, statistics_counters, constrained_first_nodes,
+                    new_blocked_nodes, {}, drivers, time_limit, trigger_timeout,
+                    use_max_runs_cap, streamed_data_size);
+              }
+            } else {
+              throw std::logic_error(
+                  "Should be able to place nodes in an empty run!");
+            }
           }
         }
       }
     } else {
       current_plan.push_back(current_run);
       ExecutionPlanSchedulingData current_scheduling_data = {
-          processed_nodes, available_nodes, graph, data_tables};
+          processed_nodes, available_nodes, graph, data_tables,
+          streamed_data_size};
       if (const auto& [it, inserted] =
               resulting_plan.try_emplace(current_plan, current_scheduling_data);
           inserted) {
         if (current_plan.size() < min_runs) {
           min_runs = current_plan.size();
         }
+      }
+      if (std::chrono::system_clock::now() > time_limit) {
+        trigger_timeout = true;
       }
     }
   }

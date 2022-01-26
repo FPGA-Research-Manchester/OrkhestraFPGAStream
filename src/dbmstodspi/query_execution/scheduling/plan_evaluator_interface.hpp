@@ -17,10 +17,13 @@ limitations under the License.
 #pragma once
 
 #include <vector>
+#include <map>
 
 #include "scheduled_module.hpp"
+#include "scheduling_data.hpp"
 
 using orkhestrafs::dbmstodspi::ScheduledModule;
+using orkhestrafs::dbmstodspi::scheduling_data::ExecutionPlanSchedulingData;
 
 namespace orkhestrafs::dbmstodspi {
 /**
@@ -33,10 +36,28 @@ class PlanEvaluatorInterface {
    * @brief Get the best plan from the vector of fitting plans
    * @param available_plans All avaialable plans to choose from.
    * @param min_run_count Minimum run count in a plan.
-   * @return Best plan
+   * @param last_configuration Currently configured modules
+   * @param resource_string PR region resources
+   * @param utilites_scaler How to prioritize utility
+   * @param config_written_scaler How to prioritize config data
+   * @param utility_per_frame_scaler How to prioritize utility to data ratio
+   * @param plan_metadata All plans meta data
+   * @param cost_of_columns How expensive each column is
+   * @param streaming_speed Current IO speed
+   * @param configuration_speed How fast is configuration data streamed
+   * @return Best plan with the last configuration
    */
   virtual auto GetBestPlan(
-      std::vector<std::vector<std::vector<ScheduledModule>>> available_plans,
-      int min_run_count) -> std::vector<std::vector<ScheduledModule>> = 0;
+      const std::vector<std::vector<std::vector<ScheduledModule>>>&
+          available_plans,
+      int min_run_count, const std::vector<ScheduledModule>& last_configuration,
+      const std::string resource_string, double utilites_scaler,
+      double config_written_scaler, double utility_per_frame_scaler,
+      const std::map<std::vector<std::vector<ScheduledModule>>,
+                     ExecutionPlanSchedulingData>& plan_metadata,
+      const std::map<char, int>& cost_of_columns, double streaming_speed,
+      double configuration_speed)
+      -> std::pair<std::vector<std::vector<ScheduledModule>>,
+                   std::vector<ScheduledModule>> = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

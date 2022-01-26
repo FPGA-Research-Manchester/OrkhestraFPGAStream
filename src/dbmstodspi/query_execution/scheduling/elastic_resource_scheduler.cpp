@@ -17,11 +17,16 @@ limitations under the License.
 #include "elastic_resource_scheduler.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <limits>
 #include <stdexcept>
 
 #include "elastic_scheduling_graph_parser.hpp"
+#include "logger.hpp"
 #include "scheduling_data.hpp"
+
+using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
 
 using orkhestrafs::dbmstodspi::ElasticResourceNodeScheduler;
 using orkhestrafs::dbmstodspi::ElasticSchedulingGraphParser;
@@ -57,6 +62,30 @@ void ElasticResourceNodeScheduler::RemoveUnnecessaryTables(
   tables = resulting_tables;
 }
 
+auto ElasticResourceNodeScheduler::CalculateTimeLimit(
+    const std::map<std::string, SchedulingQueryNode>& graph,
+    const std::map<std::string, TableMetadata>& data_tables,
+    double config_speed,
+    double streaming_speed,
+    const std::map<QueryOperationType, int>& operation_costs) -> double {
+  int smallest_config_size = 0;
+  for (const auto &[node_name, parameters] : graph) {
+    smallest_config_size += operation_costs.at(parameters.operation);
+  }
+  double config_time = smallest_config_size / config_speed;
+  int table_sizes = 0;
+  for (const auto &[node_name, parameters] : graph) {
+    for (const auto &table_name : parameters.data_tables) {
+      if (!table_name.empty()) {
+        table_sizes += data_tables.at(table_name).record_count *
+                       data_tables.at(table_name).record_size * 4;
+      }
+    }
+  }
+  double execution_time = table_sizes / streaming_speed;
+  return config_time + execution_time;
+}
+
 auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     std::vector<std::shared_ptr<QueryNode>> &available_nodes,
     const std::map<QueryOperationType, OperationPRModules> &hw_library,
@@ -68,44 +97,115 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     std::map<std::string, TableMetadata> &tables)
     -> std::queue<std::pair<ConfigurableModulesVector,
                             std::vector<std::shared_ptr<QueryNode>>>> {
+  Log(LogLevel::kTrace, "Scheduling preprocessing.");
   RemoveUnnecessaryTables(graph, tables);
 
   ElasticSchedulingGraphParser::PreprocessNodes(
       starting_nodes, hw_library, processed_nodes, graph, tables, drivers);
-
+  Log(LogLevel::kTrace, "Starting main scheduling loop.");
   std::map<std::vector<std::vector<ScheduledModule>>,
            ExecutionPlanSchedulingData>
       resulting_plans;
   int min_runs = std::numeric_limits<int>::max();
   std::pair<int, int> placed_nodes_and_discarded_placements = {0, 0};
 
-  // TODO: Get these from config.
-  bool reduce_single_runs = true;
-  std::vector<std::vector<ModuleSelection>> satisfying_module_heuristics;
-  std::vector<std::vector<ModuleSelection>> all_module_heuristics;
-  satisfying_module_heuristics.push_back(
+  auto trigger_timeout = false;
+  std::vector<std::vector<ModuleSelection>> shortest_first_module_heuristics;
+  std::vector<std::vector<ModuleSelection>> longest_first_module_heuristics;
+  std::vector<std::vector<ModuleSelection>> shortest_module_heuristics;
+  std::vector<std::vector<ModuleSelection>> longest_module_heuristics;
+  std::vector<std::vector<ModuleSelection>> all_modules_heuristics;
+  shortest_first_module_heuristics.push_back(
       {static_cast<std::string>("SHORTEST_AVAILABLE"),
        static_cast<std::string>("FIRST_AVAILABLE")});
-  all_module_heuristics.push_back(
+  longest_first_module_heuristics.push_back(
       {static_cast<std::string>("LONGEST_AVAILABLE"),
        static_cast<std::string>("FIRST_AVAILABLE")});
-  std::pair<std::vector<std::vector<ModuleSelection>>,
-            std::vector<std::vector<ModuleSelection>>>
-      default_heuristics = {satisfying_module_heuristics,
-                            all_module_heuristics};
+  shortest_module_heuristics.push_back(
+      {static_cast<std::string>("SHORTEST_AVAILABLE")});
+  longest_module_heuristics.push_back(
+      {static_cast<std::string>("LONGEST_AVAILABLE")});
+  all_modules_heuristics.push_back({static_cast<std::string>("ALL_AVAILABLE")});
+  std::vector<std::pair<std::vector<std::vector<ModuleSelection>>,
+                        std::vector<std::vector<ModuleSelection>>>>
+      heuristic_choices = {
+          {shortest_first_module_heuristics, longest_first_module_heuristics},
+          {shortest_module_heuristics, longest_module_heuristics},
+          {all_modules_heuristics, all_modules_heuristics},
+          {{}, all_modules_heuristics}};
 
-  ElasticSchedulingGraphParser::PlaceNodesRecursively(
-      std::move(starting_nodes), std::move(processed_nodes), std::move(graph),
-      {}, {}, resulting_plans, reduce_single_runs, hw_library, min_runs, tables,
-      default_heuristics, placed_nodes_and_discarded_placements,
-      first_node_names, {}, {}, drivers);
+  double streaming_speed = 4800000000;
+  double configuration_speed = 66000000;
 
+  // Hardcoded for now but should be calculated based on the HW_library.
+  std::map<QueryOperationType, int> operation_costs = {
+      {QueryOperationType::kFilter, 315456},
+      {QueryOperationType::kLinearSort, 770784},
+      {QueryOperationType::kMergeSort, 770784},
+      {QueryOperationType::kJoin, 462768},
+      {QueryOperationType::kAddition, 315456},
+      {QueryOperationType::kMultiplication, 916608},
+      {QueryOperationType::kAggregationSum, 229152},
+  };
+
+  double time_limit_duration_in_seconds = CalculateTimeLimit(
+      graph, tables, configuration_speed, streaming_speed, operation_costs);
+  bool reduce_single_runs = true;
+  bool use_max_runs_cap = true;
+  int heuristic_choice = 0;
+
+  auto time_limit =
+      std::chrono::system_clock::now() +
+      std::chrono::milliseconds(int(time_limit_duration_in_seconds * 1000));
+
+  std::chrono::steady_clock::time_point begin =
+      std::chrono::steady_clock::now();
+
+  try {
+    ElasticSchedulingGraphParser::PlaceNodesRecursively(
+        std::move(starting_nodes), std::move(processed_nodes), std::move(graph),
+        {}, {}, resulting_plans, reduce_single_runs, hw_library, min_runs,
+        tables, heuristic_choices.at(heuristic_choice),
+        placed_nodes_and_discarded_placements, first_node_names, {}, {},
+        drivers, time_limit, trigger_timeout, use_max_runs_cap, 0);
+  } catch (std::runtime_error &e) {
+    Log(LogLevel::kInfo, "Timeout of " +
+                             std::to_string(time_limit_duration_in_seconds) +
+                             " seconds hit by the scheduler.");
+  }
+
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  Log(LogLevel::kInfo,
+      "Main scheduling loop time = " +
+          std::to_string(
+              std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
+                  .count()) +
+          "[milliseconds]");
+
+  Log(LogLevel::kTrace, "Choosing best plan.");
   std::vector<std::vector<std::vector<ScheduledModule>>> all_plans;
   for (const auto &[plan, _] : resulting_plans) {
     all_plans.push_back(plan);
   }
-  auto best_plan = plan_evaluator_->GetBestPlan(all_plans, min_runs);
 
+  std::vector<ScheduledModule> last_configuration = {};
+  std::string resource_string = "MMDMDBMMDBMMDMDBMMDBMMDMDBMMDBM";
+  // Not used actually
+  double utilites_scaler = 1;
+  double config_written_scaler = 1;
+  double utility_per_frame_scaler = 1;
+  // resulting_plans
+  int frame_size = 372;
+  std::map<char, int> cost_of_columns = {{'M', 216 * frame_size},
+                                         {'D', 200 * frame_size},
+                                         {'B', 196 * frame_size}};
+
+  // TODO: Save new_last_config
+  auto [best_plan, new_last_config] = plan_evaluator_->GetBestPlan(
+      all_plans, min_runs, last_configuration, resource_string, utilites_scaler,
+      config_written_scaler, utility_per_frame_scaler, resulting_plans,
+      cost_of_columns, streaming_speed, configuration_speed);
+  Log(LogLevel::kTrace, "Creating module queue.");
   starting_nodes = resulting_plans.at(best_plan).available_nodes;
   processed_nodes = resulting_plans.at(best_plan).processed_nodes;
   graph = resulting_plans.at(best_plan).graph;
@@ -162,7 +262,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     }
     new_available_nodes.push_back(chosen_node);
   }
-
+  Log(LogLevel::kTrace, "Execution plan made!");
   available_nodes = new_available_nodes;
   return resulting_runs;
 }
