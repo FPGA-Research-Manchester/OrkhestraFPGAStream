@@ -62,6 +62,30 @@ void ElasticResourceNodeScheduler::RemoveUnnecessaryTables(
   tables = resulting_tables;
 }
 
+auto ElasticResourceNodeScheduler::CalculateTimeLimit(
+    const std::map<std::string, SchedulingQueryNode>& graph,
+    const std::map<std::string, TableMetadata>& data_tables,
+    double config_speed,
+    double streaming_speed,
+    const std::map<QueryOperationType, int>& operation_costs) -> double {
+  int smallest_config_size = 0;
+  for (const auto &[node_name, parameters] : graph) {
+    smallest_config_size += operation_costs.at(parameters.operation);
+  }
+  double config_time = smallest_config_size / config_speed;
+  int table_sizes = 0;
+  for (const auto &[node_name, parameters] : graph) {
+    for (const auto &table_name : parameters.data_tables) {
+      if (!table_name.empty()) {
+        table_sizes += data_tables.at(table_name).record_count *
+                       data_tables.at(table_name).record_size * 4;
+      }
+    }
+  }
+  double execution_time = table_sizes / streaming_speed;
+  return config_time + execution_time;
+}
+
 auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     std::vector<std::shared_ptr<QueryNode>> &available_nodes,
     const std::map<QueryOperationType, OperationPRModules> &hw_library,
@@ -110,8 +134,22 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
           {all_modules_heuristics, all_modules_heuristics},
           {{}, all_modules_heuristics}};
 
-  // Have to get from config or calculate
-  double time_limit_duration_in_seconds = 3.0;
+  double streaming_speed = 4800000000;
+  double configuration_speed = 66000000;
+
+  // Hardcoded for now but should be calculated based on the HW_library.
+  std::map<QueryOperationType, int> operation_costs = {
+      {QueryOperationType::kFilter, 315456},
+      {QueryOperationType::kLinearSort, 770784},
+      {QueryOperationType::kMergeSort, 770784},
+      {QueryOperationType::kJoin, 462768},
+      {QueryOperationType::kAddition, 315456},
+      {QueryOperationType::kMultiplication, 916608},
+      {QueryOperationType::kAggregationSum, 229152},
+  };
+
+  double time_limit_duration_in_seconds = CalculateTimeLimit(
+      graph, tables, configuration_speed, streaming_speed, operation_costs);
   bool reduce_single_runs = true;
   bool use_max_runs_cap = true;
   int heuristic_choice = 0;
@@ -119,6 +157,9 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   auto time_limit =
       std::chrono::system_clock::now() +
       std::chrono::milliseconds(int(time_limit_duration_in_seconds * 1000));
+
+  std::chrono::steady_clock::time_point begin =
+      std::chrono::steady_clock::now();
 
   try {
     ElasticSchedulingGraphParser::PlaceNodesRecursively(
@@ -132,6 +173,14 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
                              std::to_string(time_limit_duration_in_seconds) +
                              " seconds hit by the scheduler.");
   }
+
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  Log(LogLevel::kInfo,
+      "Main scheduling loop time = " +
+          std::to_string(
+              std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
+                  .count()) +
+          "[milliseconds]");
 
   Log(LogLevel::kTrace, "Choosing best plan.");
   std::vector<std::vector<std::vector<ScheduledModule>>> all_plans;
@@ -150,8 +199,6 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   std::map<char, int> cost_of_columns = {{'M', 216 * frame_size},
                                          {'D', 200 * frame_size},
                                          {'B', 196 * frame_size}};
-  double streaming_speed = 4800000000;
-  double configuration_speed = 66000000;
 
   // TODO: Save new_last_config
   auto [best_plan, new_last_config] = plan_evaluator_->GetBestPlan(
