@@ -22,7 +22,6 @@ limitations under the License.
 #include "execution_manager.hpp"
 #include "fpga_driver_factory.hpp"
 #include "memory_manager.hpp"
-#include "one_plan_node_scheduler.hpp"
 #include "plan_evaluator.hpp"
 #include "query_manager.hpp"
 #include "schedule_state.hpp"
@@ -37,7 +36,6 @@ using orkhestrafs::dbmstodspi::DataManager;
 using orkhestrafs::dbmstodspi::ElasticResourceNodeScheduler;
 using orkhestrafs::dbmstodspi::FPGADriverFactory;
 using orkhestrafs::dbmstodspi::MemoryManager;
-using orkhestrafs::dbmstodspi::OnePlanNodeScheduler;
 using orkhestrafs::dbmstodspi::PlanEvaluator;
 using orkhestrafs::dbmstodspi::QueryManager;
 using orkhestrafs::dbmstodspi::ScheduleState;
@@ -46,7 +44,6 @@ using orkhestrafs::dbmstodspi::SetupSchedulingState;
 
 auto ExecutionManagerFactory::GetManager(const Config& config)
     -> std::unique_ptr<ExecutionManagerInterface> {
-  /*auto chosen_scheduler = std::make_unique<OnePlanNodeScheduler>();*/
   auto secondary_scheduler = std::make_unique<ElasticResourceNodeScheduler>(
       std::make_unique<PlanEvaluator>());
 

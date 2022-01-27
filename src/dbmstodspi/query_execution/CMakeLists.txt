@@ -129,8 +129,6 @@ add_library(query_execution OBJECT
             fpga_managing/setup/decorators/blocking_sort_module_setup.cpp
 		    fpga_managing/setup/decorators/reducing_module_setup.hpp
 		    fpga_managing/setup/decorators/reducing_module_setup.cpp
-            scheduling/one_plan_node_scheduler.cpp
-            scheduling/one_plan_node_scheduler.hpp
             scheduling/node_scheduler_interface.hpp
             scheduling/elastic_resource_scheduler.cpp
             scheduling/elastic_resource_scheduler.hpp
@@ -150,6 +148,8 @@ add_library(query_execution OBJECT
             scheduling/elastic_module_checker.cpp
             scheduling/id_manager.hpp
             scheduling/id_manager.cpp
+            scheduling/bitstream_config_helper.hpp
+            scheduling/bitstream_config_helper.cpp
             scheduling/table_manager.hpp
             scheduling/table_manager.cpp
 		    scheduling/pre_scheduling_processor.cpp

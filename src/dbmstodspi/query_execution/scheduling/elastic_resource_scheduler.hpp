@@ -33,19 +33,6 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       std::unique_ptr<PlanEvaluatorInterface> plan_evaluator)
       : plan_evaluator_{std::move(plan_evaluator)} {}
 
-  auto FindAcceleratedQueryNodeSets(
-      std::vector<std::shared_ptr<QueryNode>> starting_nodes,
-      const std::map<ConfigurableModulesVector, std::string>
-          &supported_accelerator_bitstreams,
-      const std::map<QueryOperationType, std::vector<std::vector<int>>>
-          &existing_modules_library,
-      std::map<std::string,
-               std::map<int, std::vector<std::pair<std::string, int>>>>
-          &linked_nodes)
-      -> std::queue<
-          std::pair<ConfigurableModulesVector,
-                    std::vector<std::shared_ptr<QueryNode>>>> override;
-
   auto GetNextSetOfRuns(
       std::vector<std::shared_ptr<QueryNode>>& available_nodes,
       const std::map<QueryOperationType, OperationPRModules> &hw_library,
@@ -56,7 +43,7 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       AcceleratorLibraryInterface &drivers,
       std::map<std::string, TableMetadata> &tables)
       -> std::queue<
-          std::pair<ConfigurableModulesVector,
+          std::pair<std::vector<ScheduledModule>,
                     std::vector<std::shared_ptr<QueryNode>>>> override;
 
  private:

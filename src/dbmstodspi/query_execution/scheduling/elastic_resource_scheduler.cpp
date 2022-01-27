@@ -31,21 +31,6 @@ using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::ElasticResourceNodeScheduler;
 using orkhestrafs::dbmstodspi::ElasticSchedulingGraphParser;
 
-auto ElasticResourceNodeScheduler::FindAcceleratedQueryNodeSets(
-    std::vector<std::shared_ptr<QueryNode>> starting_nodes,
-    const std::map<ConfigurableModulesVector, std::string>
-        &supported_accelerator_bitstreams,
-    const std::map<QueryOperationType, std::vector<std::vector<int>>>
-        &existing_modules_library,
-    std::map<std::string,
-             std::map<int, std::vector<std::pair<std::string, int>>>>
-        &linked_nodes)
-    -> std::queue<std::pair<ConfigurableModulesVector,
-                            std::vector<std::shared_ptr<QueryNode>>>> {
-  throw std::runtime_error("Not implemented!");
-  return {};
-}
-
 void ElasticResourceNodeScheduler::RemoveUnnecessaryTables(
     const std::map<std::string, SchedulingQueryNode> &graph,
     std::map<std::string, TableMetadata> &tables) {
@@ -95,7 +80,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     std::map<std::string, SchedulingQueryNode> &graph,
     AcceleratorLibraryInterface &drivers,
     std::map<std::string, TableMetadata> &tables)
-    -> std::queue<std::pair<ConfigurableModulesVector,
+    -> std::queue<std::pair<std::vector<ScheduledModule>,
                             std::vector<std::shared_ptr<QueryNode>>>> {
   Log(LogLevel::kTrace, "Scheduling preprocessing.");
   RemoveUnnecessaryTables(graph, tables);
@@ -213,20 +198,12 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
 
   // TODO: move queue construction and available node modification to separate
   // methods
-  std::queue<std::pair<ConfigurableModulesVector,
+  std::queue<std::pair<std::vector<ScheduledModule>,
                        std::vector<std::shared_ptr<QueryNode>>>>
       resulting_runs;
   for (const auto &run : best_plan) {
-    ConfigurableModulesVector chosen_modules;
     std::vector<std::shared_ptr<QueryNode>> chosen_nodes;
     for (int module_index = 0; module_index < run.size(); module_index++) {
-      // for (const auto &chosen_module : run) {
-      chosen_modules.emplace_back(
-          run.at(module_index).operation_type,
-          hw_library.at(run.at(module_index).operation_type)
-              .bitstream_map.at(run.at(module_index).bitstream)
-              .capacity);
-
       std::shared_ptr<QueryNode> chosen_node;
       for (const auto &node : available_nodes) {
         chosen_node = FindSharedPointerFromRootNodes(
@@ -244,7 +221,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
         chosen_nodes.push_back(chosen_node);
       }
     }
-    resulting_runs.push({chosen_modules, chosen_nodes});
+    resulting_runs.push({run, chosen_nodes});
   }
 
   // TODO: Code duplication here!

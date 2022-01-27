@@ -1028,11 +1028,14 @@ def remove_from_graph(graph, current_node_name):
     # Before node check has to put in as well. Can't quite handle multiple inputs
     # And also check how many inputs or how many outputs.
     # Hardcoded for 1 in 1 out at the moment.
+
+    # If it is not one in and one out - throw an error
     if (len(graph[current_node_name]["after"]) != 1 or len(
             graph[current_node_name]["before"]) != 1):
         raise ValueError("Not implemented")
     after_node = graph[current_node_name]["after"][0]
     before_node_data = graph[current_node_name]["before"][0]
+
     if after_node == "" and before_node_data == ("", -1):
         pass
     elif after_node == "":
@@ -1326,6 +1329,8 @@ def find_config_written_for_configuration(
     fully_written_frames = []
     for column in resource_string:
         fully_written_frames.append(cost_of_columns[column])
+
+    # Get complements of configs.
     reduced_next_config = list(next_configuration)
     reduced_current_config = list(current_configuration)
     for next_module in next_configuration:
@@ -1334,6 +1339,7 @@ def find_config_written_for_configuration(
                 reduced_next_config.remove(next_module)
                 reduced_current_config.remove(cur_module)
 
+    # Get left over
     left_over_config = [
         module for module in current_configuration if module not in reduced_current_config]
     left_over_config.extend(reduced_next_config)

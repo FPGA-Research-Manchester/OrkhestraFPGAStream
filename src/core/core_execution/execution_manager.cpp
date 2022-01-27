@@ -60,7 +60,20 @@ void ExecutionManager::ScheduleUnscheduledNodes() {
       all_reuse_links_);
 }
 void ExecutionManager::SetupNextRunData() {
-  if (config_.accelerator_library.find(query_node_runs_queue_.front().first) ==
+  ConfigurableModulesVector next_set_of_operators;
+  auto next_run = query_node_runs_queue_.front().first;
+  // Need to construct the new thing here
+  for (int module_index = 0; module_index < next_run.size();
+       module_index++) {
+    // for (const auto &chosen_module : run) {
+    next_set_of_operators.emplace_back(
+        next_run.at(module_index).operation_type,
+        config_.pr_hw_library.at(next_run.at(module_index).operation_type)
+            .bitstream_map.at(next_run.at(module_index).bitstream)
+            .capacity);
+  }
+
+  if (config_.accelerator_library.find(next_set_of_operators) ==
       config_.accelerator_library.end()) {
     // for (const auto& thing : query_node_runs_queue_.front().first) {
     //  auto op_type = thing.operation_type;
@@ -73,9 +86,14 @@ void ExecutionManager::SetupNextRunData() {
       memory_manager_.get(),
       config_.accelerator_library.at(query_node_runs_queue_.front().first),
       config_);*/
-  // Not ready yet.
-  /*query_manager_->LoadPRBitstreams(memory_manager_.get(), config_.temp,
-   *accelerator_library_.get());*/
+  // Not ready yet. Need to also give it the current configuration. With empty modules add additional acceleration nodes which won't be configured with the DMA but will configure the modules
+  /*auto [bitstreams_to_load, empty_modules] = query_manager_->GetPRBitstreamsToLoadWithPassthroughModules(
+      {}, query_node_runs_queue_.front().first, 31); 
+  query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
+                                   *accelerator_library_.get());*/
+  // Debugging
+  query_manager_->LoadPRBitstreams(memory_manager_.get(), config_.temp,
+   *accelerator_library_.get());
 
   auto next_scheduled_run_nodes = PopNextScheduledRun();
 
