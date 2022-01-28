@@ -163,3 +163,14 @@ auto AcceleratorLibrary::IsOperationDataSensitive(QueryOperationType operation)
   auto driver = GetDriver(operation);
   return driver->IsDataSensitive();
 }
+
+auto AcceleratorLibrary::GetEmptyModuleNode(QueryOperationType operation, int module_position)
+    -> AcceleratedQueryNode {
+  auto driver = GetDriver(operation);
+  AcceleratedQueryNode passthrough_module_node =
+      driver->GetPassthroughInitParameters();
+  passthrough_module_node.operation_type = operation;
+  passthrough_module_node.operation_module_location = module_position;
+  passthrough_module_node.composed_module_locations = {};
+  return passthrough_module_node;
+}

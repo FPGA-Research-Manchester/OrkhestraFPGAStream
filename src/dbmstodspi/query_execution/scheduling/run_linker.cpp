@@ -22,15 +22,15 @@ limitations under the License.
 using orkhestrafs::dbmstodspi::RunLinker;
 
 auto RunLinker::LinkPeripheralNodesFromGivenRuns(
-    std::queue<std::pair<ConfigurableModulesVector,
+    std::queue<std::pair<std::vector<ScheduledModule>,
                          std::vector<std::shared_ptr<QueryNode>>>>
         query_node_runs_queue,
     std::map<std::string,
              std::map<int, std::vector<std::pair<std::string, int>>>>&
         linked_nodes)
-    -> std::queue<std::pair<ConfigurableModulesVector,
+    -> std::queue<std::pair<std::vector<ScheduledModule>,
                             std::vector<std::shared_ptr<QueryNode>>>> {
-  std::queue<std::pair<ConfigurableModulesVector,
+  std::queue<std::pair<std::vector<ScheduledModule>,
                        std::vector<std::shared_ptr<QueryNode>>>>
       linked_nodes_queue;
   while (!query_node_runs_queue.empty()) {

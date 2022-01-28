@@ -23,10 +23,10 @@ limitations under the License.
 #include <vector>
 
 #include "query_scheduling_data.hpp"
+#include "scheduled_module.hpp"
 
-using orkhestrafs::core_interfaces::query_scheduling_data::
-    ConfigurableModulesVector;
 using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
+using orkhestrafs::dbmstodspi::ScheduledModule;
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -44,13 +44,13 @@ class RunLinker {
    * @return New queue with updated nodes
    */
   static auto LinkPeripheralNodesFromGivenRuns(
-      std::queue<std::pair<ConfigurableModulesVector,
+      std::queue<std::pair<std::vector<ScheduledModule>,
                            std::vector<std::shared_ptr<QueryNode>>>>
           query_node_runs_queue,
       std::map<std::string,
                std::map<int, std::vector<std::pair<std::string, int>>>>&
           linked_nodes)
-      -> std::queue<std::pair<ConfigurableModulesVector,
+      -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<std::shared_ptr<QueryNode>>>>;
 
  private:

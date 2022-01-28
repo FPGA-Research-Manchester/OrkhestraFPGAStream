@@ -16,15 +16,19 @@ limitations under the License.
 
 #include "plan_evaluator.hpp"
 
+#include <algorithm>
+#include <limits>
+#include <numeric>
 #include <set>
 #include <stdexcept>
-#include <algorithm>
-#include <numeric>
-#include <limits>
 
+#include "bitstream_config_helper.hpp"
+
+using orkhestrafs::dbmstodspi::BitstreamConfigHelper;
 using orkhestrafs::dbmstodspi::PlanEvaluator;
 
-void PlanEvaluator::FindNewWrittenFrames(const std::vector<int>& fully_written_frames,
+void PlanEvaluator::FindNewWrittenFrames(
+    const std::vector<int>& fully_written_frames,
     std::vector<int>& written_frames,
     const std::vector<ScheduledModule>& configuration) {
   for (const auto& module : configuration) {
@@ -46,31 +50,12 @@ auto PlanEvaluator::FindConfigWrittenForConfiguration(
   for (const auto& column : resource_string) {
     fully_written_frames.push_back(cost_of_columns.at(column));
   }
-  auto reduced_next_config = current_run;
-  auto reduced_current_config = previous_configuration;
-  for (const auto& next_module : current_run) {
-    for (const auto& cur_module : previous_configuration) {
-      if (cur_module.operation_type == next_module.operation_type &&
-          cur_module.bitstream == next_module.bitstream &&
-          cur_module.position == next_module.position) {
-        reduced_next_config.erase(std::remove(reduced_next_config.begin(), reduced_next_config.end(),
-                        next_module),
-                                  reduced_next_config.end());
-        reduced_current_config.erase(
-            std::remove(reduced_current_config.begin(),
-                        reduced_current_config.end(), cur_module),
-            reduced_current_config.end());
-      }
-    }
-  }
+  auto [reduced_next_config, reduced_current_config] =
+      BitstreamConfigHelper::GetConfigCompliments(current_run,
+                                                  previous_configuration);
 
-  auto left_over_config = reduced_next_config;
-  for (const auto& module : previous_configuration) {
-    if (std::find(reduced_current_config.begin(), reduced_current_config.end(),
-                  module) == reduced_current_config.end()) {
-      left_over_config.push_back(module);
-    }
-  }
+  auto left_over_config = BitstreamConfigHelper::GetResultingConfig(
+      previous_configuration, reduced_current_config, reduced_next_config);
 
   FindNewWrittenFrames(fully_written_frames, written_frames,
                        reduced_next_config);
@@ -85,13 +70,14 @@ auto PlanEvaluator::FindConfigWritten(
     const std::vector<std::vector<ScheduledModule>>& all_runs,
     const std::vector<ScheduledModule>& current_configuration,
     const std::string resource_string,
-    const std::map<char, int>&cost_of_columns) -> std::pair<int, std::vector<ScheduledModule>> {
-  auto [overall_config_written, new_config] = FindConfigWrittenForConfiguration(
-      all_runs.front(), current_configuration, resource_string, cost_of_columns);
-  for (int run_i = 0; run_i < all_runs.size()-1; run_i++) {
+    const std::map<char, int>& cost_of_columns)
+    -> std::pair<int, std::vector<ScheduledModule>> {
+  auto [overall_config_written, new_config] =
+      FindConfigWrittenForConfiguration(all_runs.front(), current_configuration,
+                                        resource_string, cost_of_columns);
+  for (int run_i = 0; run_i < all_runs.size() - 1; run_i++) {
     auto [config_written, returned_config] = FindConfigWrittenForConfiguration(
-        all_runs.at(run_i+1), new_config,
-                                          resource_string, cost_of_columns);
+        all_runs.at(run_i + 1), new_config, resource_string, cost_of_columns);
     new_config = returned_config;
     overall_config_written += config_written;
   }
@@ -105,7 +91,9 @@ auto PlanEvaluator::FindFastestPlan(
   auto current_min_runtime = std::numeric_limits<double>::max();
   auto current_min_runtime_i = 0;
   for (int plan_i = 0; plan_i < data_streamed.size(); plan_i++) {
-    auto current_runtime = (data_streamed.at(plan_i) / streaming_speed + configuration_data_wirtten.at(plan_i) / configuration_speed);
+    auto current_runtime =
+        (data_streamed.at(plan_i) / streaming_speed +
+         configuration_data_wirtten.at(plan_i) / configuration_speed);
     if (current_runtime < current_min_runtime) {
       current_min_runtime_i = plan_i;
       current_min_runtime = current_runtime;
@@ -139,7 +127,7 @@ auto PlanEvaluator::GetBestPlan(
     last_configurations.push_back(new_config);
   }
   int max_plan_i = FindFastestPlan(data_streamed, configuration_data_wirtten,
-                               streaming_speed, configuration_speed);
+                                   streaming_speed, configuration_speed);
   std::pair<std::vector<std::vector<ScheduledModule>>,
             std::vector<ScheduledModule>>
       best_plan = {available_plans.at(max_plan_i),

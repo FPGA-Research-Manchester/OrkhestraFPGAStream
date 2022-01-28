@@ -128,9 +128,10 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::map<std::string, std::vector<RecordSizeAndCount>> input_stream_sizes_;
   std::map<std::string, std::vector<RecordSizeAndCount>> output_stream_sizes_;
 
-  std::queue<std::pair<ConfigurableModulesVector,
+  std::queue<std::pair<std::vector<ScheduledModule>,
                        std::vector<std::shared_ptr<QueryNode>>>>
       query_node_runs_queue_;
+  std::vector<ScheduledModule> current_configuration_;
 
   // Clear for each run
   std::map<std::string, std::vector<StreamResultParameters>> result_parameters_;

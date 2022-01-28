@@ -19,6 +19,7 @@ limitations under the License.
 #include <algorithm>
 #include <stdexcept>
 
+#include "bitstream_config_helper.hpp"
 #include "elastic_module_checker.hpp"
 #include "fpga_manager.hpp"
 #include "id_manager.hpp"
@@ -27,10 +28,12 @@ limitations under the License.
 #include "query_acceleration_constants.hpp"
 #include "run_linker.hpp"
 #include "stream_data_parameters.hpp"
+#include "table_data.hpp"
 #include "table_manager.hpp"
 #include "util.hpp"
-#include "table_data.hpp"
 
+using orkhestrafs::core_interfaces::table_data::SortedSequence;
+using orkhestrafs::dbmstodspi::BitstreamConfigHelper;
 using orkhestrafs::dbmstodspi::QueryManager;
 using orkhestrafs::dbmstodspi::RunLinker;
 using orkhestrafs::dbmstodspi::StreamDataParameters;
@@ -38,7 +41,6 @@ using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::query_acceleration_constants::kIOStreamParamDefs;
 using orkhestrafs::dbmstodspi::util::CreateReferenceVector;
-using orkhestrafs::core_interfaces::table_data::SortedSequence;
 
 auto QueryManager::GetCurrentLinks(
     const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
@@ -335,6 +337,33 @@ void QueryManager::LoadNextBitstreamIfNew(
       config.required_memory_space.at(bitstream_file_name));
 }
 
+void QueryManager::LoadInitialStaticBitstream(
+    MemoryManagerInterface* memory_manager) {
+  memory_manager->LoadStatic();
+}
+
+void QueryManager::LoadEmptyRoutingPRRegion(
+    MemoryManagerInterface* memory_manager,
+    AcceleratorLibraryInterface& driver_library) {
+  std::vector<std::string> empty_pr_region = {
+      "RT_95.bin", "RT_92.bin", "RT_89.bin", "RT_86.bin", "RT_83.bin",
+      "RT_80.bin", "RT_77.bin", "RT_74.bin", "RT_71.bin", "RT_68.bin",
+      "RT_65.bin", "RT_62.bin", "RT_59.bin", "RT_56.bin", "RT_53.bin",
+      "RT_50.bin", "RT_47.bin", "RT_44.bin", "RT_41.bin", "RT_38.bin",
+      "RT_35.bin", "RT_32.bin", "RT_29.bin", "RT_26.bin", "RT_23.bin",
+      "RT_20.bin", "RT_17.bin", "RT_14.bin", "RT_11.bin", "RT_8.bin",
+      "RT_5.bin",  "TAA_2.bin"};
+  LoadPRBitstreams(memory_manager, empty_pr_region, driver_library);
+}
+
+void QueryManager::LoadPRBitstreams(
+    MemoryManagerInterface* memory_manager,
+    const std::vector<std::string>& bitstream_names,
+    AcceleratorLibraryInterface& driver_library) {
+  auto dma_module = driver_library.GetDMAModule();
+  memory_manager->LoadPartialBitstream(bitstream_names, *dma_module);
+}
+
 auto QueryManager::ScheduleNextSetOfNodes(
     std::vector<std::shared_ptr<QueryNode>>& query_nodes,
     const std::vector<std::string>& first_node_names,
@@ -344,30 +373,78 @@ auto QueryManager::ScheduleNextSetOfNodes(
     std::map<std::string, TableMetadata>& tables,
     AcceleratorLibraryInterface& drivers, const Config& config,
     NodeSchedulerInterface& node_scheduler,
-    std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links)
-    -> std::queue<std::pair<ConfigurableModulesVector,
+    std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links,
+    const std::vector<ScheduledModule>& current_configuration)
+    -> std::queue<std::pair<std::vector<ScheduledModule>,
                             std::vector<std::shared_ptr<QueryNode>>>> {
   auto current_queue = node_scheduler.GetNextSetOfRuns(
       query_nodes, config.pr_hw_library, first_node_names, starting_nodes,
-      processed_nodes, graph, drivers, tables);
+      processed_nodes, graph, drivers, tables, current_configuration);
   return RunLinker::LinkPeripheralNodesFromGivenRuns(current_queue,
                                                      all_reuse_links);
 }
 
-auto QueryManager::ScheduleUnscheduledNodes(
-    std::vector<std::shared_ptr<QueryNode>> unscheduled_root_nodes,
-    Config config, NodeSchedulerInterface& node_scheduler)
-    -> std::pair<
-        std::map<std::string, std::map<int, MemoryReuseTargets>>,
-        std::queue<std::pair<ConfigurableModulesVector,
-                             std::vector<std::shared_ptr<QueryNode>>>>> {
-  std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links;
+auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
+    std::vector<ScheduledModule>& current_config,
+    const std::vector<ScheduledModule>& next_config, int column_count)
+    -> std::pair<std::vector<std::string>,
+                 std::vector<std::pair<QueryOperationType, bool>>> {
+  std::vector<int> written_frames(column_count, false);
+  auto [reduced_next_config, reduced_current_config] =
+      BitstreamConfigHelper::GetConfigCompliments(next_config, current_config);
 
-  auto query_node_runs_queue = node_scheduler.FindAcceleratedQueryNodeSets(
-      std::move(unscheduled_root_nodes), config.accelerator_library,
-      config.module_library, all_reuse_links);
+  // Find out which frames need writing to.
+  for (const auto& module : reduced_current_config) {
+    for (int column_i = module.position.first;
+         column_i < module.position.second + 1; column_i++) {
+      written_frames[column_i] = true;
+    }
+  }
+  std::vector<std::string> required_bitstreams;
+  for (const auto& module : reduced_next_config) {
+    for (int column_i = module.position.first;
+         column_i < module.position.second + 1; column_i++) {
+      written_frames[column_i] = false;
+    }
+    required_bitstreams.push_back(module.bitstream);
+  }
 
-  return {all_reuse_links, query_node_runs_queue};
+  // Hardoded for now.
+  std::vector<std::string> routing_bitstreams = {
+      "RT_95.bin", "RT_92.bin", "RT_89.bin", "RT_86.bin", "RT_83.bin",
+      "RT_80.bin", "RT_77.bin", "RT_74.bin", "RT_71.bin", "RT_68.bin",
+      "RT_65.bin", "RT_62.bin", "RT_59.bin", "RT_56.bin", "RT_53.bin",
+      "RT_50.bin", "RT_47.bin", "RT_44.bin", "RT_41.bin", "RT_38.bin",
+      "RT_35.bin", "RT_32.bin", "RT_29.bin", "RT_26.bin", "RT_23.bin",
+      "RT_20.bin", "RT_17.bin", "RT_14.bin", "RT_11.bin", "RT_8.bin",
+      "RT_5.bin"};
+
+  for (int column_i = 0; column_i < column_count; column_i++) {
+    if (written_frames.at(column_i)) {
+      required_bitstreams.push_back(routing_bitstreams.at(column_i));
+    }
+  }
+
+  auto left_over_config = BitstreamConfigHelper::GetResultingConfig(
+      next_config, reduced_next_config, reduced_current_config);
+  std::sort(left_over_config.begin(), left_over_config.end(),
+            [](const auto& lhs, const auto& rhs) {
+              return lhs.position.first < rhs.position.first;
+            });
+
+  std::vector<std::pair<QueryOperationType, bool>> passthrough_modules;
+  for (const auto& module : left_over_config) {
+    if (std::find(next_config.begin(), next_config.end(), module) ==
+        next_config.end()) {
+      passthrough_modules.push_back({module.operation_type, false});
+    } else {
+      passthrough_modules.push_back({module.operation_type, true});
+    }
+  }
+
+  current_config = left_over_config;
+
+  return {required_bitstreams, passthrough_modules};
 }
 
 // auto QueryManager::IsRunValid(std::vector<AcceleratedQueryNode> current_run)

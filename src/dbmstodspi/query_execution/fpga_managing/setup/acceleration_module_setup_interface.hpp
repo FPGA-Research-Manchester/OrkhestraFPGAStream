@@ -145,10 +145,17 @@ class AccelerationModuleSetupInterface {
 
   /**
    * Is the module sensitive to input data sizes.
-   * @return Boolean flag for scheduling noting if the module is resource elastic.
+   * @return Boolean flag for scheduling noting if the module is resource
+   * elastic.
    */
   virtual auto IsDataSensitive() -> bool;
-  
+
+  /**
+   * Return passthrough module initialisation parameters
+   * @return Operation parameters.
+   */
+  virtual auto GetPassthroughInitParameters()
+      -> AcceleratedQueryNode;
 
  protected:
   static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)

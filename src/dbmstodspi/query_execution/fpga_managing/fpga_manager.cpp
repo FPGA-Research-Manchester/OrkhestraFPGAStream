@@ -75,6 +75,12 @@ void FPGAManager::SetupQueryAcceleration(
     FindIOStreams(query_node.output_streams, output_streams,
                   query_node.operation_parameters, false,
                   output_streams_active_status_);
+    /*input_streams_active_status_[0] = false;
+    input_streams_active_status_[1] = true;
+    output_streams_active_status_[0] = false;
+    output_streams_active_status_[2] = true;
+    output_streams_active_status_[4] = true;
+    output_streams.push_back(output_streams[0]);*/
   }
 
   // MISSING PIECE OF LOGIC HERE...
@@ -113,7 +119,8 @@ void FPGAManager::FindIOStreams(
     std::bitset<query_acceleration_constants::kMaxIOStreamCount>&
         stream_status_array) {
   for (const auto& current_stream : all_streams) {
-    if (current_stream.physical_address) {
+    // Stream ID 15 reserved for passthrough
+    if (current_stream.physical_address && current_stream.stream_id != 15) {
       found_streams.push_back(current_stream);
       stream_status_array[current_stream.stream_id] = true;
     }
@@ -172,24 +179,24 @@ void FPGAManager::FindActiveStreams(
 void FPGAManager::WaitForStreamsToFinish() {
   dma_engine_->StartController(false, output_streams_active_status_);
 
-  /*auto test = dma_engine_->IsControllerFinished(true);
-  auto test1 = dma_engine_->IsControllerFinished(true);
-  auto test2 = dma_engine_->IsControllerFinished(false);
-  auto test3 = dma_engine_->IsControllerFinished(false);*/
+  //auto test = dma_engine_->IsControllerFinished(true);
+  //auto test1 = dma_engine_->IsControllerFinished(true);
+  //auto test2 = dma_engine_->IsControllerFinished(false);
+  //auto test3 = dma_engine_->IsControllerFinished(false);
 
-#ifdef FPGA_AVAILABLE
-  while (!(dma_engine_->IsControllerFinished(true) &&
-           dma_engine_->IsControllerFinished(false))) {
-    // sleep(3);
-    // std::cout << "Processing..." << std::endl;
-    // std::cout << "Input:"
-    //          << dma_engine_.IsInputControllerFinished()
-    //          << std::endl;
-    // std::cout << "Output:"
-    //          << dma_engine_.IsOutputControllerFinished()
-    //          << std::endl;
-  }
-#endif
+  #ifdef FPGA_AVAILABLE
+    while (!(dma_engine_->IsControllerFinished(true) &&
+             dma_engine_->IsControllerFinished(false))) {
+      // sleep(3);
+      // std::cout << "Processing..." << std::endl;
+      // std::cout << "Input:"
+      //          << dma_engine_.IsInputControllerFinished()
+      //          << std::endl;
+      // std::cout << "Output:"
+      //          << dma_engine_.IsOutputControllerFinished()
+      //          << std::endl;
+    }
+  #endif
 }
 
 void FPGAManager::ReadResultsFromRegisters() {
@@ -219,6 +226,14 @@ auto FPGAManager::GetResultingStreamSizes(
       result_sizes{};
   for (auto stream_id : active_output_stream_ids) {
     output_streams_active_status_[stream_id] = false;
+    /*if (stream_id == 2) {
+      result_sizes[stream_id - 2] =
+          dma_engine_->GetControllerStreamSize(false, stream_id);
+      int yo = 0;
+    } else {
+      auto thing = dma_engine_->GetControllerStreamSize(false, stream_id);
+      int yo = 0;
+    }*/
     result_sizes[stream_id] =
         dma_engine_->GetControllerStreamSize(false, stream_id);
   }
@@ -233,6 +248,41 @@ void FPGAManager::PrintDebuggingData() {
                      std::to_string(dma_engine_->GetValidReadCyclesCount()));
   Log(log_level, "ValidWriteCount: " +
                      std::to_string(dma_engine_->GetValidWriteCyclesCount()));
+
+  Log(log_level, "InputActiveDataCycles: " +
+                     std::to_string(dma_engine_->GetInputActiveDataCycles()));
+  Log(log_level,
+      "InputActiveDataLastCycles: " +
+          std::to_string(dma_engine_->GetInputActiveDataLastCycles()));
+  Log(log_level,
+      "InputActiveControlCycles: " +
+          std::to_string(dma_engine_->GetInputActiveControlCycles()));
+  Log(log_level,
+      "InputActiveControlLastCycles: " +
+          std::to_string(dma_engine_->GetInputActiveControlLastCycles()));
+  Log(log_level,
+      "InputActiveEndOfStreamCycles: " +
+          std::to_string(dma_engine_->GetInputActiveEndOfStreamCycles()));
+  Log(log_level, "OutputActiveDataCycles : " +
+                     std::to_string(dma_engine_->GetOutputActiveDataCycles()));
+  Log(log_level,
+      "OutputActiveDataLastCycles: " +
+          std::to_string(dma_engine_->GetOutputActiveDataLastCycles()));
+  Log(log_level,
+      "OutputActiveControlCycles: " +
+          std::to_string(dma_engine_->GetOutputActiveControlCycles()));
+  Log(log_level,
+      "OutputActiveControlLastCycles: " +
+          std::to_string(dma_engine_->GetOutputActiveControlLastCycles()));
+  Log(log_level,
+      "OutputActiveEndOfStreamCycles : " +
+          std::to_string(dma_engine_->GetOutputActiveEndOfStreamCycles()));
+  Log(log_level,
+      "InputActiveInstructionCycles : " +
+          std::to_string(dma_engine_->GetInputActiveInstructionCycles()));
+  Log(log_level,
+      "OutputActiveInstructionCycles : " +
+          std::to_string(dma_engine_->GetOutputActiveInstructionCycles()));
   if (ila_module_) {
     std::cout << "======================================================ILA 0 "
                  "DATA ======================================================="

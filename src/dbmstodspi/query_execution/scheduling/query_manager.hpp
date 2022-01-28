@@ -46,13 +46,6 @@ class QueryManager : public QueryManagerInterface {
   void LoadNextBitstreamIfNew(MemoryManagerInterface* memory_manager,
                               std::string bitstream_file_name,
                               Config config) override;
-  auto ScheduleUnscheduledNodes(
-      std::vector<std::shared_ptr<QueryNode>> unscheduled_root_nodes,
-      Config config, NodeSchedulerInterface& node_scheduler)
-      -> std::pair<std::map<std::string, std::map<int, MemoryReuseTargets>>,
-                   std::queue<std::pair<
-                       ConfigurableModulesVector,
-                       std::vector<std::shared_ptr<QueryNode>>>>> override;
   // auto IsRunValid(std::vector<AcceleratedQueryNode> current_run)
   //    -> bool override;
   void ExecuteAndProcessResults(
@@ -91,10 +84,27 @@ class QueryManager : public QueryManagerInterface {
       std::map<std::string, TableMetadata>& tables,
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
-      std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links)
+      std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links,
+      const std::vector<ScheduledModule>& current_configuration)
       -> std::queue<
-          std::pair<ConfigurableModulesVector,
+          std::pair<std::vector<ScheduledModule>,
                     std::vector<std::shared_ptr<QueryNode>>>> override;
+  void LoadInitialStaticBitstream(
+      MemoryManagerInterface* memory_manager) override;
+
+  void LoadEmptyRoutingPRRegion(
+      MemoryManagerInterface* memory_manager,
+      AcceleratorLibraryInterface& driver_library) override;
+
+  void LoadPRBitstreams(MemoryManagerInterface* memory_manager,
+                        const std::vector<std::string>& bitstream_names,
+                        AcceleratorLibraryInterface& driver_library) override;
+
+  auto GetPRBitstreamsToLoadWithPassthroughModules(
+      std::vector<ScheduledModule>& current_config,
+      const std::vector<ScheduledModule>& next_config, int column_count)
+      -> std::pair<std::vector<std::string>,
+                   std::vector<std::pair<QueryOperationType, bool>>> override;
 
  private:
   static void CheckTableData(const DataManagerInterface* data_manager,

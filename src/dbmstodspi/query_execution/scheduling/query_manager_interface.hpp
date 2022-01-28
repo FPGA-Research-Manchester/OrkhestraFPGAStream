@@ -31,6 +31,7 @@ limitations under the License.
 #include "memory_manager_interface.hpp"
 #include "node_scheduler_interface.hpp"
 #include "query_scheduling_data.hpp"
+#include "scheduled_module.hpp"
 
 using orkhestrafs::core_interfaces::Config;
 using orkhestrafs::core_interfaces::MemoryBlockInterface;
@@ -45,6 +46,7 @@ using orkhestrafs::dbmstodspi::AcceleratedQueryNode;
 using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
 using orkhestrafs::dbmstodspi::FPGAManagerInterface;
 using orkhestrafs::dbmstodspi::NodeSchedulerInterface;
+using orkhestrafs::dbmstodspi::ScheduledModule;
 
 namespace orkhestrafs::dbmstodspi {
 /**
@@ -107,25 +109,11 @@ class QueryManagerInterface {
                                       std::string bitstream_file_name,
                                       Config config) = 0;
   /**
-   * @brief Schedule operations to different runs.
-   * @param unscheduled_root_nodes Nodes with no dependencies.
-   * @param config Configuration for different operators.
-   * @return How memory pointers could be reused between differnt runs and a
-   * queue of runs.
-   */
-  virtual auto ScheduleUnscheduledNodes(
-      std::vector<std::shared_ptr<QueryNode>> unscheduled_root_nodes,
-      Config config, NodeSchedulerInterface& node_scheduler)
-      -> std::pair<
-          std::map<std::string, std::map<int, MemoryReuseTargets>>,
-          std::queue<std::pair<ConfigurableModulesVector,
-                               std::vector<std::shared_ptr<QueryNode>>>>> = 0;
-  /**
    * @brief Check if the run is correctly scheduled.
    * @param current_run Nodes ready for execution.
    * @return Boolean flag noting if the run is valid.
    */
-  //virtual auto IsRunValid(std::vector<AcceleratedQueryNode> current_run)
+  // virtual auto IsRunValid(std::vector<AcceleratedQueryNode> current_run)
   //    -> bool = 0;
   /**
    * @brief Execute given nodes.
@@ -149,8 +137,9 @@ class QueryManagerInterface {
       const std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
       const std::vector<AcceleratedQueryNode>& execution_query_nodes,
-      std::map<std::string, TableMetadata>& scheduling_table_data, 
-      const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links, 
+      std::map<std::string, TableMetadata>& scheduling_table_data,
+      const std::map<std::string, std::map<int, MemoryReuseTargets>>&
+          reuse_links,
       std::map<std::string, SchedulingQueryNode>& scheduling_graph) = 0;
 
   /**
@@ -191,6 +180,7 @@ class QueryManagerInterface {
    * @param config Config values
    * @param node_scheduler The scheduler object
    * @param all_reuse_links All links between runs.
+   * @param current_configuration Currently configured bitstreams
    * @return Queue of sets of runs.
    */
   virtual auto ScheduleNextSetOfNodes(
@@ -202,9 +192,53 @@ class QueryManagerInterface {
       std::map<std::string, TableMetadata>& tables,
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
-      std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links)
-      -> std::queue<std::pair<ConfigurableModulesVector,
+      std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links,
+      const std::vector<ScheduledModule>& current_configuration)
+      -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<std::shared_ptr<QueryNode>>>> = 0;
+
+  /**
+   * @brief Load the initial static system
+   * @param memory_manager Memory manager for accessing the FPGA and loading the
+   * bitstream.
+   */
+  virtual void LoadInitialStaticBitstream(
+      MemoryManagerInterface* memory_manager) = 0;
+
+  /**
+   * @brief Load the empty PR region routing wires
+   * @param memory_manager Memory manager for accessing the FPGA and loading the
+   * bitstream.
+   * @param driver_library To get the DMA module to decouple from the PR region.
+   */
+  virtual void LoadEmptyRoutingPRRegion(
+      MemoryManagerInterface* memory_manager,
+      AcceleratorLibraryInterface& driver_library) = 0;
+
+  /**
+   * @brief Load PR bitstreams
+   * @param memory_manager Memory manager for accessing the FPGA and loading the
+   * bitstream.
+   * @param bitstream_names Bitstreams to load
+   * @param driver_library To get the DMA module to decouple from the PR region.
+   */
+  virtual void LoadPRBitstreams(
+      MemoryManagerInterface* memory_manager,
+      const std::vector<std::string>& bitstream_names,
+      AcceleratorLibraryInterface& driver_library) = 0;
+
+  /**
+   * @brief Find out which bitstreams have to be loaded next.
+   * @param current_config Currently loaded modules.
+   * @param next_config Desired modules.
+   * @param column_count how many columns there are in the PR region.
+   * @return Which bitstreams are required and which modules can be skipped.
+   */
+  virtual auto GetPRBitstreamsToLoadWithPassthroughModules(
+      std::vector<ScheduledModule>& current_config,
+      const std::vector<ScheduledModule>& next_config, int column_count)
+      -> std::pair<std::vector<std::string>,
+                   std::vector<std::pair<QueryOperationType, bool>>> = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

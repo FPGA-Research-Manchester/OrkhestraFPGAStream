@@ -78,6 +78,8 @@ class MergeSortSetup : public virtual AccelerationModuleSetupInterface,
  private:
   static auto PotentialRecordCountIsValid(int potential_record_count,
                                           int record_size) -> bool;
+  static void SetupPassthroughMergeSort(
+      MergeSortInterface& merge_sort_module);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

@@ -157,7 +157,7 @@ TEST_F(ExecutionManagerTest, DISABLED_ScheduleUnscheduledNodesUsesGraph) {
   // std::vector<std::shared_ptr<QueryNode>> expected_nodes;
 
   EXPECT_CALL(mock_graph, ExportRootNodes()).Times(1);
-  EXPECT_CALL(mock_query_manager_, ScheduleUnscheduledNodes(_, _, _)).Times(1);
+  //EXPECT_CALL(mock_query_manager_, ScheduleUnscheduledNodes(_, _, _)).Times(1);
 
   execution_manager_under_test->Execute(std::move(mock_graph_ptr));
   execution_manager_under_test->ScheduleUnscheduledNodes();
@@ -206,8 +206,8 @@ TEST_F(ExecutionManagerTest, DISABLED_SetupPopsScheduledNodes) {
       expected_setup_results = {expected_accel_nodes, expected_result_params};
 
   EXPECT_CALL(mock_graph, ExportRootNodes()).Times(1);
-  EXPECT_CALL(mock_query_manager_, ScheduleUnscheduledNodes(_, _, _))
-      .WillOnce(testing::Return(schedule_results));
+  /*EXPECT_CALL(mock_query_manager_, ScheduleUnscheduledNodes(_, _, _))
+      .WillOnce(testing::Return(schedule_results));*/
 
   EXPECT_CALL(mock_query_manager_, LoadNextBitstreamIfNew(_, _, _)).Times(1);
   EXPECT_CALL(mock_query_manager_,

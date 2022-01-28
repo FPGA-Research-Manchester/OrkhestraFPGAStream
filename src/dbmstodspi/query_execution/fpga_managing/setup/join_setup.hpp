@@ -32,6 +32,8 @@ class JoinSetup : public virtual AccelerationModuleSetupInterface,
                                    int first_stream_size,
                                    int second_stream_size, int shift_size);
 
+  static void SetupPassthroughJoin(JoinInterface& join_module);
+
  public:
   void SetupModule(AccelerationModule& acceleration_module,
                    const AcceleratedQueryNode& module_parameters) override;

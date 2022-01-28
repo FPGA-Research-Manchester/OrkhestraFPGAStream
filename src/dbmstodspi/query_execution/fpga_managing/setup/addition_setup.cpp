@@ -32,10 +32,21 @@ void AdditionSetup::SetupModule(AccelerationModule& acceleration_module,
   Log(LogLevel::kInfo,
       "Configuring addition on pos " +
           std::to_string(module_parameters.operation_module_location));
-  AdditionSetup::SetupAdditionModule(
-      dynamic_cast<AdditionInterface&>(acceleration_module),
-      module_parameters.input_streams[0].stream_id,
-      module_parameters.operation_parameters);
+  if (module_parameters.input_streams[0].stream_id != 15) {
+    AdditionSetup::SetupAdditionModule(
+        dynamic_cast<AdditionInterface&>(acceleration_module),
+        module_parameters.input_streams[0].stream_id,
+        module_parameters.operation_parameters);
+  } else {
+    AdditionSetup::SetupPassthroughAddition(
+        dynamic_cast<AdditionInterface&>(acceleration_module));
+  }
+
+}
+
+void AdditionSetup::SetupPassthroughAddition(
+    AdditionInterface& addition_module) {
+  addition_module.DefineInput(15, 0);
 }
 
 auto AdditionSetup::CreateModule(MemoryManagerInterface* memory_manager,

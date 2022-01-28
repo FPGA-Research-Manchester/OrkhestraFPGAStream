@@ -27,6 +27,8 @@ namespace orkhestrafs::dbmstodspi {
  * setup.
  */
 class AggregationSumSetup : public AccelerationModuleSetupInterface {
+ private:
+  static void SetupPassthroughSum(AggregationSumInterface& aggregation_module);
  public:
   void SetupModule(AccelerationModule& acceleration_module,
                    const AcceleratedQueryNode& module_parameters) override;

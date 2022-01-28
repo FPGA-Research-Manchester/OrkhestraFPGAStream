@@ -194,6 +194,15 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
    */
   auto IsOperationDataSensitive(QueryOperationType operation) -> bool override;
 
+  /**
+   * Method to get operation params for a passthrough module.
+   * @param operation Operation enum
+   * @param module_position Position of the passthrough module in the PR region.
+   * @return Node with which a passthrough module can be initialised.
+   */
+  auto GetEmptyModuleNode(QueryOperationType operation, int module_position)
+      -> AcceleratedQueryNode override;
+
  private:
   auto GetDriver(QueryOperationType operation_type)
       -> AccelerationModuleSetupInterface*;

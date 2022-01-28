@@ -38,16 +38,28 @@ void MergeSortSetup::SetupModule(
   Log(LogLevel::kInfo,
       "Configuring merge sort on pos " +
           std::to_string(module_parameters.operation_module_location));
-  MergeSortSetup::SetupMergeSortModule(
-      dynamic_cast<MergeSortInterface&>(acceleration_module),
-      module_parameters.input_streams[0].stream_id,
-      GetStreamRecordSize(module_parameters.input_streams[0]), 0, true);
+  if (module_parameters.input_streams[0].stream_id != 15) {
+    MergeSortSetup::SetupMergeSortModule(
+        dynamic_cast<MergeSortInterface&>(acceleration_module),
+        module_parameters.input_streams[0].stream_id,
+        GetStreamRecordSize(module_parameters.input_streams[0]), 0, true);
+  } else {
+    MergeSortSetup::SetupPassthroughMergeSort(
+        dynamic_cast<MergeSortInterface&>(acceleration_module));
+  }
+  
 }
 
 auto MergeSortSetup::CreateModule(MemoryManagerInterface* memory_manager,
                                   int module_position)
     -> std::unique_ptr<AccelerationModule> {
   return std::make_unique<MergeSort>(memory_manager, module_position);
+}
+
+void MergeSortSetup::SetupPassthroughMergeSort(
+    MergeSortInterface& merge_sort_module) {
+  merge_sort_module.SetStreamParams(15, 1);
+  merge_sort_module.StartPrefetchingData(0, false);
 }
 
 void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,

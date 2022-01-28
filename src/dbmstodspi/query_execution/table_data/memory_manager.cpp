@@ -42,13 +42,15 @@ void MemoryManager::LoadStatic() {
 
   Log(LogLevel::kDebug, "Loading static");
 
+  std::string static_bitstream = "pstaticw_wFilter_wTAA_wrong";
+
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
 
   acceleration_instance_ =
-      pr_manager_.fpgaLoadStatic("eight_static", register_space_size);
+      pr_manager_.fpgaLoadStatic(static_bitstream, register_space_size);
   /*acceleration_instance_ =
-      pr_manager_.fpgaLoadStatic("DSPI_filtering", register_space_size);*/
+      pr_manager_.fpgaLoadStatic("normal_filter", register_space_size);*/
 
   register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
 
@@ -62,7 +64,7 @@ void MemoryManager::LoadStatic() {
               std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
                   .count()) +
           "[ms]");
-  Log(LogLevel::kDebug, "Static loaded!");
+  Log(LogLevel::kDebug, "Static loaded: " + static_bitstream);
 
   loaded_register_space_size_ = register_space_size;
   loaded_bitstream_ = "static";
@@ -74,12 +76,17 @@ void MemoryManager::LoadStatic() {
 void MemoryManager::LoadPartialBitstream(const std::vector<std::string>& bitstream_name,
                                          DMAInterface& dma_engine) {
 #ifdef FPGA_AVAILABLE
+  if (loaded_bitstream_ != "static") {
+    throw std::runtime_error("Can't load partial bitstreams without static!");
+  }
+
   dma_engine.DecoupleFromPRRegion();
   FPGAManager fpga_manager(0);
   
-  for (const auto& name : bitstream_name) {
+  /*for (const auto& name : bitstream_name) {
+    Log(LogLevel::kDebug, "Loading PR bitstream:" + name);
     fpga_manager.loadPartial(name);
-  }
+  }*/
 #else
   throw std::runtime_error("Can't load anything!");
 #endif
