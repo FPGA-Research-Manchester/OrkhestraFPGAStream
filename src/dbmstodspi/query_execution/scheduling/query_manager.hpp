@@ -84,7 +84,8 @@ class QueryManager : public QueryManagerInterface {
       std::map<std::string, TableMetadata>& tables,
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
-      std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links)
+      std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links,
+      const std::vector<ScheduledModule>& current_configuration)
       -> std::queue<
           std::pair<std::vector<ScheduledModule>,
                     std::vector<std::shared_ptr<QueryNode>>>> override;
@@ -100,7 +101,7 @@ class QueryManager : public QueryManagerInterface {
                         AcceleratorLibraryInterface& driver_library) override;
 
   auto GetPRBitstreamsToLoadWithPassthroughModules(
-      const std::vector<ScheduledModule>& current_config,
+      std::vector<ScheduledModule>& current_config,
       const std::vector<ScheduledModule>& next_config, int column_count)
       -> std::pair<std::vector<std::string>,
                    std::vector<std::pair<QueryOperationType, bool>>> override;

@@ -180,6 +180,7 @@ class QueryManagerInterface {
    * @param config Config values
    * @param node_scheduler The scheduler object
    * @param all_reuse_links All links between runs.
+   * @param current_configuration Currently configured bitstreams
    * @return Queue of sets of runs.
    */
   virtual auto ScheduleNextSetOfNodes(
@@ -191,7 +192,8 @@ class QueryManagerInterface {
       std::map<std::string, TableMetadata>& tables,
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
-      std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links)
+      std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links,
+      const std::vector<ScheduledModule>& current_configuration)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<std::shared_ptr<QueryNode>>>> = 0;
 
@@ -233,7 +235,7 @@ class QueryManagerInterface {
    * @return Which bitstreams are required and which modules can be skipped.
    */
   virtual auto GetPRBitstreamsToLoadWithPassthroughModules(
-      const std::vector<ScheduledModule>& current_config,
+      std::vector<ScheduledModule>& current_config,
       const std::vector<ScheduledModule>& next_config, int column_count)
       -> std::pair<std::vector<std::string>,
                    std::vector<std::pair<QueryOperationType, bool>>> = 0;

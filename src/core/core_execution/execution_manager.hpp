@@ -131,6 +131,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::queue<std::pair<std::vector<ScheduledModule>,
                        std::vector<std::shared_ptr<QueryNode>>>>
       query_node_runs_queue_;
+  std::vector<ScheduledModule> current_configuration_;
 
   // Clear for each run
   std::map<std::string, std::vector<StreamResultParameters>> result_parameters_;

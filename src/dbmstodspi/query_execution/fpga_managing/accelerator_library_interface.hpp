@@ -84,6 +84,9 @@ class AcceleratorLibraryInterface {
       -> bool = 0;
   virtual auto IsOperationDataSensitive(QueryOperationType operation)
       -> bool = 0;
+  virtual auto GetEmptyModuleNode(QueryOperationType operation,
+                                  int module_position)
+      -> AcceleratedQueryNode = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

@@ -33,10 +33,23 @@ void AggregationSumSetup::SetupModule(
   Log(LogLevel::kInfo,
       "Configuring sum on pos " +
           std::to_string(module_parameters.operation_module_location));
-  AggregationSumSetup::SetupAggregationSum(
-      dynamic_cast<AggregationSumInterface&>(acceleration_module),
-      module_parameters.input_streams[0].stream_id,
-      module_parameters.operation_parameters);
+  if (module_parameters.input_streams[0].stream_id != 15) {
+    AggregationSumSetup::SetupAggregationSum(
+        dynamic_cast<AggregationSumInterface&>(acceleration_module),
+        module_parameters.input_streams[0].stream_id,
+        module_parameters.operation_parameters);
+  } else {
+    AggregationSumSetup::SetupPassthroughSum(
+        dynamic_cast<AggregationSumInterface&>(acceleration_module));
+  }
+
+}
+
+void AggregationSumSetup::SetupPassthroughSum(
+    AggregationSumInterface& aggregation_module) {
+  aggregation_module.ResetSumRegisters();
+  aggregation_module.DefineInput(15, 0);
+  aggregation_module.StartPrefetching(false, false, false);
 }
 
 auto AggregationSumSetup::CreateModule(MemoryManagerInterface* memory_manager,

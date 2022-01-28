@@ -79,7 +79,8 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     std::vector<std::string> &processed_nodes,
     std::map<std::string, SchedulingQueryNode> &graph,
     AcceleratorLibraryInterface &drivers,
-    std::map<std::string, TableMetadata> &tables)
+    std::map<std::string, TableMetadata> &tables,
+    const std::vector<ScheduledModule> &current_configuration)
     -> std::queue<std::pair<std::vector<ScheduledModule>,
                             std::vector<std::shared_ptr<QueryNode>>>> {
   Log(LogLevel::kTrace, "Scheduling preprocessing.");
@@ -173,7 +174,6 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     all_plans.push_back(plan);
   }
 
-  std::vector<ScheduledModule> last_configuration = {};
   std::string resource_string = "MMDMDBMMDBMMDMDBMMDBMMDMDBMMDBM";
   // Not used actually
   double utilites_scaler = 1;
@@ -185,9 +185,10 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
                                          {'D', 200 * frame_size},
                                          {'B', 196 * frame_size}};
 
-  // TODO: Save new_last_config
+  // TODO: new_last_config not really needed
   auto [best_plan, new_last_config] = plan_evaluator_->GetBestPlan(
-      all_plans, min_runs, last_configuration, resource_string, utilites_scaler,
+      all_plans, min_runs, current_configuration, resource_string,
+      utilites_scaler,
       config_written_scaler, utility_per_frame_scaler, resulting_plans,
       cost_of_columns, streaming_speed, configuration_speed);
   Log(LogLevel::kTrace, "Creating module queue.");

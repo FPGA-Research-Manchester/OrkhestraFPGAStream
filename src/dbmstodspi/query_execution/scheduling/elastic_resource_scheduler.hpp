@@ -41,7 +41,8 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       std::vector<std::string> &processed_nodes,
       std::map<std::string, SchedulingQueryNode> &graph,
       AcceleratorLibraryInterface &drivers,
-      std::map<std::string, TableMetadata> &tables)
+      std::map<std::string, TableMetadata> &tables,
+      const std::vector<ScheduledModule> &current_configuration)
       -> std::queue<
           std::pair<std::vector<ScheduledModule>,
                     std::vector<std::shared_ptr<QueryNode>>>> override;

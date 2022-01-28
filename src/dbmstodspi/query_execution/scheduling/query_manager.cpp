@@ -373,18 +373,19 @@ auto QueryManager::ScheduleNextSetOfNodes(
     std::map<std::string, TableMetadata>& tables,
     AcceleratorLibraryInterface& drivers, const Config& config,
     NodeSchedulerInterface& node_scheduler,
-    std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links)
+    std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links,
+    const std::vector<ScheduledModule>& current_configuration)
     -> std::queue<std::pair<std::vector<ScheduledModule>,
                             std::vector<std::shared_ptr<QueryNode>>>> {
   auto current_queue = node_scheduler.GetNextSetOfRuns(
       query_nodes, config.pr_hw_library, first_node_names, starting_nodes,
-      processed_nodes, graph, drivers, tables);
+      processed_nodes, graph, drivers, tables, current_configuration);
   return RunLinker::LinkPeripheralNodesFromGivenRuns(current_queue,
                                                      all_reuse_links);
 }
 
 auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
-    const std::vector<ScheduledModule>& current_config,
+    std::vector<ScheduledModule>& current_config,
     const std::vector<ScheduledModule>& next_config, int column_count)
     -> std::pair<std::vector<std::string>,
                  std::vector<std::pair<QueryOperationType, bool>>> {
@@ -440,6 +441,8 @@ auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
       passthrough_modules.push_back({module.operation_type, true});
     }
   }
+
+  current_config = left_over_config;
 
   return {required_bitstreams, passthrough_modules};
 }

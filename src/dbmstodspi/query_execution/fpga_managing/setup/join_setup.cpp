@@ -34,15 +34,26 @@ void JoinSetup::SetupModule(AccelerationModule& acceleration_module,
   Log(LogLevel::kInfo,
       "Configuring join on pos " +
           std::to_string(module_parameters.operation_module_location));
-  JoinSetup::SetupJoinModule(
-      dynamic_cast<JoinInterface&>(acceleration_module),
-      module_parameters.input_streams[0].stream_id,
-      GetStreamRecordSize(module_parameters.input_streams[0]),
-      module_parameters.input_streams[1].stream_id,
-      GetStreamRecordSize(module_parameters.input_streams[1]),
-      module_parameters.output_streams[0].stream_id,
-      module_parameters.output_streams[0].input_chunks_per_record,
-      module_parameters.operation_parameters.at(0).at(0));
+  if (module_parameters.input_streams[0].stream_id != 15) {
+    JoinSetup::SetupJoinModule(
+        dynamic_cast<JoinInterface&>(acceleration_module),
+        module_parameters.input_streams[0].stream_id,
+        GetStreamRecordSize(module_parameters.input_streams[0]),
+        module_parameters.input_streams[1].stream_id,
+        GetStreamRecordSize(module_parameters.input_streams[1]),
+        module_parameters.output_streams[0].stream_id,
+        module_parameters.output_streams[0].input_chunks_per_record,
+        module_parameters.operation_parameters.at(0).at(0));
+  } else {
+    JoinSetup::SetupPassthroughJoin(
+        dynamic_cast<JoinInterface&>(acceleration_module));
+  }
+}
+
+void JoinSetup::SetupPassthroughJoin(JoinInterface& join_module) {
+  join_module.Reset();
+  join_module.DefineOutputStream(1, 15, 15, 15);
+  join_module.StartPrefetchingData();
 }
 
 auto JoinSetup::CreateModule(MemoryManagerInterface* memory_manager,
@@ -139,9 +150,9 @@ auto JoinSetup::GetWorstCaseProcessedTables(
 auto JoinSetup::InputHasToBeSorted() -> bool { return true; }
 
 // Just pick the largest table name for now.
-auto JoinSetup::GetResultingTables(const std::map<std::string, TableMetadata>& tables,
-                        const std::vector<std::string>& table_names)
-    -> std::vector<std::string> {
+auto JoinSetup::GetResultingTables(
+    const std::map<std::string, TableMetadata>& tables,
+    const std::vector<std::string>& table_names) -> std::vector<std::string> {
   std::string max_table_name = "";
   int max_size = 0;
   for (const auto& table_name : table_names) {

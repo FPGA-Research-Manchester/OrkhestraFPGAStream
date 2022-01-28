@@ -62,6 +62,7 @@ class NodeSchedulerInterface {
    * @param graph Graph of all of the nodes that haven't been executed already.
    * @param drivers Drivers of the operators
    * @param tables Table metadata.
+   * @param current_configuration Currently loaded modules.
    * @return Queue of groups of accelerated query
    * nodes to be accelerated next.
    */
@@ -73,7 +74,8 @@ class NodeSchedulerInterface {
       std::vector<std::string>& processed_nodes,
       std::map<std::string, SchedulingQueryNode>& graph,
       AcceleratorLibraryInterface& drivers,
-      std::map<std::string, TableMetadata>& tables)
+      std::map<std::string, TableMetadata>& tables,
+      const std::vector<ScheduledModule>& current_configuration)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<std::shared_ptr<QueryNode>>>> = 0;
 };
