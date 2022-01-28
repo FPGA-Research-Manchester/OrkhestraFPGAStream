@@ -81,4 +81,6 @@ class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
               (QueryOperationType operation_type), (override));
   MOCK_METHOD((bool), IsOperationDataSensitive,
               (QueryOperationType operation_type), (override));
+  MOCK_METHOD((AcceleratedQueryNode), GetEmptyModuleNode,
+              (QueryOperationType operation, int module_position), (override));
 };

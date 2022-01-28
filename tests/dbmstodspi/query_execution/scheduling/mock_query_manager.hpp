@@ -61,10 +61,6 @@ class MockQueryManager : public QueryManagerInterface {
               (MemoryManagerInterface * memory_manager,
                std::string bitstream_file_name, Config config),
               (override));
-  MOCK_METHOD(ScheduledNodes, ScheduleUnscheduledNodes,
-              (std::vector<std::shared_ptr<QueryNode>> unscheduled_root_nodes,
-               Config config, NodeSchedulerInterface& node_scheduler),
-              (override));
   /*MOCK_METHOD(bool, IsRunValid, (std::vector<AcceleratedQueryNode>
      current_run), (override));*/
   MOCK_METHOD(void, ExecuteAndProcessResults,
@@ -87,7 +83,7 @@ class MockQueryManager : public QueryManagerInterface {
                const std::vector<std::string>& scheduled_node_names),
               (override));
   MOCK_METHOD(
-      (std::queue<std::pair<ConfigurableModulesVector, QueryNodeVector>>),
+      (std::queue<std::pair<std::vector<ScheduledModule>, QueryNodeVector>>),
       ScheduleNextSetOfNodes,
       (QueryNodeVector & query_nodes,
        const std::vector<std::string>& first_node_names,
@@ -95,6 +91,25 @@ class MockQueryManager : public QueryManagerInterface {
        std::vector<std::string>& processed_nodes, SchedulingNodeMap& graph,
        TableMap& tables, AcceleratorLibraryInterface& drivers,
        const Config& config, NodeSchedulerInterface& node_scheduler,
-       ReuseLinks& all_reuse_links),
+       ReuseLinks& all_reuse_links,
+       const std::vector<ScheduledModule>& current_configuration),
       (override));
+  MOCK_METHOD(void, LoadInitialStaticBitstream,
+              (MemoryManagerInterface * memory_manager), (override));
+  MOCK_METHOD(void, LoadEmptyRoutingPRRegion,
+              (MemoryManagerInterface * memory_manager,
+               AcceleratorLibraryInterface& driver_library),
+              (override));
+  MOCK_METHOD(void, LoadPRBitstreams,
+              (MemoryManagerInterface * memory_manager,
+               const std::vector<std::string>& bitstream_names,
+               AcceleratorLibraryInterface& driver_library),
+              (override));
+  MOCK_METHOD((std::pair<std::vector<std::string>,
+                         std::vector<std::pair<QueryOperationType, bool>>>),
+              GetPRBitstreamsToLoadWithPassthroughModules,
+              (std::vector<ScheduledModule> & current_config,
+               const std::vector<ScheduledModule>& next_config,
+               int column_count),
+              (override));
 };
