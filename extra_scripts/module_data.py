@@ -14,7 +14,7 @@
 
 import sys
 import json
-
+import itertools
 
 # Possibly generate resource string
 # Possibly generate the resource requirements
@@ -59,6 +59,9 @@ def main(argv):
 
     with open('test_result.json', 'w') as write_file:
         json.dump(data, write_file, indent=4, sort_keys=True)
+
+    # To print out potential task orders
+    print(list(itertools.permutations(list(resource_requirements.keys()))))
 
 
 def collect_all_substrings(input_str):
