@@ -24,6 +24,8 @@ import itertools
 # Get all substrings that meet the requirements.
 # Choose the smallest ones out of them for each requirement.
 # Give each a unique name - module name + slack + index
+
+
 def main(argv):
     # with open("test.json", 'r') as read_file:
     #     data = json.load(read_file)
@@ -33,12 +35,11 @@ def main(argv):
     all_substrings = collect_all_substrings(resource_string)
 
     resource_requirements = {
-        "module_1_easy": [{"M": 2, "D": 1, }],
-        "module_2_easy": [{"M": 3, "D": 1, }],
-        "module_3_easy": [{"M": 2, "D": 2, }],
-        "module_4_hard": [{"M": 2, "D": 1, "B": 1}],
-        "module_5_hard": [{"M": 3, "D": 3}],
-        "module_6_hard": [{"M": 1, "D": 1, "B": 2}]
+        "module_1_hard": [{"M": 3, "D": 1, "B": 1}],
+        "module_2_hard": [{"M": 7, "D": 3, "B": 3}],
+        "module_3_hard": [{"B": 3}],
+        "module_4_hard": [{"D": 4}],
+        "module_5_hard": [{"M": 7}]
     }
 
     data = dict()
@@ -48,9 +49,12 @@ def main(argv):
         data[module]["bitstreams"] = dict()
         max_slack = 0
         for requirement in resource_requirements[module]:
-            module_substrings = get_module_substrings_with_requirements(all_substrings, requirement, max_slack)
+            module_substrings = get_module_substrings_with_requirements(
+                all_substrings, requirement, max_slack)
             for substring_index in range(len(module_substrings)):
-                bitstream_name = module + "_" + str(module_substrings[substring_index][0]) + "_" + str(substring_index)
+                bitstream_name = module + "_" + \
+                    str(module_substrings[substring_index]
+                        [0]) + "_" + str(substring_index)
                 data[module]["bitstreams"][bitstream_name] = {"string": module_substrings[substring_index][1],
                                                               "is_backwards": False}
 
@@ -76,7 +80,8 @@ def collect_all_substrings(input_str):
 
 def add_start_locations(data, pr_region_length):
     for module in data.keys():
-        data[module]["start_locations"] = [[] for position in range(pr_region_length)]
+        data[module]["start_locations"] = [[]
+                                           for position in range(pr_region_length)]
         for bitstream in data[module]["bitstreams"].keys():
             for location in data[module]["bitstreams"][bitstream]["locations"]:
                 data[module]["start_locations"][location].append(bitstream)
@@ -89,7 +94,8 @@ def is_satisfying_string(substring, requirement):
     return True
 
 
-def get_module_substrings_with_requirements(all_substrings, requirement, max_slack):
+def get_module_substrings_with_requirements(
+        all_substrings, requirement, max_slack):
     unique_substrings = list(dict.fromkeys(all_substrings))
     matching_substrings = []
     smallest_string_len = -1
@@ -99,7 +105,8 @@ def get_module_substrings_with_requirements(all_substrings, requirement, max_sla
                 smallest_string_len = len(substring)
             if len(substring) > smallest_string_len + max_slack:
                 break
-            matching_substrings.append((len(substring) - smallest_string_len, substring))
+            matching_substrings.append(
+                (len(substring) - smallest_string_len, substring))
     return matching_substrings
 
 
@@ -107,7 +114,8 @@ def add_position_and_length(data, resource_string):
     for module in data.keys():
         for bitstream in data[module]["bitstreams"].keys():
             module_string = data[module]["bitstreams"][bitstream]["string"]
-            data[module]["bitstreams"][bitstream]["length"] = len(module_string)
+            data[module]["bitstreams"][bitstream]["length"] = len(
+                module_string)
             data[module]["bitstreams"][bitstream]["locations"] = [i for i in range(len(resource_string)) if
                                                                   resource_string.startswith(module_string, i)]
 

@@ -26,6 +26,15 @@ def main(argv):
     argv = "MMDMDBMMDBMMDMDBMMDBMMDMDBMMDBM"
     all_substrings = collect_all_substrings(argv)
     counts = pd.Series(all_substrings).value_counts()
+    sorted_patterns = dict()
+    for key in counts.keys():
+        if counts[key] in sorted_patterns:
+            sorted_patterns[counts[key]].append(key)
+        else:
+            sorted_patterns[counts[key]] = [key]
+    for key in sorted_patterns.keys():
+        sorted_patterns[key] = sorted(sorted_patterns[key], key=lambda x: len(x))
+        print(f"{key}:{sorted_patterns[key]}")
     # plot = counts.plot.hist(
     #     bins=16,
     #     xticks=range(16))
