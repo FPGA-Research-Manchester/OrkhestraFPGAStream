@@ -149,13 +149,87 @@ hw_library_small = {
         ], [], [], [], [], [], [],
             [], [],
             ['mergesort32.bit'], [], [], [], [], [], [], [], [], [], []],
-    }, "Merge Join": {
+    }, "mjoin": {
         "bitstreams": {
-            "join.bit": {"locations": (0, 10, 20), "length": 6, "capacity": (), "string": "MMDMDB",
-                         "is_backwards": False}},
-        "start_locations": [['join.bit'], [], [], [], [], [], [], [], [], [], ['join.bit'], [], [], [], [], [], [],
-                            [],
-                            [], [], ['join.bit'], [], [], [], [], [], [], [], [], [], []],
+            "mjoin_0": {
+                "string": "MMDMDB",
+                "is_backwards": False,
+                "length": 6,
+                "capacity": (),
+                "locations": [
+                    0,
+                    10,
+                    20
+                ]
+            },
+            "mjoin_1": {
+                "string": "MMDMDBMMDB",
+                "is_backwards": False,
+                "length": 10,
+                "capacity": (),
+                "locations": [
+                    0,
+                    10,
+                    20
+                ]
+            },
+            "mjoin_2": {
+                "string": "DBMMDMDBMMDB",
+                "is_backwards": False,
+                "length": 12,
+                "capacity": (),
+                "locations": [
+                    8,
+                    18
+                ]
+            }
+        },
+        "start_locations": [
+            [
+                "mjoin_0",
+                "mjoin_1"
+            ],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [
+                "mjoin_2"
+            ],
+            [],
+            [
+                "mjoin_0",
+                "mjoin_1"
+            ],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [
+                "mjoin_2"
+            ],
+            [],
+            [
+                "mjoin_0",
+                "mjoin_1"
+            ],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            []
+        ]
     },
     # "Addition": {
     #     "bitstreams": {
@@ -229,13 +303,87 @@ hw_library_and_small_merge_sort = {
         ], [], [], [], [], [], [],
             [], [],
             ['mergesort32.bit', 'mergesort64.bit'], [], [], [], [], [], [], [], [], [], []],
-    }, "Merge Join": {
+    }, "mjoin": {
         "bitstreams": {
-            "join.bit": {"locations": (0, 10, 20), "length": 6, "capacity": (), "string": "MMDMDB",
-                         "is_backwards": False}},
-        "start_locations": [['join.bit'], [], [], [], [], [], [], [], [], [], ['join.bit'], [], [], [], [], [], [],
-                            [],
-                            [], [], ['join.bit'], [], [], [], [], [], [], [], [], [], []],
+            "mjoin_0": {
+                "string": "MMDMDB",
+                "is_backwards": False,
+                "length": 6,
+                "capacity": (),
+                "locations": [
+                    0,
+                    10,
+                    20
+                ]
+            },
+            "mjoin_1": {
+                "string": "MMDMDBMMDB",
+                "is_backwards": False,
+                "length": 10,
+                "capacity": (),
+                "locations": [
+                    0,
+                    10,
+                    20
+                ]
+            },
+            "mjoin_2": {
+                "string": "DBMMDMDBMMDB",
+                "is_backwards": False,
+                "length": 12,
+                "capacity": (),
+                "locations": [
+                    8,
+                    18
+                ]
+            }
+        },
+        "start_locations": [
+            [
+                "mjoin_0",
+                "mjoin_1"
+            ],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [
+                "mjoin_2"
+            ],
+            [],
+            [
+                "mjoin_0",
+                "mjoin_1"
+            ],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [
+                "mjoin_2"
+            ],
+            [],
+            [
+                "mjoin_0",
+                "mjoin_1"
+            ],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            []
+        ]
     },
     # "Addition": {
     #     "bitstreams": {
@@ -309,13 +457,87 @@ hw_library_and_big_merge_sort = {
         ], [], [], [], [], [], [],
             ['mergesort128.bit'], [],
             ['mergesort32.bit'], [], [], [], [], [], [], [], [], [], []],
-    }, "Merge Join": {
+    }, "mjoin": {
         "bitstreams": {
-            "join.bit": {"locations": (0, 10, 20), "length": 6, "capacity": (), "string": "MMDMDB",
-                         "is_backwards": False}},
-        "start_locations": [['join.bit'], [], [], [], [], [], [], [], [], [], ['join.bit'], [], [], [], [], [], [],
-                            [],
-                            [], [], ['join.bit'], [], [], [], [], [], [], [], [], [], []],
+            "mjoin_0": {
+                "string": "MMDMDB",
+                "is_backwards": False,
+                "length": 6,
+                "capacity": (),
+                "locations": [
+                    0,
+                    10,
+                    20
+                ]
+            },
+            "mjoin_1": {
+                "string": "MMDMDBMMDB",
+                "is_backwards": False,
+                "length": 10,
+                "capacity": (),
+                "locations": [
+                    0,
+                    10,
+                    20
+                ]
+            },
+            "mjoin_2": {
+                "string": "DBMMDMDBMMDB",
+                "is_backwards": False,
+                "length": 12,
+                "capacity": (),
+                "locations": [
+                    8,
+                    18
+                ]
+            }
+        },
+        "start_locations": [
+            [
+                "mjoin_0",
+                "mjoin_1"
+            ],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [
+                "mjoin_2"
+            ],
+            [],
+            [
+                "mjoin_0",
+                "mjoin_1"
+            ],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [
+                "mjoin_2"
+            ],
+            [],
+            [
+                "mjoin_0",
+                "mjoin_1"
+            ],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            []
+        ]
     },
     # "Addition": {
     #     "bitstreams": {

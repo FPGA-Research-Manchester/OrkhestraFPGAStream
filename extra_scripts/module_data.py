@@ -40,7 +40,8 @@ def make_resource_requirements(hw_library):
         requirements[operation] = []
         for module in hw_library[operation]["bitstreams"].keys():
             module_string = hw_library[operation]["bitstreams"][module]["string"]
-            requirements[operation].append({c: module_string.count(c) for c in set(module_string)})
+            requirements[operation].append(
+                {c: module_string.count(c) for c in set(module_string)})
     return requirements
 
 
@@ -75,8 +76,8 @@ def get_resource_hit_counts(
     for location in range(len(global_start_locations)):
         for bitstream in global_start_locations[location]:
             for hit_location in range(location, location +
-                                                hw_library[all_bitstream_operators_map[bitstream]]["bitstreams"][
-                                                    bitstream]["length"]):
+                                      hw_library[all_bitstream_operators_map[bitstream]]["bitstreams"][
+                                          bitstream]["length"]):
                 hit_counts[hit_location] += 1
     return hit_counts
 
@@ -106,14 +107,19 @@ def add_additional_modules(all_substrings, current_hw_library, max_slack, resour
                 all_substrings, resource_requirements[module][requirement_index], existing, max_slack)
             chosen_substring = module_selection_func(module_substrings, all_substrings, resource_string,
                                                      current_hw_library, module, requirement_index)
-            add_bitstream_to_hw_library(chosen_substring, current_hw_library, module, requirement_index)
+            add_bitstream_to_hw_library(
+                chosen_substring,
+                current_hw_library,
+                module,
+                requirement_index)
     # print("Updated:")
     # print(json.dumps(data, indent=4))
 
 
-def add_bitstream_to_hw_library(chosen_substring, current_hw_library, module, requirement_index):
+def add_bitstream_to_hw_library(
+        chosen_substring, current_hw_library, module, requirement_index):
     bitstream_name = module + "_" + str(requirement_index) + "_" + \
-                     str(chosen_substring[0])
+        str(chosen_substring[0])
     current_hw_library[module]["bitstreams"][bitstream_name] = {"string": chosen_substring[1],
                                                                 "is_backwards": False}
 
@@ -153,7 +159,8 @@ def get_module_substrings_with_requirements(
     while not matching_substrings:
         for substring in unique_substrings:
             if len(substring) > minimum_size:
-                if is_satisfying_string(substring, requirement) and substring not in existing:
+                if is_satisfying_string(
+                        substring, requirement) and substring not in existing:
                     if smallest_string_len == -1:
                         smallest_string_len = len(substring)
                     if len(substring) > smallest_string_len + max_slack:
@@ -177,7 +184,8 @@ def add_position_and_length(data, resource_string):
 
 def choose_based_on_histogram(module_substrings, all_substrings, resource_string, hw_library, module,
                               requirement_index):
-    string_counts = {pattern: all_substrings.count(pattern) for pattern in set(all_substrings)}
+    string_counts = {pattern: all_substrings.count(
+        pattern) for pattern in set(all_substrings)}
 
     max_placements = 0
     chosen_substring = module_substrings[0]
@@ -190,14 +198,20 @@ def choose_based_on_histogram(module_substrings, all_substrings, resource_string
 
 
 # We need to get the popularity.
-def choose_based_on_heatmap(module_substrings, all_substrings, resource_string, hw_library, module, requirement_index):
+def choose_based_on_heatmap(module_substrings, all_substrings,
+                            resource_string, hw_library, module, requirement_index):
     std_devs = dict()
     for substring in module_substrings:
         current_hw_library = copy.deepcopy(hw_library)
-        add_bitstream_to_hw_library(substring, current_hw_library, module, requirement_index)
+        add_bitstream_to_hw_library(
+            substring,
+            current_hw_library,
+            module,
+            requirement_index)
         add_position_and_length(current_hw_library, resource_string)
         add_start_locations(current_hw_library, len(resource_string))
-        global_resource_hit_counts = get_normalized_resource_popularity(current_hw_library, resource_string)
+        global_resource_hit_counts = get_normalized_resource_popularity(
+            current_hw_library, resource_string)
         std_devs[substring[1]] = statistics.stdev(global_resource_hit_counts)
 
     # print("Orig:")
@@ -236,6 +250,9 @@ def main(argv):
             hw_library[module]["bitstreams"][bitstream_name] = {"string": initial_modules[module][substring_index],
                                                                 "is_backwards": False}
 
+    # add_position_and_length(hw_library, resource_string)
+    # add_start_locations(hw_library, len(resource_string))
+
     # print("Orig:")
     # print(json.dumps(hw_library, indent=4))
 
@@ -262,7 +279,7 @@ def main(argv):
     current_hw_library = copy.deepcopy(hw_library)
     find_std_devs_after_adding_modules(additional_module_count, all_substrings, current_hw_library, max_slack,
                                        resource_requirements, resource_string, std_devs, choose_based_on_histogram, frames)
-    print(frames)
+    print(std_devs)
     global_std_devs.append(std_devs)
     global_frames.append(frames)
 
@@ -271,7 +288,7 @@ def main(argv):
     current_hw_library = copy.deepcopy(hw_library)
     find_std_devs_after_adding_modules(additional_module_count, all_substrings, current_hw_library, max_slack,
                                        resource_requirements, resource_string, std_devs, choose_based_on_heatmap, frames)
-    print(frames)
+    print(std_devs)
     global_std_devs.append(std_devs)
     global_frames.append(frames)
 
@@ -281,7 +298,7 @@ def main(argv):
     current_hw_library = copy.deepcopy(hw_library)
     find_std_devs_after_adding_modules(additional_module_count, all_substrings, current_hw_library, max_slack,
                                        resource_requirements, resource_string, std_devs, choose_based_on_histogram, frames)
-    print(frames)
+    print(std_devs)
     global_std_devs.append(std_devs)
     global_frames.append(frames)
 
@@ -290,7 +307,7 @@ def main(argv):
     current_hw_library = copy.deepcopy(hw_library)
     find_std_devs_after_adding_modules(additional_module_count, all_substrings, current_hw_library, max_slack,
                                        resource_requirements, resource_string, std_devs, choose_based_on_heatmap, frames)
-    print(frames)
+    print(std_devs)
     global_std_devs.append(std_devs)
     global_frames.append(frames)
 
@@ -300,7 +317,7 @@ def main(argv):
     current_hw_library = copy.deepcopy(hw_library)
     find_std_devs_after_adding_modules(additional_module_count, all_substrings, current_hw_library, max_slack,
                                        resource_requirements, resource_string, std_devs, choose_based_on_histogram, frames)
-    print(frames)
+    print(std_devs)
     global_std_devs.append(std_devs)
     global_frames.append(frames)
 
@@ -309,7 +326,26 @@ def main(argv):
     current_hw_library = copy.deepcopy(hw_library)
     find_std_devs_after_adding_modules(additional_module_count, all_substrings, current_hw_library, max_slack,
                                        resource_requirements, resource_string, std_devs, choose_based_on_heatmap, frames)
-    print(frames)
+    print(std_devs)
+    global_std_devs.append(std_devs)
+    global_frames.append(frames)
+
+    max_slack = 3
+    std_devs = []
+    frames = []
+    current_hw_library = copy.deepcopy(hw_library)
+    find_std_devs_after_adding_modules(additional_module_count, all_substrings, current_hw_library, max_slack,
+                                       resource_requirements, resource_string, std_devs, choose_based_on_histogram, frames)
+    print(std_devs)
+    global_std_devs.append(std_devs)
+    global_frames.append(frames)
+
+    std_devs = []
+    frames = []
+    current_hw_library = copy.deepcopy(hw_library)
+    find_std_devs_after_adding_modules(additional_module_count, all_substrings, current_hw_library, max_slack,
+                                       resource_requirements, resource_string, std_devs, choose_based_on_heatmap, frames)
+    print(std_devs)
     global_std_devs.append(std_devs)
     global_frames.append(frames)
 
@@ -321,28 +357,40 @@ def main(argv):
             module_additions = std_dev_i
             additional_slack = run_i // 2
             std_dev_dict.append(
-                {"Std dev": global_std_devs[run_i][std_dev_i], "Additional slack": additional_slack, "Type": cur_type,
+                {"Std dev": global_std_devs[run_i][std_dev_i], "Additional slack": additional_slack, "Strategy": cur_type,
                  "Module additions": module_additions})
             frames_dict.append(
-                {"MB": global_frames[run_i][std_dev_i]/1000000, "Additional slack": additional_slack, "Type": cur_type,
+                {"MB": global_frames[run_i][std_dev_i] / 1000000, "Additional slack": additional_slack, "Strategy": cur_type,
                  "Module additions": module_additions})
 
     std_dev_df = pd.DataFrame(std_dev_dict)
     frames_df = pd.DataFrame(frames_dict)
 
-    #sns.set_theme()
+    # sns.set_theme()
+    sns.set(font_scale=2)
     sns.set_style("whitegrid")
-    #sns.set(font_scale=2)
-    g=sns.lineplot(data=std_dev_df, hue="Type", x="Module additions", y="Std dev", style="Additional slack")
+    g = sns.lineplot(
+        data=std_dev_df,
+        hue="Strategy",
+        x="Module additions",
+        y="Std dev",
+        style="Additional slack")
     g.set_xticks(range(11))
     g.set_title("Standard deviation of module library extensions")
+    plt.xlim(0, 10)
     plt.show()
 
     sns.set_style("whitegrid")
     # sns.set(font_scale=2)
-    g = sns.lineplot(data=frames_df, hue="Type", x="Module additions", y="MB", style="Additional slack")
+    g = sns.lineplot(
+        data=frames_df,
+        hue="Strategy",
+        x="Module additions",
+        y="MB",
+        style="Additional slack")
     g.set_xticks(range(11))
     g.set_title("Module library size after extensions")
+    plt.xlim(0, 10)
     plt.show()
 
     # with open('test_result.json', 'w') as write_file:
@@ -356,7 +404,8 @@ def find_std_devs_after_adding_modules(additional_module_count, all_substrings, 
                                        resource_requirements, resource_string, std_devs, module_selection_func, frames):
     add_position_and_length(hw_library, resource_string)
     add_start_locations(hw_library, len(resource_string))
-    global_resource_hit_counts = get_normalized_resource_popularity(hw_library, resource_string)
+    global_resource_hit_counts = get_normalized_resource_popularity(
+        hw_library, resource_string)
     std_devs.append(statistics.stdev(global_resource_hit_counts))
     frame_size = 372
     frames.append(frame_size * get_frame_count(hw_library))
@@ -367,7 +416,8 @@ def find_std_devs_after_adding_modules(additional_module_count, all_substrings, 
         add_position_and_length(hw_library, resource_string)
         add_start_locations(hw_library, len(resource_string))
 
-        global_resource_hit_counts = get_normalized_resource_popularity(hw_library, resource_string)
+        global_resource_hit_counts = get_normalized_resource_popularity(
+            hw_library, resource_string)
         std_devs.append(statistics.stdev(global_resource_hit_counts))
         frames.append(frame_size * get_frame_count(hw_library))
 
@@ -375,7 +425,10 @@ def find_std_devs_after_adding_modules(additional_module_count, all_substrings, 
 def get_frame_count(hw_library):
     existing = []
     for operation in hw_library.keys():
-        existing.extend(list(get_existing(hw_library[operation]["bitstreams"])))
+        existing.extend(
+            list(
+                get_existing(
+                    hw_library[operation]["bitstreams"])))
     resource_count = dict()
     for pattern in existing:
         for char in pattern:
