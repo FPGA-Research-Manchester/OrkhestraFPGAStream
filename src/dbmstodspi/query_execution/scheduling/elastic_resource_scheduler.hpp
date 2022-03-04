@@ -20,6 +20,7 @@ limitations under the License.
 
 #include "node_scheduler_interface.hpp"
 #include "plan_evaluator_interface.hpp"
+#include "module_selection.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -59,6 +60,18 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
   static void RemoveUnnecessaryTables(
       const std::map<std::string, SchedulingQueryNode> &graph,
       std::map<std::string, TableMetadata> &tables);
+  static auto GetDefaultHeuristics() -> const std::vector<std::pair<std::vector<std::vector<ModuleSelection>>,
+                                                                                      std::vector<std::vector<ModuleSelection>>>>;
+  auto GetNodePointerWithName(
+      std::vector<std::shared_ptr<QueryNode>> &available_nodes,
+      std::string node_name) -> std::shared_ptr<QueryNode>;
+  auto FindNewAvailableNodes(
+      std::vector<std::string> &starting_nodes,
+      std::vector<std::shared_ptr<QueryNode>> &available_nodes) -> std::vector<std::shared_ptr<QueryNode>>;
+  auto GetQueueOfResultingRuns(
+      std::vector<std::shared_ptr<QueryNode>> &available_nodes,
+      std::vector<std::vector<ScheduledModule>> best_plan) -> std::queue<std::pair<std::vector<ScheduledModule>,
+                                                                                    std::vector<std::shared_ptr<QueryNode>>>>;
 
   std::unique_ptr<PlanEvaluatorInterface> plan_evaluator_;
 };
