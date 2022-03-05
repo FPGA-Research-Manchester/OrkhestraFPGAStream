@@ -158,7 +158,7 @@ void RapidJSONReader::GetOperationType(
       {node_parameter.name.GetString(), node_parameter.value.GetString()});
 }
 
-auto RapidJSONReader::ReadDataSizes(std::string json_filename)
+auto RapidJSONReader::ReadValueMap(std::string json_filename)
     -> std::map<std::string, double> {
   const auto document = Read(json_filename);
   std::map<std::string, double> value_map;

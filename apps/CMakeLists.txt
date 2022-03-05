@@ -102,6 +102,7 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/repo.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/config.ini
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/extended_config.ini 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/column_sizes.json 
     
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/concurrency_testing.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/double_run_testing.json 

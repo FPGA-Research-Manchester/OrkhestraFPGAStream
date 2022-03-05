@@ -51,9 +51,32 @@ struct Config {
   std::map<std::string, TableMetadata> initial_all_tables_metadata;
   std::map<QueryOperationType, OperationPRModules> pr_hw_library;
 
+  /*int frame_size = 372;
+  std::map<char, int> cost_of_columns = {{'M', 216 * frame_size},
+                                         {'D', 200 * frame_size},
+                                         {'B', 196 * frame_size}};*/
+  std::map<char, int> cost_of_columns;
+
+  // Default values here:
+  bool reduce_single_runs = true;
+  bool use_max_runs_cap = true;
+  int heuristic_choice = 0;
+
+  double streaming_speed = 4800000000;
+  double configuration_speed = 66000000;
+
+  double time_limit_duration_in_seconds = -1;
+
+  std::string resource_string = "MMDMDBMMDBMMDMDBMMDBMMDMDBMMDBM";
+
+  double utilites_scaler = -1;
+  double config_written_scaler = -1;
+  double utility_per_frame_scaler = -1;
+
+
   /// CSV data column separator character.
   char csv_separator;
 
-  std::vector<std::string> temp;
+  std::vector<std::string> debug_forced_pr_bitstreams;
 };
 }  // namespace orkhestrafs::core_interfaces

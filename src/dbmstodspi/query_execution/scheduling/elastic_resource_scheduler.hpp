@@ -35,15 +35,15 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       : plan_evaluator_{std::move(plan_evaluator)} {}
 
   auto GetNextSetOfRuns(
-      std::vector<std::shared_ptr<QueryNode>>& available_nodes,
-      const std::map<QueryOperationType, OperationPRModules> &hw_library,
-      const std::vector<std::string> &first_node_names,
-      std::vector<std::string> &starting_nodes,
-      std::vector<std::string> &processed_nodes,
-      std::map<std::string, SchedulingQueryNode> &graph,
-      AcceleratorLibraryInterface &drivers,
-      std::map<std::string, TableMetadata> &tables,
-      const std::vector<ScheduledModule> &current_configuration)
+      std::vector<std::shared_ptr<QueryNode>>& query_nodes,
+      const std::vector<std::string>& first_node_names,
+      std::vector<std::string>& starting_nodes,
+      std::vector<std::string>& processed_nodes,
+      std::map<std::string, SchedulingQueryNode>& graph,
+      AcceleratorLibraryInterface& drivers,
+      std::map<std::string, TableMetadata>& tables,
+      const std::vector<ScheduledModule>& current_configuration,
+      const Config& config)
       -> std::queue<
           std::pair<std::vector<ScheduledModule>,
                     std::vector<std::shared_ptr<QueryNode>>>> override;
@@ -72,6 +72,9 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       std::vector<std::shared_ptr<QueryNode>> &available_nodes,
       std::vector<std::vector<ScheduledModule>> best_plan) -> std::queue<std::pair<std::vector<ScheduledModule>,
                                                                                     std::vector<std::shared_ptr<QueryNode>>>>;
+  static auto ElasticResourceNodeScheduler::GetLargestModulesSizes(
+      const std::map<QueryOperationType, OperationPRModules>& hw_libary)
+      -> std::map<QueryOperationType, int>;
 
   std::unique_ptr<PlanEvaluatorInterface> plan_evaluator_;
 };

@@ -53,11 +53,11 @@ class JSONReaderInterface {
 
   virtual ~JSONReaderInterface() = default;
   /**
-   * @brief Read the JSON file describing data type sizes.
+   * @brief Read the JSON file describing mapped values.
    * @param json_filename JSON file.
-   * @return Data type and size map.
+   * @return Mapped values.
    */
-  virtual auto ReadDataSizes(std::string json_filename)
+  virtual auto ReadValueMap(std::string json_filename)
       -> std::map<std::string, double> = 0;
   /**
    * @brief Read memory mapped register space sizes.

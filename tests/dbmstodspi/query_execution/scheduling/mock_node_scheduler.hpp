@@ -38,12 +38,13 @@ class MockNodeScheduler : public NodeSchedulerInterface {
 
  public:
   MOCK_METHOD(ResultingPlanQueue, GetNextSetOfRuns,
-              (NodeVector & query_nodes, const HWLibraryMap& hw_library,
+              (NodeVector & query_nodes,
                const std::vector<std::string>& first_node_names,
                std::vector<std::string>& starting_nodes,
                std::vector<std::string>& processed_nodes,
                SchedulingNodeMap& graph, AcceleratorLibraryInterface& drivers,
                TableMap& tables,
-               const std::vector<ScheduledModule>& current_configuration),
+               const std::vector<ScheduledModule>& current_configuration,
+               const Config& config),
               (override));
 };

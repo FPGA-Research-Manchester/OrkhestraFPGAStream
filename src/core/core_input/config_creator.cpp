@@ -17,10 +17,9 @@ limitations under the License.
 #include "config_creator.hpp"
 
 #include <algorithm>
-#include <vector>
-
-#include <sstream>
 #include <iostream>
+#include <sstream>
+#include <vector>
 
 #include "pr_module_data.hpp"
 #include "query_scheduling_data.hpp"
@@ -41,25 +40,45 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string data_separator = "DATA_SEPARATOR";
   std::string table_metadata = "TABLE_METADATA";
   std::string hw_library = "HW_LIBRARY";
+  std::string column_cost = "COLUMN_COST";
 
-  std::string temp = "TEMP";
+  std::string force_pr = "DEBUG_FORCE_PR";
+  std::string reduce_runs = "REDUCE_RUNS";
+  std::string max_runs = "MAX_RUNS_CAP";
+  std::string heuristic = "HEURISTIC";
+  std::string streaming_speed = "STREAMING_SPEED";
+  std::string configuration_speed = "CONFIGURATION_SPEED";
+  std::string time_limit = "TIME_LIMIT";
+  std::string resource_string = "RESOURCE_STRING";
+  std::string utility_scaler = "UTILITY_SCALER";
+  std::string config_scaler = "CONFIG_SCALER";
+  std::string utility_per_frame_scaler = "UTILITY_PER_FRAME_SCALER";
 
   // repo.json is hardcoded for now.
 
   auto config_values = config_reader_->ParseInputConfig(config_filename);
 
-  auto accelerator_library_data = json_reader_->ReadAcceleratorLibrary(
-      config_values[configurations_library]);
-
   Config config;
 
-  std::stringstream ss(config_values[temp]);
+  std::istringstream(config_values[reduce_runs]) >> std::boolalpha >>
+      config.reduce_single_runs;
+  std::istringstream(config_values[max_runs]) >> std::boolalpha >>
+      config.use_max_runs_cap;
+  config.heuristic_choice = std::stoi(config_values[heuristic]);
+  config.streaming_speed = std::stod(config_values[streaming_speed]);
+  config.configuration_speed = std::stod(config_values[configuration_speed]);
+  config.time_limit_duration_in_seconds = std::stod(config_values[time_limit]);
+  config.resource_string = config_values[resource_string];
+  config.utilites_scaler = std::stod(config_values[utility_scaler]);
+  config.config_written_scaler = std::stod(config_values[config_scaler]);
+  config.utility_per_frame_scaler =
+      std::stod(config_values[utility_per_frame_scaler]);
 
-  std::string s;
-  while (std::getline(ss, s, ',')) {
-    config.temp.push_back(s);
-  }
+  config.debug_forced_pr_bitstreams =
+      SetCommaSeparatedValues(config_values[force_pr]);
 
+  auto accelerator_library_data = json_reader_->ReadAcceleratorLibrary(
+      config_values[configurations_library]);
   config.accelerator_library =
       ConvertStringMapToQueryOperations(accelerator_library_data);
   config.module_library =
@@ -75,8 +94,14 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
 
   config.pr_hw_library = CreateHWLibrary(hw_library_json_data);
 
+  auto column_sizes =
+      json_reader_->ReadValueMap(config_values[data_type_sizes]);
+  for (const auto& [column_type, size] : column_sizes) {
+    config.cost_of_columns.insert({column_type[0], (int)size});
+  }
+
   auto string_key_data_sizes =
-      json_reader_->ReadDataSizes(config_values[data_type_sizes]);
+      json_reader_->ReadValueMap(config_values[column_cost]);
   for (const auto& [string_key, size_scale] : string_key_data_sizes) {
     config.data_sizes.insert({kDataTypeNames.at(string_key), size_scale});
   }
@@ -85,6 +110,17 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
       json_reader_->ReadReqMemorySpace(config_values[memory_requirements]);
   config.csv_separator = config_values[data_separator].c_str()[0];
   return config;
+}
+
+auto ConfigCreator::SetCommaSeparatedValues(std::string original_string)
+    -> std::vector<std::string> {
+  std::vector<std::string> resulting_string_list;
+  std::stringstream ss(original_string);
+  std::string s;
+  while (std::getline(ss, s, ',')) {
+    resulting_string_list.push_back(s);
+  }
+  return resulting_string_list;
 }
 
 auto ConfigCreator::ConvertStringMapToQueryOperations(

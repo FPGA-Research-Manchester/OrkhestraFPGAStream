@@ -69,6 +69,8 @@ class ConfigCreator {
                              std::map<std::string, std::variant<std::vector<int>,
                                                                 int, std::string>>>,
                     std::vector<std::vector<std::string>>>>& hw_data_in_string_form) -> std::map<QueryOperationType, OperationPRModules>;
+  static auto SetCommaSeparatedValues(std::string original_string)
+      -> std::vector<std::string>;
 
  public:
   /**

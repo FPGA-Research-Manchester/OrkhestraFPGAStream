@@ -23,6 +23,7 @@ limitations under the License.
 #include <vector>
 
 #include "accelerator_library_interface.hpp"
+#include "config.hpp"
 #include "operation_types.hpp"
 #include "pr_module_data.hpp"
 #include "query_scheduling_data.hpp"
@@ -35,6 +36,7 @@ using orkhestrafs::core_interfaces::query_scheduling_data::
     ConfigurableModulesVector;
 using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
 
+using orkhestrafs::core_interfaces::Config;
 using orkhestrafs::core_interfaces::hw_library::OperationPRModules;
 using orkhestrafs::core_interfaces::table_data::TableMetadata;
 using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
@@ -53,8 +55,6 @@ class NodeSchedulerInterface {
    * @brief Find groups of accelerated query nodes which can be run in the
    * FPGA with multiple runs.
    * @param query_nodes Pointers of all of the leaf nodes
-   * @param hw_library Map of all of the available bitstreams for each
-   * operation.
    * @param first_node_names Names of the leaf nodes.
    * @param starting_nodes Input vector of leaf nodes from which the parsing can
    * begin.
@@ -63,19 +63,20 @@ class NodeSchedulerInterface {
    * @param drivers Drivers of the operators
    * @param tables Table metadata.
    * @param current_configuration Currently loaded modules.
+   * @param config All scheduling related metadata including HW library
    * @return Queue of groups of accelerated query
    * nodes to be accelerated next.
    */
   virtual auto GetNextSetOfRuns(
       std::vector<std::shared_ptr<QueryNode>>& query_nodes,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library,
       const std::vector<std::string>& first_node_names,
       std::vector<std::string>& starting_nodes,
       std::vector<std::string>& processed_nodes,
       std::map<std::string, SchedulingQueryNode>& graph,
       AcceleratorLibraryInterface& drivers,
       std::map<std::string, TableMetadata>& tables,
-      const std::vector<ScheduledModule>& current_configuration)
+      const std::vector<ScheduledModule>& current_configuration,
+      const Config& config)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<std::shared_ptr<QueryNode>>>> = 0;
 };
