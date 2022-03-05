@@ -1,8 +1,0 @@
-{
-  "name": "DSPI_linear_sorting",
-  "address": "0xa0000000",
-  "bitfiles": [
-    {"name": "DSPI_linear_sorting.bin", "region": "full"}
-  ],
-  "registers": []
-}

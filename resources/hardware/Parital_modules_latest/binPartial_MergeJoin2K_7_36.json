@@ -1,0 +1,11 @@
+{
+  "name": "binPartial_MergeJoin2K_7_36",
+  "address": "0xa0000000",
+  "bitfiles": [
+    {
+      "name": "binPartial_MergeJoin2K_7_36.bin",
+      "region": "full"
+    }
+  ],
+  "registers": []
+}
