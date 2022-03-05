@@ -1,26 +1,114 @@
-[{
-	"filename": "lineitem0.01.csv",
-	"record_size": 38,
-	"record_count": 60175,
-	"sorted_status": []
-}, {
-	"filename": "part0.01.csv",
-	"record_size": 44,
-	"record_count": 2000,
-	"sorted_status": [[0, 2000]]
-}, {
-	"filename": "lineitem0.1.csv",
-	"record_size": 38,
-	"record_count": 600572,
-	"sorted_status": []
-}, {
-	"filename": "part0.1.csv",
-	"record_size": 44,
-	"record_count": 20000,
-	"sorted_status": [[0, 20000]]
-}, {
-	"filename": "CAR_DATA.csv",
-	"record_size": 16,
-	"record_count": 1000,
-	"sorted_status": [[0, 1000]]
-}]
+[
+	{
+		"filename": "lineitem0.01.csv",
+		"record_size": 38,
+		"record_count": 60175,
+		"sorted_status": []
+	},
+	{
+		"filename": "part0.01.csv",
+		"record_size": 44,
+		"record_count": 2000,
+		"sorted_status": [ [ 0, 2000 ] ]
+	},
+	{
+		"filename": "lineitem0.1.csv",
+		"record_size": 38,
+		"record_count": 600572,
+		"sorted_status": []
+	},
+	{
+		"filename": "part0.1.csv",
+		"record_size": 44,
+		"record_count": 20000,
+		"sorted_status": [ [ 0, 20000 ] ]
+	},
+	{
+		"filename": "CAR_DATA.csv",
+		"record_size": 18,
+		"record_count": 1000,
+		"sorted_status": [ [ 0, 1000 ] ]
+	},
+	{
+		"filename": "CAR_DATA_8K.csv",
+		"record_size": 18,
+		"record_count": 8000,
+		"sorted_status": []
+	},
+	{
+		"filename": "CUSTOMER_DATA.csv",
+		"record_size": 7,
+		"record_count": 500,
+		"sorted_status": [ [ 0, 500 ] ]
+	},
+	{
+		"filename": "CAR_DATA_HALF_SORTED.csv",
+		"record_size": 18,
+		"record_count": 1000,
+		"sorted_status": [
+			[ 0, 16 ],
+			[ 16, 16 ],
+			[ 32, 16 ],
+			[ 48, 16 ],
+			[ 64, 16 ],
+			[ 80, 16 ],
+			[ 96, 16 ],
+			[ 112, 16 ],
+			[ 128, 16 ],
+			[ 144, 16 ],
+			[ 160, 16 ],
+			[ 176, 16 ],
+			[ 192, 16 ],
+			[ 208, 16 ],
+			[ 224, 16 ],
+			[ 240, 16 ],
+			[ 256, 16 ],
+			[ 272, 16 ],
+			[ 288, 16 ],
+			[ 304, 16 ],
+			[ 320, 16 ],
+			[ 336, 16 ],
+			[ 352, 16 ],
+			[ 368, 16 ],
+			[ 384, 16 ],
+			[ 400, 16 ],
+			[ 416, 16 ],
+			[ 432, 16 ],
+			[ 448, 16 ],
+			[ 464, 16 ],
+			[ 480, 16 ],
+			[ 496, 16 ],
+			[ 512, 16 ],
+			[ 528, 16 ],
+			[ 544, 16 ],
+			[ 560, 16 ],
+			[ 576, 16 ],
+			[ 592, 16 ],
+			[ 608, 16 ],
+			[ 624, 16 ],
+			[ 640, 16 ],
+			[ 656, 16 ],
+			[ 672, 16 ],
+			[ 688, 16 ],
+			[ 704, 16 ],
+			[ 720, 16 ],
+			[ 736, 16 ],
+			[ 752, 16 ],
+			[ 768, 16 ],
+			[ 784, 16 ],
+			[ 800, 16 ],
+			[ 816, 16 ],
+			[ 832, 16 ],
+			[ 848, 16 ],
+			[ 864, 16 ],
+			[ 880, 16 ],
+			[ 896, 16 ],
+			[ 912, 16 ],
+			[ 928, 16 ],
+			[ 944, 16 ],
+			[ 960, 16 ],
+			[ 976, 16 ],
+			[ 992, 8 ]
+		]
+	}
+]

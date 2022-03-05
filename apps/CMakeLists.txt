@@ -102,6 +102,7 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/repo.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/config.ini
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/extended_config.ini 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/column_sizes.json 
     
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/concurrency_testing.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/double_run_testing.json 
@@ -112,6 +113,8 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF01.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF03.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/merge_sort_testing.json 
+
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/lin_sort_testing.json 
     
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/TPCH_Q6_SF001.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/TPCH_Q6_SF1.json 
@@ -133,29 +136,36 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/tables_data.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/pr_hw_library.json
 
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_check_cheat_direct.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_check_cheat_direct.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter_7_36.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter_37_66.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter_67_96.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter_7_36.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter_37_66.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter_67_96.bin
 
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_prClk_Filter_67_96.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_prClk_Filter_67_96.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_staticClk_Filter_67_96.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_staticClk_Filter_67_96.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_Filter_67_96.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_Filter_67_96.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_static.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_static.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_Filter_37_66.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_Filter_37_66.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_Filter_7_36.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_Filter_7_36.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_staticClk_Filter_37_66.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_staticClk_Filter_37_66.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_staticClk_Filter_7_36.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_staticClk_Filter_7_36.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_prClk_Filter_37_66.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_prClk_Filter_37_66.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_prClk_Filter_7_36.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Partial_test/eight_binPartial_prClk_Filter_7_36.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_LinearSort512_7_36.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_LinearSort512_37_66.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_LinearSort512_67_96.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_LinearSort512_7_36.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_LinearSort512_37_66.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_LinearSort512_67_96.bin
+
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeJoin2K_7_36.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeJoin2K_37_66.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeJoin2K_67_96.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeJoin2K_7_36.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeJoin2K_37_66.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeJoin2K_67_96.bin
+
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort64_7_36.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort64_37_66.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort64_67_96.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort64_7_36.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort64_37_66.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort64_67_96.bin
+
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/static.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/static.json
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Route_through/RT_2.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Route_through/RT_5.json

@@ -23,9 +23,9 @@ limitations under the License.
 #include "logger.hpp"
 
 #ifdef FPGA_AVAILABLE
+#include "fpga.h"
 #include "mmio.h"
 #include "udma_memory_block.hpp"
-#include "fpga.h"
 #else
 #include "virtual_memory_block.hpp"
 #endif
@@ -37,12 +37,13 @@ using orkhestrafs::dbmstodspi::logging::LogLevel;
 MemoryManager::~MemoryManager() = default;
 
 void MemoryManager::LoadStatic() {
-#ifdef FPGA_AVAILABLE
+  // Addressable register space on the FPGA. No need to preserve space for the
+  // whole addressable space, for the supported library 10 MB is enough.
   const int register_space_size = 10 * 1024 * 1024;
-
+#ifdef FPGA_AVAILABLE
   Log(LogLevel::kDebug, "Loading static");
 
-  std::string static_bitstream = "pstaticw_wFilter_wTAA_wrong";
+  std::string static_bitstream = "static";
 
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
@@ -50,7 +51,7 @@ void MemoryManager::LoadStatic() {
   acceleration_instance_ =
       pr_manager_.fpgaLoadStatic(static_bitstream, register_space_size);
   /*acceleration_instance_ =
-      pr_manager_.fpgaLoadStatic("normal_filter", register_space_size);*/
+      pr_manager_.fpgaLoadStatic("DSPI_merge_sorting", register_space_size);*/
 
   register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
 
@@ -65,30 +66,30 @@ void MemoryManager::LoadStatic() {
                   .count()) +
           "[ms]");
   Log(LogLevel::kDebug, "Static loaded: " + static_bitstream);
-
+#else
+  /*throw std::runtime_error("Can't load anything!");*/
+  register_space_ = std::vector<uint32_t>(register_space_size, -1);
+#endif
   loaded_register_space_size_ = register_space_size;
   loaded_bitstream_ = "static";
-#else
-  throw std::runtime_error("Can't load anything!");
-#endif
 }
 
-void MemoryManager::LoadPartialBitstream(const std::vector<std::string>& bitstream_name,
-                                         DMAInterface& dma_engine) {
-#ifdef FPGA_AVAILABLE
+void MemoryManager::LoadPartialBitstream(
+    const std::vector<std::string>& bitstream_name, DMAInterface& dma_engine) {
   if (loaded_bitstream_ != "static") {
     throw std::runtime_error("Can't load partial bitstreams without static!");
   }
-
+#ifdef FPGA_AVAILABLE
   dma_engine.DecoupleFromPRRegion();
   FPGAManager fpga_manager(0);
-  
-  /*for (const auto& name : bitstream_name) {
+
+  for (const auto& name : bitstream_name) {
     Log(LogLevel::kDebug, "Loading PR bitstream:" + name);
     fpga_manager.loadPartial(name);
-  }*/
+  }
 #else
-  throw std::runtime_error("Can't load anything!");
+  // Don't do anything
+  /*throw std::runtime_error("Can't load anything!");*/
 #endif
 }
 

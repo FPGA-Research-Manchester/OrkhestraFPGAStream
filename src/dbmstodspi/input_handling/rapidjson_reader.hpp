@@ -50,11 +50,11 @@ class RapidJSONReader : public JSONReaderInterface {
  public:
   ~RapidJSONReader() override = default;
   /**
-   * @brief Read the JSON file describing data type sizes.
+   * @brief Read the JSON file describing a simple map.
    * @param json_filename JSON file.
-   * @return Data type and size map.
+   * @return Value map.
    */
-  auto ReadDataSizes(std::string json_filename)
+  auto ReadValueMap(std::string json_filename)
       -> std::map<std::string, double> override;
   /**
    * @brief Read memory mapped register space sizes.

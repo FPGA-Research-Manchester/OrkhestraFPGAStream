@@ -37,11 +37,26 @@ void FilterSetup::SetupModule(AccelerationModule& acceleration_module,
   Log(LogLevel::kInfo,
       "Configuring filter on pos " +
           std::to_string(module_parameters.operation_module_location));
-  FilterSetup::SetupFilterModule(
-      dynamic_cast<FilterInterface&>(acceleration_module),
-      module_parameters.input_streams[0].stream_id,
-      module_parameters.output_streams[0].stream_id,
-      module_parameters.operation_parameters);
+  if (module_parameters.input_streams[0].stream_id != 15) {
+    FilterSetup::SetupFilterModule(
+        dynamic_cast<FilterInterface&>(acceleration_module),
+        module_parameters.input_streams[0].stream_id,
+        module_parameters.output_streams[0].stream_id,
+        module_parameters.operation_parameters);
+  } else {
+    FilterSetup::SetupPassthroughFilter(
+        dynamic_cast<FilterInterface&>(acceleration_module));
+  }
+}
+
+void FilterSetup::SetupPassthroughFilter(FilterInterface& filter_module) {
+  filter_module.ResetDNFStates();
+  filter_module.FilterSetStreamIDs(15, 15,
+                                   15);
+
+  SetOneOutputSingleModuleMode(filter_module);
+  filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
+      query_acceleration_constants::kDatapathWidth);
 }
 
 auto FilterSetup::CreateModule(MemoryManagerInterface* memory_manager,
@@ -127,6 +142,9 @@ void FilterSetup::SetAllComparisons(
            operation_parameters.at(current_vector_id + kLiteralTypeOffset)) {
         literal_types.push_back(
             static_cast<module_config_values::LiteralTypes>(literal_type));
+        // For not filtering anything
+        /*literal_types.push_back(
+            static_cast<module_config_values::LiteralTypes>(0));*/
       }
       std::vector<int> dnf_clause_ids =
           operation_parameters.at(current_vector_id + kDNFClauseIdsOffset);

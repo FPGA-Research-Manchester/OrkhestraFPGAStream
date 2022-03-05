@@ -378,8 +378,8 @@ auto QueryManager::ScheduleNextSetOfNodes(
     -> std::queue<std::pair<std::vector<ScheduledModule>,
                             std::vector<std::shared_ptr<QueryNode>>>> {
   auto current_queue = node_scheduler.GetNextSetOfRuns(
-      query_nodes, config.pr_hw_library, first_node_names, starting_nodes,
-      processed_nodes, graph, drivers, tables, current_configuration);
+      query_nodes, first_node_names, starting_nodes, processed_nodes, graph,
+      drivers, tables, current_configuration, config);
   return RunLinker::LinkPeripheralNodesFromGivenRuns(current_queue,
                                                      all_reuse_links);
 }

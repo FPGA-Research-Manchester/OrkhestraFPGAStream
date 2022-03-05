@@ -48,11 +48,10 @@ void ElasticResourceNodeScheduler::RemoveUnnecessaryTables(
 }
 
 auto ElasticResourceNodeScheduler::CalculateTimeLimit(
-    const std::map<std::string, SchedulingQueryNode>& graph,
-    const std::map<std::string, TableMetadata>& data_tables,
-    double config_speed,
-    double streaming_speed,
-    const std::map<QueryOperationType, int>& operation_costs) -> double {
+    const std::map<std::string, SchedulingQueryNode> &graph,
+    const std::map<std::string, TableMetadata> &data_tables,
+    double config_speed, double streaming_speed,
+    const std::map<QueryOperationType, int> &operation_costs) -> double {
   int smallest_config_size = 0;
   for (const auto &[node_name, parameters] : graph) {
     smallest_config_size += operation_costs.at(parameters.operation);
@@ -71,59 +70,10 @@ auto ElasticResourceNodeScheduler::CalculateTimeLimit(
   return config_time + execution_time;
 }
 
-auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
-    std::vector<std::shared_ptr<QueryNode>> &available_nodes,
-    const std::map<QueryOperationType, OperationPRModules> &hw_library,
-    const std::vector<std::string> &first_node_names,
-    std::vector<std::string> &starting_nodes,
-    std::vector<std::string> &processed_nodes,
-    std::map<std::string, SchedulingQueryNode> &graph,
-    AcceleratorLibraryInterface &drivers,
-    std::map<std::string, TableMetadata> &tables,
-    const std::vector<ScheduledModule> &current_configuration)
-    -> std::queue<std::pair<std::vector<ScheduledModule>,
-                            std::vector<std::shared_ptr<QueryNode>>>> {
-  Log(LogLevel::kTrace, "Scheduling preprocessing.");
-  RemoveUnnecessaryTables(graph, tables);
-
-  ElasticSchedulingGraphParser::PreprocessNodes(
-      starting_nodes, hw_library, processed_nodes, graph, tables, drivers);
-  Log(LogLevel::kTrace, "Starting main scheduling loop.");
-  std::map<std::vector<std::vector<ScheduledModule>>,
-           ExecutionPlanSchedulingData>
-      resulting_plans;
-  int min_runs = std::numeric_limits<int>::max();
-  std::pair<int, int> placed_nodes_and_discarded_placements = {0, 0};
-
-  auto trigger_timeout = false;
-  std::vector<std::vector<ModuleSelection>> shortest_first_module_heuristics;
-  std::vector<std::vector<ModuleSelection>> longest_first_module_heuristics;
-  std::vector<std::vector<ModuleSelection>> shortest_module_heuristics;
-  std::vector<std::vector<ModuleSelection>> longest_module_heuristics;
-  std::vector<std::vector<ModuleSelection>> all_modules_heuristics;
-  shortest_first_module_heuristics.push_back(
-      {static_cast<std::string>("SHORTEST_AVAILABLE"),
-       static_cast<std::string>("FIRST_AVAILABLE")});
-  longest_first_module_heuristics.push_back(
-      {static_cast<std::string>("LONGEST_AVAILABLE"),
-       static_cast<std::string>("FIRST_AVAILABLE")});
-  shortest_module_heuristics.push_back(
-      {static_cast<std::string>("SHORTEST_AVAILABLE")});
-  longest_module_heuristics.push_back(
-      {static_cast<std::string>("LONGEST_AVAILABLE")});
-  all_modules_heuristics.push_back({static_cast<std::string>("ALL_AVAILABLE")});
-  std::vector<std::pair<std::vector<std::vector<ModuleSelection>>,
-                        std::vector<std::vector<ModuleSelection>>>>
-      heuristic_choices = {
-          {shortest_first_module_heuristics, longest_first_module_heuristics},
-          {shortest_module_heuristics, longest_module_heuristics},
-          {all_modules_heuristics, all_modules_heuristics},
-          {{}, all_modules_heuristics}};
-
-  double streaming_speed = 4800000000;
-  double configuration_speed = 66000000;
-
-  // Hardcoded for now but should be calculated based on the HW_library.
+auto ElasticResourceNodeScheduler::GetLargestModulesSizes(
+    const std::map<QueryOperationType, OperationPRModules> &hw_libary)
+    -> std::map<QueryOperationType, int> {
+  // Hardcoded for now.
   std::map<QueryOperationType, int> operation_costs = {
       {QueryOperationType::kFilter, 315456},
       {QueryOperationType::kLinearSort, 770784},
@@ -133,27 +83,59 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
       {QueryOperationType::kMultiplication, 916608},
       {QueryOperationType::kAggregationSum, 229152},
   };
+  return operation_costs;
+}
 
-  double time_limit_duration_in_seconds = CalculateTimeLimit(
-      graph, tables, configuration_speed, streaming_speed, operation_costs);
-  bool reduce_single_runs = true;
-  bool use_max_runs_cap = true;
-  int heuristic_choice = 0;
+auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
+    std::vector<std::shared_ptr<QueryNode>> &available_nodes,
+    const std::vector<std::string> &first_node_names,
+    std::vector<std::string> &starting_nodes,
+    std::vector<std::string> &processed_nodes,
+    std::map<std::string, SchedulingQueryNode> &graph,
+    AcceleratorLibraryInterface &drivers,
+    std::map<std::string, TableMetadata> &tables,
+    const std::vector<ScheduledModule> &current_configuration,
+    const Config &config)
+    -> std::queue<std::pair<std::vector<ScheduledModule>,
+                            std::vector<std::shared_ptr<QueryNode>>>> {
+  Log(LogLevel::kTrace, "Scheduling preprocessing.");
+  RemoveUnnecessaryTables(graph, tables);
 
+  ElasticSchedulingGraphParser::PreprocessNodes(
+      starting_nodes, config.pr_hw_library, processed_nodes, graph, tables,
+      drivers);
+
+  Log(LogLevel::kTrace, "Starting main scheduling loop.");
+  std::map<std::vector<std::vector<ScheduledModule>>,
+           ExecutionPlanSchedulingData>
+      resulting_plans;
+  int min_runs = std::numeric_limits<int>::max();
+  std::pair<int, int> placed_nodes_and_discarded_placements = {0, 0};
+  auto heuristic_choices = GetDefaultHeuristics();
+
+  double time_limit_duration_in_seconds = config.time_limit_duration_in_seconds;
+  if (time_limit_duration_in_seconds == -1) {
+    auto operation_costs = GetLargestModulesSizes(config.pr_hw_library);
+    time_limit_duration_in_seconds =
+        CalculateTimeLimit(graph, tables, config.configuration_speed,
+                           config.streaming_speed, operation_costs);
+  }
   auto time_limit =
       std::chrono::system_clock::now() +
       std::chrono::milliseconds(int(time_limit_duration_in_seconds * 1000));
-
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
+
+  bool timeout_trigger = false;
 
   try {
     ElasticSchedulingGraphParser::PlaceNodesRecursively(
         std::move(starting_nodes), std::move(processed_nodes), std::move(graph),
-        {}, {}, resulting_plans, reduce_single_runs, hw_library, min_runs,
-        tables, heuristic_choices.at(heuristic_choice),
+        {}, {}, resulting_plans, config.reduce_single_runs,
+        config.pr_hw_library, min_runs, tables,
+        heuristic_choices.at(config.heuristic_choice),
         placed_nodes_and_discarded_placements, first_node_names, {}, {},
-        drivers, time_limit, trigger_timeout, use_max_runs_cap, 0);
+        drivers, time_limit, timeout_trigger, config.use_max_runs_cap, 0);
   } catch (std::runtime_error &e) {
     Log(LogLevel::kInfo, "Timeout of " +
                              std::to_string(time_limit_duration_in_seconds) +
@@ -174,48 +156,39 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     all_plans.push_back(plan);
   }
 
-  std::string resource_string = "MMDMDBMMDBMMDMDBMMDBMMDMDBMMDBM";
-  // Not used actually
-  double utilites_scaler = 1;
-  double config_written_scaler = 1;
-  double utility_per_frame_scaler = 1;
   // resulting_plans
-  int frame_size = 372;
-  std::map<char, int> cost_of_columns = {{'M', 216 * frame_size},
-                                         {'D', 200 * frame_size},
-                                         {'B', 196 * frame_size}};
-
   // TODO: new_last_config not really needed
   auto [best_plan, new_last_config] = plan_evaluator_->GetBestPlan(
-      all_plans, min_runs, current_configuration, resource_string,
-      utilites_scaler,
-      config_written_scaler, utility_per_frame_scaler, resulting_plans,
-      cost_of_columns, streaming_speed, configuration_speed);
+      all_plans, min_runs, current_configuration, config.resource_string,
+      config.utilites_scaler, config.config_written_scaler,
+      config.utility_per_frame_scaler, resulting_plans, config.cost_of_columns,
+      config.streaming_speed, config.configuration_speed);
   Log(LogLevel::kTrace, "Creating module queue.");
   starting_nodes = resulting_plans.at(best_plan).available_nodes;
   processed_nodes = resulting_plans.at(best_plan).processed_nodes;
   graph = resulting_plans.at(best_plan).graph;
   tables = resulting_plans.at(best_plan).tables;
 
-  // TODO: move queue construction and available node modification to separate
-  // methods
+  auto resulting_runs = GetQueueOfResultingRuns(available_nodes, best_plan);
+
+  available_nodes = FindNewAvailableNodes(starting_nodes, available_nodes);
+  Log(LogLevel::kTrace, "Execution plan made!");
+  return resulting_runs;
+}
+
+auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
+    std::vector<std::shared_ptr<QueryNode>> &available_nodes,
+    std::vector<std::vector<ScheduledModule>> best_plan)
+    -> std::queue<std::pair<std::vector<ScheduledModule>,
+                            std::vector<std::shared_ptr<QueryNode>>>> {
   std::queue<std::pair<std::vector<ScheduledModule>,
                        std::vector<std::shared_ptr<QueryNode>>>>
       resulting_runs;
   for (const auto &run : best_plan) {
     std::vector<std::shared_ptr<QueryNode>> chosen_nodes;
     for (int module_index = 0; module_index < run.size(); module_index++) {
-      std::shared_ptr<QueryNode> chosen_node;
-      for (const auto &node : available_nodes) {
-        chosen_node = FindSharedPointerFromRootNodes(
-            run.at(module_index).node_name, node);
-        if (chosen_node != nullptr) {
-          break;
-        }
-      }
-      if (chosen_node == nullptr) {
-        throw std::runtime_error("No corresponding node found!");
-      }
+      auto chosen_node = this->GetNodePointerWithName(
+          available_nodes, run.at(module_index).node_name);
       chosen_node->module_locations.push_back(module_index + 1);
       if (std::find(chosen_nodes.begin(), chosen_nodes.end(), chosen_node) ==
           chosen_nodes.end()) {
@@ -224,25 +197,60 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     }
     resulting_runs.push({run, chosen_nodes});
   }
+  return resulting_runs;
+}
 
-  // TODO: Code duplication here!
+auto ElasticResourceNodeScheduler::FindNewAvailableNodes(
+    std::vector<std::string> &starting_nodes,
+    std::vector<std::shared_ptr<QueryNode>> &available_nodes)
+    -> std::vector<std::shared_ptr<QueryNode>> {
   std::vector<std::shared_ptr<QueryNode>> new_available_nodes;
   for (const auto &node_name : starting_nodes) {
-    std::shared_ptr<QueryNode> chosen_node;
-    for (const auto &node : available_nodes) {
-      chosen_node = FindSharedPointerFromRootNodes(node_name, node);
-      if (chosen_node != nullptr) {
-        break;
-      }
-    }
-    if (chosen_node == nullptr) {
-      throw std::runtime_error("No corresponding node found!");
-    }
+    auto chosen_node = this->GetNodePointerWithName(available_nodes, node_name);
     new_available_nodes.push_back(chosen_node);
   }
-  Log(LogLevel::kTrace, "Execution plan made!");
-  available_nodes = new_available_nodes;
-  return resulting_runs;
+  return new_available_nodes;
+}
+
+auto ElasticResourceNodeScheduler::GetNodePointerWithName(
+    std::vector<std::shared_ptr<QueryNode>> &available_nodes,
+    std::string node_name) -> std::shared_ptr<QueryNode> {
+  std::shared_ptr<QueryNode> chosen_node;
+  for (const auto &node : available_nodes) {
+    chosen_node = FindSharedPointerFromRootNodes(node_name, node);
+    if (chosen_node != nullptr) {
+      break;
+    }
+  }
+  if (chosen_node == nullptr) {
+    throw std::runtime_error("No corresponding node found!");
+  }
+  return std::move(chosen_node);
+}
+
+auto ElasticResourceNodeScheduler::GetDefaultHeuristics()
+    -> const std::vector<std::pair<std::vector<std::vector<ModuleSelection>>,
+                                   std::vector<std::vector<ModuleSelection>>>> {
+  std::vector<std::vector<ModuleSelection>> shortest_first_module_heuristics;
+  std::vector<std::vector<ModuleSelection>> longest_first_module_heuristics;
+  std::vector<std::vector<ModuleSelection>> shortest_module_heuristics;
+  std::vector<std::vector<ModuleSelection>> longest_module_heuristics;
+  std::vector<std::vector<ModuleSelection>> all_modules_heuristics;
+  shortest_first_module_heuristics.push_back(
+      {static_cast<std::string>("SHORTEST_AVAILABLE"),
+       static_cast<std::string>("FIRST_AVAILABLE")});
+  longest_first_module_heuristics.push_back(
+      {static_cast<std::string>("LONGEST_AVAILABLE"),
+       static_cast<std::string>("FIRST_AVAILABLE")});
+  shortest_module_heuristics.push_back(
+      {static_cast<std::string>("SHORTEST_AVAILABLE")});
+  longest_module_heuristics.push_back(
+      {static_cast<std::string>("LONGEST_AVAILABLE")});
+  all_modules_heuristics.push_back({static_cast<std::string>("ALL_AVAILABLE")});
+  return {{shortest_first_module_heuristics, longest_first_module_heuristics},
+          {shortest_module_heuristics, longest_module_heuristics},
+          {all_modules_heuristics, all_modules_heuristics},
+          {{}, all_modules_heuristics}};
 }
 
 auto ElasticResourceNodeScheduler::FindSharedPointerFromRootNodes(
