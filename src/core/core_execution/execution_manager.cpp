@@ -87,11 +87,12 @@ void ExecutionManager::SetupNextRunData() {
   auto [bitstreams_to_load, empty_modules] =
       query_manager_->GetPRBitstreamsToLoadWithPassthroughModules(
           current_configuration_, query_node_runs_queue_.front().first, 31);
-  /*query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
-   *accelerator_library_.get());*/
-  // Debugging
-  query_manager_->LoadPRBitstreams(memory_manager_.get(), config_.temp,
+  query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
                                    *accelerator_library_.get());
+  // Debugging
+  /*std::vector<std::pair<QueryOperationType, bool>> empty_modules;
+  query_manager_->LoadPRBitstreams(memory_manager_.get(), config_.temp,
+                                   *accelerator_library_.get());*/
 
   auto next_scheduled_run_nodes = PopNextScheduledRun();
 
@@ -111,10 +112,19 @@ void ExecutionManager::SetupNextRunData() {
   query_nodes_ = std::move(execution_nodes_and_result_params.first);
   for (int module_pos = 0; module_pos < empty_modules.size(); module_pos++) {
     if (empty_modules.at(module_pos).second)
-      query_nodes_.insert(query_nodes_.begin() + module_pos,
-                          accelerator_library_->GetEmptyModuleNode(
-                              empty_modules.at(module_pos).first, module_pos));
+      query_nodes_.insert(
+          query_nodes_.begin() + module_pos,
+          accelerator_library_->GetEmptyModuleNode(
+              empty_modules.at(module_pos).first, module_pos + 1));
   }
+  // For debugging - manual insertion of passthrough modules
+  /*query_nodes_.insert(query_nodes_.begin(),
+                      accelerator_library_->GetEmptyModuleNode(QueryOperationType::kMergeSort,
+     2));*/
+  /* query_nodes_.insert(
+      query_nodes_.begin() + 2,
+      accelerator_library_->GetEmptyModuleNode(QueryOperationType::kFilter,
+     3));*/
   result_parameters_ = std::move(execution_nodes_and_result_params.second);
 }
 void ExecutionManager::ExecuteAndProcessResults() {
@@ -156,8 +166,8 @@ void ExecutionManager::SetupSchedulingData() {
   // TODO: The static bitstream loading should be moved to a different state!
   query_manager_->LoadInitialStaticBitstream(memory_manager_.get());
   // The empty routing should be part of the static really.
-  /*query_manager_->LoadEmptyRoutingPRRegion(memory_manager_.get(),
-   *accelerator_library_.get());*/
+  query_manager_->LoadEmptyRoutingPRRegion(memory_manager_.get(),
+                                           *accelerator_library_.get());
 
   current_tables_metadata_ = config_.initial_all_tables_metadata;
 

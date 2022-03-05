@@ -21,16 +21,16 @@ limitations under the License.
 #include "logger.hpp"
 #include "merge_sort.hpp"
 #include "merge_sort_interface.hpp"
-#include "stream_parameter_calculator.hpp"
 #include "query_scheduling_helper.hpp"
+#include "stream_parameter_calculator.hpp"
 
 using orkhestrafs::dbmstodspi::MergeSortSetup;
 
 using orkhestrafs::dbmstodspi::MergeSort;
 using orkhestrafs::dbmstodspi::MergeSortInterface;
+using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
-using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
 void MergeSortSetup::SetupModule(
     AccelerationModule& acceleration_module,
@@ -44,10 +44,11 @@ void MergeSortSetup::SetupModule(
         module_parameters.input_streams[0].stream_id,
         GetStreamRecordSize(module_parameters.input_streams[0]), 0, true);
   } else {
-    MergeSortSetup::SetupPassthroughMergeSort(
-        dynamic_cast<MergeSortInterface&>(acceleration_module));
+    throw std::runtime_error(
+        "Can't configure merge sort to passthrough on stream ID");
+    /*MergeSortSetup::SetupPassthroughMergeSort(
+        dynamic_cast<MergeSortInterface&>(acceleration_module));*/
   }
-  
 }
 
 auto MergeSortSetup::CreateModule(MemoryManagerInterface* memory_manager,
@@ -132,13 +133,16 @@ auto MergeSortSetup::PotentialRecordCountIsValid(int potential_record_count,
       throw std::runtime_error("Something went wrong!");
   }
 }
-auto MergeSortSetup::IsMultiChannelStream(
-    bool is_input_stream, int stream_index) -> bool {
+auto MergeSortSetup::IsMultiChannelStream(bool is_input_stream,
+                                          int stream_index) -> bool {
   return is_input_stream && stream_index == 0;
 }
 auto MergeSortSetup::GetMultiChannelParams(
     bool is_input, int stream_index,
     std::vector<std::vector<int>> operation_parameters) -> std::pair<int, int> {
+  if (!is_input) {
+    return {-1, -1};
+  }
   if (operation_parameters.size() == 1) {
     return {operation_parameters.at(0).at(0), operation_parameters.at(0).at(1)};
   } else {
@@ -163,15 +167,17 @@ auto MergeSortSetup::GetMinSortingRequirementsForTable(
     if (QuerySchedulingHelper::IsTableSorted(table_data)) {
       return {0};
     }
-    int pos_of_last_sorted_element = table_data.sorted_status.back().start_position + table_data.sorted_status.back().length;
+    int pos_of_last_sorted_element =
+        table_data.sorted_status.back().start_position +
+        table_data.sorted_status.back().length;
     if (pos_of_last_sorted_element > table_data.record_count) {
       throw std::runtime_error("Incorrect sorted meta data");
     }
-    int unsorted_tail_length = table_data.record_count - pos_of_last_sorted_element;
-    return {static_cast<int>(table_data.sorted_status.size()) + unsorted_tail_length};
+    int unsorted_tail_length =
+        table_data.record_count - pos_of_last_sorted_element;
+    return {static_cast<int>(table_data.sorted_status.size()) +
+            unsorted_tail_length};
   }
 }
 
-auto MergeSortSetup::IsDataSensitive() -> bool {
-  return true;
-}
+auto MergeSortSetup::IsDataSensitive() -> bool { return true; }
