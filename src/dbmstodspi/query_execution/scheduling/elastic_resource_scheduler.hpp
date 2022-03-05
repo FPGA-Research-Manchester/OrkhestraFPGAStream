@@ -72,7 +72,7 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       std::vector<std::shared_ptr<QueryNode>> &available_nodes,
       std::vector<std::vector<ScheduledModule>> best_plan) -> std::queue<std::pair<std::vector<ScheduledModule>,
                                                                                     std::vector<std::shared_ptr<QueryNode>>>>;
-  static auto ElasticResourceNodeScheduler::GetLargestModulesSizes(
+  static auto GetLargestModulesSizes(
       const std::map<QueryOperationType, OperationPRModules>& hw_libary)
       -> std::map<QueryOperationType, int>;
 
