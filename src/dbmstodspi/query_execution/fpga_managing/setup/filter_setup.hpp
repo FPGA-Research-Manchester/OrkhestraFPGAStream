@@ -94,5 +94,6 @@ class FilterSetup : public virtual AccelerationModuleSetupInterface,
   static void SetAllComparisons(
       FilterInterface& filter_module,
       const std::vector<std::vector<int>>& operation_parameters);
+  static void SetupPassthroughFilter(FilterInterface& filter_module);
 };
 }  // namespace orkhestrafs::dbmstodspi
