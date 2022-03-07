@@ -94,14 +94,13 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
 
   config.pr_hw_library = CreateHWLibrary(hw_library_json_data);
 
-  auto column_sizes =
-      json_reader_->ReadValueMap(config_values[data_type_sizes]);
+  auto column_sizes = json_reader_->ReadValueMap(config_values[column_cost]);
   for (const auto& [column_type, size] : column_sizes) {
     config.cost_of_columns.insert({column_type[0], (int)size});
   }
 
   auto string_key_data_sizes =
-      json_reader_->ReadValueMap(config_values[column_cost]);
+      json_reader_->ReadValueMap(config_values[data_type_sizes]);
   for (const auto& [string_key, size_scale] : string_key_data_sizes) {
     config.data_sizes.insert({kDataTypeNames.at(string_key), size_scale});
   }
