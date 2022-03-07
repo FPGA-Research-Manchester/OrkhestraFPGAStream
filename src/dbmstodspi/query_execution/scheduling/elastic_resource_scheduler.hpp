@@ -61,6 +61,16 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
                              ExecutionPlanSchedulingData>,
                     long long> override;
 
+  void BenchmarkScheduling(
+      const std::vector<std::string> &first_node_names,
+      std::vector<std::string> &starting_nodes,
+      std::vector<std::string> &processed_nodes,
+      std::map<std::string, SchedulingQueryNode> &graph,
+      AcceleratorLibraryInterface &drivers,
+      std::map<std::string, TableMetadata> &tables,
+                           std::vector<ScheduledModule> &current_configuration,
+                           const Config &config) override;
+
  private:
   static auto CalculateTimeLimit(
       const std::map<std::string, SchedulingQueryNode> &graph,

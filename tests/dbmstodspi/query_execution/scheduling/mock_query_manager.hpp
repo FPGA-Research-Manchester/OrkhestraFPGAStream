@@ -112,4 +112,13 @@ class MockQueryManager : public QueryManagerInterface {
                const std::vector<ScheduledModule>& next_config,
                int column_count),
               (override));
+  MOCK_METHOD(
+      (void), BenchmarkScheduling,
+      (const std::vector<std::string>& first_node_names,
+       std::vector<std::string>& starting_nodes,
+       std::vector<std::string>& processed_nodes, SchedulingNodeMap& graph,
+       TableMap& tables, AcceleratorLibraryInterface& drivers,
+       const Config& config, NodeSchedulerInterface& node_scheduler,
+       std::vector<ScheduledModule>& current_configuration),
+      (override));
 };

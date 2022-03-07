@@ -364,6 +364,20 @@ void QueryManager::LoadPRBitstreams(
   memory_manager->LoadPartialBitstream(bitstream_names, *dma_module);
 }
 
+void QueryManager::BenchmarkScheduling(
+    const std::vector<std::string>& first_node_names,
+    std::vector<std::string>& starting_nodes,
+    std::vector<std::string>& processed_nodes,
+    std::map<std::string, SchedulingQueryNode>& graph,
+    std::map<std::string, TableMetadata>& tables,
+    AcceleratorLibraryInterface& drivers, const Config& config,
+    NodeSchedulerInterface& node_scheduler,
+    std::vector<ScheduledModule>& current_configuration) {
+  node_scheduler.BenchmarkScheduling(first_node_names, starting_nodes,
+                                  processed_nodes, graph, drivers, tables,
+                                  current_configuration, config);
+}
+
 auto QueryManager::ScheduleNextSetOfNodes(
     std::vector<std::shared_ptr<QueryNode>>& query_nodes,
     const std::vector<std::string>& first_node_names,

@@ -93,6 +93,10 @@ class ExecutionManager : public ExecutionManagerInterface,
   void PopAndPrintCurrentPlan() override;
   void SetupSchedulingData() override;
 
+  void BenchmarkScheduleUnscheduledNodes() override;
+  auto IsBenchmarkDone() -> bool override;
+
+
  private:
   // Initial inputs
   std::unique_ptr<QueryManagerInterface> query_manager_;

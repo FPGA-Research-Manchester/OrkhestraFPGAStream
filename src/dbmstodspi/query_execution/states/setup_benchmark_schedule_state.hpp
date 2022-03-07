@@ -1,5 +1,5 @@
 ﻿/*
-Copyright 2021 University of Manchester
+Copyright 2022 University of Manchester
 
 Licensed under the Apache License, Version 2.0(the "License");
 you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ namespace orkhestrafs::dbmstodspi {
 /**
  * @brief State for scheduling which is followed by a debug state.
  */
-class DebugScheduleState : public StateInterface {
+class SetupBenchmarkScheduleState : public StateInterface {
  public:
-  ~DebugScheduleState() override = default;
+  ~SetupBenchmarkScheduleState() override = default;
 
   auto Execute(GraphProcessingFSMInterface* fsm)
       -> std::unique_ptr<StateInterface> override;

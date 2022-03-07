@@ -89,6 +89,17 @@ class QueryManager : public QueryManagerInterface {
       -> std::queue<
           std::pair<std::vector<ScheduledModule>,
                     std::vector<std::shared_ptr<QueryNode>>>> override;
+
+  void BenchmarkScheduling(
+      const std::vector<std::string>& first_node_names,
+      std::vector<std::string>& starting_nodes,
+      std::vector<std::string>& processed_nodes,
+      std::map<std::string, SchedulingQueryNode>& graph,
+      std::map<std::string, TableMetadata>& tables,
+      AcceleratorLibraryInterface& drivers, const Config& config,
+      NodeSchedulerInterface& node_scheduler,
+      std::vector<ScheduledModule>& current_configuration) override;
+
   void LoadInitialStaticBitstream(
       MemoryManagerInterface* memory_manager) override;
 

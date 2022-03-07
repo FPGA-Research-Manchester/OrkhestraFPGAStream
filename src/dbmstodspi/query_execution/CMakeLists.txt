@@ -26,8 +26,10 @@ add_library(query_execution OBJECT
             states/print_plan_state.cpp
             states/schedule_state.hpp
             states/schedule_state.cpp
-            states/debug_schedule_state.hpp
-            states/debug_schedule_state.cpp
+            states/benchmark_schedule_state.hpp
+            states/benchmark_schedule_state.cpp
+            states/setup_benchmark_schedule_state.hpp
+            states/setup_benchmark_schedule_state.cpp
             states/setup_nodes_state.hpp
             states/setup_nodes_state.cpp
             states/state_interface.hpp

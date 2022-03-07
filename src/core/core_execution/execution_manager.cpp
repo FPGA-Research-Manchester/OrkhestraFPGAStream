@@ -59,6 +59,16 @@ void ExecutionManager::ScheduleUnscheduledNodes() {
       current_tables_metadata_, *accelerator_library_, config_, *scheduler_,
       all_reuse_links_, current_configuration_);
 }
+void ExecutionManager::BenchmarkScheduleUnscheduledNodes() {
+  query_manager_->BenchmarkScheduling(
+      nodes_constrained_to_first_,
+      current_available_nodes_, processed_nodes_, current_query_graph_,
+      current_tables_metadata_, *accelerator_library_, config_, *scheduler_, current_configuration_);
+}
+auto ExecutionManager::IsBenchmarkDone() -> bool {
+  return current_available_nodes_.empty();
+}
+
 void ExecutionManager::SetupNextRunData() {
   ConfigurableModulesVector next_set_of_operators;
   auto next_run = query_node_runs_queue_.front().first;

@@ -35,6 +35,11 @@ class MockNodeScheduler : public NodeSchedulerInterface {
   using HWLibraryMap = std::map<QueryOperationType, OperationPRModules>;
   using SchedulingNodeMap = std::map<std::string, SchedulingQueryNode>;
   using TableMap = std::map<std::string, TableMetadata>;
+  using AllPlans =
+      std::tuple<int,
+                 std::map<std::vector<std::vector<ScheduledModule>>,
+                          ExecutionPlanSchedulingData>,
+                 long long>;
 
  public:
   MOCK_METHOD(ResultingPlanQueue, GetNextSetOfRuns,
@@ -45,6 +50,24 @@ class MockNodeScheduler : public NodeSchedulerInterface {
                SchedulingNodeMap& graph, AcceleratorLibraryInterface& drivers,
                TableMap& tables,
                const std::vector<ScheduledModule>& current_configuration,
+               const Config& config),
+              (override));
+
+  MOCK_METHOD(AllPlans, ScheduleAndGetAllPlans,
+              (const std::vector<std::string>& first_node_names,
+               std::vector<std::string>& starting_nodes,
+               std::vector<std::string>& processed_nodes,
+               SchedulingNodeMap& graph, AcceleratorLibraryInterface& drivers,
+               TableMap& tables, const Config& config),
+              (override));
+
+  MOCK_METHOD(void, BenchmarkScheduling,
+              (const std::vector<std::string>& first_node_names,
+               std::vector<std::string>& starting_nodes,
+               std::vector<std::string>& processed_nodes,
+               SchedulingNodeMap& graph, AcceleratorLibraryInterface& drivers,
+               TableMap& tables,
+               std::vector<ScheduledModule>& current_configuration,
                const Config& config),
               (override));
 };

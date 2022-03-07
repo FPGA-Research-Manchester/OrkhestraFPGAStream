@@ -25,6 +25,8 @@ limitations under the License.
 #include "logger.hpp"
 #include "scheduling_data.hpp"
 
+#include <iostream>
+
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 
@@ -139,6 +141,50 @@ auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
   return {min_runs, resulting_plans,
           std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
               .count()};
+}
+
+void ElasticResourceNodeScheduler::BenchmarkScheduling(
+    const std::vector<std::string> &first_node_names,
+    std::vector<std::string> &starting_nodes,
+    std::vector<std::string> &processed_nodes,
+    std::map<std::string, SchedulingQueryNode> &graph,
+    AcceleratorLibraryInterface &drivers,
+    std::map<std::string, TableMetadata> &tables,
+    std::vector<ScheduledModule> &current_configuration, const Config &config) {
+  Log(LogLevel::kTrace, "Scheduling preprocessing.");
+  RemoveUnnecessaryTables(graph, tables);
+
+  ElasticSchedulingGraphParser::PreprocessNodes(
+      starting_nodes, config.pr_hw_library, processed_nodes, graph, tables,
+      drivers);
+
+  auto [min_runs, resulting_plans, scheduling_time] =
+      ScheduleAndGetAllPlans(first_node_names, starting_nodes, processed_nodes,
+                             graph, drivers, tables, config);
+  Log(LogLevel::kInfo, "Main scheduling loop time = " +
+                           std::to_string(scheduling_time) + "[milliseconds]");
+
+  Log(LogLevel::kTrace, "Choosing best plan.");
+  // resulting_plans
+  auto [best_plan, new_last_config] = plan_evaluator_->GetBestPlan(
+      min_runs, current_configuration, config.resource_string,
+      config.utilites_scaler, config.config_written_scaler,
+      config.utility_per_frame_scaler, resulting_plans, config.cost_of_columns,
+      config.streaming_speed, config.configuration_speed);
+  Log(LogLevel::kTrace, "Creating module queue.");
+  starting_nodes = resulting_plans.at(best_plan).available_nodes;
+  processed_nodes = resulting_plans.at(best_plan).processed_nodes;
+  graph = resulting_plans.at(best_plan).graph;
+  tables = resulting_plans.at(best_plan).tables;
+
+  current_configuration = new_last_config;
+
+  for (const auto &run : best_plan) {
+    for (const auto &node : run) {
+      std::cout << " " << node.node_name << " ";
+    }
+    std::cout << std::endl;
+  }
 }
 
 auto ElasticResourceNodeScheduler::GetNextSetOfRuns(

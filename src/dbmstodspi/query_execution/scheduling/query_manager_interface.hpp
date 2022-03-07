@@ -197,6 +197,16 @@ class QueryManagerInterface {
       -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<std::shared_ptr<QueryNode>>>> = 0;
 
+  virtual void BenchmarkScheduling(
+      const std::vector<std::string>& first_node_names,
+      std::vector<std::string>& starting_nodes,
+      std::vector<std::string>& processed_nodes,
+      std::map<std::string, SchedulingQueryNode>& graph,
+      std::map<std::string, TableMetadata>& tables,
+      AcceleratorLibraryInterface& drivers, const Config& config,
+      NodeSchedulerInterface& node_scheduler,
+      std::vector<ScheduledModule>& current_configuration) = 0;
+
   /**
    * @brief Load the initial static system
    * @param memory_manager Memory manager for accessing the FPGA and loading the

@@ -1,5 +1,5 @@
-/*
-Copyright 2021 University of Manchester
+﻿/*
+Copyright 2022 University of Manchester
 
 Licensed under the Apache License, Version 2.0(the "License");
 you may not use this file except in compliance with the License.
@@ -14,21 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "setup_scheduling_state.hpp"
+#include "setup_benchmark_schedule_state.hpp"
+#include "benchmark_schedule_state.hpp"
 
 #include "logger.hpp"
-#include "schedule_state.hpp"
+#include "print_plan_state.hpp"
 
-using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
-using orkhestrafs::dbmstodspi::SetupSchedulingState;
-using orkhestrafs::dbmstodspi::ScheduleState;
-using orkhestrafs::dbmstodspi::StateInterface;
+using orkhestrafs::dbmstodspi::SetupBenchmarkScheduleState;
+using orkhestrafs::dbmstodspi::BenchmarkScheduleState;
+using orkhestrafs::dbmstodspi::PrintPlanState;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 
-auto SetupSchedulingState::Execute(GraphProcessingFSMInterface* fsm)
+// TODO: Duplicates normal schedule state! Need to have a constructor to tell
+// what is the next state
+auto SetupBenchmarkScheduleState::Execute(GraphProcessingFSMInterface* fsm)
     -> std::unique_ptr<StateInterface> {
   Log(LogLevel::kTrace, "Setup scheduling state");
   fsm->SetupSchedulingData();
-  return std::make_unique<ScheduleState>();
+  return std::make_unique<BenchmarkScheduleState>();
 }
