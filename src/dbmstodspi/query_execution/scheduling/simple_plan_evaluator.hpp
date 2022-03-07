@@ -24,9 +24,7 @@ namespace orkhestrafs::dbmstodspi {
  */
 class SimplePlanEvaluator : public PlanEvaluatorInterface {
  public:
-  auto GetBestPlan(const std::vector<std::vector<std::vector<ScheduledModule>>>&
-                       available_plans,
-                   int min_run_count,
+  auto GetBestPlan(int min_run_count,
                    const std::vector<ScheduledModule>& last_configuration,
                    const std::string resource_string, double utilites_scaler,
                    double config_written_scaler,

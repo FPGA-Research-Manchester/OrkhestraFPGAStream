@@ -79,6 +79,20 @@ class NodeSchedulerInterface {
       const Config& config)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<std::shared_ptr<QueryNode>>>> = 0;
+
+  // Core scheduling method for benchmarking
+  virtual auto ScheduleAndGetAllPlans(
+      const std::vector<std::string>& first_node_names,
+      std::vector<std::string>& starting_nodes,
+      std::vector<std::string>& processed_nodes,
+      std::map<std::string, SchedulingQueryNode>& graph,
+      AcceleratorLibraryInterface& drivers,
+      std::map<std::string, TableMetadata>& tables,
+      const Config& config)
+      -> std::tuple<int,
+                    std::map<std::vector<std::vector<ScheduledModule>>,
+                             ExecutionPlanSchedulingData>,
+                    long long> = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

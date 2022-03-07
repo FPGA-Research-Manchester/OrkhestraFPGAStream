@@ -16,8 +16,8 @@ limitations under the License.
 
 #pragma once
 
-#include <vector>
 #include <map>
+#include <vector>
 
 #include "scheduled_module.hpp"
 #include "scheduling_data.hpp"
@@ -34,7 +34,6 @@ class PlanEvaluatorInterface {
   virtual ~PlanEvaluatorInterface() = default;
   /**
    * @brief Get the best plan from the vector of fitting plans
-   * @param available_plans All avaialable plans to choose from.
    * @param min_run_count Minimum run count in a plan.
    * @param last_configuration Currently configured modules
    * @param resource_string PR region resources
@@ -48,8 +47,6 @@ class PlanEvaluatorInterface {
    * @return Best plan with the last configuration
    */
   virtual auto GetBestPlan(
-      const std::vector<std::vector<std::vector<ScheduledModule>>>&
-          available_plans,
       int min_run_count, const std::vector<ScheduledModule>& last_configuration,
       const std::string resource_string, double utilites_scaler,
       double config_written_scaler, double utility_per_frame_scaler,

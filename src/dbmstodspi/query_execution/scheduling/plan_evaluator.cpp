@@ -103,8 +103,6 @@ auto PlanEvaluator::FindFastestPlan(
 }
 
 auto PlanEvaluator::GetBestPlan(
-    const std::vector<std::vector<std::vector<ScheduledModule>>>&
-        available_plans,
     int min_run_count, const std::vector<ScheduledModule>& last_configuration,
     const std::string resource_string, double utilites_scaler,
     double config_written_scaler, double utility_per_frame_scaler,
@@ -117,11 +115,17 @@ auto PlanEvaluator::GetBestPlan(
   std::vector<int> data_streamed;
   std::vector<int> configuration_data_wirtten;
   std::vector<std::vector<ScheduledModule>> last_configurations;
-  for (int plan_i = 0; plan_i < available_plans.size(); plan_i++) {
+
+  std::vector<std::vector<std::vector<ScheduledModule>>> all_plans_list;
+  for (const auto& [plan, _] : plan_metadata) {
+    all_plans_list.push_back(plan);
+  }
+
+  for (int plan_i = 0; plan_i < all_plans_list.size(); plan_i++) {
     data_streamed.push_back(
-        plan_metadata.at(available_plans.at(plan_i)).streamed_data_size);
+        plan_metadata.at(all_plans_list.at(plan_i)).streamed_data_size);
     auto [config_written, new_config] =
-        FindConfigWritten(available_plans.at(plan_i), last_configuration,
+        FindConfigWritten(all_plans_list.at(plan_i), last_configuration,
                           resource_string, cost_of_columns);
     configuration_data_wirtten.push_back(config_written);
     last_configurations.push_back(new_config);
@@ -130,7 +134,7 @@ auto PlanEvaluator::GetBestPlan(
                                    streaming_speed, configuration_speed);
   std::pair<std::vector<std::vector<ScheduledModule>>,
             std::vector<ScheduledModule>>
-      best_plan = {available_plans.at(max_plan_i),
+      best_plan = {all_plans_list.at(max_plan_i),
                    last_configurations.at(max_plan_i)};
 
   if (best_plan.first.empty()) {

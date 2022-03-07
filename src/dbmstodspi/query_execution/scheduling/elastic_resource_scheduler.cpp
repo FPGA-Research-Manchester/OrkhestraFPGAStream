@@ -86,26 +86,17 @@ auto ElasticResourceNodeScheduler::GetLargestModulesSizes(
   return operation_costs;
 }
 
-auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
-    std::vector<std::shared_ptr<QueryNode>> &available_nodes,
+auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
     const std::vector<std::string> &first_node_names,
     std::vector<std::string> &starting_nodes,
     std::vector<std::string> &processed_nodes,
     std::map<std::string, SchedulingQueryNode> &graph,
     AcceleratorLibraryInterface &drivers,
-    std::map<std::string, TableMetadata> &tables,
-    const std::vector<ScheduledModule> &current_configuration,
-    const Config &config)
-    -> std::queue<std::pair<std::vector<ScheduledModule>,
-                            std::vector<std::shared_ptr<QueryNode>>>> {
-  Log(LogLevel::kTrace, "Scheduling preprocessing.");
-  RemoveUnnecessaryTables(graph, tables);
-
-  ElasticSchedulingGraphParser::PreprocessNodes(
-      starting_nodes, config.pr_hw_library, processed_nodes, graph, tables,
-      drivers);
-
-  Log(LogLevel::kTrace, "Starting main scheduling loop.");
+    std::map<std::string, TableMetadata> &tables, const Config &config)
+    -> std::tuple<int,
+                  std::map<std::vector<std::vector<ScheduledModule>>,
+                           ExecutionPlanSchedulingData>,
+                  long long> {
   std::map<std::vector<std::vector<ScheduledModule>>,
            ExecutionPlanSchedulingData>
       resulting_plans;
@@ -128,6 +119,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
 
   bool timeout_trigger = false;
 
+  // Configure the runtime_error behaviour
   try {
     ElasticSchedulingGraphParser::PlaceNodesRecursively(
         std::move(starting_nodes), std::move(processed_nodes), std::move(graph),
@@ -143,23 +135,41 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   }
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  Log(LogLevel::kInfo,
-      "Main scheduling loop time = " +
-          std::to_string(
-              std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
-                  .count()) +
-          "[milliseconds]");
+
+  return {min_runs, resulting_plans,
+          std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
+              .count()};
+}
+
+auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
+    std::vector<std::shared_ptr<QueryNode>> &available_nodes,
+    const std::vector<std::string> &first_node_names,
+    std::vector<std::string> &starting_nodes,
+    std::vector<std::string> &processed_nodes,
+    std::map<std::string, SchedulingQueryNode> &graph,
+    AcceleratorLibraryInterface &drivers,
+    std::map<std::string, TableMetadata> &tables,
+    const std::vector<ScheduledModule> &current_configuration,
+    const Config &config)
+    -> std::queue<std::pair<std::vector<ScheduledModule>,
+                            std::vector<std::shared_ptr<QueryNode>>>> {
+  Log(LogLevel::kTrace, "Scheduling preprocessing.");
+  RemoveUnnecessaryTables(graph, tables);
+
+  ElasticSchedulingGraphParser::PreprocessNodes(
+      starting_nodes, config.pr_hw_library, processed_nodes, graph, tables,
+      drivers);
+
+  auto [min_runs, resulting_plans, scheduling_time] =
+      ScheduleAndGetAllPlans(first_node_names, starting_nodes, processed_nodes,
+                             graph, drivers, tables, config);
+  Log(LogLevel::kInfo, "Main scheduling loop time = " +
+                           std::to_string(scheduling_time) + "[milliseconds]");
 
   Log(LogLevel::kTrace, "Choosing best plan.");
-  std::vector<std::vector<std::vector<ScheduledModule>>> all_plans;
-  for (const auto &[plan, _] : resulting_plans) {
-    all_plans.push_back(plan);
-  }
-
   // resulting_plans
-  // TODO: new_last_config not really needed
   auto [best_plan, new_last_config] = plan_evaluator_->GetBestPlan(
-      all_plans, min_runs, current_configuration, config.resource_string,
+      min_runs, current_configuration, config.resource_string,
       config.utilites_scaler, config.config_written_scaler,
       config.utility_per_frame_scaler, resulting_plans, config.cost_of_columns,
       config.streaming_speed, config.configuration_speed);
@@ -170,7 +180,6 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   tables = resulting_plans.at(best_plan).tables;
 
   auto resulting_runs = GetQueueOfResultingRuns(available_nodes, best_plan);
-
   available_nodes = FindNewAvailableNodes(starting_nodes, available_nodes);
   Log(LogLevel::kTrace, "Execution plan made!");
   return resulting_runs;
