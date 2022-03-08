@@ -44,7 +44,7 @@ class PlanEvaluatorInterface {
    * @param cost_of_columns How expensive each column is
    * @param streaming_speed Current IO speed
    * @param configuration_speed How fast is configuration data streamed
-   * @return Best plan with the last configuration
+   * @return Best plan with the last configuration and cost values
    */
   virtual auto GetBestPlan(
       int min_run_count, const std::vector<ScheduledModule>& last_configuration,
@@ -54,7 +54,7 @@ class PlanEvaluatorInterface {
                      ExecutionPlanSchedulingData>& plan_metadata,
       const std::map<char, int>& cost_of_columns, double streaming_speed,
       double configuration_speed)
-      -> std::pair<std::vector<std::vector<ScheduledModule>>,
-                   std::vector<ScheduledModule>> = 0;
+      -> std::tuple<std::vector<std::vector<ScheduledModule>>,
+                   std::vector<ScheduledModule>, int, int> = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

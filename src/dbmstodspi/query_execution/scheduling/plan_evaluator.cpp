@@ -110,8 +110,8 @@ auto PlanEvaluator::GetBestPlan(
                    ExecutionPlanSchedulingData>& plan_metadata,
     const std::map<char, int>& cost_of_columns, double streaming_speed,
     double configuration_speed)
-    -> std::pair<std::vector<std::vector<ScheduledModule>>,
-                 std::vector<ScheduledModule>> {
+    -> std::tuple<std::vector<std::vector<ScheduledModule>>,
+                 std::vector<ScheduledModule>, int, int> {
   std::vector<int> data_streamed;
   std::vector<int> configuration_data_wirtten;
   std::vector<std::vector<ScheduledModule>> last_configurations;
@@ -132,12 +132,14 @@ auto PlanEvaluator::GetBestPlan(
   }
   int max_plan_i = FindFastestPlan(data_streamed, configuration_data_wirtten,
                                    streaming_speed, configuration_speed);
-  std::pair<std::vector<std::vector<ScheduledModule>>,
-            std::vector<ScheduledModule>>
+  std::tuple<std::vector<std::vector<ScheduledModule>>,
+            std::vector<ScheduledModule>, int ,int>
       best_plan = {all_plans_list.at(max_plan_i),
-                   last_configurations.at(max_plan_i)};
+                   last_configurations.at(max_plan_i),
+                   data_streamed.at(max_plan_i),
+                   configuration_data_wirtten.at(max_plan_i)};
 
-  if (best_plan.first.empty()) {
+  if (std::get<0>(best_plan).empty()) {
     throw std::runtime_error("No plan chosen!");
   }
   return best_plan;

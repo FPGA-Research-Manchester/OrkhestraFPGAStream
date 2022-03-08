@@ -33,8 +33,8 @@ class SimplePlanEvaluator : public PlanEvaluatorInterface {
                                   ExecutionPlanSchedulingData>& plan_metadata,
                    const std::map<char, int>& cost_of_columns,
                    double streaming_speed, double configuration_speed)
-      -> std::pair<std::vector<std::vector<ScheduledModule>>,
-                   std::vector<ScheduledModule>> override;
+      -> std::tuple<std::vector<std::vector<ScheduledModule>>,
+                   std::vector<ScheduledModule>,int, int> override;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

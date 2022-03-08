@@ -24,9 +24,9 @@ namespace orkhestrafs::dbmstodspi {
 /**
  * @brief State for printing the chosen plan.
  */
-class PrintPlanState : public StateInterface {
+class PrintBenchmarkState : public StateInterface {
  public:
-  ~PrintPlanState() override = default;
+  ~PrintBenchmarkState() override = default;
 
   auto Execute(GraphProcessingFSMInterface* fsm)
       -> std::unique_ptr<StateInterface> override;

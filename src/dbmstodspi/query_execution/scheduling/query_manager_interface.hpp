@@ -249,6 +249,8 @@ class QueryManagerInterface {
       const std::vector<ScheduledModule>& next_config, int column_count)
       -> std::pair<std::vector<std::string>,
                    std::vector<std::pair<QueryOperationType, bool>>> = 0;
+
+  virtual void PrintBenchmarkStats() = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

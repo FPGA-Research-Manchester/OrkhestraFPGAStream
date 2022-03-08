@@ -19,6 +19,8 @@ limitations under the License.
 #include <algorithm>
 #include <stdexcept>
 
+#include <iostream>
+
 #include "bitstream_config_helper.hpp"
 #include "elastic_module_checker.hpp"
 #include "fpga_manager.hpp"
@@ -373,9 +375,15 @@ void QueryManager::BenchmarkScheduling(
     AcceleratorLibraryInterface& drivers, const Config& config,
     NodeSchedulerInterface& node_scheduler,
     std::vector<ScheduledModule>& current_configuration) {
-  node_scheduler.BenchmarkScheduling(first_node_names, starting_nodes,
-                                  processed_nodes, graph, drivers, tables,
-                                  current_configuration, config);
+  node_scheduler.BenchmarkScheduling(
+      first_node_names, starting_nodes, processed_nodes, graph, drivers, tables,
+      current_configuration, config, benchmark_stats_);
+}
+
+void QueryManager::PrintBenchmarkStats() {
+  for (const auto& [stats_key,value] : benchmark_stats_) {
+    std::cout << stats_key << ": " << value << std::endl;
+  }
 }
 
 auto QueryManager::ScheduleNextSetOfNodes(

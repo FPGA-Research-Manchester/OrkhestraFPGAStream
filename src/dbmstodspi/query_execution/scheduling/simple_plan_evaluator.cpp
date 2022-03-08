@@ -32,10 +32,10 @@ auto SimplePlanEvaluator::GetBestPlan(
                    ExecutionPlanSchedulingData>& plan_metadata,
     const std::map<char, int>& cost_of_columns, double streaming_speed,
     double configuration_speed)
-    -> std::pair<std::vector<std::vector<ScheduledModule>>,
-                 std::vector<ScheduledModule>> {
-  std::pair<std::vector<std::vector<ScheduledModule>>,
-            std::vector<ScheduledModule>>
+    -> std::tuple<std::vector<std::vector<ScheduledModule>>,
+                  std::vector<ScheduledModule>, int, int> {
+  std::tuple<std::vector<std::vector<ScheduledModule>>,
+             std::vector<ScheduledModule>, int, int>
       best_plan;
   int max_nodes_in_min_plan = 0;
   int min_configured_rows_in_min_plan = 0;
@@ -60,16 +60,16 @@ auto SimplePlanEvaluator::GetBestPlan(
         if (unique_node_names.size() > max_nodes_in_min_plan) {
           max_nodes_in_min_plan = unique_node_names.size();
           min_configured_rows_in_min_plan = configured_rows;
-          best_plan = {all_plans_list.at(plan_index), {}};
+          best_plan = {all_plans_list.at(plan_index), {}, 0, 0};
         } else if (unique_node_names.size() == max_nodes_in_min_plan &&
                    configured_rows < min_configured_rows_in_min_plan) {
           min_configured_rows_in_min_plan = configured_rows;
-          best_plan = {all_plans_list.at(plan_index), {}};
+          best_plan = {all_plans_list.at(plan_index), {}, 0, 0};
         }
       }
     }
   }
-  if (best_plan.first.empty()) {
+  if (std::get<0>(best_plan).empty()) {
     throw std::runtime_error("No plan chosen!");
   }
   return best_plan;

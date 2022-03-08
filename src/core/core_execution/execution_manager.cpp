@@ -158,38 +158,29 @@ auto ExecutionManager::PopNextScheduledRun()
   return executable_query_nodes;
 }
 
-void ExecutionManager::PopAndPrintCurrentPlan() {
-  int run_count = 0;
-  while (!query_node_runs_queue_.empty()) {
-    auto executable_query_nodes = query_node_runs_queue_.front().second;
-    std::cout << "Run " << run_count << std::endl;
-    for (const auto& node : executable_query_nodes) {
-      std::cout << node->node_name << " ";
-    }
-    std::cout << std::endl;
-    run_count++;
-    query_node_runs_queue_.pop();
-  }
+void ExecutionManager::PrintCurrentStats() {
+  query_manager_->PrintBenchmarkStats();
 }
 
-void ExecutionManager::SetupSchedulingData() {
-  // TODO: The static bitstream loading should be moved to a different state!
-  query_manager_->LoadInitialStaticBitstream(memory_manager_.get());
-  // The empty routing should be part of the static really.
-  query_manager_->LoadEmptyRoutingPRRegion(memory_manager_.get(),
-                                           *accelerator_library_.get());
-
-  current_tables_metadata_ = config_.initial_all_tables_metadata;
-
+void ExecutionManager::SetupSchedulingData(bool setup_bitstreams) {
   for (const auto& node : unscheduled_graph_->GetRootNodesPtrs()) {
     current_available_nodes_.push_back(node->node_name);
   }
+
+  current_tables_metadata_ = config_.initial_all_tables_metadata;
 
   SetupSchedulingGraphAndConstrainedNodes(
       unscheduled_graph_->GetAllNodesPtrs(), current_query_graph_,
       *accelerator_library_, nodes_constrained_to_first_);
 
-  current_available_node_pointers_ = unscheduled_graph_->ExportRootNodes();
+  if (setup_bitstreams) {
+    // TODO: The static bitstream loading should be moved to a different state!
+    query_manager_->LoadInitialStaticBitstream(memory_manager_.get());
+    // The empty routing should be part of the static really.
+    query_manager_->LoadEmptyRoutingPRRegion(memory_manager_.get(),
+                                             *accelerator_library_.get());
+    current_available_node_pointers_ = unscheduled_graph_->ExportRootNodes();
+  }
 }
 
 void ExecutionManager::SetupSchedulingGraphAndConstrainedNodes(

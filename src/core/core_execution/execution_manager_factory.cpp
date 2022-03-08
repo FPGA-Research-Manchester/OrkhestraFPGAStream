@@ -38,19 +38,22 @@ using orkhestrafs::dbmstodspi::FPGADriverFactory;
 using orkhestrafs::dbmstodspi::MemoryManager;
 using orkhestrafs::dbmstodspi::PlanEvaluator;
 using orkhestrafs::dbmstodspi::QueryManager;
-using orkhestrafs::dbmstodspi::ScheduleState;
-using orkhestrafs::dbmstodspi::SetupBenchmarkScheduleState;
+#ifdef FPGA_AVAILABLE
 using orkhestrafs::dbmstodspi::SetupSchedulingState;
+#else
+using orkhestrafs::dbmstodspi::SetupBenchmarkScheduleState;
+#endif
 
 auto ExecutionManagerFactory::GetManager(const Config& config)
     -> std::unique_ptr<ExecutionManagerInterface> {
   auto scheduler = std::make_unique<ElasticResourceNodeScheduler>(
       std::make_unique<PlanEvaluator>());
 
-  /*auto chosen_start_state = std::make_unique<ScheduleState>();
-  auto secondary_start_state = std::make_unique<DebugScheduleState>();*/
-  /*auto start_state = std::make_unique<SetupSchedulingState>();*/
+#ifdef FPGA_AVAILABLE
+  auto start_state = std::make_unique<SetupSchedulingState>();
+#else
   auto start_state = std::make_unique<SetupBenchmarkScheduleState>();
+#endif
 
   return std::make_unique<ExecutionManager>(
       std::move(config), std::make_unique<QueryManager>(),

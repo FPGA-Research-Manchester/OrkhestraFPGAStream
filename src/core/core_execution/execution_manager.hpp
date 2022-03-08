@@ -90,8 +90,8 @@ class ExecutionManager : public ExecutionManagerInterface,
   auto IsRunReadyForExecution() -> bool override;
   /*auto IsRunValid() -> bool override;*/
   void ExecuteAndProcessResults() override;
-  void PopAndPrintCurrentPlan() override;
-  void SetupSchedulingData() override;
+  void PrintCurrentStats() override;
+  void SetupSchedulingData(bool setup_bitstreams) override;
 
   void BenchmarkScheduleUnscheduledNodes() override;
   auto IsBenchmarkDone() -> bool override;

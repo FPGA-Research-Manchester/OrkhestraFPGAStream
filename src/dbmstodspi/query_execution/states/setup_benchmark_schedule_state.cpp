@@ -18,11 +18,9 @@ limitations under the License.
 #include "benchmark_schedule_state.hpp"
 
 #include "logger.hpp"
-#include "print_plan_state.hpp"
 
 using orkhestrafs::dbmstodspi::SetupBenchmarkScheduleState;
 using orkhestrafs::dbmstodspi::BenchmarkScheduleState;
-using orkhestrafs::dbmstodspi::PrintPlanState;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 
@@ -31,6 +29,6 @@ using orkhestrafs::dbmstodspi::logging::LogLevel;
 auto SetupBenchmarkScheduleState::Execute(GraphProcessingFSMInterface* fsm)
     -> std::unique_ptr<StateInterface> {
   Log(LogLevel::kTrace, "Setup scheduling state");
-  fsm->SetupSchedulingData();
+  fsm->SetupSchedulingData(false);
   return std::make_unique<BenchmarkScheduleState>();
 }

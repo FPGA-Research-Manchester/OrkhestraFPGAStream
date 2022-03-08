@@ -31,8 +31,8 @@ class MockGraphProcessingFSM : public GraphProcessingFSMInterface {
   MOCK_METHOD(bool, IsRunReadyForExecution, (), (override));
   //MOCK_METHOD(bool, IsRunValid, (), (override));
   MOCK_METHOD(void, ExecuteAndProcessResults, (), (override));
-  MOCK_METHOD(void, PopAndPrintCurrentPlan, (), (override));
-  MOCK_METHOD(void, SetupSchedulingData, (), (override));
+  MOCK_METHOD(void, PrintCurrentStats, (), (override));
+  MOCK_METHOD(void, SetupSchedulingData, (bool), (override));
 
   MOCK_METHOD(bool, IsBenchmarkDone, (), (override));
   MOCK_METHOD(void, BenchmarkScheduleUnscheduledNodes, (), (override));

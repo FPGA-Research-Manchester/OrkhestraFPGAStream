@@ -116,8 +116,16 @@ class QueryManager : public QueryManagerInterface {
       const std::vector<ScheduledModule>& next_config, int column_count)
       -> std::pair<std::vector<std::string>,
                    std::vector<std::pair<QueryOperationType, bool>>> override;
+  void PrintBenchmarkStats() override;
 
  private:
+  std::map<std::string, double> benchmark_stats_ = {
+      {"pre_process_time", 0}, {"schedule_time", 0},
+      {"timeout", 0},          {"cost_eval_time", 0},
+      {"overall_time", 0},     {"run_count", 0},
+      {"data_amount", 0},      {"configuration_amount", 0},
+      {"schedule_count", 0}};
+
   static void CheckTableData(const DataManagerInterface* data_manager,
                              const TableData& expected_table,
                              const TableData& resulting_table);

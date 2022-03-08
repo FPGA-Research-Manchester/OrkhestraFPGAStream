@@ -14,18 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "print_plan_state.hpp"
+#include "print_benchmark_state.hpp"
 
 #include "logger.hpp"
 
-using orkhestrafs::dbmstodspi::PrintPlanState;
+using orkhestrafs::dbmstodspi::PrintBenchmarkState;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 
-auto PrintPlanState::Execute(GraphProcessingFSMInterface* fsm)
+auto PrintBenchmarkState::Execute(GraphProcessingFSMInterface* fsm)
     -> std::unique_ptr<StateInterface> {
-  Log(LogLevel::kTrace, "Print plan state");
-  fsm->PopAndPrintCurrentPlan();
+  Log(LogLevel::kTrace, "Print stats state");
+  fsm->PrintCurrentStats();
   fsm->SetFinishedFlag();
-  return std::make_unique<PrintPlanState>();
+  return std::make_unique<PrintBenchmarkState>();
 }

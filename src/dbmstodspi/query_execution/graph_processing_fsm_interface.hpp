@@ -77,14 +77,15 @@ class GraphProcessingFSMInterface {
    */
   virtual void ExecuteAndProcessResults() = 0;
   /**
-   * @brief Debug method to print the current plan. Will delete the run!
+   * @brief Debug method to print the current stats. Will delete the run!
    */
-  virtual void PopAndPrintCurrentPlan() = 0;
+  virtual void PrintCurrentStats() = 0;
   /**
    * @brief Method to setup current table data from config which tells the
    * scheduler about the available tables and query graphs.
+   * @param Boolean for confirming the use of bitstreams
    */
-  virtual void SetupSchedulingData() = 0;
+  virtual void SetupSchedulingData(bool setup_bitstreams) = 0;
 
   /**
    * @brief Schedule unscheduled nodes.

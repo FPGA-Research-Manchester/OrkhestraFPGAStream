@@ -93,7 +93,7 @@ class NodeSchedulerInterface {
       -> std::tuple<int,
                     std::map<std::vector<std::vector<ScheduledModule>>,
                              ExecutionPlanSchedulingData>,
-                    long long> = 0;
+                    long long, bool> = 0;
 
   virtual void BenchmarkScheduling(
       const std::vector<std::string>& first_node_names,
@@ -102,8 +102,8 @@ class NodeSchedulerInterface {
       std::map<std::string, SchedulingQueryNode>& graph,
       AcceleratorLibraryInterface& drivers,
       std::map<std::string, TableMetadata>& tables,
-      std::vector<ScheduledModule>& current_configuration,
-      const Config& config) = 0;
+      std::vector<ScheduledModule>& current_configuration, const Config& config,
+      std::map<std::string, double>& benchmark_data) = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

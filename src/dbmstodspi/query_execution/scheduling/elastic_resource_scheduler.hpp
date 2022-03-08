@@ -48,18 +48,17 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
           std::pair<std::vector<ScheduledModule>,
                     std::vector<std::shared_ptr<QueryNode>>>> override;
 
-  auto ScheduleAndGetAllPlans(
-      const std::vector<std::string> &first_node_names,
-      std::vector<std::string> &starting_nodes,
-      std::vector<std::string> &processed_nodes,
-      std::map<std::string, SchedulingQueryNode> &graph,
-      AcceleratorLibraryInterface &drivers,
-      std::map<std::string, TableMetadata> &tables,
-      const Config &config)
+  auto ScheduleAndGetAllPlans(const std::vector<std::string> &first_node_names,
+                              std::vector<std::string> &starting_nodes,
+                              std::vector<std::string> &processed_nodes,
+                              std::map<std::string, SchedulingQueryNode> &graph,
+                              AcceleratorLibraryInterface &drivers,
+                              std::map<std::string, TableMetadata> &tables,
+                              const Config &config)
       -> std::tuple<int,
                     std::map<std::vector<std::vector<ScheduledModule>>,
                              ExecutionPlanSchedulingData>,
-                    long long> override;
+                    long long, bool> override;
 
   void BenchmarkScheduling(
       const std::vector<std::string> &first_node_names,
@@ -68,8 +67,8 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       std::map<std::string, SchedulingQueryNode> &graph,
       AcceleratorLibraryInterface &drivers,
       std::map<std::string, TableMetadata> &tables,
-                           std::vector<ScheduledModule> &current_configuration,
-                           const Config &config) override;
+      std::vector<ScheduledModule> &current_configuration, const Config &config,
+      std::map<std::string, double> &benchmark_data) override;
 
  private:
   static auto CalculateTimeLimit(

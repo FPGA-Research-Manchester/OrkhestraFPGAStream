@@ -39,7 +39,8 @@ class MockNodeScheduler : public NodeSchedulerInterface {
       std::tuple<int,
                  std::map<std::vector<std::vector<ScheduledModule>>,
                           ExecutionPlanSchedulingData>,
-                 long long>;
+                 long long, bool>;
+  using BenchmarkMap = std::map<std::string, double>;
 
  public:
   MOCK_METHOD(ResultingPlanQueue, GetNextSetOfRuns,
@@ -68,6 +69,6 @@ class MockNodeScheduler : public NodeSchedulerInterface {
                SchedulingNodeMap& graph, AcceleratorLibraryInterface& drivers,
                TableMap& tables,
                std::vector<ScheduledModule>& current_configuration,
-               const Config& config),
+               const Config& config, BenchmarkMap& benchmark_data),
               (override));
 };

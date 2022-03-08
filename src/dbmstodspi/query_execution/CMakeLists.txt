@@ -22,8 +22,8 @@ endif()
 add_library(query_execution OBJECT 
             states/execute_state.hpp
             states/execute_state.cpp
-            states/print_plan_state.hpp
-            states/print_plan_state.cpp
+            states/print_benchmark_state.hpp
+            states/print_benchmark_state.cpp
             states/schedule_state.hpp
             states/schedule_state.cpp
             states/benchmark_schedule_state.hpp
