@@ -16,11 +16,16 @@ limitations under the License.
 
 #pragma once
 #include "query_manager_interface.hpp"
+#include "json_reader_interface.hpp"
+
+using orkhestrafs::core_interfaces::JSONReaderInterface;
 
 namespace orkhestrafs::dbmstodspi {
 
 class QueryManager : public QueryManagerInterface {
  public:
+  QueryManager(std::unique_ptr<JSONReaderInterface> json_reader)
+      : json_reader_{std::move(json_reader)} {};
   ~QueryManager() override = default;
   auto GetCurrentLinks(
       const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
@@ -119,6 +124,7 @@ class QueryManager : public QueryManagerInterface {
   void PrintBenchmarkStats() override;
 
  private:
+  std::unique_ptr<JSONReaderInterface> json_reader_;
   std::map<std::string, double> benchmark_stats_ = {
       {"pre_process_time", 0}, {"schedule_time", 0},
       {"timeout", 0},          {"cost_eval_time", 0},

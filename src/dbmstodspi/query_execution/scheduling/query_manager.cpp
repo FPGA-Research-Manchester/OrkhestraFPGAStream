@@ -384,6 +384,7 @@ void QueryManager::PrintBenchmarkStats() {
   for (const auto& [stats_key,value] : benchmark_stats_) {
     std::cout << stats_key << ": " << value << std::endl;
   }
+  json_reader_->WriteValueMap(benchmark_stats_, "benchmark_stats.json");
 }
 
 auto QueryManager::ScheduleNextSetOfNodes(

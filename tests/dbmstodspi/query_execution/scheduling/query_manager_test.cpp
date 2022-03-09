@@ -72,7 +72,7 @@ TEST_F(QueryManagerTest, GetCurrentLinksReturnsLinks) {
   all_reuse_targets.insert({other_node_name, any_reuse_target});
   expected_results.insert({base_node_name_, expected_reuse_target});
 
-  QueryManager query_manager_under_test;
+  QueryManager query_manager_under_test(nullptr);
 
   ASSERT_EQ(expected_results, query_manager_under_test.GetCurrentLinks(
                                   {base_query_node_}, all_reuse_targets));
@@ -162,7 +162,7 @@ TEST_F(QueryManagerTest, SetupAccelerationNodesForExecutionReturnsExpectedRun) {
   // TODO: Missing test with composed modules!
   base_query_node_->module_locations = {expected_location};
 
-  QueryManager query_manager_under_test;
+  QueryManager query_manager_under_test(nullptr);
 
   auto [query_nodes, result_parameters] =
       query_manager_under_test.SetupAccelerationNodesForExecution(
@@ -221,7 +221,7 @@ TEST_F(QueryManagerTest, SetupAccelerationNodesForExecutionReturnsExpectedRun) {
 }
 TEST_F(QueryManagerTest, LoadNextBitstreamIfNewUsesMemoryManager) {
   MockMemoryManager mock_memory_manager;
-  QueryManager query_manager_under_test;
+  QueryManager query_manager_under_test(nullptr);
   Config config;
   std::string expected_bitstream_file_name = "test_file";
   int expected_memory_space = 10;
@@ -250,14 +250,14 @@ TEST_F(QueryManagerTest, DISABLED_ExecuteAndProcessResultsCallsFPGAManager) {
   std::map<std::string, std::vector<RecordSizeAndCount>> output_stream_sizes;
   std::map<std::string, std::vector<StreamResultParameters>> result_parameters;
   MockDataManager mock_data_manager;
-  QueryManager query_manager_under_test;
+  QueryManager query_manager_under_test(nullptr);
   /*query_manager_under_test.ExecuteAndProcessResults(
       &mock_fpga_manager, &mock_data_manager, output_memory_blocks,
       output_stream_sizes, result_parameters, execution_query_nodes);*/
 }
 
 TEST_F(QueryManagerTest, FreeMemoryBlocksMovesLinkedMemoryBlocks) {
-  QueryManager query_manager_under_test;
+  QueryManager query_manager_under_test(nullptr);
   MockMemoryManager mock_memory_manager;
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
       input_memory_blocks;
@@ -317,7 +317,7 @@ TEST_F(QueryManagerTest, FreeMemoryBlocksMovesLinkedMemoryBlocks) {
 }
 
 TEST_F(QueryManagerTest, FreeMemoryBlocksRemovesMemoryBlocksAndStreamData) {
-  QueryManager query_manager_under_test;
+  QueryManager query_manager_under_test(nullptr);
   MockMemoryManager mock_memory_manager;
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
       input_memory_blocks;

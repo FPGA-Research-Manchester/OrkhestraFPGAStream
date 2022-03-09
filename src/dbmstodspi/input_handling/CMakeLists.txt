@@ -21,8 +21,6 @@ add_library(input_handling OBJECT
             graph.hpp
             config_value_checker_interface.hpp
             graph_creator_interface.hpp
-            json_reader_interface.hpp
-            json_validator_interface.hpp
             rapidjson_reader.cpp
             rapidjson_reader.hpp
             input_config_reader_interface.hpp

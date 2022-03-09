@@ -22,7 +22,7 @@ limitations under the License.
 #include <variant>
 #include <vector>
 
-namespace orkhestrafs::dbmstodspi {
+namespace orkhestrafs::core_interfaces {
 /**
  * @brief Interface for classes to read JSON.
  */
@@ -96,5 +96,13 @@ class JSONReaderInterface {
    * @return Return a map of the read json.
    */
   virtual auto ReadHWLibraryData(std::string json_filename) -> HWLibraryStringMap = 0;
+
+  /**
+   * @brief Write value map to a json file.
+   * @param data Map of values to be written.
+   * @param json_filename JSON file
+   */
+  virtual void WriteValueMap(
+      std::map<std::string, double> data, const std::string& json_filename) = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

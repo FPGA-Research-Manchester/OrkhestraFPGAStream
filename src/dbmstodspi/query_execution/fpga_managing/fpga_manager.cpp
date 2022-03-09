@@ -123,6 +123,12 @@ void FPGAManager::FindIOStreams(
     if (current_stream.physical_address && current_stream.stream_id != 15) {
       found_streams.push_back(current_stream);
       stream_status_array[current_stream.stream_id] = true;
+      // To configure passthrough streams
+      /*auto new_stream = current_stream;
+      new_stream.stream_record_count = 0;
+      new_stream.stream_id = 1;
+      found_streams.push_back(new_stream);
+      stream_status_array[new_stream.stream_id] = true;*/
     }
   }
 }
@@ -179,24 +185,24 @@ void FPGAManager::FindActiveStreams(
 void FPGAManager::WaitForStreamsToFinish() {
   dma_engine_->StartController(false, output_streams_active_status_);
 
-  //auto test = dma_engine_->IsControllerFinished(true);
-  //auto test1 = dma_engine_->IsControllerFinished(true);
-  //auto test2 = dma_engine_->IsControllerFinished(false);
-  //auto test3 = dma_engine_->IsControllerFinished(false);
+  auto test = dma_engine_->IsControllerFinished(true);
+  auto test1 = dma_engine_->IsControllerFinished(true);
+  auto test2 = dma_engine_->IsControllerFinished(false);
+  auto test3 = dma_engine_->IsControllerFinished(false);
 
-  #ifdef FPGA_AVAILABLE
-    while (!(dma_engine_->IsControllerFinished(true) &&
-             dma_engine_->IsControllerFinished(false))) {
-      // sleep(3);
-      // std::cout << "Processing..." << std::endl;
-      // std::cout << "Input:"
-      //          << dma_engine_.IsInputControllerFinished()
-      //          << std::endl;
-      // std::cout << "Output:"
-      //          << dma_engine_.IsOutputControllerFinished()
-      //          << std::endl;
-    }
-  #endif
+  //#ifdef FPGA_AVAILABLE
+  //  while (!(dma_engine_->IsControllerFinished(true) &&
+  //           dma_engine_->IsControllerFinished(false))) {
+  //    // sleep(3);
+  //    // std::cout << "Processing..." << std::endl;
+  //    // std::cout << "Input:"
+  //    //          << dma_engine_.IsInputControllerFinished()
+  //    //          << std::endl;
+  //    // std::cout << "Output:"
+  //    //          << dma_engine_.IsOutputControllerFinished()
+  //    //          << std::endl;
+  //  }
+  //#endif
 }
 
 void FPGAManager::ReadResultsFromRegisters() {
@@ -235,7 +241,7 @@ auto FPGAManager::GetResultingStreamSizes(
       int yo = 0;
     }*/
     result_sizes[stream_id] =
-        dma_engine_->GetControllerStreamSize(false, stream_id);
+        dma_engine_->GetControllerStreamSize(false, stream_id) + 30;
   }
   return result_sizes;
 }

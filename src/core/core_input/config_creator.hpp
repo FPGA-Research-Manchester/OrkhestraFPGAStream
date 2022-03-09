@@ -31,7 +31,7 @@ using orkhestrafs::core_interfaces::operation_types::QueryOperation;
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 using orkhestrafs::dbmstodspi::ConfigValueCheckerInterface;
 using orkhestrafs::dbmstodspi::InputConfigReaderInterface;
-using orkhestrafs::dbmstodspi::JSONReaderInterface;
+using orkhestrafs::core_interfaces::JSONReaderInterface;
 using orkhestrafs::dbmstodspi::JSONValidatorInterface;
 
 namespace orkhestrafs::core::core_input {

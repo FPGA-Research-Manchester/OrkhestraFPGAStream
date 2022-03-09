@@ -27,6 +27,7 @@ limitations under the License.
 #include "schedule_state.hpp"
 #include "setup_benchmark_schedule_state.hpp"
 #include "setup_scheduling_state.hpp"
+#include "rapidjson_reader.hpp"
 
 using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::core::core_execution::ExecutionManagerFactory;
@@ -38,6 +39,7 @@ using orkhestrafs::dbmstodspi::FPGADriverFactory;
 using orkhestrafs::dbmstodspi::MemoryManager;
 using orkhestrafs::dbmstodspi::PlanEvaluator;
 using orkhestrafs::dbmstodspi::QueryManager;
+using orkhestrafs::dbmstodspi::RapidJSONReader;
 #ifdef FPGA_AVAILABLE
 using orkhestrafs::dbmstodspi::SetupSchedulingState;
 #else
@@ -56,7 +58,8 @@ auto ExecutionManagerFactory::GetManager(const Config& config)
 #endif
 
   return std::make_unique<ExecutionManager>(
-      std::move(config), std::make_unique<QueryManager>(),
+      std::move(config),
+      std::make_unique<QueryManager>(std::make_unique<RapidJSONReader>()),
       std::make_unique<DataManager>(config.data_sizes, config.csv_separator,
                                     std::make_unique<CSVReader>()),
       std::make_unique<MemoryManager>(), std::move(start_state),
