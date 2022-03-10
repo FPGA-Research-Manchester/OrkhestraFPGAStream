@@ -58,7 +58,7 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       -> std::tuple<int,
                     std::map<std::vector<std::vector<ScheduledModule>>,
                              ExecutionPlanSchedulingData>,
-                    long long, bool> override;
+                    long long, bool, std::pair<int, int>> override;
 
   void BenchmarkScheduling(
       const std::vector<std::string> &first_node_names,

@@ -722,23 +722,23 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
               available_module_placements.end(),
               new_available_module_placements.begin(),
               new_available_module_placements.end());
-          if (!available_module_placements.empty()) {
-            for (const auto& [module_index, module_placement] :
-                 available_module_placements) {
-              auto new_current_run = current_run;
-              new_current_run.insert(new_current_run.begin() + module_index,
-                                     module_placement);
-              streamed_data_size += GetNewStreamedDataSize(
-                  current_run, module_placement.node_name, data_tables, graph);
-              FindNextModulePlacement(
-                  graph, resulting_plan, available_nodes, current_plan,
-                  hw_library, module_placement, new_current_run, node_name,
-                  processed_nodes, reduce_single_runs, min_runs, data_tables,
-                  heuristics, statistics_counters, constrained_first_nodes,
-                  blocked_nodes, next_run_blocked_nodes, drivers, time_limit,
-                  trigger_timeout, use_max_runs_cap, streamed_data_size);
-            }
-          }
+        }
+      }
+      if (!available_module_placements.empty()) {
+        for (const auto& [module_index, module_placement] :
+             available_module_placements) {
+          auto new_current_run = current_run;
+          new_current_run.insert(new_current_run.begin() + module_index,
+                                 module_placement);
+          streamed_data_size += GetNewStreamedDataSize(
+              current_run, module_placement.node_name, data_tables, graph);
+          FindNextModulePlacement(
+              graph, resulting_plan, available_nodes, current_plan, hw_library,
+              module_placement, new_current_run, module_placement.node_name,
+              processed_nodes, reduce_single_runs, min_runs, data_tables,
+              heuristics, statistics_counters, constrained_first_nodes,
+              blocked_nodes, next_run_blocked_nodes, drivers, time_limit,
+              trigger_timeout, use_max_runs_cap, streamed_data_size);
         }
       }
       if ((available_module_placements.empty() || !reduce_single_runs) &&

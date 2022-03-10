@@ -97,7 +97,7 @@ auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
     -> std::tuple<int,
                   std::map<std::vector<std::vector<ScheduledModule>>,
                            ExecutionPlanSchedulingData>,
-                  long long, bool> {
+                  long long, bool, std::pair<int, int>> {
   std::map<std::vector<std::vector<ScheduledModule>>,
            ExecutionPlanSchedulingData>
       resulting_plans;
@@ -140,7 +140,7 @@ auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
   return {min_runs, resulting_plans,
           std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
               .count(),
-          timeout_trigger};
+          timeout_trigger, placed_nodes_and_discarded_placements};
 }
 
 void ElasticResourceNodeScheduler::BenchmarkScheduling(
@@ -151,7 +151,8 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
     AcceleratorLibraryInterface &drivers,
     std::map<std::string, TableMetadata> &tables,
     std::vector<ScheduledModule> &current_configuration, const Config &config,
-    std::map<std::string, double>& benchmark_data) {
+    std::map<std::string, double> &benchmark_data) {
+  Log(LogLevel::kTrace, "Schedule round");
   std::chrono::steady_clock::time_point begin_pre_process =
       std::chrono::steady_clock::now();
   RemoveUnnecessaryTables(graph, tables);
@@ -163,50 +164,53 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
   auto pre_process_time = std::chrono::duration_cast<std::chrono::microseconds>(
                               end_pre_process - begin_pre_process)
                               .count();
-
-  
-
-  auto [min_runs, resulting_plans, scheduling_time, timed_out] =
+  auto [min_runs, resulting_plans, scheduling_time, timed_out, stats] =
       ScheduleAndGetAllPlans(first_node_names, starting_nodes, processed_nodes,
                              graph, drivers, tables, config);
-
   std::chrono::steady_clock::time_point begin_cost_eval =
       std::chrono::steady_clock::now();
   // resulting_plans
-  auto [best_plan, new_last_config, data_amount, configuration_amount] = plan_evaluator_->GetBestPlan(
-      min_runs, current_configuration, config.resource_string,
-      config.utilites_scaler, config.config_written_scaler,
-      config.utility_per_frame_scaler, resulting_plans, config.cost_of_columns,
-      config.streaming_speed, config.configuration_speed);
+  auto [best_plan, new_last_config, data_amount, configuration_amount] =
+      plan_evaluator_->GetBestPlan(
+          min_runs, current_configuration, config.resource_string,
+          config.utilites_scaler, config.config_written_scaler,
+          config.utility_per_frame_scaler, resulting_plans,
+          config.cost_of_columns, config.streaming_speed,
+          config.configuration_speed);
   std::chrono::steady_clock::time_point end_cost_eval =
       std::chrono::steady_clock::now();
   auto cost_eval_time = std::chrono::duration_cast<std::chrono::microseconds>(
                             end_cost_eval - begin_cost_eval)
                             .count();
-  
+
   auto overall_time = std::chrono::duration_cast<std::chrono::microseconds>(
                           end_cost_eval - begin_pre_process)
                           .count();
+  benchmark_data["discarded_placements"] += stats.second;
+  benchmark_data["placed_nodes"] += stats.first;
+  benchmark_data["plan_count"] += resulting_plans.size();
   benchmark_data["pre_process_time"] += pre_process_time;
-  std::cout << "pre_process_time: " << std::to_string(pre_process_time)
-            << std::endl;
+  // std::cout << "pre_process_time: " << std::to_string(pre_process_time)
+  //          << std::endl;
   benchmark_data["schedule_time"] += scheduling_time;
-  std::cout << "schedule_time: " << std::to_string(scheduling_time)
-            << std::endl;
+  // std::cout << "schedule_time: " << std::to_string(scheduling_time)
+  //          << std::endl;
   benchmark_data["timeout"] += timed_out;
-  std::cout << "timeout: " << std::to_string(timed_out) << std::endl;
+  // std::cout << "timeout: " << std::to_string(timed_out) << std::endl;
   benchmark_data["cost_eval_time"] += cost_eval_time;
-  std::cout << "cost_eval_time: " << std::to_string(cost_eval_time)
-            << std::endl;
+  // std::cout << "cost_eval_time: " << std::to_string(cost_eval_time)
+  //          << std::endl;
   benchmark_data["overall_time"] += overall_time;
-  std::cout << "overall_time: " << std::to_string(overall_time) << std::endl;
+  // std::cout << "overall_time: " << std::to_string(overall_time) << std::endl;
   benchmark_data["run_count"] += best_plan.size();
-  std::cout << "run_count: " << std::to_string(best_plan.size()) << std::endl;
+  // std::cout << "run_count: " << std::to_string(best_plan.size()) <<
+  // std::endl;
   benchmark_data["data_amount"] += data_amount;
-  std::cout << "data_amount: " << std::to_string(data_amount) << std::endl;
+  // std::cout << "data_amount: " << std::to_string(data_amount) << std::endl;
   benchmark_data["configuration_amount"] += configuration_amount;
-  std::cout << "configuration_amount: " << std::to_string(configuration_amount)
-            << std::endl;
+  // std::cout << "configuration_amount: " <<
+  // std::to_string(configuration_amount)
+  //          << std::endl;
   benchmark_data["schedule_count"] += 1;
 
   starting_nodes = resulting_plans.at(best_plan).available_nodes;
@@ -216,12 +220,12 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
 
   current_configuration = new_last_config;
 
-  for (const auto &run : best_plan) {
+  /*for (const auto &run : best_plan) {
     for (const auto &node : run) {
       std::cout << " " << node.node_name << " ";
     }
     std::cout << std::endl;
-  }
+  }*/
 }
 
 auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
@@ -243,19 +247,22 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
       starting_nodes, config.pr_hw_library, processed_nodes, graph, tables,
       drivers);
 
-  auto [min_runs, resulting_plans, scheduling_time, _] =
+  auto [min_runs, resulting_plans, scheduling_time, ignored_timeout, ignored_stats] =
       ScheduleAndGetAllPlans(first_node_names, starting_nodes, processed_nodes,
                              graph, drivers, tables, config);
-  Log(LogLevel::kInfo, "Main scheduling loop time = " +
-                           std::to_string(scheduling_time/1000) + "[milliseconds]");
+  Log(LogLevel::kInfo,
+      "Main scheduling loop time = " + std::to_string(scheduling_time / 1000) +
+          "[milliseconds]");
 
   Log(LogLevel::kTrace, "Choosing best plan.");
   // resulting_plans
-  auto [best_plan, new_last_config, ignored_data_size, ignored_config_size] = plan_evaluator_->GetBestPlan(
-      min_runs, current_configuration, config.resource_string,
-      config.utilites_scaler, config.config_written_scaler,
-      config.utility_per_frame_scaler, resulting_plans, config.cost_of_columns,
-      config.streaming_speed, config.configuration_speed);
+  auto [best_plan, new_last_config, ignored_data_size, ignored_config_size] =
+      plan_evaluator_->GetBestPlan(
+          min_runs, current_configuration, config.resource_string,
+          config.utilites_scaler, config.config_written_scaler,
+          config.utility_per_frame_scaler, resulting_plans,
+          config.cost_of_columns, config.streaming_speed,
+          config.configuration_speed);
   Log(LogLevel::kTrace, "Creating module queue.");
   starting_nodes = resulting_plans.at(best_plan).available_nodes;
   processed_nodes = resulting_plans.at(best_plan).processed_nodes;
@@ -339,10 +346,13 @@ auto ElasticResourceNodeScheduler::GetDefaultHeuristics()
   longest_module_heuristics.push_back(
       {static_cast<std::string>("LONGEST_AVAILABLE")});
   all_modules_heuristics.push_back({static_cast<std::string>("ALL_AVAILABLE")});
-  return {{shortest_first_module_heuristics, longest_first_module_heuristics},
-          {shortest_module_heuristics, longest_module_heuristics},
-          {all_modules_heuristics, all_modules_heuristics},
-          {{}, all_modules_heuristics}};
+  return {
+      {shortest_first_module_heuristics, longest_first_module_heuristics},
+      {shortest_module_heuristics, longest_module_heuristics},
+      {shortest_module_heuristics, longest_module_heuristics},
+      {all_modules_heuristics, all_modules_heuristics},
+      {{}, all_modules_heuristics},
+  };
 }
 
 auto ElasticResourceNodeScheduler::FindSharedPointerFromRootNodes(

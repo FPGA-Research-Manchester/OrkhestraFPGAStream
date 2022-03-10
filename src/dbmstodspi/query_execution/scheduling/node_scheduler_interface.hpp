@@ -93,7 +93,7 @@ class NodeSchedulerInterface {
       -> std::tuple<int,
                     std::map<std::vector<std::vector<ScheduledModule>>,
                              ExecutionPlanSchedulingData>,
-                    long long, bool> = 0;
+                    long long, bool, std::pair<int, int>> = 0;
 
   virtual void BenchmarkScheduling(
       const std::vector<std::string>& first_node_names,

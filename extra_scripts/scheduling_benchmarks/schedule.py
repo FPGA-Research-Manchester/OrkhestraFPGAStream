@@ -963,8 +963,8 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
                         placed_module.node_name, starting_nodes, original_graph, graph, data_tables, selectivity)
 
     overall_stop_time = perf_counter()
-    print(
-        f"Scheduling duration: {overall_stop_time - overall_start_time - overall_cost_evaluation_time:.3f}s; Cost evaluation duration:{overall_cost_evaluation_time:.3f}s; Score: {(overall_score/plans_chosen) * 100:.2f}%")
+    # print(
+    #     f"Scheduling duration: {overall_stop_time - overall_start_time - overall_cost_evaluation_time:.3f}s; Cost evaluation duration:{overall_cost_evaluation_time:.3f}s; Score: {(overall_score/plans_chosen) * 100:.2f}%")
 
     overall_utility = 1 / overall_runs
 

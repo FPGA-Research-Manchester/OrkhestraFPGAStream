@@ -74,8 +74,8 @@ for my $run_i (@repeat_runs){
                                 open($stats_file, ">>$stats_filename");
                                 print $stats_file "\n$filter_c,$filter_dnf_low[$filter_size_i],$filter_comp_low[$filter_size_i],$filter_dnf_high[$filter_size_i],$filter_comp_high[$filter_size_i],$empty_j,$join_c,$arith_c,$arith_c,0.5,$query_c,$table_low[$table_size_i],$table_upper[$table_size_i],$max_node_limit,$min_node_limit";
                                 close $stats_file;
-                                my $query_generation = system("python benchmark_generator.py $stats_filename $graph_filename $table_filename");
-                                my $stats_generation = system("python graph_statistics.py $stats_filename $graph_filename $table_filename");
+                                my $query_generation = system("python benchmark_generator.py $stats_filename $graph_filename $table_filename 0");
+                                my $stats_generation = system("python graph_statistics_python.py $stats_filename $graph_filename $table_filename");
                                 tie *BW, 'File::ReadBackwards', $stats_filename or
                                     die "can't read $stats_filename $!" ;
                                 my $generated_query = <BW>;

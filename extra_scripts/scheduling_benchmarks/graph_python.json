@@ -1,10 +1,7 @@
 {
     "node0": {
-        "operation": "Filter",
-        "capacity": [
-            3,
-            2
-        ],
+        "operation": "Addition",
+        "capacity": [],
         "before": [
             [
                 "",
@@ -12,7 +9,7 @@
             ]
         ],
         "after": [
-            "node1"
+            ""
         ],
         "tables": [
             "table_0"
@@ -20,24 +17,7 @@
         "satisfying_bitstreams": []
     },
     "node1": {
-        "operation": "Addition",
-        "capacity": [],
-        "before": [
-            [
-                "node0",
-                0
-            ]
-        ],
-        "after": [
-            ""
-        ],
-        "tables": [
-            ""
-        ],
-        "satisfying_bitstreams": []
-    },
-    "node2": {
-        "operation": "Linear Sort",
+        "operation": "Global Sum",
         "capacity": [],
         "before": [
             [
@@ -46,32 +26,15 @@
             ]
         ],
         "after": [
-            "node3"
+            ""
         ],
         "tables": [
             "table_1"
         ],
         "satisfying_bitstreams": []
     },
-    "node3": {
-        "operation": "Merge Sort",
-        "capacity": [],
-        "before": [
-            [
-                "node2",
-                0
-            ]
-        ],
-        "after": [
-            "node6"
-        ],
-        "tables": [
-            ""
-        ],
-        "satisfying_bitstreams": []
-    },
-    "node4": {
-        "operation": "Linear Sort",
+    "node2": {
+        "operation": "Global Sum",
         "capacity": [],
         "before": [
             [
@@ -80,91 +43,15 @@
             ]
         ],
         "after": [
-            "node5"
-        ],
-        "tables": [
-            "table_6"
-        ],
-        "satisfying_bitstreams": []
-    },
-    "node5": {
-        "operation": "Merge Sort",
-        "capacity": [],
-        "before": [
-            [
-                "node4",
-                0
-            ]
-        ],
-        "after": [
-            "node6"
-        ],
-        "tables": [
             ""
-        ],
-        "satisfying_bitstreams": []
-    },
-    "node6": {
-        "operation": "Merge Join",
-        "capacity": [],
-        "before": [
-            [
-                "node3",
-                0
-            ],
-            [
-                "node5",
-                0
-            ]
-        ],
-        "after": [
-            ""
-        ],
-        "tables": [
-            "",
-            ""
-        ],
-        "satisfying_bitstreams": []
-    },
-    "node7": {
-        "operation": "Filter",
-        "capacity": [
-            1,
-            2
-        ],
-        "before": [
-            [
-                "",
-                -1
-            ]
-        ],
-        "after": [
-            "node8"
         ],
         "tables": [
             "table_2"
         ],
         "satisfying_bitstreams": []
     },
-    "node8": {
+    "node3": {
         "operation": "Global Sum",
-        "capacity": [],
-        "before": [
-            [
-                "node7",
-                0
-            ]
-        ],
-        "after": [
-            ""
-        ],
-        "tables": [
-            ""
-        ],
-        "satisfying_bitstreams": []
-    },
-    "node9": {
-        "operation": "Linear Sort",
         "capacity": [],
         "before": [
             [
@@ -173,172 +60,14 @@
             ]
         ],
         "after": [
-            "node10"
+            ""
         ],
         "tables": [
             "table_3"
         ],
         "satisfying_bitstreams": []
     },
-    "node10": {
-        "operation": "Merge Sort",
-        "capacity": [],
-        "before": [
-            [
-                "node9",
-                0
-            ]
-        ],
-        "after": [
-            "node13"
-        ],
-        "tables": [
-            ""
-        ],
-        "satisfying_bitstreams": []
-    },
-    "node11": {
-        "operation": "Linear Sort",
-        "capacity": [],
-        "before": [
-            [
-                "",
-                -1
-            ]
-        ],
-        "after": [
-            "node12"
-        ],
-        "tables": [
-            "table_7"
-        ],
-        "satisfying_bitstreams": []
-    },
-    "node12": {
-        "operation": "Merge Sort",
-        "capacity": [],
-        "before": [
-            [
-                "node11",
-                0
-            ]
-        ],
-        "after": [
-            "node13"
-        ],
-        "tables": [
-            ""
-        ],
-        "satisfying_bitstreams": []
-    },
-    "node13": {
-        "operation": "Merge Join",
-        "capacity": [],
-        "before": [
-            [
-                "node10",
-                0
-            ],
-            [
-                "node12",
-                0
-            ]
-        ],
-        "after": [
-            "node14"
-        ],
-        "tables": [
-            "",
-            ""
-        ],
-        "satisfying_bitstreams": []
-    },
-    "node14": {
-        "operation": "Addition",
-        "capacity": [],
-        "before": [
-            [
-                "node13",
-                0
-            ]
-        ],
-        "after": [
-            "node15"
-        ],
-        "tables": [
-            ""
-        ],
-        "satisfying_bitstreams": []
-    },
-    "node15": {
-        "operation": "Multiplier",
-        "capacity": [],
-        "before": [
-            [
-                "node14",
-                0
-            ]
-        ],
-        "after": [
-            "node16"
-        ],
-        "tables": [
-            ""
-        ],
-        "satisfying_bitstreams": []
-    },
-    "node16": {
-        "operation": "Multiplier",
-        "capacity": [],
-        "before": [
-            [
-                "node15",
-                0
-            ]
-        ],
-        "after": [
-            "node17"
-        ],
-        "tables": [
-            ""
-        ],
-        "satisfying_bitstreams": []
-    },
-    "node17": {
-        "operation": "Addition",
-        "capacity": [],
-        "before": [
-            [
-                "node16",
-                0
-            ]
-        ],
-        "after": [
-            "node18"
-        ],
-        "tables": [
-            ""
-        ],
-        "satisfying_bitstreams": []
-    },
-    "node18": {
-        "operation": "Global Sum",
-        "capacity": [],
-        "before": [
-            [
-                "node17",
-                0
-            ]
-        ],
-        "after": [
-            ""
-        ],
-        "tables": [
-            ""
-        ],
-        "satisfying_bitstreams": []
-    },
-    "node19": {
+    "node4": {
         "operation": "Global Sum",
         "capacity": [],
         "before": [
@@ -355,11 +84,113 @@
         ],
         "satisfying_bitstreams": []
     },
-    "node20": {
+    "node5": {
+        "operation": "Global Sum",
+        "capacity": [],
+        "before": [
+            [
+                "",
+                -1
+            ]
+        ],
+        "after": [
+            ""
+        ],
+        "tables": [
+            "table_5"
+        ],
+        "satisfying_bitstreams": []
+    },
+    "node6": {
+        "operation": "Addition",
+        "capacity": [],
+        "before": [
+            [
+                "",
+                -1
+            ]
+        ],
+        "after": [
+            "node7"
+        ],
+        "tables": [
+            "table_6"
+        ],
+        "satisfying_bitstreams": []
+    },
+    "node7": {
+        "operation": "Multiplier",
+        "capacity": [],
+        "before": [
+            [
+                "node6",
+                0
+            ]
+        ],
+        "after": [
+            "node8"
+        ],
+        "tables": [
+            ""
+        ],
+        "satisfying_bitstreams": []
+    },
+    "node8": {
+        "operation": "Multiplier",
+        "capacity": [],
+        "before": [
+            [
+                "node7",
+                0
+            ]
+        ],
+        "after": [
+            "node9"
+        ],
+        "tables": [
+            ""
+        ],
+        "satisfying_bitstreams": []
+    },
+    "node9": {
+        "operation": "Addition",
+        "capacity": [],
+        "before": [
+            [
+                "node8",
+                0
+            ]
+        ],
+        "after": [
+            "node10"
+        ],
+        "tables": [
+            ""
+        ],
+        "satisfying_bitstreams": []
+    },
+    "node10": {
+        "operation": "Addition",
+        "capacity": [],
+        "before": [
+            [
+                "node9",
+                0
+            ]
+        ],
+        "after": [
+            ""
+        ],
+        "tables": [
+            ""
+        ],
+        "satisfying_bitstreams": []
+    },
+    "node11": {
         "operation": "Filter",
         "capacity": [
-            2,
-            1
+            11,
+            7
         ],
         "before": [
             [
@@ -368,19 +199,143 @@
             ]
         ],
         "after": [
-            "node21"
+            "node12"
         ],
         "tables": [
-            "table_5"
+            "table_7"
         ],
         "satisfying_bitstreams": []
     },
-    "node21": {
+    "node12": {
+        "operation": "Linear Sort",
+        "capacity": [],
+        "before": [
+            [
+                "node11",
+                0
+            ]
+        ],
+        "after": [
+            "node13"
+        ],
+        "tables": [
+            ""
+        ],
+        "satisfying_bitstreams": []
+    },
+    "node13": {
+        "operation": "Merge Sort",
+        "capacity": [],
+        "before": [
+            [
+                "node12",
+                0
+            ]
+        ],
+        "after": [
+            "node16"
+        ],
+        "tables": [
+            ""
+        ],
+        "satisfying_bitstreams": []
+    },
+    "node14": {
+        "operation": "Linear Sort",
+        "capacity": [],
+        "before": [
+            [
+                "",
+                -1
+            ]
+        ],
+        "after": [
+            "node15"
+        ],
+        "tables": [
+            "table_10"
+        ],
+        "satisfying_bitstreams": []
+    },
+    "node15": {
+        "operation": "Merge Sort",
+        "capacity": [],
+        "before": [
+            [
+                "node14",
+                0
+            ]
+        ],
+        "after": [
+            "node16"
+        ],
+        "tables": [
+            ""
+        ],
+        "satisfying_bitstreams": []
+    },
+    "node16": {
+        "operation": "Merge Join",
+        "capacity": [],
+        "before": [
+            [
+                "node13",
+                0
+            ],
+            [
+                "node15",
+                0
+            ]
+        ],
+        "after": [
+            ""
+        ],
+        "tables": [
+            "",
+            ""
+        ],
+        "satisfying_bitstreams": []
+    },
+    "node17": {
         "operation": "Global Sum",
         "capacity": [],
         "before": [
             [
-                "node20",
+                "",
+                -1
+            ]
+        ],
+        "after": [
+            ""
+        ],
+        "tables": [
+            "table_8"
+        ],
+        "satisfying_bitstreams": []
+    },
+    "node18": {
+        "operation": "Addition",
+        "capacity": [],
+        "before": [
+            [
+                "",
+                -1
+            ]
+        ],
+        "after": [
+            "node19"
+        ],
+        "tables": [
+            "table_9"
+        ],
+        "satisfying_bitstreams": []
+    },
+    "node19": {
+        "operation": "Global Sum",
+        "capacity": [],
+        "before": [
+            [
+                "node18",
                 0
             ]
         ],

@@ -127,60 +127,60 @@ def check_for_dependency(current_graph, before_nodes):
 
 def main(argv):
 
-    c_scheduler_format = True
+    c_scheduler_format = int(argv[3]) != 0
 
-    # graph_file = argv[1]
-    # table_data = argv[2]
+    graph_file = argv[1]
+    table_file = argv[2]
 
-    # with open(argv[0], "r") as stats_file:
-    #     last_line = stats_file.readlines()[-1]
-    #     values = last_line.split(',')
-    #     if len(values) < 12:
-    #         raise ValueError("Incorrect input")
+    with open(argv[0], "r") as stats_file:
+        last_line = stats_file.readlines()[-1]
+        values = last_line.split(',')
+        if len(values) < 12:
+            raise ValueError("Incorrect input")
 
-    #     filter_chance = float(values[0])
-    #     filter_first_lower_bound = int(values[1])
-    #     filter_second_lower_bount = int(values[2])
-    #     filter_first_upper_bount = int(values[3])
-    #     filter_second_upper_bound = int(values[4])
-    #     filter_lower_bound = [
-    #         filter_first_lower_bound, filter_second_lower_bount]
-    #     filter_upper_bound = [
-    #         filter_first_upper_bount, filter_second_upper_bound]
-    #     leave_empty_join_chance = float(values[5])
-    #     join_chance = float(values[6])
-    #     arithmetic_chance = float(values[7])
-    #     aggregation_chance = float(values[8])
-    #     multiplier_chance = float(values[9])
-    #     query_count = int(values[10])
-    #     table_size_lower_bound = int(values[11])
-    #     table_size_upper_bound = int(values[12])
-    #     node_max_limit = int(values[13])
-    #     node_min_limit = int(values[14])
+        filter_chance = float(values[0])
+        filter_first_lower_bound = int(values[1])
+        filter_second_lower_bount = int(values[2])
+        filter_first_upper_bount = int(values[3])
+        filter_second_upper_bound = int(values[4])
+        filter_lower_bound = [
+            filter_first_lower_bound, filter_second_lower_bount]
+        filter_upper_bound = [
+            filter_first_upper_bount, filter_second_upper_bound]
+        leave_empty_join_chance = float(values[5])
+        join_chance = float(values[6])
+        arithmetic_chance = float(values[7])
+        aggregation_chance = float(values[8])
+        multiplier_chance = float(values[9])
+        query_count = int(values[10])
+        table_size_lower_bound = int(values[11])
+        table_size_upper_bound = int(values[12])
+        node_max_limit = int(values[13])
+        node_min_limit = int(values[14])
 
     # Hard coded for now
     table_recod_size_lower_bound = 8
     table_recod_size_upper_bound = 24
 
-    filter_chance = 0.5
-    filter_first_lower_bound = 1
-    filter_second_lower_bount = 10
-    filter_first_upper_bount = 5
-    filter_second_upper_bound = 20
-    filter_lower_bound = [filter_first_lower_bound, filter_second_lower_bount]
-    filter_upper_bound = [filter_first_upper_bount, filter_second_upper_bound]
-    leave_empty_join_chance = 0.5
-    join_chance = 0.5
-    arithmetic_chance = 0.5
-    aggregation_chance = 0.5
-    multiplier_chance = 0.5
-    query_count = 3
-    table_size_lower_bound = 10
-    table_size_upper_bound = 10000
-    node_max_limit = 10
-    node_min_limit = 3
-    graph_file = "test_graph.json"
-    table_file = "test_table.json"
+    # filter_chance = 0.5
+    # filter_first_lower_bound = 1
+    # filter_second_lower_bount = 10
+    # filter_first_upper_bount = 5
+    # filter_second_upper_bound = 20
+    # filter_lower_bound = [filter_first_lower_bound, filter_second_lower_bount]
+    # filter_upper_bound = [filter_first_upper_bount, filter_second_upper_bound]
+    # leave_empty_join_chance = 0.5
+    # join_chance = 0.5
+    # arithmetic_chance = 0.5
+    # aggregation_chance = 0.5
+    # multiplier_chance = 0.5
+    # query_count = 3
+    # table_size_lower_bound = 10
+    # table_size_upper_bound = 10000
+    # node_max_limit = 10
+    # node_min_limit = 3
+    # graph_file = "test_graph.json"
+    # table_file = "test_table.json"
 
     current_graph = {}
     current_join_nodes = []
@@ -256,13 +256,15 @@ def main(argv):
                 output.append(None)
             operation = operation_names[current_graph[node_name]["operation"]]
             if operation == "kFilter":
-                operation_parameters["operation_params"] = [[0,
-                                                             0,
-                                                             current_graph[node_name]["capacity"][0]],
-                                                            [],
-                                                            [],
-                                                            [],
-                                                            [current_graph[node_name]["capacity"][1]]]
+                operation_params = [
+                    [0, 0, current_graph[node_name]["capacity"][1]]]
+                for i in range(current_graph[node_name]["capacity"][1]):
+                    operation_params.append([])
+                    operation_params.append([])
+                    operation_params.append([])
+                    operation_params.append(
+                        [current_graph[node_name]["capacity"][0]])
+                operation_parameters["operation_params"] = operation_params
             new_graph[node_name] = {
                 "input": input,
                 "output": output,

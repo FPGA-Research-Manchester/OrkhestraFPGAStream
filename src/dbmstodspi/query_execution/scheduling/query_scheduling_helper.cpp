@@ -102,7 +102,7 @@ auto QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
             std::find(past_nodes.begin(), past_nodes.end(),
                       previous_node_name) == past_nodes.end()) {
           auto search = std::find(potential_nodes.begin(),
-                                  potential_nodes.end(), previous_node_name);
+                                  potential_nodes.end(), potential_node_name);
           if (search != potential_nodes.end()) {
             potential_nodes.erase(search);
           }

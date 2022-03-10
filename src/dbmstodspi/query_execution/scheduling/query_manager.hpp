@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 #pragma once
-#include "query_manager_interface.hpp"
 #include "json_reader_interface.hpp"
+#include "query_manager_interface.hpp"
 
 using orkhestrafs::core_interfaces::JSONReaderInterface;
 
@@ -130,7 +130,8 @@ class QueryManager : public QueryManagerInterface {
       {"timeout", 0},          {"cost_eval_time", 0},
       {"overall_time", 0},     {"run_count", 0},
       {"data_amount", 0},      {"configuration_amount", 0},
-      {"schedule_count", 0}};
+      {"schedule_count", 0},   {"plan_count", 0},
+      {"placed_nodes", 0},     {"discarded_placements", 0}};
 
   static void CheckTableData(const DataManagerInterface* data_manager,
                              const TableData& expected_table,

@@ -39,7 +39,7 @@ class MockNodeScheduler : public NodeSchedulerInterface {
       std::tuple<int,
                  std::map<std::vector<std::vector<ScheduledModule>>,
                           ExecutionPlanSchedulingData>,
-                 long long, bool>;
+                 long long, bool, std::pair<int, int>>;
   using BenchmarkMap = std::map<std::string, double>;
 
  public:
