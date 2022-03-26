@@ -38,7 +38,7 @@ void RapidJSONReader::WriteValueMap(std::map<std::string, double> data,
   for (const auto& [key, value] : data) {
     Value json_key;
     json_key.SetString(key.c_str(), key.size(), document.GetAllocator());
-    auto thing = json_key.GetString();
+    const auto* thing = json_key.GetString();
     document.AddMember(json_key, value, document.GetAllocator());
   }
   FILE* file_pointer =
@@ -327,7 +327,7 @@ auto RapidJSONReader::ReadHWLibraryData(std::string json_filename)
          operator_parameters[start_locations_field.c_str()].GetArray()) {
       std::vector<std::string> current_location_bitstreams;
       for (const auto& bitstream_name : start_location_array.GetArray()) {
-        current_location_bitstreams.push_back(bitstream_name.GetString());
+        current_location_bitstreams.emplace_back(bitstream_name.GetString());
       }
       start_locations_vector.push_back(current_location_bitstreams);
     }

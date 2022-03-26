@@ -19,11 +19,10 @@ limitations under the License.
 #include <map>
 #include <memory>
 #include <queue>
-#include <utility>
-#include <vector>
-
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include "accelerator_library_interface.hpp"
 #include "config.hpp"
@@ -35,13 +34,11 @@ limitations under the License.
 #include "scheduling_query_node.hpp"
 #include "table_data.hpp"
 
-using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 using orkhestrafs::core_interfaces::query_scheduling_data::
     ConfigurableModulesVector;
 using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
 
 using orkhestrafs::core_interfaces::Config;
-using orkhestrafs::core_interfaces::hw_library::OperationPRModules;
 using orkhestrafs::core_interfaces::table_data::TableMetadata;
 using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
 using orkhestrafs::dbmstodspi::ScheduledModule;
@@ -92,10 +89,9 @@ class NodeSchedulerInterface {
       std::unordered_set<std::string>& processed_nodes,
       std::unordered_map<std::string, SchedulingQueryNode>& graph,
       AcceleratorLibraryInterface& drivers,
-      std::map<std::string, TableMetadata>& tables,
-      const Config& config)
+      std::map<std::string, TableMetadata>& tables, const Config& config)
       -> std::tuple<int,
-          std::map<std::vector<std::vector<ScheduledModule>>,
+                    std::map<std::vector<std::vector<ScheduledModule>>,
                              ExecutionPlanSchedulingData>,
                     long long, bool, std::pair<int, int>> = 0;
 

@@ -1,17 +1,18 @@
 #include "cynq.h"
-#include "mmio.h"
-#include "json.hpp"
-#include "fpga.h"
 
-//extern "C" {
+#include "fpga.h"
+#include "json.hpp"
+#include "mmio.h"
+
+// extern "C" {
 //  #include "bit_patch.h"
 //}
 
-#include <filesystem>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
+#include <filesystem>
 #include <string>
 
 namespace fs = std::filesystem;
@@ -20,37 +21,37 @@ FPGAManager fpga0(0);
 
 typedef std::map<std::string, uint32_t> paramlist;
 
-
-
-
 Bitstream::Bitstream() {}
 
-Bitstream::Bitstream(std::string bits, std::string main, std::vector<std::string> stubs) :
-    bitstream(bits), mainRegion(main), stubRegions(stubs),
-    slotCount(1 + stubs.size()), multiSlot(slotCount > 1) {}
+Bitstream::Bitstream(std::string bits, std::string main,
+                     std::vector<std::string> stubs)
+    : bitstream(bits),
+      mainRegion(main),
+      stubRegions(stubs),
+      slotCount(1 + stubs.size()),
+      multiSlot(slotCount > 1) {}
 
-Bitstream::Bitstream(std::string bits, std::string main) : Bitstream(bits, main, std::vector<std::string>()) {}
+Bitstream::Bitstream(std::string bits, std::string main)
+    : Bitstream(bits, main, std::vector<std::string>()) {}
 
 bool Bitstream::isInstalled() {
   std::string libfirmpath = "/lib/firmware/" + bitstream;
   std::string repopath = bitstream;
   struct stat libfirm, repo;
-  if (stat(libfirmpath.c_str(), &libfirm) != 0)
-    return false;
+  if (stat(libfirmpath.c_str(), &libfirm) != 0) return false;
   stat(repopath.c_str(), &repo);
   return libfirm.st_mtime >= repo.st_mtime;
 }
 
 void Bitstream::install() {
   if (isInstalled()) return;
-  std::cout << "Installing module " << bitstream << " to /lib/firmware" << std::endl;
+  std::cout << "Installing module " << bitstream << " to /lib/firmware"
+            << std::endl;
   fs::copy_file(bitstream, "/lib/firmware/" + bitstream,
-      fs::copy_options::overwrite_existing);
+                fs::copy_options::overwrite_existing);
 }
 
-bool Bitstream::isFull() {
-  return mainRegion == "full";
-}
+bool Bitstream::isFull() { return mainRegion == "full"; }
 
 std::string shellname;
 int zeroSlotID = 0;
@@ -63,11 +64,8 @@ std::map<std::string, int> slotIDs = {
 };
 */
 
-
 Accel::Accel() {}
-Accel::Accel(std::string name) :
-  name(name) {
-}
+Accel::Accel(std::string name) : name(name) {}
 void Accel::addBitstream(const Bitstream &bits) {
   bitstreams.push_back(bits);
   bitstreams.back().install();
@@ -78,39 +76,45 @@ void Accel::addRegister(std::string name, int offset) {
 int Accel::getRegister(std::string name) {
   try {
     return registers.at(name);
-  } catch (std::out_of_range& e) {
-    std::cerr << "Lookup of register " << name << " in accel " << this->name << " failed" << std::endl;
+  } catch (std::out_of_range &e) {
+    std::cerr << "Lookup of register " << name << " in accel " << this->name
+              << " failed" << std::endl;
     throw NoSuchRegisterException();
   }
 }
 
-
-// for all 'base' (in slot zero) bitstreams 
+// for all 'base' (in slot zero) bitstreams
 //   for all slots which can fit bitstream (slotno < slotcount - bs.segcount)
 //     if (bitstreams.contains(slotno, size)) continue;
 //     new_bs_file = relocate_bitstream(old, new, slotno);
 //     new_bs = Bitstream(new_bs_file, slotno, width)
 //     bitstreams.add(new_bs)
 
-//void Accel::setupSiblings() {
+// void Accel::setupSiblings() {
 //  std::vector<Bitstream> oldbslist = bitstreams;
 //  for (Bitstream &bs : oldbslist) { // for each bitstream
 //
 //    // check if bitstream is valid for moving
-//    if (bs.isFull()) continue;                                  // skip: full bitstreams cannot be relocated
-//    if (slotIDs.find(bs.mainRegion) == slotIDs.end()) continue; // skip: bitstream must be in relocatable slot
-//    if (slotIDs.at(bs.mainRegion) != zeroSlotID) continue;      // skip: bitstream must be in slot zero
+//    if (bs.isFull()) continue;                                  // skip: full
+//    bitstreams cannot be relocated if (slotIDs.find(bs.mainRegion) ==
+//    slotIDs.end()) continue; // skip: bitstream must be in relocatable slot if
+//    (slotIDs.at(bs.mainRegion) != zeroSlotID) continue;      // skip:
+//    bitstream must be in slot zero
 //
-//    std::cout << "Attempting to create siblings for " << bs.bitstream << std::endl;
-//    std::string relocatablebspath = bs.bitstream; // input bitstream
+//    std::cout << "Attempting to create siblings for " << bs.bitstream <<
+//    std::endl; std::string relocatablebspath = bs.bitstream; // input
+//    bitstream
 //
 //    for (auto &newSlot : slotIDs) { // for each slot in current shell
-//      if (newSlot.second > slotIDs.size() - bs.slotCount) continue; // skip: relocacted bitstream will not fit
+//      if (newSlot.second > slotIDs.size() - bs.slotCount) continue; // skip:
+//      relocacted bitstream will not fit
 //
 //      // check if this bitstream already exists
 //      bool exists = false;
-//      for (Bitstream &candidate : bitstreams) { // check if bitstream already exists
-//        if (candidate.slotCount == bs.slotCount && candidate.mainRegion == newSlot.first) {
+//      for (Bitstream &candidate : bitstreams) { // check if bitstream already
+//      exists
+//        if (candidate.slotCount == bs.slotCount && candidate.mainRegion ==
+//        newSlot.first) {
 //          exists = true;
 //          break;
 //        }
@@ -119,27 +123,30 @@ int Accel::getRegister(std::string name) {
 //
 //      // if not, we need to create it
 //      // generate unique bitstream name <name>_<shellname>_slot_<slotid>
-//      std::string newBSName = name + "_" + shellname + "_slot_" + std::to_string(newSlot.second); // output bitstream
-//      if (bs.slotCount > 1) // if wider than a single slot, add width to name
+//      std::string newBSName = name + "_" + shellname + "_slot_" +
+//      std::to_string(newSlot.second); // output bitstream if (bs.slotCount >
+//      1) // if wider than a single slot, add width to name
 //        newBSName += "_width_" + std::to_string(bs.slotCount);
 //      newBSName += ".gen.bin";
 //
 //      // check bitstream exists
 //      std::string path = newBSName;
 //      struct stat buffer;
-//      if (stat(path.c_str(), &buffer) == 0) continue; // skip: file exists (if stat() succeds))
+//      if (stat(path.c_str(), &buffer) == 0) continue; // skip: file exists (if
+//      stat() succeds))
 //
 //      // relocate bitstream
 //      std::cout << " - creating sibling " << newBSName << std::endl;
-//      if (relocate_bitstream_file(relocatablebspath.c_str(), path.c_str(), newSlot.second) != 0) // try to relocate
+//      if (relocate_bitstream_file(relocatablebspath.c_str(), path.c_str(),
+//      newSlot.second) != 0) // try to relocate
 //        throw std::runtime_error("Failed to relocate bitstream");
 //
 //      // setup updated stub regions
 //      std::vector<std::string> stubs;
 //      for (auto& stub : bs.stubRegions) {
 //        int id = slotIDs[stub]; // get stub numeric id
-//        for (auto &slot : slotIDs) // find slot with same numeric id 
-//          if (slot.second == id) 
+//        for (auto &slot : slotIDs) // find slot with same numeric id
+//          if (slot.second == id)
 //            stubs.push_back(slot.first);
 //      }
 //      addBitstream(Bitstream(newBSName, newSlot.first, stubs));
@@ -154,7 +161,7 @@ Accel Accel::loadFromJSON(std::string jsonpath) {
   nlohmann::json json;
   try {
     jsonfile >> json;
-  } catch (nlohmann::detail::parse_error& e) {
+  } catch (nlohmann::detail::parse_error &e) {
     std::cerr << "Failed to parse file: " << jsonpath << std::endl;
     throw e;
   }
@@ -162,7 +169,8 @@ Accel Accel::loadFromJSON(std::string jsonpath) {
   std::string name = json["name"];
   Accel accel(name);
   if (json.contains("address"))
-    accel.address = std::stol(json["address"].get<std::string>().c_str(), nullptr, 0);
+    accel.address =
+        std::stol(json["address"].get<std::string>().c_str(), nullptr, 0);
   else
     accel.address = 0;
   for (auto &bitfile : json["bitfiles"]) {
@@ -174,13 +182,12 @@ Accel Accel::loadFromJSON(std::string jsonpath) {
     }
   }
   for (auto &reg : json["registers"])
-    accel.addRegister(reg["name"], std::stoi(reg["offset"].get<std::string>().c_str(), nullptr, 0));
-  //accel.setupSiblings();
+    accel.addRegister(
+        reg["name"],
+        std::stoi(reg["offset"].get<std::string>().c_str(), nullptr, 0));
+  // accel.setupSiblings();
   return accel;
 }
-
-
-
 
 Shell Shell::loadFromJSON(std::string jsonpath) {
   std::ifstream jsonfile(jsonpath);
@@ -189,28 +196,29 @@ Shell Shell::loadFromJSON(std::string jsonpath) {
   nlohmann::json json;
   try {
     jsonfile >> json;
-  } catch (nlohmann::detail::parse_error& e) {
+  } catch (nlohmann::detail::parse_error &e) {
     std::cerr << "Failed to parse file: " << jsonpath << std::endl;
     throw e;
   }
-  
+
   Shell shell;
   shell.name = json["name"];
   shellname = shell.name;
   shell.bitstream = json["bitfile"];
   int region_count = 0;
   for (auto &reg : json["regions"]) {
-    shell.blanks[reg["name"]]  = reg["blank"];
-    shell.blockers[reg["name"]] = std::stol(reg["bridge"].get<std::string>().c_str(), nullptr, 0);
-    shell.addrs[reg["name"]]    = std::stol(reg["addr"].get<std::string>().c_str(), nullptr, 0);
-    
+    shell.blanks[reg["name"]] = reg["blank"];
+    shell.blockers[reg["name"]] =
+        std::stol(reg["bridge"].get<std::string>().c_str(), nullptr, 0);
+    shell.addrs[reg["name"]] =
+        std::stol(reg["addr"].get<std::string>().c_str(), nullptr, 0);
+
     slotIDs[reg["name"]] = region_count;
     region_count++;
   }
   shell.install();
   return shell;
 }
-
 
 bool Shell::isInstalled() {
   std::string path = "/lib/firmware/" + bitstream;
@@ -219,43 +227,51 @@ bool Shell::isInstalled() {
 }
 void Shell::install() {
   if (isInstalled()) return;
-  fs::copy_file(bitstream, "/lib/firmware/" + bitstream, \
-     fs::copy_options::update_existing);
+  fs::copy_file(bitstream, "/lib/firmware/" + bitstream,
+                fs::copy_options::update_existing);
 }
 
+Region::Region()
+    : blockerAddr(0), periphAddr(0), mapped(false), locked(false) {}
 
-
-
-Region::Region() :
-    blockerAddr(0), periphAddr(0),
-    mapped(false), locked(false) {}
-
-Region::Region(std::string name, std::string blankName, long blocker, long address) :
-    name(name), blank(blankName, name),
-    blockerAddr(blocker), periphAddr(address),
-    mapped(false), locked(false) {
+Region::Region(std::string name, std::string blankName, long blocker,
+               long address)
+    : name(name),
+      blank(blankName, name),
+      blockerAddr(blocker),
+      periphAddr(address),
+      mapped(false),
+      locked(false) {
   blank.install();
   mapDevs();
 }
 
 Region::~Region() {
-  if (mapped)
-    unmapDevs();
+  if (mapped) unmapDevs();
 }
 
 // moove constructo
-Region::Region(Region&& a) :
-    name(a.name), blank(a.blank),
-    blockerAddr(a.blockerAddr), blockerDev(a.blockerDev), blockerRegs(a.blockerRegs),
-    periphAddr(a.periphAddr), periphDev(a.periphDev), periphRegs(a.periphRegs), mapped(a.mapped),
-    accel(a.accel), bitstream(a.bitstream), stub(a.stub), locked(a.locked) {
+Region::Region(Region &&a)
+    : name(a.name),
+      blank(a.blank),
+      blockerAddr(a.blockerAddr),
+      blockerDev(a.blockerDev),
+      blockerRegs(a.blockerRegs),
+      periphAddr(a.periphAddr),
+      periphDev(a.periphDev),
+      periphRegs(a.periphRegs),
+      mapped(a.mapped),
+      accel(a.accel),
+      bitstream(a.bitstream),
+      stub(a.stub),
+      locked(a.locked) {
   // std::cout << "move consturctors" << std::endl;
   // we have stolen the mapping from the other object
   a.mapped = false;
 }
 
 // moove assignment
-Region& Region::operator=(Region&& a) {
+Region &Region::operator=(Region &&a) {
   // std::cout << "move assign" << std::endl;
   if (&a == this) return *this;
   if (mapped) unmapDevs();
@@ -281,42 +297,38 @@ Region& Region::operator=(Region&& a) {
 
 // mmap blockers and peripheral address ranges
 void Region::mapDevs() {
-  std::cout << "Mmapping region " << name << ", " << (void*)periphAddr << ", " << (void*)blockerAddr << std::endl;
+  std::cout << "Mmapping region " << name << ", " << (void *)periphAddr << ", "
+            << (void *)blockerAddr << std::endl;
   // load blocker register mmap
   blockerDev = mmioGetMmap("/dev/mem", blockerAddr, 4);
   if (blockerDev.fd == -1)
     throw std::runtime_error("Could not load blocker mmio");
-  blockerRegs = (uint8_t*)blockerDev.mmap;
+  blockerRegs = (uint8_t *)blockerDev.mmap;
 
   // load device register mmap
   periphDev = mmioGetMmap("/dev/mem", periphAddr, 4096);
-  if (periphDev.fd == -1)
-    throw std::runtime_error("could not mmap accel");
-  periphRegs = (uint32_t*)periphDev.mmap;
+  if (periphDev.fd == -1) throw std::runtime_error("could not mmap accel");
+  periphRegs = (uint32_t *)periphDev.mmap;
 
   mapped = true;
 }
 
 // unmap blockers and peripherals
 void Region::unmapDevs() {
-  std::cout << "Munmapping region " << name << ", " << (void*)periphAddr << ", " << (void*)blockerAddr << std::endl;
+  std::cout << "Munmapping region " << name << ", " << (void *)periphAddr
+            << ", " << (void *)blockerAddr << std::endl;
   mmioFreeMmap(blockerDev);
   mmioFreeMmap(periphDev);
   mapped = false;
 }
 
-void Region::setBlock(bool status) {
-  *blockerRegs = (status ? 1 : 0);
-}
+void Region::setBlock(bool status) { *blockerRegs = (status ? 1 : 0); }
 
-bool Region::canElideLoad(Bitstream &bs) {
-  return &bs == bitstream;
-}
+bool Region::canElideLoad(Bitstream &bs) { return &bs == bitstream; }
 
 void Region::loadAccel(Accel &acc, Bitstream &bs) {
-  if (locked)
-    throw std::runtime_error("loading onto locked accel");
-  if (bitstream != &bs) { // yeet that bitstream
+  if (locked) throw std::runtime_error("loading onto locked accel");
+  if (bitstream != &bs) {  // yeet that bitstream
     std::cout << "Loading accelerator manually" << std::endl;
     setBlock(true);
     fpga0.loadPartial(blank.bitstream);
@@ -331,9 +343,8 @@ void Region::loadAccel(Accel &acc, Bitstream &bs) {
 }
 
 void Region::loadStub(Accel &acc, Bitstream &bs) {
-  if (locked)
-    throw std::runtime_error("loading onto locked accel");
-  if (bitstream != &bs) { // yeet that bitstream
+  if (locked) throw std::runtime_error("loading onto locked accel");
+  if (bitstream != &bs) {  // yeet that bitstream
     stub = true;
     bitstream = &bs;
     accel = &acc;
@@ -344,53 +355,47 @@ void Region::loadStub(Accel &acc, Bitstream &bs) {
 }
 
 void Region::unloadAccel() {
-  if (!locked)
-    throw std::runtime_error("unloading from unlocked accel");
+  if (!locked) throw std::runtime_error("unloading from unlocked accel");
   locked = false;
 }
 
-
-
 void AccelInst::programAccel(paramlist &regvals) {
-  if (!region->locked)
-    throw std::runtime_error("running from unlocked accel");
+  if (!region->locked) throw std::runtime_error("running from unlocked accel");
   for (auto &param : regvals) {
     int offy = accel->getRegister(param.first) / 4;
-    //std::cout << "setting " << param.first << ":" << offy << ":" << &regs[offy] << " to " << param.second << std::endl;
+    // std::cout << "setting " << param.first << ":" << offy << ":" <<
+    // &regs[offy] << " to " << param.second << std::endl;
     region->periphRegs[offy] = param.second;
   }
 }
 
 void AccelInst::runAccel() {
-  if (!region->locked)
-    throw std::runtime_error("running from unlocked accel");
+  if (!region->locked) throw std::runtime_error("running from unlocked accel");
   // std::cout << "Starting Accelerator" << std::endl;
   int offy = accel->getRegister("control") / 4;
   region->periphRegs[offy] = 1;
 }
 
 bool AccelInst::running() {
-  if (!region->locked)
-    throw std::runtime_error("running from unlocked accel");
+  if (!region->locked) throw std::runtime_error("running from unlocked accel");
   int offy = accel->getRegister("control") / 4;
   return (region->periphRegs[offy] & 4) == 0;
 }
 
 void AccelInst::wait() {
-  if (!region->locked)
-    throw std::runtime_error("running from unlocked accel");
+  if (!region->locked) throw std::runtime_error("running from unlocked accel");
   int offy = accel->getRegister("control") / 4;
-  while ((region->periphRegs[offy] & 4) == 0);
+  while ((region->periphRegs[offy] & 4) == 0)
+    ;
 }
-
-
 
 void StaticAccelInst::programAccel(paramlist &regvals) {
   if (!prmanager->accel)
     throw std::runtime_error("running from unlocked accel");
   for (auto &param : regvals) {
     int offy = accel->getRegister(param.first) / 4;
-    //std::cout << "setting " << param.first << "(" << offy <<  "): " << param.second << std::endl;
+    // std::cout << "setting " << param.first << "(" << offy <<  "): " <<
+    // param.second << std::endl;
     prmanager->accelRegs[offy] = param.second;
   }
 }
@@ -414,20 +419,16 @@ void StaticAccelInst::wait() {
   if (!prmanager->accel)
     throw std::runtime_error("running from unlocked accel");
   int offy = accel->getRegister("control") / 4;
-  while ((prmanager->accelRegs[offy] & 4) == 0);
+  while ((prmanager->accelRegs[offy] & 4) == 0)
+    ;
 }
-
-
-
 
 // manages the fpga, its regions, accelerators, and jobs
-PRManager::PRManager() {
-  importDefs();
-}
+PRManager::PRManager() { importDefs(); }
 
-void PRManager::fpgaLoadRegions(Accel& acc, Bitstream &bs) {
-  regions.at(bs.mainRegion).loadAccel(acc, bs);   // load main
-  for (auto &stub : bs.stubRegions)               // load stubs
+void PRManager::fpgaLoadRegions(Accel &acc, Bitstream &bs) {
+  regions.at(bs.mainRegion).loadAccel(acc, bs);  // load main
+  for (auto &stub : bs.stubRegions)              // load stubs
     regions.at(stub).loadStub(acc, bs);
 }
 
@@ -442,7 +443,7 @@ AccelInst PRManager::fpgaRun(std::string accname, paramlist &regvals) {
   AccelInst inst = fpgaLoad(accname);
   try {
     inst.programAccel(regvals);
-  } catch (std::exception& e) {
+  } catch (std::exception &e) {
     std::cerr << "Could not program accelerator " << accname << std::endl;
     fpgaUnloadRegions(inst);
     throw;
@@ -459,24 +460,26 @@ AccelInst PRManager::fpgaLoad(std::string accname) {
   Region *loadableRegion = nullptr;
   Bitstream *loadableBitstream = nullptr;
   bool validRegion = false;
-  
+
   for (auto &bitstream : toload.bitstreams) {
-    if (regions.find(bitstream.mainRegion) == regions.end()) continue; // check region exists
+    if (regions.find(bitstream.mainRegion) == regions.end())
+      continue;  // check region exists
     validRegion = true;
-    if (canQuickLoadBitstream(bitstream)) { // can be quickloaded
-      Region &tohost = regions[bitstream.mainRegion]; // perform quickload
+    if (canQuickLoadBitstream(bitstream)) {            // can be quickloaded
+      Region &tohost = regions[bitstream.mainRegion];  // perform quickload
       fpgaLoadRegions(toload, bitstream);
       instance.bitstream = &bitstream;
       instance.region = &tohost;
       return instance;
     }
-    if (!loadableRegion && canLoadBitstream(bitstream)) { // can be normal loaded
+    if (!loadableRegion &&
+        canLoadBitstream(bitstream)) {  // can be normal loaded
       loadableRegion = &regions[bitstream.mainRegion];
       loadableBitstream = &bitstream;
-    } 
+    }
   }
 
-  // perform slow loading 
+  // perform slow loading
   if (loadableRegion) {
     Region &tohost = *loadableRegion;
     Bitstream &bitstream = *loadableBitstream;
@@ -485,8 +488,8 @@ AccelInst PRManager::fpgaLoad(std::string accname) {
     instance.region = &tohost;
     return instance;
   }
- 
-  if (validRegion) // report no valid, vs valid but filled
+
+  if (validRegion)  // report no valid, vs valid but filled
     throw FPGAFullException();
   else
     throw RegionNotFoundException();
@@ -513,11 +516,9 @@ bool PRManager::canQuickLoadBitstream(Bitstream &bs) {
 // check if regions used by a bitstream are free
 bool PRManager::canLoadBitstream(Bitstream &bs) {
   try {
-    if (regions.at(bs.mainRegion).locked)
-      return false;
+    if (regions.at(bs.mainRegion).locked) return false;
     for (std::string &stub : bs.stubRegions)
-      if (regions.at(stub).locked)
-        return false;
+      if (regions.at(stub).locked) return false;
   } catch (std::out_of_range a) {
     return false;
   }
@@ -525,64 +526,62 @@ bool PRManager::canLoadBitstream(Bitstream &bs) {
 }
 
 void PRManager::fpgaLoadShell(std::string name) {
-  if (shell || accel)
-    throw std::runtime_error("FPGA already loaded");
+  if (shell || accel) throw std::runtime_error("FPGA already loaded");
 
   Shell &toLoad = shells.at(name);
-  for (auto& blank : toLoad.blanks)
-    regions.try_emplace(blank.first, blank.first, blank.second, 
-        toLoad.blockers[blank.first], toLoad.addrs[blank.first]);
+  for (auto &blank : toLoad.blanks)
+    regions.try_emplace(blank.first, blank.first, blank.second,
+                        toLoad.blockers[blank.first],
+                        toLoad.addrs[blank.first]);
 
   fpga0.loadFull(toLoad.bitstream);
 
   shell = &toLoad;
 }
 
-StaticAccelInst PRManager::fpgaLoadStatic(std::string name, int register_space_size) {
+StaticAccelInst PRManager::fpgaLoadStatic(std::string name,
+                                          int register_space_size) {
   /*if (accel || shell) {
     throw std::runtime_error("FPGA already loaded");
   } else {*/
-    Accel& acc = accels.at(name);
-    Bitstream *bs = nullptr;
-    for (auto& bitstream : acc.bitstreams)
-      if (bitstream.isFull())
-        bs = &bitstream;
-    if (bs == nullptr)
-      throw std::runtime_error("no suitable bitstream");
-    StaticAccelInst inst;
-    inst.accel = &acc;
-    inst.bitstream  = bs;
-    inst.prmanager = this;
-    fpga0.loadFull(bs->bitstream);
+  Accel &acc = accels.at(name);
+  Bitstream *bs = nullptr;
+  for (auto &bitstream : acc.bitstreams)
+    if (bitstream.isFull()) bs = &bitstream;
+  if (bs == nullptr) throw std::runtime_error("no suitable bitstream");
+  StaticAccelInst inst;
+  inst.accel = &acc;
+  inst.bitstream = bs;
+  inst.prmanager = this;
+  fpga0.loadFull(bs->bitstream);
 
-    //std::string readbackFile = "readback.bin";
+  // std::string readbackFile = "readback.bin";
 
-    //std::cout << "Beginning config read..." << std::endl;
-    //std::vector<char> configdata = fpga0.readbackConfig();
-    //std::cout << "Done! Read " << configdata.size() << " bytes" << std::endl;
-    //if (true) {
-    //  std::cout << "Config data is: " << std::endl;
-    //  std::cout << std::string(configdata.begin(), configdata.end())
-    //            << std::endl;
-    //}
+  // std::cout << "Beginning config read..." << std::endl;
+  // std::vector<char> configdata = fpga0.readbackConfig();
+  // std::cout << "Done! Read " << configdata.size() << " bytes" << std::endl;
+  // if (true) {
+  //  std::cout << "Config data is: " << std::endl;
+  //  std::cout << std::string(configdata.begin(), configdata.end())
+  //            << std::endl;
+  //}
 
-    //std::cout << "Beginning image read..." << std::endl;
-    //std::vector<char> imagedata = fpga0.readbackImage();
-    //std::cout << "Done! Read " << imagedata.size() << " bytes" << std::endl;
-    //if (true) {
-    //  std::cout << "Writing readback data to " << readbackFile << std::endl;
-    //  std::ofstream readbackOut(readbackFile);
-    //  std::copy(imagedata.cbegin(), imagedata.cend(),
-    //            std::ostreambuf_iterator<char>(readbackOut));
-    //}
-    
-    accelMap = mmioGetMmap("/dev/mem", acc.address, register_space_size);
-    if (accelMap.fd == -1)
-      throw std::runtime_error("could not mmap accel");
-    accelRegs = (uint32_t*)accelMap.mmap;
-    
-    accel = &acc;
-    return inst;
+  // std::cout << "Beginning image read..." << std::endl;
+  // std::vector<char> imagedata = fpga0.readbackImage();
+  // std::cout << "Done! Read " << imagedata.size() << " bytes" << std::endl;
+  // if (true) {
+  //  std::cout << "Writing readback data to " << readbackFile << std::endl;
+  //  std::ofstream readbackOut(readbackFile);
+  //  std::copy(imagedata.cbegin(), imagedata.cend(),
+  //            std::ostreambuf_iterator<char>(readbackOut));
+  //}
+
+  accelMap = mmioGetMmap("/dev/mem", acc.address, register_space_size);
+  if (accelMap.fd == -1) throw std::runtime_error("could not mmap accel");
+  accelRegs = (uint32_t *)accelMap.mmap;
+
+  accel = &acc;
+  return inst;
   //}
 }
 
@@ -599,21 +598,21 @@ void PRManager::importDefs() {
   std::string jsonfilename = "repo.json";
   std::ifstream jsonfile(jsonfilename);
   if (jsonfile.fail())
-    throw std::runtime_error("Could not open file for reading: " + jsonfilename);
+    throw std::runtime_error("Could not open file for reading: " +
+                             jsonfilename);
   nlohmann::json json;
   try {
     jsonfile >> json;
-  } catch (nlohmann::detail::parse_error& e) {
+  } catch (nlohmann::detail::parse_error &e) {
     std::cerr << "Failed to parse json file: " << jsonfilename << std::endl;
     throw;
   }
 
-  //importShell(json["shell"]);
-  for (auto &accelname : json["accelerators"])
-    try {
+  // importShell(json["shell"]);
+  for (auto &accelname : json["accelerators"]) try {
       std::string thing = accelname;
       importAccel(accelname);
-    } catch (std::runtime_error& e) {
+    } catch (std::runtime_error &e) {
       std::cerr << "Failed to import accel: " << accelname << std::endl;
       throw;
     }

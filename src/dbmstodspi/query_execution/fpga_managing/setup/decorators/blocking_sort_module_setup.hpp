@@ -23,17 +23,18 @@ namespace orkhestrafs::dbmstodspi {
 /**
  * @brief Class for noting which module has to fully sort the input table.
  */
-class BlockingSortModuleSetup : public virtual AccelerationModuleSetupInterface {
+class BlockingSortModuleSetup
+    : public virtual AccelerationModuleSetupInterface {
  public:
   auto GetWorstCaseProcessedTables(
       const std::vector<int>& min_capacity,
       const std::vector<std::string>& input_tables,
       const std::map<std::string, TableMetadata>& data_tables)
       -> std::map<std::string, TableMetadata> override;
-  auto UpdateDataTable(
-      const std::vector<int>& module_capacity,
-      const std::vector<std::string>& input_table_names,
-      const std::map<std::string, TableMetadata>& data_tables,
-      std::map<std::string, TableMetadata>& resulting_tables) -> bool override;
+  auto UpdateDataTable(const std::vector<int>& module_capacity,
+                       const std::vector<std::string>& input_table_names,
+                       const std::map<std::string, TableMetadata>& data_tables,
+                       std::map<std::string, TableMetadata>& resulting_tables)
+      -> bool override;
 };
 }  // namespace orkhestrafs::dbmstodspi

@@ -17,14 +17,12 @@ limitations under the License.
 #pragma once
 #include <cstdint>
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-#include <memory>
 
 #include "memory_block_interface.hpp"
-
-using orkhestrafs::core_interfaces::MemoryBlockInterface;
 
 namespace orkhestrafs::core_interfaces::table_data {
 
@@ -65,14 +63,14 @@ struct TableData {
 struct SortedSequence {
   int start_position;
   int length;
-  // TODO: add sorted by column
+  // TODO(Kaspar): add sorted by column
 };
 
 /**
  * @brief Struct to hold information about a database table.
  */
 struct TableMetadata {
-  int record_size; //words
+  int record_size;  // words
   int record_count;
   std::vector<SortedSequence> sorted_status;
 };

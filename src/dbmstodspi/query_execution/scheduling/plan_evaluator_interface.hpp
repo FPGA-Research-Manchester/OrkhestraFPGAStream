@@ -48,13 +48,13 @@ class PlanEvaluatorInterface {
    */
   virtual auto GetBestPlan(
       int min_run_count, const std::vector<ScheduledModule>& last_configuration,
-      const std::string resource_string, double utilites_scaler,
+      std::string resource_string, double utilites_scaler,
       double config_written_scaler, double utility_per_frame_scaler,
       const std::map<std::vector<std::vector<ScheduledModule>>,
                      ExecutionPlanSchedulingData>& plan_metadata,
       const std::map<char, int>& cost_of_columns, double streaming_speed,
       double configuration_speed)
       -> std::tuple<std::vector<std::vector<ScheduledModule>>,
-                   std::vector<ScheduledModule>, int, int> = 0;
+                    std::vector<ScheduledModule>, int, int> = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

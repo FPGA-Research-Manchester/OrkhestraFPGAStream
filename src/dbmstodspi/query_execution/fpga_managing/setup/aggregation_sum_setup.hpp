@@ -29,10 +29,11 @@ namespace orkhestrafs::dbmstodspi {
 class AggregationSumSetup : public AccelerationModuleSetupInterface {
  private:
   static void SetupPassthroughSum(AggregationSumInterface& aggregation_module);
+
  public:
   void SetupModule(AccelerationModule& acceleration_module,
                    const AcceleratedQueryNode& module_parameters) override;
-  auto CreateModule(MemoryManagerInterface* memory_manager, int module_position)
+  auto CreateModule(MemoryManagerInterface* memory_manager, int module_postion)
       -> std::unique_ptr<AccelerationModule> override;
   /**
    * @brief Setup the configuration for the global sum module.

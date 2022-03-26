@@ -31,8 +31,6 @@ limitations under the License.
 #endif
 
 using orkhestrafs::dbmstodspi::MemoryManager;
-using orkhestrafs::dbmstodspi::logging::Log;
-using orkhestrafs::dbmstodspi::logging::LogLevel;
 
 MemoryManager::~MemoryManager() = default;
 
@@ -55,7 +53,7 @@ void MemoryManager::LoadStatic() {
 
   register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
 
-  //SetFPGATo300MHz();
+  // SetFPGATo300MHz();
   SetFPGATo100MHz();
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
@@ -75,7 +73,8 @@ void MemoryManager::LoadStatic() {
 }
 
 void MemoryManager::LoadPartialBitstream(
-    const std::vector<std::string>& bitstream_name, DMAInterface& dma_engine) {
+    const std::vector<std::string>& /*bitstream_name*/,
+    DMAInterface& /*dma_engine*/) {
   if (loaded_bitstream_ != "static") {
     throw std::runtime_error("Can't load partial bitstreams without static!");
   }
@@ -171,7 +170,7 @@ void MemoryManager::FreeMemoryBlock(
 void MemoryManager::SetFPGATo300MHz() { SetFPGAClockSpeed(0x10500); }
 void MemoryManager::SetFPGATo100MHz() { SetFPGAClockSpeed(0x10F00); }
 
-void MemoryManager::SetFPGAClockSpeed(int speed_value) {
+void MemoryManager::SetFPGAClockSpeed(int /*speed_value*/) {
 #ifdef FPGA_AVAILABLE
   auto clock_memory_map = mmioGetMmap("/dev/mem", 0xFF5E0000, 1024);
   if (clock_memory_map.fd == -1)

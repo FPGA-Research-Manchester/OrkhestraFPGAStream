@@ -43,7 +43,7 @@ auto QuerySchedulingHelper::FindNodePtrIndex(QueryNode* current_node,
   return index;
 }
 
-// TODO: Check that it is sorted by the desired column.
+// TODO(Kaspar): Check that it is sorted by the desired column.
 auto QuerySchedulingHelper::IsTableSorted(TableMetadata table_data) -> bool {
   return table_data.sorted_status.size() == 1 &&
          table_data.sorted_status.at(0).start_position == 0 &&
@@ -52,7 +52,7 @@ auto QuerySchedulingHelper::IsTableSorted(TableMetadata table_data) -> bool {
 
 void QuerySchedulingHelper::AddNewTableToNextNodes(
     std::unordered_map<std::string, SchedulingQueryNode>& graph,
-    std::string node_name, const std::vector<std::string>& table_names) {
+    const std::string& node_name, const std::vector<std::string>& table_names) {
   for (const auto& next_node_name : graph.at(node_name).after_nodes) {
     if (!next_node_name.empty()) {
       for (const auto& [current_node_index, current_stream_index] :
@@ -66,7 +66,7 @@ void QuerySchedulingHelper::AddNewTableToNextNodes(
 
 auto QuerySchedulingHelper::GetCurrentNodeIndexesByName(
     const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-    std::string next_node_name, std::string current_node_name)
+    const std::string& next_node_name, const std::string& current_node_name)
     -> std::vector<std::pair<int, int>> {
   std::vector<std::pair<int, int>> resulting_indexes;
   for (int potential_current_node_index = 0;
@@ -79,7 +79,8 @@ auto QuerySchedulingHelper::GetCurrentNodeIndexesByName(
       auto stream_index = graph.at(next_node_name)
                               .before_nodes.at(potential_current_node_index)
                               .second;
-      resulting_indexes.push_back({potential_current_node_index, stream_index});
+      resulting_indexes.emplace_back(potential_current_node_index,
+                                     stream_index);
     }
   }
   if (resulting_indexes.empty()) {
@@ -90,7 +91,8 @@ auto QuerySchedulingHelper::GetCurrentNodeIndexesByName(
 }
 
 auto QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
-    std::string node_name, const std::unordered_set<std::string>& past_nodes,
+    const std::string& node_name,
+    const std::unordered_set<std::string>& past_nodes,
     const std::unordered_map<std::string, SchedulingQueryNode>& graph)
     -> std::unordered_set<std::string> {
   std::unordered_set<std::string> potential_nodes(
@@ -116,10 +118,10 @@ auto QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
   return potential_nodes;
 }
 
-// TODO: This needs improving to support multi inputs and outputs
+// TODO(Kaspar): This needs improving to support multi inputs and outputs
 void QuerySchedulingHelper::RemoveNodeFromGraph(
     std::unordered_map<std::string, SchedulingQueryNode>& graph,
-    std::string node_name) {
+    const std::string& node_name) {
   // We just support one in and one out currently.
   if (graph.at(node_name).before_nodes.size() != 1 ||
       graph.at(node_name).after_nodes.size() != 1) {
@@ -129,7 +131,7 @@ void QuerySchedulingHelper::RemoveNodeFromGraph(
 
   auto before_node = graph.at(node_name).before_nodes.front();
   auto after_node = graph.at(node_name).after_nodes.front();
-  // TODO: No need for the temp copies.
+  // TODO(Kaspar): No need for the temp copies.
   if (after_node.empty() && before_node.second == -1) {
     // Do nothing
   } else if (after_node.empty()) {

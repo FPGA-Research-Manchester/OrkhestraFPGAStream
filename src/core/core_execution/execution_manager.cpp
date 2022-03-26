@@ -42,7 +42,7 @@ void ExecutionManager::Execute(
 
 auto ExecutionManager::IsUnscheduledNodesGraphEmpty() -> bool {
   return current_available_node_pointers_.empty();
-  // TODO: Change the usage of the graph. Currently it's pointless.
+  // TODO(Kaspar): Change the usage of the graph. Currently it's pointless.
   /*return unscheduled_graph_->IsEmpty();*/
 }
 auto ExecutionManager::IsARunScheduled() -> bool {
@@ -77,11 +77,11 @@ void ExecutionManager::SetupNextRunData() {
   // query_node_runs_queue_.push(first);
 
   auto next_run = query_node_runs_queue_.front().first;
-  for (int module_index = 0; module_index < next_run.size(); module_index++) {
+  for (auto& module_index : next_run) {
     next_set_of_operators.emplace_back(
-        next_run.at(module_index).operation_type,
-        config_.pr_hw_library.at(next_run.at(module_index).operation_type)
-            .bitstream_map.at(next_run.at(module_index).bitstream)
+        module_index.operation_type,
+        config_.pr_hw_library.at(module_index.operation_type)
+            .bitstream_map.at(module_index.bitstream)
             .capacity);
   }
 
@@ -106,9 +106,9 @@ void ExecutionManager::SetupNextRunData() {
       query_manager_->GetPRBitstreamsToLoadWithPassthroughModules(
           current_configuration_, query_node_runs_queue_.front().first, 31);
   query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
-                                   *accelerator_library_.get());
+                                   *accelerator_library_);
   query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
-                                   *accelerator_library_.get()); /*
+                                   *accelerator_library_); /*
    query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
                                     *accelerator_library_.get());*/
   // Debugging
@@ -134,11 +134,12 @@ void ExecutionManager::SetupNextRunData() {
           next_scheduled_run_nodes);
   query_nodes_ = std::move(execution_nodes_and_result_params.first);
   for (int module_pos = 0; module_pos < empty_modules.size(); module_pos++) {
-    if (empty_modules.at(module_pos).second)
+    if (empty_modules.at(module_pos).second) {
       query_nodes_.insert(
           query_nodes_.begin() + module_pos,
           accelerator_library_->GetEmptyModuleNode(
               empty_modules.at(module_pos).first, module_pos + 1));
+    }
   }
   // For debugging - manual insertion of passthrough modules
   /*query_nodes_.insert(query_nodes_.begin(),
@@ -187,18 +188,20 @@ void ExecutionManager::SetupSchedulingData(bool setup_bitstreams) {
       *accelerator_library_, nodes_constrained_to_first_);
 
   if (setup_bitstreams) {
-    // TODO: The static bitstream loading should be moved to a different state!
+    // TODO(Kaspar): The static bitstream loading should be moved to a different
+    // state!
     query_manager_->LoadInitialStaticBitstream(memory_manager_.get());
     // The empty routing should be part of the static really.
     query_manager_->LoadEmptyRoutingPRRegion(memory_manager_.get(),
-                                             *accelerator_library_.get());
+                                             *accelerator_library_);
     current_available_node_pointers_ = unscheduled_graph_->ExportRootNodes();
   }
 }
 
 void ExecutionManager::SetupSchedulingGraphAndConstrainedNodes(
     const std::vector<QueryNode*>& all_query_nodes,
-    std::unordered_map<std::string, SchedulingQueryNode>& current_scheduling_graph,
+    std::unordered_map<std::string, SchedulingQueryNode>&
+        current_scheduling_graph,
     AcceleratorLibraryInterface& hw_library,
     std::unordered_set<std::string>& constrained_nodes_vector) {
   for (const auto& node : all_query_nodes) {
@@ -213,7 +216,8 @@ void ExecutionManager::SetupSchedulingGraphAndConstrainedNodes(
 }
 
 void ExecutionManager::AddSavedNodesToConstrainedList(
-    QueryNode* const& node, std::unordered_set<std::string>& constrained_nodes) {
+    QueryNode* const& node,
+    std::unordered_set<std::string>& constrained_nodes) {
   for (int node_index = 0; node_index < node->is_checked.size(); node_index++) {
     if (node->is_checked[node_index]) {
       auto constrained_node_name = node->next_nodes[node_index]->node_name;
@@ -234,18 +238,17 @@ void ExecutionManager::AddSchedulingNodeToGraph(
     if (next_node) {
       current_node.after_nodes.push_back(next_node->node_name);
     } else {
-      current_node.after_nodes.push_back("");
+      current_node.after_nodes.emplace_back("");
     }
   }
   for (const auto& previous_node : node->previous_nodes) {
     auto previous_node_ptr = previous_node.lock();
     if (previous_node_ptr) {
-      current_node.before_nodes.push_back(
-          {previous_node_ptr->node_name,
-           QuerySchedulingHelper::FindNodePtrIndex(node,
-                                                   previous_node_ptr.get())});
+      current_node.before_nodes.emplace_back(
+          previous_node_ptr->node_name, QuerySchedulingHelper::FindNodePtrIndex(
+                                            node, previous_node_ptr.get()));
     } else {
-      current_node.before_nodes.push_back({"", -1});
+      current_node.before_nodes.emplace_back("", -1);
     }
   }
   for (const auto& input_files : node->input_data_definition_files) {
@@ -271,7 +274,7 @@ void ExecutionManager::AddFirstModuleNodesToConstrainedList(
 
 // This check is looking at all the nodes if there are multiple identical before
 // streams.
-// TODO: Splitting nodes aren't supported at the moment anyway:
+// TODO(Kaspar): Splitting nodes aren't supported at the moment anyway:
 // after_nodes needs to be a vector of vectors!
 void ExecutionManager::AddSplittingNodesToConstrainedList(
     std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph,

@@ -32,13 +32,12 @@ class AdditionSetup : public AccelerationModuleSetupInterface {
       -> std::array<std::pair<uint32_t, uint32_t>, 8>;
   static auto ReverseNegationSpecification(
       std::vector<int> negation_specification) -> std::bitset<8>;
-  static void SetupPassthroughAddition(
-      AdditionInterface& addition_module);
+  static void SetupPassthroughAddition(AdditionInterface& addition_module);
 
  public:
   void SetupModule(AccelerationModule& acceleration_module,
                    const AcceleratedQueryNode& module_parameters) override;
-  auto CreateModule(MemoryManagerInterface* memory_manager, int module_position)
+  auto CreateModule(MemoryManagerInterface* memory_manager, int module_postion)
       -> std::unique_ptr<AccelerationModule> override;
 
   /**

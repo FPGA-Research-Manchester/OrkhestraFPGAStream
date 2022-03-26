@@ -27,12 +27,12 @@ namespace orkhestrafs::dbmstodspi {
 class AcceleratorLibrary : public AcceleratorLibraryInterface {
  public:
   ~AcceleratorLibrary() override = default;
-  AcceleratorLibrary(MemoryManagerInterface* memory_manager_,
+  AcceleratorLibrary(MemoryManagerInterface* memory_manager,
                      std::unique_ptr<DMASetupInterface> dma_setup,
                      std::map<QueryOperationType,
                               std::unique_ptr<AccelerationModuleSetupInterface>>
                          module_driver_library)
-      : memory_manager_{memory_manager_},
+      : memory_manager_{memory_manager},
         dma_setup_{std::move(dma_setup)},
         module_driver_library_{std::move(module_driver_library)} {};
   /**
@@ -152,12 +152,12 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
    * @param resulting_tables Updated map
    * @return Boolean showing if the update was substantial enough to move on.
    */
-  auto UpdateDataTable(
-      QueryOperationType operation_type,
-      const std::vector<int>& module_capacity,
-      const std::vector<std::string>& input_table_names,
-      const std::map<std::string, TableMetadata>& data_tables,
-      std::map<std::string, TableMetadata>& resulting_tables) -> bool override;
+  auto UpdateDataTable(QueryOperationType operation_type,
+                       const std::vector<int>& module_capacity,
+                       const std::vector<std::string>& input_table_names,
+                       const std::map<std::string, TableMetadata>& data_tables,
+                       std::map<std::string, TableMetadata>& resulting_tables)
+      -> bool override;
 
   /**
    * Is the input table supposed to be sorted?
@@ -174,9 +174,9 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
    * @param tables All table data
    * @return Vector of output table names.
    */
-  auto GetResultingTables(
-      QueryOperationType operation, const std::vector<std::string>& table_names,
-      const std::map<std::string, TableMetadata>& tables)
+  auto GetResultingTables(QueryOperationType operation,
+                          const std::vector<std::string>& table_names,
+                          const std::map<std::string, TableMetadata>& tables)
       -> std::vector<std::string> override;
 
   /**
@@ -184,11 +184,11 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
    * @param operation Operation enum
    * @return Boolean flag.
    */
-  auto IsOperationReducingData(QueryOperationType operation)
-      -> bool override;
+  auto IsOperationReducingData(QueryOperationType operation) -> bool override;
 
   /**
-   * Method to check if the operation is data sensive and requires precise input data.
+   * Method to check if the operation is data sensive and requires precise input
+   * data.
    * @param operation Operation enum
    * @return Boolean flag.
    */

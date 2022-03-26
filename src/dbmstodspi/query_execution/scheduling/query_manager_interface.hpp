@@ -20,10 +20,9 @@ limitations under the License.
 #include <memory>
 #include <queue>
 #include <string>
-#include <utility>
-
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 
 #include "accelerated_query_node.hpp"
 #include "accelerator_library_interface.hpp"
@@ -141,7 +140,8 @@ class QueryManagerInterface {
       std::map<std::string, TableMetadata>& scheduling_table_data,
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
           reuse_links,
-      std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph) = 0;
+      std::unordered_map<std::string, SchedulingQueryNode>&
+          scheduling_graph) = 0;
 
   /**
    * @brief Method to move reusable output memory blocks to input maps. And the
@@ -193,7 +193,8 @@ class QueryManagerInterface {
       std::map<std::string, TableMetadata>& tables,
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
-      std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>& all_reuse_links,
+      std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>&
+          all_reuse_links,
       const std::vector<ScheduledModule>& current_configuration)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<std::shared_ptr<QueryNode>>>> = 0;

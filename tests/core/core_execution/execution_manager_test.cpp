@@ -26,16 +26,14 @@ limitations under the License.
 #include "mock_fpga_manager.hpp"
 #include "mock_graph.hpp"
 #include "mock_memory_manager.hpp"
+#include "mock_node_scheduler.hpp"
 #include "mock_query_manager.hpp"
 #include "mock_state.hpp"
 #include "stream_data_parameters.hpp"
-#include "mock_node_scheduler.hpp"
 
 namespace {
 
 using orkhestrafs::core::core_execution::ExecutionManager;
-using orkhestrafs::dbmstodspi::FPGADriverFactory;
-using orkhestrafs::dbmstodspi::StreamDataParameters;
 using testing::_;
 
 class ExecutionManagerTest : public ::testing::Test {
@@ -82,7 +80,7 @@ class ExecutionManagerTest : public ::testing::Test {
   MockFPGADriverFactory& mock_fpga_driver_factory_;
   MockAcceleratorLibrary& mock_accelerator_library_;
   MockFPGAManager& mock_fpga_manager_;
-  MockNodeScheduler& mock_node_scheduler_; // Not tested
+  MockNodeScheduler& mock_node_scheduler_;  // Not tested
 
   Config test_config_;
 
@@ -157,7 +155,8 @@ TEST_F(ExecutionManagerTest, DISABLED_ScheduleUnscheduledNodesUsesGraph) {
   // std::vector<std::shared_ptr<QueryNode>> expected_nodes;
 
   EXPECT_CALL(mock_graph, ExportRootNodes()).Times(1);
-  //EXPECT_CALL(mock_query_manager_, ScheduleUnscheduledNodes(_, _, _)).Times(1);
+  // EXPECT_CALL(mock_query_manager_, ScheduleUnscheduledNodes(_, _,
+  // _)).Times(1);
 
   execution_manager_under_test->Execute(std::move(mock_graph_ptr));
   execution_manager_under_test->ScheduleUnscheduledNodes();
@@ -165,73 +164,74 @@ TEST_F(ExecutionManagerTest, DISABLED_ScheduleUnscheduledNodesUsesGraph) {
 
 // Difficult one
 TEST_F(ExecutionManagerTest, DISABLED_SetupPopsScheduledNodes) {
-  //QueryOperationType expected_operation_type = QueryOperationType::kAddition;
-  //std::vector<QueryOperation> expected_operations = {
+  // QueryOperationType expected_operation_type = QueryOperationType::kAddition;
+  // std::vector<QueryOperation> expected_operations = {
   //    {expected_operation_type, {}}};
-  //test_config_.accelerator_library.insert({expected_operations, "some_file"});
-  //auto execution_manager_under_test = SetUpExecutionManager();
-  //EXPECT_CALL(mock_first_state_, Execute(execution_manager_under_test.get()))
+  // test_config_.accelerator_library.insert({expected_operations,
+  // "some_file"}); auto execution_manager_under_test = SetUpExecutionManager();
+  // EXPECT_CALL(mock_first_state_, Execute(execution_manager_under_test.get()))
   //    .WillOnce(testing::Invoke(StopFSM));
 
-  //std::unique_ptr<MockGraph> mock_graph_ptr = std::make_unique<MockGraph>();
-  //MockGraph& mock_graph = *mock_graph_ptr;
+  // std::unique_ptr<MockGraph> mock_graph_ptr = std::make_unique<MockGraph>();
+  // MockGraph& mock_graph = *mock_graph_ptr;
 
-  //std::queue<std::pair<ConfigurableModulesVector,
+  // std::queue<std::pair<ConfigurableModulesVector,
   //                     std::vector<std::shared_ptr<QueryNode>>>>
   //    query_node_runs_queue;
-  //std::vector<std::shared_ptr<QueryNode>> expected_nodes;
-  //query_node_runs_queue.push({expected_operations, expected_nodes});
-  //std::map<std::string, std::map<int, MemoryReuseTargets>> expected_links;
-  //std::pair<std::map<std::string, std::map<int, MemoryReuseTargets>>,
+  // std::vector<std::shared_ptr<QueryNode>> expected_nodes;
+  // query_node_runs_queue.push({expected_operations, expected_nodes});
+  // std::map<std::string, std::map<int, MemoryReuseTargets>> expected_links;
+  // std::pair<std::map<std::string, std::map<int, MemoryReuseTargets>>,
   //          std::queue<std::pair<ConfigurableModulesVector,
   //                               std::vector<std::shared_ptr<QueryNode>>>>>
   //    schedule_results = {expected_links, query_node_runs_queue};
 
-  //std::vector<StreamDataParameters> stream_params;
-  //int operation_module_location = 0;
-  //std::vector<std::vector<int>> operation_parameters;
+  // std::vector<StreamDataParameters> stream_params;
+  // int operation_module_location = 0;
+  // std::vector<std::vector<int>> operation_parameters;
 
-  //AcceleratedQueryNode test_node = {stream_params,
+  // AcceleratedQueryNode test_node = {stream_params,
   //                                  stream_params,
   //                                  expected_operation_type,
   //                                  operation_module_location,
   //                                  {},
   //                                  operation_parameters};
 
-  //std::vector<AcceleratedQueryNode> expected_accel_nodes = {test_node};
-  //std::map<std::string, std::vector<StreamResultParameters>>
+  // std::vector<AcceleratedQueryNode> expected_accel_nodes = {test_node};
+  // std::map<std::string, std::vector<StreamResultParameters>>
   //    expected_result_params;
-  //std::pair<std::vector<AcceleratedQueryNode>,
+  // std::pair<std::vector<AcceleratedQueryNode>,
   //          std::map<std::string, std::vector<StreamResultParameters>>>
   //    expected_setup_results = {expected_accel_nodes, expected_result_params};
 
-  //EXPECT_CALL(mock_graph, ExportRootNodes()).Times(1);
+  // EXPECT_CALL(mock_graph, ExportRootNodes()).Times(1);
   ///*EXPECT_CALL(mock_query_manager_, ScheduleUnscheduledNodes(_, _, _))
   //    .WillOnce(testing::Return(schedule_results));*/
 
-  //EXPECT_CALL(mock_query_manager_, LoadNextBitstreamIfNew(_, _, _)).Times(1);
-  //EXPECT_CALL(mock_query_manager_,
+  // EXPECT_CALL(mock_query_manager_, LoadNextBitstreamIfNew(_, _, _)).Times(1);
+  // EXPECT_CALL(mock_query_manager_,
   //            GetCurrentLinks(expected_nodes, expected_links))
   //    .Times(1);
-  //EXPECT_CALL(mock_query_manager_, SetupAccelerationNodesForExecution(
+  // EXPECT_CALL(mock_query_manager_, SetupAccelerationNodesForExecution(
   //                                     _, _, _, _, _, _, _, expected_nodes))
   //    .WillOnce(testing::Return(expected_setup_results));
 
-  //execution_manager_under_test->Execute(std::move(mock_graph_ptr));
-  //EXPECT_FALSE(execution_manager_under_test->IsARunScheduled());
-  //EXPECT_FALSE(execution_manager_under_test->IsRunReadyForExecution());
-  //execution_manager_under_test->ScheduleUnscheduledNodes();
-  //EXPECT_TRUE(execution_manager_under_test->IsARunScheduled());
-  //execution_manager_under_test->SetupNextRunData();
-  //EXPECT_FALSE(execution_manager_under_test->IsARunScheduled());
-  //EXPECT_TRUE(execution_manager_under_test->IsRunReadyForExecution());
+  // execution_manager_under_test->Execute(std::move(mock_graph_ptr));
+  // EXPECT_FALSE(execution_manager_under_test->IsARunScheduled());
+  // EXPECT_FALSE(execution_manager_under_test->IsRunReadyForExecution());
+  // execution_manager_under_test->ScheduleUnscheduledNodes();
+  // EXPECT_TRUE(execution_manager_under_test->IsARunScheduled());
+  // execution_manager_under_test->SetupNextRunData();
+  // EXPECT_FALSE(execution_manager_under_test->IsARunScheduled());
+  // EXPECT_TRUE(execution_manager_under_test->IsRunReadyForExecution());
 }
 
 TEST_F(ExecutionManagerTest,
        DISABLED_ExecuteAccelerationNodesUsesQueryManager) {
   auto execution_manager_under_test = SetUpExecutionManager();
 
-  //EXPECT_CALL(mock_query_manager_, ExecuteAndProcessResults(_, _, _, _, _, _))
+  // EXPECT_CALL(mock_query_manager_, ExecuteAndProcessResults(_, _, _, _, _,
+  // _))
   //    .Times(1);
   EXPECT_CALL(mock_query_manager_, FreeMemoryBlocks(_, _, _, _, _, _, _))
       .Times(1);

@@ -18,6 +18,4 @@ limitations under the License.
 
 using orkhestrafs::dbmstodspi::FirstModuleSetup;
 
-auto FirstModuleSetup::IsConstrainedToFirstInPipeline() -> bool {
-  return true;
-}
+auto FirstModuleSetup::IsConstrainedToFirstInPipeline() -> bool { return true; }

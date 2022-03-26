@@ -54,8 +54,8 @@ using orkhestrafs::dbmstodspi::logging::LogLevel;
 
 void FPGAManager::SetupQueryAcceleration(
     const std::vector<AcceleratedQueryNode>& query_nodes) {
-  // TODO: Doesn't reset configuration. Unused modules should be configured to
-  // be unused.
+  // TODO(Kaspar): Doesn't reset configuration. Unused modules should be
+  // configured to be unused.
   dma_engine_->GlobalReset();
   read_back_modules_.clear();
   read_back_parameters_.clear();
@@ -101,8 +101,8 @@ void FPGAManager::SetupQueryAcceleration(
     module_library_->SetupOperation(query_node);
     auto readback_modules = module_library_->ExportLastModulesIfReadback();
     if (!readback_modules.empty()) {
-      for (int i = 0; i < readback_modules.size(); i++) {
-        read_back_modules_.push_back(std::move(readback_modules.at(i)));
+      for (auto& readback_module : readback_modules) {
+        read_back_modules_.push_back(std::move(readback_module));
         // Don't know how this will work out with combined readback modules as
         // we don't have any at the moment.
         read_back_parameters_.push_back(query_node.operation_parameters.at(1));
@@ -114,8 +114,8 @@ void FPGAManager::SetupQueryAcceleration(
 void FPGAManager::FindIOStreams(
     const std::vector<StreamDataParameters>& all_streams,
     std::vector<StreamDataParameters>& found_streams,
-    const std::vector<std::vector<int>>& operation_parameters,
-    const bool is_multichannel_stream,
+    const std::vector<std::vector<int>>& /*operation_parameters*/,
+    const bool /*is_multichannel_stream*/,
     std::bitset<query_acceleration_constants::kMaxIOStreamCount>&
         stream_status_array) {
   for (const auto& current_stream : all_streams) {

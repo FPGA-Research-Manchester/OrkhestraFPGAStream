@@ -33,7 +33,8 @@ class MockNodeScheduler : public NodeSchedulerInterface {
   using ModulesMap =
       std::map<QueryOperationType, std::vector<std::vector<int>>>;
   using HWLibraryMap = std::map<QueryOperationType, OperationPRModules>;
-  using SchedulingNodeMap = std::unordered_map<std::string, SchedulingQueryNode>;
+  using SchedulingNodeMap =
+      std::unordered_map<std::string, SchedulingQueryNode>;
   using TableMap = std::map<std::string, TableMetadata>;
   using AllPlans =
       std::tuple<int,

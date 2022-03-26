@@ -69,7 +69,7 @@ auto BitstreamConfigHelper::GetOldNonOverlappingModules(
   auto non_overlapping = previous_configuration;
   for (const auto& cur_module : previous_configuration) {
     for (const auto& next_module : current_run) {
-        // Assuming inclusive coordinates
+      // Assuming inclusive coordinates
       if ((cur_module.position.first >= next_module.position.first &&
            cur_module.position.first <= next_module.position.second) ||
           (cur_module.position.second >= next_module.position.first &&

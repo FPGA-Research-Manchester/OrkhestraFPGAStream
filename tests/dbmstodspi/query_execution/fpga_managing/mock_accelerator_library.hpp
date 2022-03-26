@@ -30,8 +30,10 @@ class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
   using TableMap = std::map<std::string, TableMetadata>;
 
  public:
-  MOCK_METHOD(void, SetupOperation,
-              (const AcceleratedQueryNode& node_parameters), (override));
+  MOCK_METHOD(
+      void, SetupOperation,
+      (const orkhestrafs::dbmstodspi::AcceleratedQueryNode& node_parameters),
+      (override));
   MOCK_METHOD(std::unique_ptr<DMAInterface>, GetDMAModule, (), (override));
   MOCK_METHOD(DMASetupInterface&, GetDMAModuleSetup, (), (override));
   MOCK_METHOD(std::vector<std::unique_ptr<ReadBackModule>>,
@@ -81,6 +83,7 @@ class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
               (QueryOperationType operation_type), (override));
   MOCK_METHOD((bool), IsOperationDataSensitive,
               (QueryOperationType operation_type), (override));
-  MOCK_METHOD((AcceleratedQueryNode), GetEmptyModuleNode,
+  MOCK_METHOD((orkhestrafs::dbmstodspi::AcceleratedQueryNode),
+              GetEmptyModuleNode,
               (QueryOperationType operation, int module_position), (override));
 };

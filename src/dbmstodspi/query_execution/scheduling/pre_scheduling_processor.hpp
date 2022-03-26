@@ -17,10 +17,9 @@ limitations under the License.
 #pragma once
 
 #include <map>
-#include <vector>
-
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 #include "accelerator_library_interface.hpp"
 #include "operation_types.hpp"
@@ -52,16 +51,17 @@ class PreSchedulingProcessor {
 
   // def get_min_requirements(current_node_name, graph, hw_library, data_tables)
   static auto GetMinRequirementsForFullyExecutingNode(
-      std::string node_name,
+      const std::string& node_name,
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
       AcceleratorLibraryInterface& accelerator_library,
-      const std::map<std::string, TableMetadata> data_tables)
+      const std::map<std::string, TableMetadata>& data_tables)
       -> std::vector<int>;
 
   // def find_adequate_bitstreams(min_requirements, operation, hw_library)
   static auto FindAdequateBitstreams(
-      const std::vector<int> min_requirements, QueryOperationType operation,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library) -> std::unordered_set<std::string>;
+      const std::vector<int>& min_requirements, QueryOperationType operation,
+      const std::map<QueryOperationType, OperationPRModules>& hw_library)
+      -> std::unordered_set<std::string>;
 
   // def
   // get_fitting_bitstream_locations_based_on_list(list_of_fitting_bitstreams,

@@ -20,9 +20,8 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "memory_block_interface.hpp"
-
 #include "dma_interface.hpp"
+#include "memory_block_interface.hpp"
 
 using orkhestrafs::core_interfaces::MemoryBlockInterface;
 using orkhestrafs::dbmstodspi::DMAInterface;
@@ -48,7 +47,7 @@ class MemoryManagerInterface {
   virtual void LoadStatic() = 0;
   virtual void LoadPartialBitstream(
       const std::vector<std::string>& bitstream_name,
-                                    DMAInterface& dma_engine) = 0;
+      DMAInterface& dma_engine) = 0;
 
  private:
   virtual auto AllocateMemoryBlock()

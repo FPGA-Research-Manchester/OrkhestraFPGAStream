@@ -16,7 +16,6 @@ limitations under the License.
 
 #pragma once
 #include <chrono>
-
 #include <unordered_map>
 #include <unordered_set>
 
@@ -29,9 +28,9 @@ limitations under the License.
 using orkhestrafs::core_interfaces::hw_library::OperationPRModules;
 using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
 using orkhestrafs::dbmstodspi::ModuleSelection;
+using orkhestrafs::dbmstodspi::PairHash;
 using orkhestrafs::dbmstodspi::ScheduledModule;
 using orkhestrafs::dbmstodspi::scheduling_data::ExecutionPlanSchedulingData;
-using orkhestrafs::dbmstodspi::PairHash;
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -49,16 +48,16 @@ class ElasticSchedulingGraphParser {
       AcceleratorLibraryInterface& accelerator_library);
 
   static void PlaceNodesRecursively(
-      std::unordered_set<std::string> available_nodes,
-      std::unordered_set<std::string> processed_nodes,
-      std::unordered_map<std::string, SchedulingQueryNode> graph,
-      std::vector<ScheduledModule> current_run,
+      const std::unordered_set<std::string>& available_nodes,
+      const std::unordered_set<std::string>& processed_nodes,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::vector<ScheduledModule>& current_run,
       std::vector<std::vector<ScheduledModule>> current_plan,
       std::map<std::vector<std::vector<ScheduledModule>>,
                ExecutionPlanSchedulingData>& resulting_plan,
       bool reduce_single_runs,
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      int& min_runs, std::map<std::string, TableMetadata> data_tables,
+      int& min_runs, const std::map<std::string, TableMetadata>& data_tables,
       const std::pair<std::vector<std::vector<ModuleSelection>>,
                       std::vector<std::vector<ModuleSelection>>>& heuristics,
       std::pair<int, int>& statistics_counters,
@@ -67,15 +66,12 @@ class ElasticSchedulingGraphParser {
       std::unordered_set<std::string> next_run_blocked_nodes,
       AcceleratorLibraryInterface& drivers,
       const std::chrono::system_clock::time_point& time_limit,
-      bool& trigger_timeout, const bool use_max_runs_cap,
-      int streamed_data_size);
+      bool& trigger_timeout, bool use_max_runs_cap, int streamed_data_size);
 
  private:
-  static auto IsSubsetOf(
-      const std::unordered_set<std::string>& a,
-      const std::unordered_set<std::string>& b) -> bool;
+  static auto IsSubsetOf(const std::unordered_set<std::string>& a,
+                         const std::unordered_set<std::string>& b) -> bool;
 
-   
   static auto GetNewStreamedDataSize(
       const std::vector<ScheduledModule>& current_run,
       const std::string& node_name,
@@ -85,16 +81,16 @@ class ElasticSchedulingGraphParser {
   static auto IsTableEqualForGivenNode(
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
       const std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
-      std::string next_node_name,
+      const std::string& next_node_name,
       const std::map<std::string, TableMetadata>& data_tables,
       const std::map<std::string, TableMetadata>& new_tables) -> bool;
 
   static void UpdateNextNodeTables(
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      std::string node_name,
+      const std::string& node_name,
       std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
-      std::vector<std::string> skipped_nodes,
-      const std::vector<std::string> resulting_tables);
+      const std::vector<std::string>& skipped_nodes,
+      const std::vector<std::string>& resulting_tables);
 
   static auto GetResultingTables(
       const std::vector<std::string>& table_names,
@@ -106,7 +102,7 @@ class ElasticSchedulingGraphParser {
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
       const std::vector<int>& missing_utility,
       std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
-      std::string node_name, bool is_node_fully_processed);
+      const std::string& node_name, bool is_node_fully_processed);
 
   static auto FindMissingUtility(const std::vector<int>& bitstream_capacity,
                                  std::vector<int>& missing_capacity,
@@ -115,7 +111,7 @@ class ElasticSchedulingGraphParser {
   static auto CheckForSkippableSortOperations(
       const std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
       const std::map<std::string, TableMetadata>& new_tables,
-      std::string node_name,
+      const std::string& node_name,
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
       AcceleratorLibraryInterface& drivers) -> std::vector<std::string>;
 
@@ -142,7 +138,7 @@ class ElasticSchedulingGraphParser {
       -> std::vector<std::tuple<int, int, int>>;
 
   static auto GetChosenModulePlacements(
-      std::string node_name,
+      const std::string& node_name,
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
       std::pair<int, int>& statistics_counters,
       QueryOperationType current_operation,
@@ -154,8 +150,9 @@ class ElasticSchedulingGraphParser {
 
   static auto CurrentRunHasFirstModule(
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      const std::vector<ScheduledModule>& current_run, std::string node_name,
-      AcceleratorLibraryInterface& drivers) -> bool;
+      const std::vector<ScheduledModule>& current_run,
+      const std::string& node_name, AcceleratorLibraryInterface& drivers)
+      -> bool;
 
   static auto RemoveUnavailableNodesInThisRun(
       const std::unordered_set<std::string>& available_nodes,
@@ -167,15 +164,16 @@ class ElasticSchedulingGraphParser {
       AcceleratorLibraryInterface& drivers) -> std::unordered_set<std::string>;
 
   static auto GetMinPositionInCurrentRun(
-      const std::vector<ScheduledModule>& current_run, std::string node_name,
+      const std::vector<ScheduledModule>& current_run,
+      const std::string& node_name,
       const std::unordered_map<std::string, SchedulingQueryNode>& graph) -> int;
 
   static auto GetTakenColumns(const std::vector<ScheduledModule>& current_run)
       -> std::vector<std::pair<int, int>>;
 
   static auto GetScheduledModulesForNodeAfterPos(
-      const std::unordered_map<std::string, SchedulingQueryNode>& graph, int min_position,
-      std::string node_name,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      int min_position, const std::string& node_name,
       const std::vector<std::pair<int, int>>& taken_positions,
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
       const std::pair<std::vector<std::vector<ModuleSelection>>,
@@ -188,30 +186,30 @@ class ElasticSchedulingGraphParser {
       std::unordered_map<std::string, SchedulingQueryNode> graph,
       std::map<std::vector<std::vector<ScheduledModule>>,
                ExecutionPlanSchedulingData>& resulting_plan,
-      std::unordered_set<std::string> available_nodes,
+      const std::unordered_set<std::string>& available_nodes,
       std::vector<std::vector<ScheduledModule>> current_plan,
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
       const ScheduledModule& module_placement,
-      std::vector<ScheduledModule> current_run, std::string node_name,
-      std::unordered_set<std::string> processed_nodes, bool reduce_single_runs,
-      int& min_runs, std::map<std::string, TableMetadata> data_tables,
+      std::vector<ScheduledModule> current_run, const std::string& node_name,
+      const std::unordered_set<std::string>& processed_nodes,
+      bool reduce_single_runs, int& min_runs,
+      const std::map<std::string, TableMetadata>& data_tables,
       const std::pair<std::vector<std::vector<ModuleSelection>>,
                       std::vector<std::vector<ModuleSelection>>>& heuristics,
       std::pair<int, int>& statistics_counters,
       const std::unordered_set<std::string>& constrained_first_nodes,
       std::unordered_set<std::string> blocked_nodes,
-      std::unordered_set<std::string> next_run_blocked_nodes,
+      const std::unordered_set<std::string>& next_run_blocked_nodes,
       AcceleratorLibraryInterface& drivers,
       const std::chrono::system_clock::time_point& time_limit,
-      bool& trigger_timeout, const bool use_max_runs_cap,
-      int streamed_data_size);
+      bool& trigger_timeout, bool use_max_runs_cap, int streamed_data_size);
 
   static auto UpdateGraph(
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      std::string bitstream,
+      const std::string& bitstream,
       const std::map<std::string, TableMetadata>& data_tables,
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      std::string node_name, const std::vector<int>& capacity,
+      const std::string& node_name, const std::vector<int>& capacity,
       QueryOperationType operation, AcceleratorLibraryInterface& drivers)
       -> std::tuple<std::unordered_map<std::string, SchedulingQueryNode>,
                     std::map<std::string, TableMetadata>, bool,
@@ -221,13 +219,12 @@ class ElasticSchedulingGraphParser {
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
       const std::unordered_set<std::string>& available_nodes,
       const std::unordered_set<std::string>& processed_nodes,
-      std::string node_name,
-      bool satisfied_requirements)
+      const std::string& node_name, bool satisfied_requirements)
       -> std::pair<std::unordered_set<std::string>,
                    std::unordered_set<std::string>>;
 
   static void UpdateSatisfyingBitstreamsList(
-      std::string node_name,
+      const std::string& node_name,
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
       std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
       std::unordered_set<std::string>& new_available_nodes,

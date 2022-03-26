@@ -34,7 +34,7 @@ TEST_F(ExecuteStateTest, ExecuteProcessesResultsAndReturnsSetupState) {
 
   EXPECT_CALL(mock_fsm, IsRunReadyForExecution())
       .WillOnce(testing::Return(true));
-  //EXPECT_CALL(mock_fsm, IsRunValid()).WillOnce(testing::Return(true));
+  // EXPECT_CALL(mock_fsm, IsRunValid()).WillOnce(testing::Return(true));
   EXPECT_CALL(mock_fsm, ExecuteAndProcessResults()).Times(1);
 
   ExecuteState state_under_test;
@@ -47,7 +47,7 @@ TEST_F(ExecuteStateTest, DISABLED_ExecuteCrashesWithInvalidRun) {
 
   EXPECT_CALL(mock_fsm, IsRunReadyForExecution())
       .WillOnce(testing::Return(true));
-  //EXPECT_CALL(mock_fsm, IsRunValid()).WillOnce(testing::Return(false));
+  // EXPECT_CALL(mock_fsm, IsRunValid()).WillOnce(testing::Return(false));
   EXPECT_CALL(mock_fsm, ExecuteAndProcessResults()).Times(0);
 
   ExecuteState state_under_test;
@@ -59,7 +59,7 @@ TEST_F(ExecuteStateTest, ExecuteCrashesWithNoNodes) {
 
   EXPECT_CALL(mock_fsm, IsRunReadyForExecution())
       .WillOnce(testing::Return(false));
-  //EXPECT_CALL(mock_fsm, IsRunValid()).Times(0);
+  // EXPECT_CALL(mock_fsm, IsRunValid()).Times(0);
   EXPECT_CALL(mock_fsm, ExecuteAndProcessResults()).Times(0);
 
   ExecuteState state_under_test;

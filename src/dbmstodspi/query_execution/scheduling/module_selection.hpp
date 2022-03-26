@@ -18,14 +18,12 @@ limitations under the License.
 
 #include <map>
 #include <string>
-#include <utility>
-
 #include <unordered_set>
+#include <utility>
 
 #include "operation_types.hpp"
 #include "scheduled_module.hpp"
 
-using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 using orkhestrafs::dbmstodspi::ScheduledModule;
 
 namespace orkhestrafs::dbmstodspi {
@@ -41,7 +39,7 @@ class MyHash;
 
 template <>
 struct MyHash<ScheduledModule> {
-  std::size_t operator()(ScheduledModule const& s) const {
+  auto operator()(ScheduledModule const& s) const -> std::size_t {
     std::size_t res = 0;
     hash_combine(res, s.bitstream);
     hash_combine(res, s.position.first);
@@ -54,7 +52,7 @@ struct MyHash<ScheduledModule> {
 
 struct PairHash {
   template <class T1, class T2>
-  std::size_t operator()(std::pair<T1, T2> const& pair) const {
+  auto operator()(std::pair<T1, T2> const& pair) const -> std::size_t {
     std::size_t h1 = std::hash<T1>()(pair.first);
     std::size_t h2 = MyHash<T2>()(pair.second);
 
@@ -69,7 +67,7 @@ struct PairHash {
 class ModuleSelection {
  private:
   enum SelectionMode { kAll, kFirst, kLast, kShortest, kLongest };
-  const std::map<std::string, SelectionMode> kToStringMap = {
+  const std::map<std::string, SelectionMode> kToStringMap_ = {
       {"ALL_AVAILABLE", SelectionMode::kAll},
       {"FIRST_AVAILABLE", SelectionMode::kFirst},
       {"LAST_AVAILABLE", SelectionMode::kLast},
@@ -78,8 +76,8 @@ class ModuleSelection {
 
   SelectionMode value_;
 
-  // TODO: Find a more beautiful way to do this as methods are not allowed with
-  // enums in C.
+  // TODO(Kaspar): Find a more beautiful way to do this as methods are not
+  // allowed with enums in C.
   static auto SelectAll(
       const std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
           available_placements)
@@ -102,9 +100,9 @@ class ModuleSelection {
       -> std::unordered_set<std::pair<int, ScheduledModule>, PairHash>;
 
  public:
-  ModuleSelection(std::string selection_mode)
-      : value_{kToStringMap.at(selection_mode)} {};
-  auto SelectAccordingToMode(
+  explicit ModuleSelection(const std::string& selection_mode)
+      : value_{kToStringMap_.at(selection_mode)} {};
+  [[nodiscard]] auto SelectAccordingToMode(
       const std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
           available_placements) const
       -> std::unordered_set<std::pair<int, ScheduledModule>, PairHash>;

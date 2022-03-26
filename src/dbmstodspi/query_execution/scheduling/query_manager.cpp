@@ -308,7 +308,7 @@ auto QueryManager::SetupAccelerationNodesForExecution(
   IDManager::AllocateStreamIDs(CreateReferenceVector(current_query_nodes),
                                input_ids, output_ids);
 
-  for (auto& node : current_query_nodes) {
+  for (const auto& node : current_query_nodes) {
     AllocateOutputMemoryBlocks(memory_manager, data_manager,
                                output_memory_blocks[node->node_name], *node,
                                output_stream_sizes[node->node_name]);
@@ -331,12 +331,13 @@ auto QueryManager::SetupAccelerationNodesForExecution(
     node->module_locations = {
         node->module_locations.begin() + removable_parameter_count + 1,
         node->module_locations.end()};
-    if (node->operation_type == QueryOperationType::kMergeSort) { 
+    if (node->operation_type == QueryOperationType::kMergeSort) {
       auto before = node->operation_parameters.operation_parameters;
       node->operation_parameters.operation_parameters = {
           node->operation_parameters.operation_parameters.begin() +
               removable_parameter_count *
-                  node->operation_parameters.operation_parameters[0][1] + 1,
+                  node->operation_parameters.operation_parameters[0][1] +
+              1,
           node->operation_parameters.operation_parameters.end()};
 
       auto after = node->operation_parameters.operation_parameters;
@@ -439,7 +440,7 @@ auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
     const std::vector<ScheduledModule>& next_config, int column_count)
     -> std::pair<std::vector<std::string>,
                  std::vector<std::pair<QueryOperationType, bool>>> {
-  std::vector<int> written_frames(column_count, false);
+  std::vector<int> written_frames(column_count, 0);
 
   auto old_routing_modules = BitstreamConfigHelper::GetOldNonOverlappingModules(
       next_config, current_config);
@@ -461,7 +462,7 @@ auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
   for (const auto& module : removable_modules) {
     for (int column_i = module.position.first;
          column_i < module.position.second + 1; column_i++) {
-      written_frames[column_i] = true;
+      written_frames[column_i] = 1;
     }
   }
   // for (const auto& module : old_routing_modules) {
@@ -475,7 +476,7 @@ auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
   for (const auto& module : reduced_next_config) {
     for (int column_i = module.position.first;
          column_i < module.position.second + 1; column_i++) {
-      written_frames[column_i] = false;
+      written_frames[column_i] = 0;
     }
     required_bitstreams.push_back(module.bitstream);
   }
@@ -509,9 +510,9 @@ auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
                      [&](auto new_module) {
                        return module.bitstream == new_module.bitstream;
                      }) != next_config.end()) {
-      passthrough_modules.push_back({module.operation_type, false});
+      passthrough_modules.emplace_back(module.operation_type, false);
     } else {
-      passthrough_modules.push_back({module.operation_type, true});
+      passthrough_modules.emplace_back(module.operation_type, true);
     }
   }
 
@@ -651,9 +652,10 @@ void QueryManager::FreeMemoryBlocks(
     std::map<std::string, std::vector<RecordSizeAndCount>>& output_stream_sizes,
     const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links,
     const std::vector<std::string>& scheduled_node_names) {
-
-  // For all reuse links where it is doing self linking. Just write output to input and don't clear the memory block. Then remove the link from the vector. 
-  //vec.erase(std::remove(vec.begin(), vec.end(), 8), vec.end());
+  // For all reuse links where it is doing self linking. Just write output to
+  // input and don't clear the memory block. Then remove the link from the
+  // vector.
+  // vec.erase(std::remove(vec.begin(), vec.end(), 8), vec.end());
 
   std::vector<std::string> save_input;
   for (const auto& [node_name, data_mapping] : reuse_links) {
@@ -786,7 +788,7 @@ void QueryManager::UpdateTableData(
     std::map<std::string, TableMetadata>& scheduling_table_data,
     const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links,
     std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph) {
-  // TODO: This needs to get tested!!!
+  // TODO(Kaspar): This needs to get tested!!!
   // Also this is assuming that there always is a link. There might not be.
   for (const auto& [node_name, stream_parameters] : result_parameters) {
     for (int stream_index = 0; stream_index < stream_parameters.size();
@@ -836,7 +838,7 @@ void QueryManager::UpdateTableData(
 
 void QueryManager::CropSortedStatus(
     std::map<std::string, TableMetadata>& scheduling_table_data,
-    std::string filename) {
+    const std::string& filename) {
   auto current_data = scheduling_table_data.at(filename);
   if (!current_data.sorted_status.empty()) {
     if (current_data.sorted_status.back().start_position +
@@ -926,15 +928,12 @@ auto QueryManager::AddQueryNodes(
                                 : no_io_output_params;
       std::vector<std::vector<int>> single_module_params = {
           all_module_params.begin() + 1 + offset * i,
-                all_module_params.begin() + 1 + offset * (i + 1)};
+          all_module_params.begin() + 1 + offset * (i + 1)};
       single_module_params.insert(single_module_params.begin(),
                                   all_module_params[0]);
       query_nodes_vector.push_back(
-          {current_input,
-           current_output,
-           node.operation_type,
-           sorted_module_locations.at(i),
-           sorted_module_locations,
+          {current_input, current_output, node.operation_type,
+           sorted_module_locations.at(i), sorted_module_locations,
            single_module_params});
     }
   }

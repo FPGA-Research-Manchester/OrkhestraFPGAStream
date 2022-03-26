@@ -37,7 +37,8 @@ class MockQueryManager : public QueryManagerInterface {
   using MappedRecordSizes =
       std::map<std::string, std::vector<RecordSizeAndCount>>;
   using TableMap = std::map<std::string, TableMetadata>;
-  using SchedulingNodeMap = std::unordered_map<std::string, SchedulingQueryNode>;
+  using SchedulingNodeMap =
+      std::unordered_map<std::string, SchedulingQueryNode>;
   using QueryNodeVector = std::vector<std::shared_ptr<QueryNode>>;
 
  public:
@@ -86,9 +87,9 @@ class MockQueryManager : public QueryManagerInterface {
        const std::unordered_set<std::string>& first_node_names,
        std::unordered_set<std::string>& starting_nodes,
        std::unordered_set<std::string>& processed_nodes,
-       SchedulingNodeMap& graph,
-       TableMap& tables, AcceleratorLibraryInterface& drivers,
-       const Config& config, NodeSchedulerInterface& node_scheduler,
+       SchedulingNodeMap& graph, TableMap& tables,
+       AcceleratorLibraryInterface& drivers, const Config& config,
+       NodeSchedulerInterface& node_scheduler,
        std::queue<ReuseLinks>& all_reuse_links,
        const std::vector<ScheduledModule>& current_configuration),
       (override));

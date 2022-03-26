@@ -75,7 +75,7 @@ class AcceleratorLibraryInterface {
       std::map<std::string, TableMetadata>& resulting_tables) -> bool = 0;
   virtual auto IsInputSupposedToBeSorted(QueryOperationType operation_type)
       -> bool = 0;
-  // TODO: This method needs improving
+  // TODO(Kaspar): This method needs improving
   virtual auto GetResultingTables(
       QueryOperationType operation, const std::vector<std::string>& table_names,
       const std::map<std::string, TableMetadata>& tables)

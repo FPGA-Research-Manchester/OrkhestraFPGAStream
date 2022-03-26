@@ -163,6 +163,7 @@ add_library(query_execution OBJECT
             scheduling/module_selection.cpp
             scheduling/module_selection.hpp
             scheduling/scheduling_data.hpp
+            scheduling/time_limit_execption.hpp
             ${OS_DEPENDENT_MEMORY_BLOCK})
 
 target_include_directories(query_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} 
@@ -176,7 +177,7 @@ target_include_directories(query_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 					                              ${CMAKE_CURRENT_SOURCE_DIR}/scheduling)
 
 target_link_libraries(query_execution PRIVATE core_interfaces)
-target_link_libraries(query_execution PRIVATE util)
+target_link_libraries(query_execution PUBLIC util)
 
 if (ENABLE_FPGA)
 	target_link_libraries(query_execution PUBLIC fos)

@@ -31,13 +31,14 @@ namespace orkhestrafs::dbmstodspi {
 class LinearSortSetup : public virtual AccelerationModuleSetupInterface,
                         public SortingModuleSetup {
  private:
-  auto GetSortedSequenceWithCapacity(int bitstream_capacity, int record_count)
+  static auto GetSortedSequenceWithCapacity(int bitstream_capacity,
+                                            int record_count)
       -> std::vector<SortedSequence>;
 
  public:
   void SetupModule(AccelerationModule& acceleration_module,
                    const AcceleratedQueryNode& module_parameters) override;
-  auto CreateModule(MemoryManagerInterface* memory_manager, int module_position)
+  auto CreateModule(MemoryManagerInterface* memory_manager, int module_postion)
       -> std::unique_ptr<AccelerationModule> override;
   auto GetMinSortingRequirementsForTable(const TableMetadata& table_data)
       -> std::vector<int> override;

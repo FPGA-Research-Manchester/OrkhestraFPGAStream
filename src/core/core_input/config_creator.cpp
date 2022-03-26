@@ -96,7 +96,7 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
 
   auto column_sizes = json_reader_->ReadValueMap(config_values[column_cost]);
   for (const auto& [column_type, size] : column_sizes) {
-    config.cost_of_columns.insert({column_type[0], (int)size});
+    config.cost_of_columns.insert({column_type[0], static_cast<int>(size)});
   }
 
   auto string_key_data_sizes =
@@ -111,7 +111,7 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   return config;
 }
 
-auto ConfigCreator::SetCommaSeparatedValues(std::string original_string)
+auto ConfigCreator::SetCommaSeparatedValues(const std::string& original_string)
     -> std::vector<std::string> {
   std::vector<std::string> resulting_string_list;
   std::stringstream ss(original_string);
@@ -197,7 +197,7 @@ auto ConfigCreator::CreateHWLibrary(
       current_module.fitting_locations =
           std::get<std::vector<int>>(bitstream_parameters.at(locations_field));
       current_module.is_backwards =
-          std::get<int>(bitstream_parameters.at(is_backwards_field));
+          (std::get<int>(bitstream_parameters.at(is_backwards_field)) != 0);
       current_module.length =
           std::get<int>(bitstream_parameters.at(length_field));
       current_module.resource_string =

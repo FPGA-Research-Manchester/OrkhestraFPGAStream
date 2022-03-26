@@ -24,8 +24,8 @@ using orkhestrafs::dbmstodspi::PrintBenchmarkState;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 
-// TODO: Duplicates normal schedule state! Need to have a constructor to tell
-// what is the next state
+// TODO(Kaspar): Duplicates normal schedule state! Need to have a constructor to
+// tell what is the next state
 auto BenchmarkScheduleState::Execute(GraphProcessingFSMInterface* fsm)
     -> std::unique_ptr<StateInterface> {
   Log(LogLevel::kTrace, "Benchmark schedule state");

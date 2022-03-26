@@ -51,10 +51,10 @@ auto PreSchedulingProcessor::GetMinimumCapacityValuesFromHWLibrary(
 }
 
 auto PreSchedulingProcessor::GetMinRequirementsForFullyExecutingNode(
-    std::string node_name,
+    const std::string& node_name,
     const std::unordered_map<std::string, SchedulingQueryNode>& graph,
     AcceleratorLibraryInterface& accelerator_library,
-    const std::map<std::string, TableMetadata> data_tables)
+    const std::map<std::string, TableMetadata>& data_tables)
     -> std::vector<int> {
   if (accelerator_library.IsOperationSorting(graph.at(node_name).operation)) {
     auto tables_to_be_sorted = graph.at(node_name).data_tables;
@@ -65,13 +65,12 @@ auto PreSchedulingProcessor::GetMinRequirementsForFullyExecutingNode(
     return accelerator_library.GetMinSortingRequirements(
         graph.at(node_name).operation,
         data_tables.at(tables_to_be_sorted.front()));
-  } else {
-    return graph.at(node_name).capacity;
   }
+  return graph.at(node_name).capacity;
 }
 
 auto PreSchedulingProcessor::FindAdequateBitstreams(
-    const std::vector<int> min_requirements, QueryOperationType operation,
+    const std::vector<int>& min_requirements, QueryOperationType operation,
     const std::map<QueryOperationType, OperationPRModules>& hw_library)
     -> std::unordered_set<std::string> {
   std::unordered_set<std::string> fitting_bitstreams;
@@ -128,6 +127,7 @@ auto PreSchedulingProcessor::GetWorstCaseProcessedTables(
           operation, min_capacity, input_tables, data_tables);
 
   std::vector<std::string> table_names;
+  table_names.reserve(new_tables.size());
   for (const auto& [key, _] : new_tables) {
     table_names.push_back(key);
   }

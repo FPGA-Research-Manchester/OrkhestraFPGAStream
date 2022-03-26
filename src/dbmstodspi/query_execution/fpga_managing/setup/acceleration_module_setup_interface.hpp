@@ -154,8 +154,7 @@ class AccelerationModuleSetupInterface {
    * Return passthrough module initialisation parameters
    * @return Operation parameters.
    */
-  virtual auto GetPassthroughInitParameters()
-      -> AcceleratedQueryNode;
+  virtual auto GetPassthroughInitParameters() -> AcceleratedQueryNode;
 
  protected:
   static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)

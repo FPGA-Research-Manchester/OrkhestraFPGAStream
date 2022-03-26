@@ -25,13 +25,14 @@ using orkhestrafs::dbmstodspi::SimplePlanEvaluator;
 // and min configuration overhead is chosen
 // (TODO:module reuse isn't considered)
 auto SimplePlanEvaluator::GetBestPlan(
-    int min_run_count, const std::vector<ScheduledModule>& last_configuration,
-    const std::string resource_string, double utilites_scaler,
-    double config_written_scaler, double utility_per_frame_scaler,
+    int min_run_count,
+    const std::vector<ScheduledModule>& /*last_configuration*/,
+    const std::string /*resource_string*/, double /*utilites_scaler*/,
+    double /*config_written_scaler*/, double /*utility_per_frame_scaler*/,
     const std::map<std::vector<std::vector<ScheduledModule>>,
                    ExecutionPlanSchedulingData>& plan_metadata,
-    const std::map<char, int>& cost_of_columns, double streaming_speed,
-    double configuration_speed)
+    const std::map<char, int>& /*cost_of_columns*/, double /*streaming_speed*/,
+    double /*configuration_speed*/)
     -> std::tuple<std::vector<std::vector<ScheduledModule>>,
                   std::vector<ScheduledModule>, int, int> {
   std::tuple<std::vector<std::vector<ScheduledModule>>,
@@ -41,18 +42,17 @@ auto SimplePlanEvaluator::GetBestPlan(
   int min_configured_rows_in_min_plan = 0;
 
   std::vector<std::vector<std::vector<ScheduledModule>>> all_plans_list;
+  all_plans_list.reserve(plan_metadata.size());
   for (const auto& [plan, _] : plan_metadata) {
     all_plans_list.push_back(plan);
   }
 
-  for (int plan_index = 0; plan_index < all_plans_list.size(); plan_index++) {
-    if (all_plans_list.at(plan_index).size() == min_run_count) {
+  for (auto& plan_index : all_plans_list) {
+    if (plan_index.size() == min_run_count) {
       int configured_rows = 0;
       std::set<std::string> unique_node_names;
-      for (int run_index = 0; run_index < all_plans_list.at(plan_index).size();
-           run_index++) {
-        for (const auto& chosen_module :
-             all_plans_list.at(plan_index).at(run_index)) {
+      for (int run_index = 0; run_index < plan_index.size(); run_index++) {
+        for (const auto& chosen_module : plan_index.at(run_index)) {
           unique_node_names.insert(chosen_module.node_name);
           configured_rows +=
               chosen_module.position.second - chosen_module.position.first + 1;
@@ -60,11 +60,11 @@ auto SimplePlanEvaluator::GetBestPlan(
         if (unique_node_names.size() > max_nodes_in_min_plan) {
           max_nodes_in_min_plan = unique_node_names.size();
           min_configured_rows_in_min_plan = configured_rows;
-          best_plan = {all_plans_list.at(plan_index), {}, 0, 0};
+          best_plan = {plan_index, {}, 0, 0};
         } else if (unique_node_names.size() == max_nodes_in_min_plan &&
                    configured_rows < min_configured_rows_in_min_plan) {
           min_configured_rows_in_min_plan = configured_rows;
-          best_plan = {all_plans_list.at(plan_index), {}, 0, 0};
+          best_plan = {plan_index, {}, 0, 0};
         }
       }
     }

@@ -21,8 +21,8 @@ limitations under the License.
 #include "json_reader_interface.hpp"
 #include "rapidjson/document.h"
 
-using rapidjson::Document;
 using orkhestrafs::core_interfaces::JSONReaderInterface;
+using rapidjson::Document;
 
 namespace orkhestrafs::dbmstodspi {
 

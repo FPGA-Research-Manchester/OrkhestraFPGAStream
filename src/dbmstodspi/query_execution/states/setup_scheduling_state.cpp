@@ -20,8 +20,8 @@ limitations under the License.
 #include "schedule_state.hpp"
 
 using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
-using orkhestrafs::dbmstodspi::SetupSchedulingState;
 using orkhestrafs::dbmstodspi::ScheduleState;
+using orkhestrafs::dbmstodspi::SetupSchedulingState;
 using orkhestrafs::dbmstodspi::StateInterface;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;

@@ -21,13 +21,14 @@ limitations under the License.
 using orkhestrafs::dbmstodspi::AccelerationModuleSetupInterface;
 
 auto AccelerationModuleSetupInterface::IsMultiChannelStream(
-    bool is_input_stream, int stream_index) -> bool {
+    bool /*is_input_stream*/, int /*stream_index*/) -> bool {
   return false;
 }
 
 auto AccelerationModuleSetupInterface::GetMultiChannelParams(
-    bool is_input, int stream_index,
-    std::vector<std::vector<int>> operation_parameters) -> std::pair<int, std::vector<int>> {
+    bool /*is_input*/, int /*stream_index*/,
+    std::vector<std::vector<int>> /*operation_parameters*/)
+    -> std::pair<int, std::vector<int>> {
   return {-1, {-1}};
 }
 
@@ -45,7 +46,8 @@ auto AccelerationModuleSetupInterface::IsConstrainedToFirstInPipeline()
 }
 
 auto AccelerationModuleSetupInterface::GetCapacityRequirement(
-    std::vector<std::vector<int>> operation_parameters) -> std::vector<int> {
+    std::vector<std::vector<int>> /*operation_parameters*/)
+    -> std::vector<int> {
   return {};
 }
 
@@ -54,7 +56,7 @@ auto AccelerationModuleSetupInterface::IsSortingInputTable() -> bool {
 }
 
 auto AccelerationModuleSetupInterface::GetWorstCaseProcessedTables(
-    const std::vector<int>& min_capacity,
+    const std::vector<int>& /*min_capacity*/,
     const std::vector<std::string>& input_tables,
     const std::map<std::string, TableMetadata>& data_tables)
     -> std::map<std::string, TableMetadata> {
@@ -67,10 +69,10 @@ auto AccelerationModuleSetupInterface::GetWorstCaseProcessedTables(
 }
 
 auto AccelerationModuleSetupInterface::UpdateDataTable(
-    const std::vector<int>& module_capacity,
-    const std::vector<std::string>& input_table_names,
-    const std::map<std::string, TableMetadata>& data_tables,
-    std::map<std::string, TableMetadata>& resulting_tables) -> bool {
+    const std::vector<int>& /*module_capacity*/,
+    const std::vector<std::string>& /*input_table_names*/,
+    const std::map<std::string, TableMetadata>& /*data_tables*/,
+    std::map<std::string, TableMetadata>& /*resulting_tables*/) -> bool {
   throw std::runtime_error("Not implemented!");
 }
 
@@ -79,9 +81,9 @@ auto AccelerationModuleSetupInterface::InputHasToBeSorted() -> bool {
 }
 
 auto AccelerationModuleSetupInterface::GetResultingTables(
-    const std::map<std::string, TableMetadata>& tables,
+    const std::map<std::string, TableMetadata>& /*tables*/,
     const std::vector<std::string>& table_names) -> std::vector<std::string> {
-  // TODO: Eventually will be removed if a generator module exists.
+  // TODO(Kaspar): Eventually will be removed if a generator module exists.
   if (table_names.empty()) {
     throw std::runtime_error("No input data found");
   }
@@ -99,8 +101,8 @@ auto AccelerationModuleSetupInterface::IsDataSensitive() -> bool {
 auto AccelerationModuleSetupInterface::GetPassthroughInitParameters()
     -> AcceleratedQueryNode {
   AcceleratedQueryNode passthrough_module_node;
-  passthrough_module_node.input_streams = {{15, 0, 0, 0, {}}};
-  passthrough_module_node.output_streams = {{15, 0, 0, 0, {}}};
+  passthrough_module_node.input_streams = {{15, 0, 0, nullptr, {}}};
+  passthrough_module_node.output_streams = {{15, 0, 0, nullptr, {}}};
   passthrough_module_node.operation_parameters = {};
   return passthrough_module_node;
 }

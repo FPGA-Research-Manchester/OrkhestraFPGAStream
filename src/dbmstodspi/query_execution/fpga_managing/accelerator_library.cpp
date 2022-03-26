@@ -24,9 +24,9 @@ using orkhestrafs::dbmstodspi::AcceleratorLibrary;
 
 void AcceleratorLibrary::SetupOperation(
     const AcceleratedQueryNode& node_parameters) {
-  auto driver = GetDriver(node_parameters.operation_type);
+  auto* driver = GetDriver(node_parameters.operation_type);
   recent_setup_modules_.clear();
-  // TODO: Put into a for loop for composed modules.
+  // TODO(Kaspar): Put into a for loop for composed modules.
   auto current_module = driver->CreateModule(
       memory_manager_, node_parameters.operation_module_location);
   driver->SetupModule(*current_module, node_parameters);
@@ -40,13 +40,12 @@ auto AcceleratorLibrary::GetDMAModule() -> std::unique_ptr<DMAInterface> {
 auto AcceleratorLibrary::ExportLastModulesIfReadback()
     -> std::vector<std::unique_ptr<ReadBackModule>> {
   std::vector<std::unique_ptr<ReadBackModule>> resulting_vector;
-  for (int i = 0; i < recent_setup_modules_.size(); i++) {
-    auto cast_check =
-        dynamic_cast<ReadBackModule*>(recent_setup_modules_.at(i).get());
+  for (auto& recent_setup_module : recent_setup_modules_) {
+    auto* cast_check = dynamic_cast<ReadBackModule*>(recent_setup_module.get());
     if (cast_check) {
       std::unique_ptr<ReadBackModule> my_new_pointer(
           dynamic_cast<ReadBackModule*>(
-              std::move(recent_setup_modules_.at(i)).release()));
+              std::move(recent_setup_module).release()));
       resulting_vector.push_back(std::move(my_new_pointer));
     }
   }
@@ -65,14 +64,14 @@ auto AcceleratorLibrary::GetILAModule() -> std::unique_ptr<ILA> {
 auto AcceleratorLibrary::IsMultiChannelStream(bool is_input, int stream_index,
                                               QueryOperationType operation_type)
     -> bool {
-  auto driver = GetDriver(operation_type);
+  auto* driver = GetDriver(operation_type);
   return driver->IsMultiChannelStream(is_input, stream_index);
 }
 auto AcceleratorLibrary::GetMultiChannelParams(
     bool is_input, int stream_index, QueryOperationType operation_type,
     const std::vector<std::vector<int>>& operation_parameters)
     -> std::pair<int, std::vector<int>> {
-  auto driver = GetDriver(operation_type);
+  auto* driver = GetDriver(operation_type);
   return driver->GetMultiChannelParams(is_input, stream_index,
                                        operation_parameters);
 }
@@ -82,40 +81,38 @@ auto AcceleratorLibrary::GetDriver(QueryOperationType operation_type)
   auto search = module_driver_library_.find(operation_type);
   if (search != module_driver_library_.end()) {
     return search->second.get();
-  } else {
-    throw std::runtime_error("Operator driver not found!");
   }
+  throw std::runtime_error("Operator driver not found!");
 }
 
 auto AcceleratorLibrary::GetNodeCapacity(
     QueryOperationType operation_type,
     const std::vector<std::vector<int>>& operation_parameters)
     -> std::vector<int> {
-  auto driver = GetDriver(operation_type);
+  auto* driver = GetDriver(operation_type);
   return driver->GetCapacityRequirement(operation_parameters);
 }
 
 auto AcceleratorLibrary::IsNodeConstrainedToFirstInPipeline(
     QueryOperationType operation_type) -> bool {
-  auto driver = GetDriver(operation_type);
+  auto* driver = GetDriver(operation_type);
   return driver->IsConstrainedToFirstInPipeline();
 }
 
 auto AcceleratorLibrary::IsOperationSorting(QueryOperationType operation_type)
     -> bool {
-  auto driver = GetDriver(operation_type);
+  auto* driver = GetDriver(operation_type);
   return driver->IsSortingInputTable();
 }
 
 auto AcceleratorLibrary::GetMinSortingRequirements(
     QueryOperationType operation_type, const TableMetadata& table_data)
     -> std::vector<int> {
-  auto driver = dynamic_cast<SortingModuleSetup*>(GetDriver(operation_type));
+  auto* driver = dynamic_cast<SortingModuleSetup*>(GetDriver(operation_type));
   if (driver) {
     return driver->GetMinSortingRequirementsForTable(table_data);
-  } else {
-    throw std::runtime_error("Non sorting operation given!");
   }
+  throw std::runtime_error("Non sorting operation given!");
 }
 
 auto AcceleratorLibrary::GetWorstCaseProcessedTables(
@@ -123,7 +120,7 @@ auto AcceleratorLibrary::GetWorstCaseProcessedTables(
     const std::vector<std::string>& input_tables,
     const std::map<std::string, TableMetadata>& data_tables)
     -> std::map<std::string, TableMetadata> {
-  auto driver = GetDriver(operation_type);
+  auto* driver = GetDriver(operation_type);
   return driver->GetWorstCaseProcessedTables(min_capacity, input_tables,
                                              data_tables);
 }
@@ -133,14 +130,14 @@ auto AcceleratorLibrary::UpdateDataTable(
     const std::vector<std::string>& input_table_names,
     const std::map<std::string, TableMetadata>& data_tables,
     std::map<std::string, TableMetadata>& resulting_tables) -> bool {
-  auto driver = GetDriver(operation_type);
+  auto* driver = GetDriver(operation_type);
   return driver->UpdateDataTable(module_capacity, input_table_names,
                                  data_tables, resulting_tables);
 }
 
-auto AcceleratorLibrary::IsInputSupposedToBeSorted(QueryOperationType operation_type)
-    -> bool {
-  auto driver = GetDriver(operation_type);
+auto AcceleratorLibrary::IsInputSupposedToBeSorted(
+    QueryOperationType operation_type) -> bool {
+  auto* driver = GetDriver(operation_type);
   return driver->InputHasToBeSorted();
 }
 
@@ -148,25 +145,26 @@ auto AcceleratorLibrary::GetResultingTables(
     QueryOperationType operation, const std::vector<std::string>& table_names,
     const std::map<std::string, TableMetadata>& tables)
     -> std::vector<std::string> {
-  auto driver = GetDriver(operation);
+  auto* driver = GetDriver(operation);
   return driver->GetResultingTables(tables, table_names);
 }
 
 auto AcceleratorLibrary::IsOperationReducingData(QueryOperationType operation)
     -> bool {
-  auto driver = GetDriver(operation);
+  auto* driver = GetDriver(operation);
   return driver->IsReducingData();
 }
 
 auto AcceleratorLibrary::IsOperationDataSensitive(QueryOperationType operation)
     -> bool {
-  auto driver = GetDriver(operation);
+  auto* driver = GetDriver(operation);
   return driver->IsDataSensitive();
 }
 
-auto AcceleratorLibrary::GetEmptyModuleNode(QueryOperationType operation, int module_position)
+auto AcceleratorLibrary::GetEmptyModuleNode(QueryOperationType operation,
+                                            int module_position)
     -> AcceleratedQueryNode {
-  auto driver = GetDriver(operation);
+  auto* driver = GetDriver(operation);
   AcceleratedQueryNode passthrough_module_node =
       driver->GetPassthroughInitParameters();
   passthrough_module_node.operation_type = operation;

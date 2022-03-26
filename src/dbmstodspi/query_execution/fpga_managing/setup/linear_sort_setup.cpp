@@ -69,20 +69,19 @@ auto LinearSortSetup::GetSortedSequenceWithCapacity(int bitstream_capacity,
   int sequence_count = record_count / bitstream_capacity;
   if (sequence_count == 0) {
     return {{0, record_count}};
-  } else {
-    std::vector<SortedSequence> new_sorted_sequences;
-    for (int sequence_index = 0; sequence_index < sequence_count;
-         sequence_index++) {
-      new_sorted_sequences.push_back(
-          {bitstream_capacity * sequence_index, bitstream_capacity});
-      if (sequence_index == sequence_count - 1 &&
-          record_count % bitstream_capacity != 0) {
-        new_sorted_sequences.push_back({bitstream_capacity * sequence_count,
-                                        record_count % bitstream_capacity});
-      }
-    }
-    return new_sorted_sequences;
   }
+  std::vector<SortedSequence> new_sorted_sequences;
+  for (int sequence_index = 0; sequence_index < sequence_count;
+       sequence_index++) {
+    new_sorted_sequences.push_back(
+        {bitstream_capacity * sequence_index, bitstream_capacity});
+    if (sequence_index == sequence_count - 1 &&
+        record_count % bitstream_capacity != 0) {
+      new_sorted_sequences.push_back({bitstream_capacity * sequence_count,
+                                      record_count % bitstream_capacity});
+    }
+  }
+  return new_sorted_sequences;
 }
 
 auto LinearSortSetup::GetWorstCaseProcessedTables(

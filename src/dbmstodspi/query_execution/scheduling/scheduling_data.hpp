@@ -18,11 +18,10 @@ limitations under the License.
 
 #include <map>
 #include <string>
-#include <utility>
-#include <vector>
-
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include "scheduling_query_node.hpp"
 #include "table_data.hpp"

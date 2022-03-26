@@ -24,10 +24,10 @@ limitations under the License.
 #include "memory_manager.hpp"
 #include "plan_evaluator.hpp"
 #include "query_manager.hpp"
+#include "rapidjson_reader.hpp"
 #include "schedule_state.hpp"
 #include "setup_benchmark_schedule_state.hpp"
 #include "setup_scheduling_state.hpp"
-#include "rapidjson_reader.hpp"
 
 using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::core::core_execution::ExecutionManagerFactory;
@@ -58,7 +58,7 @@ auto ExecutionManagerFactory::GetManager(const Config& config)
 #endif
 
   return std::make_unique<ExecutionManager>(
-      std::move(config),
+      config,
       std::make_unique<QueryManager>(std::make_unique<RapidJSONReader>()),
       std::make_unique<DataManager>(config.data_sizes, config.csv_separator,
                                     std::make_unique<CSVReader>()),

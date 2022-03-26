@@ -18,10 +18,9 @@ limitations under the License.
 
 #include <queue>
 #include <string>
-#include <utility>
-
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
+#include <utility>
 
 #include "accelerated_query_node.hpp"
 #include "accelerator_library_interface.hpp"
@@ -75,7 +74,7 @@ class ExecutionManager : public ExecutionManagerInterface,
         memory_manager_{std::move(memory_manager)},
         query_manager_{std::move(query_manager)},
         scheduler_{std::move(scheduler)},
-        config_{std::move(config)},
+        config_{config},
         accelerator_library_{std::move(
             driver_factory->CreateAcceleratorLibrary(memory_manager_.get()))},
         fpga_manager_{std::move(
@@ -98,7 +97,6 @@ class ExecutionManager : public ExecutionManagerInterface,
 
   void BenchmarkScheduleUnscheduledNodes() override;
   auto IsBenchmarkDone() -> bool override;
-
 
  private:
   // Initial inputs
@@ -126,7 +124,8 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::vector<std::shared_ptr<QueryNode>> current_available_node_pointers_;
 
   // Variables used throughout different states.
-  std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>> all_reuse_links_;
+  std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>
+      all_reuse_links_;
   std::map<std::string, std::map<int, MemoryReuseTargets>> current_reuse_links_;
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
       input_memory_blocks_;
@@ -147,10 +146,11 @@ class ExecutionManager : public ExecutionManagerInterface,
 
   auto PopNextScheduledRun() -> std::vector<std::shared_ptr<QueryNode>>;
 
-  // TODO: Move this to a different class
+  // TODO(Kaspar): Move this to a different class
   static void SetupSchedulingGraphAndConstrainedNodes(
       const std::vector<QueryNode*>& all_query_nodes,
-      std::unordered_map<std::string, SchedulingQueryNode>& current_scheduling_graph,
+      std::unordered_map<std::string, SchedulingQueryNode>&
+          current_scheduling_graph,
       AcceleratorLibraryInterface& hw_library,
       std::unordered_set<std::string>& constrained_nodes_vector);
 
@@ -159,9 +159,11 @@ class ExecutionManager : public ExecutionManagerInterface,
       std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph,
       AcceleratorLibraryInterface& accelerator_library);
   static void AddSavedNodesToConstrainedList(
-      QueryNode* const& node, std::unordered_set<std::string>& constrained_nodes);
+      QueryNode* const& node,
+      std::unordered_set<std::string>& constrained_nodes);
   static void AddFirstModuleNodesToConstrainedList(
-      QueryNode* const& node, std::unordered_set<std::string>& constrained_nodes,
+      QueryNode* const& node,
+      std::unordered_set<std::string>& constrained_nodes,
       AcceleratorLibraryInterface& accelerator_library);
   static void AddSplittingNodesToConstrainedList(
       std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph,

@@ -18,6 +18,4 @@ limitations under the License.
 
 using orkhestrafs::dbmstodspi::SortingModuleSetup;
 
-auto SortingModuleSetup::IsSortingInputTable() -> bool {
-  return true;
-}
+auto SortingModuleSetup::IsSortingInputTable() -> bool { return true; }

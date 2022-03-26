@@ -24,7 +24,7 @@ namespace orkhestrafs::dbmstodspi {
 
 class QueryManager : public QueryManagerInterface {
  public:
-  QueryManager(std::unique_ptr<JSONReaderInterface> json_reader)
+  explicit QueryManager(std::unique_ptr<JSONReaderInterface> json_reader)
       : json_reader_{std::move(json_reader)} {};
   ~QueryManager() override = default;
   auto GetCurrentLinks(
@@ -65,7 +65,8 @@ class QueryManager : public QueryManagerInterface {
       std::map<std::string, TableMetadata>& scheduling_table_data,
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
           reuse_links,
-      std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph) override;
+      std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph)
+      override;
   void FreeMemoryBlocks(
       MemoryManagerInterface* memory_manager,
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
@@ -150,7 +151,7 @@ class QueryManager : public QueryManagerInterface {
       int table_size,
       const std::unique_ptr<MemoryBlockInterface>& source_memory_device,
       const std::unique_ptr<MemoryBlockInterface>& target_memory_device);
-  void ProcessResults(
+  static void ProcessResults(
       const DataManagerInterface* data_manager,
       std::array<int, query_acceleration_constants::kMaxIOStreamCount>
           result_sizes,
@@ -210,10 +211,11 @@ class QueryManager : public QueryManagerInterface {
           input_stream_sizes,
       std::map<std::string, std::vector<RecordSizeAndCount>>&
           output_stream_sizes);
-  auto AddQueryNodes(std::vector<AcceleratedQueryNode>& query_nodes_vector,
-                     std::vector<StreamDataParameters>&& input_params,
-                     std::vector<StreamDataParameters>&& output_params,
-                     const QueryNode& node) -> int;
+  static auto AddQueryNodes(
+      std::vector<AcceleratedQueryNode>& query_nodes_vector,
+      std::vector<StreamDataParameters>&& input_params,
+      std::vector<StreamDataParameters>&& output_params, const QueryNode& node)
+      -> int;
   static void UpdateTableData(
       const std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
@@ -225,7 +227,7 @@ class QueryManager : public QueryManagerInterface {
       std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph);
   static void CropSortedStatus(
       std::map<std::string, TableMetadata>& scheduling_table_data,
-      std::string filename);
+      const std::string& filename);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

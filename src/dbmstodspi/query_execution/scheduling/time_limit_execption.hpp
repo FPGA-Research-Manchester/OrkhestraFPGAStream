@@ -19,21 +19,23 @@ limitations under the License.
 #include <exception>
 #include <iostream>
 #include <string>
+#include <utility>
 
 namespace orkhestrafs::dbmstodspi {
 /**
- * @brief From https://stackoverflow.com/questions/35215169/c-create-a-class-exception
+ * @brief From
+ * https://stackoverflow.com/questions/35215169/c-create-a-class-exception
  */
 class TimeLimitException : public std::exception {
-  std::string _exception_message;
+  std::string exception_message_;
 
  public:
-  TimeLimitException(const std::string& exception_message)
-      : _exception_message(exception_message) {}
+  explicit TimeLimitException(std::string exception_message)
+      : exception_message_(std::move(exception_message)) {}
 
-  virtual const char* what() const noexcept override {
-    return _exception_message.c_str();
+  [[nodiscard]] auto what() const noexcept -> const char* override {
+    return exception_message_.c_str();
   }
-}; 
+};
 
 }  // namespace orkhestrafs::dbmstodspi

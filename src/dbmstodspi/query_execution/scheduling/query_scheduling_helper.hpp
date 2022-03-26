@@ -15,12 +15,12 @@ limitations under the License.
 */
 
 #pragma once
+#include <unordered_map>
+#include <unordered_set>
+
 #include "query_scheduling_data.hpp"
 #include "scheduling_query_node.hpp"
 #include "table_data.hpp"
-
-#include <unordered_map>
-#include <unordered_set>
 
 using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
 using orkhestrafs::core_interfaces::table_data::TableMetadata;
@@ -60,7 +60,8 @@ class QuerySchedulingHelper {
    * @return Vector of node names which are now available.
    */
   static auto GetNewAvailableNodesAfterSchedulingGivenNode(
-      std::string node_name, const std::unordered_set<std::string>& past_nodes,
+      const std::string& node_name,
+      const std::unordered_set<std::string>& past_nodes,
       const std::unordered_map<std::string, SchedulingQueryNode>& graph)
       -> std::unordered_set<std::string>;
 
@@ -72,7 +73,7 @@ class QuerySchedulingHelper {
    */
   static void AddNewTableToNextNodes(
       std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      std::string node_name,
+      const std::string& node_name,
       const std::vector<std::string>& table_names);
 
   /**
@@ -86,7 +87,7 @@ class QuerySchedulingHelper {
    */
   static auto GetCurrentNodeIndexesByName(
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      std::string next_node_name, std::string current_node_name)
+      const std::string& next_node_name, const std::string& current_node_name)
       -> std::vector<std::pair<int, int>>;
 
   /**
@@ -97,7 +98,7 @@ class QuerySchedulingHelper {
    */
   static void RemoveNodeFromGraph(
       std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      std::string node_name);
+      const std::string& node_name);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

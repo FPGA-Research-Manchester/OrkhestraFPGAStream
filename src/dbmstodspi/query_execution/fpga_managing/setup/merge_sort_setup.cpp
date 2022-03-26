@@ -39,18 +39,14 @@ void MergeSortSetup::SetupModule(
       "Configuring merge sort on pos " +
           std::to_string(module_parameters.operation_module_location));
   if (module_parameters.input_streams[0].stream_id != 15) {
-
-    
-
     auto index = std::find(module_parameters.composed_module_locations.begin(),
                            module_parameters.composed_module_locations.end(),
                            module_parameters.operation_module_location) -
                  module_parameters.composed_module_locations.begin();
 
     bool is_first = index == 0;
-    // TODO: For now assuming all modules are the same!
+    // TODO(Kaspar): For now assuming all modules are the same!
     int base_id = module_parameters.operation_parameters.at(2).at(0);
-
 
     MergeSortSetup::SetupMergeSortModule(
         dynamic_cast<MergeSortInterface&>(acceleration_module),
@@ -152,50 +148,49 @@ auto MergeSortSetup::IsMultiChannelStream(bool is_input_stream,
   return is_input_stream && stream_index == 0;
 }
 auto MergeSortSetup::GetMultiChannelParams(
-    bool is_input, int stream_index,
-    std::vector<std::vector<int>> operation_parameters) -> std::pair<int, std::vector<int>> {
+    bool is_input, int /*stream_index*/,
+    std::vector<std::vector<int>> operation_parameters)
+    -> std::pair<int, std::vector<int>> {
   if (!is_input) {
     return {-1, {-1}};
-  } else {
-    int max_channel_count = 0;
-    // Assuming all modules have the same records_per_channel
-    std::vector<int> records_per_channel;
-    int module_count = operation_parameters.at(0).at(0);
-    int parameter_offset = operation_parameters.at(0).at(1);
-    for (int module_index = 0; module_index < module_count; module_index++) {
-      max_channel_count +=
-          static_cast<int>(operation_parameters.at(module_index * parameter_offset + 1).size());
-      records_per_channel.reserve(
-          records_per_channel.size() +
-          operation_parameters.at(module_index * parameter_offset + 1).size());
-      records_per_channel.insert(
-          records_per_channel.end(),
-          operation_parameters.at(module_index * parameter_offset + 1).begin(),
-          operation_parameters.at(module_index * parameter_offset + 1).end());
-    }
-    return {max_channel_count, records_per_channel};
   }
+  int max_channel_count = 0;
+  // Assuming all modules have the same records_per_channel
+  std::vector<int> records_per_channel;
+  int module_count = operation_parameters.at(0).at(0);
+  int parameter_offset = operation_parameters.at(0).at(1);
+  for (int module_index = 0; module_index < module_count; module_index++) {
+    max_channel_count += static_cast<int>(
+        operation_parameters.at(module_index * parameter_offset + 1).size());
+    records_per_channel.reserve(
+        records_per_channel.size() +
+        operation_parameters.at(module_index * parameter_offset + 1).size());
+    records_per_channel.insert(
+        records_per_channel.end(),
+        operation_parameters.at(module_index * parameter_offset + 1).begin(),
+        operation_parameters.at(module_index * parameter_offset + 1).end());
+  }
+  return {max_channel_count, records_per_channel};
 }
 
 auto MergeSortSetup::GetMinSortingRequirementsForTable(
     const TableMetadata& table_data) -> std::vector<int> {
   if (table_data.sorted_status.empty()) {
     return {table_data.record_count};
-  } else {
-    if (QuerySchedulingHelper::IsTableSorted(table_data)) {
-      return {0};
-    }
-    int pos_of_last_sorted_element =
-        table_data.sorted_status.back().start_position +
-        table_data.sorted_status.back().length;
-    if (pos_of_last_sorted_element > table_data.record_count) {
-      throw std::runtime_error("Incorrect sorted meta data");
-    }
-    int unsorted_tail_length =
-        table_data.record_count - pos_of_last_sorted_element;
-    return {static_cast<int>(table_data.sorted_status.size()) +
-            unsorted_tail_length};
   }
+  if (QuerySchedulingHelper::IsTableSorted(table_data)) {
+    return {0};
+  }
+  int pos_of_last_sorted_element =
+      table_data.sorted_status.back().start_position +
+      table_data.sorted_status.back().length;
+  if (pos_of_last_sorted_element > table_data.record_count) {
+    throw std::runtime_error("Incorrect sorted meta data");
+  }
+  int unsorted_tail_length =
+      table_data.record_count - pos_of_last_sorted_element;
+  return {static_cast<int>(table_data.sorted_status.size()) +
+          unsorted_tail_length};
 }
 
 auto MergeSortSetup::IsDataSensitive() -> bool { return true; }
