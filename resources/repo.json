@@ -79,6 +79,9 @@
     "binPartial_MergeSort64_67_96",
     "DSPI_joining",
     "DSPI_merge_sorting",
-    "DSPI_linear_sorting"
+    "DSPI_linear_sorting",
+    "binPartial_AggregateGlobalSum_55_63",
+    "binPartial_ConstArith64b_85_96",
+    "binPartial_DecMult64b_64_84"
   ]
 }
