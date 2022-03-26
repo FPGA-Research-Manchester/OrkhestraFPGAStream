@@ -61,3 +61,25 @@ auto BitstreamConfigHelper::GetConfigCompliments(
 
   return {reduced_next_config, reduced_current_config};
 }
+
+auto BitstreamConfigHelper::GetOldNonOverlappingModules(
+    const std::vector<ScheduledModule>& current_run,
+    const std::vector<ScheduledModule>& previous_configuration)
+    -> std::vector<ScheduledModule> {
+  auto non_overlapping = previous_configuration;
+  for (const auto& cur_module : previous_configuration) {
+    for (const auto& next_module : current_run) {
+        // Assuming inclusive coordinates
+      if ((cur_module.position.first >= next_module.position.first &&
+           cur_module.position.first <= next_module.position.second) ||
+          (cur_module.position.second >= next_module.position.first &&
+           cur_module.position.second <= next_module.position.second)) {
+        non_overlapping.erase(std::remove(non_overlapping.begin(),
+                                          non_overlapping.end(), cur_module),
+                              non_overlapping.end());
+        break;
+      }
+    }
+  }
+  return non_overlapping;
+}

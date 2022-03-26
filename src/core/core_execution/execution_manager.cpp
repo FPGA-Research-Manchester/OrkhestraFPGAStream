@@ -61,9 +61,9 @@ void ExecutionManager::ScheduleUnscheduledNodes() {
 }
 void ExecutionManager::BenchmarkScheduleUnscheduledNodes() {
   query_manager_->BenchmarkScheduling(
-      nodes_constrained_to_first_,
-      current_available_nodes_, processed_nodes_, current_query_graph_,
-      current_tables_metadata_, *accelerator_library_, config_, *scheduler_, current_configuration_);
+      nodes_constrained_to_first_, current_available_nodes_, processed_nodes_,
+      current_query_graph_, current_tables_metadata_, *accelerator_library_,
+      config_, *scheduler_, current_configuration_);
 }
 auto ExecutionManager::IsBenchmarkDone() -> bool {
   return current_available_nodes_.empty();
@@ -71,6 +71,11 @@ auto ExecutionManager::IsBenchmarkDone() -> bool {
 
 void ExecutionManager::SetupNextRunData() {
   ConfigurableModulesVector next_set_of_operators;
+
+  // const auto first = query_node_runs_queue_.front();  // getting the first
+  // query_node_runs_queue_.pop();                       // removing him
+  // query_node_runs_queue_.push(first);
+
   auto next_run = query_node_runs_queue_.front().first;
   for (int module_index = 0; module_index < next_run.size(); module_index++) {
     next_set_of_operators.emplace_back(
@@ -80,29 +85,38 @@ void ExecutionManager::SetupNextRunData() {
             .capacity);
   }
 
-  if (config_.accelerator_library.find(next_set_of_operators) ==
-      config_.accelerator_library.end()) {
-    // for (const auto& thing : query_node_runs_queue_.front().first) {
-    //  auto op_type = thing.operation_type;
-    //  auto module_params = thing.resource_elasticity_data;
-    //}
-    throw std::runtime_error("Bitstream not found!");
-  }
+  // if (config_.accelerator_library.find(next_set_of_operators) ==
+  //    config_.accelerator_library.end()) {
+  //  // for (const auto& thing : query_node_runs_queue_.front().first) {
+  //  //  auto op_type = thing.operation_type;
+  //  //  auto module_params = thing.resource_elasticity_data;
+  //  //}
+  //  throw std::runtime_error("Bitstream not found!");
+  //}
 
   // Old
   /*query_manager_->LoadNextBitstreamIfNew(
       memory_manager_.get(),
       config_.accelerator_library.at(query_node_runs_queue_.front().first),
       config_);*/
+  /*query_manager_->LoadInitialStaticBitstream(memory_manager_.get());
+  query_manager_->LoadEmptyRoutingPRRegion(memory_manager_.get(),
+                                           *accelerator_library_.get());*/
   auto [bitstreams_to_load, empty_modules] =
       query_manager_->GetPRBitstreamsToLoadWithPassthroughModules(
           current_configuration_, query_node_runs_queue_.front().first, 31);
   query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
                                    *accelerator_library_.get());
+  query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
+                                   *accelerator_library_.get()); /*
+   query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
+                                    *accelerator_library_.get());*/
   // Debugging
-  /*std::vector<std::pair<QueryOperationType, bool>> empty_modules;
-  query_manager_->LoadPRBitstreams(memory_manager_.get(), config_.temp,
-                                   *accelerator_library_.get());*/
+  // std::vector<std::pair<QueryOperationType, bool>> empty_modules;
+  /*query_manager_->LoadEmptyRoutingPRRegion(memory_manager_.get(),
+   *accelerator_library_.get());*/
+  /*query_manager_->LoadPRBitstreams(memory_manager_.get(),
+   *config_.debug_forced_pr_bitstreams, accelerator_library_.get());*/
 
   auto next_scheduled_run_nodes = PopNextScheduledRun();
 
@@ -110,8 +124,7 @@ void ExecutionManager::SetupNextRunData() {
     scheduled_node_names_.push_back(node->node_name);
   }
 
-  current_reuse_links_ = query_manager_->GetCurrentLinks(
-      next_scheduled_run_nodes, all_reuse_links_);
+  current_reuse_links_ = query_manager_->GetCurrentLinks(all_reuse_links_);
 
   auto execution_nodes_and_result_params =
       query_manager_->SetupAccelerationNodesForExecution(
@@ -164,7 +177,7 @@ void ExecutionManager::PrintCurrentStats() {
 
 void ExecutionManager::SetupSchedulingData(bool setup_bitstreams) {
   for (const auto& node : unscheduled_graph_->GetRootNodesPtrs()) {
-    current_available_nodes_.push_back(node->node_name);
+    current_available_nodes_.insert(node->node_name);
   }
 
   current_tables_metadata_ = config_.initial_all_tables_metadata;
@@ -185,9 +198,9 @@ void ExecutionManager::SetupSchedulingData(bool setup_bitstreams) {
 
 void ExecutionManager::SetupSchedulingGraphAndConstrainedNodes(
     const std::vector<QueryNode*>& all_query_nodes,
-    std::map<std::string, SchedulingQueryNode>& current_scheduling_graph,
+    std::unordered_map<std::string, SchedulingQueryNode>& current_scheduling_graph,
     AcceleratorLibraryInterface& hw_library,
-    std::vector<std::string>& constrained_nodes_vector) {
+    std::unordered_set<std::string>& constrained_nodes_vector) {
   for (const auto& node : all_query_nodes) {
     AddSchedulingNodeToGraph(node, current_scheduling_graph, hw_library);
 
@@ -200,13 +213,13 @@ void ExecutionManager::SetupSchedulingGraphAndConstrainedNodes(
 }
 
 void ExecutionManager::AddSavedNodesToConstrainedList(
-    QueryNode* const& node, std::vector<std::string>& constrained_nodes) {
+    QueryNode* const& node, std::unordered_set<std::string>& constrained_nodes) {
   for (int node_index = 0; node_index < node->is_checked.size(); node_index++) {
     if (node->is_checked[node_index]) {
       auto constrained_node_name = node->next_nodes[node_index]->node_name;
       if (std::find(constrained_nodes.begin(), constrained_nodes.end(),
                     constrained_node_name) == constrained_nodes.end()) {
-        constrained_nodes.push_back(constrained_node_name);
+        constrained_nodes.insert(constrained_node_name);
       }
     }
   }
@@ -214,7 +227,7 @@ void ExecutionManager::AddSavedNodesToConstrainedList(
 
 void ExecutionManager::AddSchedulingNodeToGraph(
     QueryNode* const& node,
-    std::map<std::string, SchedulingQueryNode>& scheduling_graph,
+    std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph,
     AcceleratorLibraryInterface& accelerator_library) {
   SchedulingQueryNode current_node;
   for (const auto& next_node : node->next_nodes) {
@@ -246,13 +259,13 @@ void ExecutionManager::AddSchedulingNodeToGraph(
 }
 
 void ExecutionManager::AddFirstModuleNodesToConstrainedList(
-    QueryNode* const& node, std::vector<std::string>& constrained_nodes,
+    QueryNode* const& node, std::unordered_set<std::string>& constrained_nodes,
     AcceleratorLibraryInterface& accelerator_library) {
   if (accelerator_library.IsNodeConstrainedToFirstInPipeline(
           node->operation_type) &&
       std::find(constrained_nodes.begin(), constrained_nodes.end(),
                 node->node_name) == constrained_nodes.end()) {
-    constrained_nodes.push_back(node->node_name);
+    constrained_nodes.insert(node->node_name);
   };
 }
 
@@ -261,8 +274,8 @@ void ExecutionManager::AddFirstModuleNodesToConstrainedList(
 // TODO: Splitting nodes aren't supported at the moment anyway:
 // after_nodes needs to be a vector of vectors!
 void ExecutionManager::AddSplittingNodesToConstrainedList(
-    std::map<std::string, SchedulingQueryNode>& scheduling_graph,
-    std::vector<std::string>& constrained_nodes) {
+    std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph,
+    std::unordered_set<std::string>& constrained_nodes) {
   std::vector<std::pair<std::string, int>> all_stream_dependencies;
   std::vector<std::pair<std::string, int>> splitting_streams;
   for (const auto& [node_name, node_parameters] : scheduling_graph) {
@@ -290,7 +303,7 @@ void ExecutionManager::AddSplittingNodesToConstrainedList(
             std::find(constrained_nodes.begin(), constrained_nodes.end(),
                       potentially_constrained_node_name) ==
                 constrained_nodes.end()) {
-          constrained_nodes.push_back(potentially_constrained_node_name);
+          constrained_nodes.insert(potentially_constrained_node_name);
         }
       }
     }

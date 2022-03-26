@@ -72,7 +72,7 @@ class AccelerationModuleSetupInterface {
   virtual auto GetMultiChannelParams(
       bool is_input, int stream_index,
       std::vector<std::vector<int>> operation_parameters)
-      -> std::pair<int, int>;
+      -> std::pair<int, std::vector<int>>;
 
   /**
    * @brief Can the module have any prerequisite modules before it?

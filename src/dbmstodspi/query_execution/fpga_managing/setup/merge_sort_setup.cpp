@@ -39,10 +39,24 @@ void MergeSortSetup::SetupModule(
       "Configuring merge sort on pos " +
           std::to_string(module_parameters.operation_module_location));
   if (module_parameters.input_streams[0].stream_id != 15) {
+
+    
+
+    auto index = std::find(module_parameters.composed_module_locations.begin(),
+                           module_parameters.composed_module_locations.end(),
+                           module_parameters.operation_module_location) -
+                 module_parameters.composed_module_locations.begin();
+
+    bool is_first = index == 0;
+    // TODO: For now assuming all modules are the same!
+    int base_id = module_parameters.operation_parameters.at(2).at(0);
+
+
     MergeSortSetup::SetupMergeSortModule(
         dynamic_cast<MergeSortInterface&>(acceleration_module),
         module_parameters.input_streams[0].stream_id,
-        GetStreamRecordSize(module_parameters.input_streams[0]), 0, true);
+        GetStreamRecordSize(module_parameters.input_streams[0]), base_id,
+        is_first);
   } else {
     throw std::runtime_error(
         "Can't configure merge sort to passthrough on stream ID");
@@ -139,21 +153,25 @@ auto MergeSortSetup::IsMultiChannelStream(bool is_input_stream,
 }
 auto MergeSortSetup::GetMultiChannelParams(
     bool is_input, int stream_index,
-    std::vector<std::vector<int>> operation_parameters) -> std::pair<int, int> {
+    std::vector<std::vector<int>> operation_parameters) -> std::pair<int, std::vector<int>> {
   if (!is_input) {
-    return {-1, -1};
-  }
-  if (operation_parameters.size() == 1) {
-    return {operation_parameters.at(0).at(0), operation_parameters.at(0).at(1)};
+    return {-1, {-1}};
   } else {
     int max_channel_count = 0;
     // Assuming all modules have the same records_per_channel
-    int records_per_channel = operation_parameters.at(1).at(1);
+    std::vector<int> records_per_channel;
     int module_count = operation_parameters.at(0).at(0);
     int parameter_offset = operation_parameters.at(0).at(1);
     for (int module_index = 0; module_index < module_count; module_index++) {
       max_channel_count +=
-          operation_parameters.at(module_index * parameter_offset + 1).at(0);
+          static_cast<int>(operation_parameters.at(module_index * parameter_offset + 1).size());
+      records_per_channel.reserve(
+          records_per_channel.size() +
+          operation_parameters.at(module_index * parameter_offset + 1).size());
+      records_per_channel.insert(
+          records_per_channel.end(),
+          operation_parameters.at(module_index * parameter_offset + 1).begin(),
+          operation_parameters.at(module_index * parameter_offset + 1).end());
     }
     return {max_channel_count, records_per_channel};
   }

@@ -19,6 +19,9 @@ limitations under the License.
 #include <map>
 #include <vector>
 
+#include <unordered_map>
+#include <unordered_set>
+
 #include "accelerator_library_interface.hpp"
 #include "operation_types.hpp"
 #include "pr_module_data.hpp"
@@ -45,12 +48,12 @@ class PreSchedulingProcessor {
    */
   static auto GetMinimumCapacityValuesFromHWLibrary(
       const std::map<QueryOperationType, OperationPRModules>& hw_library)
-      -> std::map<QueryOperationType, std::vector<int>>;
+      -> std::unordered_map<QueryOperationType, std::vector<int>>;
 
   // def get_min_requirements(current_node_name, graph, hw_library, data_tables)
   static auto GetMinRequirementsForFullyExecutingNode(
       std::string node_name,
-      const std::map<std::string, SchedulingQueryNode>& graph,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
       AcceleratorLibraryInterface& accelerator_library,
       const std::map<std::string, TableMetadata> data_tables)
       -> std::vector<int>;
@@ -58,14 +61,13 @@ class PreSchedulingProcessor {
   // def find_adequate_bitstreams(min_requirements, operation, hw_library)
   static auto FindAdequateBitstreams(
       const std::vector<int> min_requirements, QueryOperationType operation,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library)
-      -> std::vector<std::string>;
+      const std::map<QueryOperationType, OperationPRModules>& hw_library) -> std::unordered_set<std::string>;
 
   // def
   // get_fitting_bitstream_locations_based_on_list(list_of_fitting_bitstreams,
   // start_locations)
   static auto GetFittingBitstreamLocations(
-      const std::vector<std::string>& fitting_bitstreams_names,
+      const std::unordered_set<std::string>& fitting_bitstreams_names,
       const std::vector<std::vector<std::string>>& start_locations)
       -> std::vector<std::vector<std::string>>;
 
@@ -83,11 +85,11 @@ class PreSchedulingProcessor {
   // hw_library, data_tables)
   static void AddSatisfyingBitstreamLocationsToGraph(
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      std::map<std::string, SchedulingQueryNode>& graph,
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
       std::map<std::string, TableMetadata>& data_tables,
       AcceleratorLibraryInterface& accelerator_library,
-      std::vector<std::string>& available_nodes,
-      std::vector<std::string> processed_nodes);
+      std::unordered_set<std::string>& available_nodes,
+      std::unordered_set<std::string> processed_nodes);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

@@ -29,7 +29,7 @@ auto QuerySchedulingHelper::FindNodePtrIndex(QueryNode* current_node,
     if (potential_current_node != nullptr &&
         potential_current_node.get() == current_node) {
       if (index != -1) {
-        throw std::logic_error(
+        throw std::runtime_error(
             "Currently can't support the same module taking multiple inputs "
             "from another module!");
       }
@@ -38,7 +38,7 @@ auto QuerySchedulingHelper::FindNodePtrIndex(QueryNode* current_node,
     counter++;
   }
   if (index == -1) {
-    throw std::logic_error("No current node found!");
+    throw std::runtime_error("No current node found!");
   }
   return index;
 }
@@ -51,8 +51,8 @@ auto QuerySchedulingHelper::IsTableSorted(TableMetadata table_data) -> bool {
 }
 
 void QuerySchedulingHelper::AddNewTableToNextNodes(
-    std::map<std::string, SchedulingQueryNode>& graph, std::string node_name,
-    const std::vector<std::string>& table_names) {
+    std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    std::string node_name, const std::vector<std::string>& table_names) {
   for (const auto& next_node_name : graph.at(node_name).after_nodes) {
     if (!next_node_name.empty()) {
       for (const auto& [current_node_index, current_stream_index] :
@@ -65,7 +65,7 @@ void QuerySchedulingHelper::AddNewTableToNextNodes(
 }
 
 auto QuerySchedulingHelper::GetCurrentNodeIndexesByName(
-    const std::map<std::string, SchedulingQueryNode>& graph,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
     std::string next_node_name, std::string current_node_name)
     -> std::vector<std::pair<int, int>> {
   std::vector<std::pair<int, int>> resulting_indexes;
@@ -83,17 +83,19 @@ auto QuerySchedulingHelper::GetCurrentNodeIndexesByName(
     }
   }
   if (resulting_indexes.empty()) {
-    throw std::logic_error(
+    throw std::runtime_error(
         "No next nodes found with the expected dependency");
   }
   return resulting_indexes;
 }
 
 auto QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
-    std::string node_name, const std::vector<std::string>& past_nodes,
-    const std::map<std::string, SchedulingQueryNode>& graph)
-    -> std::vector<std::string> {
-  std::vector<std::string> potential_nodes = graph.at(node_name).after_nodes;
+    std::string node_name, const std::unordered_set<std::string>& past_nodes,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph)
+    -> std::unordered_set<std::string> {
+  std::unordered_set<std::string> potential_nodes(
+      graph.at(node_name).after_nodes.begin(),
+      graph.at(node_name).after_nodes.end());
   for (const auto& potential_node_name : graph.at(node_name).after_nodes) {
     if (!potential_node_name.empty()) {
       for (const auto& [previous_node_name, node_index] :
@@ -110,20 +112,18 @@ auto QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
       }
     }
   }
-  potential_nodes.erase(
-      std::remove(potential_nodes.begin(), potential_nodes.end(), ""),
-      potential_nodes.end());
+  potential_nodes.erase("");
   return potential_nodes;
 }
 
 // TODO: This needs improving to support multi inputs and outputs
 void QuerySchedulingHelper::RemoveNodeFromGraph(
-    std::map<std::string, SchedulingQueryNode>& graph, std::string node_name) {
-
+    std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    std::string node_name) {
   // We just support one in and one out currently.
   if (graph.at(node_name).before_nodes.size() != 1 ||
       graph.at(node_name).after_nodes.size() != 1) {
-    throw std::logic_error(
+    throw std::runtime_error(
         "Only nodes with one input and one output are supported!");
   }
 

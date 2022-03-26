@@ -19,6 +19,9 @@ limitations under the License.
 #include "scheduling_query_node.hpp"
 #include "table_data.hpp"
 
+#include <unordered_map>
+#include <unordered_set>
+
 using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
 using orkhestrafs::core_interfaces::table_data::TableMetadata;
 using orkhestrafs::dbmstodspi::SchedulingQueryNode;
@@ -57,9 +60,9 @@ class QuerySchedulingHelper {
    * @return Vector of node names which are now available.
    */
   static auto GetNewAvailableNodesAfterSchedulingGivenNode(
-      std::string node_name, const std::vector<std::string>& past_nodes,
-      const std::map<std::string, SchedulingQueryNode>& graph)
-      -> std::vector<std::string>;
+      std::string node_name, const std::unordered_set<std::string>& past_nodes,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph)
+      -> std::unordered_set<std::string>;
 
   /**
    * @brief Move current table names to the next nodes.
@@ -68,7 +71,8 @@ class QuerySchedulingHelper {
    * @param table_names Table name vector to add to next nodes.
    */
   static void AddNewTableToNextNodes(
-      std::map<std::string, SchedulingQueryNode>& graph, std::string node_name,
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      std::string node_name,
       const std::vector<std::string>& table_names);
 
   /**
@@ -81,7 +85,7 @@ class QuerySchedulingHelper {
    * current node.
    */
   static auto GetCurrentNodeIndexesByName(
-      const std::map<std::string, SchedulingQueryNode>& graph,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
       std::string next_node_name, std::string current_node_name)
       -> std::vector<std::pair<int, int>>;
 
@@ -92,7 +96,8 @@ class QuerySchedulingHelper {
    * @param node_name Name of the node to be removed.
    */
   static void RemoveNodeFromGraph(
-      std::map<std::string, SchedulingQueryNode>& graph, std::string node_name);
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      std::string node_name);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

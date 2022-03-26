@@ -40,6 +40,11 @@ class BitstreamConfigHelper {
       const std::vector<ScheduledModule>& current_run,
       const std::vector<ScheduledModule>& previous_configuration)
       -> std::pair<std::vector<ScheduledModule>, std::vector<ScheduledModule>>;
+
+  static auto GetOldNonOverlappingModules(
+      const std::vector<ScheduledModule>& current_run,
+      const std::vector<ScheduledModule>& previous_configuration)
+      -> std::vector<ScheduledModule>;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

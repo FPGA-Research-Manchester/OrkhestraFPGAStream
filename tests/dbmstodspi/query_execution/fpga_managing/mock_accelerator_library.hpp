@@ -41,7 +41,7 @@ class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
               (bool is_input, int stream_index,
                QueryOperationType operation_type),
               (override));
-  MOCK_METHOD((std::pair<int, int>), GetMultiChannelParams,
+  MOCK_METHOD((std::pair<int, std::vector<int>>), GetMultiChannelParams,
               (bool is_input, int stream_index,
                QueryOperationType operation_type,
                const std::vector<std::vector<int>>& operation_parameters),

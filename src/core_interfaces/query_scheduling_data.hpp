@@ -66,6 +66,8 @@ struct QueryNode {
   std::string node_name;
   /// Flag vector setting stream results to be checked
   std::vector<bool> is_checked;
+  /// Flag for saying if this node will be fully executed in this run
+  bool is_finished = true;
 
   auto operator==(const QueryNode& rhs) const -> bool {
     bool are_prev_nodes_equal =

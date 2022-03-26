@@ -23,8 +23,9 @@ limitations under the License.
 using orkhestrafs::dbmstodspi::ModuleSelection;
 
 auto ModuleSelection::SelectAccordingToMode(
-    const std::vector<std::pair<int, ScheduledModule>>& available_placements)
-    const -> std::vector<std::pair<int, ScheduledModule>> {
+    const std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+        available_placements) const
+    -> std::unordered_set<std::pair<int, ScheduledModule>, PairHash> {
   switch (value_) {
     case kAll:
       return SelectAll(available_placements);
@@ -47,54 +48,56 @@ auto ModuleSelection::SelectAccordingToMode(
 }
 
 auto ModuleSelection::SelectAll(
-    const std::vector<std::pair<int, ScheduledModule>>& available_placements)
-    -> std::vector<std::pair<int, ScheduledModule>> {
+    const std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+        available_placements)
+    -> std::unordered_set<std::pair<int, ScheduledModule>, PairHash> {
   return available_placements;
 }
 
 auto ModuleSelection::SelectFirst(
-    const std::vector<std::pair<int, ScheduledModule>>& available_placements)
-    -> std::vector<std::pair<int, ScheduledModule>> {
+    const std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+        available_placements)
+    -> std::unordered_set<std::pair<int, ScheduledModule>, PairHash> {
   int min_available_position = std::numeric_limits<int>::max();
   for (const auto& placement : available_placements) {
     if (placement.second.position.first < min_available_position) {
       min_available_position = placement.second.position.first;
     }
   }
-  std::vector<std::pair<int, ScheduledModule>> chosen_placements;
+  std::unordered_set<std::pair<int, ScheduledModule>, PairHash>
+      chosen_placements;
   for (const auto& placement : available_placements) {
     if (placement.second.position.first == min_available_position) {
-      chosen_placements.push_back(placement);
+      chosen_placements.insert(placement);
     }
   }
-  auto it = std::unique(chosen_placements.begin(), chosen_placements.end());
-  chosen_placements.resize(std::distance(chosen_placements.begin(), it));
   return chosen_placements;
 }
 
 auto ModuleSelection::SelectLast(
-    const std::vector<std::pair<int, ScheduledModule>>& available_placements)
-    -> std::vector<std::pair<int, ScheduledModule>> {
+    const std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+        available_placements)
+    -> std::unordered_set<std::pair<int, ScheduledModule>, PairHash> {
   int max_available_position = 0;
   for (const auto& placement : available_placements) {
     if (placement.second.position.first > max_available_position) {
       max_available_position = placement.second.position.first;
     }
   }
-  std::vector<std::pair<int, ScheduledModule>> chosen_placements;
+  std::unordered_set<std::pair<int, ScheduledModule>, PairHash>
+      chosen_placements;
   for (const auto& placement : available_placements) {
     if (placement.second.position.first == max_available_position) {
-      chosen_placements.push_back(placement);
+      chosen_placements.insert(placement);
     }
   }
-  auto it = std::unique(chosen_placements.begin(), chosen_placements.end());
-  chosen_placements.resize(std::distance(chosen_placements.begin(), it));
   return chosen_placements;
 }
 
 auto ModuleSelection::SelectShortest(
-    const std::vector<std::pair<int, ScheduledModule>>& available_placements)
-    -> std::vector<std::pair<int, ScheduledModule>> {
+    const std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+        available_placements)
+    -> std::unordered_set<std::pair<int, ScheduledModule>, PairHash> {
   int min_module_size = std::numeric_limits<int>::max();
   for (const auto& placement : available_placements) {
     if (placement.second.position.second - placement.second.position.first + 1 <
@@ -103,22 +106,22 @@ auto ModuleSelection::SelectShortest(
                         placement.second.position.first + 1;
     }
   }
-  std::vector<std::pair<int, ScheduledModule>> chosen_placements;
+  std::unordered_set<std::pair<int, ScheduledModule>, PairHash>
+      chosen_placements;
   for (const auto& placement : available_placements) {
     if (placement.second.position.second - placement.second.position.first +
             1 ==
         min_module_size) {
-      chosen_placements.push_back(placement);
+      chosen_placements.insert(placement);
     }
   }
-  auto it = std::unique(chosen_placements.begin(), chosen_placements.end());
-  chosen_placements.resize(std::distance(chosen_placements.begin(), it));
   return chosen_placements;
 }
 
 auto ModuleSelection::SelectLongest(
-    const std::vector<std::pair<int, ScheduledModule>>& available_placements)
-    -> std::vector<std::pair<int, ScheduledModule>> {
+    const std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+        available_placements)
+    -> std::unordered_set<std::pair<int, ScheduledModule>, PairHash> {
   int max_module_size = 0;
   for (const auto& placement : available_placements) {
     if (placement.second.position.second - placement.second.position.first + 1 >
@@ -127,15 +130,14 @@ auto ModuleSelection::SelectLongest(
                         placement.second.position.first + 1;
     }
   }
-  std::vector<std::pair<int, ScheduledModule>> chosen_placements;
+  std::unordered_set<std::pair<int, ScheduledModule>, PairHash>
+      chosen_placements;
   for (const auto& placement : available_placements) {
     if (placement.second.position.second - placement.second.position.first +
             1 ==
         max_module_size) {
-      chosen_placements.push_back(placement);
+      chosen_placements.insert(placement);
     }
   }
-  auto it = std::unique(chosen_placements.begin(), chosen_placements.end());
-  chosen_placements.resize(std::distance(chosen_placements.begin(), it));
   return chosen_placements;
 }

@@ -112,6 +112,8 @@ void DMASetup::SetupDMAModuleDirection(
   if (is_input_stream && multichannel_stream_count != 0) {
     dma_engine.SetNumberOfInputStreamsWithMultipleChannels(
         multichannel_stream_count);
+  } else if (is_input_stream) {
+    dma_engine.SetNumberOfInputStreamsWithMultipleChannels(0);
   }
 }
 
@@ -126,12 +128,29 @@ void DMASetup::AllocateStreamBuffers(DMASetupData& stream_setup_data,
 void DMASetup::SetMultiChannelSetupData(
     const StreamDataParameters& stream_init_data,
     DMASetupData& stream_setup_data) {
-  stream_setup_data.active_channel_count =
+  /*stream_setup_data.active_channel_count =
       (stream_init_data.stream_record_count +
        stream_init_data.records_per_channel - 1) /
-      stream_init_data.records_per_channel;
+      stream_init_data.records_per_channel;*/
+  stream_setup_data.active_channel_count = stream_init_data.max_channel_count;
+  for (int j = 0; j < stream_init_data.records_per_channel.size(); j++) {
+    DMAChannelSetupData current_channel_setup_data{};
+    current_channel_setup_data.record_count =
+        stream_init_data.records_per_channel[j];
+    current_channel_setup_data.channel_id = j;
+    int records_so_far = 0;
+    for (int z = 0; z < j; z++) {
+      records_so_far += stream_init_data.records_per_channel[z];
+    }
 
-  for (int j = 0; j < stream_setup_data.active_channel_count; j++) {
+    current_channel_setup_data.stream_address = reinterpret_cast<uintptr_t>(
+        stream_init_data.physical_address +
+        (stream_init_data.stream_record_size * records_so_far));
+
+    stream_setup_data.channel_setup_data.push_back(current_channel_setup_data);
+  }
+
+  /*for (int j = 0; j < stream_setup_data.active_channel_count; j++) {
     DMAChannelSetupData current_channel_setup_data{};
     if (j == stream_setup_data.active_channel_count - 1 &&
         stream_init_data.stream_record_count %
@@ -152,17 +171,17 @@ void DMASetup::SetMultiChannelSetupData(
          (stream_init_data.records_per_channel * j)));
 
     stream_setup_data.channel_setup_data.push_back(current_channel_setup_data);
-  }
+  }*/
 
   // Just in case setting the unused channels to 0 size and use the start
   // address of the used channels.
-  for (int j = stream_setup_data.active_channel_count;
+  /*for (int j = stream_setup_data.active_channel_count;
        j < stream_init_data.max_channel_count; j++) {
     DMAChannelSetupData current_channel_setup_data = {
         reinterpret_cast<uintptr_t>(stream_init_data.physical_address), 0, j};
     stream_setup_data.channel_setup_data.push_back(current_channel_setup_data);
   }
-  stream_setup_data.active_channel_count = stream_init_data.max_channel_count;
+  stream_setup_data.active_channel_count = stream_init_data.max_channel_count;*/
 }
 
 // This is the most optimal channel record count for the given max channel

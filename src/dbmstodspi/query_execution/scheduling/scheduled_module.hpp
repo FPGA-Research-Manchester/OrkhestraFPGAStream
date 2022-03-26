@@ -20,7 +20,9 @@ limitations under the License.
 #include <utility>
 
 #include "operation_types.hpp"
+#include "table_data.hpp"
 
+using orkhestrafs::core_interfaces::table_data::TableMetadata;
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 
 namespace orkhestrafs::dbmstodspi {
@@ -34,6 +36,7 @@ struct ScheduledModule {
   QueryOperationType operation_type;
   std::string bitstream;
   std::pair<int, int> position;
+  std::vector<TableMetadata> processed_table_data;
 
   // For map to work.
   bool operator<(const ScheduledModule& rhs) const {

@@ -241,7 +241,7 @@ auto FPGAManager::GetResultingStreamSizes(
       int yo = 0;
     }*/
     result_sizes[stream_id] =
-        dma_engine_->GetControllerStreamSize(false, stream_id) + 30;
+        dma_engine_->GetControllerStreamSize(false, stream_id);
   }
   return result_sizes;
 }

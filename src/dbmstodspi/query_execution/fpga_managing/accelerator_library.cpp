@@ -71,7 +71,7 @@ auto AcceleratorLibrary::IsMultiChannelStream(bool is_input, int stream_index,
 auto AcceleratorLibrary::GetMultiChannelParams(
     bool is_input, int stream_index, QueryOperationType operation_type,
     const std::vector<std::vector<int>>& operation_parameters)
-    -> std::pair<int, int> {
+    -> std::pair<int, std::vector<int>> {
   auto driver = GetDriver(operation_type);
   return driver->GetMultiChannelParams(is_input, stream_index,
                                        operation_parameters);

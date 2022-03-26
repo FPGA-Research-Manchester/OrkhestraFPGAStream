@@ -47,8 +47,9 @@ class RunLinker {
       std::queue<std::pair<std::vector<ScheduledModule>,
                            std::vector<std::shared_ptr<QueryNode>>>>
           query_node_runs_queue,
-      std::map<std::string,
-               std::map<int, std::vector<std::pair<std::string, int>>>>&
+      std::queue<
+          std::map<std::string,
+                   std::map<int, std::vector<std::pair<std::string, int>>>>>&
           linked_nodes)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<std::shared_ptr<QueryNode>>>>;
@@ -56,9 +57,11 @@ class RunLinker {
  private:
   static void CheckExternalLinks(
       const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
-      std::map<std::string,
-               std::map<int, std::vector<std::pair<std::string, int>>>>&
-          linked_nodes);
+      std::queue<
+          std::map<std::string,
+                   std::map<int, std::vector<std::pair<std::string, int>>>>>&
+          linked_nodes,
+      std::map<std::string, int>& run_counter);
   static auto ReuseMemory(const QueryNode& source_node,
                           const QueryNode& target_node) -> bool;
   static auto IsNodeMissingFromTheVector(

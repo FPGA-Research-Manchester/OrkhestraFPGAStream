@@ -28,8 +28,7 @@ class QueryManager : public QueryManagerInterface {
       : json_reader_{std::move(json_reader)} {};
   ~QueryManager() override = default;
   auto GetCurrentLinks(
-      const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
-      const std::map<std::string, std::map<int, MemoryReuseTargets>>&
+      std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>&
           all_reuse_links)
       -> std::map<std::string, std::map<int, MemoryReuseTargets>> override;
   auto SetupAccelerationNodesForExecution(
@@ -66,7 +65,7 @@ class QueryManager : public QueryManagerInterface {
       std::map<std::string, TableMetadata>& scheduling_table_data,
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
           reuse_links,
-      std::map<std::string, SchedulingQueryNode>& scheduling_graph) override;
+      std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph) override;
   void FreeMemoryBlocks(
       MemoryManagerInterface* memory_manager,
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
@@ -82,24 +81,25 @@ class QueryManager : public QueryManagerInterface {
       const std::vector<std::string>& scheduled_node_names) override;
   auto ScheduleNextSetOfNodes(
       std::vector<std::shared_ptr<QueryNode>>& query_nodes,
-      const std::vector<std::string>& first_node_names,
-      std::vector<std::string>& starting_nodes,
-      std::vector<std::string>& processed_nodes,
-      std::map<std::string, SchedulingQueryNode>& graph,
+      const std::unordered_set<std::string>& first_node_names,
+      std::unordered_set<std::string>& starting_nodes,
+      std::unordered_set<std::string>& processed_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
       std::map<std::string, TableMetadata>& tables,
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
-      std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links,
+      std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>&
+          all_reuse_links,
       const std::vector<ScheduledModule>& current_configuration)
       -> std::queue<
           std::pair<std::vector<ScheduledModule>,
                     std::vector<std::shared_ptr<QueryNode>>>> override;
 
   void BenchmarkScheduling(
-      const std::vector<std::string>& first_node_names,
-      std::vector<std::string>& starting_nodes,
-      std::vector<std::string>& processed_nodes,
-      std::map<std::string, SchedulingQueryNode>& graph,
+      const std::unordered_set<std::string>& first_node_names,
+      std::unordered_set<std::string>& starting_nodes,
+      std::unordered_set<std::string>& processed_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
       std::map<std::string, TableMetadata>& tables,
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
@@ -210,10 +210,10 @@ class QueryManager : public QueryManagerInterface {
           input_stream_sizes,
       std::map<std::string, std::vector<RecordSizeAndCount>>&
           output_stream_sizes);
-  void AddQueryNodes(std::vector<AcceleratedQueryNode>& query_nodes_vector,
+  auto AddQueryNodes(std::vector<AcceleratedQueryNode>& query_nodes_vector,
                      std::vector<StreamDataParameters>&& input_params,
                      std::vector<StreamDataParameters>&& output_params,
-                     const QueryNode& node);
+                     const QueryNode& node) -> int;
   static void UpdateTableData(
       const std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
@@ -222,7 +222,7 @@ class QueryManager : public QueryManagerInterface {
       std::map<std::string, TableMetadata>& scheduling_table_data,
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
           reuse_links,
-      std::map<std::string, SchedulingQueryNode>& scheduling_graph);
+      std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph);
   static void CropSortedStatus(
       std::map<std::string, TableMetadata>& scheduling_table_data,
       std::string filename);

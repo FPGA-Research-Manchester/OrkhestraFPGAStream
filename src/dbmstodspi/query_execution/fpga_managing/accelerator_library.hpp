@@ -87,7 +87,7 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
   auto GetMultiChannelParams(
       bool is_input, int stream_index, QueryOperationType operation_type,
       const std::vector<std::vector<int>>& operation_parameters)
-      -> std::pair<int, int> override;
+      -> std::pair<int, std::vector<int>> override;
 
   /**
    * @brief Method to get capacity requirement values from the driver based on

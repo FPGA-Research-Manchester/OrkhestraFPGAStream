@@ -26,17 +26,22 @@ limitations under the License.
 #include "pre_scheduling_processor.hpp"
 #include "query_scheduling_helper.hpp"
 #include "table_data.hpp"
+#include "time_limit_execption.hpp"
+#include "util.hpp"
 
 using orkhestrafs::core_interfaces::table_data::SortedSequence;
 using orkhestrafs::dbmstodspi::ElasticSchedulingGraphParser;
 using orkhestrafs::dbmstodspi::PreSchedulingProcessor;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
+using orkhestrafs::dbmstodspi::TimeLimitException;
+using orkhestrafs::dbmstodspi::PairHash;
 
 void ElasticSchedulingGraphParser::PreprocessNodes(
-    std::vector<std::string>& available_nodes,
-    const std::map<QueryOperationType, OperationPRModules>& hw_library,
-    const std::vector<std::string>& processed_nodes,
-    std::map<std::string, SchedulingQueryNode>& graph,
+    std::unordered_set<std::string>& available_nodes,
+    const std::map<QueryOperationType, OperationPRModules>&
+        hw_library,
+    const std::unordered_set<std::string>& processed_nodes,
+    std::unordered_map<std::string, SchedulingQueryNode>& graph,
     std::map<std::string, TableMetadata>& data_tables,
     AcceleratorLibraryInterface& accelerator_library) {
   PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
@@ -45,7 +50,8 @@ void ElasticSchedulingGraphParser::PreprocessNodes(
 }
 
 auto ElasticSchedulingGraphParser::CurrentRunHasFirstModule(
-    const std::map<QueryOperationType, OperationPRModules>& hw_library,
+    const std::map<QueryOperationType, OperationPRModules>&
+        hw_library,
     const std::vector<ScheduledModule>& current_run, std::string node_name,
     AcceleratorLibraryInterface& drivers) -> bool {
   for (const auto& scheduled_module : current_run) {
@@ -59,13 +65,14 @@ auto ElasticSchedulingGraphParser::CurrentRunHasFirstModule(
 }
 
 auto ElasticSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
-    const std::vector<std::string>& available_nodes,
+    const std::unordered_set<std::string>& available_nodes,
     const std::vector<ScheduledModule>& current_run,
-    const std::map<QueryOperationType, OperationPRModules>& hw_library,
-    const std::map<std::string, SchedulingQueryNode>& graph,
-    const std::vector<std::string>& constrained_first_nodes,
-    const std::vector<std::string>& blocked_nodes,
-    AcceleratorLibraryInterface& drivers) -> std::vector<std::string> {
+    const std::map<QueryOperationType, OperationPRModules>&
+        hw_library,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    const std::unordered_set<std::string>& constrained_first_nodes,
+    const std::unordered_set<std::string>& blocked_nodes,
+    AcceleratorLibraryInterface& drivers) -> std::unordered_set<std::string> {
   auto resulting_nodes = available_nodes;
   for (const auto& node_name : available_nodes) {
     if (std::find(constrained_first_nodes.begin(),
@@ -75,9 +82,7 @@ auto ElasticSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
         for (const auto& [before_node_name, _] :
              graph.at(node_name).before_nodes) {
           if (module.node_name == before_node_name) {
-            resulting_nodes.erase(std::remove(resulting_nodes.begin(),
-                                              resulting_nodes.end(), node_name),
-                                  resulting_nodes.end());
+            resulting_nodes.erase(node_name);
           }
         }
       }
@@ -85,15 +90,11 @@ auto ElasticSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
     if (drivers.IsNodeConstrainedToFirstInPipeline(
             graph.at(node_name).operation) &&
         CurrentRunHasFirstModule(hw_library, current_run, node_name, drivers)) {
-      resulting_nodes.erase(std::remove(resulting_nodes.begin(),
-                                        resulting_nodes.end(), node_name),
-                            resulting_nodes.end());
+      resulting_nodes.erase(node_name);
     }
     if (std::find(blocked_nodes.begin(), blocked_nodes.end(), node_name) !=
         blocked_nodes.end()) {
-      resulting_nodes.erase(std::remove(resulting_nodes.begin(),
-                                        resulting_nodes.end(), node_name),
-                            resulting_nodes.end());
+      resulting_nodes.erase(node_name);
     }
   }
   return resulting_nodes;
@@ -101,7 +102,7 @@ auto ElasticSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
 
 auto ElasticSchedulingGraphParser::GetMinPositionInCurrentRun(
     const std::vector<ScheduledModule>& current_run, std::string node_name,
-    const std::map<std::string, SchedulingQueryNode>& graph) -> int {
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph) -> int {
   std::vector<ScheduledModule> currently_scheduled_prereq_nodes;
   for (const auto& [previous_node_name, _] : graph.at(node_name).before_nodes) {
     for (const auto& module_placement : current_run) {
@@ -138,7 +139,7 @@ auto ElasticSchedulingGraphParser::GetModuleIndex(
     int start_location_index,
     const std::vector<std::pair<int, int>>& taken_positions) -> int {
   if (taken_positions.empty()) {
-    throw std::logic_error("Taken positions can't be empty!");
+    throw std::runtime_error("Taken positions can't be empty!");
   }
   if (start_location_index < taken_positions.at(0).first) {
     return 0;
@@ -155,7 +156,8 @@ auto ElasticSchedulingGraphParser::GetModuleIndex(
 auto ElasticSchedulingGraphParser::FindAllAvailableBitstreamsAfterMinPos(
     QueryOperationType current_operation, int min_position,
     const std::vector<std::pair<int, int>>& taken_positions,
-    const std::map<QueryOperationType, OperationPRModules>& hw_library,
+    const std::map<QueryOperationType, OperationPRModules>&
+        hw_library,
     const std::vector<std::vector<std::string>>& bitstream_start_locations)
     -> std::vector<std::tuple<int, int, int>> {
   std::vector<std::tuple<int, int, int>> all_positions_and_bitstream_indexes;
@@ -203,8 +205,8 @@ auto ElasticSchedulingGraphParser::FindAllAvailableBitstreamsAfterMinPos(
 auto ElasticSchedulingGraphParser::GetBitstreamEndFromLibrary(
     int chosen_bitstream_index, int chosen_column_position,
     QueryOperationType current_operation,
-    const std::map<QueryOperationType, OperationPRModules>& hw_library)
-    -> std::pair<std::string, int> {
+    const std::map<QueryOperationType, OperationPRModules>&
+        hw_library) -> std::pair<std::string, int> {
   auto chosen_bitstream_name =
       hw_library.at(current_operation)
           .starting_locations.at(chosen_column_position)
@@ -218,12 +220,15 @@ auto ElasticSchedulingGraphParser::GetBitstreamEndFromLibrary(
 }
 
 void ElasticSchedulingGraphParser::ReduceSelectionAccordingToHeuristics(
-    std::vector<std::pair<int, ScheduledModule>>& resulting_module_placements,
+    std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+        resulting_module_placements,
     const std::vector<std::vector<ModuleSelection>>& heuristics) {
-  std::vector<std::vector<std::pair<int, ScheduledModule>>>
+  std::vector<std::unordered_set<std::pair<int, ScheduledModule>, PairHash>>
       all_selected_placements;
   for (const auto& module_placement_clause : heuristics) {
-    auto current_selected_placements = resulting_module_placements;
+    std::unordered_set<std::pair<int, ScheduledModule>, PairHash>
+        current_selected_placements;
+    current_selected_placements = resulting_module_placements;
     for (const auto& placement_selection_function : module_placement_clause) {
       current_selected_placements =
           placement_selection_function.SelectAccordingToMode(
@@ -237,7 +242,7 @@ void ElasticSchedulingGraphParser::ReduceSelectionAccordingToHeuristics(
       if (std::find(resulting_module_placements.begin(),
                     resulting_module_placements.end(),
                     chosen_module) == resulting_module_placements.end()) {
-        resulting_module_placements.push_back(chosen_module);
+        resulting_module_placements.insert(chosen_module);
       }
     }
   }
@@ -245,29 +250,32 @@ void ElasticSchedulingGraphParser::ReduceSelectionAccordingToHeuristics(
 
 auto ElasticSchedulingGraphParser::GetChosenModulePlacements(
     std::string node_name,
-    const std::map<QueryOperationType, OperationPRModules>& hw_library,
+    const std::map<QueryOperationType, OperationPRModules>&
+        hw_library,
     std::pair<int, int>& statistics_counters,
     QueryOperationType current_operation,
     const std::vector<std::vector<ModuleSelection>>& heuristics,
     int min_position, const std::vector<std::pair<int, int>>& taken_positions,
-    const std::vector<std::vector<std::string>>& bitstream_start_locations)
-    -> std::vector<std::pair<int, ScheduledModule>> {
+    const std::vector<std::vector<std::string>>& bitstream_start_locations,
+    const std::vector<TableMetadata>& processed_table_data)
+    -> std::unordered_set<std::pair<int, ScheduledModule>, PairHash> {
   auto available_bitstreams = FindAllAvailableBitstreamsAfterMinPos(
       current_operation, min_position, taken_positions, hw_library,
       bitstream_start_locations);
-  std::vector<std::pair<int, ScheduledModule>> resulting_module_placements;
+  std::unordered_set<std::pair<int, ScheduledModule>, PairHash>
+      resulting_module_placements;
   if (!available_bitstreams.empty()) {
     for (const auto& [chosen_module_position, chosen_column_position,
                       chosen_bitstream_index] : available_bitstreams) {
       auto [chosen_bitstream, end_index] = GetBitstreamEndFromLibrary(
           chosen_bitstream_index, chosen_column_position, current_operation,
           hw_library);
-      resulting_module_placements.push_back(
-          {chosen_module_position,
-           {node_name,
-            current_operation,
-            chosen_bitstream,
-            {chosen_column_position, end_index}}});
+      resulting_module_placements.insert({chosen_module_position,
+                                          {node_name,
+                                           current_operation,
+                                           chosen_bitstream,
+                                           {chosen_column_position, end_index},
+                                           processed_table_data}});
     }
     statistics_counters.first += resulting_module_placements.size();
     ReduceSelectionAccordingToHeuristics(resulting_module_placements,
@@ -279,37 +287,50 @@ auto ElasticSchedulingGraphParser::GetChosenModulePlacements(
 }
 
 auto ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPos(
-    const std::map<std::string, SchedulingQueryNode>& graph, int min_position,
-    std::string node_name,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    int min_position, std::string node_name,
     const std::vector<std::pair<int, int>>& taken_positions,
-    const std::map<QueryOperationType, OperationPRModules>& hw_library,
+    const std::map<QueryOperationType, OperationPRModules>&
+        hw_library,
     const std::pair<std::vector<std::vector<ModuleSelection>>,
                     std::vector<std::vector<ModuleSelection>>>& heuristics,
-    std::pair<int, int>& statistics_counters)
-    -> std::vector<std::pair<int, ScheduledModule>> {
+    std::pair<int, int>& statistics_counters,
+    const std::map<std::string, TableMetadata>& data_tables)
+    -> std::unordered_set<std::pair<int, ScheduledModule>, PairHash> {
   auto current_operation = graph.at(node_name).operation;
-  std::vector<std::pair<int, ScheduledModule>> available_module_placements;
+  std::vector<TableMetadata> processed_tables_data;
+  for (const auto table_name : graph.at(node_name).data_tables) {
+    if (table_name.empty()) {
+      processed_tables_data.push_back({-1, -1, {}});
+    } else {
+      processed_tables_data.push_back(data_tables.at(table_name));
+    }
+  }
+  std::unordered_set<std::pair<int, ScheduledModule>, PairHash>
+      available_module_placements;
   if (!graph.at(node_name).satisfying_bitstreams.empty() &&
       !heuristics.first.empty()) {
     available_module_placements = GetChosenModulePlacements(
         node_name, hw_library, statistics_counters, current_operation,
         heuristics.first, min_position, taken_positions,
-        graph.at(node_name).satisfying_bitstreams);
+        graph.at(node_name).satisfying_bitstreams, processed_tables_data);
   }
   if (available_module_placements.empty()) {
     available_module_placements = GetChosenModulePlacements(
         node_name, hw_library, statistics_counters, current_operation,
         heuristics.second, min_position, taken_positions,
-        hw_library.at(graph.at(node_name).operation).starting_locations);
+        hw_library.at(graph.at(node_name).operation).starting_locations,
+        processed_tables_data);
   }
   return available_module_placements;
 }
 
 auto ElasticSchedulingGraphParser::CheckForSkippableSortOperations(
-    const std::map<std::string, SchedulingQueryNode>& new_graph,
+    const std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
     const std::map<std::string, TableMetadata>& new_tables,
     std::string node_name,
-    const std::map<QueryOperationType, OperationPRModules>& hw_library,
+    const std::map<QueryOperationType, OperationPRModules>&
+        hw_library,
     AcceleratorLibraryInterface& drivers) -> std::vector<std::string> {
   std::vector<std::string> skipped_nodes;
   auto all_tables_sorted = !std::any_of(
@@ -337,7 +358,7 @@ auto ElasticSchedulingGraphParser::FindMissingUtility(
     -> bool {
   bool is_node_fully_processed = true;
   if (bitstream_capacity.size() != node_capacity.size()) {
-    throw std::logic_error("Capacity parameters don't match!");
+    throw std::runtime_error("Capacity parameters don't match!");
   }
   for (int capacity_parameter_index = 0;
        capacity_parameter_index < bitstream_capacity.size();
@@ -352,9 +373,9 @@ auto ElasticSchedulingGraphParser::FindMissingUtility(
 }
 
 void ElasticSchedulingGraphParser::UpdateGraphCapacities(
-    const std::map<std::string, SchedulingQueryNode>& graph,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
     const std::vector<int>& missing_utility,
-    std::map<std::string, SchedulingQueryNode>& new_graph,
+    std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
     std::string node_name, bool is_node_fully_processed) {
   if (!is_node_fully_processed) {
     new_graph.at(node_name) = graph.at(node_name);
@@ -377,7 +398,7 @@ auto ElasticSchedulingGraphParser::GetResultingTables(
   if (drivers.IsInputSupposedToBeSorted(operation)) {
     for (const auto& table_name : table_names) {
       if (!QuerySchedulingHelper::IsTableSorted(tables.at(table_name))) {
-        throw std::logic_error("Table should be sorted!");
+        throw std::runtime_error("Table should be sorted!");
       }
     }
   }
@@ -385,9 +406,9 @@ auto ElasticSchedulingGraphParser::GetResultingTables(
 }
 
 void ElasticSchedulingGraphParser::UpdateNextNodeTables(
-    const std::map<std::string, SchedulingQueryNode>& graph,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
     std::string node_name,
-    std::map<std::string, SchedulingQueryNode>& new_graph,
+    std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
     std::vector<std::string> skipped_nodes,
     const std::vector<std::string> resulting_tables) {
   QuerySchedulingHelper::AddNewTableToNextNodes(new_graph, node_name,
@@ -401,13 +422,14 @@ void ElasticSchedulingGraphParser::UpdateNextNodeTables(
 }
 
 auto ElasticSchedulingGraphParser::UpdateGraph(
-    const std::map<std::string, SchedulingQueryNode>& graph,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
     std::string bitstream,
     const std::map<std::string, TableMetadata>& data_tables,
-    const std::map<QueryOperationType, OperationPRModules>& hw_library,
+    const std::map<QueryOperationType, OperationPRModules>&
+        hw_library,
     std::string node_name, const std::vector<int>& capacity,
     QueryOperationType operation, AcceleratorLibraryInterface& drivers)
-    -> std::tuple<std::map<std::string, SchedulingQueryNode>,
+    -> std::tuple<std::unordered_map<std::string, SchedulingQueryNode>,
                   std::map<std::string, TableMetadata>, bool,
                   std::vector<std::string>> {
   auto new_graph = graph;
@@ -439,30 +461,28 @@ auto ElasticSchedulingGraphParser::UpdateGraph(
 }
 
 auto ElasticSchedulingGraphParser::CreateNewAvailableNodes(
-    const std::map<std::string, SchedulingQueryNode>& graph,
-    const std::vector<std::string>& available_nodes,
-    const std::vector<std::string>& processed_nodes, std::string node_name,
-    bool satisfied_requirements)
-    -> std::pair<std::vector<std::string>, std::vector<std::string>> {
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    const std::unordered_set<std::string>& available_nodes,
+    const std::unordered_set<std::string>& processed_nodes,
+    std::string node_name, bool satisfied_requirements)
+    -> std::pair<std::unordered_set<std::string>,
+                 std::unordered_set<std::string>> {
   auto new_available_nodes = available_nodes;
   auto new_processed_nodes = processed_nodes;
   if (satisfied_requirements) {
-    new_available_nodes.erase(std::remove(new_available_nodes.begin(),
-                                          new_available_nodes.end(), node_name),
-                              new_available_nodes.end());
-    new_processed_nodes.push_back(node_name);
+    new_available_nodes.erase(node_name);
+    new_processed_nodes.insert(node_name);
     auto next_nodes =
         QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
             node_name, new_processed_nodes, graph);
-    new_available_nodes.insert(new_available_nodes.end(), next_nodes.begin(),
-                               next_nodes.end());
+    new_available_nodes.insert(next_nodes.begin(), next_nodes.end());
   }
   return {new_available_nodes, new_processed_nodes};
 }
 
 auto ElasticSchedulingGraphParser::IsTableEqualForGivenNode(
-    const std::map<std::string, SchedulingQueryNode>& graph,
-    const std::map<std::string, SchedulingQueryNode>& new_graph,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    const std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
     std::string node_name,
     const std::map<std::string, TableMetadata>& data_tables,
     const std::map<std::string, TableMetadata>& new_tables) -> bool {
@@ -491,13 +511,14 @@ auto ElasticSchedulingGraphParser::IsTableEqualForGivenNode(
 
 void ElasticSchedulingGraphParser::UpdateSatisfyingBitstreamsList(
     std::string node_name,
-    const std::map<std::string, SchedulingQueryNode>& graph,
-    std::map<std::string, SchedulingQueryNode>& new_graph,
-    std::vector<std::string>& new_available_nodes,
-    const std::map<QueryOperationType, OperationPRModules>& hw_library,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
+    std::unordered_set<std::string>& new_available_nodes,
+    const std::map<QueryOperationType, OperationPRModules>&
+        hw_library,
     const std::map<std::string, TableMetadata>& data_tables,
     std::map<std::string, TableMetadata>& new_tables,
-    const std::vector<std::string>& new_processed_nodes,
+    const std::unordered_set<std::string>& new_processed_nodes,
     AcceleratorLibraryInterface& drivers) {
   if (std::any_of(
           new_graph.begin(), new_graph.end(), [&](const auto& map_entry) {
@@ -554,14 +575,14 @@ void ElasticSchedulingGraphParser::UpdateSatisfyingBitstreamsList(
 
 void ElasticSchedulingGraphParser::FindDataSensitiveNodeNames(
     const std::string& node_name,
-    const std::map<std::string, SchedulingQueryNode>& graph,
-    std::vector<std::string>& new_next_run_blocked_nodes,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    std::unordered_set<std::string>& new_next_run_blocked_nodes,
     AcceleratorLibraryInterface& drivers) {
   for (const auto& next_node_name : graph.at(node_name).after_nodes) {
     if (!next_node_name.empty()) {
       if (drivers.IsOperationDataSensitive(
               graph.at(next_node_name).operation)) {
-        new_next_run_blocked_nodes.push_back(next_node_name);
+        new_next_run_blocked_nodes.insert(next_node_name);
       }
       FindDataSensitiveNodeNames(next_node_name, graph,
                                  new_next_run_blocked_nodes, drivers);
@@ -570,11 +591,12 @@ void ElasticSchedulingGraphParser::FindDataSensitiveNodeNames(
 }
 
 auto ElasticSchedulingGraphParser::GetNewBlockedNodes(
-    const std::vector<std::string>& next_run_blocked_nodes,
-    const std::map<QueryOperationType, OperationPRModules>& hw_library,
+    const std::unordered_set<std::string>& next_run_blocked_nodes,
+    const std::map<QueryOperationType, OperationPRModules>&
+        hw_library,
     const ScheduledModule& module_placement,
-    const std::map<std::string, SchedulingQueryNode>& graph,
-    AcceleratorLibraryInterface& drivers) -> std::vector<std::string> {
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    AcceleratorLibraryInterface& drivers) -> std::unordered_set<std::string> {
   auto new_next_run_blocked_nodes = next_run_blocked_nodes;
   if (drivers.IsOperationReducingData(module_placement.operation_type)) {
     FindDataSensitiveNodeNames(module_placement.node_name, graph,
@@ -584,22 +606,23 @@ auto ElasticSchedulingGraphParser::GetNewBlockedNodes(
 }
 
 void ElasticSchedulingGraphParser::FindNextModulePlacement(
-    std::map<std::string, SchedulingQueryNode> graph,
+    std::unordered_map<std::string, SchedulingQueryNode> graph,
     std::map<std::vector<std::vector<ScheduledModule>>,
-             ExecutionPlanSchedulingData>& resulting_plan,
-    std::vector<std::string> available_nodes,
+                       ExecutionPlanSchedulingData>& resulting_plan,
+    std::unordered_set<std::string> available_nodes,
     std::vector<std::vector<ScheduledModule>> current_plan,
-    const std::map<QueryOperationType, OperationPRModules>& hw_library,
+    const std::map<QueryOperationType, OperationPRModules>&
+        hw_library,
     const ScheduledModule& module_placement,
     std::vector<ScheduledModule> current_run, std::string node_name,
-    std::vector<std::string> processed_nodes, bool reduce_single_runs,
+    std::unordered_set<std::string> processed_nodes, bool reduce_single_runs,
     int& min_runs, std::map<std::string, TableMetadata> data_tables,
     const std::pair<std::vector<std::vector<ModuleSelection>>,
                     std::vector<std::vector<ModuleSelection>>>& heuristics,
     std::pair<int, int>& statistics_counters,
-    const std::vector<std::string>& constrained_first_nodes,
-    std::vector<std::string> blocked_nodes,
-    std::vector<std::string> next_run_blocked_nodes,
+    const std::unordered_set<std::string>& constrained_first_nodes,
+    std::unordered_set<std::string> blocked_nodes,
+    std::unordered_set<std::string> next_run_blocked_nodes,
     AcceleratorLibraryInterface& drivers,
     const std::chrono::system_clock::time_point& time_limit,
     bool& trigger_timeout, const bool use_max_runs_cap,
@@ -616,7 +639,7 @@ void ElasticSchedulingGraphParser::FindNextModulePlacement(
   for (const auto& skipped_node_name : skipped_node_names) {
     if (std::find(new_available_nodes.begin(), new_available_nodes.end(),
                   skipped_node_name) == new_available_nodes.end()) {
-      throw std::logic_error("Skipped nodes marked in the wrong order!");
+      throw std::runtime_error("Skipped nodes marked in the wrong order!");
     } else {
       auto new_nodes_pair = CreateNewAvailableNodes(
           graph, new_available_nodes, new_processed_nodes, skipped_node_name,
@@ -645,7 +668,7 @@ auto ElasticSchedulingGraphParser::GetNewStreamedDataSize(
     const std::vector<ScheduledModule>& current_run,
     const std::string& node_name,
     const std::map<std::string, TableMetadata>& data_tables,
-    const std::map<std::string, SchedulingQueryNode>& graph) -> int {
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph) -> int {
   std::vector<std::string> before_node_names;
   for (const auto& before_stream : graph.at(node_name).before_nodes) {
     before_node_names.push_back(before_stream.first);
@@ -671,42 +694,54 @@ auto ElasticSchedulingGraphParser::GetNewStreamedDataSize(
   return streamed_data_size;
 }
 
+auto ElasticSchedulingGraphParser::IsSubsetOf(
+    const std::unordered_set<std::string>& a,
+    const std::unordered_set<std::string>& b) -> bool {
+  // return true if all members of a are also in b
+  if (a.size() > b.size()) return false;
+
+  auto const not_found = b.end();
+  for (auto const& element : a)
+    if (b.find(element) == not_found) return false;
+
+  return true;
+}
+
 // TODO: The constants could be changed to be class variables.
 void ElasticSchedulingGraphParser::PlaceNodesRecursively(
-    std::vector<std::string> available_nodes,
-    std::vector<std::string> processed_nodes,
-    std::map<std::string, SchedulingQueryNode> graph,
+    std::unordered_set<std::string> available_nodes,
+    std::unordered_set<std::string> processed_nodes,
+    std::unordered_map<std::string, SchedulingQueryNode> graph,
     std::vector<ScheduledModule> current_run,
     std::vector<std::vector<ScheduledModule>> current_plan,
     std::map<std::vector<std::vector<ScheduledModule>>,
-             ExecutionPlanSchedulingData>& resulting_plan,
+                       ExecutionPlanSchedulingData>& resulting_plan,
     bool reduce_single_runs,
-    const std::map<QueryOperationType, OperationPRModules>& hw_library,
+    const std::map<QueryOperationType, OperationPRModules>&
+        hw_library,
     int& min_runs, std::map<std::string, TableMetadata> data_tables,
     const std::pair<std::vector<std::vector<ModuleSelection>>,
                     std::vector<std::vector<ModuleSelection>>>& heuristics,
     std::pair<int, int>& statistics_counters,
-    const std::vector<std::string>& constrained_first_nodes,
-    std::vector<std::string> blocked_nodes,
-    std::vector<std::string> next_run_blocked_nodes,
+    const std::unordered_set<std::string>& constrained_first_nodes,
+    std::unordered_set<std::string> blocked_nodes,
+    std::unordered_set<std::string> next_run_blocked_nodes,
     AcceleratorLibraryInterface& drivers,
     const std::chrono::system_clock::time_point& time_limit,
     bool& trigger_timeout, const bool use_max_runs_cap,
     int streamed_data_size) {
   if (trigger_timeout) {
-    throw std::runtime_error("Timeout");
+    throw TimeLimitException("Timeout");
   }
   if (!(current_plan.size() > min_runs && use_max_runs_cap) &&
       !trigger_timeout) {
-    std::sort(blocked_nodes.begin(), blocked_nodes.end());
-    std::sort(available_nodes.begin(), available_nodes.end());
     if (!available_nodes.empty() &&
-        !std::includes(blocked_nodes.begin(), blocked_nodes.end(),
-                       available_nodes.begin(), available_nodes.end())) {
+        !IsSubsetOf(available_nodes, blocked_nodes)) {
       auto available_nodes_in_this_run = RemoveUnavailableNodesInThisRun(
           available_nodes, current_run, hw_library, graph,
           constrained_first_nodes, blocked_nodes, drivers);
-      std::vector<std::pair<int, ScheduledModule>> available_module_placements;
+      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>
+          available_module_placements;
       for (const auto& node_name : available_nodes) {
         if (std::find(available_nodes_in_this_run.begin(),
                       available_nodes_in_this_run.end(),
@@ -717,9 +752,8 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
           auto new_available_module_placements =
               GetScheduledModulesForNodeAfterPos(
                   graph, min_position, node_name, taken_positions, hw_library,
-                  heuristics, statistics_counters);
+                  heuristics, statistics_counters, data_tables);
           available_module_placements.insert(
-              available_module_placements.end(),
               new_available_module_placements.begin(),
               new_available_module_placements.end());
         }
@@ -747,8 +781,7 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
           if (std::find(blocked_nodes.begin(), blocked_nodes.end(),
                         node_name) == blocked_nodes.end()) {
             auto new_blocked_nodes = blocked_nodes;
-            new_blocked_nodes.insert(new_blocked_nodes.end(),
-                                     next_run_blocked_nodes.begin(),
+            new_blocked_nodes.insert(next_run_blocked_nodes.begin(),
                                      next_run_blocked_nodes.end());
             if (std::find(new_blocked_nodes.begin(), new_blocked_nodes.end(),
                           node_name) != new_blocked_nodes.end()) {
@@ -768,7 +801,7 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
             }
             available_module_placements = GetScheduledModulesForNodeAfterPos(
                 graph, 0, node_name, {}, hw_library, heuristics,
-                statistics_counters);
+                statistics_counters, data_tables);
             if (!available_module_placements.empty()) {
               for (const auto& [_, module_placement] :
                    available_module_placements) {
@@ -783,7 +816,7 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
                     use_max_runs_cap, streamed_data_size);
               }
             } else {
-              throw std::logic_error(
+              throw std::runtime_error(
                   "Should be able to place nodes in an empty run!");
             }
           }

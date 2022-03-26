@@ -25,15 +25,17 @@ limitations under the License.
 #include "elastic_scheduling_graph_parser.hpp"
 #include "logger.hpp"
 #include "scheduling_data.hpp"
+#include "time_limit_execption.hpp"
 
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 
 using orkhestrafs::dbmstodspi::ElasticResourceNodeScheduler;
 using orkhestrafs::dbmstodspi::ElasticSchedulingGraphParser;
+using orkhestrafs::dbmstodspi::TimeLimitException;
 
 void ElasticResourceNodeScheduler::RemoveUnnecessaryTables(
-    const std::map<std::string, SchedulingQueryNode> &graph,
+    const std::unordered_map<std::string, SchedulingQueryNode> &graph,
     std::map<std::string, TableMetadata> &tables) {
   std::map<std::string, TableMetadata> resulting_tables;
   for (const auto &[table_name, table_data] : tables) {
@@ -49,10 +51,11 @@ void ElasticResourceNodeScheduler::RemoveUnnecessaryTables(
 }
 
 auto ElasticResourceNodeScheduler::CalculateTimeLimit(
-    const std::map<std::string, SchedulingQueryNode> &graph,
+    const std::unordered_map<std::string, SchedulingQueryNode> &graph,
     const std::map<std::string, TableMetadata> &data_tables,
     double config_speed, double streaming_speed,
-    const std::map<QueryOperationType, int> &operation_costs) -> double {
+    const std::unordered_map<QueryOperationType, int> &operation_costs)
+    -> double {
   int smallest_config_size = 0;
   for (const auto &[node_name, parameters] : graph) {
     smallest_config_size += operation_costs.at(parameters.operation);
@@ -73,9 +76,9 @@ auto ElasticResourceNodeScheduler::CalculateTimeLimit(
 
 auto ElasticResourceNodeScheduler::GetLargestModulesSizes(
     const std::map<QueryOperationType, OperationPRModules> &hw_libary)
-    -> std::map<QueryOperationType, int> {
+    -> std::unordered_map<QueryOperationType, int> {
   // Hardcoded for now.
-  std::map<QueryOperationType, int> operation_costs = {
+  std::unordered_map<QueryOperationType, int> operation_costs = {
       {QueryOperationType::kFilter, 315456},
       {QueryOperationType::kLinearSort, 770784},
       {QueryOperationType::kMergeSort, 770784},
@@ -88,12 +91,13 @@ auto ElasticResourceNodeScheduler::GetLargestModulesSizes(
 }
 
 auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
-    const std::vector<std::string> &first_node_names,
-    std::vector<std::string> &starting_nodes,
-    std::vector<std::string> &processed_nodes,
-    std::map<std::string, SchedulingQueryNode> &graph,
+    const std::unordered_set<std::string> &first_node_names,
+    std::unordered_set<std::string> &starting_nodes,
+    std::unordered_set<std::string> &processed_nodes,
+    std::unordered_map<std::string, SchedulingQueryNode> &graph,
     AcceleratorLibraryInterface &drivers,
-    std::map<std::string, TableMetadata> &tables, const Config &config)
+    std::map<std::string, TableMetadata> &tables,
+    const Config &config)
     -> std::tuple<int,
                   std::map<std::vector<std::vector<ScheduledModule>>,
                            ExecutionPlanSchedulingData>,
@@ -129,7 +133,7 @@ auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
         heuristic_choices.at(config.heuristic_choice),
         placed_nodes_and_discarded_placements, first_node_names, {}, {},
         drivers, time_limit, timeout_trigger, config.use_max_runs_cap, 0);
-  } catch (std::runtime_error &e) {
+  } catch (TimeLimitException &e) {
     Log(LogLevel::kInfo, "Timeout of " +
                              std::to_string(time_limit_duration_in_seconds) +
                              " seconds hit by the scheduler.");
@@ -144,10 +148,10 @@ auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
 }
 
 void ElasticResourceNodeScheduler::BenchmarkScheduling(
-    const std::vector<std::string> &first_node_names,
-    std::vector<std::string> &starting_nodes,
-    std::vector<std::string> &processed_nodes,
-    std::map<std::string, SchedulingQueryNode> &graph,
+    const std::unordered_set<std::string> &first_node_names,
+    std::unordered_set<std::string> &starting_nodes,
+    std::unordered_set<std::string> &processed_nodes,
+    std::unordered_map<std::string, SchedulingQueryNode> &graph,
     AcceleratorLibraryInterface &drivers,
     std::map<std::string, TableMetadata> &tables,
     std::vector<ScheduledModule> &current_configuration, const Config &config,
@@ -230,10 +234,10 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
 
 auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     std::vector<std::shared_ptr<QueryNode>> &available_nodes,
-    const std::vector<std::string> &first_node_names,
-    std::vector<std::string> &starting_nodes,
-    std::vector<std::string> &processed_nodes,
-    std::map<std::string, SchedulingQueryNode> &graph,
+    const std::unordered_set<std::string> &first_node_names,
+    std::unordered_set<std::string> &starting_nodes,
+    std::unordered_set<std::string> &processed_nodes,
+    std::unordered_map<std::string, SchedulingQueryNode> &graph,
     AcceleratorLibraryInterface &drivers,
     std::map<std::string, TableMetadata> &tables,
     const std::vector<ScheduledModule> &current_configuration,
@@ -275,11 +279,24 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   return resulting_runs;
 }
 
+// Only thing missing is the resource elastic information.
 auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
     std::vector<std::shared_ptr<QueryNode>> &available_nodes,
     std::vector<std::vector<ScheduledModule>> best_plan)
     -> std::queue<std::pair<std::vector<ScheduledModule>,
                             std::vector<std::shared_ptr<QueryNode>>>> {
+  // Clear potentially unfinished nodes
+  for (const auto &node : available_nodes) {
+    node->module_locations.clear();
+    if (node->operation_type == QueryOperationType::kMergeSort) {
+      node->operation_parameters.operation_parameters.clear();
+    }
+    
+  }
+  
+  // How many nodes in each run?
+  std::unordered_map<std::string, int> node_counts;
+
   std::queue<std::pair<std::vector<ScheduledModule>,
                        std::vector<std::shared_ptr<QueryNode>>>>
       resulting_runs;
@@ -288,11 +305,43 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
     for (int module_index = 0; module_index < run.size(); module_index++) {
       auto chosen_node = this->GetNodePointerWithName(
           available_nodes, run.at(module_index).node_name);
+      node_counts[run.at(module_index).node_name] += 1;
       chosen_node->module_locations.push_back(module_index + 1);
       if (std::find(chosen_nodes.begin(), chosen_nodes.end(), chosen_node) ==
           chosen_nodes.end()) {
         chosen_nodes.push_back(chosen_node);
       }
+    }
+    // Mark end of the run
+
+
+    // Table already deleted.
+    for (auto &node : chosen_nodes) {
+      if (node->operation_type == QueryOperationType::kMergeSort) {
+        node->operation_parameters.operation_parameters.push_back(
+            {node_counts[node->node_name],2});
+        // Find first in run with this node 
+        auto first_module =
+            std::find_if(run.begin(), run.end(), [](auto module) {
+              return module.operation_type == QueryOperationType::kMergeSort;
+            });
+        auto sorted_status =
+            first_module->processed_table_data.at(0).sorted_status;
+        for (int i = 0; i < node_counts[node->node_name]; i++) {
+          std::vector<int> channel_sizes(64,0);
+          int offset = i * 64;
+          for (int j = 0; j < sorted_status.size() - offset && j < 64; j++) {
+            channel_sizes[j] = sorted_status[j + offset].length;
+          }
+          node->operation_parameters.operation_parameters.push_back(
+              channel_sizes);
+          node->operation_parameters.operation_parameters.push_back({offset});
+        }
+      }
+
+
+      node->module_locations.push_back(-1);
+      node_counts[node->node_name] = 0;
     }
     resulting_runs.push({run, chosen_nodes});
   }
@@ -300,12 +349,16 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
 }
 
 auto ElasticResourceNodeScheduler::FindNewAvailableNodes(
-    std::vector<std::string> &starting_nodes,
+    std::unordered_set<std::string> &starting_nodes,
     std::vector<std::shared_ptr<QueryNode>> &available_nodes)
     -> std::vector<std::shared_ptr<QueryNode>> {
   std::vector<std::shared_ptr<QueryNode>> new_available_nodes;
+  for (const auto &previous_start_node : available_nodes) {
+    previous_start_node->is_finished = true;
+  }
   for (const auto &node_name : starting_nodes) {
     auto chosen_node = this->GetNodePointerWithName(available_nodes, node_name);
+    chosen_node->is_finished = false;
     new_available_nodes.push_back(chosen_node);
   }
   return new_available_nodes;
@@ -362,10 +415,12 @@ auto ElasticResourceNodeScheduler::FindSharedPointerFromRootNodes(
     return current_node;
   } else {
     for (const auto &next_node : current_node->next_nodes) {
-      auto result =
-          FindSharedPointerFromRootNodes(searched_node_name, next_node);
-      if (result != nullptr) {
-        return result;
+      if (next_node) {
+        auto result =
+            FindSharedPointerFromRootNodes(searched_node_name, next_node);
+        if (result != nullptr) {
+          return result;
+        }
       }
     }
   }

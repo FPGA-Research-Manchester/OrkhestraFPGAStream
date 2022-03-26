@@ -42,7 +42,7 @@ struct StreamDataParameters {
   /// How many channels can be used for this stream.
   int max_channel_count = -1;
   /// How many records will there be for each channel.
-  int records_per_channel = -1;
+  std::vector<int> records_per_channel = {-1};
 
   auto operator==(const StreamDataParameters& rhs) const -> bool {
     return stream_id == rhs.stream_id &&

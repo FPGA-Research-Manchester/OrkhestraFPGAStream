@@ -26,8 +26,8 @@ using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
 auto PreSchedulingProcessor::GetMinimumCapacityValuesFromHWLibrary(
     const std::map<QueryOperationType, OperationPRModules>& hw_library)
-    -> std::map<QueryOperationType, std::vector<int>> {
-  std::map<QueryOperationType, std::vector<int>> min_capacity_map;
+    -> std::unordered_map<QueryOperationType, std::vector<int>> {
+  std::unordered_map<QueryOperationType, std::vector<int>> min_capacity_map;
   for (const auto& [operation, operation_bitstreams_data] : hw_library) {
     for (const auto& [bitstream_name, bitstream_parameters] :
          operation_bitstreams_data.bitstream_map) {
@@ -52,14 +52,14 @@ auto PreSchedulingProcessor::GetMinimumCapacityValuesFromHWLibrary(
 
 auto PreSchedulingProcessor::GetMinRequirementsForFullyExecutingNode(
     std::string node_name,
-    const std::map<std::string, SchedulingQueryNode>& graph,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
     AcceleratorLibraryInterface& accelerator_library,
     const std::map<std::string, TableMetadata> data_tables)
     -> std::vector<int> {
   if (accelerator_library.IsOperationSorting(graph.at(node_name).operation)) {
     auto tables_to_be_sorted = graph.at(node_name).data_tables;
     if (tables_to_be_sorted.size() != 1) {
-      throw std::logic_error(
+      throw std::runtime_error(
           "Currently sorters only support one input table!");
     }
     return accelerator_library.GetMinSortingRequirements(
@@ -73,8 +73,8 @@ auto PreSchedulingProcessor::GetMinRequirementsForFullyExecutingNode(
 auto PreSchedulingProcessor::FindAdequateBitstreams(
     const std::vector<int> min_requirements, QueryOperationType operation,
     const std::map<QueryOperationType, OperationPRModules>& hw_library)
-    -> std::vector<std::string> {
-  std::vector<std::string> fitting_bitstreams;
+    -> std::unordered_set<std::string> {
+  std::unordered_set<std::string> fitting_bitstreams;
   for (const auto& [bitstream_name, bitstream_parameters] :
        hw_library.at(operation).bitstream_map) {
     bool bitstream_utility_is_great_enough = true;
@@ -88,14 +88,14 @@ auto PreSchedulingProcessor::FindAdequateBitstreams(
       }
     }
     if (bitstream_utility_is_great_enough) {
-      fitting_bitstreams.push_back(bitstream_name);
+      fitting_bitstreams.insert(bitstream_name);
     }
   }
   return fitting_bitstreams;
 }
 
 auto PreSchedulingProcessor::GetFittingBitstreamLocations(
-    const std::vector<std::string>& fitting_bitstreams_names,
+    const std::unordered_set<std::string>& fitting_bitstreams_names,
     const std::vector<std::vector<std::string>>& start_locations)
     -> std::vector<std::vector<std::string>> {
   std::vector<std::vector<std::string>> fitting_bitstream_locations;
@@ -137,23 +137,22 @@ auto PreSchedulingProcessor::GetWorstCaseProcessedTables(
 
 void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     const std::map<QueryOperationType, OperationPRModules>& hw_library,
-    std::map<std::string, SchedulingQueryNode>& graph,
+    std::unordered_map<std::string, SchedulingQueryNode>& graph,
     std::map<std::string, TableMetadata>& data_tables,
     AcceleratorLibraryInterface& accelerator_library,
-    std::vector<std::string>& available_nodes,
-    std::vector<std::string> processed_nodes) {
+    std::unordered_set<std::string>& available_nodes,
+    std::unordered_set<std::string> processed_nodes) {
   auto current_available_nodes = available_nodes;
   auto min_capacity = GetMinimumCapacityValuesFromHWLibrary(hw_library);
 
   while (!current_available_nodes.empty()) {
-    auto current_node_name = current_available_nodes.back();
-    current_available_nodes.pop_back();
-    processed_nodes.push_back(current_node_name);
+    auto current_node_name = *current_available_nodes.begin();
+    current_available_nodes.erase(current_available_nodes.begin());
+    processed_nodes.insert(current_node_name);
     auto new_available_nodes =
         QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
             current_node_name, processed_nodes, graph);
-    current_available_nodes.insert(current_available_nodes.end(),
-                                   new_available_nodes.begin(),
+    current_available_nodes.insert(new_available_nodes.begin(),
                                    new_available_nodes.end());
     auto min_requirements = GetMinRequirementsForFullyExecutingNode(
         current_node_name, graph, accelerator_library, data_tables);
@@ -176,17 +175,13 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     if (min_requirements.size() == 1 && min_requirements.front() == 0) {
       if (std::find(available_nodes.begin(), available_nodes.end(),
                     current_node_name) != available_nodes.end()) {
-        available_nodes.erase(
-            std::remove(available_nodes.begin(), available_nodes.end(),
-                        current_node_name),
-            available_nodes.end());
+        available_nodes.erase(current_node_name);
         auto processed_nodes_with_deleted_nodes = processed_nodes;
-        processed_nodes_with_deleted_nodes.push_back(current_node_name);
+        processed_nodes_with_deleted_nodes.insert(current_node_name);
         auto new_available_nodes =
             QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
                 current_node_name, processed_nodes_with_deleted_nodes, graph);
-        available_nodes.insert(available_nodes.end(),
-                               new_available_nodes.begin(),
+        available_nodes.insert(new_available_nodes.begin(),
                                new_available_nodes.end());
       }
       QuerySchedulingHelper::RemoveNodeFromGraph(graph, current_node_name);

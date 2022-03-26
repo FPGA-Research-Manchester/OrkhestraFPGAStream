@@ -37,15 +37,12 @@ class MockQueryManager : public QueryManagerInterface {
   using MappedRecordSizes =
       std::map<std::string, std::vector<RecordSizeAndCount>>;
   using TableMap = std::map<std::string, TableMetadata>;
-  using SchedulingNodeMap = std::map<std::string, SchedulingQueryNode>;
+  using SchedulingNodeMap = std::unordered_map<std::string, SchedulingQueryNode>;
   using QueryNodeVector = std::vector<std::shared_ptr<QueryNode>>;
 
  public:
-  MOCK_METHOD(
-      ReuseLinks, GetCurrentLinks,
-      (const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
-       const ReuseLinks& all_reuse_links),
-      (override));
+  MOCK_METHOD(ReuseLinks, GetCurrentLinks,
+              (std::queue<ReuseLinks> & all_reuse_links), (override));
   MOCK_METHOD(
       ExecutionReadyNodes, SetupAccelerationNodesForExecution,
       (DataManagerInterface * data_manager,
@@ -86,12 +83,13 @@ class MockQueryManager : public QueryManagerInterface {
       (std::queue<std::pair<std::vector<ScheduledModule>, QueryNodeVector>>),
       ScheduleNextSetOfNodes,
       (QueryNodeVector & query_nodes,
-       const std::vector<std::string>& first_node_names,
-       std::vector<std::string>& starting_nodes,
-       std::vector<std::string>& processed_nodes, SchedulingNodeMap& graph,
+       const std::unordered_set<std::string>& first_node_names,
+       std::unordered_set<std::string>& starting_nodes,
+       std::unordered_set<std::string>& processed_nodes,
+       SchedulingNodeMap& graph,
        TableMap& tables, AcceleratorLibraryInterface& drivers,
        const Config& config, NodeSchedulerInterface& node_scheduler,
-       ReuseLinks& all_reuse_links,
+       std::queue<ReuseLinks>& all_reuse_links,
        const std::vector<ScheduledModule>& current_configuration),
       (override));
   MOCK_METHOD(void, LoadInitialStaticBitstream,
@@ -113,9 +111,9 @@ class MockQueryManager : public QueryManagerInterface {
                int column_count),
               (override));
   MOCK_METHOD((void), BenchmarkScheduling,
-              (const std::vector<std::string>& first_node_names,
-               std::vector<std::string>& starting_nodes,
-               std::vector<std::string>& processed_nodes,
+              (const std::unordered_set<std::string>& first_node_names,
+               std::unordered_set<std::string>& starting_nodes,
+               std::unordered_set<std::string>& processed_nodes,
                SchedulingNodeMap& graph, TableMap& tables,
                AcceleratorLibraryInterface& drivers, const Config& config,
                NodeSchedulerInterface& node_scheduler,

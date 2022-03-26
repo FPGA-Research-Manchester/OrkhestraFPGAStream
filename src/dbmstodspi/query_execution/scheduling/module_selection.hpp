@@ -20,6 +20,8 @@ limitations under the License.
 #include <string>
 #include <utility>
 
+#include <unordered_set>
+
 #include "operation_types.hpp"
 #include "scheduled_module.hpp"
 
@@ -27,6 +29,38 @@ using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 using orkhestrafs::dbmstodspi::ScheduledModule;
 
 namespace orkhestrafs::dbmstodspi {
+
+template <class T>
+inline void hash_combine(std::size_t& s, const T& v) {
+  std::hash<T> h;
+  s ^= h(v) + 0x9e3779b9 + (s << 6) + (s >> 2);
+}
+
+template <class T>
+class MyHash;
+
+template <>
+struct MyHash<ScheduledModule> {
+  std::size_t operator()(ScheduledModule const& s) const {
+    std::size_t res = 0;
+    hash_combine(res, s.bitstream);
+    hash_combine(res, s.position.first);
+    hash_combine(res, s.position.second);
+    hash_combine(res, s.operation_type);
+    hash_combine(res, s.node_name);
+    return res;
+  }
+};
+
+struct PairHash {
+  template <class T1, class T2>
+  std::size_t operator()(std::pair<T1, T2> const& pair) const {
+    std::size_t h1 = std::hash<T1>()(pair.first);
+    std::size_t h2 = MyHash<T2>()(pair.second);
+
+    return h1 ^ (h2 << 1);
+  }
+};
 
 /**
  * @brief Struct to hold data about a specific module placement during
@@ -47,27 +81,33 @@ class ModuleSelection {
   // TODO: Find a more beautiful way to do this as methods are not allowed with
   // enums in C.
   static auto SelectAll(
-      const std::vector<std::pair<int, ScheduledModule>>& available_placements)
-      -> std::vector<std::pair<int, ScheduledModule>>;
+      const std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+          available_placements)
+      -> std::unordered_set<std::pair<int, ScheduledModule>, PairHash>;
   static auto SelectFirst(
-      const std::vector<std::pair<int, ScheduledModule>>& available_placements)
-      -> std::vector<std::pair<int, ScheduledModule>>;
+      const std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+          available_placements)
+      -> std::unordered_set<std::pair<int, ScheduledModule>, PairHash>;
   static auto SelectLast(
-      const std::vector<std::pair<int, ScheduledModule>>& available_placements)
-      -> std::vector<std::pair<int, ScheduledModule>>;
+      const std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+          available_placements)
+      -> std::unordered_set<std::pair<int, ScheduledModule>, PairHash>;
   static auto SelectShortest(
-      const std::vector<std::pair<int, ScheduledModule>>& available_placements)
-      -> std::vector<std::pair<int, ScheduledModule>>;
+      const std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+          available_placements)
+      -> std::unordered_set<std::pair<int, ScheduledModule>, PairHash>;
   static auto SelectLongest(
-      const std::vector<std::pair<int, ScheduledModule>>& available_placements)
-      -> std::vector<std::pair<int, ScheduledModule>>;
+      const std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+          available_placements)
+      -> std::unordered_set<std::pair<int, ScheduledModule>, PairHash>;
 
  public:
   ModuleSelection(std::string selection_mode)
       : value_{kToStringMap.at(selection_mode)} {};
   auto SelectAccordingToMode(
-      const std::vector<std::pair<int, ScheduledModule>>& available_placements) const
-      -> std::vector<std::pair<int, ScheduledModule>>;
+      const std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+          available_placements) const
+      -> std::unordered_set<std::pair<int, ScheduledModule>, PairHash>;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

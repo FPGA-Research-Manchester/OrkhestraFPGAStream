@@ -27,8 +27,8 @@ auto AccelerationModuleSetupInterface::IsMultiChannelStream(
 
 auto AccelerationModuleSetupInterface::GetMultiChannelParams(
     bool is_input, int stream_index,
-    std::vector<std::vector<int>> operation_parameters) -> std::pair<int, int> {
-  return {-1, -1};
+    std::vector<std::vector<int>> operation_parameters) -> std::pair<int, std::vector<int>> {
+  return {-1, {-1}};
 }
 
 auto AccelerationModuleSetupInterface::GetStreamRecordSize(
