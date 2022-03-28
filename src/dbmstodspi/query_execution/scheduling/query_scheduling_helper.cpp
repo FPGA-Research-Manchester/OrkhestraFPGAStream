@@ -103,10 +103,8 @@ auto QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
       for (const auto& [previous_node_name, node_index] :
            graph.at(potential_node_name).before_nodes) {
         if (!previous_node_name.empty() &&
-            std::find(past_nodes.begin(), past_nodes.end(),
-                      previous_node_name) == past_nodes.end()) {
-          auto search = std::find(potential_nodes.begin(),
-                                  potential_nodes.end(), potential_node_name);
+            past_nodes.find(previous_node_name) == past_nodes.end()) {
+          auto search = potential_nodes.find(potential_node_name);
           if (search != potential_nodes.end()) {
             potential_nodes.erase(search);
           }

@@ -32,6 +32,9 @@ limitations under the License.
 
 using orkhestrafs::dbmstodspi::MemoryManager;
 
+using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
+
 MemoryManager::~MemoryManager() = default;
 
 void MemoryManager::LoadStatic() {
@@ -53,10 +56,15 @@ void MemoryManager::LoadStatic() {
 
   register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
 
-  // SetFPGATo300MHz();
-  SetFPGATo100MHz();
+  SetFPGATo300MHz();
+  // SetFPGATo100MHz();
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  std::cout << "STATIC CONFIGURATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
   Log(LogLevel::kInfo,
       "Extra config time = " +
           std::to_string(
@@ -73,19 +81,26 @@ void MemoryManager::LoadStatic() {
 }
 
 void MemoryManager::LoadPartialBitstream(
-    const std::vector<std::string>& /*bitstream_name*/,
-    DMAInterface& /*dma_engine*/) {
+    const std::vector<std::string>& bitstream_name,
+    DMAInterface& dma_engine) {
   if (loaded_bitstream_ != "static") {
     throw std::runtime_error("Can't load partial bitstreams without static!");
   }
 #ifdef FPGA_AVAILABLE
   dma_engine.DecoupleFromPRRegion();
   FPGAManager fpga_manager(0);
-
+  std::chrono::steady_clock::time_point begin =
+      std::chrono::steady_clock::now();
   for (const auto& name : bitstream_name) {
     Log(LogLevel::kDebug, "Loading PR bitstream:" + name);
     fpga_manager.loadPartial(name);
   }
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  std::cout << "PR CONFIGURATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
 #else
   // Don't do anything
   /*throw std::runtime_error("Can't load anything!");*/
@@ -170,7 +185,7 @@ void MemoryManager::FreeMemoryBlock(
 void MemoryManager::SetFPGATo300MHz() { SetFPGAClockSpeed(0x10500); }
 void MemoryManager::SetFPGATo100MHz() { SetFPGAClockSpeed(0x10F00); }
 
-void MemoryManager::SetFPGAClockSpeed(int /*speed_value*/) {
+void MemoryManager::SetFPGAClockSpeed(int speed_value) {
 #ifdef FPGA_AVAILABLE
   auto clock_memory_map = mmioGetMmap("/dev/mem", 0xFF5E0000, 1024);
   if (clock_memory_map.fd == -1)

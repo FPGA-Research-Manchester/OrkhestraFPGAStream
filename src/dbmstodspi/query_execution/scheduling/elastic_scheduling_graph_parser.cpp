@@ -74,9 +74,7 @@ auto ElasticSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
     AcceleratorLibraryInterface& drivers) -> std::unordered_set<std::string> {
   auto resulting_nodes = available_nodes;
   for (const auto& node_name : available_nodes) {
-    if (std::find(constrained_first_nodes.begin(),
-                  constrained_first_nodes.end(),
-                  node_name) != constrained_first_nodes.end()) {
+    if (constrained_first_nodes.find(node_name)!= constrained_first_nodes.end()) {
       for (const auto& module : current_run) {
         for (const auto& [before_node_name, _] :
              graph.at(node_name).before_nodes) {
@@ -91,7 +89,7 @@ auto ElasticSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
         CurrentRunHasFirstModule(hw_library, current_run, node_name, drivers)) {
       resulting_nodes.erase(node_name);
     }
-    if (std::find(blocked_nodes.begin(), blocked_nodes.end(), node_name) !=
+    if (blocked_nodes.find(node_name)!=
         blocked_nodes.end()) {
       resulting_nodes.erase(node_name);
     }
@@ -238,9 +236,7 @@ void ElasticSchedulingGraphParser::ReduceSelectionAccordingToHeuristics(
   resulting_module_placements.clear();
   for (const auto& chosen_module_set : all_selected_placements) {
     for (const auto& chosen_module : chosen_module_set) {
-      if (std::find(resulting_module_placements.begin(),
-                    resulting_module_placements.end(),
-                    chosen_module) == resulting_module_placements.end()) {
+      if (resulting_module_placements.find(chosen_module) == resulting_module_placements.end()) {
         resulting_module_placements.insert(chosen_module);
       }
     }
@@ -457,22 +453,17 @@ auto ElasticSchedulingGraphParser::UpdateGraph(
 
 auto ElasticSchedulingGraphParser::CreateNewAvailableNodes(
     const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-    const std::unordered_set<std::string>& available_nodes,
-    const std::unordered_set<std::string>& processed_nodes,
-    const std::string& node_name, bool satisfied_requirements)
-    -> std::pair<std::unordered_set<std::string>,
-                 std::unordered_set<std::string>> {
-  auto new_available_nodes = available_nodes;
-  auto new_processed_nodes = processed_nodes;
+    std::unordered_set<std::string>& available_nodes,
+    std::unordered_set<std::string>& processed_nodes,
+    const std::string& node_name, bool satisfied_requirements){
   if (satisfied_requirements) {
-    new_available_nodes.erase(node_name);
-    new_processed_nodes.insert(node_name);
+    available_nodes.erase(node_name);
+    processed_nodes.insert(node_name);
     auto next_nodes =
         QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
-            node_name, new_processed_nodes, graph);
-    new_available_nodes.insert(next_nodes.begin(), next_nodes.end());
+            node_name, processed_nodes, graph);
+    available_nodes.insert(next_nodes.begin(), next_nodes.end());
   }
-  return {new_available_nodes, new_processed_nodes};
 }
 
 auto ElasticSchedulingGraphParser::IsTableEqualForGivenNode(
@@ -626,20 +617,18 @@ void ElasticSchedulingGraphParser::FindNextModulePlacement(
                   node_name, graph.at(node_name).capacity,
                   graph.at(node_name).operation, drivers);
 
-  auto [new_available_nodes, new_processed_nodes] =
-      CreateNewAvailableNodes(graph, available_nodes, processed_nodes,
+  std::unordered_set<std::string> new_available_nodes = available_nodes;
+  std::unordered_set<std::string> new_processed_nodes = processed_nodes;
+
+  CreateNewAvailableNodes(graph, new_available_nodes, new_processed_nodes,
                               node_name, satisfied_requirements);
 
   for (const auto& skipped_node_name : skipped_node_names) {
-    if (std::find(new_available_nodes.begin(), new_available_nodes.end(),
-                  skipped_node_name) == new_available_nodes.end()) {
+    if (new_available_nodes.find(skipped_node_name) == new_available_nodes.end()) {
       throw std::runtime_error("Skipped nodes marked in the wrong order!");
     }
-    auto new_nodes_pair =
-        CreateNewAvailableNodes(graph, new_available_nodes, new_processed_nodes,
+    CreateNewAvailableNodes(graph, new_available_nodes, new_processed_nodes,
                                 skipped_node_name, satisfied_requirements);
-    new_available_nodes = new_nodes_pair.first;
-    new_processed_nodes = new_nodes_pair.second;
   }
 
   UpdateSatisfyingBitstreamsList(node_name, graph, new_graph,
@@ -741,9 +730,7 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
       std::unordered_set<std::pair<int, ScheduledModule>, PairHash>
           available_module_placements;
       for (const auto& node_name : available_nodes) {
-        if (std::find(available_nodes_in_this_run.begin(),
-                      available_nodes_in_this_run.end(),
-                      node_name) != available_nodes_in_this_run.end()) {
+        if (available_nodes_in_this_run.find(node_name) != available_nodes_in_this_run.end()) {
           auto min_position =
               GetMinPositionInCurrentRun(current_run, node_name, graph);
           auto taken_positions = GetTakenColumns(current_run);
@@ -776,13 +763,11 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
       if ((available_module_placements.empty() || !reduce_single_runs) &&
           !current_run.empty()) {
         for (const auto& node_name : available_nodes) {
-          if (std::find(blocked_nodes.begin(), blocked_nodes.end(),
-                        node_name) == blocked_nodes.end()) {
+          if (blocked_nodes.find(node_name) == blocked_nodes.end()) {
             auto new_blocked_nodes = blocked_nodes;
             new_blocked_nodes.insert(next_run_blocked_nodes.begin(),
                                      next_run_blocked_nodes.end());
-            if (std::find(new_blocked_nodes.begin(), new_blocked_nodes.end(),
-                          node_name) != new_blocked_nodes.end()) {
+            if (new_blocked_nodes.find(node_name) != new_blocked_nodes.end()) {
               PlaceNodesRecursively(
                   available_nodes, processed_nodes, graph, current_run,
                   current_plan, resulting_plan, reduce_single_runs, hw_library,

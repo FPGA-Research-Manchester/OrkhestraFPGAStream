@@ -217,11 +217,9 @@ class ElasticSchedulingGraphParser {
 
   static auto CreateNewAvailableNodes(
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      const std::unordered_set<std::string>& available_nodes,
-      const std::unordered_set<std::string>& processed_nodes,
-      const std::string& node_name, bool satisfied_requirements)
-      -> std::pair<std::unordered_set<std::string>,
-                   std::unordered_set<std::string>>;
+      std::unordered_set<std::string>& available_nodes,
+      std::unordered_set<std::string>& processed_nodes,
+      const std::string& node_name, bool satisfied_requirements);
 
   static void UpdateSatisfyingBitstreamsList(
       const std::string& node_name,

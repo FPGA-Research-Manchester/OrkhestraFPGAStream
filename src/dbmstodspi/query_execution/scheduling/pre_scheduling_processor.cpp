@@ -103,9 +103,8 @@ auto PreSchedulingProcessor::GetFittingBitstreamLocations(
     fitting_bitstream_locations.push_back(start_locations.at(location_index));
     for (int bitstream_index = start_locations.at(location_index).size() - 1;
          bitstream_index >= 0; bitstream_index--) {
-      if (std::find(fitting_bitstreams_names.begin(),
-                    fitting_bitstreams_names.end(),
-                    start_locations.at(location_index).at(bitstream_index)) ==
+      if (fitting_bitstreams_names.find(
+              start_locations.at(location_index).at(bitstream_index)) ==
           fitting_bitstreams_names.end()) {
         fitting_bitstream_locations.at(location_index)
             .erase(fitting_bitstream_locations.at(location_index).begin() +
@@ -173,8 +172,7 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
                                                   resulting_tables);
 
     if (min_requirements.size() == 1 && min_requirements.front() == 0) {
-      if (std::find(available_nodes.begin(), available_nodes.end(),
-                    current_node_name) != available_nodes.end()) {
+      if (available_nodes.find(current_node_name) != available_nodes.end()) {
         available_nodes.erase(current_node_name);
         auto processed_nodes_with_deleted_nodes = processed_nodes;
         processed_nodes_with_deleted_nodes.insert(current_node_name);

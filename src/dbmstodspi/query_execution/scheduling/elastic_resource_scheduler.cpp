@@ -243,6 +243,9 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     const Config &config)
     -> std::queue<std::pair<std::vector<ScheduledModule>,
                             std::vector<std::shared_ptr<QueryNode>>>> {
+
+    std::chrono::steady_clock::time_point start =
+      std::chrono::steady_clock::now();
   Log(LogLevel::kTrace, "Scheduling preprocessing.");
   RemoveUnnecessaryTables(graph, tables);
 
@@ -275,6 +278,13 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
 
   auto resulting_runs = GetQueueOfResultingRuns(available_nodes, best_plan);
   available_nodes = FindNewAvailableNodes(starting_nodes, available_nodes);
+  std::chrono::steady_clock::time_point end =
+      std::chrono::steady_clock::now();
+  std::cout << "TOTAL SCHEDULING:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     start)
+                   .count()
+            << std::endl;
   Log(LogLevel::kTrace, "Execution plan made!");
   return resulting_runs;
 }
@@ -316,6 +326,12 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
     // Table already deleted.
     for (auto &node : chosen_nodes) {
       if (node->operation_type == QueryOperationType::kMergeSort) {
+        if (!node->operation_parameters.operation_parameters.empty() && node
+                ->operation_parameters.operation_parameters.at(0)
+                .empty()) {
+          node->operation_parameters.operation_parameters.erase(
+              node->operation_parameters.operation_parameters.begin());
+        }
         node->operation_parameters.operation_parameters.push_back(
             {node_counts[node->node_name], 2});
         // Find first in run with this node

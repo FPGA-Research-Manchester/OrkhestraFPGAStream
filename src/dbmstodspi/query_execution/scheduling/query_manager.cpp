@@ -19,6 +19,7 @@ limitations under the License.
 #include <algorithm>
 #include <iostream>
 #include <stdexcept>
+#include <chrono>
 
 #include "bitstream_config_helper.hpp"
 #include "elastic_module_checker.hpp"
@@ -173,6 +174,11 @@ void QueryManager::AllocateInputMemoryBlocks(
 
       std::chrono::steady_clock::time_point end =
           std::chrono::steady_clock::now();
+      std::cout << "FS TO MEMORY WRITE:"
+                << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                         begin)
+                       .count()
+                << std::endl;
       Log(LogLevel::kInfo,
           "Read data time = " +
               std::to_string(
@@ -490,9 +496,15 @@ auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
       "RT_35.bin", "RT_32.bin", "RT_29.bin", "RT_26.bin", "RT_23.bin",
       "RT_20.bin", "RT_17.bin", "RT_14.bin", "RT_11.bin", "RT_8.bin",
       "RT_5.bin"};
+  /*std::vector<std::string> routing_bitstreams = {
+      "RT_95.bin", "RT_92.bin", "RT_89.bin", "RT_86.bin", "RT_83.bin",
+      "RT_80.bin", "RT_77.bin", "RT_74.bin", "RT_71.bin", "RT_68.bin",
+      "RT_65.bin", "RT_62.bin", "RT_59.bin", "RT_56.bin", "TAA_53.bin"};*/
 
-  for (int column_i = 0; column_i < column_count; column_i++) {
+  for (int column_i = 0; column_i < routing_bitstreams.size(); column_i++) {
     if (written_frames.at(column_i)) {
+      /*required_bitstreams.push_back("TAA_53.bin");
+      break;*/
       required_bitstreams.push_back(routing_bitstreams.at(column_i));
     }
   }
@@ -585,6 +597,11 @@ void QueryManager::WriteResults(
   TableManager::WriteResultTableFile(data_manager, resulting_table, filename);
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  std::cout << "MEMORY TO FS WRITE:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
   Log(LogLevel::kInfo,
       "Write result data time = " +
           std::to_string(
@@ -599,9 +616,17 @@ void QueryManager::CopyMemoryData(
     const std::unique_ptr<MemoryBlockInterface>& target_memory_device) {
   volatile uint32_t* source = source_memory_device->GetVirtualAddress();
   volatile uint32_t* target = target_memory_device->GetVirtualAddress();
+  std::chrono::steady_clock::time_point begin =
+      std::chrono::steady_clock::now();
   for (int i = 0; i < table_size; i++) {
     target[i] = source[i];
   }
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  std::cout << "MEMORY TO MEMORY WRITE:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
 }
 
 void QueryManager::ProcessResults(
@@ -761,15 +786,27 @@ void QueryManager::ExecuteAndProcessResults(
 
   Log(LogLevel::kTrace, "Setup query!");
   fpga_manager->SetupQueryAcceleration(execution_query_nodes);
+  std::chrono::steady_clock::time_point init_end =
+      std::chrono::steady_clock::now();
+  std::cout << "INITIALISATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(init_end -
+                                                                     begin)
+                   .count()
+            << std::endl;
   Log(LogLevel::kTrace, "Running query!");
   auto result_sizes = fpga_manager->RunQueryAcceleration();
   Log(LogLevel::kTrace, "Query done!");
 
-  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point total_end = std::chrono::steady_clock::now();
+  std::cout << "TOTAL EXEC:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(total_end -
+                                                                     begin)
+                   .count()
+            << std::endl;
   Log(LogLevel::kInfo,
       "Init and run time = " +
-          std::to_string(
-              std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+          std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(
+                             total_end - begin)
                   .count()) +
           "[microseconds]");
 
