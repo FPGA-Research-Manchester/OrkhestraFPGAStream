@@ -57,13 +57,12 @@ class QuerySchedulingHelper {
    * @param node_name Currently scheduled nodes
    * @param past_nodes All of the nodes which have been processed allready
    * @param graph All nodes
-   * @return Vector of node names which are now available.
    */
-  static auto GetNewAvailableNodesAfterSchedulingGivenNode(
+  static void GetNewAvailableNodesAfterSchedulingGivenNode(
       const std::string& node_name,
       const std::unordered_set<std::string>& past_nodes,
-      const std::unordered_map<std::string, SchedulingQueryNode>& graph)
-      -> std::unordered_set<std::string>;
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      std::unordered_set<std::string>& current_available_nodes);
 
   /**
    * @brief Move current table names to the next nodes.

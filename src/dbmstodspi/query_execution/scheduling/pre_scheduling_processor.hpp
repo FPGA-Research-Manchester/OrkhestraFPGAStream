@@ -58,10 +58,11 @@ class PreSchedulingProcessor {
       -> std::vector<int>;
 
   // def find_adequate_bitstreams(min_requirements, operation, hw_library)
-  static auto FindAdequateBitstreams(
-      const std::vector<int>& min_requirements, QueryOperationType operation,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library)
-      -> std::unordered_set<std::string>;
+  static void FindAdequateBitstreams(
+      const std::vector<int>& min_requirements,
+      const std::map<QueryOperationType, OperationPRModules>& hw_library,
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::string& node_name);
 
   // def
   // get_fitting_bitstream_locations_based_on_list(list_of_fitting_bitstreams,

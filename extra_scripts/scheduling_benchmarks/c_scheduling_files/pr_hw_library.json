@@ -1,30 +1,118 @@
 {
 	"kFilter": {
 		"bitstreams": {
-			"binPartial_Filter_7_36.bin": {
-				"locations": [  20 ],
-				"length": 10,
-				"capacity": [ 32, 4 ],
-				"string": "MMDMDBMMDB",
+			"filter81.bit": {
+				"locations": [
+					0,
+					10,
+					20
+				],
+				"length": 4,
+				"capacity": [
+					8,
+					1
+				],
+				"string": "MMDM",
 				"is_backwards": 0
 			},
-			"binPartial_Filter_37_66.bin": {
-				"locations": [ 10 ],
-				"length": 10,
-				"capacity": [ 32, 4 ],
-				"string": "MMDMDBMMDB",
+			"filter84.bit": {
+				"locations": [
+					2,
+					12,
+					22
+				],
+				"length": 7,
+				"capacity": [
+					8,
+					4
+				],
+				"string": "MMDM",
 				"is_backwards": 0
 			},
-			"binPartial_Filter_67_96.bin": {
-				"locations": [ 0 ],
+			"filter162.bit": {
+				"locations": [
+					0,
+					10,
+					20
+				],
+				"length": 5,
+				"capacity": [
+					16,
+					2
+				],
+				"string": "MMDM",
+				"is_backwards": 0
+			},
+			"filter164.bit": {
+				"locations": [
+					0,
+					10,
+					20
+				],
+				"length": 7,
+				"capacity": [
+					16,
+					4
+				],
+				"string": "MMDM",
+				"is_backwards": 0
+			},
+			"filter321.bit": {
+				"locations": [
+					0,
+					10,
+					20
+				],
+				"length": 5,
+				"capacity": [
+					31,
+					1
+				],
+				"string": "MMDM",
+				"is_backwards": 0
+			},
+			"filter322.bit": {
+				"locations": [
+					2,
+					12,
+					22
+				],
+				"length": 7,
+				"capacity": [
+					32,
+					2
+				],
+				"string": "MMDM",
+				"is_backwards": 0
+			},
+			"filter324.bit": {
+				"locations": [
+					0,
+					10,
+					20
+				],
 				"length": 10,
-				"capacity": [ 32, 4 ],
-				"string": "MMDMDBMMDB",
+				"capacity": [
+					32,
+					4
+				],
+				"string": "MMDM",
 				"is_backwards": 0
 			}
 		},
 		"start_locations": [
-			[ "binPartial_Filter_67_96.bin"],
+			[
+				"filter81.bit",
+				"filter162.bit",
+				"filter164.bit",
+				"filter321.bit",
+				"filter324.bit"
+			],
+			[],
+			[
+				"filter84.bit",
+				"filter322.bit"
+			],
 			[],
 			[],
 			[],
@@ -32,21 +120,37 @@
 			[],
 			[],
 			[],
+			[
+				"filter81.bit",
+				"filter162.bit",
+				"filter164.bit",
+				"filter321.bit",
+				"filter324.bit"
+			],
+			[],
+			[
+				"filter84.bit",
+				"filter322.bit"
+			],
 			[],
 			[],
-			["binPartial_Filter_37_66.bin"],
 			[],
 			[],
 			[],
 			[],
 			[],
+			[
+				"filter81.bit",
+				"filter162.bit",
+				"filter164.bit",
+				"filter321.bit",
+				"filter324.bit"
+			],
 			[],
-			[],
-			[],
-			[],
-			[ "binPartial_Filter_7_36.bin"],
-			[],
-			[],
+			[
+				"filter84.bit",
+				"filter322.bit"
+			],
 			[],
 			[],
 			[],
@@ -59,50 +163,64 @@
 	},
 	"kLinearSort": {
 		"bitstreams": {
-			"binPartial_LinearSort512_7_36.bin": {
-				"locations": [ 20 ],
+			"linear512.bit": {
+				"locations": [
+					0,
+					10,
+					20
+				],
 				"length": 10,
-				"capacity": [ 512 ],
+				"capacity": [
+					512
+				],
 				"string": "MMDMDBMMDB",
 				"is_backwards": 0
 			},
-			"binPartial_LinearSort512_37_66.bin": {
-				"locations": [ 10 ],
-				"length": 10,
-				"capacity": [ 512 ],
-				"string": "MMDMDBMMDB",
-				"is_backwards": 0
-			},
-			"binPartial_LinearSort512_67_96.bin": {
-				"locations": [ 0 ],
-				"length": 10,
-				"capacity": [ 512 ],
+			"linear1024.bit": {
+				"locations": [
+					6,
+					16
+				],
+				"length": 14,
+				"capacity": [
+					1024
+				],
 				"string": "MMDMDBMMDB",
 				"is_backwards": 0
 			}
 		},
 		"start_locations": [
-			[ "binPartial_LinearSort512_67_96.bin" ],
+			[
+				"linear512.bit"
+			],
 			[],
 			[],
 			[],
 			[],
 			[],
+			[
+				"linear1024.bit"
+			],
+			[],
+			[],
+			[],
+			[
+				"linear512.bit"
+			],
 			[],
 			[],
 			[],
 			[],
-			[ "binPartial_LinearSort512_37_66.bin" ],
+			[],
+			[
+				"linear1024.bit"
+			],
 			[],
 			[],
 			[],
-			[],
-			[],
-			[],
-			[],
-			[],
-			[],
-			[ "binPartial_LinearSort512_7_36.bin" ],
+			[
+				"linear512.bit"
+			],
 			[],
 			[],
 			[],
@@ -117,30 +235,50 @@
 	},
 	"kMergeSort": {
 		"bitstreams": {
-			"binPartial_MergeSort64_7_36.bin": {
-				"locations": [ 20 ],
-				"length": 10,
-				"capacity": [ 64 ],
+			"mergesort32.bit": {
+				"locations": [
+					0,
+					10,
+					20
+				],
+				"length": 7,
+				"capacity": [
+					32
+				],
 				"string": "MMDMDBMMDB",
 				"is_backwards": 0
 			},
-			"binPartial_MergeSort64_37_66.bin": {
-				"locations": [ 10 ],
+			"mergesort64.bit": {
+				"locations": [
+					0,
+					10,
+					20
+				],
 				"length": 10,
-				"capacity": [ 64 ],
+				"capacity": [
+					64
+				],
 				"string": "MMDMDBMMDB",
 				"is_backwards": 0
 			},
-			"binPartial_MergeSort64_67_96.bin": {
-				"locations": [ 0 ],
-				"length": 10,
-				"capacity": [ 64 ],
+			"mergesort128.bit": {
+				"locations": [
+					8,
+					18
+				],
+				"length": 12,
+				"capacity": [
+					128
+				],
 				"string": "MMDMDBMMDB",
 				"is_backwards": 0
 			}
 		},
 		"start_locations": [
-			[ "binPartial_MergeSort64_67_96.bin" ],
+			[
+				"mergesort32.bit",
+				"mergesort64.bit"
+			],
 			[],
 			[],
 			[],
@@ -148,19 +286,29 @@
 			[],
 			[],
 			[],
+			[
+				"mergesort128.bit"
+			],
+			[],
+			[
+				"mergesort32.bit",
+				"mergesort64.bit"
+			],
 			[],
 			[],
-			[ "binPartial_MergeSort64_37_66.bin" ],
 			[],
 			[],
 			[],
 			[],
 			[],
+			[
+				"mergesort128.bit"
+			],
 			[],
-			[],
-			[],
-			[],
-			[ "binPartial_MergeSort64_7_36.bin" ],
+			[
+				"mergesort32.bit",
+				"mergesort64.bit"
+			],
 			[],
 			[],
 			[],
@@ -176,21 +324,27 @@
 	"kJoin": {
 		"bitstreams": {
 			"binPartial_MergeJoin2K_37_66.bin": {
-				"locations": [ 10 ],
+				"locations": [
+					10
+				],
 				"length": 6,
 				"capacity": [],
 				"string": "MMDMDB",
 				"is_backwards": 0
 			},
 			"binPartial_MergeJoin2K_67_96.bin": {
-				"locations": [ 0 ],
+				"locations": [
+					0
+				],
 				"length": 6,
 				"capacity": [],
 				"string": "MMDMDB",
 				"is_backwards": 0
 			},
 			"binPartial_MergeJoin2K_7_36.bin": {
-				"locations": [ 20 ],
+				"locations": [
+					20
+				],
 				"length": 6,
 				"capacity": [],
 				"string": "MMDMDB",
@@ -198,7 +352,9 @@
 			}
 		},
 		"start_locations": [
-			[ "binPartial_MergeJoin2K_67_96.bin" ],
+			[
+				"binPartial_MergeJoin2K_67_96.bin"
+			],
 			[],
 			[],
 			[],
@@ -208,7 +364,9 @@
 			[],
 			[],
 			[],
-			[ "binPartial_MergeJoin2K_37_66.bin" ],
+			[
+				"binPartial_MergeJoin2K_37_66.bin"
+			],
 			[],
 			[],
 			[],
@@ -218,7 +376,9 @@
 			[],
 			[],
 			[],
-			[ "binPartial_MergeJoin2K_7_36.bin" ],
+			[
+				"binPartial_MergeJoin2K_7_36.bin"
+			],
 			[],
 			[],
 			[],
@@ -234,7 +394,11 @@
 	"kAddition": {
 		"bitstreams": {
 			"addition.bit": {
-				"locations": [0, 10, 20],
+				"locations": [
+					0,
+					10,
+					20
+				],
 				"length": 4,
 				"capacity": [],
 				"string": "MMDM",
@@ -242,7 +406,9 @@
 			}
 		},
 		"start_locations": [
-			["addition.bit"],
+			[
+				"addition.bit"
+			],
 			[],
 			[],
 			[],
@@ -252,7 +418,9 @@
 			[],
 			[],
 			[],
-			["addition.bit"],
+			[
+				"addition.bit"
+			],
 			[],
 			[],
 			[],
@@ -262,7 +430,9 @@
 			[],
 			[],
 			[],
-			["addition.bit"],
+			[
+				"addition.bit"
+			],
 			[],
 			[],
 			[],
@@ -278,7 +448,11 @@
 	"kMultiplication": {
 		"bitstreams": {
 			"multiplier.bit": {
-				"locations": [4, 14, 24],
+				"locations": [
+					4,
+					14,
+					24
+				],
 				"length": 7,
 				"capacity": [],
 				"string": "DBMMDBM",
@@ -290,7 +464,9 @@
 			[],
 			[],
 			[],
-			["multiplier.bit"],
+			[
+				"multiplier.bit"
+			],
 			[],
 			[],
 			[],
@@ -300,7 +476,9 @@
 			[],
 			[],
 			[],
-			["multiplier.bit"],
+			[
+				"multiplier.bit"
+			],
 			[],
 			[],
 			[],
@@ -310,7 +488,9 @@
 			[],
 			[],
 			[],
-			["multiplier.bit"],
+			[
+				"multiplier.bit"
+			],
 			[],
 			[],
 			[],
@@ -322,7 +502,11 @@
 	"kAggregationSum": {
 		"bitstreams": {
 			"globalsum.bit": {
-				"locations": [2, 12, 22],
+				"locations": [
+					2,
+					12,
+					22
+				],
 				"length": 3,
 				"capacity": [],
 				"string": "DMD",
@@ -332,7 +516,9 @@
 		"start_locations": [
 			[],
 			[],
-			["globalsum.bit"],
+			[
+				"globalsum.bit"
+			],
 			[],
 			[],
 			[],
@@ -342,7 +528,9 @@
 			[],
 			[],
 			[],
-			["globalsum.bit"],
+			[
+				"globalsum.bit"
+			],
 			[],
 			[],
 			[],
@@ -352,7 +540,9 @@
 			[],
 			[],
 			[],
-			["globalsum.bit"],
+			[
+				"globalsum.bit"
+			],
 			[],
 			[],
 			[],

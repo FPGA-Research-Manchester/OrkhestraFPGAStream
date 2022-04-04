@@ -62,8 +62,9 @@ auto AccelerationModuleSetupInterface::GetWorstCaseProcessedTables(
     -> std::map<std::string, TableMetadata> {
   std::map<std::string, TableMetadata> resulting_tables;
   for (const auto& input_table_name : input_tables) {
-    resulting_tables.insert(
-        {input_table_name, data_tables.at(input_table_name)});
+    resulting_tables[input_table_name] = data_tables.at(input_table_name);
+    /*resulting_tables.insert(
+        {input_table_name, data_tables.at(input_table_name)});*/
   }
   return resulting_tables;
 }

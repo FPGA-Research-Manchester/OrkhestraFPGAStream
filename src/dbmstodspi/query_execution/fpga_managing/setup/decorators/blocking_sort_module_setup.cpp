@@ -83,13 +83,17 @@ auto BlockingSortModuleSetup::UpdateDataTable(
     new_sorted_sequences.push_back({0, new_sequence_length});
     if (new_sequence_length < current_table.record_count &&
         module_capacity.front() < current_sequences.size()) {
-      for (int sequence_index = module_capacity.front();
+      new_sorted_sequences.insert(new_sorted_sequences.end(),
+          current_sequences.begin() + module_capacity.front(),
+          current_sequences.end());
+      /*for (int sequence_index = module_capacity.front();
            sequence_index < current_sequences.size(); sequence_index++) {
         new_sorted_sequences.push_back(current_sequences.at(sequence_index));
-      }
+      }*/
     }
   }
-  current_table.sorted_status = new_sorted_sequences;
+  // FIx later
+  //current_table.sorted_status = {{0, current_table.record_count}};
   resulting_tables.at(table_name) = current_table;
   return QuerySchedulingHelper::IsTableSorted(current_table);
 }

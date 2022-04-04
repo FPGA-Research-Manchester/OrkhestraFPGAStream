@@ -81,11 +81,11 @@ def main(argv):
     # shell=True)
 
     result = subprocess.run(
-            f"{exe_location_full} -c {config_location_full} -i {input_location} -q",
-            check=True, shell=True)
+        f"{exe_location_full} -c {config_location_full} -i {input_location} -q",
+        check=True, shell=True)
 
     # try:
-        
+
     # except subprocess.SubprocessError:
     #     pro.kill()
     #     print("FAIL")
@@ -103,16 +103,16 @@ def main(argv):
         stats_file.write(",")
         stats_file.write(str(data["plan_count"]))  # Plan count
         stats_file.write(",")
-        stats_file.write(str(data["placed_nodes"]))  # Placed nodes
+        stats_file.write(str(data["discarded_placements"]))  # Placed nodes
         stats_file.write(",")
         # Discarded placements
-        stats_file.write(str(data["discarded_placements"]))
+        stats_file.write(str(data["placed_nodes"]))
         stats_file.write(",")
         stats_file.write(str(data["schedule_count"]))  # Plans chosen
         stats_file.write(",")
         stats_file.write(str(data["run_count"]))  # run_count
         stats_file.write(",")
-        stats_file.write(str(data["overall_time"] / 1000000))  # performance_s
+        stats_file.write(str(data["schedule_time"] / 1000000))  # performance_s
         stats_file.write(",")
         # performance_s
         stats_file.write(str(data["cost_eval_time"] / 1000000))

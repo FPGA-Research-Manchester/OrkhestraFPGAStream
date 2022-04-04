@@ -840,7 +840,7 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
     current_run = []
     current_plan = []
 
-    overall_start_time = perf_counter()
+    # overall_start_time = perf_counter()
 
     # Prepare first_nodes
     first_nodes = get_first_nodes_from_saved_nodes(saved_nodes, graph)
@@ -865,6 +865,7 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
     overall_runs = 0
     overall_exec_time = 0
     overall_config_time = 0
+    overall_performance_time = 0
 
     current_configuration = []
 
@@ -882,6 +883,7 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
             starting_nodes, graph, hw_library, data_tables, past_nodes)
         # Start the main recursive method
         current_start_time = perf_counter()
+        overall_start_time = perf_counter()
         try:
             place_nodes_recursively(starting_nodes, past_nodes, graph, current_run, current_plan, resulting_plans, disallow_empty_runs,
                                     hw_library, min_runs_pointer, data_tables, module_placement_selections,
@@ -902,6 +904,9 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
         #     resulting_plans, min_runs_pointer[0] + 1, resource_string)
 
         # print(f"Time: {perf_counter()-current_start_time:.3f}s")
+
+        overall_stop_time = perf_counter()
+        overall_performance_time += overall_stop_time - overall_start_time
 
         plan_count += len(resulting_plans)
         placed_nodes += skipped_placements_stat_pointer[1]
@@ -962,7 +967,7 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
                     reduce_table_sizes(
                         placed_module.node_name, starting_nodes, original_graph, graph, data_tables, selectivity)
 
-    overall_stop_time = perf_counter()
+    # overall_stop_time = perf_counter()
     # print(
     #     f"Scheduling duration: {overall_stop_time - overall_start_time - overall_cost_evaluation_time:.3f}s; Cost evaluation duration:{overall_cost_evaluation_time:.3f}s; Score: {(overall_score/plans_chosen) * 100:.2f}%")
 
@@ -973,9 +978,10 @@ def find_plans_and_print(starting_nodes, graph, resource_string, hw_library, dat
     else:
         utility_frame_ratio = -1
 
+    # overall_performance_time = overall_stop_time - overall_start_time
+
     stats_list = [plan_count, placed_nodes, discarded_placements,
-                  plans_chosen, run_count, overall_stop_time -
-                  overall_start_time, overall_cost_evaluation_time,
+                  plans_chosen, run_count, overall_performance_time, overall_cost_evaluation_time,
                   timeouts, overall_utility, overall_config_written, utility_frame_ratio, (
                       overall_score / plans_chosen),
                   exec_time, config_time]

@@ -69,13 +69,14 @@ auto PreSchedulingProcessor::GetMinRequirementsForFullyExecutingNode(
   return graph.at(node_name).capacity;
 }
 
-auto PreSchedulingProcessor::FindAdequateBitstreams(
-    const std::vector<int>& min_requirements, QueryOperationType operation,
-    const std::map<QueryOperationType, OperationPRModules>& hw_library)
-    -> std::unordered_set<std::string> {
+void PreSchedulingProcessor::FindAdequateBitstreams(
+    const std::vector<int>& min_requirements,
+    const std::map<QueryOperationType, OperationPRModules>& hw_library,
+    std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    const std::string& node_name) {
   std::unordered_set<std::string> fitting_bitstreams;
   for (const auto& [bitstream_name, bitstream_parameters] :
-       hw_library.at(operation).bitstream_map) {
+       hw_library.at(graph.at(node_name).operation).bitstream_map) {
     bool bitstream_utility_is_great_enough = true;
     for (int capacity_parameter_index = 0;
          capacity_parameter_index < bitstream_parameters.capacity.size();
@@ -90,17 +91,21 @@ auto PreSchedulingProcessor::FindAdequateBitstreams(
       fitting_bitstreams.insert(bitstream_name);
     }
   }
-  return fitting_bitstreams;
+  if (!fitting_bitstreams.empty()) {
+    graph.at(node_name).satisfying_bitstreams = GetFittingBitstreamLocations(
+        std::move(fitting_bitstreams),
+        hw_library.at(graph.at(node_name).operation).starting_locations);
+  }
 }
 
 auto PreSchedulingProcessor::GetFittingBitstreamLocations(
     const std::unordered_set<std::string>& fitting_bitstreams_names,
     const std::vector<std::vector<std::string>>& start_locations)
     -> std::vector<std::vector<std::string>> {
-  std::vector<std::vector<std::string>> fitting_bitstream_locations;
+  std::vector<std::vector<std::string>> fitting_bitstream_locations =
+      start_locations;
   for (int location_index = 0; location_index < start_locations.size();
        location_index++) {
-    fitting_bitstream_locations.push_back(start_locations.at(location_index));
     for (int bitstream_index = start_locations.at(location_index).size() - 1;
          bitstream_index >= 0; bitstream_index--) {
       if (fitting_bitstreams_names.find(
@@ -148,39 +153,31 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     auto current_node_name = *current_available_nodes.begin();
     current_available_nodes.erase(current_available_nodes.begin());
     processed_nodes.insert(current_node_name);
-    auto new_available_nodes =
-        QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
-            current_node_name, processed_nodes, graph);
-    current_available_nodes.insert(new_available_nodes.begin(),
-                                   new_available_nodes.end());
+    QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
+        current_node_name, processed_nodes, graph, current_available_nodes);
     auto min_requirements = GetMinRequirementsForFullyExecutingNode(
         current_node_name, graph, accelerator_library, data_tables);
-    auto list_of_fitting_bitstreams = FindAdequateBitstreams(
-        min_requirements, graph.at(current_node_name).operation, hw_library);
-    if (!list_of_fitting_bitstreams.empty()) {
-      graph.at(current_node_name).satisfying_bitstreams =
-          GetFittingBitstreamLocations(
-              list_of_fitting_bitstreams,
-              hw_library.at(graph.at(current_node_name).operation)
-                  .starting_locations);
-    }
-    auto resulting_tables = GetWorstCaseProcessedTables(
+    FindAdequateBitstreams(min_requirements, hw_library, graph,
+                           current_node_name);
+    /*auto resulting_tables = GetWorstCaseProcessedTables(
         graph.at(current_node_name).data_tables, accelerator_library,
         data_tables, min_capacity.at(graph.at(current_node_name).operation),
-        graph.at(current_node_name).operation);
-    QuerySchedulingHelper::AddNewTableToNextNodes(graph, current_node_name,
-                                                  resulting_tables);
+        graph.at(current_node_name).operation);*/
+    QuerySchedulingHelper::AddNewTableToNextNodes(
+        graph, current_node_name,
+        GetWorstCaseProcessedTables(
+            graph.at(current_node_name).data_tables, accelerator_library,
+            data_tables, min_capacity.at(graph.at(current_node_name).operation),
+            graph.at(current_node_name).operation));
 
     if (min_requirements.size() == 1 && min_requirements.front() == 0) {
       if (available_nodes.find(current_node_name) != available_nodes.end()) {
         available_nodes.erase(current_node_name);
         auto processed_nodes_with_deleted_nodes = processed_nodes;
         processed_nodes_with_deleted_nodes.insert(current_node_name);
-        auto new_available_nodes =
-            QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
-                current_node_name, processed_nodes_with_deleted_nodes, graph);
-        available_nodes.insert(new_available_nodes.begin(),
-                               new_available_nodes.end());
+        QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
+            current_node_name, processed_nodes_with_deleted_nodes, graph,
+            available_nodes);
       }
       QuerySchedulingHelper::RemoveNodeFromGraph(graph, current_node_name);
     }

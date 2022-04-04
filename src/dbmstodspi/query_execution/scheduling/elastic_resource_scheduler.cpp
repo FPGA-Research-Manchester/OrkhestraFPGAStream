@@ -101,11 +101,6 @@ auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
                   std::map<std::vector<std::vector<ScheduledModule>>,
                            ExecutionPlanSchedulingData>,
                   long long, bool, std::pair<int, int>> {
-  std::map<std::vector<std::vector<ScheduledModule>>,
-           ExecutionPlanSchedulingData>
-      resulting_plans;
-  int min_runs = std::numeric_limits<int>::max();
-  std::pair<int, int> placed_nodes_and_discarded_placements = {0, 0};
   auto heuristic_choices = GetDefaultHeuristics();
 
   double time_limit_duration_in_seconds = config.time_limit_duration_in_seconds;
@@ -118,20 +113,20 @@ auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
   auto time_limit =
       std::chrono::system_clock::now() +
       std::chrono::milliseconds(int(time_limit_duration_in_seconds * 1000));
+
+  ElasticSchedulingGraphParser scheduler(
+      config.pr_hw_library, heuristic_choices.at(config.heuristic_choice),
+      first_node_names, drivers, time_limit, config.use_max_runs_cap,
+      config.reduce_single_runs);
+
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
 
-  bool timeout_trigger = false;
-
   // Configure the runtime_error behaviour
   try {
-    ElasticSchedulingGraphParser::PlaceNodesRecursively(
+    scheduler.PlaceNodesRecursively(
         std::move(starting_nodes), std::move(processed_nodes), std::move(graph),
-        {}, {}, resulting_plans, config.reduce_single_runs,
-        config.pr_hw_library, min_runs, tables,
-        heuristic_choices.at(config.heuristic_choice),
-        placed_nodes_and_discarded_placements, first_node_names, {}, {},
-        drivers, time_limit, timeout_trigger, config.use_max_runs_cap, 0);
+        {}, {}, tables, {}, {}, 0);
   } catch (TimeLimitException &e) {
     Log(LogLevel::kInfo, "Timeout of " +
                              std::to_string(time_limit_duration_in_seconds) +
@@ -140,10 +135,10 @@ auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-  return {min_runs, resulting_plans,
+  return {-1, scheduler.GetResultingPlan(),
           std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
               .count(),
-          timeout_trigger, placed_nodes_and_discarded_placements};
+          scheduler.GetTimeoutStatus(), scheduler.GetStats()};
 }
 
 void ElasticResourceNodeScheduler::BenchmarkScheduling(
@@ -159,9 +154,9 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
   std::chrono::steady_clock::time_point begin_pre_process =
       std::chrono::steady_clock::now();
   RemoveUnnecessaryTables(graph, tables);
-  ElasticSchedulingGraphParser::PreprocessNodes(
-      starting_nodes, config.pr_hw_library, processed_nodes, graph, tables,
-      drivers);
+  ElasticSchedulingGraphParser::PreprocessNodes(starting_nodes, processed_nodes,
+                                                graph, tables,
+                                                config.pr_hw_library, drivers);
   std::chrono::steady_clock::time_point end_pre_process =
       std::chrono::steady_clock::now();
   auto pre_process_time = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -243,15 +238,14 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     const Config &config)
     -> std::queue<std::pair<std::vector<ScheduledModule>,
                             std::vector<std::shared_ptr<QueryNode>>>> {
-
-    std::chrono::steady_clock::time_point start =
+  std::chrono::steady_clock::time_point start =
       std::chrono::steady_clock::now();
   Log(LogLevel::kTrace, "Scheduling preprocessing.");
   RemoveUnnecessaryTables(graph, tables);
 
-  ElasticSchedulingGraphParser::PreprocessNodes(
-      starting_nodes, config.pr_hw_library, processed_nodes, graph, tables,
-      drivers);
+  ElasticSchedulingGraphParser::PreprocessNodes(starting_nodes, processed_nodes,
+                                                graph, tables,
+                                                config.pr_hw_library, drivers);
 
   auto [min_runs, resulting_plans, scheduling_time, ignored_timeout,
         ignored_stats] =
@@ -260,6 +254,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   Log(LogLevel::kInfo,
       "Main scheduling loop time = " + std::to_string(scheduling_time / 1000) +
           "[milliseconds]");
+  std::cout << "PLAN COUNT:" << resulting_plans.size() << std::endl;
 
   Log(LogLevel::kTrace, "Choosing best plan.");
   // resulting_plans
@@ -278,8 +273,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
 
   auto resulting_runs = GetQueueOfResultingRuns(available_nodes, best_plan);
   available_nodes = FindNewAvailableNodes(starting_nodes, available_nodes);
-  std::chrono::steady_clock::time_point end =
-      std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   std::cout << "TOTAL SCHEDULING:"
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      start)
@@ -326,9 +320,8 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
     // Table already deleted.
     for (auto &node : chosen_nodes) {
       if (node->operation_type == QueryOperationType::kMergeSort) {
-        if (!node->operation_parameters.operation_parameters.empty() && node
-                ->operation_parameters.operation_parameters.at(0)
-                .empty()) {
+        if (!node->operation_parameters.operation_parameters.empty() &&
+            node->operation_parameters.operation_parameters.at(0).empty()) {
           node->operation_parameters.operation_parameters.erase(
               node->operation_parameters.operation_parameters.begin());
         }
@@ -339,8 +332,7 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
             std::find_if(run.begin(), run.end(), [](auto module) {
               return module.operation_type == QueryOperationType::kMergeSort;
             });
-        auto sorted_status =
-            first_module->processed_table_data.at(0).sorted_status;
+        auto sorted_status = first_module->processed_table_data;
         for (int i = 0; i < node_counts[node->node_name]; i++) {
           std::vector<int> channel_sizes(64, 0);
           int offset = i * 64;

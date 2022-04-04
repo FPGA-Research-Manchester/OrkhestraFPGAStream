@@ -90,11 +90,11 @@ auto QuerySchedulingHelper::GetCurrentNodeIndexesByName(
   return resulting_indexes;
 }
 
-auto QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
+void QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
     const std::string& node_name,
     const std::unordered_set<std::string>& past_nodes,
-    const std::unordered_map<std::string, SchedulingQueryNode>& graph)
-    -> std::unordered_set<std::string> {
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    std::unordered_set<std::string>& current_available_nodes){
   std::unordered_set<std::string> potential_nodes(
       graph.at(node_name).after_nodes.begin(),
       graph.at(node_name).after_nodes.end());
@@ -113,7 +113,7 @@ auto QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
     }
   }
   potential_nodes.erase("");
-  return potential_nodes;
+  current_available_nodes.merge(potential_nodes);
 }
 
 // TODO(Kaspar): This needs improving to support multi inputs and outputs
