@@ -253,7 +253,6 @@ void ExecutionManager::AddSchedulingNodeToGraph(
   for (const auto& input_files : node->input_data_definition_files) {
     current_node.data_tables.push_back(input_files);
   }
-  current_node.corresponding_node = node;
   current_node.operation = node->operation_type;
   current_node.capacity = accelerator_library.GetNodeCapacity(
       node->operation_type, node->operation_parameters.operation_parameters);

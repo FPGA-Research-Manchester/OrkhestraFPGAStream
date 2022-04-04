@@ -70,15 +70,15 @@ class ElasticSchedulingGraphParser {
       AcceleratorLibraryInterface& drivers);
 
   void PlaceNodesRecursively(
-      const std::unordered_set<std::string>& available_nodes,
-      const std::unordered_set<std::string>& processed_nodes,
-      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      const std::vector<ScheduledModule>& current_run,
+      std::unordered_set<std::string> available_nodes,
+      std::unordered_set<std::string> processed_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode> graph,
+      std::vector<ScheduledModule> current_run,
       std::vector<std::vector<ScheduledModule>> current_plan,
-      const std::map<std::string, TableMetadata>& data_tables,
-      const std::unordered_set<std::string>& blocked_nodes,
-      const std::unordered_set<std::string>& next_run_blocked_nodes,
-      const int streamed_data_size);
+      std::map<std::string, TableMetadata> data_tables,
+      std::unordered_set<std::string> blocked_nodes,
+      std::unordered_set<std::string> next_run_blocked_nodes,
+      int streamed_data_size);
 
   auto GetTimeoutStatus() -> bool;
   auto GetResultingPlan() -> std::map<std::vector<std::vector<ScheduledModule>>,
@@ -100,6 +100,10 @@ class ElasticSchedulingGraphParser {
   std::map<std::vector<std::vector<ScheduledModule>>,
            ExecutionPlanSchedulingData> resulting_plan_;
   bool reduce_single_runs_;
+
+  void GetAllAvailableModulePlacementsInCurrentRun(std::unordered_set<std::pair<int, ScheduledModule>, PairHash>& available_module_placements,
+                        const std::unordered_set<std::string>& available_nodes, const std::vector<ScheduledModule>& current_run, const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+                        const std::unordered_set<std::string>& blocked_nodes, const std::map<std::string, TableMetadata>& data_tables);
 
   static auto IsSubsetOf(const std::unordered_set<std::string>& a,
                          const std::unordered_set<std::string>& b) -> bool;
@@ -222,7 +226,7 @@ class ElasticSchedulingGraphParser {
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
       std::unordered_set<std::string>& available_nodes,
       std::unordered_set<std::string>& processed_nodes,
-      const std::string& node_name, bool satisfied_requirements);
+      const std::string& node_name);
 
   void UpdateSatisfyingBitstreamsList(
       const std::string& node_name,

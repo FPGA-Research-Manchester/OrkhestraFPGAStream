@@ -94,6 +94,7 @@ auto BlockingSortModuleSetup::UpdateDataTable(
   }
   // FIx later
   //current_table.sorted_status = {{0, current_table.record_count}};
+  current_table.sorted_status = new_sorted_sequences;
   resulting_tables.at(table_name) = current_table;
   return QuerySchedulingHelper::IsTableSorted(current_table);
 }

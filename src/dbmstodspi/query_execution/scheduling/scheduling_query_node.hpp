@@ -38,6 +38,5 @@ struct SchedulingQueryNode {
   std::vector<std::string> after_nodes;
   std::vector<std::string> data_tables;
   std::vector<std::vector<std::string>> satisfying_bitstreams;
-  QueryNode* corresponding_node;
 };
 }  // namespace orkhestrafs::dbmstodspi
