@@ -53,16 +53,15 @@ auto PreSchedulingProcessor::GetMinimumCapacityValuesFromHWLibrary(
 auto PreSchedulingProcessor::GetMinRequirementsForFullyExecutingNode(
     const std::string& node_name,
     const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-    AcceleratorLibraryInterface& accelerator_library,
     const std::map<std::string, TableMetadata>& data_tables)
     -> std::vector<int> {
-  if (accelerator_library.IsOperationSorting(graph.at(node_name).operation)) {
+  if (accelerator_library_.IsOperationSorting(graph.at(node_name).operation)) {
     auto tables_to_be_sorted = graph.at(node_name).data_tables;
     if (tables_to_be_sorted.size() != 1) {
       throw std::runtime_error(
           "Currently sorters only support one input table!");
     }
-    return accelerator_library.GetMinSortingRequirements(
+    return accelerator_library_.GetMinSortingRequirements(
         graph.at(node_name).operation,
         data_tables.at(tables_to_be_sorted.front()));
   }
@@ -71,12 +70,11 @@ auto PreSchedulingProcessor::GetMinRequirementsForFullyExecutingNode(
 
 void PreSchedulingProcessor::FindAdequateBitstreams(
     const std::vector<int>& min_requirements,
-    const std::map<QueryOperationType, OperationPRModules>& hw_library,
     std::unordered_map<std::string, SchedulingQueryNode>& graph,
     const std::string& node_name) {
   std::unordered_set<std::string> fitting_bitstreams;
   for (const auto& [bitstream_name, bitstream_parameters] :
-       hw_library.at(graph.at(node_name).operation).bitstream_map) {
+       hw_library_.at(graph.at(node_name).operation).bitstream_map) {
     bool bitstream_utility_is_great_enough = true;
     for (int capacity_parameter_index = 0;
          capacity_parameter_index < bitstream_parameters.capacity.size();
@@ -94,7 +92,7 @@ void PreSchedulingProcessor::FindAdequateBitstreams(
   if (!fitting_bitstreams.empty()) {
     graph.at(node_name).satisfying_bitstreams = GetFittingBitstreamLocations(
         std::move(fitting_bitstreams),
-        hw_library.at(graph.at(node_name).operation).starting_locations);
+        hw_library_.at(graph.at(node_name).operation).starting_locations);
   }
 }
 
@@ -121,13 +119,11 @@ auto PreSchedulingProcessor::GetFittingBitstreamLocations(
 }
 
 auto PreSchedulingProcessor::GetWorstCaseProcessedTables(
-    const std::vector<std::string>& input_tables,
-    AcceleratorLibraryInterface& accelerator_library,
-    std::map<std::string, TableMetadata>& data_tables,
-    const std::vector<int>& min_capacity, QueryOperationType operation)
+    const std::vector<std::string>& input_tables, const std::vector<int>& min_capacity,
+    std::map<std::string, TableMetadata>& data_tables, QueryOperationType operation)
     -> std::vector<std::string> {
   std::map<std::string, TableMetadata> new_tables =
-      accelerator_library.GetWorstCaseProcessedTables(
+      accelerator_library_.GetWorstCaseProcessedTables(
           operation, min_capacity, input_tables, data_tables);
 
   std::vector<std::string> table_names;
@@ -139,43 +135,53 @@ auto PreSchedulingProcessor::GetWorstCaseProcessedTables(
   return table_names;
 }
 
+// TODO: Need a special case check of 0 rows left - Can immediately cut stuff out.
 void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
-    const std::map<QueryOperationType, OperationPRModules>& hw_library,
     std::unordered_map<std::string, SchedulingQueryNode>& graph,
     std::map<std::string, TableMetadata>& data_tables,
-    AcceleratorLibraryInterface& accelerator_library,
     std::unordered_set<std::string>& available_nodes,
     std::unordered_set<std::string> processed_nodes) {
+  // Should know which table was updated, which node was updated.
   auto current_available_nodes = available_nodes;
-  auto min_capacity = GetMinimumCapacityValuesFromHWLibrary(hw_library);
-
+  auto originally_processed_nodes = processed_nodes;
+  // While there are available nodes
   while (!current_available_nodes.empty()) {
+    // Get a random available node
     auto current_node_name = *current_available_nodes.begin();
+    // Remove chosen node from available nodes
     current_available_nodes.erase(current_available_nodes.begin());
+    // Mark it processed
     processed_nodes.insert(current_node_name);
-    QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
+    // Find new available nodes after processing current node
+    QuerySchedulingHelper::UpdateAvailableNodesAfterSchedulingGivenNode(
         current_node_name, processed_nodes, graph, current_available_nodes);
+    // Find what are the minimum requirements for executing current node.
     auto min_requirements = GetMinRequirementsForFullyExecutingNode(
-        current_node_name, graph, accelerator_library, data_tables);
-    FindAdequateBitstreams(min_requirements, hw_library, graph,
+        current_node_name, graph, data_tables);
+    // Find all bitstreams that meet minimum requirements and update graph.
+    FindAdequateBitstreams(min_requirements, graph,
                            current_node_name);
-    /*auto resulting_tables = GetWorstCaseProcessedTables(
-        graph.at(current_node_name).data_tables, accelerator_library,
-        data_tables, min_capacity.at(graph.at(current_node_name).operation),
-        graph.at(current_node_name).operation);*/
-    QuerySchedulingHelper::AddNewTableToNextNodes(
+    // Get worst case tables and update the graph - Because fitting ones might not have been used.
+    // If new tables are the exact same as old tables - don't do anything
+    // Set following stuff as processed and not available! -> Nice and universal!
+    auto new_table_added = QuerySchedulingHelper::AddNewTableToNextNodes(
         graph, current_node_name,
         GetWorstCaseProcessedTables(
-            graph.at(current_node_name).data_tables, accelerator_library,
-            data_tables, min_capacity.at(graph.at(current_node_name).operation),
+            graph.at(current_node_name).data_tables,
+            min_capacity_.at(graph.at(current_node_name).operation), data_tables,
             graph.at(current_node_name).operation));
-
-    if (min_requirements.size() == 1 && min_requirements.front() == 0) {
+    // A module can't be skipped if no new table was added!
+    // TODO: Double check this!
+    if (!new_table_added){
+      QuerySchedulingHelper::SetAllNodesAsProcessedAfterGivenNode(current_node_name, processed_nodes, graph, current_available_nodes);
+    }
+    // If a module can be skipped the min_requirements is marked as 0
+    else if (min_requirements.size() == 1 && min_requirements.front() == 0) {
       if (available_nodes.find(current_node_name) != available_nodes.end()) {
         available_nodes.erase(current_node_name);
-        auto processed_nodes_with_deleted_nodes = processed_nodes;
+        auto processed_nodes_with_deleted_nodes = originally_processed_nodes;
         processed_nodes_with_deleted_nodes.insert(current_node_name);
-        QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
+        QuerySchedulingHelper::UpdateAvailableNodesAfterSchedulingGivenNode(
             current_node_name, processed_nodes_with_deleted_nodes, graph,
             available_nodes);
       }

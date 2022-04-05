@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <memory>
 
+#include "elastic_scheduling_graph_parser.hpp"
 #include "module_selection.hpp"
 #include "node_scheduler_interface.hpp"
 #include "plan_evaluator_interface.hpp"
@@ -103,5 +104,6 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       -> std::unordered_map<QueryOperationType, int>;
 
   std::unique_ptr<PlanEvaluatorInterface> plan_evaluator_;
+  std::unique_ptr<ElasticSchedulingGraphParser>scheduler_;
 };
 }  // namespace orkhestrafs::dbmstodspi

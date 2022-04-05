@@ -25,6 +25,7 @@ limitations under the License.
 #include "pr_module_data.hpp"
 #include "scheduled_module.hpp"
 #include "scheduling_data.hpp"
+#include "pre_scheduling_processor.hpp"
 
 using orkhestrafs::core_interfaces::hw_library::OperationPRModules;
 using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
@@ -32,6 +33,7 @@ using orkhestrafs::dbmstodspi::ModuleSelection;
 using orkhestrafs::dbmstodspi::PairHash;
 using orkhestrafs::dbmstodspi::ScheduledModule;
 using orkhestrafs::dbmstodspi::scheduling_data::ExecutionPlanSchedulingData;
+using orkhestrafs::dbmstodspi::PreSchedulingProcessor;
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -47,27 +49,25 @@ class ElasticSchedulingGraphParser {
                       std::vector<std::vector<ModuleSelection>>>& heuristics,
       const std::unordered_set<std::string>& constrained_first_nodes,
       AcceleratorLibraryInterface& drivers,
-      const std::chrono::system_clock::time_point& time_limit,
       const bool use_max_runs_cap, const bool reduce_single_runs)
       : hw_library_{hw_library},
         heuristics_{heuristics},
         statistics_counters_{0,0},
         constrained_first_nodes_{constrained_first_nodes},
         drivers_{drivers},
-        time_limit_{time_limit},
+        time_limit_{std::chrono::system_clock::time_point::max()},
         trigger_timeout_{false},
         use_max_runs_cap_{use_max_runs_cap},
         reduce_single_runs_{reduce_single_runs},
         resulting_plan_{},
-        min_runs{std::numeric_limits<int>::max()} {};
+        min_runs_{std::numeric_limits<int>::max()},
+        pre_scheduler_{hw_library, drivers} {};
 
-  static void PreprocessNodes(
+  void PreprocessNodes(
       std::unordered_set<std::string>& available_nodes,
       const std::unordered_set<std::string>& processed_nodes,
       std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      std::map<std::string, TableMetadata>& data_tables,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      AcceleratorLibraryInterface& drivers);
+      std::map<std::string, TableMetadata>& data_tables);
 
   void PlaceNodesRecursively(
       std::unordered_set<std::string> available_nodes,
@@ -85,21 +85,30 @@ class ElasticSchedulingGraphParser {
                                       ExecutionPlanSchedulingData>;
   auto GetStats() -> std::pair<int, int>;
 
+  void SetTimeLimit(const std::chrono::system_clock::time_point new_time_limit);
+
  private:
 
-  int min_runs;
+  int min_runs_;
   const std::map<QueryOperationType, OperationPRModules> hw_library_;
   const std::pair<std::vector<std::vector<ModuleSelection>>,
                   std::vector<std::vector<ModuleSelection>>> heuristics_;
   std::pair<int, int> statistics_counters_;
   const std::unordered_set<std::string> constrained_first_nodes_;
   AcceleratorLibraryInterface& drivers_;
-  const std::chrono::system_clock::time_point time_limit_;
+  std::chrono::system_clock::time_point time_limit_;
   bool trigger_timeout_;
   const bool use_max_runs_cap_;
   std::map<std::vector<std::vector<ScheduledModule>>,
            ExecutionPlanSchedulingData> resulting_plan_;
   bool reduce_single_runs_;
+  PreSchedulingProcessor pre_scheduler_;
+
+  void AddPlanToAllPlansAndMeasureTime(const std::vector<std::vector<ScheduledModule>>& current_plan,
+                                                                     const std::unordered_set<std::string>& available_nodes,
+                                                                     const std::unordered_set<std::string>& processed_nodes,
+                                                                     const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+                                                                     const std::map<std::string, TableMetadata>& data_tables, int streamed_data_size);
 
   void GetAllAvailableModulePlacementsInCurrentRun(std::unordered_set<std::pair<int, ScheduledModule>, PairHash>& available_module_placements,
                         const std::unordered_set<std::string>& available_nodes, const std::vector<ScheduledModule>& current_run, const std::unordered_map<std::string, SchedulingQueryNode>& graph,
@@ -235,7 +244,7 @@ class ElasticSchedulingGraphParser {
       std::unordered_set<std::string>& new_available_nodes,
       const std::map<std::string, TableMetadata>& data_tables,
       std::map<std::string, TableMetadata>& new_tables,
-      const std::unordered_set<std::string>& new_processed_nodes);
+      const std::unordered_set<std::string>& new_processed_nodes, QueryOperationType operation);
 
   void GetNewBlockedNodes(
       std::unordered_set<std::string>& next_run_blocked_nodes,

@@ -50,17 +50,15 @@ class PreSchedulingProcessor {
       -> std::unordered_map<QueryOperationType, std::vector<int>>;
 
   // def get_min_requirements(current_node_name, graph, hw_library, data_tables)
-  static auto GetMinRequirementsForFullyExecutingNode(
+  auto GetMinRequirementsForFullyExecutingNode(
       const std::string& node_name,
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      AcceleratorLibraryInterface& accelerator_library,
       const std::map<std::string, TableMetadata>& data_tables)
       -> std::vector<int>;
 
   // def find_adequate_bitstreams(min_requirements, operation, hw_library)
-  static void FindAdequateBitstreams(
+  void FindAdequateBitstreams(
       const std::vector<int>& min_requirements,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library,
       std::unordered_map<std::string, SchedulingQueryNode>& graph,
       const std::string& node_name);
 
@@ -74,21 +72,23 @@ class PreSchedulingProcessor {
 
   // def get_worst_case_fully_processed_tables(input_tables,
   // current_node_decorators, data_tables, min_capacity)
-  static auto GetWorstCaseProcessedTables(
-      const std::vector<std::string>& input_tables,
-      AcceleratorLibraryInterface& accelerator_library,
-      std::map<std::string, TableMetadata>& data_tables,
-      const std::vector<int>& min_capacity, QueryOperationType operation)
+  auto GetWorstCaseProcessedTables(
+      const std::vector<std::string>& input_tables, const std::vector<int>& min_capacity,
+      std::map<std::string, TableMetadata>& data_tables, QueryOperationType operation)
       -> std::vector<std::string>;
 
+  const std::map<QueryOperationType, OperationPRModules> hw_library_;
+  AcceleratorLibraryInterface& accelerator_library_;
+  const std::unordered_map<QueryOperationType, std::vector<int>> min_capacity_;
+
  public:
+  PreSchedulingProcessor(const std::map<QueryOperationType, OperationPRModules>& hw_library, AcceleratorLibraryInterface& accelerator_library) :hw_library_{hw_library},accelerator_library_{accelerator_library},min_capacity_{GetMinimumCapacityValuesFromHWLibrary(hw_library)} {};
+
   // def add_satisfying_bitstream_locations_to_graph(available_nodes, graph,
   // hw_library, data_tables)
-  static void AddSatisfyingBitstreamLocationsToGraph(
-      const std::map<QueryOperationType, OperationPRModules>& hw_library,
+  void AddSatisfyingBitstreamLocationsToGraph(
       std::unordered_map<std::string, SchedulingQueryNode>& graph,
       std::map<std::string, TableMetadata>& data_tables,
-      AcceleratorLibraryInterface& accelerator_library,
       std::unordered_set<std::string>& available_nodes,
       std::unordered_set<std::string> processed_nodes);
 };

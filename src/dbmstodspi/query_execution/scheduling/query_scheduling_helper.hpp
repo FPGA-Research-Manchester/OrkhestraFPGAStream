@@ -58,11 +58,22 @@ class QuerySchedulingHelper {
    * @param past_nodes All of the nodes which have been processed allready
    * @param graph All nodes
    */
-  static void GetNewAvailableNodesAfterSchedulingGivenNode(
+  static void UpdateAvailableNodesAfterSchedulingGivenNode(
       const std::string& node_name,
       const std::unordered_set<std::string>& past_nodes,
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
       std::unordered_set<std::string>& current_available_nodes);
+
+  static auto GetNewAvailableNodesAfterSchedulingGivenNode(const std::string& node_name,
+                                                                                       const std::unordered_set<std::string>& past_nodes,
+                                                                                       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+                                                                                       const std::unordered_set<std::string>& current_available_nodes) -> std::unordered_set<std::string>;
+
+  static void SetAllNodesAsProcessedAfterGivenNode(
+          const std::string& node_name,
+          std::unordered_set<std::string>& past_nodes,
+          const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+          std::unordered_set<std::string>& current_available_nodes);
 
   /**
    * @brief Move current table names to the next nodes.
@@ -70,10 +81,10 @@ class QuerySchedulingHelper {
    * @param node_name Current node name
    * @param table_names Table name vector to add to next nodes.
    */
-  static void AddNewTableToNextNodes(
+  static auto AddNewTableToNextNodes(
       std::unordered_map<std::string, SchedulingQueryNode>& graph,
       const std::string& node_name,
-      const std::vector<std::string>& table_names);
+      const std::vector<std::string>& table_names) -> bool;
 
   /**
    * @brief Method to get current node index from the next nodes perspective and

@@ -101,7 +101,6 @@ auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
                   std::map<std::vector<std::vector<ScheduledModule>>,
                            ExecutionPlanSchedulingData>,
                   long long, bool, std::pair<int, int>> {
-  auto heuristic_choices = GetDefaultHeuristics();
 
   double time_limit_duration_in_seconds = config.time_limit_duration_in_seconds;
   if (time_limit_duration_in_seconds == -1) {
@@ -114,17 +113,13 @@ auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
       std::chrono::system_clock::now() +
       std::chrono::milliseconds(int(time_limit_duration_in_seconds * 1000));
 
-  ElasticSchedulingGraphParser scheduler(
-      config.pr_hw_library, heuristic_choices.at(config.heuristic_choice),
-      first_node_names, drivers, time_limit, config.use_max_runs_cap,
-      config.reduce_single_runs);
-
+  scheduler_->SetTimeLimit(time_limit);
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
 
   // Configure the runtime_error behaviour
   try {
-    scheduler.PlaceNodesRecursively(
+    scheduler_->PlaceNodesRecursively(
         std::move(starting_nodes), std::move(processed_nodes), std::move(graph),
         {}, {}, tables, {}, {}, 0);
   } catch (TimeLimitException &e) {
@@ -135,10 +130,10 @@ auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-  return {-1, scheduler.GetResultingPlan(),
+  return {-1, scheduler_->GetResultingPlan(),
           std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
               .count(),
-          scheduler.GetTimeoutStatus(), scheduler.GetStats()};
+          scheduler_->GetTimeoutStatus(), scheduler_->GetStats()};
 }
 
 void ElasticResourceNodeScheduler::BenchmarkScheduling(
@@ -153,10 +148,15 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
   Log(LogLevel::kTrace, "Schedule round");
   std::chrono::steady_clock::time_point begin_pre_process =
       std::chrono::steady_clock::now();
+  if (!scheduler_){
+    auto heuristic_choices = GetDefaultHeuristics();
+    scheduler_ = std::make_unique<ElasticSchedulingGraphParser>(config.pr_hw_library, heuristic_choices.at(config.heuristic_choice),
+                                                                first_node_names, drivers, config.use_max_runs_cap,
+                                                                config.reduce_single_runs);
+  }
   RemoveUnnecessaryTables(graph, tables);
-  ElasticSchedulingGraphParser::PreprocessNodes(starting_nodes, processed_nodes,
-                                                graph, tables,
-                                                config.pr_hw_library, drivers);
+  scheduler_->PreprocessNodes(starting_nodes, processed_nodes,
+                                                graph, tables);
   std::chrono::steady_clock::time_point end_pre_process =
       std::chrono::steady_clock::now();
   auto pre_process_time = std::chrono::duration_cast<std::chrono::microseconds>(
@@ -244,9 +244,15 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   Log(LogLevel::kTrace, "Scheduling preprocessing.");
   RemoveUnnecessaryTables(graph, tables);
 
-  ElasticSchedulingGraphParser::PreprocessNodes(starting_nodes, processed_nodes,
-                                                graph, tables,
-                                                config.pr_hw_library, drivers);
+  if (!scheduler_){
+    auto heuristic_choices = GetDefaultHeuristics();
+    scheduler_ = std::make_unique<ElasticSchedulingGraphParser>(config.pr_hw_library, heuristic_choices.at(config.heuristic_choice),
+                                                                first_node_names, drivers, config.use_max_runs_cap,
+                                                                config.reduce_single_runs);
+  }
+
+  scheduler_->PreprocessNodes(starting_nodes, processed_nodes,
+                                                graph, tables);
 
   auto [min_runs, resulting_plans, scheduling_time, ignored_timeout,
         ignored_stats] =
