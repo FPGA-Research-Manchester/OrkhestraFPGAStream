@@ -66,8 +66,7 @@ class QuerySchedulingHelper {
 
   static auto GetNewAvailableNodesAfterSchedulingGivenNode(const std::string& node_name,
                                                                                        const std::unordered_set<std::string>& past_nodes,
-                                                                                       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-                                                                                       const std::unordered_set<std::string>& current_available_nodes) -> std::unordered_set<std::string>;
+                                                                                       const std::unordered_map<std::string, SchedulingQueryNode>& graph) -> std::unordered_set<std::string>;
 
   static void SetAllNodesAsProcessedAfterGivenNode(
           const std::string& node_name,

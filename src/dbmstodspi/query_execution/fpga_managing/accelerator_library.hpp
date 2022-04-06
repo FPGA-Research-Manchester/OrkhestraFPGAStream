@@ -155,7 +155,6 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
   auto UpdateDataTable(QueryOperationType operation_type,
                        const std::vector<int>& module_capacity,
                        const std::vector<std::string>& input_table_names,
-                       const std::map<std::string, TableMetadata>& data_tables,
                        std::map<std::string, TableMetadata>& resulting_tables)
       -> bool override;
 

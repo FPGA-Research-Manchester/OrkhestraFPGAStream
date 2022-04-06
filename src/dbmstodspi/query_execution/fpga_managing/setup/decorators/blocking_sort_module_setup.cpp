@@ -48,7 +48,6 @@ auto BlockingSortModuleSetup::GetWorstCaseProcessedTables(
 auto BlockingSortModuleSetup::UpdateDataTable(
     const std::vector<int>& module_capacity,
     const std::vector<std::string>& input_table_names,
-    const std::map<std::string, TableMetadata>& data_tables,
     std::map<std::string, TableMetadata>& resulting_tables) -> bool {
   if (input_table_names.size() != 1) {
     throw std::runtime_error("Wrong number of tables!");
@@ -57,7 +56,7 @@ auto BlockingSortModuleSetup::UpdateDataTable(
     throw std::runtime_error("Wrong merge sort capacity given!");
   }
   auto table_name = input_table_names.front();
-  auto current_table = data_tables.at(table_name);
+  auto current_table = resulting_tables.at(table_name);
   if (QuerySchedulingHelper::IsTableSorted(current_table)) {
     throw std::runtime_error("Table is sorted already!");
   }

@@ -170,10 +170,13 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
             graph.at(current_node_name).data_tables,
             min_capacity_.at(graph.at(current_node_name).operation), data_tables,
             graph.at(current_node_name).operation));
-    // A module can't be skipped if no new table was added!
-    // TODO: Double check this!
+    // A module can't be skipped if no new table was added
     if (!new_table_added){
       QuerySchedulingHelper::SetAllNodesAsProcessedAfterGivenNode(current_node_name, processed_nodes, graph, current_available_nodes);
+      // TODO: Remove this check!
+      if (min_requirements.size() == 1 && min_requirements.front() == 0) {
+        throw std::runtime_error("Something went wrong!");
+      }
     }
     // If a module can be skipped the min_requirements is marked as 0
     else if (min_requirements.size() == 1 && min_requirements.front() == 0) {

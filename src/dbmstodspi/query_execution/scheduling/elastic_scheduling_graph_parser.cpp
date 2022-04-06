@@ -41,8 +41,7 @@ void ElasticSchedulingGraphParser::PreprocessNodes(
     std::unordered_map<std::string, SchedulingQueryNode>& graph,
     std::map<std::string, TableMetadata>& data_tables) {
   pre_scheduler_.AddSatisfyingBitstreamLocationsToGraph(
-      graph, data_tables, available_nodes,
-      processed_nodes);
+      graph, data_tables, available_nodes, processed_nodes);
 }
 
 auto ElasticSchedulingGraphParser::CurrentRunHasFirstModule(
@@ -66,21 +65,22 @@ auto ElasticSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
     -> std::unordered_set<std::string> {
   auto resulting_nodes = available_nodes;
   for (const auto& node_name : available_nodes) {
+    // Does the current run have something planned already such that you can't
+    // place a node into first location
     if (constrained_first_nodes_.find(node_name) !=
         constrained_first_nodes_.end()) {
-      for (const auto& module : current_run) {
-        for (const auto& [before_node_name, _] :
-             graph.at(node_name).before_nodes) {
-          if (module.node_name == before_node_name) {
-            resulting_nodes.erase(node_name);
+      if (CurrentRunHasFirstModule(current_run, node_name)) {
+        resulting_nodes.erase(node_name);
+      } else {
+        for (const auto& module : current_run) {
+          for (const auto& [before_node_name, _] :
+               graph.at(node_name).before_nodes) {
+            if (module.node_name == before_node_name) {
+              resulting_nodes.erase(node_name);
+            }
           }
         }
       }
-    }
-    if (drivers_.IsNodeConstrainedToFirstInPipeline(
-            graph.at(node_name).operation) &&
-        CurrentRunHasFirstModule(current_run, node_name)) {
-      resulting_nodes.erase(node_name);
     }
     if (blocked_nodes.find(node_name) != blocked_nodes.end()) {
       resulting_nodes.erase(node_name);
@@ -219,20 +219,17 @@ void ElasticSchedulingGraphParser::ReduceSelectionAccordingToHeuristics(
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
         resulting_module_placements,
     const std::vector<std::vector<ModuleSelection>>& heuristics) {
-  std::vector<std::unordered_set<std::pair<int, ScheduledModule>, PairHash>>
-      all_selected_placements;
-  all_selected_placements.reserve(heuristics.size());
+  auto original_placements = resulting_module_placements;
+  resulting_module_placements.clear();
+  std::unordered_set<std::pair<int, ScheduledModule>, PairHash>
+      current_selected_placements;
   for (const auto& module_placement_clause : heuristics) {
-    auto current_selected_placements = resulting_module_placements;
+    current_selected_placements = original_placements;
     for (const auto& placement_selection_function : module_placement_clause) {
       placement_selection_function.SelectAccordingToMode(
           current_selected_placements);
     }
-    all_selected_placements.push_back(std::move(current_selected_placements));
-  }
-  resulting_module_placements.clear();
-  for (auto& chosen_module_set : all_selected_placements) {
-    resulting_module_placements.merge(chosen_module_set);
+    resulting_module_placements.merge(current_selected_placements);
   }
 }
 
@@ -244,6 +241,7 @@ auto ElasticSchedulingGraphParser::GetChosenModulePlacements(
     const std::vector<SortedSequence>& processed_table_data,
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
         module_placements) -> bool {
+  // Do I need to construct this every time?
   auto available_bitstreams = FindAllAvailableBitstreamsAfterMinPos(
       current_operation, min_position, taken_positions,
       bitstream_start_locations);
@@ -252,6 +250,7 @@ auto ElasticSchedulingGraphParser::GetChosenModulePlacements(
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash> new_modules;
     for (const auto& [chosen_module_position, chosen_column_position,
                       chosen_bitstream_index] : available_bitstreams) {
+      // Looking for similar things twice?
       auto [chosen_bitstream, end_index] = GetBitstreamEndFromLibrary(
           chosen_bitstream_index, chosen_column_position, current_operation);
       new_modules.insert({chosen_module_position,
@@ -280,6 +279,7 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPos(
     const std::map<std::string, TableMetadata>& data_tables,
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
         module_placements) {
+  // No need for this separate variable.
   auto current_operation = graph.at(node_name).operation;
   std::vector<SortedSequence> processed_tables_data;
   // TODO: Change this hack later
@@ -358,12 +358,10 @@ auto ElasticSchedulingGraphParser::FindMissingUtility(
 }
 
 void ElasticSchedulingGraphParser::UpdateGraphCapacities(
-    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
     const std::vector<int>& missing_utility,
     std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
     const std::string& node_name, bool is_node_fully_processed) {
   if (!is_node_fully_processed) {
-    new_graph.at(node_name) = graph.at(node_name);
     std::vector<int> new_capacity_values;
     new_capacity_values.reserve(missing_utility.size());
     for (int capacity_parameter_index : missing_utility) {
@@ -388,56 +386,48 @@ auto ElasticSchedulingGraphParser::GetResultingTables(
 }
 
 void ElasticSchedulingGraphParser::UpdateNextNodeTables(
-    const std::unordered_map<std::string, SchedulingQueryNode>& /*graph*/,
     const std::string& node_name,
     std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
-    const std::vector<std::string>& skipped_nodes,
     const std::vector<std::string>& resulting_tables) {
   QuerySchedulingHelper::AddNewTableToNextNodes(new_graph, node_name,
                                                 resulting_tables);
-  new_graph.erase(node_name);
-  for (const auto& skipped_node : skipped_nodes) {
-    QuerySchedulingHelper::AddNewTableToNextNodes(new_graph, skipped_node,
-                                                  resulting_tables);
-    new_graph.erase(skipped_node);
-  }
+  //  new_graph.erase(node_name);
+  //  for (const auto& skipped_node : skipped_nodes) {
+  //    QuerySchedulingHelper::AddNewTableToNextNodes(new_graph, skipped_node,
+  //                                                  resulting_tables);
+  //    new_graph.erase(skipped_node);
+  //  }
 }
 
-auto ElasticSchedulingGraphParser::UpdateGraph(
-    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-    const std::string& bitstream,
-    const std::map<std::string, TableMetadata>& data_tables,
-    const std::string& node_name, const std::vector<int>& capacity,
-    QueryOperationType operation,
+auto ElasticSchedulingGraphParser::UpdateGraphCapacitiesAndTables(
     std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
-    std::map<std::string, TableMetadata>& new_data_tables)
-    -> std::pair<bool, std::vector<std::string>> {
-  std::vector<std::string> skipped_nodes;
+    std::map<std::string, TableMetadata>& new_data_tables,
+    const std::string& bitstream, const std::string& node_name,
+    const std::vector<int>& capacity, QueryOperationType operation) -> bool {
   bool is_node_fully_processed = false;
   if (drivers_.IsOperationSorting(operation)) {
     is_node_fully_processed = drivers_.UpdateDataTable(
         operation,
         hw_library_.at(operation).bitstream_map.at(bitstream).capacity,
-        graph.at(node_name).data_tables, data_tables, new_data_tables);
-    if (is_node_fully_processed) {
-      skipped_nodes = CheckForSkippableSortOperations(
-          new_graph, new_data_tables, node_name);
-    }
+        new_graph.at(node_name).data_tables, new_data_tables);
+    //    if (is_node_fully_processed) {
+    //      skipped_nodes = CheckForSkippableSortOperations(
+    //          new_graph, new_data_tables, node_name);
+    //    }
   } else {
     std::vector<int> missing_utility;
     is_node_fully_processed = FindMissingUtility(
         hw_library_.at(operation).bitstream_map.at(bitstream).capacity,
         missing_utility, capacity);
-    UpdateGraphCapacities(graph, missing_utility, new_graph, node_name,
+    UpdateGraphCapacities(missing_utility, new_graph, node_name,
                           is_node_fully_processed);
   }
   if (is_node_fully_processed) {
-    auto resulting_table = GetResultingTables(graph.at(node_name).data_tables,
-                                              new_data_tables, operation);
-    UpdateNextNodeTables(graph, node_name, new_graph, skipped_nodes,
-                         resulting_table);
+    auto resulting_table = GetResultingTables(
+        new_graph.at(node_name).data_tables, new_data_tables, operation);
+    UpdateNextNodeTables(node_name, new_graph, resulting_table);
   }
-  return {is_node_fully_processed, skipped_nodes};
+  return is_node_fully_processed;
 }
 
 auto ElasticSchedulingGraphParser::CreateNewAvailableNodes(
@@ -445,10 +435,10 @@ auto ElasticSchedulingGraphParser::CreateNewAvailableNodes(
     std::unordered_set<std::string>& available_nodes,
     std::unordered_set<std::string>& processed_nodes,
     const std::string& node_name) {
-    available_nodes.erase(node_name);
-    processed_nodes.insert(node_name);
-    QuerySchedulingHelper::UpdateAvailableNodesAfterSchedulingGivenNode(
-        node_name, processed_nodes, graph, available_nodes);
+  available_nodes.erase(node_name);
+  processed_nodes.insert(node_name);
+  QuerySchedulingHelper::UpdateAvailableNodesAfterSchedulingGivenNode(
+      node_name, processed_nodes, graph, available_nodes);
 }
 
 auto ElasticSchedulingGraphParser::IsTableEqualForGivenNode(
@@ -480,111 +470,83 @@ auto ElasticSchedulingGraphParser::IsTableEqualForGivenNode(
   return false;
 }
 
-void ElasticSchedulingGraphParser::UpdateSatisfyingBitstreamsList(
-    const std::string& node_name,
-    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-    std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
-    std::unordered_set<std::string>& new_available_nodes,
-    const std::map<std::string, TableMetadata>& data_tables,
-    std::map<std::string, TableMetadata>& new_tables,
-    const std::unordered_set<std::string>& new_processed_nodes, QueryOperationType operation) {
-
-
-  // If sorting module and not finished - Redo itself; If sorting module and finished - Redo next node.
-  if (drivers_.IsOperationSorting(operation)){
-    if (new_processed_nodes.find(node_name) != new_processed_nodes.end()){
-      // TODO: Make it just process the immediate new nodes not all available nodes - But need to update all nodes if something removed.
+void ElasticSchedulingGraphParser::
+    UpdateAvailableNodesAndSatisfyingBitstreamsList(
+        const std::string& node_name,
+        std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
+        std::unordered_set<std::string>& new_available_nodes,
+        std::map<std::string, TableMetadata>& new_tables,
+        std::unordered_set<std::string>& new_processed_nodes,
+        QueryOperationType operation, bool satisfied_requirements,
+        std::unordered_set<std::string>& new_next_run_blocked_nodes,
+        const std::unordered_set<std::string>& blocked_nodes) {
+  // If sorting module and not finished - Redo itself; If sorting module and
+  // finished - Redo next node.
+  if (drivers_.IsOperationSorting(operation)) {
+    if (satisfied_requirements) {
+      new_processed_nodes.insert(node_name);
+      new_available_nodes.erase(node_name);
+      auto immediate_new_available_nodes =
+          QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
+              node_name, new_processed_nodes, new_graph);
       pre_scheduler_.AddSatisfyingBitstreamLocationsToGraph(
-          new_graph, new_tables, new_available_nodes,
+          new_graph, new_tables, immediate_new_available_nodes,
           new_processed_nodes);
+      new_available_nodes.merge(immediate_new_available_nodes);
+      new_graph.erase(node_name);
     } else {
       std::unordered_set<std::string> immediate_available_nodes = {node_name};
       pre_scheduler_.AddSatisfyingBitstreamLocationsToGraph(
           new_graph, new_tables, immediate_available_nodes,
           new_processed_nodes);
     }
+  } else if (satisfied_requirements) {
+    CreateNewAvailableNodes(new_graph, new_available_nodes, new_processed_nodes,
+                            node_name);
+    // TODO: Create a list of nodes that have been checked for this already -
+    // perhaps
+    GetNewBlockedNodes(new_next_run_blocked_nodes, new_graph, operation,
+                       node_name, blocked_nodes);
+    new_graph.erase(node_name);
   }
-
-
-
-
-  // Need to figure out a better way to trigger these! And only partially - no need to go over the whole thing if only next node is affected
-//  if (std::any_of(
-//          new_graph.begin(), new_graph.end(), [&](const auto& map_entry) {
-//            return graph.at(map_entry.first).capacity !=
-//                       new_graph.at(map_entry.first).capacity ||
-//                   !IsTableEqualForGivenNode(graph, new_graph, map_entry.first,
-//                                             data_tables, new_tables);
-//          })) {
-//    // For performance remove these checks! These checks don't work anyways as
-//    // tables can be changed with node removal.
-//    /*std::vector<std::vector<std::string>> previous_tables;
-//    for (const auto& [_, node] : graph) {
-//      previous_tables.push_back(node.data_tables);
-//    }*/
-//    pre_scheduler_.AddSatisfyingBitstreamLocationsToGraph(
-//        new_graph, new_tables, new_available_nodes,
-//        new_processed_nodes);
-//    /*std::vector<std::vector<std::string>> current_tables;
-//    for (const auto& [_, node] : graph) {
-//      current_tables.push_back(node.data_tables);
-//    }
-//    if (previous_tables != current_tables) {
-//      throw std::runtime_error("Something went wrong!");
-//    }*/
-//  } else {
-//    if (std::any_of(
-//            graph.at(node_name).after_nodes.begin(),
-//            graph.at(node_name).after_nodes.end(),
-//            [&](const std::string& next_node_name) {
-//              return (!next_node_name.empty() &&
-//                      new_graph.find(next_node_name) == new_graph.end()) ||
-//                     (!next_node_name.empty() &&
-//                      !IsTableEqualForGivenNode(graph, new_graph,
-//                                                next_node_name, data_tables,
-//                                                new_tables));
-//            })) {
-//      /*std::vector<std::vector<std::string>> previous_tables;
-//      for (const auto& [_, node] : graph) {
-//        previous_tables.push_back(node.data_tables);
-//      }*/
-//      pre_scheduler_.AddSatisfyingBitstreamLocationsToGraph(
-//          new_graph, new_tables, new_available_nodes,
-//          new_processed_nodes);
-//      /*std::vector<std::vector<std::string>> current_tables;
-//      for (const auto& [_, node] : graph) {
-//        current_tables.push_back(node.data_tables);
-//      }
-//      if (previous_tables != current_tables) {
-//        throw std::runtime_error("Something went wrong!");
-//      }*/
-//    }
-//  }
 }
 
 void ElasticSchedulingGraphParser::FindDataSensitiveNodeNames(
     const std::string& node_name,
     const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-    std::unordered_set<std::string>& new_next_run_blocked_nodes) {
+    std::unordered_set<std::string>& new_next_run_blocked_nodes,
+    const std::unordered_set<std::string>& blocked_nodes) {
   for (const auto& next_node_name : graph.at(node_name).after_nodes) {
     if (!next_node_name.empty()) {
       if (drivers_.IsOperationDataSensitive(
               graph.at(next_node_name).operation)) {
-        new_next_run_blocked_nodes.insert(next_node_name);
+        if (blocked_nodes.find(next_node_name) == blocked_nodes.end() &&
+            new_next_run_blocked_nodes.find(next_node_name) ==
+                new_next_run_blocked_nodes.end()) {
+          new_next_run_blocked_nodes.insert(next_node_name);
+          FindDataSensitiveNodeNames(next_node_name, graph,
+                                     new_next_run_blocked_nodes, blocked_nodes);
+        }
+        // Else do nothing.
+      } else {
+        FindDataSensitiveNodeNames(next_node_name, graph,
+                                   new_next_run_blocked_nodes, blocked_nodes);
       }
-      FindDataSensitiveNodeNames(next_node_name, graph,
-                                 new_next_run_blocked_nodes);
     }
   }
 }
 
+// We have a problem over here.
+// TODO: Always when a filter or join gets placed it goes through the whole
+// thing.
 void ElasticSchedulingGraphParser::GetNewBlockedNodes(
     std::unordered_set<std::string>& next_run_blocked_nodes,
-    const ScheduledModule& module_placement,
-    const std::unordered_map<std::string, SchedulingQueryNode>& graph) {
-  if (drivers_.IsOperationReducingData(module_placement.operation_type)) {
-    FindDataSensitiveNodeNames(module_placement.node_name, graph,
-                               next_run_blocked_nodes);
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    QueryOperationType operation, const std::string& node_name,
+    const std::unordered_set<std::string>& blocked_nodes) {
+  if (drivers_.IsOperationReducingData(operation)) {
+    FindDataSensitiveNodeNames(node_name, graph, next_run_blocked_nodes,
+                               blocked_nodes);
   }
 }
 
@@ -636,67 +598,73 @@ auto ElasticSchedulingGraphParser::IsSubsetOf(
   return true;
 }
 
-void ElasticSchedulingGraphParser::FindNextModulePlacement(
-    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+void ElasticSchedulingGraphParser::UpdateGraphAndTableValuesGivenPlacement(
     std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
     std::unordered_set<std::string>& new_available_nodes,
     const ScheduledModule& module_placement, const std::string& node_name,
     std::unordered_set<std::string>& new_processed_nodes,
-    const std::map<std::string, TableMetadata>& data_tables,
     std::map<std::string, TableMetadata>& new_data_tables,
-    std::unordered_set<std::string>& new_next_run_blocked_nodes) {
-  auto [satisfied_requirements, skipped_node_names] =
-      UpdateGraph(graph, module_placement.bitstream, data_tables, node_name,
-                  graph.at(node_name).capacity, graph.at(node_name).operation,
-                  new_graph, new_data_tables); // Update data tables
+    std::unordered_set<std::string>& new_next_run_blocked_nodes,
+    const std::unordered_set<std::string>& blocked_nodes) {
+  auto satisfied_requirements = UpdateGraphCapacitiesAndTables(
+      new_graph, new_data_tables, module_placement.bitstream, node_name,
+      new_graph.at(node_name).capacity, new_graph.at(node_name).operation);
 
-  if (satisfied_requirements) {
-    CreateNewAvailableNodes(graph, new_available_nodes, new_processed_nodes,
-                            node_name);
-    for (const auto& skipped_node_name : skipped_node_names) {
-      if (new_available_nodes.find(skipped_node_name) ==
-          new_available_nodes.end()) {
-        throw std::runtime_error("Skipped nodes marked in the wrong order!");
-      }
-      CreateNewAvailableNodes(graph, new_available_nodes, new_processed_nodes,
-                              skipped_node_name);
-    }
-    GetNewBlockedNodes(new_next_run_blocked_nodes, module_placement, graph);
-  }
-
-  // Update satisfying bitstreams list
-  UpdateSatisfyingBitstreamsList(node_name, graph, new_graph,
-                                 new_available_nodes, data_tables,
-                                 new_data_tables, new_processed_nodes, graph.at(node_name).operation);
+  UpdateAvailableNodesAndSatisfyingBitstreamsList(
+      node_name, new_graph, new_available_nodes, new_data_tables,
+      new_processed_nodes, new_graph.at(node_name).operation,
+      satisfied_requirements, new_next_run_blocked_nodes, blocked_nodes);
 }
 
-void ElasticSchedulingGraphParser::GetAllAvailableModulePlacementsInCurrentRun(std::unordered_set<std::pair<int, ScheduledModule>, PairHash>& available_module_placements,
-                                                         const std::unordered_set<std::string>& available_nodes, const std::vector<ScheduledModule>& current_run, const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-                                                         const std::unordered_set<std::string>& blocked_nodes, const std::map<std::string, TableMetadata>& data_tables) {
+void ElasticSchedulingGraphParser::GetAllAvailableModulePlacementsInCurrentRun(
+    std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+        available_module_placements,
+    const std::unordered_set<std::string>& available_nodes,
+    const std::vector<ScheduledModule>& current_run,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    const std::unordered_set<std::string>& blocked_nodes,
+    const std::map<std::string, TableMetadata>& data_tables) {
+//  std::tuple<std::unordered_set<std::string>, std::unordered_set<std::string>,
+//             std::vector<ScheduledModule>>
+//      current_query = {available_nodes, blocked_nodes, current_run};
+//  auto search = saved_placements_.find(current_query);
+//  if (search == saved_placements_.end()) {
+//    auto available_nodes_in_this_run = RemoveUnavailableNodesInThisRun(
+//        available_nodes, current_run, graph, blocked_nodes);
+//
+//    for (const auto& node_name : available_nodes_in_this_run) {
+//      GetScheduledModulesForNodeAfterPos(
+//          graph, GetMinPositionInCurrentRun(current_run, node_name, graph),
+//          node_name, GetTakenColumns(current_run), data_tables,
+//          available_module_placements);
+//    }
+//    saved_placements_.insert({current_query, available_module_placements});
+//  } else {
+//    available_module_placements = search->second;
+//  }
+
   auto available_nodes_in_this_run = RemoveUnavailableNodesInThisRun(
       available_nodes, current_run, graph, blocked_nodes);
 
-  for (const auto& node_name : available_nodes) {
-    if (available_nodes_in_this_run.find(node_name) !=
-        available_nodes_in_this_run.end()) {
-      GetScheduledModulesForNodeAfterPos(
-          graph, GetMinPositionInCurrentRun(current_run, node_name, graph),
-          node_name, GetTakenColumns(current_run), data_tables,
-          available_module_placements);
-    }
+  for (const auto& node_name : available_nodes_in_this_run) {
+    GetScheduledModulesForNodeAfterPos(
+        graph, GetMinPositionInCurrentRun(current_run, node_name, graph),
+        node_name, GetTakenColumns(current_run), data_tables,
+        available_module_placements);
   }
 }
 
-void ElasticSchedulingGraphParser::AddPlanToAllPlansAndMeasureTime(const std::vector<std::vector<ScheduledModule>>& current_plan,
-                                                                   const std::unordered_set<std::string>& available_nodes,
-                                     const std::unordered_set<std::string>& processed_nodes,
-                                     const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-                                     const std::map<std::string, TableMetadata>& data_tables, int streamed_data_size){
+void ElasticSchedulingGraphParser::AddPlanToAllPlansAndMeasureTime(
+    const std::vector<std::vector<ScheduledModule>>& current_plan,
+    const std::unordered_set<std::string>& available_nodes,
+    const std::unordered_set<std::string>& processed_nodes,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    const std::map<std::string, TableMetadata>& data_tables,
+    int streamed_data_size) {
   ExecutionPlanSchedulingData current_scheduling_data = {
-      processed_nodes, available_nodes, graph, data_tables,
-      streamed_data_size};
-  if (const auto& [it, inserted] = resulting_plan_.try_emplace(
-          current_plan, current_scheduling_data);
+      processed_nodes, available_nodes, graph, data_tables, streamed_data_size};
+  if (const auto& [it, inserted] =
+          resulting_plan_.try_emplace(current_plan, current_scheduling_data);
       inserted) {
     if (current_plan.size() < min_runs_) {
       min_runs_ = current_plan.size();
@@ -717,105 +685,116 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
     std::unordered_set<std::string> blocked_nodes,
     std::unordered_set<std::string> next_run_blocked_nodes,
     int streamed_data_size) {
+  // TODO: Potentially check for timeouts more often
   if (trigger_timeout_) {
     throw TimeLimitException("Timeout");
   }
-  if (!(current_plan.size() > min_runs_ && use_max_runs_cap_) &&
-      !trigger_timeout_) {
-    if (!available_nodes.empty() &&
-        !IsSubsetOf(available_nodes, blocked_nodes)) {
-      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>
-          available_module_placements;
-      GetAllAvailableModulePlacementsInCurrentRun(available_module_placements,available_nodes, current_run, graph, blocked_nodes, data_tables);
-      if (!available_module_placements.empty()) {
-        // while loop <- linear if you don't need to make choices
-        while(available_module_placements.size() == 1 && reduce_single_runs_){
-          auto current_placement = *available_module_placements.begin();
-          current_run.insert(current_run.begin() + current_placement.first,
-                             current_placement.second);
-          streamed_data_size += GetNewStreamedDataSize(
-              current_run, current_placement.second.node_name, data_tables, graph);
-          std::map<std::string, TableMetadata> old_data_tables =
-              data_tables;
-          std::unordered_map<std::string, SchedulingQueryNode> old_graph =
-              graph;
-          FindNextModulePlacement(old_graph, graph, available_nodes,
-                                  current_placement.second, current_placement.second.node_name,
-                                  processed_nodes, old_data_tables,
-                                  data_tables, next_run_blocked_nodes);
-          available_module_placements.clear();
-          GetAllAvailableModulePlacementsInCurrentRun(available_module_placements,available_nodes, current_run, graph, blocked_nodes, data_tables);
-          // Go to new run
-          if (available_module_placements.empty()){
-            current_plan.push_back(current_run);
-            current_run.clear();
-            blocked_nodes.merge(next_run_blocked_nodes);
-            next_run_blocked_nodes.clear();
-            GetAllAvailableModulePlacementsInCurrentRun(available_module_placements,available_nodes, current_run, graph, blocked_nodes, data_tables);
-          }
-        }
-        // Check if finish is required after linear scheduling.
-        if (available_nodes.empty() ||
-            IsSubsetOf(available_nodes, blocked_nodes)){
-          AddPlanToAllPlansAndMeasureTime(current_plan, available_nodes, processed_nodes, graph, data_tables, streamed_data_size);
-          return;
-        }
-        // Recursive approach if you have to make decisions.
-        else if (!available_module_placements.empty()) {
-          for (const auto& [module_index, module_placement] :
-               available_module_placements) {
-            // Make new variables
-            auto new_current_run = current_run;
-            new_current_run.insert(new_current_run.begin() + module_index,
-                                   module_placement);
-            auto new_streamed_data_size = streamed_data_size;
-            new_streamed_data_size += GetNewStreamedDataSize(
-                current_run, module_placement.node_name, data_tables, graph);
-            std::unordered_set<std::string> new_available_nodes =
-                available_nodes;
-            std::unordered_set<std::string> new_processed_nodes =
-                processed_nodes;
-            std::map<std::string, TableMetadata> new_data_tables =
-                data_tables;
-            std::unordered_map<std::string, SchedulingQueryNode> new_graph =
-                graph;
-            std::unordered_set<std::string> new_next_run_blocked_nodes =
-                next_run_blocked_nodes;
-
-            // Update new variables
-            FindNextModulePlacement(
-                graph, new_graph, new_available_nodes, module_placement,
-                module_placement.node_name, new_processed_nodes, data_tables,
-                new_data_tables, new_next_run_blocked_nodes);
-
-            // Go to a new decision branch
-            PlaceNodesRecursively(
-                std::move(new_available_nodes), std::move(new_processed_nodes),
-                std::move(new_graph), std::move(new_current_run), current_plan,
-                std::move(new_data_tables), blocked_nodes,
-                std::move(new_next_run_blocked_nodes),
-                std::move(new_streamed_data_size));
-          }
+  while (!available_nodes.empty() &&
+         !IsSubsetOf(available_nodes, blocked_nodes)) {
+    std::unordered_set<std::pair<int, ScheduledModule>, PairHash>
+        available_module_placements;
+    // Might as well remember this one then?
+    // Map current run and available nodes to predetermined set of available
+    // placements!
+    GetAllAvailableModulePlacementsInCurrentRun(
+        available_module_placements, available_nodes, current_run, graph,
+        blocked_nodes, data_tables);
+    if (!available_module_placements.empty()) {
+      // while loop <- linear if you don't need to make choices
+      while (available_module_placements.size() == 1 && reduce_single_runs_) {
+        auto current_placement =
+            std::move(available_module_placements
+                          .extract(available_module_placements.begin())
+                          .value());
+        current_run.insert(current_run.begin() + current_placement.first,
+                           current_placement.second);
+        streamed_data_size += GetNewStreamedDataSize(
+            current_run, current_placement.second.node_name, data_tables,
+            graph);
+        UpdateGraphAndTableValuesGivenPlacement(
+            graph, available_nodes, current_placement.second,
+            current_placement.second.node_name, processed_nodes, data_tables,
+            next_run_blocked_nodes, blocked_nodes);
+        GetAllAvailableModulePlacementsInCurrentRun(
+            available_module_placements, available_nodes, current_run, graph,
+            blocked_nodes, data_tables);
+        // Go to new run
+        if (available_module_placements.empty()) {
+          current_plan.push_back(current_run);
+          current_run.clear();
+          blocked_nodes.merge(next_run_blocked_nodes);
+          next_run_blocked_nodes.clear();
+          GetAllAvailableModulePlacementsInCurrentRun(
+              available_module_placements, available_nodes, current_run, graph,
+              blocked_nodes, data_tables);
         }
       }
-      // Finish current run and start placing nodes to the next run
-      if ((available_module_placements.empty() || !reduce_single_runs_) &&
-          !current_run.empty()) {
-        blocked_nodes.merge(next_run_blocked_nodes);
-        current_plan.push_back(std::move(current_run));
-        PlaceNodesRecursively(std::move(available_nodes), std::move(processed_nodes), std::move(graph),
-                              {}, std::move(current_plan), std::move(data_tables),
-                              std::move(blocked_nodes), {},
-                              streamed_data_size);
+      // Check if finish is required after linear scheduling.
+      if (available_nodes.empty() ||
+          IsSubsetOf(available_nodes, blocked_nodes)) {
+        AddPlanToAllPlansAndMeasureTime(current_plan, available_nodes,
+                                        processed_nodes, graph, data_tables,
+                                        streamed_data_size);
         return;
       }
-    } else {
-      if (!current_run.empty()){
-        current_plan.push_back(std::move(current_run));
+      // Recursive approach if you have to make decisions.
+      else if (!available_module_placements.empty()) {
+        for (const auto& [module_index, module_placement] :
+             available_module_placements) {
+          // Make new variables
+          auto new_current_run = current_run;
+          new_current_run.insert(new_current_run.begin() + module_index,
+                                 module_placement);
+          auto new_streamed_data_size = streamed_data_size;
+          new_streamed_data_size += GetNewStreamedDataSize(
+              current_run, module_placement.node_name, data_tables, graph);
+          std::unordered_set<std::string> new_available_nodes = available_nodes;
+          std::unordered_set<std::string> new_processed_nodes = processed_nodes;
+          std::map<std::string, TableMetadata> new_data_tables = data_tables;
+          std::unordered_map<std::string, SchedulingQueryNode> new_graph =
+              graph;
+          std::unordered_set<std::string> new_next_run_blocked_nodes =
+              next_run_blocked_nodes;
+
+          // Update new variables
+          UpdateGraphAndTableValuesGivenPlacement(
+              new_graph, new_available_nodes, module_placement,
+              module_placement.node_name, new_processed_nodes, new_data_tables,
+              new_next_run_blocked_nodes, blocked_nodes);
+
+          // Go to a new decision branch
+          PlaceNodesRecursively(
+              std::move(new_available_nodes), std::move(new_processed_nodes),
+              std::move(new_graph), std::move(new_current_run), current_plan,
+              std::move(new_data_tables), blocked_nodes,
+              std::move(new_next_run_blocked_nodes),
+              std::move(new_streamed_data_size));
+        }
       }
-      AddPlanToAllPlansAndMeasureTime(current_plan, available_nodes, processed_nodes, graph, data_tables, streamed_data_size);
+    }
+    // Finish current run and start placing nodes to the next run
+    if ((available_module_placements.empty() || !reduce_single_runs_) &&
+        !current_run.empty()) {
+      current_plan.push_back(current_run);
+      if (!(current_plan.size() > min_runs_ && use_max_runs_cap_)) {
+        return;
+      }
+      current_run.clear();
+      blocked_nodes.merge(next_run_blocked_nodes);
+      next_run_blocked_nodes.clear();
+    }
+    // Stop recursion with no choices.
+    if (current_run.empty()) {
+      return;
     }
   }
+
+  if (!current_run.empty()) {
+    current_plan.push_back(std::move(current_run));
+  }
+  AddPlanToAllPlansAndMeasureTime(current_plan, available_nodes,
+                                  processed_nodes, graph, data_tables,
+                                  streamed_data_size);
 }
 
 auto ElasticSchedulingGraphParser::GetTimeoutStatus() -> bool {
@@ -832,6 +811,7 @@ auto ElasticSchedulingGraphParser::GetStats() -> std::pair<int, int> {
   return statistics_counters_;
 }
 
-void ElasticSchedulingGraphParser::SetTimeLimit(const std::chrono::system_clock::time_point new_time_limit) {
-  time_limit_=new_time_limit;
+void ElasticSchedulingGraphParser::SetTimeLimit(
+    const std::chrono::system_clock::time_point new_time_limit) {
+  time_limit_ = new_time_limit;
 }

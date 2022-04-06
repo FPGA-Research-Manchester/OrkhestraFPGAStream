@@ -263,9 +263,7 @@ void ExecutionManager::AddFirstModuleNodesToConstrainedList(
     QueryNode* const& node, std::unordered_set<std::string>& constrained_nodes,
     AcceleratorLibraryInterface& accelerator_library) {
   if (accelerator_library.IsNodeConstrainedToFirstInPipeline(
-          node->operation_type) &&
-      std::find(constrained_nodes.begin(), constrained_nodes.end(),
-                node->node_name) == constrained_nodes.end()) {
+          node->operation_type)) {
     constrained_nodes.insert(node->node_name);
   };
 }

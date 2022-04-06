@@ -72,7 +72,6 @@ auto AccelerationModuleSetupInterface::GetWorstCaseProcessedTables(
 auto AccelerationModuleSetupInterface::UpdateDataTable(
     const std::vector<int>& /*module_capacity*/,
     const std::vector<std::string>& /*input_table_names*/,
-    const std::map<std::string, TableMetadata>& /*data_tables*/,
     std::map<std::string, TableMetadata>& /*resulting_tables*/) -> bool {
   throw std::runtime_error("Not implemented!");
 }

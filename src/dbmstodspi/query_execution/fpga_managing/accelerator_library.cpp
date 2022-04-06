@@ -128,11 +128,10 @@ auto AcceleratorLibrary::GetWorstCaseProcessedTables(
 auto AcceleratorLibrary::UpdateDataTable(
     QueryOperationType operation_type, const std::vector<int>& module_capacity,
     const std::vector<std::string>& input_table_names,
-    const std::map<std::string, TableMetadata>& data_tables,
     std::map<std::string, TableMetadata>& resulting_tables) -> bool {
   auto* driver = GetDriver(operation_type);
   return driver->UpdateDataTable(module_capacity, input_table_names,
-                                 data_tables, resulting_tables);
+                                 resulting_tables);
 }
 
 auto AcceleratorLibrary::IsInputSupposedToBeSorted(
