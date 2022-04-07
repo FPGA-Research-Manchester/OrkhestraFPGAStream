@@ -17,6 +17,7 @@ limitations under the License.
 #include "elastic_scheduling_graph_parser.hpp"
 
 #include <algorithm>
+#include <numeric>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -72,13 +73,18 @@ auto ElasticSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
       if (CurrentRunHasFirstModule(current_run, node_name)) {
         resulting_nodes.erase(node_name);
       } else {
-        for (const auto& module : current_run) {
-          for (const auto& [before_node_name, _] :
-               graph.at(node_name).before_nodes) {
-            if (module.node_name == before_node_name) {
-              resulting_nodes.erase(node_name);
-            }
-          }
+        // Is there a parent node in the current run already.
+        if (std::any_of(
+                current_run.begin(), current_run.end(),
+                [&](const auto& module) {
+                  return std::find_if(
+                             graph.at(node_name).before_nodes.begin(),
+                             graph.at(node_name).before_nodes.end(),
+                             [&](const auto& before_pointer) {
+                               return before_pointer.first == module.node_name;
+                             }) != graph.at(node_name).before_nodes.end();
+                })) {
+          resulting_nodes.erase(node_name);
         }
       }
     }
@@ -250,7 +256,6 @@ auto ElasticSchedulingGraphParser::GetChosenModulePlacements(
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash> new_modules;
     for (const auto& [chosen_module_position, chosen_column_position,
                       chosen_bitstream_index] : available_bitstreams) {
-      // Looking for similar things twice?
       auto [chosen_bitstream, end_index] = GetBitstreamEndFromLibrary(
           chosen_bitstream_index, chosen_column_position, current_operation);
       new_modules.insert({chosen_module_position,
@@ -274,13 +279,49 @@ auto ElasticSchedulingGraphParser::GetChosenModulePlacements(
 
 void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPos(
     const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    const std::vector<ScheduledModule>& current_run,
+    const std::string& node_name,
+    const std::map<std::string, TableMetadata>& data_tables,
+    std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+        module_placements) {
+  // Get current query
+  std::string current_query = node_name;
+  for (const auto& module : current_run) {
+    current_query += module.bitstream;
+  }
+
+  // Find placements
+  std::unordered_set<std::pair<int, ScheduledModule>, PairHash>
+      found_placements;
+  auto search = saved_placements_.find(current_query);
+  if (search == saved_placements_.end()) {
+    GetScheduledModulesForNodeAfterPosOrig(
+        graph, GetMinPositionInCurrentRun(current_run, node_name, graph),
+        node_name, GetTakenColumns(current_run), data_tables, found_placements);
+    saved_placements_.insert({current_query, found_placements});
+    module_placements.merge(found_placements);
+  } else {
+    // Add new table status
+    found_placements = search->second;
+    std::vector<SortedSequence> processed_tables_data;
+    if (!graph.at(node_name).data_tables.at(0).empty()) {
+      processed_tables_data =
+          data_tables.at(graph.at(node_name).data_tables.at(0)).sorted_status;
+    }
+    for (auto new_module_placement : found_placements) {
+      new_module_placement.second.processed_table_data = processed_tables_data;
+      module_placements.insert(std::move(new_module_placement));
+    }
+  }
+}
+
+void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPosOrig(
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
     int min_position, const std::string& node_name,
     const std::vector<std::pair<int, int>>& taken_positions,
     const std::map<std::string, TableMetadata>& data_tables,
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
         module_placements) {
-  // No need for this separate variable.
-  auto current_operation = graph.at(node_name).operation;
   std::vector<SortedSequence> processed_tables_data;
   // TODO: Change this hack later
   if (!graph.at(node_name).data_tables.at(0).empty()) {
@@ -299,14 +340,15 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPos(
   if (!graph.at(node_name).satisfying_bitstreams.empty() &&
       !heuristics_.first.empty()) {
     modules_found = GetChosenModulePlacements(
-        node_name, current_operation, heuristics_.first, min_position,
-        taken_positions, graph.at(node_name).satisfying_bitstreams,
-        processed_tables_data, module_placements);
+        node_name, graph.at(node_name).operation, heuristics_.first,
+        min_position, taken_positions,
+        graph.at(node_name).satisfying_bitstreams, processed_tables_data,
+        module_placements);
   }
   if (!modules_found) {
     GetChosenModulePlacements(
-        node_name, current_operation, heuristics_.second, min_position,
-        taken_positions,
+        node_name, graph.at(node_name).operation, heuristics_.second,
+        min_position, taken_positions,
         hw_library_.at(graph.at(node_name).operation).starting_locations,
         processed_tables_data, module_placements);
   }
@@ -624,33 +666,56 @@ void ElasticSchedulingGraphParser::GetAllAvailableModulePlacementsInCurrentRun(
     const std::unordered_map<std::string, SchedulingQueryNode>& graph,
     const std::unordered_set<std::string>& blocked_nodes,
     const std::map<std::string, TableMetadata>& data_tables) {
-//  std::tuple<std::unordered_set<std::string>, std::unordered_set<std::string>,
-//             std::vector<ScheduledModule>>
-//      current_query = {available_nodes, blocked_nodes, current_run};
-//  auto search = saved_placements_.find(current_query);
-//  if (search == saved_placements_.end()) {
-//    auto available_nodes_in_this_run = RemoveUnavailableNodesInThisRun(
-//        available_nodes, current_run, graph, blocked_nodes);
-//
-//    for (const auto& node_name : available_nodes_in_this_run) {
-//      GetScheduledModulesForNodeAfterPos(
-//          graph, GetMinPositionInCurrentRun(current_run, node_name, graph),
-//          node_name, GetTakenColumns(current_run), data_tables,
-//          available_module_placements);
-//    }
-//    saved_placements_.insert({current_query, available_module_placements});
-//  } else {
-//    available_module_placements = search->second;
-//  }
+  /*std::tuple<std::unordered_set<std::string>, std::unordered_set<std::string>,
+             std::vector<ScheduledModule>>
+      current_query = {available_nodes, blocked_nodes, current_run};*/
+  /*std::vector<std::string> current_query(available_nodes.begin(),
+                                       available_nodes.end());
+  std::sort(current_query.begin(), current_query.end());
+  std::vector<std::string> temp(blocked_nodes.begin(),
+                                         blocked_nodes.end());
+  std::sort(temp.begin(), temp.end());
+  current_query.insert(current_query.end(), temp.begin(), temp.end());
+  temp.clear();
+  for (const auto& module : current_run) {
+    temp.push_back(module.bitstream);
+  }
+  std::sort(temp.begin(), temp.end());
+  current_query.insert(current_query.end(), temp.begin(), temp.end());
+  std::string query_string = std::accumulate(
+      current_query.begin(), current_query.end(), std::string(""));
+
+  auto search = saved_placements_.find(query_string);*/
+  /*auto search = saved_placements_.find(current_query);
+  if (search == saved_placements_.end()) {
+    auto available_nodes_in_this_run = RemoveUnavailableNodesInThisRun(
+        available_nodes, current_run, graph, blocked_nodes);
+
+    for (const auto& node_name : available_nodes_in_this_run) {
+      GetScheduledModulesForNodeAfterPos(
+          graph, GetMinPositionInCurrentRun(current_run, node_name, graph),
+          node_name, GetTakenColumns(current_run), data_tables,
+          available_module_placements);
+    }
+    saved_placements_.insert({current_query, available_module_placements});
+  } else {
+    available_module_placements = search->second;
+  }*/
 
   auto available_nodes_in_this_run = RemoveUnavailableNodesInThisRun(
       available_nodes, current_run, graph, blocked_nodes);
 
-  for (const auto& node_name : available_nodes_in_this_run) {
-    GetScheduledModulesForNodeAfterPos(
+  /*for (const auto& node_name : available_nodes_in_this_run) {
+    GetScheduledModulesForNodeAfterPosOrig(
         graph, GetMinPositionInCurrentRun(current_run, node_name, graph),
         node_name, GetTakenColumns(current_run), data_tables,
         available_module_placements);
+  }*/
+
+  for (const auto& node_name : available_nodes_in_this_run) {
+    GetScheduledModulesForNodeAfterPos(graph, current_run, node_name,
+                                       data_tables,
+                                       available_module_placements);
   }
 }
 
@@ -693,9 +758,6 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
          !IsSubsetOf(available_nodes, blocked_nodes)) {
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash>
         available_module_placements;
-    // Might as well remember this one then?
-    // Map current run and available nodes to predetermined set of available
-    // placements!
     GetAllAvailableModulePlacementsInCurrentRun(
         available_module_placements, available_nodes, current_run, graph,
         blocked_nodes, data_tables);
@@ -784,7 +846,8 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
       next_run_blocked_nodes.clear();
     }
     // Stop recursion with no choices.
-    if (current_run.empty()) {
+    if (current_run.empty() && !available_nodes.empty() &&
+        !IsSubsetOf(available_nodes, blocked_nodes)) {
       return;
     }
   }

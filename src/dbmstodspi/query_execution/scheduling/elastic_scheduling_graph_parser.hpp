@@ -105,7 +105,7 @@ class ElasticSchedulingGraphParser {
   bool reduce_single_runs_;
   PreSchedulingProcessor pre_scheduler_;
 
-  struct CustomCmp {
+  /*struct CustomCmp {
     bool operator()(const std::tuple<std::unordered_set<std::string>,
                                      std::unordered_set<std::string>, std::vector<ScheduledModule>>& a, const std::tuple<std::unordered_set<std::string>,
                                      std::unordered_set<std::string>, std::vector<ScheduledModule>>& b) const {
@@ -138,6 +138,14 @@ class ElasticSchedulingGraphParser {
       std::tuple<std::unordered_set<std::string>,
                  std::unordered_set<std::string>, std::vector<ScheduledModule>>,
       std::unordered_set<std::pair<int, ScheduledModule>, PairHash>, CustomCmp>
+      saved_placements_;*/
+  /*std::unordered_map<
+      std::string,
+      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>>
+      saved_placements_;*/
+  std::unordered_map<
+      std::string,
+      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>>
       saved_placements_;
 
   void AddPlanToAllPlansAndMeasureTime(
@@ -244,10 +252,17 @@ class ElasticSchedulingGraphParser {
   static auto GetTakenColumns(const std::vector<ScheduledModule>& current_run)
       -> std::vector<std::pair<int, int>>;
 
-  void GetScheduledModulesForNodeAfterPos(
+  void GetScheduledModulesForNodeAfterPosOrig(
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
       int min_position, const std::string& node_name,
       const std::vector<std::pair<int, int>>& taken_positions,
+      const std::map<std::string, TableMetadata>& data_tables,
+      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+          module_placements);
+  void GetScheduledModulesForNodeAfterPos(
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::vector<ScheduledModule>& current_run, 
+      const std::string& node_name,
       const std::map<std::string, TableMetadata>& data_tables,
       std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
           module_placements);
