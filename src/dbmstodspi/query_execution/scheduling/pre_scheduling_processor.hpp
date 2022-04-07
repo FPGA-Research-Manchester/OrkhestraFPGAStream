@@ -91,6 +91,11 @@ class PreSchedulingProcessor {
       std::map<std::string, TableMetadata>& data_tables,
       std::unordered_set<std::string>& available_nodes,
       std::unordered_set<std::string> processed_nodes);
+
+  void UpdateOnlySatisfyingBitstreams(
+      const std::string& node_name,
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::map<std::string, TableMetadata>& data_tables);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

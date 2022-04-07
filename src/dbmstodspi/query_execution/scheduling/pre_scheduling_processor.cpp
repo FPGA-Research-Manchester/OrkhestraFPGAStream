@@ -135,6 +135,14 @@ auto PreSchedulingProcessor::GetWorstCaseProcessedTables(
   return table_names;
 }
 
+void PreSchedulingProcessor::UpdateOnlySatisfyingBitstreams(
+    const std::string& node_name,
+    std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    const std::map<std::string, TableMetadata>& data_tables) {
+  FindAdequateBitstreams(GetMinRequirementsForFullyExecutingNode(node_name, graph, data_tables),
+      graph, node_name);
+}
+
 // TODO: Need a special case check of 0 rows left - Can immediately cut stuff out.
 void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     std::unordered_map<std::string, SchedulingQueryNode>& graph,

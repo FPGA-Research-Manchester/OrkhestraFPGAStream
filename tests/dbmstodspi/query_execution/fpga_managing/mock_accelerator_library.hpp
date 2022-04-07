@@ -70,7 +70,7 @@ class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
               (QueryOperationType operation_type,
                const std::vector<int>& module_capacity,
                const std::vector<std::string>& input_table_names,
-               const TableMap& data_tables, TableMap& resulting_tables),
+               TableMap& resulting_tables),
               (override));
   MOCK_METHOD((bool), IsInputSupposedToBeSorted,
               (QueryOperationType operation_type), (override));

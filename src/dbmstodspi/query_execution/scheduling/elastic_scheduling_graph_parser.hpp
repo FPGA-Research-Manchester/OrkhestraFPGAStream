@@ -102,16 +102,16 @@ class ElasticSchedulingGraphParser {
   std::map<std::vector<std::vector<ScheduledModule>>,
            ExecutionPlanSchedulingData>
       resulting_plan_;
-  bool reduce_single_runs_;
+  const bool reduce_single_runs_;
   PreSchedulingProcessor pre_scheduler_;
 
   /*struct CustomCmp {
     bool operator()(const std::tuple<std::unordered_set<std::string>,
-                                     std::unordered_set<std::string>, std::vector<ScheduledModule>>& a, const std::tuple<std::unordered_set<std::string>,
-                                     std::unordered_set<std::string>, std::vector<ScheduledModule>>& b) const {
-      std::string combined_string_a;
-      for (const auto& available :std::get<0>(a)){
-        combined_string_a+=available;
+                                     std::unordered_set<std::string>,
+  std::vector<ScheduledModule>>& a, const
+  std::tuple<std::unordered_set<std::string>, std::unordered_set<std::string>,
+  std::vector<ScheduledModule>>& b) const { std::string combined_string_a; for
+  (const auto& available :std::get<0>(a)){ combined_string_a+=available;
       }
       for (const auto& blocked :std::get<1>(a)){
         combined_string_a+=blocked;
@@ -261,7 +261,7 @@ class ElasticSchedulingGraphParser {
           module_placements);
   void GetScheduledModulesForNodeAfterPos(
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      const std::vector<ScheduledModule>& current_run, 
+      const std::vector<ScheduledModule>& current_run,
       const std::string& node_name,
       const std::map<std::string, TableMetadata>& data_tables,
       std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
@@ -270,7 +270,7 @@ class ElasticSchedulingGraphParser {
   void UpdateGraphAndTableValuesGivenPlacement(
       std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
       std::unordered_set<std::string>& new_available_nodes,
-      const ScheduledModule& module_placement, const std::string& node_name,
+      const ScheduledModule& module_placement,
       std::unordered_set<std::string>& new_processed_nodes,
       std::map<std::string, TableMetadata>& new_data_tables,
       std::unordered_set<std::string>& new_next_run_blocked_nodes,

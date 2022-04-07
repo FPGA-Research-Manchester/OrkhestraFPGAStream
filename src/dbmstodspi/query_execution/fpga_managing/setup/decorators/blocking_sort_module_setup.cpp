@@ -55,8 +55,8 @@ auto BlockingSortModuleSetup::UpdateDataTable(
   if (module_capacity.size() != 1) {
     throw std::runtime_error("Wrong merge sort capacity given!");
   }
-  auto table_name = input_table_names.front();
-  auto current_table = resulting_tables.at(table_name);
+  auto current_table =
+      resulting_tables.at(input_table_names.front());
   if (QuerySchedulingHelper::IsTableSorted(current_table)) {
     throw std::runtime_error("Table is sorted already!");
   }
@@ -94,6 +94,6 @@ auto BlockingSortModuleSetup::UpdateDataTable(
   // FIx later
   //current_table.sorted_status = {{0, current_table.record_count}};
   current_table.sorted_status = new_sorted_sequences;
-  resulting_tables.at(table_name) = current_table;
+  resulting_tables.at(input_table_names.front()) = current_table;
   return QuerySchedulingHelper::IsTableSorted(current_table);
 }

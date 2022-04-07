@@ -48,8 +48,7 @@ void ModuleSelection::SelectAccordingToMode(
 
 void ModuleSelection::SelectAll(
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
-        available_placements) {
-}
+        available_placements) {}
 
 void ModuleSelection::SelectFirst(
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
@@ -105,8 +104,7 @@ void ModuleSelection::SelectShortest(
 
   for (auto it = available_placements.begin();
        it != available_placements.end();) {
-    if (it->second.position.second - it->second.position.first +
-            1 !=
+    if (it->second.position.second - it->second.position.first + 1 !=
         min_module_size) {
       it = available_placements.erase(it);
     } else {
@@ -128,8 +126,7 @@ void ModuleSelection::SelectLongest(
   }
   for (auto it = available_placements.begin();
        it != available_placements.end();) {
-    if (it->second.position.second - it->second.position.first +
-            1 !=
+    if (it->second.position.second - it->second.position.first + 1 !=
         max_module_size) {
       it = available_placements.erase(it);
     } else {
