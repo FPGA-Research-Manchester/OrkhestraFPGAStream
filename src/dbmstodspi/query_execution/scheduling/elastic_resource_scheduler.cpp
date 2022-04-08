@@ -91,17 +91,14 @@ auto ElasticResourceNodeScheduler::GetLargestModulesSizes(
 }
 
 auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
-    const std::unordered_set<std::string> &first_node_names,
     std::unordered_set<std::string> &starting_nodes,
     std::unordered_set<std::string> &processed_nodes,
     std::unordered_map<std::string, SchedulingQueryNode> &graph,
-    AcceleratorLibraryInterface &drivers,
     std::map<std::string, TableMetadata> &tables, const Config &config)
     -> std::tuple<int,
                   std::map<std::vector<std::vector<ScheduledModule>>,
                            ExecutionPlanSchedulingData>,
                   long long, bool, std::pair<int, int>> {
-
   double time_limit_duration_in_seconds = config.time_limit_duration_in_seconds;
   if (time_limit_duration_in_seconds == -1) {
     auto operation_costs = GetLargestModulesSizes(config.pr_hw_library);
@@ -148,23 +145,23 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
   Log(LogLevel::kTrace, "Schedule round");
   std::chrono::steady_clock::time_point begin_pre_process =
       std::chrono::steady_clock::now();
-  if (!scheduler_){
+  if (!scheduler_) {
     auto heuristic_choices = GetDefaultHeuristics();
-    scheduler_ = std::make_unique<ElasticSchedulingGraphParser>(config.pr_hw_library, heuristic_choices.at(config.heuristic_choice),
-                                                                first_node_names, drivers, config.use_max_runs_cap,
-                                                                config.reduce_single_runs);
+    scheduler_ = std::make_unique<ElasticSchedulingGraphParser>(
+        config.pr_hw_library, heuristic_choices.at(config.heuristic_choice),
+        first_node_names, drivers, config.use_max_runs_cap,
+        config.reduce_single_runs);
   }
   RemoveUnnecessaryTables(graph, tables);
-  scheduler_->PreprocessNodes(starting_nodes, processed_nodes,
-                                                graph, tables);
+  scheduler_->PreprocessNodes(starting_nodes, processed_nodes, graph, tables);
   std::chrono::steady_clock::time_point end_pre_process =
       std::chrono::steady_clock::now();
   auto pre_process_time = std::chrono::duration_cast<std::chrono::microseconds>(
                               end_pre_process - begin_pre_process)
                               .count();
   auto [min_runs, resulting_plans, scheduling_time, timed_out, stats] =
-      ScheduleAndGetAllPlans(first_node_names, starting_nodes, processed_nodes,
-                             graph, drivers, tables, config);
+      ScheduleAndGetAllPlans(starting_nodes, processed_nodes,
+                             graph, tables, config);
   std::chrono::steady_clock::time_point begin_cost_eval =
       std::chrono::steady_clock::now();
   // resulting_plans
@@ -187,7 +184,8 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
   benchmark_data["discarded_placements"] += stats.second;
   benchmark_data["placed_nodes"] += stats.first;
   benchmark_data["plan_count"] += resulting_plans.size();
-  std::cout << "plan_count: " << std::to_string(resulting_plans.size()) << std::endl;
+  std::cout << "plan_count: " << std::to_string(resulting_plans.size())
+            << std::endl;
   benchmark_data["pre_process_time"] += pre_process_time;
   // std::cout << "pre_process_time: " << std::to_string(pre_process_time)
   //          << std::endl;
@@ -244,20 +242,20 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   Log(LogLevel::kTrace, "Scheduling preprocessing.");
   RemoveUnnecessaryTables(graph, tables);
 
-  if (!scheduler_){
+  if (!scheduler_) {
     auto heuristic_choices = GetDefaultHeuristics();
-    scheduler_ = std::make_unique<ElasticSchedulingGraphParser>(config.pr_hw_library, heuristic_choices.at(config.heuristic_choice),
-                                                                first_node_names, drivers, config.use_max_runs_cap,
-                                                                config.reduce_single_runs);
+    scheduler_ = std::make_unique<ElasticSchedulingGraphParser>(
+        config.pr_hw_library, heuristic_choices.at(config.heuristic_choice),
+        first_node_names, drivers, config.use_max_runs_cap,
+        config.reduce_single_runs);
   }
 
-  scheduler_->PreprocessNodes(starting_nodes, processed_nodes,
-                                                graph, tables);
+  scheduler_->PreprocessNodes(starting_nodes, processed_nodes, graph, tables);
 
   auto [min_runs, resulting_plans, scheduling_time, ignored_timeout,
         ignored_stats] =
-      ScheduleAndGetAllPlans(first_node_names, starting_nodes, processed_nodes,
-                             graph, drivers, tables, config);
+      ScheduleAndGetAllPlans(starting_nodes, processed_nodes,
+                             graph, tables, config);
   Log(LogLevel::kInfo,
       "Main scheduling loop time = " + std::to_string(scheduling_time / 1000) +
           "[milliseconds]");
@@ -313,8 +311,9 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
   for (const auto &run : best_plan) {
     std::vector<std::shared_ptr<QueryNode>> chosen_nodes;
     for (int module_index = 0; module_index < run.size(); module_index++) {
-      auto chosen_node = this->GetNodePointerWithName(
-          available_nodes, run.at(module_index).node_name);
+      auto chosen_node = orkhestrafs::dbmstodspi::ElasticResourceNodeScheduler::
+          GetNodePointerWithName(available_nodes,
+                                 run.at(module_index).node_name);
       node_counts[run.at(module_index).node_name] += 1;
       chosen_node->module_locations.push_back(module_index + 1);
       if (std::find(chosen_nodes.begin(), chosen_nodes.end(), chosen_node) ==
@@ -369,7 +368,8 @@ auto ElasticResourceNodeScheduler::FindNewAvailableNodes(
     previous_start_node->is_finished = true;
   }
   for (const auto &node_name : starting_nodes) {
-    auto chosen_node = this->GetNodePointerWithName(available_nodes, node_name);
+    auto chosen_node = orkhestrafs::dbmstodspi::ElasticResourceNodeScheduler::
+        GetNodePointerWithName(available_nodes, node_name);
     chosen_node->is_finished = false;
     new_available_nodes.push_back(chosen_node);
   }

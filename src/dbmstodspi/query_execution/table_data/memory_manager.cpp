@@ -31,7 +31,6 @@ limitations under the License.
 #endif
 
 using orkhestrafs::dbmstodspi::MemoryManager;
-
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 

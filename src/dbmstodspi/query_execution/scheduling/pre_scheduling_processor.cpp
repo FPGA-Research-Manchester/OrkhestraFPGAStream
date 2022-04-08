@@ -91,7 +91,7 @@ void PreSchedulingProcessor::FindAdequateBitstreams(
   }
   if (!fitting_bitstreams.empty()) {
     graph.at(node_name).satisfying_bitstreams = GetFittingBitstreamLocations(
-        std::move(fitting_bitstreams),
+        fitting_bitstreams,
         hw_library_.at(graph.at(node_name).operation).starting_locations);
   }
 }
@@ -119,9 +119,10 @@ auto PreSchedulingProcessor::GetFittingBitstreamLocations(
 }
 
 auto PreSchedulingProcessor::GetWorstCaseProcessedTables(
-    const std::vector<std::string>& input_tables, const std::vector<int>& min_capacity,
-    std::map<std::string, TableMetadata>& data_tables, QueryOperationType operation)
-    -> std::vector<std::string> {
+    const std::vector<std::string>& input_tables,
+    const std::vector<int>& min_capacity,
+    std::map<std::string, TableMetadata>& data_tables,
+    QueryOperationType operation) -> std::vector<std::string> {
   std::map<std::string, TableMetadata> new_tables =
       accelerator_library_.GetWorstCaseProcessedTables(
           operation, min_capacity, input_tables, data_tables);
@@ -139,11 +140,13 @@ void PreSchedulingProcessor::UpdateOnlySatisfyingBitstreams(
     const std::string& node_name,
     std::unordered_map<std::string, SchedulingQueryNode>& graph,
     const std::map<std::string, TableMetadata>& data_tables) {
-  FindAdequateBitstreams(GetMinRequirementsForFullyExecutingNode(node_name, graph, data_tables),
+  FindAdequateBitstreams(
+      GetMinRequirementsForFullyExecutingNode(node_name, graph, data_tables),
       graph, node_name);
 }
 
-// TODO: Need a special case check of 0 rows left - Can immediately cut stuff out.
+// TODO(Kaspar): Need a special case check of 0 rows left - Can immediately cut
+// stuff out.
 void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     std::unordered_map<std::string, SchedulingQueryNode>& graph,
     std::map<std::string, TableMetadata>& data_tables,
@@ -167,21 +170,22 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     auto min_requirements = GetMinRequirementsForFullyExecutingNode(
         current_node_name, graph, data_tables);
     // Find all bitstreams that meet minimum requirements and update graph.
-    FindAdequateBitstreams(min_requirements, graph,
-                           current_node_name);
-    // Get worst case tables and update the graph - Because fitting ones might not have been used.
-    // If new tables are the exact same as old tables - don't do anything
-    // Set following stuff as processed and not available! -> Nice and universal!
+    FindAdequateBitstreams(min_requirements, graph, current_node_name);
+    // Get worst case tables and update the graph - Because fitting ones might
+    // not have been used. If new tables are the exact same as old tables -
+    // don't do anything Set following stuff as processed and not available! ->
+    // Nice and universal!
     auto new_table_added = QuerySchedulingHelper::AddNewTableToNextNodes(
         graph, current_node_name,
         GetWorstCaseProcessedTables(
             graph.at(current_node_name).data_tables,
-            min_capacity_.at(graph.at(current_node_name).operation), data_tables,
-            graph.at(current_node_name).operation));
+            min_capacity_.at(graph.at(current_node_name).operation),
+            data_tables, graph.at(current_node_name).operation));
     // A module can't be skipped if no new table was added
-    if (!new_table_added){
-      QuerySchedulingHelper::SetAllNodesAsProcessedAfterGivenNode(current_node_name, processed_nodes, graph, current_available_nodes);
-      // TODO: Remove this check!
+    if (!new_table_added) {
+      QuerySchedulingHelper::SetAllNodesAsProcessedAfterGivenNode(
+          current_node_name, processed_nodes, graph, current_available_nodes);
+      // TODO(Kaspar): Remove this check!
       if (min_requirements.size() == 1 && min_requirements.front() == 0) {
         throw std::runtime_error("Something went wrong!");
       }

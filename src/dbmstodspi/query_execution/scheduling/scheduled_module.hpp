@@ -23,7 +23,6 @@ limitations under the License.
 #include "table_data.hpp"
 
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
-using orkhestrafs::core_interfaces::table_data::TableMetadata;
 using orkhestrafs::core_interfaces::table_data::SortedSequence;
 
 namespace orkhestrafs::dbmstodspi {

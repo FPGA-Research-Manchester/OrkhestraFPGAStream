@@ -84,11 +84,9 @@ class NodeSchedulerInterface {
 
   // Core scheduling method for benchmarking
   virtual auto ScheduleAndGetAllPlans(
-      const std::unordered_set<std::string>& first_node_names,
       std::unordered_set<std::string>& starting_nodes,
       std::unordered_set<std::string>& processed_nodes,
       std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      AcceleratorLibraryInterface& drivers,
       std::map<std::string, TableMetadata>& tables, const Config& config)
       -> std::tuple<int,
                     std::map<std::vector<std::vector<ScheduledModule>>,

@@ -17,9 +17,9 @@ limitations under the License.
 #include "query_manager.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <stdexcept>
-#include <chrono>
 
 #include "bitstream_config_helper.hpp"
 #include "elastic_module_checker.hpp"
@@ -797,7 +797,8 @@ void QueryManager::ExecuteAndProcessResults(
   auto result_sizes = fpga_manager->RunQueryAcceleration();
   Log(LogLevel::kTrace, "Query done!");
 
-  std::chrono::steady_clock::time_point total_end = std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point total_end =
+      std::chrono::steady_clock::now();
   std::cout << "TOTAL EXEC:"
             << std::chrono::duration_cast<std::chrono::microseconds>(total_end -
                                                                      begin)
@@ -807,7 +808,7 @@ void QueryManager::ExecuteAndProcessResults(
       "Init and run time = " +
           std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(
                              total_end - begin)
-                  .count()) +
+                             .count()) +
           "[microseconds]");
 
   ProcessResults(data_manager, result_sizes, result_parameters,

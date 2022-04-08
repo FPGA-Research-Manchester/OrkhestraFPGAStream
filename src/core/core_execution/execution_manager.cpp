@@ -108,15 +108,15 @@ void ExecutionManager::SetupNextRunData() {
   query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
                                    *accelerator_library_);
   query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
-                                   *accelerator_library_); 
-   /*query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
-                                    *accelerator_library_.get());*/
+                                   *accelerator_library_);
+  /*query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
+   *accelerator_library_.get());*/
   // Debugging
   // std::vector<std::pair<QueryOperationType, bool>> empty_modules;
   /*query_manager_->LoadEmptyRoutingPRRegion(memory_manager_.get(),
    *accelerator_library_.get());*/
-  /*query_manager_->LoadPRBitstreams(memory_manager_.get(),config_.debug_forced_pr_bitstreams, *accelerator_library_.get());
-  exit(0);*/
+  /*query_manager_->LoadPRBitstreams(memory_manager_.get(),config_.debug_forced_pr_bitstreams,
+  *accelerator_library_.get()); exit(0);*/
   auto next_scheduled_run_nodes = PopNextScheduledRun();
 
   for (const auto& node : next_scheduled_run_nodes) {
@@ -220,8 +220,8 @@ void ExecutionManager::AddSavedNodesToConstrainedList(
   for (int node_index = 0; node_index < node->is_checked.size(); node_index++) {
     if (node->is_checked[node_index]) {
       auto constrained_node_name = node->next_nodes[node_index]->node_name;
-      if (constrained_nodes.find(constrained_node_name)
-               == constrained_nodes.end()) {
+      if (constrained_nodes.find(constrained_node_name) ==
+          constrained_nodes.end()) {
         constrained_nodes.insert(constrained_node_name);
       }
     }
@@ -278,7 +278,7 @@ void ExecutionManager::AddSplittingNodesToConstrainedList(
   // THere are no splitting nodes at the moment
   /*std::vector<std::pair<std::string, int>> all_stream_dependencies;
   std::vector<std::pair<std::string, int>> splitting_streams;*/
-  
+
   /*for (const auto& [node_name, node_parameters] : scheduling_graph) {
     for (const auto& previous_node_stream : node_parameters.before_nodes) {
       if (previous_node_stream.second != -1) {

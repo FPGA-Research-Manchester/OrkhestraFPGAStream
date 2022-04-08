@@ -50,11 +50,9 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
                     std::vector<std::shared_ptr<QueryNode>>>> override;
 
   auto ScheduleAndGetAllPlans(
-      const std::unordered_set<std::string> &first_node_names,
       std::unordered_set<std::string> &starting_nodes,
       std::unordered_set<std::string> &processed_nodes,
       std::unordered_map<std::string, SchedulingQueryNode> &graph,
-      AcceleratorLibraryInterface &drivers,
       std::map<std::string, TableMetadata> &tables, const Config &config)
       -> std::tuple<int,
                     std::map<std::vector<std::vector<ScheduledModule>>,
@@ -104,6 +102,6 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       -> std::unordered_map<QueryOperationType, int>;
 
   std::unique_ptr<PlanEvaluatorInterface> plan_evaluator_;
-  std::unique_ptr<ElasticSchedulingGraphParser>scheduler_;
+  std::unique_ptr<ElasticSchedulingGraphParser> scheduler_;
 };
 }  // namespace orkhestrafs::dbmstodspi

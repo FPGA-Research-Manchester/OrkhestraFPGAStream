@@ -20,6 +20,7 @@ limitations under the License.
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 
 #include "accelerator_library_interface.hpp"
 #include "module_selection.hpp"
@@ -45,21 +46,22 @@ class ElasticSchedulingGraphParser {
  public:
   ElasticSchedulingGraphParser(
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      const std::pair<std::vector<std::vector<ModuleSelection>>,
-                      std::vector<std::vector<ModuleSelection>>>& heuristics,
-      const std::unordered_set<std::string>& constrained_first_nodes,
+      std::pair<std::vector<std::vector<ModuleSelection>>,
+                std::vector<std::vector<ModuleSelection>>>
+          heuristics,
+      std::unordered_set<std::string> constrained_first_nodes,
       AcceleratorLibraryInterface& drivers, const bool use_max_runs_cap,
       const bool reduce_single_runs)
       : hw_library_{hw_library},
-        heuristics_{heuristics},
+        heuristics_{std::move(heuristics)},
         statistics_counters_{0, 0},
-        constrained_first_nodes_{constrained_first_nodes},
+        constrained_first_nodes_{std::move(constrained_first_nodes)},
         drivers_{drivers},
         time_limit_{std::chrono::system_clock::time_point::max()},
         trigger_timeout_{false},
         use_max_runs_cap_{use_max_runs_cap},
         reduce_single_runs_{reduce_single_runs},
-        resulting_plan_{},
+
         min_runs_{std::numeric_limits<int>::max()},
         pre_scheduler_{hw_library, drivers} {};
 
@@ -80,12 +82,12 @@ class ElasticSchedulingGraphParser {
       std::unordered_set<std::string> next_run_blocked_nodes,
       int streamed_data_size);
 
-  auto GetTimeoutStatus() -> bool;
+  [[nodiscard]] auto GetTimeoutStatus() const -> bool;
   auto GetResultingPlan() -> std::map<std::vector<std::vector<ScheduledModule>>,
                                       ExecutionPlanSchedulingData>;
   auto GetStats() -> std::pair<int, int>;
 
-  void SetTimeLimit(const std::chrono::system_clock::time_point new_time_limit);
+  void SetTimeLimit(std::chrono::system_clock::time_point new_time_limit);
 
  private:
   int min_runs_;

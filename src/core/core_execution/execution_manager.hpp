@@ -62,7 +62,7 @@ class ExecutionManager : public ExecutionManagerInterface,
                          public GraphProcessingFSMInterface {
  public:
   ~ExecutionManager() override = default;
-  ExecutionManager(const Config& config,
+  ExecutionManager(Config config,
                    std::unique_ptr<QueryManagerInterface> query_manager,
                    std::unique_ptr<DataManagerInterface> data_manager,
                    std::unique_ptr<MemoryManagerInterface> memory_manager,
@@ -74,7 +74,7 @@ class ExecutionManager : public ExecutionManagerInterface,
         memory_manager_{std::move(memory_manager)},
         query_manager_{std::move(query_manager)},
         scheduler_{std::move(scheduler)},
-        config_{config},
+        config_{std::move(config)},
         accelerator_library_{std::move(
             driver_factory->CreateAcceleratorLibrary(memory_manager_.get()))},
         fpga_manager_{std::move(

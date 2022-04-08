@@ -24,7 +24,6 @@ limitations under the License.
 #include "query_scheduling_data.hpp"
 
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
-using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
 
 namespace orkhestrafs::dbmstodspi {
 

@@ -52,13 +52,16 @@ auto QuerySchedulingHelper::IsTableSorted(TableMetadata table_data) -> bool {
 
 auto QuerySchedulingHelper::AddNewTableToNextNodes(
     std::unordered_map<std::string, SchedulingQueryNode>& graph,
-    const std::string& node_name, const std::vector<std::string>& table_names) -> bool {
+    const std::string& node_name, const std::vector<std::string>& table_names)
+    -> bool {
   for (const auto& next_node_name : graph.at(node_name).after_nodes) {
     if (!next_node_name.empty()) {
       for (const auto& [current_node_index, current_stream_index] :
            GetCurrentNodeIndexesByName(graph, next_node_name, node_name)) {
-        // TODO: Currently the same for all of them but should be individual
-        if (graph.at(next_node_name).data_tables.at(current_node_index) == table_names.at(current_stream_index)){
+        // TODO(Kaspar): Currently the same for all of them but should be
+        // individual
+        if (graph.at(next_node_name).data_tables.at(current_node_index) ==
+            table_names.at(current_stream_index)) {
           return false;
         }
         graph.at(next_node_name).data_tables.at(current_node_index) =
@@ -96,28 +99,32 @@ auto QuerySchedulingHelper::GetCurrentNodeIndexesByName(
 }
 
 void QuerySchedulingHelper::SetAllNodesAsProcessedAfterGivenNode(
-    const std::string& node_name,
-    std::unordered_set<std::string>& past_nodes,
+    const std::string& node_name, std::unordered_set<std::string>& past_nodes,
     const std::unordered_map<std::string, SchedulingQueryNode>& graph,
     std::unordered_set<std::string>& current_available_nodes) {
   // You have past nodes including current node
   // You have new nodes
   // You Find new nodes.
   // All of those nodes you remove from available and then you add to past nodes
-  // You save all of those nodes and you keep scheduling them while you still have nodes saved.
-  auto currently_ignored_nodes = GetNewAvailableNodesAfterSchedulingGivenNode(node_name, past_nodes, graph);
-  while (!currently_ignored_nodes.empty()){
+  // You save all of those nodes and you keep scheduling them while you still
+  // have nodes saved.
+  auto currently_ignored_nodes = GetNewAvailableNodesAfterSchedulingGivenNode(
+      node_name, past_nodes, graph);
+  while (!currently_ignored_nodes.empty()) {
     auto current_node_name = *currently_ignored_nodes.begin();
     currently_ignored_nodes.erase(current_node_name);
     current_available_nodes.erase(current_node_name);
     past_nodes.insert(current_node_name);
-    UpdateAvailableNodesAfterSchedulingGivenNode(current_node_name, past_nodes, graph, currently_ignored_nodes);
+    UpdateAvailableNodesAfterSchedulingGivenNode(
+        current_node_name, past_nodes, graph, currently_ignored_nodes);
   }
 }
 
-auto QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(const std::string& node_name,
-                                                                         const std::unordered_set<std::string>& past_nodes,
-                                                                         const std::unordered_map<std::string, SchedulingQueryNode>& graph) -> std::unordered_set<std::string> {
+auto QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
+    const std::string& node_name,
+    const std::unordered_set<std::string>& past_nodes,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph)
+    -> std::unordered_set<std::string> {
   std::unordered_set<std::string> potential_nodes(
       graph.at(node_name).after_nodes.begin(),
       graph.at(node_name).after_nodes.end());
@@ -143,8 +150,9 @@ void QuerySchedulingHelper::UpdateAvailableNodesAfterSchedulingGivenNode(
     const std::string& node_name,
     const std::unordered_set<std::string>& past_nodes,
     const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-    std::unordered_set<std::string>& current_available_nodes){
-  current_available_nodes.merge(GetNewAvailableNodesAfterSchedulingGivenNode(node_name, past_nodes, graph));
+    std::unordered_set<std::string>& current_available_nodes) {
+  current_available_nodes.merge(GetNewAvailableNodesAfterSchedulingGivenNode(
+      node_name, past_nodes, graph));
 }
 
 // TODO(Kaspar): This needs improving to support multi inputs and outputs

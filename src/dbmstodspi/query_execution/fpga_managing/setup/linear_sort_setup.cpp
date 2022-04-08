@@ -119,7 +119,9 @@ auto LinearSortSetup::UpdateDataTable(
     throw std::runtime_error("Wrong linear sort capacity given!");
   }
   auto new_sorted_sequence = GetSortedSequenceWithCapacity(
-      module_capacity.front(), resulting_tables.at(input_table_names.front()).record_count);
-  resulting_tables.at(input_table_names.front()).sorted_status = {new_sorted_sequence};
+      module_capacity.front(),
+      resulting_tables.at(input_table_names.front()).record_count);
+  resulting_tables.at(input_table_names.front()).sorted_status = {
+      new_sorted_sequence};
   return true;
 }

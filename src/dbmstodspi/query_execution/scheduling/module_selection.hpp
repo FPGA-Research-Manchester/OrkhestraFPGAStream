@@ -78,21 +78,17 @@ class ModuleSelection {
 
   // TODO(Kaspar): Find a more beautiful way to do this as methods are not
   // allowed with enums in C.
-  static void SelectAll(
-      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
-          available_placements);
-  static void SelectFirst(
-      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
-          available_placements);
-  static void SelectLast(
-      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
-          available_placements);
+  static void SelectAll(std::unordered_set<std::pair<int, ScheduledModule>,
+                                           PairHash>& available_placements);
+  static void SelectFirst(std::unordered_set<std::pair<int, ScheduledModule>,
+                                             PairHash>& available_placements);
+  static void SelectLast(std::unordered_set<std::pair<int, ScheduledModule>,
+                                            PairHash>& available_placements);
   static void SelectShortest(
       std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
           available_placements);
-  static void SelectLongest(
-      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
-          available_placements);
+  static void SelectLongest(std::unordered_set<std::pair<int, ScheduledModule>,
+                                               PairHash>& available_placements);
 
  public:
   explicit ModuleSelection(const std::string& selection_mode)

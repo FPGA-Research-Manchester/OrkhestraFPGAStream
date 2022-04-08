@@ -49,7 +49,7 @@ class PlanEvaluator : public PlanEvaluatorInterface {
       const std::vector<int>& configuration_data_wirtten,
       double streaming_speed, double configuration_speed) -> int;
 
-  auto FindConfigWrittenForConfiguration(
+  static auto FindConfigWrittenForConfiguration(
       const std::vector<ScheduledModule>& current_run,
       const std::vector<ScheduledModule>& previous_configuration,
       const std::string& resource_string,

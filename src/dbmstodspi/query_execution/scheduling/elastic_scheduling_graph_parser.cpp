@@ -322,7 +322,7 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPosOrig(
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
         module_placements) {
   std::vector<SortedSequence> processed_tables_data;
-  // TODO: Change this hack later
+  // TODO(Kaspar): Change this hack later
   if (!graph.at(node_name).data_tables.at(0).empty()) {
     processed_tables_data =
         data_tables.at(graph.at(node_name).data_tables.at(0)).sorted_status;
@@ -537,13 +537,13 @@ void ElasticSchedulingGraphParser::
       new_graph.erase(node_name);
     } else {
       pre_scheduler_.UpdateOnlySatisfyingBitstreams(node_name, new_graph,
-                                                      new_tables);
+                                                    new_tables);
     }
   } else if (satisfied_requirements) {
     CreateNewAvailableNodes(new_graph, new_available_nodes, new_processed_nodes,
                             node_name);
-    // TODO: Create a list of nodes that have been checked for this already -
-    // perhaps
+    // TODO(Kaspar): Create a list of nodes that have been checked for this
+    // already - perhaps
     GetNewBlockedNodes(new_next_run_blocked_nodes, new_graph, operation,
                        node_name, blocked_nodes);
     new_graph.erase(node_name);
@@ -576,8 +576,8 @@ void ElasticSchedulingGraphParser::FindDataSensitiveNodeNames(
 }
 
 // We have a problem over here.
-// TODO: Always when a filter or join gets placed it goes through the whole
-// thing.
+// TODO(Kaspar): Always when a filter or join gets placed it goes through the
+// whole thing.
 void ElasticSchedulingGraphParser::GetNewBlockedNodes(
     std::unordered_set<std::string>& next_run_blocked_nodes,
     const std::unordered_map<std::string, SchedulingQueryNode>& graph,
@@ -735,7 +735,6 @@ void ElasticSchedulingGraphParser::AddPlanToAllPlansAndMeasureTime(
   }
 }
 
-
 void ElasticSchedulingGraphParser::PlaceNodesRecursively(
     std::unordered_set<std::string> available_nodes,
     std::unordered_set<std::string> processed_nodes,
@@ -746,7 +745,7 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
     std::unordered_set<std::string> blocked_nodes,
     std::unordered_set<std::string> next_run_blocked_nodes,
     int streamed_data_size) {
-  // TODO: Potentially check for timeouts more often
+  // TODO(Kaspar): Potentially check for timeouts more often
   if (trigger_timeout_) {
     throw TimeLimitException("Timeout");
   }
@@ -768,8 +767,10 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
       next_run_blocked_nodes.clear();
     } else {
       // Get the placement we are going to place in this branch
-      auto current_placement = std::move(available_module_placements.extract(
-          available_module_placements.begin()).value());
+      auto current_placement =
+          std::move(available_module_placements
+                        .extract(available_module_placements.begin())
+                        .value());
       // If there are still other placements to consider do them in different
       // recursion branches.
       if (!available_module_placements.empty()) {
@@ -801,8 +802,7 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
               std::move(new_available_nodes), std::move(new_processed_nodes),
               std::move(new_graph), std::move(new_current_run), current_plan,
               std::move(new_data_tables), blocked_nodes,
-              std::move(new_next_run_blocked_nodes),
-              new_streamed_data_size);
+              std::move(new_next_run_blocked_nodes), new_streamed_data_size);
         }
         available_module_placements.clear();
       }
@@ -823,11 +823,10 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
       current_run.insert(current_run.begin() + current_placement.first,
                          current_placement.second);
       streamed_data_size += GetNewStreamedDataSize(
-          current_run, current_placement.second.node_name, data_tables,
-          graph);
+          current_run, current_placement.second.node_name, data_tables, graph);
       UpdateGraphAndTableValuesGivenPlacement(
-          graph, available_nodes, current_placement.second,
-          processed_nodes, data_tables, next_run_blocked_nodes, blocked_nodes);
+          graph, available_nodes, current_placement.second, processed_nodes,
+          data_tables, next_run_blocked_nodes, blocked_nodes);
     }
   }
   if (!current_run.empty()) {
@@ -838,7 +837,7 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
                                   streamed_data_size);
 }
 
-auto ElasticSchedulingGraphParser::GetTimeoutStatus() -> bool {
+auto ElasticSchedulingGraphParser::GetTimeoutStatus() const -> bool {
   return trigger_timeout_;
 }
 
