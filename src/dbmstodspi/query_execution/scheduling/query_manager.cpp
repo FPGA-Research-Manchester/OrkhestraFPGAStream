@@ -455,14 +455,14 @@ auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
       BitstreamConfigHelper::GetConfigCompliments(next_config, current_config);
 
   auto removable_modules = reduced_current_config;
-  /*for (const auto& reused_module : old_routing_modules) {
+  for (const auto& reused_module : old_routing_modules) {
     for (const auto& removable_module : reduced_current_config) {
       removable_modules.erase(
           std::remove(removable_modules.begin(), removable_modules.end(),
                       reused_module),
           removable_modules.end());
     }
-  }*/
+  }
 
   // Find out which frames need writing to.
   for (const auto& module : removable_modules) {

@@ -138,6 +138,8 @@ void ExecutionManager::SetupNextRunData() {
           query_nodes_.begin() + module_pos,
           accelerator_library_->GetEmptyModuleNode(
               empty_modules.at(module_pos).first, module_pos + 1));
+    } else {
+      query_nodes_.at(module_pos).operation_module_location = module_pos + 1;
     }
   }
   // For debugging - manual insertion of passthrough modules

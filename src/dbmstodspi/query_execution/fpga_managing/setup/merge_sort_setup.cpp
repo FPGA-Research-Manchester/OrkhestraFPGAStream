@@ -54,10 +54,10 @@ void MergeSortSetup::SetupModule(
         GetStreamRecordSize(module_parameters.input_streams[0]), base_id,
         is_first);
   } else {
-    throw std::runtime_error(
-        "Can't configure merge sort to passthrough on stream ID");
-    /*MergeSortSetup::SetupPassthroughMergeSort(
-        dynamic_cast<MergeSortInterface&>(acceleration_module));*/
+    /*throw std::runtime_error(
+        "Can't configure merge sort to passthrough on stream ID");*/
+    MergeSortSetup::SetupPassthroughMergeSort(
+        dynamic_cast<MergeSortInterface&>(acceleration_module));
   }
 }
 
@@ -70,7 +70,7 @@ auto MergeSortSetup::CreateModule(MemoryManagerInterface* memory_manager,
 void MergeSortSetup::SetupPassthroughMergeSort(
     MergeSortInterface& merge_sort_module) {
   merge_sort_module.SetStreamParams(15, 1);
-  merge_sort_module.StartPrefetchingData(0, false);
+  //merge_sort_module.StartPrefetchingData(0, false);
 }
 
 void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
