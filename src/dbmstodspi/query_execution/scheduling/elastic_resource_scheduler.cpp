@@ -160,8 +160,8 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
                               end_pre_process - begin_pre_process)
                               .count();
   auto [min_runs, resulting_plans, scheduling_time, timed_out, stats] =
-      ScheduleAndGetAllPlans(starting_nodes, processed_nodes,
-                             graph, tables, config);
+      ScheduleAndGetAllPlans(starting_nodes, processed_nodes, graph, tables,
+                             config);
   std::chrono::steady_clock::time_point begin_cost_eval =
       std::chrono::steady_clock::now();
   // resulting_plans
@@ -253,9 +253,8 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   scheduler_->PreprocessNodes(starting_nodes, processed_nodes, graph, tables);
 
   auto [min_runs, resulting_plans, scheduling_time, ignored_timeout,
-        ignored_stats] =
-      ScheduleAndGetAllPlans(starting_nodes, processed_nodes,
-                             graph, tables, config);
+        ignored_stats] = ScheduleAndGetAllPlans(starting_nodes, processed_nodes,
+                                                graph, tables, config);
   Log(LogLevel::kInfo,
       "Main scheduling loop time = " + std::to_string(scheduling_time / 1000) +
           "[milliseconds]");

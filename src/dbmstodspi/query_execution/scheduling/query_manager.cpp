@@ -888,9 +888,9 @@ void QueryManager::CropSortedStatus(
             current_data.record_count) {
           cropped_sequences.push_back(sequence);
         } else if (sequence.start_position < current_data.record_count) {
-          cropped_sequences.push_back(
-              {sequence.start_position,
-               current_data.record_count - sequence.start_position});
+          cropped_sequences.emplace_back(
+              sequence.start_position,
+              current_data.record_count - sequence.start_position);
         }
       }
       scheduling_table_data.at(filename).sorted_status = cropped_sequences;

@@ -88,11 +88,11 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
   static auto GetNodePointerWithName(
       std::vector<std::shared_ptr<QueryNode>> &available_nodes,
       const std::string &node_name) -> std::shared_ptr<QueryNode>;
-  auto FindNewAvailableNodes(
+  static auto FindNewAvailableNodes(
       std::unordered_set<std::string> &starting_nodes,
       std::vector<std::shared_ptr<QueryNode>> &available_nodes)
       -> std::vector<std::shared_ptr<QueryNode>>;
-  auto GetQueueOfResultingRuns(
+  static auto GetQueueOfResultingRuns(
       std::vector<std::shared_ptr<QueryNode>> &available_nodes,
       const std::vector<std::vector<ScheduledModule>> &best_plan)
       -> std::queue<std::pair<std::vector<ScheduledModule>,

@@ -116,7 +116,7 @@ void ExecutionManager::SetupNextRunData() {
   /*query_manager_->LoadEmptyRoutingPRRegion(memory_manager_.get(),
    *accelerator_library_.get());*/
   /*query_manager_->LoadPRBitstreams(memory_manager_.get(),config_.debug_forced_pr_bitstreams,
-  *accelerator_library_.get()); exit(0);*/
+   *accelerator_library_.get()); exit(0);*/
   auto next_scheduled_run_nodes = PopNextScheduledRun();
 
   for (const auto& node : next_scheduled_run_nodes) {

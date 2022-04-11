@@ -37,7 +37,7 @@ class PlanEvaluator : public PlanEvaluatorInterface {
                     std::vector<ScheduledModule>, int, int> override;
 
  private:
-  auto FindConfigWritten(
+  static auto FindConfigWritten(
       const std::vector<std::vector<ScheduledModule>>& all_runs,
       const std::vector<ScheduledModule>& current_configuration,
       const std::string& resource_string,

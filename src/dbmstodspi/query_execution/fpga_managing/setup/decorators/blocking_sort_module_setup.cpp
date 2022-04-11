@@ -70,12 +70,12 @@ auto BlockingSortModuleSetup::UpdateDataTable(
   new_sorted_sequences.reserve(current_table_sorted_status.size());
   if (current_table_sorted_status.empty()) {
     new_sorted_sequences.emplace_back(
-        0,
-        std::min(module_capacity.front(), current_table_record_count));
+        0, std::min(module_capacity.front(), current_table_record_count));
   } else {
     int new_sequence_length = 0;
     for (int sequence_index = 0;
-         sequence_index < std::min(module_capacity.front(),
+         sequence_index <
+         std::min(module_capacity.front(),
                   static_cast<int>(current_table_sorted_status.size()));
          sequence_index++) {
       new_sequence_length +=
@@ -93,8 +93,7 @@ auto BlockingSortModuleSetup::UpdateDataTable(
         module_capacity.front() < current_table_sorted_status.size()) {
       new_sorted_sequences.insert(
           new_sorted_sequences.end(),
-          current_table_sorted_status.begin() +
-              module_capacity.front(),
+          current_table_sorted_status.begin() + module_capacity.front(),
           current_table_sorted_status.end());
       /*for (int sequence_index = module_capacity.front();
            sequence_index < current_sequences.size(); sequence_index++) {
