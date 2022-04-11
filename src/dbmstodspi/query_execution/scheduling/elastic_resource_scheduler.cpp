@@ -285,6 +285,14 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
                    .count()
             << std::endl;
   Log(LogLevel::kTrace, "Execution plan made!");
+
+  /*for (const auto &run : best_plan) {
+    for (const auto &node : run) {
+      std::cout << " " << node.node_name << " ";
+    }
+    std::cout << std::endl;
+  }*/
+
   return resulting_runs;
 }
 

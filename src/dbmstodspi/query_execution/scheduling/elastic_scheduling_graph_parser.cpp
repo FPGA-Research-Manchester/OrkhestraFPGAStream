@@ -17,6 +17,7 @@ limitations under the License.
 #include "elastic_scheduling_graph_parser.hpp"
 
 #include <algorithm>
+#include <iterator>
 #include <numeric>
 #include <stdexcept>
 #include <string>
@@ -301,16 +302,18 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPos(
     module_placements.merge(found_placements);
   } else {
     // Add new table status
-    found_placements = search->second;
+    std::vector<std::pair<int, ScheduledModule>> found_placements(
+        search->second.begin(), search->second.end());
     std::vector<SortedSequence> processed_tables_data;
     if (!graph.at(node_name).data_tables.at(0).empty()) {
       processed_tables_data =
           data_tables.at(graph.at(node_name).data_tables.at(0)).sorted_status;
     }
-    for (auto new_module_placement : found_placements) {
+    for (auto& new_module_placement : found_placements) {
       new_module_placement.second.processed_table_data = processed_tables_data;
-      module_placements.insert(std::move(new_module_placement));
     }
+    module_placements.insert(std::make_move_iterator(found_placements.begin()),
+                             std::make_move_iterator(found_placements.end()));
   }
 }
 
@@ -758,7 +761,7 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
         blocked_nodes, data_tables);
     // Start planning a new run if we can't find any new valid placements
     if (available_module_placements.empty()) {
-      current_plan.push_back(current_run);
+      current_plan.push_back(std::move(current_run));
       if (use_max_runs_cap_ && current_plan.size() > min_runs_) {
         return;
       }
@@ -854,4 +857,8 @@ auto ElasticSchedulingGraphParser::GetStats() -> std::pair<int, int> {
 void ElasticSchedulingGraphParser::SetTimeLimit(
     const std::chrono::system_clock::time_point new_time_limit) {
   time_limit_ = new_time_limit;
+  trigger_timeout_ = false;
+  min_runs_ = std::numeric_limits<int>::max();
+  resulting_plan_.clear();
+  statistics_counters_ = {0, 0};
 }

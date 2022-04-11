@@ -321,7 +321,7 @@ auto QueryManager::SetupAccelerationNodesForExecution(
     AllocateInputMemoryBlocks(
         memory_manager, data_manager, input_memory_blocks[node->node_name],
         *node, output_stream_sizes, input_stream_sizes[node->node_name]);
-    exit(0);
+
     // Check what is the input_stream_sizes over here
     auto input_params = CreateStreamParams(true, *node, accelerator_library,
                                            input_ids[node->node_name],

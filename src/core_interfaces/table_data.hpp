@@ -64,6 +64,9 @@ struct SortedSequence {
   int start_position;
   int length;
   // TODO(Kaspar): add sorted by column
+
+  SortedSequence(int start_position, int length)
+      : start_position(start_position), length(length){};
 };
 
 /**

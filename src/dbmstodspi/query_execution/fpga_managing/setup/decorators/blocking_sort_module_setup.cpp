@@ -55,36 +55,47 @@ auto BlockingSortModuleSetup::UpdateDataTable(
   if (module_capacity.size() != 1) {
     throw std::runtime_error("Wrong merge sort capacity given!");
   }
-  auto current_table = resulting_tables.at(input_table_names.front());
-  if (QuerySchedulingHelper::IsTableSorted(current_table)) {
+  if (QuerySchedulingHelper::IsTableSorted(
+          resulting_tables.at(input_table_names.front()))) {
     throw std::runtime_error("Table is sorted already!");
   }
+
+  const auto& table_name = input_table_names.front();
+  const auto& current_table_sorted_status =
+      resulting_tables.at(table_name).sorted_status;
+  const auto& current_table_record_count =
+      resulting_tables.at(table_name).record_count;
+
   std::vector<SortedSequence> new_sorted_sequences;
-  auto current_sequences = current_table.sorted_status;
-  if (current_sequences.empty()) {
-    new_sorted_sequences.push_back(
-        {0, std::min(module_capacity.front(), current_table.record_count)});
+  new_sorted_sequences.reserve(current_table_sorted_status.size());
+  if (current_table_sorted_status.empty()) {
+    new_sorted_sequences.emplace_back(
+        0,
+        std::min(module_capacity.front(), current_table_record_count));
   } else {
     int new_sequence_length = 0;
     for (int sequence_index = 0;
          sequence_index < std::min(module_capacity.front(),
-                                   static_cast<int>(current_sequences.size()));
+                  static_cast<int>(current_table_sorted_status.size()));
          sequence_index++) {
-      new_sequence_length += current_sequences.at(sequence_index).length;
+      new_sequence_length +=
+          current_table_sorted_status.at(sequence_index).length;
     }
-    if (module_capacity.front() > current_sequences.size() &&
-        new_sequence_length < current_table.record_count) {
-      new_sequence_length += module_capacity.front() - current_sequences.size();
+    if (module_capacity.front() > current_table_sorted_status.size() &&
+        new_sequence_length < current_table_record_count) {
+      new_sequence_length +=
+          module_capacity.front() - current_table_sorted_status.size();
       new_sequence_length =
-          std::min(new_sequence_length, current_table.record_count);
+          std::min(new_sequence_length, current_table_record_count);
     }
-    new_sorted_sequences.push_back({0, new_sequence_length});
-    if (new_sequence_length < current_table.record_count &&
-        module_capacity.front() < current_sequences.size()) {
+    new_sorted_sequences.emplace_back(0, new_sequence_length);
+    if (new_sequence_length < current_table_record_count &&
+        module_capacity.front() < current_table_sorted_status.size()) {
       new_sorted_sequences.insert(
           new_sorted_sequences.end(),
-          current_sequences.begin() + module_capacity.front(),
-          current_sequences.end());
+          current_table_sorted_status.begin() +
+              module_capacity.front(),
+          current_table_sorted_status.end());
       /*for (int sequence_index = module_capacity.front();
            sequence_index < current_sequences.size(); sequence_index++) {
         new_sorted_sequences.push_back(current_sequences.at(sequence_index));
@@ -93,7 +104,7 @@ auto BlockingSortModuleSetup::UpdateDataTable(
   }
   // Fix later
   // current_table.sorted_status = {{0, current_table.record_count}};
-  current_table.sorted_status = new_sorted_sequences;
-  resulting_tables.at(input_table_names.front()) = current_table;
-  return QuerySchedulingHelper::IsTableSorted(current_table);
+  resulting_tables.at(table_name).sorted_status =
+      std::move(new_sorted_sequences);
+  return QuerySchedulingHelper::IsTableSorted(resulting_tables.at(table_name));
 }
