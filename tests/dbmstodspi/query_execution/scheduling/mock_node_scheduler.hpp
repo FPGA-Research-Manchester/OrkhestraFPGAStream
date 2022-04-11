@@ -56,11 +56,10 @@ class MockNodeScheduler : public NodeSchedulerInterface {
               (override));
 
   MOCK_METHOD(AllPlans, ScheduleAndGetAllPlans,
-              (const std::unordered_set<std::string>& first_node_names,
-               std::unordered_set<std::string>& starting_nodes,
+              (std::unordered_set<std::string> & starting_nodes,
                std::unordered_set<std::string>& processed_nodes,
-               SchedulingNodeMap& graph, AcceleratorLibraryInterface& drivers,
-               TableMap& tables, const Config& config),
+               SchedulingNodeMap& graph, TableMap& tables,
+               const Config& config),
               (override));
 
   MOCK_METHOD(void, BenchmarkScheduling,

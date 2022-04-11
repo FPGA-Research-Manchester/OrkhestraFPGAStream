@@ -256,7 +256,7 @@ TEST_F(QueryManagerTest, DISABLED_ExecuteAndProcessResultsCallsFPGAManager) {
       output_stream_sizes, result_parameters, execution_query_nodes);*/
 }
 
-TEST_F(QueryManagerTest, FreeMemoryBlocksMovesLinkedMemoryBlocks) {
+TEST_F(QueryManagerTest, DISABLED_FreeMemoryBlocksMovesLinkedMemoryBlocks) {
   QueryManager query_manager_under_test(nullptr);
   MockMemoryManager mock_memory_manager;
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
@@ -316,7 +316,8 @@ TEST_F(QueryManagerTest, FreeMemoryBlocksMovesLinkedMemoryBlocks) {
   ASSERT_EQ(0, output_stream_sizes.size());
 }
 
-TEST_F(QueryManagerTest, FreeMemoryBlocksRemovesMemoryBlocksAndStreamData) {
+TEST_F(QueryManagerTest,
+       DISABLED_FreeMemoryBlocksRemovesMemoryBlocksAndStreamData) {
   QueryManager query_manager_under_test(nullptr);
   MockMemoryManager mock_memory_manager;
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
