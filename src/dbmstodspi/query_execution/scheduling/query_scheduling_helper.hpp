@@ -15,6 +15,9 @@ limitations under the License.
 */
 
 #pragma once
+#include <unordered_map>
+#include <unordered_set>
+
 #include "query_scheduling_data.hpp"
 #include "scheduling_query_node.hpp"
 #include "table_data.hpp"
@@ -54,12 +57,23 @@ class QuerySchedulingHelper {
    * @param node_name Currently scheduled nodes
    * @param past_nodes All of the nodes which have been processed allready
    * @param graph All nodes
-   * @return Vector of node names which are now available.
    */
+  static void UpdateAvailableNodesAfterSchedulingGivenNode(
+      const std::string& node_name,
+      const std::unordered_set<std::string>& past_nodes,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      std::unordered_set<std::string>& current_available_nodes);
+
   static auto GetNewAvailableNodesAfterSchedulingGivenNode(
-      std::string node_name, const std::vector<std::string>& past_nodes,
-      const std::map<std::string, SchedulingQueryNode>& graph)
-      -> std::vector<std::string>;
+      const std::string& node_name,
+      const std::unordered_set<std::string>& past_nodes,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph)
+      -> std::unordered_set<std::string>;
+
+  static void SetAllNodesAsProcessedAfterGivenNode(
+      const std::string& node_name, std::unordered_set<std::string>& past_nodes,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      std::unordered_set<std::string>& current_available_nodes);
 
   /**
    * @brief Move current table names to the next nodes.
@@ -67,9 +81,10 @@ class QuerySchedulingHelper {
    * @param node_name Current node name
    * @param table_names Table name vector to add to next nodes.
    */
-  static void AddNewTableToNextNodes(
-      std::map<std::string, SchedulingQueryNode>& graph, std::string node_name,
-      const std::vector<std::string>& table_names);
+  static auto AddNewTableToNextNodes(
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::string& node_name, const std::vector<std::string>& table_names)
+      -> bool;
 
   /**
    * @brief Method to get current node index from the next nodes perspective and
@@ -81,8 +96,8 @@ class QuerySchedulingHelper {
    * current node.
    */
   static auto GetCurrentNodeIndexesByName(
-      const std::map<std::string, SchedulingQueryNode>& graph,
-      std::string next_node_name, std::string current_node_name)
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::string& next_node_name, const std::string& current_node_name)
       -> std::vector<std::pair<int, int>>;
 
   /**
@@ -92,7 +107,8 @@ class QuerySchedulingHelper {
    * @param node_name Name of the node to be removed.
    */
   static void RemoveNodeFromGraph(
-      std::map<std::string, SchedulingQueryNode>& graph, std::string node_name);
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::string& node_name);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

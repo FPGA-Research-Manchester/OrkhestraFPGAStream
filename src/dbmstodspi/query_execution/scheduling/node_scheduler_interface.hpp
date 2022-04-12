@@ -19,6 +19,8 @@ limitations under the License.
 #include <map>
 #include <memory>
 #include <queue>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -28,20 +30,20 @@ limitations under the License.
 #include "pr_module_data.hpp"
 #include "query_scheduling_data.hpp"
 #include "scheduled_module.hpp"
+#include "scheduling_data.hpp"
 #include "scheduling_query_node.hpp"
 #include "table_data.hpp"
 
-using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 using orkhestrafs::core_interfaces::query_scheduling_data::
     ConfigurableModulesVector;
 using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
 
 using orkhestrafs::core_interfaces::Config;
-using orkhestrafs::core_interfaces::hw_library::OperationPRModules;
 using orkhestrafs::core_interfaces::table_data::TableMetadata;
 using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
 using orkhestrafs::dbmstodspi::ScheduledModule;
 using orkhestrafs::dbmstodspi::SchedulingQueryNode;
+using orkhestrafs::dbmstodspi::scheduling_data::ExecutionPlanSchedulingData;
 
 namespace orkhestrafs::dbmstodspi {
 /**
@@ -69,16 +71,37 @@ class NodeSchedulerInterface {
    */
   virtual auto GetNextSetOfRuns(
       std::vector<std::shared_ptr<QueryNode>>& query_nodes,
-      const std::vector<std::string>& first_node_names,
-      std::vector<std::string>& starting_nodes,
-      std::vector<std::string>& processed_nodes,
-      std::map<std::string, SchedulingQueryNode>& graph,
+      const std::unordered_set<std::string>& first_node_names,
+      std::unordered_set<std::string>& starting_nodes,
+      std::unordered_set<std::string>& processed_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
       AcceleratorLibraryInterface& drivers,
       std::map<std::string, TableMetadata>& tables,
       const std::vector<ScheduledModule>& current_configuration,
       const Config& config)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<std::shared_ptr<QueryNode>>>> = 0;
+
+  // Core scheduling method for benchmarking
+  virtual auto ScheduleAndGetAllPlans(
+      std::unordered_set<std::string>& starting_nodes,
+      std::unordered_set<std::string>& processed_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      std::map<std::string, TableMetadata>& tables, const Config& config)
+      -> std::tuple<int,
+                    std::map<std::vector<std::vector<ScheduledModule>>,
+                             ExecutionPlanSchedulingData>,
+                    long long, bool, std::pair<int, int>> = 0;
+
+  virtual void BenchmarkScheduling(
+      const std::unordered_set<std::string>& first_node_names,
+      std::unordered_set<std::string>& starting_nodes,
+      std::unordered_set<std::string>& processed_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      AcceleratorLibraryInterface& drivers,
+      std::map<std::string, TableMetadata>& tables,
+      std::vector<ScheduledModule>& current_configuration, const Config& config,
+      std::map<std::string, double>& benchmark_data) = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

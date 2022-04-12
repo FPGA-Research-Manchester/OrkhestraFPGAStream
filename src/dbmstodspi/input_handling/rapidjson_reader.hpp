@@ -21,6 +21,7 @@ limitations under the License.
 #include "json_reader_interface.hpp"
 #include "rapidjson/document.h"
 
+using orkhestrafs::core_interfaces::JSONReaderInterface;
 using rapidjson::Document;
 
 namespace orkhestrafs::dbmstodspi {
@@ -83,11 +84,16 @@ class RapidJSONReader : public JSONReaderInterface {
   /**
    * @brief Method to read table meta data.
    * @param json_filename JSON file
-   * @return Return table sizes and sorted statuses of currently available tables.
+   * @return Return table sizes and sorted statuses of currently available
+   * tables.
    */
   auto ReadAllTablesData(std::string json_filename)
       -> std::vector<TableMetaDataStringMap> override;
 
-  auto ReadHWLibraryData(std::string json_filename) -> HWLibraryStringMap override;
+  auto ReadHWLibraryData(std::string json_filename)
+      -> HWLibraryStringMap override;
+
+  void WriteValueMap(std::map<std::string, double> data,
+                     const std::string& json_filename) override;
 };
 }  // namespace orkhestrafs::dbmstodspi

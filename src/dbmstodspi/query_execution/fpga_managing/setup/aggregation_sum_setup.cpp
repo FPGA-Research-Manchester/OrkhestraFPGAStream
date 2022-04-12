@@ -42,7 +42,6 @@ void AggregationSumSetup::SetupModule(
     AggregationSumSetup::SetupPassthroughSum(
         dynamic_cast<AggregationSumInterface&>(acceleration_module));
   }
-
 }
 
 void AggregationSumSetup::SetupPassthroughSum(

@@ -16,16 +16,24 @@ limitations under the License.
 
 #pragma once
 #include <chrono>
+#include <limits>
+#include <map>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
 
 #include "accelerator_library_interface.hpp"
 #include "module_selection.hpp"
 #include "pr_module_data.hpp"
+#include "pre_scheduling_processor.hpp"
 #include "scheduled_module.hpp"
 #include "scheduling_data.hpp"
 
 using orkhestrafs::core_interfaces::hw_library::OperationPRModules;
 using orkhestrafs::dbmstodspi::AcceleratorLibraryInterface;
 using orkhestrafs::dbmstodspi::ModuleSelection;
+using orkhestrafs::dbmstodspi::PairHash;
+using orkhestrafs::dbmstodspi::PreSchedulingProcessor;
 using orkhestrafs::dbmstodspi::ScheduledModule;
 using orkhestrafs::dbmstodspi::scheduling_data::ExecutionPlanSchedulingData;
 
@@ -36,205 +44,273 @@ namespace orkhestrafs::dbmstodspi {
  */
 class ElasticSchedulingGraphParser {
  public:
-  static void PreprocessNodes(
-      std::vector<std::string>& available_nodes,
+  ElasticSchedulingGraphParser(
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      const std::vector<std::string>& processed_nodes,
-      std::map<std::string, SchedulingQueryNode>& graph,
-      std::map<std::string, TableMetadata>& data_tables,
-      AcceleratorLibraryInterface& accelerator_library);
+      std::pair<std::vector<std::vector<ModuleSelection>>,
+                std::vector<std::vector<ModuleSelection>>>
+          heuristics,
+      std::unordered_set<std::string> constrained_first_nodes,
+      AcceleratorLibraryInterface& drivers, const bool use_max_runs_cap,
+      const bool reduce_single_runs)
+      : hw_library_{hw_library},
+        heuristics_{std::move(heuristics)},
+        statistics_counters_{0, 0},
+        constrained_first_nodes_{std::move(constrained_first_nodes)},
+        drivers_{drivers},
+        time_limit_{std::chrono::system_clock::time_point::max()},
+        trigger_timeout_{false},
+        use_max_runs_cap_{use_max_runs_cap},
+        reduce_single_runs_{reduce_single_runs},
 
-  static void PlaceNodesRecursively(
-      std::vector<std::string> available_nodes,
-      std::vector<std::string> processed_nodes,
-      std::map<std::string, SchedulingQueryNode> graph,
+        min_runs_{std::numeric_limits<int>::max()},
+        pre_scheduler_{hw_library, drivers} {};
+
+  void PreprocessNodes(
+      std::unordered_set<std::string>& available_nodes,
+      const std::unordered_set<std::string>& processed_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      std::map<std::string, TableMetadata>& data_tables);
+
+  void PlaceNodesRecursively(
+      std::unordered_set<std::string> available_nodes,
+      std::unordered_set<std::string> processed_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode> graph,
       std::vector<ScheduledModule> current_run,
       std::vector<std::vector<ScheduledModule>> current_plan,
-      std::map<std::vector<std::vector<ScheduledModule>>,
-               ExecutionPlanSchedulingData>& resulting_plan,
-      bool reduce_single_runs,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      int& min_runs, std::map<std::string, TableMetadata> data_tables,
-      const std::pair<std::vector<std::vector<ModuleSelection>>,
-                      std::vector<std::vector<ModuleSelection>>>& heuristics,
-      std::pair<int, int>& statistics_counters,
-      const std::vector<std::string>& constrained_first_nodes,
-      std::vector<std::string> blocked_nodes,
-      std::vector<std::string> next_run_blocked_nodes,
-      AcceleratorLibraryInterface& drivers,
-      const std::chrono::system_clock::time_point& time_limit,
-      bool& trigger_timeout, const bool use_max_runs_cap,
+      std::map<std::string, TableMetadata> data_tables,
+      std::unordered_set<std::string> blocked_nodes,
+      std::unordered_set<std::string> next_run_blocked_nodes,
       int streamed_data_size);
 
+  [[nodiscard]] auto GetTimeoutStatus() const -> bool;
+  auto GetResultingPlan() -> std::map<std::vector<std::vector<ScheduledModule>>,
+                                      ExecutionPlanSchedulingData>;
+  auto GetStats() -> std::pair<int, int>;
+
+  void SetTimeLimit(std::chrono::system_clock::time_point new_time_limit);
+
  private:
+  int min_runs_;
+  const std::map<QueryOperationType, OperationPRModules> hw_library_;
+  const std::pair<std::vector<std::vector<ModuleSelection>>,
+                  std::vector<std::vector<ModuleSelection>>>
+      heuristics_;
+  std::pair<int, int> statistics_counters_;
+  const std::unordered_set<std::string> constrained_first_nodes_;
+  AcceleratorLibraryInterface& drivers_;
+  std::chrono::system_clock::time_point time_limit_;
+  bool trigger_timeout_;
+  const bool use_max_runs_cap_;
+  std::map<std::vector<std::vector<ScheduledModule>>,
+           ExecutionPlanSchedulingData>
+      resulting_plan_;
+  const bool reduce_single_runs_;
+  PreSchedulingProcessor pre_scheduler_;
+
+  /*struct CustomCmp {
+    bool operator()(const std::tuple<std::unordered_set<std::string>,
+                                     std::unordered_set<std::string>,
+  std::vector<ScheduledModule>>& a, const
+  std::tuple<std::unordered_set<std::string>, std::unordered_set<std::string>,
+  std::vector<ScheduledModule>>& b) const { std::string combined_string_a; for
+  (const auto& available :std::get<0>(a)){ combined_string_a+=available;
+      }
+      for (const auto& blocked :std::get<1>(a)){
+        combined_string_a+=blocked;
+      }
+      for (const auto& module :std::get<2>(a)){
+        combined_string_a+=module.bitstream;
+      }
+
+      std::string combined_string_b;
+      for (const auto& available :std::get<0>(b)){
+        combined_string_b+=available;
+      }
+      for (const auto& blocked :std::get<1>(b)){
+        combined_string_b+=blocked;
+      }
+      for (const auto& module :std::get<2>(b)){
+        combined_string_b+=module.bitstream;
+      }
+
+      return combined_string_a.length() < combined_string_b.length();
+    }
+  };
+  std::map<
+      std::tuple<std::unordered_set<std::string>,
+                 std::unordered_set<std::string>, std::vector<ScheduledModule>>,
+      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>, CustomCmp>
+      saved_placements_;*/
+  /*std::unordered_map<
+      std::string,
+      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>>
+      saved_placements_;*/
+  std::unordered_map<
+      std::string,
+      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>>
+      saved_placements_;
+
+  void AddPlanToAllPlansAndMeasureTime(
+      const std::vector<std::vector<ScheduledModule>>& current_plan,
+      const std::unordered_set<std::string>& available_nodes,
+      const std::unordered_set<std::string>& processed_nodes,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::map<std::string, TableMetadata>& data_tables,
+      int streamed_data_size);
+
+  void GetAllAvailableModulePlacementsInCurrentRun(
+      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+          available_module_placements,
+      const std::unordered_set<std::string>& available_nodes,
+      const std::vector<ScheduledModule>& current_run,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::unordered_set<std::string>& blocked_nodes,
+      const std::map<std::string, TableMetadata>& data_tables);
+
+  static auto IsSubsetOf(const std::unordered_set<std::string>& a,
+                         const std::unordered_set<std::string>& b) -> bool;
+
   static auto GetNewStreamedDataSize(
       const std::vector<ScheduledModule>& current_run,
       const std::string& node_name,
       const std::map<std::string, TableMetadata>& data_tables,
-      const std::map<std::string, SchedulingQueryNode>& graph) -> int;
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph) -> int;
 
   static auto IsTableEqualForGivenNode(
-      const std::map<std::string, SchedulingQueryNode>& graph,
-      const std::map<std::string, SchedulingQueryNode>& new_graph,
-      std::string next_node_name,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
+      const std::string& next_node_name,
       const std::map<std::string, TableMetadata>& data_tables,
       const std::map<std::string, TableMetadata>& new_tables) -> bool;
 
   static void UpdateNextNodeTables(
-      const std::map<std::string, SchedulingQueryNode>& graph,
-      std::string node_name,
-      std::map<std::string, SchedulingQueryNode>& new_graph,
-      std::vector<std::string> skipped_nodes,
-      const std::vector<std::string> resulting_tables);
+      const std::string& node_name,
+      std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
+      const std::vector<std::string>& resulting_tables);
 
-  static auto GetResultingTables(
-      const std::vector<std::string>& table_names,
-      AcceleratorLibraryInterface& drivers,
-      const std::map<std::string, TableMetadata>& tables,
-      QueryOperationType operation) -> std::vector<std::string>;
+  auto GetResultingTables(const std::vector<std::string>& table_names,
+                          const std::map<std::string, TableMetadata>& tables,
+                          QueryOperationType operation)
+      -> std::vector<std::string>;
 
   static void UpdateGraphCapacities(
-      const std::map<std::string, SchedulingQueryNode>& graph,
       const std::vector<int>& missing_utility,
-      std::map<std::string, SchedulingQueryNode>& new_graph,
-      std::string node_name, bool is_node_fully_processed);
+      std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
+      const std::string& node_name, bool is_node_fully_processed);
 
   static auto FindMissingUtility(const std::vector<int>& bitstream_capacity,
                                  std::vector<int>& missing_capacity,
                                  const std::vector<int>& node_capacity) -> bool;
 
-  static auto CheckForSkippableSortOperations(
-      const std::map<std::string, SchedulingQueryNode>& new_graph,
+  auto CheckForSkippableSortOperations(
+      const std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
       const std::map<std::string, TableMetadata>& new_tables,
-      std::string node_name,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      AcceleratorLibraryInterface& drivers) -> std::vector<std::string>;
+      const std::string& node_name) -> std::vector<std::string>;
 
   static auto GetModuleIndex(
       int start_location_index,
       const std::vector<std::pair<int, int>>& taken_positions) -> int;
 
   static void ReduceSelectionAccordingToHeuristics(
-      std::vector<std::pair<int, ScheduledModule>>& resulting_module_placements,
+      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+          resulting_module_placements,
       const std::vector<std::vector<ModuleSelection>>& heuristics);
 
-  static auto GetBitstreamEndFromLibrary(
-      int chosen_bitstream_index, int chosen_column_position,
-      QueryOperationType current_operation,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library)
+  auto GetBitstreamEndFromLibrary(int chosen_bitstream_index,
+                                  int chosen_column_position,
+                                  QueryOperationType current_operation)
       -> std::pair<std::string, int>;
 
-  static auto FindAllAvailableBitstreamsAfterMinPos(
+  auto FindAllAvailableBitstreamsAfterMinPos(
       QueryOperationType current_operation, int min_position,
       const std::vector<std::pair<int, int>>& taken_positions,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library,
       const std::vector<std::vector<std::string>>& bitstream_start_locations)
       -> std::vector<std::tuple<int, int, int>>;
 
-  static auto GetChosenModulePlacements(
-      std::string node_name,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      std::pair<int, int>& statistics_counters,
-      QueryOperationType current_operation,
+  auto GetChosenModulePlacements(
+      const std::string& node_name, QueryOperationType current_operation,
       const std::vector<std::vector<ModuleSelection>>& heuristics,
       int min_position, const std::vector<std::pair<int, int>>& taken_positions,
-      const std::vector<std::vector<std::string>>& bitstream_start_locations)
-      -> std::vector<std::pair<int, ScheduledModule>>;
+      const std::vector<std::vector<std::string>>& bitstream_start_locations,
+      const std::vector<SortedSequence>& processed_table_data,
+      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+          module_placements) -> bool;
 
-  static auto CurrentRunHasFirstModule(
-      const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      const std::vector<ScheduledModule>& current_run, std::string node_name,
-      AcceleratorLibraryInterface& drivers) -> bool;
+  auto CurrentRunHasFirstModule(const std::vector<ScheduledModule>& current_run,
+                                const std::string& node_name) -> bool;
 
-  static auto RemoveUnavailableNodesInThisRun(
-      const std::vector<std::string>& available_nodes,
+  auto RemoveUnavailableNodesInThisRun(
+      const std::unordered_set<std::string>& available_nodes,
       const std::vector<ScheduledModule>& current_run,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      const std::map<std::string, SchedulingQueryNode>& graph,
-      const std::vector<std::string>& constrained_first_nodes,
-      const std::vector<std::string>& blocked_nodes,
-      AcceleratorLibraryInterface& drivers) -> std::vector<std::string>;
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::unordered_set<std::string>& blocked_nodes)
+      -> std::unordered_set<std::string>;
 
   static auto GetMinPositionInCurrentRun(
-      const std::vector<ScheduledModule>& current_run, std::string node_name,
-      const std::map<std::string, SchedulingQueryNode>& graph) -> int;
+      const std::vector<ScheduledModule>& current_run,
+      const std::string& node_name,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph) -> int;
 
   static auto GetTakenColumns(const std::vector<ScheduledModule>& current_run)
       -> std::vector<std::pair<int, int>>;
 
-  static auto GetScheduledModulesForNodeAfterPos(
-      const std::map<std::string, SchedulingQueryNode>& graph, int min_position,
-      std::string node_name,
+  void GetScheduledModulesForNodeAfterPosOrig(
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      int min_position, const std::string& node_name,
       const std::vector<std::pair<int, int>>& taken_positions,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      const std::pair<std::vector<std::vector<ModuleSelection>>,
-                      std::vector<std::vector<ModuleSelection>>>& heuristics,
-      std::pair<int, int>& statistics_counters)
-      -> std::vector<std::pair<int, ScheduledModule>>;
-
-  static void FindNextModulePlacement(
-      std::map<std::string, SchedulingQueryNode> graph,
-      std::map<std::vector<std::vector<ScheduledModule>>,
-               ExecutionPlanSchedulingData>& resulting_plan,
-      std::vector<std::string> available_nodes,
-      std::vector<std::vector<ScheduledModule>> current_plan,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      const ScheduledModule& module_placement,
-      std::vector<ScheduledModule> current_run, std::string node_name,
-      std::vector<std::string> processed_nodes, bool reduce_single_runs,
-      int& min_runs, std::map<std::string, TableMetadata> data_tables,
-      const std::pair<std::vector<std::vector<ModuleSelection>>,
-                      std::vector<std::vector<ModuleSelection>>>& heuristics,
-      std::pair<int, int>& statistics_counters,
-      const std::vector<std::string>& constrained_first_nodes,
-      std::vector<std::string> blocked_nodes,
-      std::vector<std::string> next_run_blocked_nodes,
-      AcceleratorLibraryInterface& drivers,
-      const std::chrono::system_clock::time_point& time_limit,
-      bool& trigger_timeout, const bool use_max_runs_cap,
-      int streamed_data_size);
-
-  static auto UpdateGraph(
-      const std::map<std::string, SchedulingQueryNode>& graph,
-      std::string bitstream,
       const std::map<std::string, TableMetadata>& data_tables,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      std::string node_name, const std::vector<int>& capacity,
-      QueryOperationType operation, AcceleratorLibraryInterface& drivers)
-      -> std::tuple<std::map<std::string, SchedulingQueryNode>,
-                    std::map<std::string, TableMetadata>, bool,
-                    std::vector<std::string>>;
+      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+          module_placements);
+  void GetScheduledModulesForNodeAfterPos(
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::vector<ScheduledModule>& current_run,
+      const std::string& node_name,
+      const std::map<std::string, TableMetadata>& data_tables,
+      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+          module_placements);
+
+  void UpdateGraphAndTableValuesGivenPlacement(
+      std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
+      std::unordered_set<std::string>& new_available_nodes,
+      const ScheduledModule& module_placement,
+      std::unordered_set<std::string>& new_processed_nodes,
+      std::map<std::string, TableMetadata>& new_data_tables,
+      std::unordered_set<std::string>& new_next_run_blocked_nodes,
+      const std::unordered_set<std::string>& blocked_nodes);
+
+  auto UpdateGraphCapacitiesAndTables(
+      std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
+      std::map<std::string, TableMetadata>& new_data_tables,
+      const std::string& bitstream, const std::string& node_name,
+      const std::vector<int>& capacity, QueryOperationType operation) -> bool;
 
   static auto CreateNewAvailableNodes(
-      const std::map<std::string, SchedulingQueryNode>& graph,
-      const std::vector<std::string>& available_nodes,
-      const std::vector<std::string>& processed_nodes, std::string node_name,
-      bool satisfied_requirements)
-      -> std::pair<std::vector<std::string>, std::vector<std::string>>;
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      std::unordered_set<std::string>& available_nodes,
+      std::unordered_set<std::string>& processed_nodes,
+      const std::string& node_name);
 
-  static void UpdateSatisfyingBitstreamsList(
-      std::string node_name,
-      const std::map<std::string, SchedulingQueryNode>& graph,
-      std::map<std::string, SchedulingQueryNode>& new_graph,
-      std::vector<std::string>& new_available_nodes,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      const std::map<std::string, TableMetadata>& data_tables,
-      std::map<std::string, TableMetadata>& new_tables,
-      const std::vector<std::string>& new_processed_nodes,
-      AcceleratorLibraryInterface& drivers);
-
-  static auto GetNewBlockedNodes(
-      const std::vector<std::string>& next_run_blocked_nodes,
-      const std::map<QueryOperationType, OperationPRModules>& hw_library,
-      const ScheduledModule& module_placement,
-      const std::map<std::string, SchedulingQueryNode>& graph,
-      AcceleratorLibraryInterface& drivers) -> std::vector<std::string>;
-
-  static void FindDataSensitiveNodeNames(
+  void UpdateAvailableNodesAndSatisfyingBitstreamsList(
       const std::string& node_name,
-      const std::map<std::string, SchedulingQueryNode>& graph,
-      std::vector<std::string>& new_next_run_blocked_nodes,
-      AcceleratorLibraryInterface& drivers);
+      std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
+      std::unordered_set<std::string>& new_available_nodes,
+      std::map<std::string, TableMetadata>& new_tables,
+      std::unordered_set<std::string>& new_processed_nodes,
+      QueryOperationType operation, bool satisfied_requirements,
+      std::unordered_set<std::string>& next_run_blocked_nodes,
+      const std::unordered_set<std::string>& blocked_nodes);
+
+  void GetNewBlockedNodes(
+      std::unordered_set<std::string>& next_run_blocked_nodes,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      QueryOperationType operation, const std::string& node_name,
+      const std::unordered_set<std::string>& blocked_nodes);
+
+  void FindDataSensitiveNodeNames(
+      const std::string& node_name,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      std::unordered_set<std::string>& new_next_run_blocked_nodes,
+      const std::unordered_set<std::string>& blocked_nodes);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

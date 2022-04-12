@@ -72,7 +72,7 @@ class AccelerationModuleSetupInterface {
   virtual auto GetMultiChannelParams(
       bool is_input, int stream_index,
       std::vector<std::vector<int>> operation_parameters)
-      -> std::pair<int, int>;
+      -> std::pair<int, std::vector<int>>;
 
   /**
    * @brief Can the module have any prerequisite modules before it?
@@ -118,7 +118,6 @@ class AccelerationModuleSetupInterface {
   virtual auto UpdateDataTable(
       const std::vector<int>& module_capacity,
       const std::vector<std::string>& input_table_names,
-      const std::map<std::string, TableMetadata>& data_tables,
       std::map<std::string, TableMetadata>& resulting_tables) -> bool;
 
   /**
@@ -154,8 +153,7 @@ class AccelerationModuleSetupInterface {
    * Return passthrough module initialisation parameters
    * @return Operation parameters.
    */
-  virtual auto GetPassthroughInitParameters()
-      -> AcceleratedQueryNode;
+  virtual auto GetPassthroughInitParameters() -> AcceleratedQueryNode;
 
  protected:
   static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)

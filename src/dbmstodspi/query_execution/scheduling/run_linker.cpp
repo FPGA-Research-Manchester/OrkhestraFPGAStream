@@ -25,19 +25,20 @@ auto RunLinker::LinkPeripheralNodesFromGivenRuns(
     std::queue<std::pair<std::vector<ScheduledModule>,
                          std::vector<std::shared_ptr<QueryNode>>>>
         query_node_runs_queue,
-    std::map<std::string,
-             std::map<int, std::vector<std::pair<std::string, int>>>>&
+    std::queue<std::map<
+        std::string, std::map<int, std::vector<std::pair<std::string, int>>>>>&
         linked_nodes)
     -> std::queue<std::pair<std::vector<ScheduledModule>,
                             std::vector<std::shared_ptr<QueryNode>>>> {
   std::queue<std::pair<std::vector<ScheduledModule>,
                        std::vector<std::shared_ptr<QueryNode>>>>
       linked_nodes_queue;
+  std::map<std::string, int> run_counter;
   while (!query_node_runs_queue.empty()) {
     auto [current_set, current_query_nodes] = query_node_runs_queue.front();
     query_node_runs_queue.pop();
 
-    CheckExternalLinks(current_query_nodes, linked_nodes);
+    CheckExternalLinks(current_query_nodes, linked_nodes, run_counter);
 
     linked_nodes_queue.push({current_set, current_query_nodes});
   }
@@ -48,15 +49,24 @@ auto RunLinker::LinkPeripheralNodesFromGivenRuns(
 // scheduled
 void RunLinker::CheckExternalLinks(
     const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
-    std::map<std::string,
-             std::map<int, std::vector<std::pair<std::string, int>>>>&
-        linked_nodes) {
+    std::queue<std::map<
+        std::string, std::map<int, std::vector<std::pair<std::string, int>>>>>&
+        linked_nodes,
+    std::map<std::string, int>& run_counter) {
+  std::map<std::string, std::map<int, std::vector<std::pair<std::string, int>>>>
+      current_links;
   for (const auto& node : current_query_nodes) {
     std::map<int, std::vector<std::pair<std::string, int>>> target_maps;
     for (int next_node_index = 0; next_node_index < node->next_nodes.size();
          next_node_index++) {
       std::vector<std::pair<std::string, int>> targets;
+      int required_run_count = std::count(node->module_locations.begin(),
+                                          node->module_locations.end(), -1);
       if (!node->next_nodes[next_node_index]) {
+        if (required_run_count - 1 != run_counter[node->node_name]) {
+          run_counter[node->node_name]++;
+          targets.emplace_back(node->node_name, 0);
+        }
         if (node->output_data_definition_files[next_node_index].empty()) {
           node->output_data_definition_files[next_node_index] =
               node->node_name + "_" + std::to_string(next_node_index) + ".csv";
@@ -69,8 +79,17 @@ void RunLinker::CheckExternalLinks(
             node->output_data_definition_files[next_node_index];
         if (current_filename.empty() &&
             ReuseMemory(*node, *node->next_nodes[next_node_index])) {
-          targets.emplace_back(node->next_nodes[next_node_index]->node_name,
-                               current_node_location);
+          // Need to do a choice here. If node finished. Put it into the next
+          // one. If not finished. Do self.
+          if (node->is_finished &&
+              required_run_count - 1 == run_counter[node->node_name]) {
+            targets.emplace_back(node->next_nodes[next_node_index]->node_name,
+                                 current_node_location);
+          } else {
+            run_counter[node->node_name]++;
+            targets.emplace_back(node->node_name, 0);
+          }
+          // Hardcoded self linking.
         } else {
           if (current_filename.empty()) {
             current_filename = node->node_name + "_" +
@@ -95,9 +114,10 @@ void RunLinker::CheckExternalLinks(
       }
     }
     if (!target_maps.empty()) {
-      linked_nodes.insert({node->node_name, target_maps});
+      current_links.insert({node->node_name, target_maps});
     }
   }
+  linked_nodes.push(current_links);
 }
 
 auto RunLinker::ReuseMemory(const QueryNode& /*source_node*/,

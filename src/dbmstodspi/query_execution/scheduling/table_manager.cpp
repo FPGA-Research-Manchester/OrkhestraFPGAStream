@@ -214,6 +214,6 @@ auto TableManager::GetColumnDataTypesFromSpecification(
 void TableManager::WriteResultTableFile(
     const DataManagerInterface* data_manager, const TableData& data_table,
     const std::string& filename) {
-  //data_manager->WriteRawTableData(data_table, filename);
+  // data_manager->WriteRawTableData(data_table, filename);
   data_manager->WriteTableData(data_table, filename);
 }

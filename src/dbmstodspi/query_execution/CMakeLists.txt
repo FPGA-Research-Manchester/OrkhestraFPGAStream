@@ -22,12 +22,14 @@ endif()
 add_library(query_execution OBJECT 
             states/execute_state.hpp
             states/execute_state.cpp
-            states/print_plan_state.hpp
-            states/print_plan_state.cpp
+            states/print_benchmark_state.hpp
+            states/print_benchmark_state.cpp
             states/schedule_state.hpp
             states/schedule_state.cpp
-            states/debug_schedule_state.hpp
-            states/debug_schedule_state.cpp
+            states/benchmark_schedule_state.hpp
+            states/benchmark_schedule_state.cpp
+            states/setup_benchmark_schedule_state.hpp
+            states/setup_benchmark_schedule_state.cpp
             states/setup_nodes_state.hpp
             states/setup_nodes_state.cpp
             states/state_interface.hpp
@@ -161,6 +163,7 @@ add_library(query_execution OBJECT
             scheduling/module_selection.cpp
             scheduling/module_selection.hpp
             scheduling/scheduling_data.hpp
+            scheduling/time_limit_execption.hpp
             ${OS_DEPENDENT_MEMORY_BLOCK})
 
 target_include_directories(query_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} 
@@ -174,7 +177,7 @@ target_include_directories(query_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 					                              ${CMAKE_CURRENT_SOURCE_DIR}/scheduling)
 
 target_link_libraries(query_execution PRIVATE core_interfaces)
-target_link_libraries(query_execution PRIVATE util)
+target_link_libraries(query_execution PUBLIC util)
 
 if (ENABLE_FPGA)
 	target_link_libraries(query_execution PUBLIC fos)

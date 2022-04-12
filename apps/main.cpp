@@ -43,7 +43,11 @@ void MeasureOverallTime(string input_def_filename, string config_filename) {
   auto begin = chrono::steady_clock::now();
   Core::Run(std::move(input_def_filename), std::move(config_filename));
   auto end = chrono::steady_clock::now();
-
+  std::cout << "TOTAL RUNTIME:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
   Log(LogLevel::kInfo,
       "Overall time = " +
           to_string(

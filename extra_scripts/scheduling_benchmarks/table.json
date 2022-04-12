@@ -1,0 +1,44 @@
+[
+    {
+        "filename": "table_0",
+        "record_count": 9769146,
+        "record_size": 23,
+        "sorted_status": []
+    },
+    {
+        "filename": "table_1",
+        "record_count": 9313855,
+        "record_size": 23,
+        "sorted_status": []
+    },
+    {
+        "filename": "table_2",
+        "record_count": 1404725,
+        "record_size": 22,
+        "sorted_status": []
+    },
+    {
+        "filename": "table_3",
+        "record_count": 7632925,
+        "record_size": 12,
+        "sorted_status": []
+    },
+    {
+        "filename": "table_4",
+        "record_count": 8939991,
+        "record_size": 15,
+        "sorted_status": []
+    },
+    {
+        "filename": "table_5",
+        "record_count": 196939,
+        "record_size": 16,
+        "sorted_status": []
+    },
+    {
+        "filename": "table_6",
+        "record_count": 2650239,
+        "record_size": 22,
+        "sorted_status": []
+    }
+]

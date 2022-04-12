@@ -29,7 +29,7 @@ class MultiplicationSetup : public AccelerationModuleSetupInterface {
  public:
   void SetupModule(AccelerationModule& acceleration_module,
                    const AcceleratedQueryNode& module_parameters) override;
-  auto CreateModule(MemoryManagerInterface* memory_manager, int module_position)
+  auto CreateModule(MemoryManagerInterface* memory_manager, int module_postion)
       -> std::unique_ptr<AccelerationModule> override;
   /**
    * @brief Method to setup the multiplication operation acceleration.

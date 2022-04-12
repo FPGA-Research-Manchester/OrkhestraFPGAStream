@@ -21,10 +21,42 @@ limitations under the License.
 
 #include "rapidjson/document.h"
 #include "rapidjson/filereadstream.h"
+#include "rapidjson/filewritestream.h"
+#include "rapidjson/writer.h"
 
 using orkhestrafs::dbmstodspi::RapidJSONReader;
 using rapidjson::Document;
 using rapidjson::FileReadStream;
+using rapidjson::FileWriteStream;
+using rapidjson::Value;
+using rapidjson::Writer;
+
+void RapidJSONReader::WriteValueMap(std::map<std::string, double> data,
+                                    const std::string& json_filename) {
+  Document document;
+  document.SetObject();
+  for (const auto& [key, value] : data) {
+    Value json_key;
+    json_key.SetString(key.c_str(), key.size(), document.GetAllocator());
+    const auto* thing = json_key.GetString();
+    document.AddMember(json_key, value, document.GetAllocator());
+  }
+  FILE* file_pointer =
+      fopen(json_filename.c_str(), "wb");  // non-Windows use "w"
+
+  if (!file_pointer) {
+    throw std::runtime_error("Couldn't find: " + json_filename);
+  }
+
+  char write_buffer[8192];
+  FileWriteStream output_stream(file_pointer, write_buffer,
+                                sizeof(write_buffer));
+
+  Writer<FileWriteStream> writer(output_stream);
+  document.Accept(writer);
+
+  fclose(file_pointer);
+}
 
 auto RapidJSONReader::Read(const std::string& json_filename)
     -> std::unique_ptr<Document> {
@@ -295,7 +327,7 @@ auto RapidJSONReader::ReadHWLibraryData(std::string json_filename)
          operator_parameters[start_locations_field.c_str()].GetArray()) {
       std::vector<std::string> current_location_bitstreams;
       for (const auto& bitstream_name : start_location_array.GetArray()) {
-        current_location_bitstreams.push_back(bitstream_name.GetString());
+        current_location_bitstreams.emplace_back(bitstream_name.GetString());
       }
       start_locations_vector.push_back(current_location_bitstreams);
     }

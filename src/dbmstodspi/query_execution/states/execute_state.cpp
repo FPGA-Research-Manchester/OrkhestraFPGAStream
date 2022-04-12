@@ -32,11 +32,11 @@ auto ExecuteState::Execute(GraphProcessingFSMInterface* fsm)
     -> std::unique_ptr<StateInterface> {
   Log(LogLevel::kTrace, "Execute state");
   if (!fsm->IsRunReadyForExecution()) {
-  //  if (!fsm->IsRunValid()) {
-  //    // Fix stuff
-  //    throw std::runtime_error("Not implemented");
-  //  }
-  //} else {
+    //  if (!fsm->IsRunValid()) {
+    //    // Fix stuff
+    //    throw std::runtime_error("Not implemented");
+    //  }
+    //} else {
     throw std::runtime_error("No nodes ready to execute!");
   }
 

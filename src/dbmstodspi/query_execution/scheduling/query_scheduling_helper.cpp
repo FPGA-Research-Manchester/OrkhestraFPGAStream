@@ -29,7 +29,7 @@ auto QuerySchedulingHelper::FindNodePtrIndex(QueryNode* current_node,
     if (potential_current_node != nullptr &&
         potential_current_node.get() == current_node) {
       if (index != -1) {
-        throw std::logic_error(
+        throw std::runtime_error(
             "Currently can't support the same module taking multiple inputs "
             "from another module!");
       }
@@ -38,35 +38,43 @@ auto QuerySchedulingHelper::FindNodePtrIndex(QueryNode* current_node,
     counter++;
   }
   if (index == -1) {
-    throw std::logic_error("No current node found!");
+    throw std::runtime_error("No current node found!");
   }
   return index;
 }
 
-// TODO: Check that it is sorted by the desired column.
+// TODO(Kaspar): Check that it is sorted by the desired column.
 auto QuerySchedulingHelper::IsTableSorted(TableMetadata table_data) -> bool {
   return table_data.sorted_status.size() == 1 &&
          table_data.sorted_status.at(0).start_position == 0 &&
          table_data.sorted_status.at(0).length == table_data.record_count;
 }
 
-void QuerySchedulingHelper::AddNewTableToNextNodes(
-    std::map<std::string, SchedulingQueryNode>& graph, std::string node_name,
-    const std::vector<std::string>& table_names) {
+auto QuerySchedulingHelper::AddNewTableToNextNodes(
+    std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    const std::string& node_name, const std::vector<std::string>& table_names)
+    -> bool {
   for (const auto& next_node_name : graph.at(node_name).after_nodes) {
     if (!next_node_name.empty()) {
       for (const auto& [current_node_index, current_stream_index] :
            GetCurrentNodeIndexesByName(graph, next_node_name, node_name)) {
+        // TODO(Kaspar): Currently the same for all of them but should be
+        // individual
+        if (graph.at(next_node_name).data_tables.at(current_node_index) ==
+            table_names.at(current_stream_index)) {
+          return false;
+        }
         graph.at(next_node_name).data_tables.at(current_node_index) =
             table_names.at(current_stream_index);
       }
     }
   }
+  return true;
 }
 
 auto QuerySchedulingHelper::GetCurrentNodeIndexesByName(
-    const std::map<std::string, SchedulingQueryNode>& graph,
-    std::string next_node_name, std::string current_node_name)
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    const std::string& next_node_name, const std::string& current_node_name)
     -> std::vector<std::pair<int, int>> {
   std::vector<std::pair<int, int>> resulting_indexes;
   for (int potential_current_node_index = 0;
@@ -79,30 +87,54 @@ auto QuerySchedulingHelper::GetCurrentNodeIndexesByName(
       auto stream_index = graph.at(next_node_name)
                               .before_nodes.at(potential_current_node_index)
                               .second;
-      resulting_indexes.push_back({potential_current_node_index, stream_index});
+      resulting_indexes.emplace_back(potential_current_node_index,
+                                     stream_index);
     }
   }
   if (resulting_indexes.empty()) {
-    throw std::logic_error(
+    throw std::runtime_error(
         "No next nodes found with the expected dependency");
   }
   return resulting_indexes;
 }
 
+void QuerySchedulingHelper::SetAllNodesAsProcessedAfterGivenNode(
+    const std::string& node_name, std::unordered_set<std::string>& past_nodes,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    std::unordered_set<std::string>& current_available_nodes) {
+  // You have past nodes including current node
+  // You have new nodes
+  // You Find new nodes.
+  // All of those nodes you remove from available and then you add to past nodes
+  // You save all of those nodes and you keep scheduling them while you still
+  // have nodes saved.
+  auto currently_ignored_nodes = GetNewAvailableNodesAfterSchedulingGivenNode(
+      node_name, past_nodes, graph);
+  while (!currently_ignored_nodes.empty()) {
+    auto current_node_name = *currently_ignored_nodes.begin();
+    currently_ignored_nodes.erase(current_node_name);
+    current_available_nodes.erase(current_node_name);
+    past_nodes.insert(current_node_name);
+    UpdateAvailableNodesAfterSchedulingGivenNode(
+        current_node_name, past_nodes, graph, currently_ignored_nodes);
+  }
+}
+
 auto QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
-    std::string node_name, const std::vector<std::string>& past_nodes,
-    const std::map<std::string, SchedulingQueryNode>& graph)
-    -> std::vector<std::string> {
-  std::vector<std::string> potential_nodes = graph.at(node_name).after_nodes;
+    const std::string& node_name,
+    const std::unordered_set<std::string>& past_nodes,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph)
+    -> std::unordered_set<std::string> {
+  std::unordered_set<std::string> potential_nodes(
+      graph.at(node_name).after_nodes.begin(),
+      graph.at(node_name).after_nodes.end());
   for (const auto& potential_node_name : graph.at(node_name).after_nodes) {
     if (!potential_node_name.empty()) {
       for (const auto& [previous_node_name, node_index] :
            graph.at(potential_node_name).before_nodes) {
         if (!previous_node_name.empty() &&
-            std::find(past_nodes.begin(), past_nodes.end(),
-                      previous_node_name) == past_nodes.end()) {
-          auto search = std::find(potential_nodes.begin(),
-                                  potential_nodes.end(), previous_node_name);
+            past_nodes.find(previous_node_name) == past_nodes.end()) {
+          auto search = potential_nodes.find(potential_node_name);
           if (search != potential_nodes.end()) {
             potential_nodes.erase(search);
           }
@@ -110,26 +142,33 @@ auto QuerySchedulingHelper::GetNewAvailableNodesAfterSchedulingGivenNode(
       }
     }
   }
-  potential_nodes.erase(
-      std::remove(potential_nodes.begin(), potential_nodes.end(), ""),
-      potential_nodes.end());
+  potential_nodes.erase("");
   return potential_nodes;
 }
 
-// TODO: This needs improving to support multi inputs and outputs
-void QuerySchedulingHelper::RemoveNodeFromGraph(
-    std::map<std::string, SchedulingQueryNode>& graph, std::string node_name) {
+void QuerySchedulingHelper::UpdateAvailableNodesAfterSchedulingGivenNode(
+    const std::string& node_name,
+    const std::unordered_set<std::string>& past_nodes,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    std::unordered_set<std::string>& current_available_nodes) {
+  current_available_nodes.merge(GetNewAvailableNodesAfterSchedulingGivenNode(
+      node_name, past_nodes, graph));
+}
 
+// TODO(Kaspar): This needs improving to support multi inputs and outputs
+void QuerySchedulingHelper::RemoveNodeFromGraph(
+    std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    const std::string& node_name) {
   // We just support one in and one out currently.
   if (graph.at(node_name).before_nodes.size() != 1 ||
       graph.at(node_name).after_nodes.size() != 1) {
-    throw std::logic_error(
+    throw std::runtime_error(
         "Only nodes with one input and one output are supported!");
   }
 
   auto before_node = graph.at(node_name).before_nodes.front();
   auto after_node = graph.at(node_name).after_nodes.front();
-  // TODO: No need for the temp copies.
+  // TODO(Kaspar): No need for the temp copies.
   if (after_node.empty() && before_node.second == -1) {
     // Do nothing
   } else if (after_node.empty()) {

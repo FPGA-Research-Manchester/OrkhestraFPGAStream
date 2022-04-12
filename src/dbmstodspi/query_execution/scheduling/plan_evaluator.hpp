@@ -24,44 +24,42 @@ namespace orkhestrafs::dbmstodspi {
  */
 class PlanEvaluator : public PlanEvaluatorInterface {
  public:
-  auto GetBestPlan(const std::vector<std::vector<std::vector<ScheduledModule>>>&
-                       available_plans,
-                   int min_run_count,
+  auto GetBestPlan(int min_run_count,
                    const std::vector<ScheduledModule>& last_configuration,
-                   const std::string resource_string, double utilites_scaler,
+                   std::string resource_string, double utilites_scaler,
                    double config_written_scaler,
                    double utility_per_frame_scaler,
                    const std::map<std::vector<std::vector<ScheduledModule>>,
                                   ExecutionPlanSchedulingData>& plan_metadata,
                    const std::map<char, int>& cost_of_columns,
                    double streaming_speed, double configuration_speed)
-      -> std::pair<std::vector<std::vector<ScheduledModule>>,
-                   std::vector<ScheduledModule>> override;
+      -> std::tuple<std::vector<std::vector<ScheduledModule>>,
+                    std::vector<ScheduledModule>, int, int> override;
 
-private:
-  auto FindConfigWritten(
+ private:
+  static auto FindConfigWritten(
       const std::vector<std::vector<ScheduledModule>>& all_runs,
       const std::vector<ScheduledModule>& current_configuration,
-      const std::string resource_string,
+      const std::string& resource_string,
       const std::map<char, int>& cost_of_columns)
       -> std::pair<int, std::vector<ScheduledModule>>;
 
-  auto FindFastestPlan(
+  static auto FindFastestPlan(
       const std::vector<int>& data_streamed,
       const std::vector<int>& configuration_data_wirtten,
       double streaming_speed, double configuration_speed) -> int;
 
-  auto FindConfigWrittenForConfiguration(
+  static auto FindConfigWrittenForConfiguration(
       const std::vector<ScheduledModule>& current_run,
       const std::vector<ScheduledModule>& previous_configuration,
-      const std::string resource_string,
+      const std::string& resource_string,
       const std::map<char, int>& cost_of_columns)
       -> std::pair<int, std::vector<ScheduledModule>>;
 
-  void FindNewWrittenFrames(
+  static void FindNewWrittenFrames(
       const std::vector<int>& fully_written_frames,
       std::vector<int>& written_frames,
-      const std::vector<ScheduledModule>& reduced_next_config);
+      const std::vector<ScheduledModule>& configuration);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

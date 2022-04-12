@@ -18,6 +18,4 @@ limitations under the License.
 
 using orkhestrafs::dbmstodspi::ReducingModuleSetup;
 
-auto ReducingModuleSetup::IsReducingData() -> bool {
-  return true;
-}
+auto ReducingModuleSetup::IsReducingData() -> bool { return true; }

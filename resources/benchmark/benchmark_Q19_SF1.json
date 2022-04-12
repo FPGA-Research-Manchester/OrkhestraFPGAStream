@@ -71,9 +71,9 @@
 				[]
 			],
 			"output_stream_params": [
-				[0, 1, 2, 3, 4, 5, 6],
-				[0, 3, 3, 3],
-				[1, 1, 1, 1],
+				[ 0, 1, 2, 1, 2, 3, 4, 5, 6 ],
+				[0, 3, 3, 3, 3],
+				[1, 1, 1, 1, 1],
 				[2]
 			],
 			"operation_params": [
@@ -89,9 +89,9 @@
 		"next_nodes": ["lineitem_part_join"],
 		"operation_parameters": {
 			"input_stream_params": [
-				[0, 1, 2, 1, 2, 3, 4, 5, 6],
-				[0, 3, 3, 3],
-				[1, 1, 1, 1],
+				[],
+				[ 0, 3, 3, 3, 3 ],
+				[ 1, 1, 1, 1, 1 ],
 				[]
 			],
 			"output_stream_params": [
@@ -101,7 +101,7 @@
 				[1]
 			],
 			"operation_params": [
-				[128, 1024]
+				[]
 			]
 		}
 	},

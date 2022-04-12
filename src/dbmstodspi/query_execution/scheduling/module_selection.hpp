@@ -18,15 +18,47 @@ limitations under the License.
 
 #include <map>
 #include <string>
+#include <unordered_set>
 #include <utility>
 
 #include "operation_types.hpp"
 #include "scheduled_module.hpp"
 
-using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 using orkhestrafs::dbmstodspi::ScheduledModule;
 
 namespace orkhestrafs::dbmstodspi {
+
+template <class T>
+inline void hash_combine(std::size_t& s, const T& v) {
+  std::hash<T> h;
+  s ^= h(v) + 0x9e3779b9 + (s << 6) + (s >> 2);
+}
+
+template <class T>
+class MyHash;
+
+template <>
+struct MyHash<ScheduledModule> {
+  auto operator()(ScheduledModule const& s) const -> std::size_t {
+    std::size_t res = 0;
+    hash_combine(res, s.bitstream);
+    hash_combine(res, s.position.first);
+    hash_combine(res, s.position.second);
+    hash_combine(res, s.operation_type);
+    hash_combine(res, s.node_name);
+    return res;
+  }
+};
+
+struct PairHash {
+  template <class T1, class T2>
+  auto operator()(std::pair<T1, T2> const& pair) const -> std::size_t {
+    std::size_t h1 = std::hash<T1>()(pair.first);
+    std::size_t h2 = MyHash<T2>()(pair.second);
+
+    return h1 ^ (h2 << 1);
+  }
+};
 
 /**
  * @brief Struct to hold data about a specific module placement during
@@ -35,7 +67,7 @@ namespace orkhestrafs::dbmstodspi {
 class ModuleSelection {
  private:
   enum SelectionMode { kAll, kFirst, kLast, kShortest, kLongest };
-  const std::map<std::string, SelectionMode> kToStringMap = {
+  const std::map<std::string, SelectionMode> kToStringMap_ = {
       {"ALL_AVAILABLE", SelectionMode::kAll},
       {"FIRST_AVAILABLE", SelectionMode::kFirst},
       {"LAST_AVAILABLE", SelectionMode::kLast},
@@ -44,30 +76,26 @@ class ModuleSelection {
 
   SelectionMode value_;
 
-  // TODO: Find a more beautiful way to do this as methods are not allowed with
-  // enums in C.
-  static auto SelectAll(
-      const std::vector<std::pair<int, ScheduledModule>>& available_placements)
-      -> std::vector<std::pair<int, ScheduledModule>>;
-  static auto SelectFirst(
-      const std::vector<std::pair<int, ScheduledModule>>& available_placements)
-      -> std::vector<std::pair<int, ScheduledModule>>;
-  static auto SelectLast(
-      const std::vector<std::pair<int, ScheduledModule>>& available_placements)
-      -> std::vector<std::pair<int, ScheduledModule>>;
-  static auto SelectShortest(
-      const std::vector<std::pair<int, ScheduledModule>>& available_placements)
-      -> std::vector<std::pair<int, ScheduledModule>>;
-  static auto SelectLongest(
-      const std::vector<std::pair<int, ScheduledModule>>& available_placements)
-      -> std::vector<std::pair<int, ScheduledModule>>;
+  // TODO(Kaspar): Find a more beautiful way to do this as methods are not
+  // allowed with enums in C.
+  static void SelectAll(std::unordered_set<std::pair<int, ScheduledModule>,
+                                           PairHash>& available_placements);
+  static void SelectFirst(std::unordered_set<std::pair<int, ScheduledModule>,
+                                             PairHash>& available_placements);
+  static void SelectLast(std::unordered_set<std::pair<int, ScheduledModule>,
+                                            PairHash>& available_placements);
+  static void SelectShortest(
+      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+          available_placements);
+  static void SelectLongest(std::unordered_set<std::pair<int, ScheduledModule>,
+                                               PairHash>& available_placements);
 
  public:
-  ModuleSelection(std::string selection_mode)
-      : value_{kToStringMap.at(selection_mode)} {};
-  auto SelectAccordingToMode(
-      const std::vector<std::pair<int, ScheduledModule>>& available_placements) const
-      -> std::vector<std::pair<int, ScheduledModule>>;
+  explicit ModuleSelection(const std::string& selection_mode)
+      : value_{kToStringMap_.at(selection_mode)} {};
+  void SelectAccordingToMode(
+      std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
+          available_placements) const;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

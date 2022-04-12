@@ -18,12 +18,10 @@ limitations under the License.
 
 #include "logger.hpp"
 #include "schedule_state.hpp"
-#include "debug_schedule_state.hpp"
 
 using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
-using orkhestrafs::dbmstodspi::SetupSchedulingState;
 using orkhestrafs::dbmstodspi::ScheduleState;
-using orkhestrafs::dbmstodspi::DebugScheduleState;
+using orkhestrafs::dbmstodspi::SetupSchedulingState;
 using orkhestrafs::dbmstodspi::StateInterface;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
@@ -31,6 +29,6 @@ using orkhestrafs::dbmstodspi::logging::LogLevel;
 auto SetupSchedulingState::Execute(GraphProcessingFSMInterface* fsm)
     -> std::unique_ptr<StateInterface> {
   Log(LogLevel::kTrace, "Setup scheduling state");
-  fsm->SetupSchedulingData();
+  fsm->SetupSchedulingData(true);
   return std::make_unique<ScheduleState>();
 }

@@ -17,6 +17,7 @@ limitations under the License.
 #include "dma_setup.hpp"
 
 #include <algorithm>
+#include <iostream>
 #include <numeric>
 #include <stdexcept>
 
@@ -31,6 +32,12 @@ void DMASetup::SetupDMAModule(
     DMAInterface& dma_module,
     const std::vector<StreamDataParameters>& input_streams,
     const std::vector<StreamDataParameters>& output_streams) {
+  int input_stream_size = 0;
+  for (const auto& input : input_streams) {
+    input_stream_size +=
+        input.stream_record_count * input.stream_record_size * 4;
+  }
+  std::cout << "STREAMED DATA SIZE:" << input_stream_size << std::endl;
   DMASetup::SetupDMAModuleDirection(dma_module, input_streams, true);
   DMASetup::SetupDMAModuleDirection(dma_module, output_streams, false);
 }
@@ -112,6 +119,8 @@ void DMASetup::SetupDMAModuleDirection(
   if (is_input_stream && multichannel_stream_count != 0) {
     dma_engine.SetNumberOfInputStreamsWithMultipleChannels(
         multichannel_stream_count);
+  } else if (is_input_stream) {
+    dma_engine.SetNumberOfInputStreamsWithMultipleChannels(0);
   }
 }
 
@@ -126,12 +135,29 @@ void DMASetup::AllocateStreamBuffers(DMASetupData& stream_setup_data,
 void DMASetup::SetMultiChannelSetupData(
     const StreamDataParameters& stream_init_data,
     DMASetupData& stream_setup_data) {
-  stream_setup_data.active_channel_count =
+  /*stream_setup_data.active_channel_count =
       (stream_init_data.stream_record_count +
        stream_init_data.records_per_channel - 1) /
-      stream_init_data.records_per_channel;
+      stream_init_data.records_per_channel;*/
+  stream_setup_data.active_channel_count = stream_init_data.max_channel_count;
+  for (int j = 0; j < stream_init_data.records_per_channel.size(); j++) {
+    DMAChannelSetupData current_channel_setup_data{};
+    current_channel_setup_data.record_count =
+        stream_init_data.records_per_channel[j];
+    current_channel_setup_data.channel_id = j;
+    int records_so_far = 0;
+    for (int z = 0; z < j; z++) {
+      records_so_far += stream_init_data.records_per_channel[z];
+    }
 
-  for (int j = 0; j < stream_setup_data.active_channel_count; j++) {
+    current_channel_setup_data.stream_address = reinterpret_cast<uintptr_t>(
+        stream_init_data.physical_address +
+        (stream_init_data.stream_record_size * records_so_far));
+
+    stream_setup_data.channel_setup_data.push_back(current_channel_setup_data);
+  }
+
+  /*for (int j = 0; j < stream_setup_data.active_channel_count; j++) {
     DMAChannelSetupData current_channel_setup_data{};
     if (j == stream_setup_data.active_channel_count - 1 &&
         stream_init_data.stream_record_count %
@@ -152,17 +178,17 @@ void DMASetup::SetMultiChannelSetupData(
          (stream_init_data.records_per_channel * j)));
 
     stream_setup_data.channel_setup_data.push_back(current_channel_setup_data);
-  }
+  }*/
 
   // Just in case setting the unused channels to 0 size and use the start
   // address of the used channels.
-  for (int j = stream_setup_data.active_channel_count;
+  /*for (int j = stream_setup_data.active_channel_count;
        j < stream_init_data.max_channel_count; j++) {
     DMAChannelSetupData current_channel_setup_data = {
         reinterpret_cast<uintptr_t>(stream_init_data.physical_address), 0, j};
     stream_setup_data.channel_setup_data.push_back(current_channel_setup_data);
   }
-  stream_setup_data.active_channel_count = stream_init_data.max_channel_count;
+  stream_setup_data.active_channel_count = stream_init_data.max_channel_count;*/
 }
 
 // This is the most optimal channel record count for the given max channel

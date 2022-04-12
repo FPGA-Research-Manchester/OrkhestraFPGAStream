@@ -18,8 +18,8 @@ limitations under the License.
 
 #include <cstdio>
 #include <iostream>
-#include <utility>
 #include <stdexcept>
+#include <utility>
 
 #include "filter.hpp"
 #include "filter_interface.hpp"
@@ -51,8 +51,7 @@ void FilterSetup::SetupModule(AccelerationModule& acceleration_module,
 
 void FilterSetup::SetupPassthroughFilter(FilterInterface& filter_module) {
   filter_module.ResetDNFStates();
-  filter_module.FilterSetStreamIDs(15, 15,
-                                   15);
+  filter_module.FilterSetStreamIDs(15, 15, 15);
 
   SetOneOutputSingleModuleMode(filter_module);
   filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(

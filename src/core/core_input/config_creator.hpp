@@ -27,11 +27,11 @@ limitations under the License.
 #include "operation_types.hpp"
 
 using orkhestrafs::core_interfaces::Config;
+using orkhestrafs::core_interfaces::JSONReaderInterface;
 using orkhestrafs::core_interfaces::operation_types::QueryOperation;
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 using orkhestrafs::dbmstodspi::ConfigValueCheckerInterface;
 using orkhestrafs::dbmstodspi::InputConfigReaderInterface;
-using orkhestrafs::dbmstodspi::JSONReaderInterface;
 using orkhestrafs::dbmstodspi::JSONValidatorInterface;
 
 namespace orkhestrafs::core::core_input {
@@ -65,11 +65,13 @@ class ConfigCreator {
   static auto CreateHWLibrary(
       const std::map<
           std::string,
-          std::pair<std::map<std::string,
-                             std::map<std::string, std::variant<std::vector<int>,
-                                                                int, std::string>>>,
-                    std::vector<std::vector<std::string>>>>& hw_data_in_string_form) -> std::map<QueryOperationType, OperationPRModules>;
-  static auto SetCommaSeparatedValues(std::string original_string)
+          std::pair<
+              std::map<std::string,
+                       std::map<std::string, std::variant<std::vector<int>, int,
+                                                          std::string>>>,
+              std::vector<std::vector<std::string>>>>& hw_data_in_string_form)
+      -> std::map<QueryOperationType, OperationPRModules>;
+  static auto SetCommaSeparatedValues(const std::string& original_string)
       -> std::vector<std::string>;
 
  public:

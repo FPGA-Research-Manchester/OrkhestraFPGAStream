@@ -20,8 +20,10 @@ limitations under the License.
 #include <utility>
 
 #include "operation_types.hpp"
+#include "table_data.hpp"
 
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
+using orkhestrafs::core_interfaces::table_data::SortedSequence;
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -34,14 +36,15 @@ struct ScheduledModule {
   QueryOperationType operation_type;
   std::string bitstream;
   std::pair<int, int> position;
+  std::vector<SortedSequence> processed_table_data;
 
   // For map to work.
-  bool operator<(const ScheduledModule& rhs) const {
+  auto operator<(const ScheduledModule& rhs) const -> bool {
     return position.first < rhs.position.first;
   }
 
   // For std::unique to work.
-  bool operator==(const ScheduledModule& rhs) const {
+  auto operator==(const ScheduledModule& rhs) const -> bool {
     return node_name == rhs.node_name && operation_type == rhs.operation_type &&
            bitstream == rhs.bitstream && position == rhs.position;
   }

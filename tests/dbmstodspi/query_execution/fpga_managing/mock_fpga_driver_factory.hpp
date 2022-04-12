@@ -23,9 +23,11 @@ using orkhestrafs::dbmstodspi::FPGADriverFactoryInterface;
 
 class MockFPGADriverFactory : public FPGADriverFactoryInterface {
  public:
-  MOCK_METHOD(std::unique_ptr<FPGAManagerInterface>, CreateFPGAManager,
-              (AcceleratorLibraryInterface * driver_library), (override));
-  MOCK_METHOD(std::unique_ptr<AcceleratorLibraryInterface>,
-              CreateAcceleratorLibrary,
-              (MemoryManagerInterface * memory_manager), (override));
+  MOCK_METHOD(std::unique_ptr<orkhestrafs::dbmstodspi::FPGAManagerInterface>,
+              CreateFPGAManager, (AcceleratorLibraryInterface * driver_library),
+              (override));
+  MOCK_METHOD(
+      std::unique_ptr<orkhestrafs::dbmstodspi::AcceleratorLibraryInterface>,
+      CreateAcceleratorLibrary, (MemoryManagerInterface * memory_manager),
+      (override));
 };

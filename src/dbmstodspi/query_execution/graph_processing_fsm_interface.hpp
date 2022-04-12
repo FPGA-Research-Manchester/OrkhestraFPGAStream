@@ -71,19 +71,30 @@ class GraphProcessingFSMInterface {
    * memory constraints could get violated.
    * @return Boolean flag showing if the run is valid.
    */
-  //virtual auto IsRunValid() -> bool = 0;
+  // virtual auto IsRunValid() -> bool = 0;
   /**
    * @brief Execute the next run ready for execution.
    */
   virtual void ExecuteAndProcessResults() = 0;
   /**
-   * @brief Debug method to print the current plan. Will delete the run!
+   * @brief Debug method to print the current stats. Will delete the run!
    */
-  virtual void PopAndPrintCurrentPlan() = 0;
+  virtual void PrintCurrentStats() = 0;
   /**
    * @brief Method to setup current table data from config which tells the
    * scheduler about the available tables and query graphs.
+   * @param Boolean for confirming the use of bitstreams
    */
-  virtual void SetupSchedulingData() = 0;
+  virtual void SetupSchedulingData(bool setup_bitstreams) = 0;
+
+  /**
+   * @brief Schedule unscheduled nodes.
+   */
+  virtual void BenchmarkScheduleUnscheduledNodes() = 0;
+  /**
+   * @brief Check if there are nodes to schedule.
+   * @return Boolean flag showing if there are no more nodes to schedule.
+   */
+  virtual auto IsBenchmarkDone() -> bool = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

@@ -16,10 +16,10 @@ limitations under the License.
 
 #pragma once
 #include "acceleration_module_setup_interface.hpp"
+#include "blocking_sort_module_setup.hpp"
 #include "first_module_setup.hpp"
 #include "merge_sort_interface.hpp"
 #include "sorting_module_setup.hpp"
-#include "blocking_sort_module_setup.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -40,10 +40,10 @@ class MergeSortSetup : public virtual AccelerationModuleSetupInterface,
       -> bool override;
   auto GetMultiChannelParams(bool is_input, int stream_index,
                              std::vector<std::vector<int>> operation_parameters)
-      -> std::pair<int, int> override;
+      -> std::pair<int, std::vector<int>> override;
   auto IsDataSensitive() -> bool override;
-  auto GetMinSortingRequirementsForTable(
-      const TableMetadata& table_data) -> std::vector<int> override;
+  auto GetMinSortingRequirementsForTable(const TableMetadata& table_data)
+      -> std::vector<int> override;
   /**
    * @brief Calculate the correct configuration data and write the setup data
    * into the memory mapped registers.
@@ -78,8 +78,7 @@ class MergeSortSetup : public virtual AccelerationModuleSetupInterface,
  private:
   static auto PotentialRecordCountIsValid(int potential_record_count,
                                           int record_size) -> bool;
-  static void SetupPassthroughMergeSort(
-      MergeSortInterface& merge_sort_module);
+  static void SetupPassthroughMergeSort(MergeSortInterface& merge_sort_module);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

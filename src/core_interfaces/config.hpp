@@ -21,15 +21,15 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
+#include "pr_module_data.hpp"
 #include "query_scheduling_data.hpp"
 #include "table_data.hpp"
-#include "pr_module_data.hpp"
 
+using orkhestrafs::core_interfaces::hw_library::OperationPRModules;
 using orkhestrafs::core_interfaces::operation_types::QueryOperation;
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 using orkhestrafs::core_interfaces::table_data::ColumnDataType;
 using orkhestrafs::core_interfaces::table_data::TableMetadata;
-using orkhestrafs::core_interfaces::hw_library::OperationPRModules;
 
 namespace orkhestrafs::core_interfaces {
 struct Config {
@@ -72,7 +72,6 @@ struct Config {
   double utilites_scaler = -1;
   double config_written_scaler = -1;
   double utility_per_frame_scaler = -1;
-
 
   /// CSV data column separator character.
   char csv_separator;

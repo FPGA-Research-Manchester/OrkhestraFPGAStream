@@ -1,13 +1,13 @@
 #include "udma.h"
 
-#include <experimental/filesystem>
-#include <fstream>
-#include <algorithm>
-
+#include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <unistd.h>
+
+#include <algorithm>
+#include <experimental/filesystem>
+#include <fstream>
 
 const std::string sysfsRoot = "/sys/class/u-dma-buf";
 const std::string devfsRoot = "/dev";
@@ -23,62 +23,56 @@ uint64_t getIntFromFile(const std::string &path, bool hex) {
   return phys_addr;
 }
 
-bool file_exists(const std::string& name) {
+bool file_exists(const std::string &name) {
   struct stat buffer;
   return (stat(name.c_str(), &buffer) == 0);
 }
 
-UdmaDevice::UdmaDevice(const std::string &devname) :
-    sysfsPath(sysfsRoot + "/" + devname),
-    devfsPath(devfsRoot + "/" + devname),
-    mapped(false),
-    phys_addr(getIntFromFile(sysfsPath + "/phys_addr", true)),
-    size(getIntFromFile(sysfsPath + "/size", false)) {
-}
+UdmaDevice::UdmaDevice(const std::string &devname)
+    : sysfsPath(sysfsRoot + "/" + devname),
+      devfsPath(devfsRoot + "/" + devname),
+      mapped(false),
+      phys_addr(getIntFromFile(sysfsPath + "/phys_addr", true)),
+      size(getIntFromFile(sysfsPath + "/size", false)) {}
 
-UdmaDevice::~UdmaDevice() {
-  unmap();
-}
+UdmaDevice::~UdmaDevice() { unmap(); }
 
 char *UdmaDevice::map() {
-  if (mapped)
-    return buffer;
-  if ((fd  = open(devfsPath.c_str(), O_RDWR|O_SYNC)) != -1) {
-    if ((buffer = (char*) mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) != MAP_FAILED) {
+  if (mapped) return buffer;
+  if ((fd = open(devfsPath.c_str(), O_RDWR | O_SYNC)) != -1) {
+    if ((buffer = (char *)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED,
+                               fd, 0)) != MAP_FAILED) {
       mapped = true;
       return buffer;
     }
-    close(fd); // mmap failed
+    close(fd);  // mmap failed
   }
-  return nullptr; // open failed
+  return nullptr;  // open failed
 }
 
 void UdmaDevice::unmap() {
-  if (!mapped)
-    return;
+  if (!mapped) return;
   munmap(buffer, size);
   close(fd);
 }
 
 // finds loaded udma buffers
-UdmaRepo::UdmaRepo () {
+UdmaRepo::UdmaRepo() {
   if (!file_exists(sysfsRoot))
     throw std::runtime_error("Udmabuf kernel module not loaded");
-  for (int i = 0; ; i++) {
+  for (int i = 0;; i++) {
     std::string devname = "udmabuf" + std::to_string(i);
     if (!file_exists(sysfsRoot + "/" + devname)) break;
     devices.emplace_back(devname);
   }
 }
 
-int UdmaRepo::count() {
-  return devices.size();
-}
+int UdmaRepo::count() { return devices.size(); }
 
 UdmaDevice *UdmaRepo::device(int index) {
   try {
     return &devices.at(index);
-  } catch (std::out_of_range& e) {
+  } catch (std::out_of_range &e) {
     throw std::runtime_error("Attempted to load non-existant buffer");
   }
 }

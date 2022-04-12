@@ -37,7 +37,7 @@ class JoinSetup : public virtual AccelerationModuleSetupInterface,
  public:
   void SetupModule(AccelerationModule& acceleration_module,
                    const AcceleratedQueryNode& module_parameters) override;
-  auto CreateModule(MemoryManagerInterface* memory_manager, int module_position)
+  auto CreateModule(MemoryManagerInterface* memory_manager, int module_postion)
       -> std::unique_ptr<AccelerationModule> override;
   auto GetWorstCaseProcessedTables(
       const std::vector<int>& min_capacity,

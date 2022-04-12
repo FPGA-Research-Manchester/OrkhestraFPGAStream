@@ -18,6 +18,8 @@ limitations under the License.
 
 #include <map>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -30,9 +32,9 @@ using orkhestrafs::dbmstodspi::SchedulingQueryNode;
 namespace orkhestrafs::dbmstodspi::scheduling_data {
 
 struct ExecutionPlanSchedulingData {
-  std::vector<std::string> processed_nodes;
-  std::vector<std::string> available_nodes;
-  std::map<std::string, SchedulingQueryNode> graph;
+  std::unordered_set<std::string> processed_nodes;
+  std::unordered_set<std::string> available_nodes;
+  std::unordered_map<std::string, SchedulingQueryNode> graph;
   std::map<std::string, TableMetadata> tables;
   int streamed_data_size;
 };

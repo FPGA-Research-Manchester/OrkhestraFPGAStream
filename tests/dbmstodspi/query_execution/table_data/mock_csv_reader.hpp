@@ -17,12 +17,12 @@ limitations under the License.
 #pragma once
 
 #include "csv_reader_interface.hpp"
-#include "memory_block_interface.hpp"
 #include "gmock/gmock.h"
+#include "memory_block_interface.hpp"
 
+using orkhestrafs::core_interfaces::MemoryBlockInterface;
 using orkhestrafs::core_interfaces::table_data::ColumnDataType;
 using orkhestrafs::dbmstodspi::CSVReaderInterface;
-using orkhestrafs::core_interfaces::MemoryBlockInterface;
 
 class MockCSVReader : public CSVReaderInterface {
  private:

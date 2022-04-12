@@ -18,6 +18,8 @@ limitations under the License.
 
 #include <queue>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 #include "accelerated_query_node.hpp"
@@ -60,7 +62,7 @@ class ExecutionManager : public ExecutionManagerInterface,
                          public GraphProcessingFSMInterface {
  public:
   ~ExecutionManager() override = default;
-  ExecutionManager(const Config& config,
+  ExecutionManager(Config config,
                    std::unique_ptr<QueryManagerInterface> query_manager,
                    std::unique_ptr<DataManagerInterface> data_manager,
                    std::unique_ptr<MemoryManagerInterface> memory_manager,
@@ -90,8 +92,11 @@ class ExecutionManager : public ExecutionManagerInterface,
   auto IsRunReadyForExecution() -> bool override;
   /*auto IsRunValid() -> bool override;*/
   void ExecuteAndProcessResults() override;
-  void PopAndPrintCurrentPlan() override;
-  void SetupSchedulingData() override;
+  void PrintCurrentStats() override;
+  void SetupSchedulingData(bool setup_bitstreams) override;
+
+  void BenchmarkScheduleUnscheduledNodes() override;
+  auto IsBenchmarkDone() -> bool override;
 
  private:
   // Initial inputs
@@ -110,16 +115,17 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::map<std::string, TableMetadata> current_tables_metadata_;
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
       memory_blocks_;
-  std::map<std::string, SchedulingQueryNode> current_query_graph_;
+  std::unordered_map<std::string, SchedulingQueryNode> current_query_graph_;
 
-  std::vector<std::string> current_available_nodes_;
-  std::vector<std::string> nodes_constrained_to_first_;
-  std::vector<std::string> processed_nodes_;
+  std::unordered_set<std::string> current_available_nodes_;
+  std::unordered_set<std::string> nodes_constrained_to_first_;
+  std::unordered_set<std::string> processed_nodes_;
 
   std::vector<std::shared_ptr<QueryNode>> current_available_node_pointers_;
 
   // Variables used throughout different states.
-  std::map<std::string, std::map<int, MemoryReuseTargets>> all_reuse_links_;
+  std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>
+      all_reuse_links_;
   std::map<std::string, std::map<int, MemoryReuseTargets>> current_reuse_links_;
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
       input_memory_blocks_;
@@ -140,24 +146,27 @@ class ExecutionManager : public ExecutionManagerInterface,
 
   auto PopNextScheduledRun() -> std::vector<std::shared_ptr<QueryNode>>;
 
-  // TODO: Move this to a different class
+  // TODO(Kaspar): Move this to a different class
   static void SetupSchedulingGraphAndConstrainedNodes(
       const std::vector<QueryNode*>& all_query_nodes,
-      std::map<std::string, SchedulingQueryNode>& current_scheduling_graph,
+      std::unordered_map<std::string, SchedulingQueryNode>&
+          current_scheduling_graph,
       AcceleratorLibraryInterface& hw_library,
-      std::vector<std::string>& constrained_nodes_vector);
+      std::unordered_set<std::string>& constrained_nodes_vector);
 
   static void AddSchedulingNodeToGraph(
       QueryNode* const& node,
-      std::map<std::string, SchedulingQueryNode>& scheduling_graph,
+      std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph,
       AcceleratorLibraryInterface& accelerator_library);
   static void AddSavedNodesToConstrainedList(
-      QueryNode* const& node, std::vector<std::string>& constrained_nodes);
+      QueryNode* const& node,
+      std::unordered_set<std::string>& constrained_nodes);
   static void AddFirstModuleNodesToConstrainedList(
-      QueryNode* const& node, std::vector<std::string>& constrained_nodes,
+      QueryNode* const& node,
+      std::unordered_set<std::string>& constrained_nodes,
       AcceleratorLibraryInterface& accelerator_library);
   static void AddSplittingNodesToConstrainedList(
-      std::map<std::string, SchedulingQueryNode>& scheduling_graph,
-      std::vector<std::string>& constrained_nodes);
+      std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph,
+      std::unordered_set<std::string>& constrained_nodes);
 };
 }  // namespace orkhestrafs::core::core_execution

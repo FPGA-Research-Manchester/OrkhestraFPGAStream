@@ -41,7 +41,6 @@ void AdditionSetup::SetupModule(AccelerationModule& acceleration_module,
     AdditionSetup::SetupPassthroughAddition(
         dynamic_cast<AdditionInterface&>(acceleration_module));
   }
-
 }
 
 void AdditionSetup::SetupPassthroughAddition(

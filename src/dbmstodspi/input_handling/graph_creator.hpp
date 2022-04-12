@@ -23,6 +23,7 @@ limitations under the License.
 #include "json_validator_interface.hpp"
 #include "query_scheduling_data.hpp"
 
+using orkhestrafs::core_interfaces::JSONReaderInterface;
 using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
 
 namespace orkhestrafs::dbmstodspi {

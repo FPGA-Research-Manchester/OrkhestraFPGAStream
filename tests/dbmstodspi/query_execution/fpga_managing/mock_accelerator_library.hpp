@@ -30,8 +30,10 @@ class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
   using TableMap = std::map<std::string, TableMetadata>;
 
  public:
-  MOCK_METHOD(void, SetupOperation,
-              (const AcceleratedQueryNode& node_parameters), (override));
+  MOCK_METHOD(
+      void, SetupOperation,
+      (const orkhestrafs::dbmstodspi::AcceleratedQueryNode& node_parameters),
+      (override));
   MOCK_METHOD(std::unique_ptr<DMAInterface>, GetDMAModule, (), (override));
   MOCK_METHOD(DMASetupInterface&, GetDMAModuleSetup, (), (override));
   MOCK_METHOD(std::vector<std::unique_ptr<ReadBackModule>>,
@@ -41,7 +43,7 @@ class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
               (bool is_input, int stream_index,
                QueryOperationType operation_type),
               (override));
-  MOCK_METHOD((std::pair<int, int>), GetMultiChannelParams,
+  MOCK_METHOD((std::pair<int, std::vector<int>>), GetMultiChannelParams,
               (bool is_input, int stream_index,
                QueryOperationType operation_type,
                const std::vector<std::vector<int>>& operation_parameters),
@@ -68,7 +70,7 @@ class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
               (QueryOperationType operation_type,
                const std::vector<int>& module_capacity,
                const std::vector<std::string>& input_table_names,
-               const TableMap& data_tables, TableMap& resulting_tables),
+               TableMap& resulting_tables),
               (override));
   MOCK_METHOD((bool), IsInputSupposedToBeSorted,
               (QueryOperationType operation_type), (override));
@@ -81,6 +83,7 @@ class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
               (QueryOperationType operation_type), (override));
   MOCK_METHOD((bool), IsOperationDataSensitive,
               (QueryOperationType operation_type), (override));
-  MOCK_METHOD((AcceleratedQueryNode), GetEmptyModuleNode,
+  MOCK_METHOD((orkhestrafs::dbmstodspi::AcceleratedQueryNode),
+              GetEmptyModuleNode,
               (QueryOperationType operation, int module_position), (override));
 };

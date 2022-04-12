@@ -17,6 +17,8 @@ limitations under the License.
 #include "query_manager.hpp"
 
 #include <algorithm>
+#include <chrono>
+#include <iostream>
 #include <stdexcept>
 
 #include "bitstream_config_helper.hpp"
@@ -43,20 +45,12 @@ using orkhestrafs::dbmstodspi::query_acceleration_constants::kIOStreamParamDefs;
 using orkhestrafs::dbmstodspi::util::CreateReferenceVector;
 
 auto QueryManager::GetCurrentLinks(
-    const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
-    const std::map<std::string, std::map<int, MemoryReuseTargets>>&
+    std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>&
         all_reuse_links)
     -> std::map<std::string, std::map<int, MemoryReuseTargets>> {
-  std::map<std::string, std::map<int, MemoryReuseTargets>> current_links;
-  for (const auto& [node_name, data_mapping] : all_reuse_links) {
-    auto search = std::find_if(
-        current_query_nodes.begin(), current_query_nodes.end(),
-        [&](const auto& node) { return node->node_name == node_name; });
-    if (search != current_query_nodes.end()) {
-      current_links.insert({node_name, data_mapping});
-    }
-  }
-  return current_links;
+  auto cur_links = all_reuse_links.front();
+  all_reuse_links.pop();
+  return cur_links;
 }
 
 void QueryManager::InitialiseMemoryBlockVector(
@@ -180,6 +174,11 @@ void QueryManager::AllocateInputMemoryBlocks(
 
       std::chrono::steady_clock::time_point end =
           std::chrono::steady_clock::now();
+      std::cout << "FS TO MEMORY WRITE:"
+                << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                         begin)
+                       .count()
+                << std::endl;
       Log(LogLevel::kInfo,
           "Read data time = " +
               std::to_string(
@@ -288,6 +287,26 @@ auto QueryManager::SetupAccelerationNodesForExecution(
   std::map<std::string, std::vector<int>> output_ids;
   std::map<std::string, std::vector<int>> input_ids;
 
+  // Mending.
+  // For all nodes. Check if previous node is in the current run and doesn't
+  // point at current node then add the pointer back. Do just 1 for now.
+  for (const auto& node : current_query_nodes) {
+    for (const auto& previous_node : node->previous_nodes) {
+      auto previous_node_ptr = previous_node.lock();
+      if (previous_node_ptr) {
+        auto current_run_find =
+            std::find_if(current_query_nodes.begin(), current_query_nodes.end(),
+                         [&](auto current_run_node) {
+                           return previous_node_ptr->node_name ==
+                                  current_run_node->node_name;
+                         });
+        if (current_run_find != current_query_nodes.end()) {
+          current_run_find->get()->next_nodes[0] = node;
+        }
+      }
+    }
+  }
+
   InitialiseVectorSizes(current_query_nodes, input_memory_blocks,
                         output_memory_blocks, input_stream_sizes,
                         output_stream_sizes);
@@ -303,6 +322,7 @@ auto QueryManager::SetupAccelerationNodesForExecution(
         memory_manager, data_manager, input_memory_blocks[node->node_name],
         *node, output_stream_sizes, input_stream_sizes[node->node_name]);
 
+    // Check what is the input_stream_sizes over here
     auto input_params = CreateStreamParams(true, *node, accelerator_library,
                                            input_ids[node->node_name],
                                            input_memory_blocks[node->node_name],
@@ -312,8 +332,23 @@ auto QueryManager::SetupAccelerationNodesForExecution(
         output_memory_blocks[node->node_name],
         output_stream_sizes[node->node_name]);
 
-    AddQueryNodes(query_nodes, std::move(input_params),
-                  std::move(output_params), *node);
+    auto removable_parameter_count = AddQueryNodes(
+        query_nodes, std::move(input_params), std::move(output_params), *node);
+    node->module_locations = {
+        node->module_locations.begin() + removable_parameter_count + 1,
+        node->module_locations.end()};
+    if (node->operation_type == QueryOperationType::kMergeSort) {
+      auto before = node->operation_parameters.operation_parameters;
+      node->operation_parameters.operation_parameters = {
+          node->operation_parameters.operation_parameters.begin() +
+              removable_parameter_count *
+                  node->operation_parameters.operation_parameters[0][1] +
+              1,
+          node->operation_parameters.operation_parameters.end()};
+
+      auto after = node->operation_parameters.operation_parameters;
+      auto after1 = node->operation_parameters.operation_parameters;
+    }
 
     StoreStreamResultParameters(result_parameters, output_ids[node->node_name],
                                 *node, output_memory_blocks[node->node_name]);
@@ -364,16 +399,38 @@ void QueryManager::LoadPRBitstreams(
   memory_manager->LoadPartialBitstream(bitstream_names, *dma_module);
 }
 
-auto QueryManager::ScheduleNextSetOfNodes(
-    std::vector<std::shared_ptr<QueryNode>>& query_nodes,
-    const std::vector<std::string>& first_node_names,
-    std::vector<std::string>& starting_nodes,
-    std::vector<std::string>& processed_nodes,
-    std::map<std::string, SchedulingQueryNode>& graph,
+void QueryManager::BenchmarkScheduling(
+    const std::unordered_set<std::string>& first_node_names,
+    std::unordered_set<std::string>& starting_nodes,
+    std::unordered_set<std::string>& processed_nodes,
+    std::unordered_map<std::string, SchedulingQueryNode>& graph,
     std::map<std::string, TableMetadata>& tables,
     AcceleratorLibraryInterface& drivers, const Config& config,
     NodeSchedulerInterface& node_scheduler,
-    std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links,
+    std::vector<ScheduledModule>& current_configuration) {
+  node_scheduler.BenchmarkScheduling(
+      first_node_names, starting_nodes, processed_nodes, graph, drivers, tables,
+      current_configuration, config, benchmark_stats_);
+}
+
+void QueryManager::PrintBenchmarkStats() {
+  /*for (const auto& [stats_key,value] : benchmark_stats_) {
+    std::cout << stats_key << ": " << value << std::endl;
+  }*/
+  json_reader_->WriteValueMap(benchmark_stats_, "benchmark_stats.json");
+}
+
+auto QueryManager::ScheduleNextSetOfNodes(
+    std::vector<std::shared_ptr<QueryNode>>& query_nodes,
+    const std::unordered_set<std::string>& first_node_names,
+    std::unordered_set<std::string>& starting_nodes,
+    std::unordered_set<std::string>& processed_nodes,
+    std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    std::map<std::string, TableMetadata>& tables,
+    AcceleratorLibraryInterface& drivers, const Config& config,
+    NodeSchedulerInterface& node_scheduler,
+    std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>&
+        all_reuse_links,
     const std::vector<ScheduledModule>& current_configuration)
     -> std::queue<std::pair<std::vector<ScheduledModule>,
                             std::vector<std::shared_ptr<QueryNode>>>> {
@@ -389,22 +446,43 @@ auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
     const std::vector<ScheduledModule>& next_config, int column_count)
     -> std::pair<std::vector<std::string>,
                  std::vector<std::pair<QueryOperationType, bool>>> {
-  std::vector<int> written_frames(column_count, false);
+  std::vector<int> written_frames(column_count, 0);
+
+  auto old_routing_modules = BitstreamConfigHelper::GetOldNonOverlappingModules(
+      next_config, current_config);
+
   auto [reduced_next_config, reduced_current_config] =
       BitstreamConfigHelper::GetConfigCompliments(next_config, current_config);
 
-  // Find out which frames need writing to.
-  for (const auto& module : reduced_current_config) {
-    for (int column_i = module.position.first;
-         column_i < module.position.second + 1; column_i++) {
-      written_frames[column_i] = true;
+  auto removable_modules = reduced_current_config;
+  for (const auto& reused_module : old_routing_modules) {
+    for (const auto& removable_module : reduced_current_config) {
+      removable_modules.erase(
+          std::remove(removable_modules.begin(), removable_modules.end(),
+                      reused_module),
+          removable_modules.end());
     }
   }
+
+  // Find out which frames need writing to.
+  for (const auto& module : removable_modules) {
+    for (int column_i = module.position.first;
+         column_i < module.position.second + 1; column_i++) {
+      written_frames[column_i] = 1;
+    }
+  }
+  // for (const auto& module : old_routing_modules) {
+  //  for (int column_i = module.position.first;
+  //       column_i < module.position.second + 1; column_i++) {
+  //    written_frames[column_i] = false;
+  //  }
+  //}
+
   std::vector<std::string> required_bitstreams;
   for (const auto& module : reduced_next_config) {
     for (int column_i = module.position.first;
          column_i < module.position.second + 1; column_i++) {
-      written_frames[column_i] = false;
+      written_frames[column_i] = 0;
     }
     required_bitstreams.push_back(module.bitstream);
   }
@@ -418,15 +496,21 @@ auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
       "RT_35.bin", "RT_32.bin", "RT_29.bin", "RT_26.bin", "RT_23.bin",
       "RT_20.bin", "RT_17.bin", "RT_14.bin", "RT_11.bin", "RT_8.bin",
       "RT_5.bin"};
+  /*std::vector<std::string> routing_bitstreams = {
+      "RT_95.bin", "RT_92.bin", "RT_89.bin", "RT_86.bin", "RT_83.bin",
+      "RT_80.bin", "RT_77.bin", "RT_74.bin", "RT_71.bin", "RT_68.bin",
+      "RT_65.bin", "RT_62.bin", "RT_59.bin", "RT_56.bin", "TAA_53.bin"};*/
 
-  for (int column_i = 0; column_i < column_count; column_i++) {
+  for (int column_i = 0; column_i < routing_bitstreams.size(); column_i++) {
     if (written_frames.at(column_i)) {
+      /*required_bitstreams.push_back("TAA_53.bin");
+      break;*/
       required_bitstreams.push_back(routing_bitstreams.at(column_i));
     }
   }
 
   auto left_over_config = BitstreamConfigHelper::GetResultingConfig(
-      next_config, reduced_next_config, reduced_current_config);
+      current_config, removable_modules, reduced_next_config);
   std::sort(left_over_config.begin(), left_over_config.end(),
             [](const auto& lhs, const auto& rhs) {
               return lhs.position.first < rhs.position.first;
@@ -434,15 +518,21 @@ auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
 
   std::vector<std::pair<QueryOperationType, bool>> passthrough_modules;
   for (const auto& module : left_over_config) {
-    if (std::find(next_config.begin(), next_config.end(), module) ==
-        next_config.end()) {
-      passthrough_modules.push_back({module.operation_type, false});
+    if (std::find_if(next_config.begin(), next_config.end(),
+                     [&](auto new_module) {
+                       return module.bitstream == new_module.bitstream;
+                     }) != next_config.end()) {
+      passthrough_modules.emplace_back(module.operation_type, false);
     } else {
-      passthrough_modules.push_back({module.operation_type, true});
+      passthrough_modules.emplace_back(module.operation_type, true);
     }
   }
 
   current_config = left_over_config;
+
+  /*for (const auto& module : old_routing_modules) {
+    required_bitstreams.push_back(module.bitstream);
+  }*/
 
   return {required_bitstreams, passthrough_modules};
 }
@@ -507,6 +597,11 @@ void QueryManager::WriteResults(
   TableManager::WriteResultTableFile(data_manager, resulting_table, filename);
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  std::cout << "MEMORY TO FS WRITE:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
   Log(LogLevel::kInfo,
       "Write result data time = " +
           std::to_string(
@@ -521,9 +616,17 @@ void QueryManager::CopyMemoryData(
     const std::unique_ptr<MemoryBlockInterface>& target_memory_device) {
   volatile uint32_t* source = source_memory_device->GetVirtualAddress();
   volatile uint32_t* target = target_memory_device->GetVirtualAddress();
+  std::chrono::steady_clock::time_point begin =
+      std::chrono::steady_clock::now();
   for (int i = 0; i < table_size; i++) {
     target[i] = source[i];
   }
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  std::cout << "MEMORY TO MEMORY WRITE:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
 }
 
 void QueryManager::ProcessResults(
@@ -574,49 +677,81 @@ void QueryManager::FreeMemoryBlocks(
     std::map<std::string, std::vector<RecordSizeAndCount>>& output_stream_sizes,
     const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links,
     const std::vector<std::string>& scheduled_node_names) {
-  std::vector<std::string> removable_vectors;
-  for (const auto& name : scheduled_node_names) {
-    for (auto& memory_block : input_memory_blocks[name]) {
-      if (memory_block) {
-        memory_manager->FreeMemoryBlock(std::move(memory_block));
-      }
-      memory_block = nullptr;
-    }
-    input_stream_sizes.erase(name);
-    input_memory_blocks.erase(name);
-  }
+  // For all reuse links where it is doing self linking. Just write output to
+  // input and don't clear the memory block. Then remove the link from the
+  // vector.
+  // vec.erase(std::remove(vec.begin(), vec.end(), 8), vec.end());
 
+  std::vector<std::string> save_input;
   for (const auto& [node_name, data_mapping] : reuse_links) {
     for (const auto& [output_stream_index, target_input_streams] :
          data_mapping) {
       if (target_input_streams.size() == 1) {
         auto target_node_name = target_input_streams.at(0).first;
         auto target_stream_index = target_input_streams.at(0).second;
-        removable_vectors.erase(
-            std::remove(removable_vectors.begin(), removable_vectors.end(),
-                        target_node_name),
-            removable_vectors.end());
-        input_memory_blocks[target_node_name][target_stream_index] =
-            std::move(output_memory_blocks[node_name][output_stream_index]);
-        output_memory_blocks[node_name][output_stream_index] = nullptr;
-        input_stream_sizes[target_node_name][target_stream_index] =
-            output_stream_sizes[node_name][output_stream_index];
-      } else {
-        for (const auto& [target_node_name, target_stream_index] :
-             target_input_streams) {
-          removable_vectors.erase(
-              std::remove(removable_vectors.begin(), removable_vectors.end(),
-                          target_node_name),
-              removable_vectors.end());
-          input_memory_blocks[target_node_name][target_stream_index] =
-              std::move(memory_manager->GetAvailableMemoryBlock());
+        if (target_node_name == node_name) {
           CopyMemoryData(
               output_stream_sizes[node_name][output_stream_index].first *
                   output_stream_sizes[node_name][output_stream_index].second,
               output_memory_blocks[node_name][output_stream_index],
               input_memory_blocks[target_node_name][target_stream_index]);
+          save_input.push_back(target_node_name);
+        }
+      }
+    }
+  }
+
+  // Check when does stuff get saved
+  /*std::vector<std::string> removable_vectors;*/
+  for (const auto& name : scheduled_node_names) {
+    if (std::find(save_input.begin(), save_input.end(), name) ==
+        save_input.end()) {
+      for (auto& memory_block : input_memory_blocks[name]) {
+        if (memory_block) {
+          memory_manager->FreeMemoryBlock(std::move(memory_block));
+        }
+        memory_block = nullptr;
+      }
+      // Should only be erased when it's not a target in reuse_links
+      // input_stream_sizes.erase(name);
+      // input_memory_blocks.erase(name);
+    }
+  }
+
+  for (const auto& [node_name, data_mapping] : reuse_links) {
+    if (std::find(save_input.begin(), save_input.end(), node_name) ==
+        save_input.end()) {
+      for (const auto& [output_stream_index, target_input_streams] :
+           data_mapping) {
+        if (target_input_streams.size() == 1) {
+          auto target_node_name = target_input_streams.at(0).first;
+          auto target_stream_index = target_input_streams.at(0).second;
+          /*removable_vectors.erase(
+              std::remove(removable_vectors.begin(), removable_vectors.end(),
+                          target_node_name),
+              removable_vectors.end());*/
+          input_memory_blocks[target_node_name][target_stream_index] =
+              std::move(output_memory_blocks[node_name][output_stream_index]);
+          output_memory_blocks[node_name][output_stream_index] = nullptr;
           input_stream_sizes[target_node_name][target_stream_index] =
               output_stream_sizes[node_name][output_stream_index];
+        } else {
+          for (const auto& [target_node_name, target_stream_index] :
+               target_input_streams) {
+            /*removable_vectors.erase(
+                std::remove(removable_vectors.begin(), removable_vectors.end(),
+                            target_node_name),
+                removable_vectors.end());*/
+            input_memory_blocks[target_node_name][target_stream_index] =
+                std::move(memory_manager->GetAvailableMemoryBlock());
+            CopyMemoryData(
+                output_stream_sizes[node_name][output_stream_index].first *
+                    output_stream_sizes[node_name][output_stream_index].second,
+                output_memory_blocks[node_name][output_stream_index],
+                input_memory_blocks[target_node_name][target_stream_index]);
+            input_stream_sizes[target_node_name][target_stream_index] =
+                output_stream_sizes[node_name][output_stream_index];
+          }
         }
       }
     }
@@ -645,22 +780,35 @@ void QueryManager::ExecuteAndProcessResults(
     const std::vector<AcceleratedQueryNode>& execution_query_nodes,
     std::map<std::string, TableMetadata>& scheduling_table_data,
     const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links,
-    std::map<std::string, SchedulingQueryNode>& scheduling_graph) {
+    std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph) {
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
 
   Log(LogLevel::kTrace, "Setup query!");
   fpga_manager->SetupQueryAcceleration(execution_query_nodes);
+  std::chrono::steady_clock::time_point init_end =
+      std::chrono::steady_clock::now();
+  std::cout << "INITIALISATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(init_end -
+                                                                     begin)
+                   .count()
+            << std::endl;
   Log(LogLevel::kTrace, "Running query!");
   auto result_sizes = fpga_manager->RunQueryAcceleration();
   Log(LogLevel::kTrace, "Query done!");
 
-  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point total_end =
+      std::chrono::steady_clock::now();
+  std::cout << "TOTAL EXEC:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(total_end -
+                                                                     begin)
+                   .count()
+            << std::endl;
   Log(LogLevel::kInfo,
       "Init and run time = " +
-          std::to_string(
-              std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
-                  .count()) +
+          std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(
+                             total_end - begin)
+                             .count()) +
           "[microseconds]");
 
   ProcessResults(data_manager, result_sizes, result_parameters,
@@ -677,8 +825,8 @@ void QueryManager::UpdateTableData(
         output_stream_sizes,
     std::map<std::string, TableMetadata>& scheduling_table_data,
     const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links,
-    std::map<std::string, SchedulingQueryNode>& scheduling_graph) {
-  // TODO: This needs to get tested!!!
+    std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph) {
+  // TODO(Kaspar): This needs to get tested!!!
   // Also this is assuming that there always is a link. There might not be.
   for (const auto& [node_name, stream_parameters] : result_parameters) {
     for (int stream_index = 0; stream_index < stream_parameters.size();
@@ -728,7 +876,7 @@ void QueryManager::UpdateTableData(
 
 void QueryManager::CropSortedStatus(
     std::map<std::string, TableMetadata>& scheduling_table_data,
-    std::string filename) {
+    const std::string& filename) {
   auto current_data = scheduling_table_data.at(filename);
   if (!current_data.sorted_status.empty()) {
     if (current_data.sorted_status.back().start_position +
@@ -740,9 +888,9 @@ void QueryManager::CropSortedStatus(
             current_data.record_count) {
           cropped_sequences.push_back(sequence);
         } else if (sequence.start_position < current_data.record_count) {
-          cropped_sequences.push_back(
-              {sequence.start_position,
-               current_data.record_count - sequence.start_position});
+          cropped_sequences.emplace_back(
+              sequence.start_position,
+              current_data.record_count - sequence.start_position);
         }
       }
       scheduling_table_data.at(filename).sorted_status = cropped_sequences;
@@ -750,11 +898,17 @@ void QueryManager::CropSortedStatus(
   }
 }
 
-void QueryManager::AddQueryNodes(
+auto QueryManager::AddQueryNodes(
     std::vector<AcceleratedQueryNode>& query_nodes_vector,
     std::vector<StreamDataParameters>&& input_params,
-    std::vector<StreamDataParameters>&& output_params, const QueryNode& node) {
-  auto sorted_module_locations = node.module_locations;
+    std::vector<StreamDataParameters>&& output_params, const QueryNode& node)
+    -> int {
+  auto run_itr =
+      std::find(node.module_locations.begin(), node.module_locations.end(), -1);
+  std::vector<int> sorted_module_locations = {node.module_locations.begin(),
+                                              run_itr};
+  /*std::vector<int> leftover_module_locations = {run_itr + 1,
+                                                node.module_locations.end()};*/
   std::sort(sorted_module_locations.begin(), sorted_module_locations.end());
   auto no_io_input_params = input_params;
   for (auto& stream_param : no_io_input_params) {
@@ -786,6 +940,20 @@ void QueryManager::AddQueryNodes(
     }
   } else {
     // Multiple resource elastic modules.
+    // Hardcoded for merge_sort for now.
+    /*for (int i = 0; i < sorted_module_locations.size(); i++) {
+      auto current_input = (i == 0) ? input_params : no_io_input_params;
+      auto current_output = (i == sorted_module_locations.size() - 1)
+                                ? output_params
+                                : no_io_output_params;
+      query_nodes_vector.push_back(
+          {current_input, current_output, node.operation_type,
+           sorted_module_locations.at(i), sorted_module_locations,
+           {{node.operation_parameters.operation_parameters[0][0] *
+                 static_cast<int>(sorted_module_locations.size()),
+             node.operation_parameters.operation_parameters[0][1]}}});
+    }*/
+
     auto all_module_params = node.operation_parameters.operation_parameters;
     if (all_module_params.at(0).at(0) != sorted_module_locations.size()) {
       throw std::runtime_error("Wrong parameters given!");
@@ -796,14 +964,16 @@ void QueryManager::AddQueryNodes(
       auto current_output = (i == sorted_module_locations.size() - 1)
                                 ? output_params
                                 : no_io_output_params;
+      std::vector<std::vector<int>> single_module_params = {
+          all_module_params.begin() + 1 + offset * i,
+          all_module_params.begin() + 1 + offset * (i + 1)};
+      single_module_params.insert(single_module_params.begin(),
+                                  all_module_params[0]);
       query_nodes_vector.push_back(
-          {current_input,
-           current_output,
-           node.operation_type,
-           sorted_module_locations.at(i),
-           sorted_module_locations,
-           {all_module_params.begin() + 1 + offset * i,
-            all_module_params.begin() + 1 + offset * (i + 1)}});
+          {current_input, current_output, node.operation_type,
+           sorted_module_locations.at(i), sorted_module_locations,
+           single_module_params});
     }
   }
+  return run_itr - node.module_locations.begin();
 }

@@ -15,16 +15,20 @@ limitations under the License.
 */
 
 #pragma once
+#include "json_reader_interface.hpp"
 #include "query_manager_interface.hpp"
+
+using orkhestrafs::core_interfaces::JSONReaderInterface;
 
 namespace orkhestrafs::dbmstodspi {
 
 class QueryManager : public QueryManagerInterface {
  public:
+  explicit QueryManager(std::unique_ptr<JSONReaderInterface> json_reader)
+      : json_reader_{std::move(json_reader)} {};
   ~QueryManager() override = default;
   auto GetCurrentLinks(
-      const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
-      const std::map<std::string, std::map<int, MemoryReuseTargets>>&
+      std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>&
           all_reuse_links)
       -> std::map<std::string, std::map<int, MemoryReuseTargets>> override;
   auto SetupAccelerationNodesForExecution(
@@ -61,7 +65,8 @@ class QueryManager : public QueryManagerInterface {
       std::map<std::string, TableMetadata>& scheduling_table_data,
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
           reuse_links,
-      std::map<std::string, SchedulingQueryNode>& scheduling_graph) override;
+      std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph)
+      override;
   void FreeMemoryBlocks(
       MemoryManagerInterface* memory_manager,
       std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
@@ -77,18 +82,30 @@ class QueryManager : public QueryManagerInterface {
       const std::vector<std::string>& scheduled_node_names) override;
   auto ScheduleNextSetOfNodes(
       std::vector<std::shared_ptr<QueryNode>>& query_nodes,
-      const std::vector<std::string>& first_node_names,
-      std::vector<std::string>& starting_nodes,
-      std::vector<std::string>& processed_nodes,
-      std::map<std::string, SchedulingQueryNode>& graph,
+      const std::unordered_set<std::string>& first_node_names,
+      std::unordered_set<std::string>& starting_nodes,
+      std::unordered_set<std::string>& processed_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
       std::map<std::string, TableMetadata>& tables,
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
-      std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links,
+      std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>&
+          all_reuse_links,
       const std::vector<ScheduledModule>& current_configuration)
       -> std::queue<
           std::pair<std::vector<ScheduledModule>,
                     std::vector<std::shared_ptr<QueryNode>>>> override;
+
+  void BenchmarkScheduling(
+      const std::unordered_set<std::string>& first_node_names,
+      std::unordered_set<std::string>& starting_nodes,
+      std::unordered_set<std::string>& processed_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      std::map<std::string, TableMetadata>& tables,
+      AcceleratorLibraryInterface& drivers, const Config& config,
+      NodeSchedulerInterface& node_scheduler,
+      std::vector<ScheduledModule>& current_configuration) override;
+
   void LoadInitialStaticBitstream(
       MemoryManagerInterface* memory_manager) override;
 
@@ -105,8 +122,18 @@ class QueryManager : public QueryManagerInterface {
       const std::vector<ScheduledModule>& next_config, int column_count)
       -> std::pair<std::vector<std::string>,
                    std::vector<std::pair<QueryOperationType, bool>>> override;
+  void PrintBenchmarkStats() override;
 
  private:
+  std::unique_ptr<JSONReaderInterface> json_reader_;
+  std::map<std::string, double> benchmark_stats_ = {
+      {"pre_process_time", 0}, {"schedule_time", 0},
+      {"timeout", 0},          {"cost_eval_time", 0},
+      {"overall_time", 0},     {"run_count", 0},
+      {"data_amount", 0},      {"configuration_amount", 0},
+      {"schedule_count", 0},   {"plan_count", 0},
+      {"placed_nodes", 0},     {"discarded_placements", 0}};
+
   static void CheckTableData(const DataManagerInterface* data_manager,
                              const TableData& expected_table,
                              const TableData& resulting_table);
@@ -124,7 +151,7 @@ class QueryManager : public QueryManagerInterface {
       int table_size,
       const std::unique_ptr<MemoryBlockInterface>& source_memory_device,
       const std::unique_ptr<MemoryBlockInterface>& target_memory_device);
-  void ProcessResults(
+  static void ProcessResults(
       const DataManagerInterface* data_manager,
       std::array<int, query_acceleration_constants::kMaxIOStreamCount>
           result_sizes,
@@ -184,10 +211,11 @@ class QueryManager : public QueryManagerInterface {
           input_stream_sizes,
       std::map<std::string, std::vector<RecordSizeAndCount>>&
           output_stream_sizes);
-  void AddQueryNodes(std::vector<AcceleratedQueryNode>& query_nodes_vector,
-                     std::vector<StreamDataParameters>&& input_params,
-                     std::vector<StreamDataParameters>&& output_params,
-                     const QueryNode& node);
+  static auto AddQueryNodes(
+      std::vector<AcceleratedQueryNode>& query_nodes_vector,
+      std::vector<StreamDataParameters>&& input_params,
+      std::vector<StreamDataParameters>&& output_params, const QueryNode& node)
+      -> int;
   static void UpdateTableData(
       const std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
@@ -196,10 +224,10 @@ class QueryManager : public QueryManagerInterface {
       std::map<std::string, TableMetadata>& scheduling_table_data,
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
           reuse_links,
-      std::map<std::string, SchedulingQueryNode>& scheduling_graph);
+      std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph);
   static void CropSortedStatus(
       std::map<std::string, TableMetadata>& scheduling_table_data,
-      std::string filename);
+      const std::string& filename);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

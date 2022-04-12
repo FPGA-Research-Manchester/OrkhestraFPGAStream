@@ -20,6 +20,8 @@ limitations under the License.
 #include <memory>
 #include <queue>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 #include "accelerated_query_node.hpp"
@@ -59,14 +61,12 @@ class QueryManagerInterface {
   /**
    * @brief Get memory dependencies in the current run to save memory block
    * pointers for next runs.
-   * @param current_query_nodes Current nodes to be executed.
    * @param all_reuse_links All links for currently scheduled nodes.
    * @return Map of current memory reuse targets and for which stream they
    * should be saved for.
    */
   virtual auto GetCurrentLinks(
-      const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
-      const std::map<std::string, std::map<int, MemoryReuseTargets>>&
+      std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>&
           all_reuse_links)
       -> std::map<std::string, std::map<int, MemoryReuseTargets>> = 0;
   /**
@@ -140,7 +140,8 @@ class QueryManagerInterface {
       std::map<std::string, TableMetadata>& scheduling_table_data,
       const std::map<std::string, std::map<int, MemoryReuseTargets>>&
           reuse_links,
-      std::map<std::string, SchedulingQueryNode>& scheduling_graph) = 0;
+      std::unordered_map<std::string, SchedulingQueryNode>&
+          scheduling_graph) = 0;
 
   /**
    * @brief Method to move reusable output memory blocks to input maps. And the
@@ -185,17 +186,28 @@ class QueryManagerInterface {
    */
   virtual auto ScheduleNextSetOfNodes(
       std::vector<std::shared_ptr<QueryNode>>& query_nodes,
-      const std::vector<std::string>& first_node_names,
-      std::vector<std::string>& starting_nodes,
-      std::vector<std::string>& processed_nodes,
-      std::map<std::string, SchedulingQueryNode>& graph,
+      const std::unordered_set<std::string>& first_node_names,
+      std::unordered_set<std::string>& starting_nodes,
+      std::unordered_set<std::string>& processed_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
       std::map<std::string, TableMetadata>& tables,
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
-      std::map<std::string, std::map<int, MemoryReuseTargets>>& all_reuse_links,
+      std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>&
+          all_reuse_links,
       const std::vector<ScheduledModule>& current_configuration)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<std::shared_ptr<QueryNode>>>> = 0;
+
+  virtual void BenchmarkScheduling(
+      const std::unordered_set<std::string>& first_node_names,
+      std::unordered_set<std::string>& starting_nodes,
+      std::unordered_set<std::string>& processed_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      std::map<std::string, TableMetadata>& tables,
+      AcceleratorLibraryInterface& drivers, const Config& config,
+      NodeSchedulerInterface& node_scheduler,
+      std::vector<ScheduledModule>& current_configuration) = 0;
 
   /**
    * @brief Load the initial static system
@@ -239,6 +251,8 @@ class QueryManagerInterface {
       const std::vector<ScheduledModule>& next_config, int column_count)
       -> std::pair<std::vector<std::string>,
                    std::vector<std::pair<QueryOperationType, bool>>> = 0;
+
+  virtual void PrintBenchmarkStats() = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

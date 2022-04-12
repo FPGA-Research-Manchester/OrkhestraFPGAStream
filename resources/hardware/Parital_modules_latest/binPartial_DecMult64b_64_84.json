@@ -1,0 +1,11 @@
+{
+  "name": "binPartial_DecMult64b_64_84",
+  "address": "0xa0000000",
+  "bitfiles": [
+    {
+      "name": "binPartial_DecMult64b_64_84.bin",
+      "region": "full"
+    }
+  ],
+  "registers": []
+}

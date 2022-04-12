@@ -50,7 +50,7 @@ class AcceleratorLibraryInterface {
   virtual auto GetMultiChannelParams(
       bool is_input, int stream_index, QueryOperationType operation_type,
       const std::vector<std::vector<int>>& operation_parameters)
-      -> std::pair<int, int> = 0;
+      -> std::pair<int, std::vector<int>> = 0;
   virtual auto GetNodeCapacity(
       QueryOperationType operation_type,
       const std::vector<std::vector<int>>& operation_parameters)
@@ -71,11 +71,10 @@ class AcceleratorLibraryInterface {
       QueryOperationType operation_type,
       const std::vector<int>& module_capacity,
       const std::vector<std::string>& input_table_names,
-      const std::map<std::string, TableMetadata>& data_tables,
       std::map<std::string, TableMetadata>& resulting_tables) -> bool = 0;
   virtual auto IsInputSupposedToBeSorted(QueryOperationType operation_type)
       -> bool = 0;
-  // TODO: This method needs improving
+  // TODO(Kaspar): This method needs improving
   virtual auto GetResultingTables(
       QueryOperationType operation, const std::vector<std::string>& table_names,
       const std::map<std::string, TableMetadata>& tables)

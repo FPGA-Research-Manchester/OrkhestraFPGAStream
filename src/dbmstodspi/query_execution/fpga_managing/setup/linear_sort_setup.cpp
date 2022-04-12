@@ -69,20 +69,19 @@ auto LinearSortSetup::GetSortedSequenceWithCapacity(int bitstream_capacity,
   int sequence_count = record_count / bitstream_capacity;
   if (sequence_count == 0) {
     return {{0, record_count}};
-  } else {
-    std::vector<SortedSequence> new_sorted_sequences;
-    for (int sequence_index = 0; sequence_index < sequence_count;
-         sequence_index++) {
-      new_sorted_sequences.push_back(
-          {bitstream_capacity * sequence_index, bitstream_capacity});
-      if (sequence_index == sequence_count - 1 &&
-          record_count % bitstream_capacity != 0) {
-        new_sorted_sequences.push_back({bitstream_capacity * sequence_count,
-                                        record_count % bitstream_capacity});
-      }
-    }
-    return new_sorted_sequences;
   }
+  std::vector<SortedSequence> new_sorted_sequences;
+  for (int sequence_index = 0; sequence_index < sequence_count;
+       sequence_index++) {
+    new_sorted_sequences.emplace_back(bitstream_capacity * sequence_index,
+                                      bitstream_capacity);
+    if (sequence_index == sequence_count - 1 &&
+        record_count % bitstream_capacity != 0) {
+      new_sorted_sequences.emplace_back(bitstream_capacity * sequence_count,
+                                        record_count % bitstream_capacity);
+    }
+  }
+  return new_sorted_sequences;
 }
 
 auto LinearSortSetup::GetWorstCaseProcessedTables(
@@ -112,7 +111,6 @@ auto LinearSortSetup::GetWorstCaseProcessedTables(
 auto LinearSortSetup::UpdateDataTable(
     const std::vector<int>& module_capacity,
     const std::vector<std::string>& input_table_names,
-    const std::map<std::string, TableMetadata>& data_tables,
     std::map<std::string, TableMetadata>& resulting_tables) -> bool {
   if (input_table_names.size() != 1) {
     throw std::runtime_error("Wrong number of tables!");
@@ -120,10 +118,10 @@ auto LinearSortSetup::UpdateDataTable(
   if (module_capacity.size() != 1) {
     throw std::runtime_error("Wrong linear sort capacity given!");
   }
-  auto current_table = data_tables.at(input_table_names.front());
   auto new_sorted_sequence = GetSortedSequenceWithCapacity(
-      module_capacity.front(), current_table.record_count);
-  current_table.sorted_status = {new_sorted_sequence};
-  resulting_tables.at(input_table_names.front()) = current_table;
+      module_capacity.front(),
+      resulting_tables.at(input_table_names.front()).record_count);
+  resulting_tables.at(input_table_names.front()).sorted_status = {
+      new_sorted_sequence};
   return true;
 }

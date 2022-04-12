@@ -24,8 +24,9 @@ limitations under the License.
 #include "memory_manager.hpp"
 #include "plan_evaluator.hpp"
 #include "query_manager.hpp"
+#include "rapidjson_reader.hpp"
 #include "schedule_state.hpp"
-#include "debug_schedule_state.hpp"
+#include "setup_benchmark_schedule_state.hpp"
 #include "setup_scheduling_state.hpp"
 
 using orkhestrafs::core::core_execution::ExecutionManager;
@@ -38,23 +39,29 @@ using orkhestrafs::dbmstodspi::FPGADriverFactory;
 using orkhestrafs::dbmstodspi::MemoryManager;
 using orkhestrafs::dbmstodspi::PlanEvaluator;
 using orkhestrafs::dbmstodspi::QueryManager;
-using orkhestrafs::dbmstodspi::ScheduleState;
-using orkhestrafs::dbmstodspi::DebugScheduleState;
+using orkhestrafs::dbmstodspi::RapidJSONReader;
+#ifdef FPGA_AVAILABLE
 using orkhestrafs::dbmstodspi::SetupSchedulingState;
+#else
+using orkhestrafs::dbmstodspi::SetupBenchmarkScheduleState;
+#endif
 
 auto ExecutionManagerFactory::GetManager(const Config& config)
     -> std::unique_ptr<ExecutionManagerInterface> {
-  auto secondary_scheduler = std::make_unique<ElasticResourceNodeScheduler>(
+  auto scheduler = std::make_unique<ElasticResourceNodeScheduler>(
       std::make_unique<PlanEvaluator>());
 
-  /*auto chosen_start_state = std::make_unique<ScheduleState>();
-  auto secondary_start_state = std::make_unique<DebugScheduleState>();*/
-  auto actual_start_state = std::make_unique<SetupSchedulingState>();
+#ifdef FPGA_AVAILABLE
+  auto start_state = std::make_unique<SetupSchedulingState>();
+#else
+  auto start_state = std::make_unique<SetupBenchmarkScheduleState>();
+#endif
 
   return std::make_unique<ExecutionManager>(
-      std::move(config), std::make_unique<QueryManager>(),
+      config,
+      std::make_unique<QueryManager>(std::make_unique<RapidJSONReader>()),
       std::make_unique<DataManager>(config.data_sizes, config.csv_separator,
                                     std::make_unique<CSVReader>()),
-      std::make_unique<MemoryManager>(), std::move(actual_start_state),
-      std::make_unique<FPGADriverFactory>(), std::move(secondary_scheduler));
+      std::make_unique<MemoryManager>(), std::move(start_state),
+      std::make_unique<FPGADriverFactory>(), std::move(scheduler));
 }

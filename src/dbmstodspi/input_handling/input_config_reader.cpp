@@ -33,6 +33,8 @@ auto InputConfigReader::ParseInputConfig(const std::string& filename)
       }
       auto delimiter_position = line.find('=');
       auto name = line.substr(0, delimiter_position);
+      std::for_each(name.begin(), name.end(),
+                    [](char& c) { c = ::toupper(c); });
       auto value = line.substr(delimiter_position + 1);
       config_data.insert({name, value});
     }

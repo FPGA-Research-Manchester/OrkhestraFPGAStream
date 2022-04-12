@@ -18,9 +18,10 @@ limitations under the License.
 
 #include <memory>
 
+#include "elastic_scheduling_graph_parser.hpp"
+#include "module_selection.hpp"
 #include "node_scheduler_interface.hpp"
 #include "plan_evaluator_interface.hpp"
-#include "module_selection.hpp"
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -30,52 +31,77 @@ namespace orkhestrafs::dbmstodspi {
  */
 class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
  public:
-  ElasticResourceNodeScheduler(
+  explicit ElasticResourceNodeScheduler(
       std::unique_ptr<PlanEvaluatorInterface> plan_evaluator)
       : plan_evaluator_{std::move(plan_evaluator)} {}
 
   auto GetNextSetOfRuns(
-      std::vector<std::shared_ptr<QueryNode>>& query_nodes,
-      const std::vector<std::string>& first_node_names,
-      std::vector<std::string>& starting_nodes,
-      std::vector<std::string>& processed_nodes,
-      std::map<std::string, SchedulingQueryNode>& graph,
-      AcceleratorLibraryInterface& drivers,
-      std::map<std::string, TableMetadata>& tables,
-      const std::vector<ScheduledModule>& current_configuration,
-      const Config& config)
+      std::vector<std::shared_ptr<QueryNode>> &available_nodes,
+      const std::unordered_set<std::string> &first_node_names,
+      std::unordered_set<std::string> &starting_nodes,
+      std::unordered_set<std::string> &processed_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode> &graph,
+      AcceleratorLibraryInterface &drivers,
+      std::map<std::string, TableMetadata> &tables,
+      const std::vector<ScheduledModule> &current_configuration,
+      const Config &config)
       -> std::queue<
           std::pair<std::vector<ScheduledModule>,
                     std::vector<std::shared_ptr<QueryNode>>>> override;
 
+  auto ScheduleAndGetAllPlans(
+      std::unordered_set<std::string> &starting_nodes,
+      std::unordered_set<std::string> &processed_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode> &graph,
+      std::map<std::string, TableMetadata> &tables, const Config &config)
+      -> std::tuple<int,
+                    std::map<std::vector<std::vector<ScheduledModule>>,
+                             ExecutionPlanSchedulingData>,
+                    long long, bool, std::pair<int, int>> override;
+
+  void BenchmarkScheduling(
+      const std::unordered_set<std::string> &first_node_names,
+      std::unordered_set<std::string> &starting_nodes,
+      std::unordered_set<std::string> &processed_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode> &graph,
+      AcceleratorLibraryInterface &drivers,
+      std::map<std::string, TableMetadata> &tables,
+      std::vector<ScheduledModule> &current_configuration, const Config &config,
+      std::map<std::string, double> &benchmark_data) override;
+
  private:
   static auto CalculateTimeLimit(
-      const std::map<std::string, SchedulingQueryNode> &graph,
+      const std::unordered_map<std::string, SchedulingQueryNode> &graph,
       const std::map<std::string, TableMetadata> &data_tables,
       double config_speed, double streaming_speed,
-      const std::map<QueryOperationType, int> &operation_costs) -> double;
+      const std::unordered_map<QueryOperationType, int> &operation_costs)
+      -> double;
   static auto FindSharedPointerFromRootNodes(
-      std::string searched_node_name, std::shared_ptr<QueryNode> current_node)
-      -> std::shared_ptr<QueryNode>;
+      const std::string &searched_node_name,
+      std::shared_ptr<QueryNode> current_node) -> std::shared_ptr<QueryNode>;
   static void RemoveUnnecessaryTables(
-      const std::map<std::string, SchedulingQueryNode> &graph,
+      const std::unordered_map<std::string, SchedulingQueryNode> &graph,
       std::map<std::string, TableMetadata> &tables);
-  static auto GetDefaultHeuristics() -> const std::vector<std::pair<std::vector<std::vector<ModuleSelection>>,
-                                                                                      std::vector<std::vector<ModuleSelection>>>>;
-  auto GetNodePointerWithName(
+  static auto GetDefaultHeuristics() -> const
+      std::vector<std::pair<std::vector<std::vector<ModuleSelection>>,
+                            std::vector<std::vector<ModuleSelection>>>>;
+  static auto GetNodePointerWithName(
       std::vector<std::shared_ptr<QueryNode>> &available_nodes,
-      std::string node_name) -> std::shared_ptr<QueryNode>;
-  auto FindNewAvailableNodes(
-      std::vector<std::string> &starting_nodes,
-      std::vector<std::shared_ptr<QueryNode>> &available_nodes) -> std::vector<std::shared_ptr<QueryNode>>;
-  auto GetQueueOfResultingRuns(
+      const std::string &node_name) -> std::shared_ptr<QueryNode>;
+  static auto FindNewAvailableNodes(
+      std::unordered_set<std::string> &starting_nodes,
+      std::vector<std::shared_ptr<QueryNode>> &available_nodes)
+      -> std::vector<std::shared_ptr<QueryNode>>;
+  static auto GetQueueOfResultingRuns(
       std::vector<std::shared_ptr<QueryNode>> &available_nodes,
-      std::vector<std::vector<ScheduledModule>> best_plan) -> std::queue<std::pair<std::vector<ScheduledModule>,
-                                                                                    std::vector<std::shared_ptr<QueryNode>>>>;
+      const std::vector<std::vector<ScheduledModule>> &best_plan)
+      -> std::queue<std::pair<std::vector<ScheduledModule>,
+                              std::vector<std::shared_ptr<QueryNode>>>>;
   static auto GetLargestModulesSizes(
-      const std::map<QueryOperationType, OperationPRModules>& hw_libary)
-      -> std::map<QueryOperationType, int>;
+      const std::map<QueryOperationType, OperationPRModules> &hw_libary)
+      -> std::unordered_map<QueryOperationType, int>;
 
   std::unique_ptr<PlanEvaluatorInterface> plan_evaluator_;
+  std::unique_ptr<ElasticSchedulingGraphParser> scheduler_;
 };
 }  // namespace orkhestrafs::dbmstodspi

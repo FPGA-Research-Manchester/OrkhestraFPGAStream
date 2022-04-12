@@ -25,8 +25,9 @@ namespace orkhestrafs::dbmstodspi {
 class Graph : public ExecutionPlanGraphInterface {
  private:
   std::vector<std::shared_ptr<QueryNode>> root_nodes_;
-  void AddNextNodeToVector(QueryNode* next_node,
+  void AddNextNodeToVector(QueryNode* current_node,
                            std::vector<QueryNode*>& all_nodes_vector);
+
  public:
   ~Graph() override = default;
 
