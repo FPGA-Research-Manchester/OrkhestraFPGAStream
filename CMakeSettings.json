@@ -77,7 +77,7 @@
     {
       "name": "Ubuntu_FPGA",
       "generator": "Ninja",
-      "configurationType": "Debug",
+      "configurationType": "Release",
       "cmakeExecutable": "cmake",
       "remoteCopySourcesExclusionList": [ ".vs", ".git", "out" ],
       "cmakeCommandArgs": "-DENABLE_TESTS=False -DENABLE_FPGA=True",

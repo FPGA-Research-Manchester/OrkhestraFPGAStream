@@ -1,0 +1,52 @@
+{
+	"linear_sort_node": {
+		"input": [ "CAR_DATA_8K.csv" ],
+		"output": [ null ],
+		"operation": "kLinearSort",
+		"previous_nodes": [ null ],
+		"next_nodes": [ null ],
+		"operation_parameters": {
+			"input_stream_params": [
+				[],
+				[ 0, 1, 1, 0 ],
+				[ 1, 32, 32, 1 ],
+				[]
+			],
+			"output_stream_params": [
+				[],
+				[ 0, 1, 1, 0 ],
+				[ 1, 32, 32, 1 ],
+				[ 2 ]
+			],
+			"operation_params": [
+				[]
+			]
+		}
+	},
+	"addition": {
+		"input": [ "lineitem_part_sf0_1_2nd_filter.csv" ],
+		"output": [ null ],
+		"operation": "kAddition",
+		"previous_nodes": [ null ],
+		"next_nodes": [ null ],
+		"operation_parameters": {
+			"input_stream_params": [
+				[],
+				[ 3, 3 ],
+				[ 1, 1 ],
+				[]
+			],
+			"output_stream_params": [
+				[],
+				[ 3, 3 ],
+				[ 1, 1 ],
+				[ 1 ]
+			],
+			"operation_params": [
+				[ 0 ],
+				[ 0, 1, 0, 0, 0, 0, 0, 0 ],
+				[ 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+			]
+		}
+	}
+}

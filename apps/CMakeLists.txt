@@ -108,6 +108,7 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/double_run_testing.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/filter_join_testing.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/filter_testing.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/addition_testing.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/single_run_testing.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF001.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF01.json 
@@ -121,9 +122,22 @@ set(data
     
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_Q19_SF001.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_Q19_SF01.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_Q6_SF01.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_Q19_SF1.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_Q17_SF011.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_Q17_SF012.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem0.01.csv 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/part0.01.csv
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem0.1.csv 
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/part0.1.csv
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem0.03.csv 
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/part0.03.csv
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem0.3.csv 
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/part0.3.csv
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/part1.csv
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem1.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem_linear_sort.csv 
+    
     
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark.pl
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_defs.zip 
@@ -163,6 +177,13 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort64_7_36.bin
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort64_37_66.bin
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort64_67_96.bin
+
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_AggregateGlobalSum_55_63.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_AggregateGlobalSum_55_63.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_ConstArith64b_85_96.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_ConstArith64b_85_96.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_DecMult64b_64_84.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_DecMult64b_64_84.bin
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/static.bin
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/static.json
@@ -317,5 +338,6 @@ endif()
 
 target_link_libraries(OrkhestraFPGAStream PRIVATE core)
 target_link_libraries(OrkhestraFPGAStream PRIVATE util)
+#set_target_properties(OrkhestraFPGAStream PROPERTIES LINK_FLAGS "/PROFILE")
 
 file(COPY ${data} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
