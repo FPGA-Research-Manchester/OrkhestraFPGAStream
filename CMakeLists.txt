@@ -43,6 +43,8 @@ add_subdirectory(src/core_interfaces)
 add_subdirectory(src/dbmstodspi)
 # Core libraries gluing everything together
 add_subdirectory(src/core)
+# Library responsible for SQL interfacing
+add_subdirectory(src/sql_parsing)
 # Applications
 add_subdirectory(apps)
 # Tests

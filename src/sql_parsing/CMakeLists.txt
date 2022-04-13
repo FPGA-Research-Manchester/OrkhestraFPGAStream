@@ -13,15 +13,11 @@
 #limitations under the License.
 
 
-# DBMStoDSPI
+# SQL parser
+add_library(sql_parsing 
+            sql_query_creator.cpp
+            sql_query_creator.hpp)
 
-add_subdirectory(util)
-add_subdirectory(query_execution)
-add_subdirectory(input_handling)
+target_include_directories(sql_parsing PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_library(dbmstodspi 
-            input_handling
-            query_execution)
-
-target_link_libraries(dbmstodspi PUBLIC input_handling
-                                 PUBLIC query_execution)
+target_link_libraries(sql_parsing PUBLIC core_interfaces)

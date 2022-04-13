@@ -17,7 +17,6 @@ limitations under the License.
 #pragma once
 
 #include <string>
-#include <vector>
 
 namespace orkhestrafs::core {
 /**

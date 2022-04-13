@@ -22,12 +22,14 @@ limitations under the License.
 #include "core.hpp"
 #include "cxxopts.hpp"
 #include "logger.hpp"
+#include "sql_query_creator.hpp"
 
 using namespace std;
 using orkhestrafs::core::Core;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::logging::SetLoggingLevel;
+using orkhestrafs::sql_parsing::SQLQueryCreator;
 
 /**
  * @brief Helper method to run the given query nodes and their subsequent nodes
@@ -42,6 +44,26 @@ using orkhestrafs::dbmstodspi::logging::SetLoggingLevel;
 void MeasureOverallTime(string input_def_filename, string config_filename) {
   auto begin = chrono::steady_clock::now();
   Core::Run(std::move(input_def_filename), std::move(config_filename));
+  auto end = chrono::steady_clock::now();
+  std::cout << "TOTAL RUNTIME:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
+  Log(LogLevel::kInfo,
+      "Overall time = " +
+          to_string(
+              chrono::duration_cast<std::chrono::milliseconds>(end - begin)
+                  .count()) +
+          "[ms]");
+}
+
+void RunCodedQuery() {
+  const auto default_config_filename = "fast_benchmark_config.ini";
+  SQLQueryCreator sql_creator;
+  auto begin = chrono::steady_clock::now();
+  Core::Run(std::move(sql_creator.ExportInputDef()),
+            std::move(default_config_filename));
   auto end = chrono::steady_clock::now();
   std::cout << "TOTAL RUNTIME:"
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
@@ -72,7 +94,7 @@ auto main(int argc, char* argv[]) -> int {
       "c,config", "Config file for used hardware",
       cxxopts::value<std::string>())("v,verbose", "Additional debug messages")(
       "t,trace", "Enable all trace signals")("q,quiet", "Disable all logging")(
-      "h,help", "Print usage");
+      "h,help", "Print usage")("r,run", "Run hardcoded query");
 
   auto result = options.parse(argc, argv);
 
@@ -91,8 +113,12 @@ auto main(int argc, char* argv[]) -> int {
     SetLoggingLevel(LogLevel::kInfo);
   }
 
-  MeasureOverallTime(result["input"].as<string>(),
-                     result["config"].as<string>());
+  if (result.count("run")) {
+    RunCodedQuery();
+  } else {
+    MeasureOverallTime(result["input"].as<string>(),
+                       result["config"].as<string>());
+  }
 
   return 0;
 }
