@@ -39,7 +39,7 @@ auto SQLQueryCreator::RegisterFilter(std::string input) -> std::string {
   return "";
 }
 
-auto SQLQueryCreator::RegisterSort(std::string input) -> std::string {
+auto SQLQueryCreator::RegisterSort(std::string input, std::string column_name) -> std::string {
   return "";
 }
 
@@ -50,19 +50,47 @@ auto SQLQueryCreator::RegisterJoin(std::string first_input,
   return "";
 }
 
-auto SQLQueryCreator::RegisterAddition(std::string input) -> std::string {
+// Just one at a time for these at the moment.
+auto SQLQueryCreator::RegisterAddition(std::string input, std::string column_name, bool make_negative, double value) -> std::string {
+  return "";
+}
+auto SQLQueryCreator::RegisterMultiplication(std::string input,
+                                             std::string first_column_name,
+                                             std::string second_column_name,
+                                             std::string result_column_name)
+    -> std::string {
+  return "";
+}
+auto SQLQueryCreator::RegisterAggregation(std::string input,
+                                          std::string column_name)
+    -> std::string {
   return "";
 }
 
-auto SQLQueryCreator::RegisterMultiplication(std::string input) -> std::string {
-  return "";
+auto SQLQueryCreator::AddStringComparison(std::string filter_id,
+                                          std::string column_name,
+                                          CompareFunctions comparison_type,
+                                          std::string compare_value) -> int {
+  return 0;
 }
-
-auto SQLQueryCreator::RegisterAggregation(std::string input) -> std::string {
-  return "";
+auto SQLQueryCreator::AddDateComparison(std::string filter_id,
+                                        std::string column_name,
+                                        CompareFunctions comparison_type,
+                                        int year, int month, int day) -> int {
+  return 0;
 }
-
-auto SQLQueryCreator::AddComparison(std::string filter_id) -> int { return 0; }
+auto SQLQueryCreator::AddIntegerComparison(std::string filter_id,
+                                           std::string column_name,
+                                           CompareFunctions comparison_type,
+                                           int compare_value) -> int {
+  return 0;
+}
+auto SQLQueryCreator::AddDoubleComparison(std::string filter_id,
+                                          std::string column_name,
+                                          CompareFunctions comparison_type,
+                                          double compare_value) -> int {
+  return 0;
+}
 
 auto SQLQueryCreator::AddOr(std::string filter_id,
                             std::vector<int> comparison_ids) -> int {

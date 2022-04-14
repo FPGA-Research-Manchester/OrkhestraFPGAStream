@@ -23,15 +23,30 @@ limitations under the License.
 #include "operation_types.hpp"
 #include "table_data.hpp"
 
-using orkhestrafs::core_interfaces::table_data::ColumnDataType;
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
+using orkhestrafs::core_interfaces::table_data::ColumnDataType;
 
 namespace orkhestrafs::sql_parsing {
+
+enum class CompareFunctions {
+  kLessThan = 0,
+  kLessThanOrEqual = 1,
+  kEqual = 2,
+  kGreaterThanOrEqual = 3,
+  kGreaterThan = 4,
+  kNotEqual = 5,
+};
 
 struct TableColumn {
   ColumnDataType column_type;
   int column_size;
   std::string column_name;
+
+  TableColumn(ColumnDataType column_type, int column_size,
+              std::string column_name)
+      : column_type(column_type),
+        column_size(column_size),
+        column_name(column_name){};
 };
 
 /**
@@ -51,16 +66,31 @@ class SQLQueryCreator {
   auto RegisterTable(std::string filename, std::vector<TableColumn> columns,
                      int row_count) -> std::string;
   auto RegisterFilter(std::string input) -> std::string;
-  auto RegisterSort(std::string input) -> std::string;
+  auto RegisterSort(std::string input, std::string column_name) -> std::string;
   auto RegisterJoin(std::string first_input, std::string first_join_key,
                     std::string second_input, std::string second_join_key)
       -> std::string;
-  auto RegisterAddition(std::string input) -> std::string;
-  auto RegisterMultiplication(std::string input) -> std::string;
-  auto RegisterAggregation(std::string input) -> std::string;
-  auto AddComparison(std::string filter_id) -> int;
+  auto RegisterAddition(std::string input, std::string column_name,
+                        bool make_negative, double value) -> std::string;
+  auto RegisterMultiplication(std::string input, std::string first_column_name,
+                              std::string second_column_name,
+                              std::string result_column_name) -> std::string;
+  auto RegisterAggregation(std::string input, std::string column_name)
+      -> std::string;
+  auto AddStringComparison(std::string filter_id, std::string column_name,
+                           CompareFunctions comparison_type,
+                           std::string compare_value) -> int;
+  auto AddDateComparison(std::string filter_id, std::string column_name,
+                         CompareFunctions comparison_type, int year, int month,
+                         int day) -> int;
+  auto AddIntegerComparison(std::string filter_id, std::string column_name,
+                            CompareFunctions comparison_type, int compare_value)
+      -> int;
+  auto AddDoubleComparison(std::string filter_id, std::string column_name,
+                           CompareFunctions comparison_type,
+                           double compare_value) -> int;
   auto AddOr(std::string filter_id, std::vector<int> comparison_ids) -> int;
   auto AddAnd(std::string filter_id, std::vector<int> comparison_ids) -> int;
   auto AddNot(std::string filter_id, std::vector<int> comparison_ids) -> int;
 };
-}  // namespace orkhestrafs::core::core_execution
+}  // namespace orkhestrafs::sql_parsing
