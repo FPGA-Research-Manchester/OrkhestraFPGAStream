@@ -16,7 +16,9 @@
 # SQL parser
 add_library(sql_parsing 
             sql_query_creator.cpp
-            sql_query_creator.hpp)
+            sql_query_creator.hpp
+            sql_query_data.cpp
+            sql_query_data.hpp)
 
 target_include_directories(sql_parsing PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 

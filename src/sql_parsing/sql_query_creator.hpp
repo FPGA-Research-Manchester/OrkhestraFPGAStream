@@ -19,47 +19,40 @@ limitations under the License.
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <unordered_set>
 
 #include "operation_types.hpp"
+#include "sql_query_data.hpp"
 #include "table_data.hpp"
 
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 using orkhestrafs::core_interfaces::table_data::ColumnDataType;
+using orkhestrafs::sql_parsing::query_data::CompareFunctions;
+using orkhestrafs::sql_parsing::query_data::OperationData;
+using orkhestrafs::sql_parsing::query_data::TableColumn;
 
 namespace orkhestrafs::sql_parsing {
-
-enum class CompareFunctions {
-  kLessThan = 0,
-  kLessThanOrEqual = 1,
-  kEqual = 2,
-  kGreaterThanOrEqual = 3,
-  kGreaterThan = 4,
-  kNotEqual = 5,
-};
-
-struct TableColumn {
-  ColumnDataType column_type;
-  int column_size;
-  std::string column_name;
-
-  TableColumn(ColumnDataType column_type, int column_size,
-              std::string column_name)
-      : column_type(column_type),
-        column_size(column_size),
-        column_name(column_name){};
-};
 
 /**
  * @brief Class to programmatically create queries.
  */
 class SQLQueryCreator {
  private:
+  const std::unordered_map<QueryOperationType, std::string> operation_names_ = {
+      {QueryOperationType::kFilter, "Filter"}, {QueryOperationType::kJoin, "Join"},
+      {QueryOperationType::kMergeSort, "MergeSort"}, {QueryOperationType::kLinearSort, "LinSort"},
+      {QueryOperationType::kAddition, "Addition"}, {QueryOperationType::kMultiplication, "Mul"},
+      {QueryOperationType::kAggregationSum, "Sum"}};
   std::unordered_map<std::string, bool> is_table_;
-  int operation_counter_;
-  std::vector<std::string> input_operations_;
-  std::vector<std::string> output_operations_;
+  int operation_counter_ = 0;
+  std::unordered_set<std::string> input_operations_;
+  std::unordered_set<std::string> output_operations_;
+  std::unordered_map<std::string, std::pair<ColumnDataType, int>> columns_;
+  std::unordered_map<std::string, OperationData> operations_;
+  std::unordered_map<std::string, std::vector<std::string>> tables_;
 
-  auto RegisterOperation(QueryOperationType operation_type) -> std::string;
+  auto RegisterOperation(QueryOperationType operation_type,
+                         std::vector<std::string> inputs) -> std::string;
 
  public:
   auto ExportInputDef() -> std::string;

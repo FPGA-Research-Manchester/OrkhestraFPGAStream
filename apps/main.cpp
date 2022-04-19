@@ -1,5 +1,5 @@
 ﻿/*
-Copyright 2021 University of Manchester
+Copyright 2022 University of Manchester
 
 Licensed under the Apache License, Version 2.0(the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ limitations under the License.
 #include "logger.hpp"
 #include "sql_query_creator.hpp"
 #include "table_data.hpp"
+#include "sql_query_data.hpp"
 
 using namespace std;
 using orkhestrafs::core::Core;
@@ -31,9 +32,9 @@ using orkhestrafs::core_interfaces::table_data::ColumnDataType;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::logging::SetLoggingLevel;
-using orkhestrafs::sql_parsing::CompareFunctions;
+using orkhestrafs::sql_parsing::query_data::CompareFunctions;
 using orkhestrafs::sql_parsing::SQLQueryCreator;
-using orkhestrafs::sql_parsing::TableColumn;
+using orkhestrafs::sql_parsing::query_data::TableColumn;
 
 /**
  * @brief Helper method to run the given query nodes and their subsequent nodes
@@ -99,13 +100,8 @@ auto CreatePartTable(SQLQueryCreator* sql_creator, int row_count,
   return sql_creator->RegisterTable(filename, columns, row_count);
 }
 
-void RunCodedQuery() {
-  const auto default_config_filename = "fast_benchmark_config.ini";
-  SQLQueryCreator sql_creator;
-
-  auto lineitem_table =
-      CreateLineitemTable(&sql_creator, 6001215, "lineitem1.csv");
-  auto first_filter = sql_creator.RegisterFilter(lineitem_table);
+void ConfigureQ19FirstFilter(SQLQueryCreator& sql_creator,
+                             string& first_filter) {
   auto quantity_big = sql_creator.AddDoubleComparison(
       first_filter, "L_QUANTITY", CompareFunctions::kLessThanOrEqual, 30.0);
   auto quantity_small = sql_creator.AddDoubleComparison(
@@ -120,10 +116,9 @@ void RunCodedQuery() {
   auto shipmode = sql_creator.AddOr(first_filter, {ship_air, ship_air_reg});
   sql_creator.AddAnd(first_filter, {shipmode, deliver_in_person, quantity_small,
                                     quantity_big});
-  auto part_table = CreatePartTable(&sql_creator, 200000, "part1.csv");
-  auto join = sql_creator.RegisterJoin(first_filter, "L_PARTKEY", part_table,
-                                       "P_PARTKEY");
-  auto second_filter = sql_creator.RegisterFilter(join);
+}
+void ConfigureQ19SecondFilter(SQLQueryCreator& sql_creator,
+                              string& second_filter) {
   auto second_quantity_big_less = sql_creator.AddDoubleComparison(
       second_filter, "L_QUANTITY", CompareFunctions::kLessThanOrEqual, 30.0);
   auto second_quantity_med_less = sql_creator.AddDoubleComparison(
@@ -194,10 +189,26 @@ void RunCodedQuery() {
                       second_quantity_big_less});
   auto or_filter = sql_creator.AddOr(second_filter, {small, med, big});
   sql_creator.AddAnd(second_filter, {size_low, or_filter});
+}
+void CreateQ19TPCH(SQLQueryCreator& sql_creator) {
+  auto lineitem_table =
+      CreateLineitemTable(&sql_creator, 6001215, "lineitem1.csv");
+  auto first_filter = sql_creator.RegisterFilter(lineitem_table);
+  ConfigureQ19FirstFilter(sql_creator, first_filter);
+  auto part_table = CreatePartTable(&sql_creator, 200000, "part1.csv");
+  auto join = sql_creator.RegisterJoin(first_filter, "L_PARTKEY", part_table,
+                                       "P_PARTKEY");
+  auto second_filter = sql_creator.RegisterFilter(join);
+  ConfigureQ19SecondFilter(sql_creator, second_filter);
   auto addition = sql_creator.RegisterAddition(second_filter, "L_DISCOUNT", true, 1);
   auto multiplication = sql_creator.RegisterMultiplication(
-      addition, "L_DISCOUNT", "L_EXTENDEDPRIVE", "TEMP_MUL");
+      addition, "L_DISCOUNT", "L_EXTENDEDPRICE", "TEMP_MUL");
   sql_creator.RegisterAggregation(multiplication, "TEMP_MUL");
+}
+void RunCodedQuery() {
+  const auto default_config_filename = "fast_benchmark_config.ini";
+  SQLQueryCreator sql_creator;
+  CreateQ19TPCH(sql_creator);
   auto begin = chrono::steady_clock::now();
   Core::Run(std::move(sql_creator.ExportInputDef()),
             std::move(default_config_filename));
