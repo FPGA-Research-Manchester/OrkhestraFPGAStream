@@ -18,8 +18,22 @@ add_library(sql_parsing
             sql_query_creator.cpp
             sql_query_creator.hpp
             sql_query_data.cpp
-            sql_query_data.hpp)
+            sql_query_data.hpp
+            sql_json_writer.cpp
+            sql_json_writer.hpp)
 
-target_include_directories(sql_parsing PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+FetchContent_Declare(
+        rapidjson
+        GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
+        GIT_TAG        v1.1.0
+)
+
+FetchContent_GetProperties(rapidjson)
+if(NOT rapidjson_POPULATED)
+    FetchContent_Populate(rapidjson)
+endif()
+
+target_include_directories(sql_parsing PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+                                       PUBLIC "${rapidjson_SOURCE_DIR}/include")
 
 target_link_libraries(sql_parsing PUBLIC core_interfaces)

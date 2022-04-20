@@ -38,7 +38,6 @@ void RapidJSONReader::WriteValueMap(std::map<std::string, double> data,
   for (const auto& [key, value] : data) {
     Value json_key;
     json_key.SetString(key.c_str(), key.size(), document.GetAllocator());
-    const auto* thing = json_key.GetString();
     document.AddMember(json_key, value, document.GetAllocator());
   }
   FILE* file_pointer =
