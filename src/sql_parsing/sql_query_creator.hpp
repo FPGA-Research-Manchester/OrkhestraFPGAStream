@@ -29,8 +29,8 @@ using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 using orkhestrafs::core_interfaces::table_data::ColumnDataType;
 using orkhestrafs::sql_parsing::query_data::CompareFunctions;
 using orkhestrafs::sql_parsing::query_data::OperationData;
-using orkhestrafs::sql_parsing::query_data::TableColumn;
 using orkhestrafs::sql_parsing::query_data::OperationParams;
+using orkhestrafs::sql_parsing::query_data::TableColumn;
 
 namespace orkhestrafs::sql_parsing {
 
@@ -78,8 +78,10 @@ class SQLQueryCreator {
           {QueryOperationType::kAggregationSum, "kAggregationSum"}};
   // TODO: Has to be made global static variable!
   const std::unordered_map<ColumnDataType, double> column_sizes_ = {
-      {ColumnDataType::kVarchar, 0.25}, {ColumnDataType::kDate, 1},
-      {ColumnDataType::kDecimal, 2}, {ColumnDataType::kInteger, 1},
+      {ColumnDataType::kVarchar, 0.25},
+      {ColumnDataType::kDate, 1},
+      {ColumnDataType::kDecimal, 2},
+      {ColumnDataType::kInteger, 1},
       {ColumnDataType::kNull, 1}};
   std::unordered_map<std::string, bool> is_table_;
   int operation_counter_ = 0;
@@ -92,9 +94,37 @@ class SQLQueryCreator {
   auto RegisterOperation(QueryOperationType operation_type,
                          std::vector<std::string> inputs) -> std::string;
   void UpdateRequiredColumns();
+  void AddTablesToProcessedOperations(
+      std::unordered_set<std::string>& processed_operations);
+  void UpdateNextOperationsListIfAvailable(
+      std::unordered_set<std::string>& processed_operations,
+      std::unordered_set<std::string>& operations_to_process,
+      const std::basic_string<char>& process_name);
+  void SetInputsForDataMap(const std::string& current_process,
+                           InputNodeParameters& current_parameters);
+  void SetOutputsForDataMap(
+      const std::string& current_process,
+      InputNodeParameters& current_parameters,
+      std::unordered_set<std::string>& processed_operations,
+      std::unordered_set<std::string>& operations_to_process);
+  auto ProcessTableColumns(const std::string& current_process, int parent_index,
+                           std::string table_name) -> int;
+  auto CompressNullColumns(const std::string& current_process, int parent_index,
+                           std::string table_name, int last_needed_column_index)
+      -> int;
+  void CopyOutputParamsOfParent(const std::string& current_process,
+                                int parent_index, std::string parent);
+  auto GetDuplicatedColumnSizes(const std::string& current_process,
+                                int parent_index) -> int;
+  void CombineOutputStreamParams(const std::string& current_process);
+  auto SetIOStreamParams(const std::string& current_process) -> int;
+  void SetStreamParamsForDataMap(const std::string& current_process,
+                                 InputNodeParameters& current_parameters);
+  void FillDataMap(std::unordered_set<std::string> processed_operations,
+                   std::unordered_set<std::string> operations_to_process,
+                   std::map<std::string, InputNodeParameters>& data_to_write);
 
  public:
-
   auto ExportInputDef() -> std::string;
   auto RegisterTable(std::string filename, std::vector<TableColumn> columns,
                      int row_count) -> std::string;

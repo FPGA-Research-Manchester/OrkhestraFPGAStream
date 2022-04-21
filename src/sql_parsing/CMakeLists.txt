@@ -17,7 +17,6 @@
 add_library(sql_parsing 
             sql_query_creator.cpp
             sql_query_creator.hpp
-            sql_query_data.cpp
             sql_query_data.hpp
             sql_json_writer.cpp
             sql_json_writer.hpp)

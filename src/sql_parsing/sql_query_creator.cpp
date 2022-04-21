@@ -25,227 +25,346 @@ using orkhestrafs::sql_parsing::SQLJSONWriter;
 using orkhestrafs::sql_parsing::SQLQueryCreator;
 
 auto SQLQueryCreator::ExportInputDef() -> std::string {
+  //  for (const auto& [process_name, is_table] : is_table_) {
+  //    if (!is_table) {
+  //      auto observe = operations_.at(process_name).used_columns;
+  //      auto copy = observe;
+  //    }
+  //  }
   UpdateRequiredColumns();
+  //  for (const auto& [process_name, is_table] : is_table_) {
+  //    if (!is_table) {
+  //      auto observe = operations_.at(process_name).used_columns;
+  //      auto copy = observe;
+  //    }
+  //  }
+
   std::unordered_set<std::string> processed_operations;
-  auto operations_to_process = input_operations_;
-  std::map<std::string, InputNodeParameters> data_to_write;
+  AddTablesToProcessedOperations(processed_operations);
 
-  while (!operations_to_process.empty()) {
-    auto current_process = *operations_to_process.begin();
-    operations_to_process.erase(current_process);
-    processed_operations.insert(current_process);
-    InputNodeParameters current_parameters;
-
-    std::vector<std::string> input_files;
-    std::vector<std::string> input_nodes;
-    for (const auto& parent : operations_.at(current_process).outputs) {
-      if (is_table_.at(parent)) {
-        input_files.push_back(parent);
-        input_nodes.push_back("");
-      } else {
-        input_nodes.push_back(parent);
-        input_files.push_back("");
-      }
-    }
-    current_parameters.insert({input_files_string, input_files});
-    current_parameters.insert({input_nodes_string, input_nodes});
-    current_parameters.insert(
-        {operation_string,
-         operation_enum_strings_.at(
-             operations_.at(current_process).operation_type)});
-    // TODO: Breaks when a final node has multiple outputs!
-    std::vector<std::string> output_files;
-    std::vector<std::string> output_nodes;
-    for (const auto& child : operations_.at(current_process).outputs) {
-      // Currently, can't set output as a table
-      output_files.push_back("");
-      output_nodes.push_back(child);
-      if (std::all_of(operations_.at(child).inputs.begin(),
-                      operations_.at(child).inputs.end(),
-                      [&](const auto& input) {
-                        return processed_operations.find(input) !=
-                               processed_operations.end();
-                      })) {
-        operations_to_process.insert(child);
-      }
-    }
-    // Temporary workaround
-    if (output_files.empty()) {
-      output_files.push_back("");
-      output_nodes.push_back("");
-    }
-    current_parameters.insert({output_files_string, output_files});
-    current_parameters.insert({output_nodes_string, output_nodes});
-
-    // TODO Still with multiple outputs the current approach doesn't work.
-    int record_size = 0;
-    for (int parent_index = 0;
-         parent_index < operations_.at(current_process).inputs.size();
-         parent_index++) {
-      auto parent = operations_.at(current_process).inputs.at(parent_index);
-      operations_[current_process].input_params.insert(
-          operations_[current_process].input_params.end(), {{}, {}, {}, {}});
-      operations_[current_process].output_params.insert(
-          operations_[current_process].output_params.end(), {{}, {}, {}, {}});
-      if (is_table_.at(parent)) {
-        int last_needed_column_index = 0;
-        int current_position_index = 0;
-        for (int column_index = 0; column_index < tables_.at(parent).size();
-             column_index++) {
-          auto [data_type, data_size] =
-              columns_.at(tables_.at(parent).at(column_index));
-          operations_[current_process]
-              .input_params[parent_index * io_param_vector_count +
-                            data_types_offset]
-              .push_back(static_cast<int>(data_type));
-          operations_[current_process]
-              .input_params[parent_index * io_param_vector_count +
-                            data_sizes_offset]
-              .push_back(data_size);
-          int column_length = column_sizes_.at(data_type) * data_size;
-          if (std::find(operations_.at(current_process).used_columns.begin(),
-                        operations_.at(current_process).used_columns.end(),
-                        tables_.at(parent).at(column_index)) !=
-              operations_.at(current_process).used_columns.end()) {
-            last_needed_column_index = column_index;
-            for (int i = 0; i < column_length; i++) {
-              operations_[current_process]
-                  .input_params[parent_index * io_param_vector_count +
-                                crossbar_offset]
-                  .push_back(current_position_index++);
-            }
-            // Hardcoded 0 index to only support a single output.
-            operations_[current_process]
-                .output_params[parent_index * io_param_vector_count +
-                               data_types_offset]
-                .push_back(static_cast<int>(data_type));
-            operations_[current_process]
-                .output_params[parent_index * io_param_vector_count +
-                               data_sizes_offset]
-                .push_back(data_size);
-          } else {
-            for (int i = 0; i < column_length; i++) {
-              operations_[current_process]
-                  .input_params[parent_index * io_param_vector_count +
-                                crossbar_offset]
-                  .push_back(-1);
-              current_position_index++;
-            }
-            operations_[current_process]
-                .output_params[parent_index * io_param_vector_count +
-                               data_types_offset]
-                .push_back(static_cast<int>(ColumnDataType::kNull));
-            operations_[current_process]
-                .output_params[parent_index * io_param_vector_count +
-                               data_sizes_offset]
-                .push_back(column_length);
-          }
-        }
-
-        std::vector<int> new_data_types_concat;
-        std::vector<int> new_data_sizes_concat;
-        int crossbar_config_length = 0;
-        for (int column_index = 0; column_index < last_needed_column_index;
-             column_index++) {
-          auto [data_type, data_size] =
-              columns_.at(tables_.at(parent).at(column_index));
-          int column_length = column_sizes_.at(data_type) * data_size;
-          record_size += column_length;
-          if (data_type == ColumnDataType::kNull &&
-              new_data_types_concat.back() ==
-                  static_cast<int>(ColumnDataType::kNull)) {
-            new_data_sizes_concat.back() += column_length;
-          } else {
-            new_data_types_concat.push_back(static_cast<int>(data_type));
-            new_data_sizes_concat.push_back(data_size);
-          }
-          crossbar_config_length += column_length;
-        }
-        operations_[current_process]
-            .output_params[parent_index * io_param_vector_count +
-                           data_sizes_offset] = new_data_sizes_concat;
-        operations_[current_process]
-            .output_params[parent_index * io_param_vector_count +
-                           data_types_offset] = new_data_types_concat;
-        operations_[current_process]
-            .input_params[parent_index * io_param_vector_count +
-                          crossbar_offset]
-            .resize(crossbar_config_length);
-      } else {
-        operations_[current_process]
-            .input_params[parent_index * io_param_vector_count +
-                          data_types_offset] =
-            operations_[parent].output_params[data_types_offset];
-        operations_[current_process]
-            .input_params[parent_index * io_param_vector_count +
-                          data_sizes_offset] =
-            operations_[parent].output_params[data_sizes_offset];
-        operations_[current_process]
-            .output_params[parent_index * io_param_vector_count +
-                           data_types_offset] =
-            operations_[parent].output_params[data_types_offset];
-        operations_[current_process]
-            .output_params[parent_index * io_param_vector_count +
-                           data_sizes_offset] =
-            operations_[parent].output_params[data_sizes_offset];
-        for (const auto& column : operations_[parent].used_columns) {
-          auto [data_type, data_size] = columns_.at(column);
-          record_size += column_sizes_.at(data_type) * data_size;
-        }
-      }
-    }
-    // TODO: Remove magic numbers!
-    operations_[current_process].output_params[chunk_count_offset].push_back(
-        (record_size + 15) / 16);
-    for (int parent_index = 1;
-         parent_index < operations_.at(current_process).inputs.size();
-         parent_index++) {
-      int start_index = 0;
-      if (operations_.at(current_process).operation_type ==
-          QueryOperationType::kJoin) {
-        start_index++;
-      }
-      for (int i = start_index;
-           i < operations_[current_process]
-                   .output_params[parent_index * io_param_vector_count +
-                                  data_sizes_offset]
-                   .size();
-           i++) {
-        operations_[current_process].output_params[data_sizes_offset].push_back(
-            operations_[current_process]
-                .output_params[parent_index * io_param_vector_count +
-                               data_sizes_offset][i]);
-        operations_[current_process].output_params[data_types_offset].push_back(
-            operations_[current_process]
-                .output_params[parent_index * io_param_vector_count +
-                               data_types_offset][i]);
-      }
-    }
-    operations_[current_process].output_params.resize(io_param_vector_count);
-
-    std::map<std::string, OperationParams> current_operation_params;
-    OperationParams params;
-    for (const auto& param_vector : operations_[current_process].input_params) {
-      params.push_back(param_vector);
-    }
-    current_operation_params.insert({input_parameters_string, params});
-    params.clear();
-    for (const auto& param_vector :
-         operations_[current_process].output_params) {
-      params.push_back(param_vector);
-    }
-    current_operation_params.insert({output_parameters_string, params});
-    // TODO: Fill in later!
-    current_operation_params.insert({operation_specific_params_string, {}});
-    current_parameters.insert(
-        {operation_parameters_string, current_operation_params});
-    data_to_write.insert({current_process, current_parameters});
+  std::unordered_set<std::string> operations_to_process;
+  for (const auto& process_name : input_operations_) {
+    UpdateNextOperationsListIfAvailable(processed_operations,
+                                        operations_to_process, process_name);
   }
+
+  std::map<std::string, InputNodeParameters> data_to_write;
+  FillDataMap(std::move(processed_operations), std::move(operations_to_process),
+              data_to_write);
   // Add crossbar reduction to output nodes - Add all nodes before merge sort as
   // output nodes as well! data_to_write
   const std::string file_name = "Q19.json";
   SQLJSONWriter::WriteQuery(file_name, data_to_write);
-  return file_name;
+  // return file_name;
+  return "benchmark_Q19_SF001.json";
+}
+void SQLQueryCreator::FillDataMap(
+    std::unordered_set<std::string> processed_operations,
+    std::unordered_set<std::string> operations_to_process,
+    std::map<std::string, InputNodeParameters>& data_to_write) {
+  while (!operations_to_process.empty()) {
+    auto current_process = *operations_to_process.begin();
+    operations_to_process.erase(current_process);
+    processed_operations.insert(current_process);
+
+    InputNodeParameters current_parameters;
+    SetInputsForDataMap(current_process, current_parameters);
+    SetOutputsForDataMap(current_process, current_parameters,
+                         processed_operations, operations_to_process);
+    current_parameters.insert(
+        {operation_string,
+         operation_enum_strings_.at(
+             operations_.at(current_process).operation_type)});
+    SetStreamParamsForDataMap(current_process, current_parameters);
+
+    data_to_write.insert({current_process, current_parameters});
+  }
+}
+void SQLQueryCreator::SetStreamParamsForDataMap(
+    const std::string& current_process,
+    InputNodeParameters& current_parameters) {
+  int record_size = SetIOStreamParams(current_process);
+  // TODO: Remove magic numbers!
+  operations_[current_process].output_params[chunk_count_offset].push_back(
+      (record_size + 15) / 16);
+  // Should just be for Join.
+  CombineOutputStreamParams(current_process);
+
+  std::map<std::string, OperationParams> current_operation_params;
+  OperationParams params;
+  for (const auto& param_vector : operations_[current_process].input_params) {
+    params.push_back(param_vector);
+  }
+  current_operation_params.insert({input_parameters_string, params});
+  params.clear();
+  for (const auto& param_vector : operations_[current_process].output_params) {
+    params.push_back(param_vector);
+  }
+  current_operation_params.insert({output_parameters_string, params});
+  // TODO: Fill in later!
+  current_operation_params.insert({operation_specific_params_string, {}});
+  current_parameters.insert(
+      {operation_parameters_string, current_operation_params});
+}
+auto SQLQueryCreator::SetIOStreamParams(const std::string& current_process)
+    -> int {
+  // TODO Still with multiple outputs the current approach doesn't work.
+  int record_size = 0;
+  for (int parent_index = 0;
+       parent_index < operations_.at(current_process).inputs.size();
+       parent_index++) {
+    auto parent = operations_.at(current_process).inputs.at(parent_index);
+    operations_[current_process].input_params.insert(
+        operations_[current_process].input_params.end(), {{}, {}, {}, {}});
+    operations_[current_process].output_params.insert(
+        operations_[current_process].output_params.end(), {{}, {}, {}, {}});
+    if (is_table_.at(parent)) {
+      //      auto observe0 = operations_[current_process].output_params[0];
+      //      auto observe1 = operations_[current_process].output_params[1];
+      //      auto observe2 = operations_[current_process].output_params[2];
+      //      auto observe3 = operations_[current_process].output_params[3];
+      int last_needed_column_index =
+          ProcessTableColumns(current_process, parent_index, parent);
+      //      observe0 = operations_[current_process].output_params[0];
+      //      observe1 = operations_[current_process].output_params[1];
+      //      observe2 = operations_[current_process].output_params[2];
+      //      observe3 = operations_[current_process].output_params[3];
+      record_size += CompressNullColumns(current_process, parent_index, parent,
+                                         last_needed_column_index);
+      //      observe0 = operations_[current_process].output_params[0];
+      //      observe1 = operations_[current_process].output_params[1];
+      //      observe2 = operations_[current_process].output_params[2];
+      //      observe3 = operations_[current_process].output_params[3];
+    } else {
+      CopyOutputParamsOfParent(current_process, parent_index, parent);
+      for (const auto& column : operations_[parent].used_columns) {
+        auto [data_type, data_size] = columns_.at(column);
+        record_size += column_sizes_.at(data_type) * data_size;
+      }
+    }
+    record_size -= GetDuplicatedColumnSizes(current_process, parent_index);
+  }
+  return record_size;
+}
+void SQLQueryCreator::CombineOutputStreamParams(
+    const std::string& current_process) {
+  for (int parent_index = 1;
+       parent_index < operations_.at(current_process).inputs.size();
+       parent_index++) {
+    int start_index = 0;
+    if (operations_.at(current_process).operation_type ==
+        QueryOperationType::kJoin) {
+      start_index++;
+    }
+    for (int i = start_index;
+         i < operations_[current_process]
+                 .output_params[parent_index * io_param_vector_count +
+                                data_sizes_offset]
+                 .size();
+         i++) {
+      operations_[current_process].output_params[data_sizes_offset].push_back(
+          operations_[current_process]
+              .output_params[parent_index * io_param_vector_count +
+                             data_sizes_offset][i]);
+      operations_[current_process].output_params[data_types_offset].push_back(
+          operations_[current_process]
+              .output_params[parent_index * io_param_vector_count +
+                             data_types_offset][i]);
+    }
+  }
+  operations_[current_process].output_params.resize(io_param_vector_count);
+}
+int SQLQueryCreator::GetDuplicatedColumnSizes(
+    const std::string& current_process, int parent_index) {
+  int duplicated_record_size = 0;
+  if (operations_.at(current_process).operation_type ==
+          QueryOperationType::kJoin &&
+      parent_index == 1) {
+    // Find first column of join.
+    int data_type = operations_[current_process]
+                        .output_params[parent_index * io_param_vector_count +
+                                       data_types_offset]
+                        .front();
+    int data_size = operations_[current_process]
+                        .output_params[parent_index * io_param_vector_count +
+                                       data_sizes_offset]
+                        .front();
+    duplicated_record_size +=
+        column_sizes_.at(static_cast<ColumnDataType>(data_type)) * data_size;
+  }
+  return duplicated_record_size;
+}
+void SQLQueryCreator::CopyOutputParamsOfParent(
+    const std::string& current_process, int parent_index, std::string parent) {
+  operations_[current_process]
+      .input_params[parent_index * io_param_vector_count + data_types_offset] =
+      operations_[parent].output_params[data_types_offset];
+  operations_[current_process]
+      .input_params[parent_index * io_param_vector_count + data_sizes_offset] =
+      operations_[parent].output_params[data_sizes_offset];
+  operations_[current_process]
+      .output_params[parent_index * io_param_vector_count + data_types_offset] =
+      operations_[parent].output_params[data_types_offset];
+  operations_[current_process]
+      .output_params[parent_index * io_param_vector_count + data_sizes_offset] =
+      operations_[parent].output_params[data_sizes_offset];
+}
+int SQLQueryCreator::CompressNullColumns(const std::string& current_process,
+                                         int parent_index,
+                                         std::string table_name,
+                                         int last_needed_column_index) {
+  int record_size = 0;
+  std::vector<int> new_data_types_concat;
+  std::vector<int> new_data_sizes_concat;
+  int crossbar_config_length = 0;
+  for (int column_index = 0; column_index <= last_needed_column_index;
+       column_index++) {
+    auto [data_type, data_size] =
+        columns_.at(tables_.at(table_name).at(column_index));
+    int column_length = column_sizes_.at(data_type) * data_size;
+    record_size += column_length;
+    int current_data_type =
+        operations_[current_process]
+            .output_params[parent_index * io_param_vector_count +
+                           data_types_offset][column_index];
+    if (!new_data_types_concat.empty() &&
+        current_data_type == static_cast<int>(ColumnDataType::kNull) &&
+        new_data_types_concat.back() ==
+            static_cast<int>(ColumnDataType::kNull)) {
+      new_data_sizes_concat.back() += column_length;
+    } else {
+      new_data_types_concat.push_back(current_data_type);
+      new_data_sizes_concat.push_back(data_size);
+    }
+    crossbar_config_length += column_length;
+  }
+  operations_[current_process]
+      .output_params[parent_index * io_param_vector_count + data_sizes_offset] =
+      new_data_sizes_concat;
+  operations_[current_process]
+      .output_params[parent_index * io_param_vector_count + data_types_offset] =
+      new_data_types_concat;
+  operations_[current_process]
+      .input_params[parent_index * io_param_vector_count + crossbar_offset]
+      .resize(crossbar_config_length);
+  return record_size;
+}
+int SQLQueryCreator::ProcessTableColumns(const std::string& current_process,
+                                         int parent_index,
+                                         std::string table_name) {
+  int current_position_index = 0;
+  int last_needed_column_index = 0;
+  for (int column_index = 0; column_index < tables_.at(table_name).size();
+       column_index++) {
+    auto [data_type, data_size] =
+        columns_.at(tables_.at(table_name).at(column_index));
+    operations_[current_process]
+        .input_params[parent_index * io_param_vector_count + data_types_offset]
+        .push_back(static_cast<int>(data_type));
+    operations_[current_process]
+        .input_params[parent_index * io_param_vector_count + data_sizes_offset]
+        .push_back(data_size);
+    int column_length = column_sizes_.at(data_type) * data_size;
+    if (std::find(operations_.at(current_process).used_columns.begin(),
+                  operations_.at(current_process).used_columns.end(),
+                  tables_.at(table_name).at(column_index)) !=
+        operations_.at(current_process).used_columns.end()) {
+      last_needed_column_index = column_index;
+      for (int i = 0; i < column_length; i++) {
+        operations_[current_process]
+            .input_params[parent_index * io_param_vector_count +
+                          crossbar_offset]
+            .push_back(current_position_index++);
+      }
+      // Hardcoded 0 index to only support a single output.
+      operations_[current_process]
+          .output_params[parent_index * io_param_vector_count +
+                         data_types_offset]
+          .push_back(static_cast<int>(data_type));
+      operations_[current_process]
+          .output_params[parent_index * io_param_vector_count +
+                         data_sizes_offset]
+          .push_back(data_size);
+    } else {
+      for (int i = 0; i < column_length; i++) {
+        operations_[current_process]
+            .input_params[parent_index * io_param_vector_count +
+                          crossbar_offset]
+            .push_back(-1);
+        current_position_index++;
+      }
+      operations_[current_process]
+          .output_params[parent_index * io_param_vector_count +
+                         data_types_offset]
+          .push_back(static_cast<int>(ColumnDataType::kNull));
+      operations_[current_process]
+          .output_params[parent_index * io_param_vector_count +
+                         data_sizes_offset]
+          .push_back(column_length);
+    }
+  }
+  return last_needed_column_index;
+}
+void SQLQueryCreator::SetOutputsForDataMap(
+    const std::string& current_process, InputNodeParameters& current_parameters,
+    std::unordered_set<std::string>& processed_operations,
+    std::unordered_set<std::string>&
+        operations_to_process) {  // TODO: Breaks when a final node has multiple
+                                  // outputs!
+  std::vector<std::string> output_files;
+  std::vector<std::string> output_nodes;
+  for (const auto& child : operations_.at(current_process).outputs) {
+    // Currently, can't set output as a table
+    output_files.push_back("");
+    output_nodes.push_back(child);
+    UpdateNextOperationsListIfAvailable(processed_operations,
+                                        operations_to_process, child);
+  }
+  // Temporary workaround
+  if (output_files.empty()) {
+    output_files.push_back("");
+    output_nodes.push_back("");
+  }
+  current_parameters.insert({output_files_string, output_files});
+  current_parameters.insert({output_nodes_string, output_nodes});
+}
+void SQLQueryCreator::SetInputsForDataMap(
+    const std::string& current_process,
+    InputNodeParameters& current_parameters) {
+  std::vector<std::string> input_files;
+  std::vector<std::string> input_nodes;
+  for (const auto& parent : operations_.at(current_process).outputs) {
+    if (is_table_.at(parent)) {
+      input_files.push_back(parent);
+      input_nodes.push_back("");
+    } else {
+      input_nodes.push_back(parent);
+      input_files.push_back("");
+    }
+  }
+  current_parameters.insert({input_files_string, input_files});
+  current_parameters.insert({input_nodes_string, input_nodes});
+}
+void SQLQueryCreator::UpdateNextOperationsListIfAvailable(
+    std::unordered_set<std::string>& processed_operations,
+    std::unordered_set<std::string>& operations_to_process,
+    const std::basic_string<char>& process_name) {
+  if (std::all_of(operations_.at(process_name).inputs.begin(),
+                  operations_.at(process_name).inputs.end(),
+                  [&](const auto& input) {
+                    return processed_operations.find(input) !=
+                           processed_operations.end();
+                  })) {
+    operations_to_process.insert(process_name);
+  }
+}
+void SQLQueryCreator::AddTablesToProcessedOperations(
+    std::unordered_set<std::string>& processed_operations) {
+  for (const auto& [table_name, is_table] : is_table_) {
+    if (is_table) {
+      processed_operations.insert(table_name);
+    }
+  }
 }
 
 void SQLQueryCreator::UpdateRequiredColumns() {
@@ -264,6 +383,7 @@ void SQLQueryCreator::UpdateRequiredColumns() {
     for (const auto& parent : operations_.at(current_process).inputs) {
       if (!is_table_.at(parent)) {
         auto transferred_columns = operations_.at(current_process).used_columns;
+        // TODO: How used columns is handled in these two cases is broken!
         if (operations_.at(current_process).operation_type ==
             QueryOperationType::kJoin) {
           transferred_columns.erase(transferred_columns.begin());
@@ -337,7 +457,7 @@ auto SQLQueryCreator::RegisterTable(std::string filename,
   for (auto& column : columns) {
     column_names.push_back(column.column_name);
     if (column.column_type == ColumnDataType::kVarchar) {
-      column.column_size = (column.column_size + 3) / 4;
+      column.column_size = ((column.column_size + 3) / 4) * 4;
     }
     columns_.insert(
         {column.column_name, {column.column_type, column.column_size}});
@@ -400,6 +520,7 @@ auto SQLQueryCreator::RegisterMultiplication(std::string input,
                                              std::string second_column_name,
                                              std::string result_column_name)
     -> std::string {
+  columns_.insert({result_column_name, {ColumnDataType::kDecimal, 1}});
   auto new_name =
       RegisterOperation(QueryOperationType::kMultiplication, {input});
   operations_[new_name].used_columns.push_back(first_column_name);
@@ -420,24 +541,44 @@ auto SQLQueryCreator::AddStringComparison(std::string filter_id,
                                           std::string column_name,
                                           CompareFunctions comparison_type,
                                           std::string compare_value) -> int {
+  if (std::find(operations_[filter_id].used_columns.begin(),
+                operations_[filter_id].used_columns.end(),
+                column_name) == operations_[filter_id].used_columns.end()) {
+    operations_[filter_id].used_columns.push_back(column_name);
+  }
   return 0;
 }
 auto SQLQueryCreator::AddDateComparison(std::string filter_id,
                                         std::string column_name,
                                         CompareFunctions comparison_type,
                                         int year, int month, int day) -> int {
+  if (std::find(operations_[filter_id].used_columns.begin(),
+                operations_[filter_id].used_columns.end(),
+                column_name) == operations_[filter_id].used_columns.end()) {
+    operations_[filter_id].used_columns.push_back(column_name);
+  }
   return 0;
 }
 auto SQLQueryCreator::AddIntegerComparison(std::string filter_id,
                                            std::string column_name,
                                            CompareFunctions comparison_type,
                                            int compare_value) -> int {
+  if (std::find(operations_[filter_id].used_columns.begin(),
+                operations_[filter_id].used_columns.end(),
+                column_name) == operations_[filter_id].used_columns.end()) {
+    operations_[filter_id].used_columns.push_back(column_name);
+  }
   return 0;
 }
 auto SQLQueryCreator::AddDoubleComparison(std::string filter_id,
                                           std::string column_name,
                                           CompareFunctions comparison_type,
                                           double compare_value) -> int {
+  if (std::find(operations_[filter_id].used_columns.begin(),
+                operations_[filter_id].used_columns.end(),
+                column_name) == operations_[filter_id].used_columns.end()) {
+    operations_[filter_id].used_columns.push_back(column_name);
+  }
   return 0;
 }
 
