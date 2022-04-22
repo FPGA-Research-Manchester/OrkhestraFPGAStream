@@ -142,9 +142,6 @@ void SQLQueryCreator::SetOperationSpecifcStreamParamsForDataMap(
     params.push_back(value_vector);
     current_operation_params.insert({operation_specific_params_string, params});
   } else if (current_operation == QueryOperationType::kAggregationSum) {
-    // TODO: Remove this. Need to make column from MUL accessible!
-    current_operation_params.insert({operation_specific_params_string, {}});
-    return;
     if (operations_[current_process].column_locations.find(
             operations_[current_process].operation_columns[0]) ==
         operations_[current_process].column_locations.end()) {
@@ -172,19 +169,22 @@ void SQLQueryCreator::SetOperationSpecifcStreamParamsForDataMap(
             operations_[current_process].column_locations.end()) {
       throw std::runtime_error("Multiplication column not found!");
     }
-    // TODO: Check order!
-    auto first_column_location =
-        operations_[current_process].column_locations
-            [operations_[current_process].operation_columns[1]];
-    auto second_column_location =
-        operations_[current_process].column_locations
-            [operations_[current_process].operation_columns[0]];
+    auto first_column_location = operations_[current_process].column_locations
+                     [operations_[current_process].operation_columns[0]];
+    auto second_column_location = operations_[current_process].column_locations
+                     [operations_[current_process].operation_columns[1]];
     if (first_column_location / 16 != second_column_location / 16 ||
-        (first_column_location % 2) || (second_column_location % 2) ||
+        (first_column_location % 4) || (second_column_location % 2) ||
         (first_column_location + 2 != second_column_location)) {
       throw std::runtime_error("Multiplication columns incorrectly placed!");
     }
     std::vector<int> params;
+    // TODO: Hardcoded to overwrite the first column at the moment!
+    operations_[current_process].column_locations.erase(
+        operations_[current_process].operation_columns[0]);
+    operations_[current_process].column_locations.insert(
+        {operations_[current_process].operation_columns[2],
+         first_column_location});
     params.push_back(first_column_location / 16);
     for (int i = 0; i < 8; i++) {
       if (i == (first_column_location % 16) / 2) {
@@ -409,9 +409,8 @@ int SQLQueryCreator::ProcessTableColumns(const std::string& current_process,
 void SQLQueryCreator::SetOutputsForDataMap(
     const std::string& current_process, InputNodeParameters& current_parameters,
     std::unordered_set<std::string>& processed_operations,
-    std::unordered_set<std::string>&
-        operations_to_process) {  // TODO: Breaks when a final node has multiple
-                                  // outputs!
+    std::unordered_set<std::string>& operations_to_process) {  
+  // TODO: Breaks when a final node has multiple outputs!
   std::vector<std::string> output_files;
   std::vector<std::string> output_nodes;
   for (const auto& child : operations_.at(current_process).outputs) {
@@ -491,12 +490,12 @@ void SQLQueryCreator::UpdateRequiredColumns() {
           transferred_columns.erase(transferred_columns.begin());
         } else if (operations_.at(current_process).operation_type ==
                    QueryOperationType::kMultiplication) {
-          transferred_columns.erase(transferred_columns.begin() + 2);
+          /*transferred_columns.erase(transferred_columns.begin() + 2);
           operations_.at(current_process).desired_columns[0] =
               operations_.at(current_process).desired_columns[2];
           operations_.at(current_process)
               .desired_columns.erase(
-                  operations_.at(current_process).desired_columns.begin() + 2);
+                  operations_.at(current_process).desired_columns.begin() + 2);*/
         }
         for (const auto& column : transferred_columns) {
           if (std::find(operations_.at(parent).desired_columns.begin(),
@@ -629,9 +628,9 @@ auto SQLQueryCreator::RegisterMultiplication(std::string input,
       RegisterOperation(QueryOperationType::kMultiplication, {input});
   operations_[new_name].desired_columns.push_back(first_column_name);
   operations_[new_name].desired_columns.push_back(second_column_name);
-  operations_[new_name].desired_columns.push_back(result_column_name);
   operations_[new_name].operation_columns.push_back(first_column_name);
   operations_[new_name].operation_columns.push_back(second_column_name);
+  operations_[new_name].operation_columns.push_back(result_column_name);
   return new_name;
 }
 auto SQLQueryCreator::RegisterAggregation(std::string input,

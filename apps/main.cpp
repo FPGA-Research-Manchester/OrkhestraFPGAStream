@@ -202,7 +202,7 @@ void CreateQ19TPCH(SQLQueryCreator& sql_creator) {
   ConfigureQ19SecondFilter(sql_creator, second_filter);
   auto addition = sql_creator.RegisterAddition(second_filter, "L_DISCOUNT", true, 1);
   auto multiplication = sql_creator.RegisterMultiplication(
-      addition, "L_DISCOUNT", "L_EXTENDEDPRICE", "TEMP_MUL");
+      addition, "L_EXTENDEDPRICE", "L_DISCOUNT", "TEMP_MUL");
   sql_creator.RegisterAggregation(multiplication, "TEMP_MUL");
 }
 void RunCodedQuery() {
