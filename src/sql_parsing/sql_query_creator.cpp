@@ -27,14 +27,14 @@ using orkhestrafs::sql_parsing::SQLQueryCreator;
 auto SQLQueryCreator::ExportInputDef() -> std::string {
   //  for (const auto& [process_name, is_table] : is_table_) {
   //    if (!is_table) {
-  //      auto observe = operations_.at(process_name).used_columns;
+  //      auto observe = operations_.at(process_name).desired_columns;
   //      auto copy = observe;
   //    }
   //  }
   UpdateRequiredColumns();
   //  for (const auto& [process_name, is_table] : is_table_) {
   //    if (!is_table) {
-  //      auto observe = operations_.at(process_name).used_columns;
+  //      auto observe = operations_.at(process_name).desired_columns;
   //      auto copy = observe;
   //    }
   //  }
@@ -101,14 +101,108 @@ void SQLQueryCreator::SetStreamParamsForDataMap(
     params.push_back(param_vector);
   }
   current_operation_params.insert({output_parameters_string, params});
-  // TODO: Fill in later!
-  current_operation_params.insert({operation_specific_params_string, {}});
+
+  SetOperationSpecifcStreamParamsForDataMap(current_process,
+                                            current_operation_params);
   current_parameters.insert(
       {operation_parameters_string, current_operation_params});
 }
+
+void SQLQueryCreator::SetOperationSpecifcStreamParamsForDataMap(
+    std::string current_process,
+    std::map<std::string, OperationParams>& current_operation_params) {
+  // TODO: Currently set up to only do one column at a time.
+  auto current_operation = operations_[current_process].operation_type;
+  if (current_operation == QueryOperationType::kAddition) {
+    if (operations_[current_process].column_locations.find(
+            operations_[current_process].operation_columns[0]) ==
+        operations_[current_process].column_locations.end()) {
+      throw std::runtime_error("Addition column not found!");
+    }
+    auto column_location = operations_[current_process]
+                               .column_locations[operations_[current_process]
+                                                     .operation_columns[0]];
+    if (column_location % 2) {
+      throw std::runtime_error("Aggregation column incorrectly placed!");
+    }
+    OperationParams params;
+    std::vector<int> chunk_vector = {column_location / 16};
+    params.push_back(chunk_vector);
+
+    auto given_operation_params = std::get<std::vector<int>>(
+        operations_[current_process].operation_params[0]);
+    std::vector<int> negation_vector(8, 0);
+    if (given_operation_params[0]) {
+      negation_vector[(column_location % 16) / 2] = 1;
+    }
+    params.push_back(negation_vector);
+
+    std::vector<int> value_vector(16, 0);
+    value_vector[(column_location % 16) + 1] = given_operation_params[1];
+    params.push_back(value_vector);
+    current_operation_params.insert({operation_specific_params_string, params});
+  } else if (current_operation == QueryOperationType::kAggregationSum) {
+    // TODO: Remove this. Need to make column from MUL accessible!
+    current_operation_params.insert({operation_specific_params_string, {}});
+    return;
+    if (operations_[current_process].column_locations.find(
+            operations_[current_process].operation_columns[0]) ==
+        operations_[current_process].column_locations.end()) {
+      throw std::runtime_error("Aggregation column not found!");
+    }
+    auto column_location = operations_[current_process]
+                               .column_locations[operations_[current_process]
+                                                     .operation_columns[0]];
+    if (column_location % 2) {
+      throw std::runtime_error("Aggregation column incorrectly placed!");
+    }
+    OperationParams params;
+    std::vector<int> chunk_vector = {column_location / 16};
+    params.push_back(chunk_vector);
+    // TODO: Not sure if it has to be in range 16 or 8.
+    std::vector<int> position_vector = {column_location % 16};
+    params.push_back(position_vector);
+    current_operation_params.insert({operation_specific_params_string, params});
+  } else if (current_operation == QueryOperationType::kMultiplication) {
+    if (operations_[current_process].column_locations.find(
+            operations_[current_process].operation_columns[0]) ==
+            operations_[current_process].column_locations.end() ||
+        operations_[current_process].column_locations.find(
+            operations_[current_process].operation_columns[1]) ==
+            operations_[current_process].column_locations.end()) {
+      throw std::runtime_error("Multiplication column not found!");
+    }
+    // TODO: Check order!
+    auto first_column_location =
+        operations_[current_process].column_locations
+            [operations_[current_process].operation_columns[1]];
+    auto second_column_location =
+        operations_[current_process].column_locations
+            [operations_[current_process].operation_columns[0]];
+    if (first_column_location / 16 != second_column_location / 16 ||
+        (first_column_location % 2) || (second_column_location % 2) ||
+        (first_column_location + 2 != second_column_location)) {
+      throw std::runtime_error("Multiplication columns incorrectly placed!");
+    }
+    std::vector<int> params;
+    params.push_back(first_column_location / 16);
+    for (int i = 0; i < 8; i++) {
+      if (i == (first_column_location % 16) / 2) {
+        params.push_back(1);
+      } else {
+        params.push_back(0);
+      }
+    }
+    current_operation_params.insert(
+        {operation_specific_params_string, {params}});
+  } else {
+    current_operation_params.insert({operation_specific_params_string, {}});
+  }
+}
+
 auto SQLQueryCreator::SetIOStreamParams(const std::string& current_process)
     -> int {
-  // TODO Still with multiple outputs the current approach doesn't work.
+  // TODO: Still with multiple outputs the current approach doesn't work.
   int record_size = 0;
   for (int parent_index = 0;
        parent_index < operations_.at(current_process).inputs.size();
@@ -137,7 +231,7 @@ auto SQLQueryCreator::SetIOStreamParams(const std::string& current_process)
       //      observe3 = operations_[current_process].output_params[3];
     } else {
       CopyOutputParamsOfParent(current_process, parent_index, parent);
-      for (const auto& column : operations_[parent].used_columns) {
+      for (const auto& column : operations_[parent].desired_columns) {
         auto [data_type, data_size] = columns_.at(column);
         record_size += column_sizes_.at(data_type) * data_size;
       }
@@ -208,6 +302,11 @@ void SQLQueryCreator::CopyOutputParamsOfParent(
   operations_[current_process]
       .output_params[parent_index * io_param_vector_count + data_sizes_offset] =
       operations_[parent].output_params[data_sizes_offset];
+  for (const auto& [column_name, column_location] :
+       operations_[parent].column_locations) {
+    operations_[current_process].column_locations.insert(
+        {column_name, column_location});
+  }
 }
 int SQLQueryCreator::CompressNullColumns(const std::string& current_process,
                                          int parent_index,
@@ -265,10 +364,12 @@ int SQLQueryCreator::ProcessTableColumns(const std::string& current_process,
         .input_params[parent_index * io_param_vector_count + data_sizes_offset]
         .push_back(data_size);
     int column_length = column_sizes_.at(data_type) * data_size;
-    if (std::find(operations_.at(current_process).used_columns.begin(),
-                  operations_.at(current_process).used_columns.end(),
+    if (std::find(operations_.at(current_process).desired_columns.begin(),
+                  operations_.at(current_process).desired_columns.end(),
                   tables_.at(table_name).at(column_index)) !=
-        operations_.at(current_process).used_columns.end()) {
+        operations_.at(current_process).desired_columns.end()) {
+      operations_[current_process].column_locations.insert(
+          {tables_.at(table_name).at(column_index), current_position_index});
       last_needed_column_index = column_index;
       for (int i = 0; i < column_length; i++) {
         operations_[current_process]
@@ -382,7 +483,8 @@ void SQLQueryCreator::UpdateRequiredColumns() {
     // current one - replace first with third one. and remove third.
     for (const auto& parent : operations_.at(current_process).inputs) {
       if (!is_table_.at(parent)) {
-        auto transferred_columns = operations_.at(current_process).used_columns;
+        auto transferred_columns =
+            operations_.at(current_process).desired_columns;
         // TODO: How used columns is handled in these two cases is broken!
         if (operations_.at(current_process).operation_type ==
             QueryOperationType::kJoin) {
@@ -390,16 +492,17 @@ void SQLQueryCreator::UpdateRequiredColumns() {
         } else if (operations_.at(current_process).operation_type ==
                    QueryOperationType::kMultiplication) {
           transferred_columns.erase(transferred_columns.begin() + 2);
-          operations_.at(current_process).used_columns[0] =
-              operations_.at(current_process).used_columns[2];
+          operations_.at(current_process).desired_columns[0] =
+              operations_.at(current_process).desired_columns[2];
           operations_.at(current_process)
-              .used_columns.erase(transferred_columns.begin() + 2);
+              .desired_columns.erase(
+                  operations_.at(current_process).desired_columns.begin() + 2);
         }
         for (const auto& column : transferred_columns) {
-          if (std::find(operations_.at(parent).used_columns.begin(),
-                        operations_.at(parent).used_columns.end(),
-                        column) == operations_.at(parent).used_columns.end()) {
-            operations_.at(parent).used_columns.push_back(column);
+          if (std::find(operations_.at(parent).desired_columns.begin(),
+                        operations_.at(parent).desired_columns.end(), column) ==
+              operations_.at(parent).desired_columns.end()) {
+            operations_.at(parent).desired_columns.push_back(column);
           }
         }
         if (std::all_of(operations_.at(parent).outputs.begin(),
@@ -483,9 +586,9 @@ auto SQLQueryCreator::RegisterSort(std::string input, std::string column_name)
         RegisterOperation(QueryOperationType::kLinearSort, {input});
     auto merge_sort_name =
         RegisterOperation(QueryOperationType::kMergeSort, {lin_sort_name});
-    operations_[lin_sort_name].used_columns.push_back(column_name);
+    operations_[lin_sort_name].desired_columns.push_back(column_name);
     operations_[lin_sort_name].sorted_by_column = column_name;
-    operations_[merge_sort_name].used_columns.push_back(column_name);
+    operations_[merge_sort_name].desired_columns.push_back(column_name);
     operations_[merge_sort_name].sorted_by_column = column_name;
     return merge_sort_name;
   }
@@ -499,7 +602,7 @@ auto SQLQueryCreator::RegisterJoin(std::string first_input,
   auto second_join_table = RegisterSort(second_input, second_join_key);
   auto join_name = RegisterOperation(QueryOperationType::kJoin,
                                      {first_join_table, second_join_table});
-  operations_[join_name].used_columns.push_back(first_join_key);
+  operations_[join_name].desired_columns.push_back(first_join_key);
   return join_name;
 }
 
@@ -509,7 +612,8 @@ auto SQLQueryCreator::RegisterAddition(std::string input,
                                        bool make_negative, double value)
     -> std::string {
   auto new_name = RegisterOperation(QueryOperationType::kAddition, {input});
-  operations_[new_name].used_columns.push_back(column_name);
+  operations_[new_name].desired_columns.push_back(column_name);
+  operations_[new_name].operation_columns.push_back(column_name);
   std::vector<int> initial_addition_values = {make_negative,
                                               static_cast<int>(value * 100)};
   operations_[new_name].operation_params.push_back(initial_addition_values);
@@ -523,9 +627,11 @@ auto SQLQueryCreator::RegisterMultiplication(std::string input,
   columns_.insert({result_column_name, {ColumnDataType::kDecimal, 1}});
   auto new_name =
       RegisterOperation(QueryOperationType::kMultiplication, {input});
-  operations_[new_name].used_columns.push_back(first_column_name);
-  operations_[new_name].used_columns.push_back(second_column_name);
-  operations_[new_name].used_columns.push_back(result_column_name);
+  operations_[new_name].desired_columns.push_back(first_column_name);
+  operations_[new_name].desired_columns.push_back(second_column_name);
+  operations_[new_name].desired_columns.push_back(result_column_name);
+  operations_[new_name].operation_columns.push_back(first_column_name);
+  operations_[new_name].operation_columns.push_back(second_column_name);
   return new_name;
 }
 auto SQLQueryCreator::RegisterAggregation(std::string input,
@@ -533,7 +639,8 @@ auto SQLQueryCreator::RegisterAggregation(std::string input,
     -> std::string {
   auto new_name =
       RegisterOperation(QueryOperationType::kAggregationSum, {input});
-  operations_[new_name].used_columns.push_back(column_name);
+  operations_[new_name].desired_columns.push_back(column_name);
+  operations_[new_name].operation_columns.push_back(column_name);
   return new_name;
 }
 
@@ -541,10 +648,10 @@ auto SQLQueryCreator::AddStringComparison(std::string filter_id,
                                           std::string column_name,
                                           CompareFunctions comparison_type,
                                           std::string compare_value) -> int {
-  if (std::find(operations_[filter_id].used_columns.begin(),
-                operations_[filter_id].used_columns.end(),
-                column_name) == operations_[filter_id].used_columns.end()) {
-    operations_[filter_id].used_columns.push_back(column_name);
+  if (std::find(operations_[filter_id].desired_columns.begin(),
+                operations_[filter_id].desired_columns.end(),
+                column_name) == operations_[filter_id].desired_columns.end()) {
+    operations_[filter_id].desired_columns.push_back(column_name);
   }
   return 0;
 }
@@ -552,10 +659,10 @@ auto SQLQueryCreator::AddDateComparison(std::string filter_id,
                                         std::string column_name,
                                         CompareFunctions comparison_type,
                                         int year, int month, int day) -> int {
-  if (std::find(operations_[filter_id].used_columns.begin(),
-                operations_[filter_id].used_columns.end(),
-                column_name) == operations_[filter_id].used_columns.end()) {
-    operations_[filter_id].used_columns.push_back(column_name);
+  if (std::find(operations_[filter_id].desired_columns.begin(),
+                operations_[filter_id].desired_columns.end(),
+                column_name) == operations_[filter_id].desired_columns.end()) {
+    operations_[filter_id].desired_columns.push_back(column_name);
   }
   return 0;
 }
@@ -563,10 +670,10 @@ auto SQLQueryCreator::AddIntegerComparison(std::string filter_id,
                                            std::string column_name,
                                            CompareFunctions comparison_type,
                                            int compare_value) -> int {
-  if (std::find(operations_[filter_id].used_columns.begin(),
-                operations_[filter_id].used_columns.end(),
-                column_name) == operations_[filter_id].used_columns.end()) {
-    operations_[filter_id].used_columns.push_back(column_name);
+  if (std::find(operations_[filter_id].desired_columns.begin(),
+                operations_[filter_id].desired_columns.end(),
+                column_name) == operations_[filter_id].desired_columns.end()) {
+    operations_[filter_id].desired_columns.push_back(column_name);
   }
   return 0;
 }
@@ -574,10 +681,10 @@ auto SQLQueryCreator::AddDoubleComparison(std::string filter_id,
                                           std::string column_name,
                                           CompareFunctions comparison_type,
                                           double compare_value) -> int {
-  if (std::find(operations_[filter_id].used_columns.begin(),
-                operations_[filter_id].used_columns.end(),
-                column_name) == operations_[filter_id].used_columns.end()) {
-    operations_[filter_id].used_columns.push_back(column_name);
+  if (std::find(operations_[filter_id].desired_columns.begin(),
+                operations_[filter_id].desired_columns.end(),
+                column_name) == operations_[filter_id].desired_columns.end()) {
+    operations_[filter_id].desired_columns.push_back(column_name);
   }
   return 0;
 }

@@ -115,7 +115,7 @@ void SQLJSONWriter::WriteQuery(
     document.AddMember(node_name_value, node_params_value,
                        document.GetAllocator());
   }
-  FILE* file_pointer = fopen(filename.c_str(), "w");  // non-Windows use "w"
+  FILE* file_pointer = fopen(filename.c_str(), "wb");  // non-Windows use "w"
 
   if (!file_pointer) {
     throw std::runtime_error("Couldn't find: " + filename);

@@ -123,6 +123,9 @@ class SQLQueryCreator {
   void FillDataMap(std::unordered_set<std::string> processed_operations,
                    std::unordered_set<std::string> operations_to_process,
                    std::map<std::string, InputNodeParameters>& data_to_write);
+  void SetOperationSpecifcStreamParamsForDataMap(
+      std::string current_process,
+      std::map<std::string, OperationParams>& current_operation_params);
 
  public:
   auto ExportInputDef() -> std::string;

@@ -57,7 +57,9 @@ using OperationParams =
 struct OperationData {
   QueryOperationType operation_type;
   std::string sorted_by_column;
-  std::vector<std::string> used_columns;
+  std::unordered_map<std::string, int> column_locations;
+  std::vector<std::string> operation_columns;
+  std::vector<std::string> desired_columns;
   std::vector<std::string> inputs;
   std::vector<std::string> outputs;
   OperationParams operation_params;
