@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <algorithm>
 #include <iostream>
+#include <utility>
 
 #include "sql_json_writer.hpp"
 
@@ -102,102 +103,127 @@ void SQLQueryCreator::SetStreamParamsForDataMap(
   }
   current_operation_params.insert({output_parameters_string, params});
 
-  SetOperationSpecifcStreamParamsForDataMap(current_process,
-                                            current_operation_params);
+  SetOperationSpecificStreamParamsForDataMap(current_process,
+                                             current_operation_params);
   current_parameters.insert(
       {operation_parameters_string, current_operation_params});
 }
 
-void SQLQueryCreator::SetOperationSpecifcStreamParamsForDataMap(
+void SQLQueryCreator::SetOperationSpecificStreamParamsForDataMap(
     std::string current_process,
     std::map<std::string, OperationParams>& current_operation_params) {
   // TODO: Currently set up to only do one column at a time.
   auto current_operation = operations_[current_process].operation_type;
   if (current_operation == QueryOperationType::kAddition) {
-    if (operations_[current_process].column_locations.find(
-            operations_[current_process].operation_columns[0]) ==
-        operations_[current_process].column_locations.end()) {
-      throw std::runtime_error("Addition column not found!");
-    }
-    auto column_location = operations_[current_process]
-                               .column_locations[operations_[current_process]
-                                                     .operation_columns[0]];
-    if (column_location % 2) {
-      throw std::runtime_error("Aggregation column incorrectly placed!");
-    }
-    OperationParams params;
-    std::vector<int> chunk_vector = {column_location / 16};
-    params.push_back(chunk_vector);
-
-    auto given_operation_params = std::get<std::vector<int>>(
-        operations_[current_process].operation_params[0]);
-    std::vector<int> negation_vector(8, 0);
-    if (given_operation_params[0]) {
-      negation_vector[(column_location % 16) / 2] = 1;
-    }
-    params.push_back(negation_vector);
-
-    std::vector<int> value_vector(16, 0);
-    value_vector[(column_location % 16) + 1] = given_operation_params[1];
-    params.push_back(value_vector);
-    current_operation_params.insert({operation_specific_params_string, params});
+    SetAdditionStreamParams(current_process, current_operation_params);
   } else if (current_operation == QueryOperationType::kAggregationSum) {
-    if (operations_[current_process].column_locations.find(
-            operations_[current_process].operation_columns[0]) ==
-        operations_[current_process].column_locations.end()) {
-      throw std::runtime_error("Aggregation column not found!");
-    }
-    auto column_location = operations_[current_process]
-                               .column_locations[operations_[current_process]
-                                                     .operation_columns[0]];
-    if (column_location % 2) {
-      throw std::runtime_error("Aggregation column incorrectly placed!");
-    }
-    OperationParams params;
-    std::vector<int> chunk_vector = {column_location / 16};
-    params.push_back(chunk_vector);
-    // TODO: Not sure if it has to be in range 16 or 8.
-    std::vector<int> position_vector = {column_location % 16};
-    params.push_back(position_vector);
-    current_operation_params.insert({operation_specific_params_string, params});
+    SetAggregationStreamParams(current_process, current_operation_params);
   } else if (current_operation == QueryOperationType::kMultiplication) {
-    if (operations_[current_process].column_locations.find(
-            operations_[current_process].operation_columns[0]) ==
-            operations_[current_process].column_locations.end() ||
-        operations_[current_process].column_locations.find(
-            operations_[current_process].operation_columns[1]) ==
-            operations_[current_process].column_locations.end()) {
-      throw std::runtime_error("Multiplication column not found!");
-    }
-    auto first_column_location = operations_[current_process].column_locations
-                     [operations_[current_process].operation_columns[0]];
-    auto second_column_location = operations_[current_process].column_locations
-                     [operations_[current_process].operation_columns[1]];
-    if (first_column_location / 16 != second_column_location / 16 ||
-        (first_column_location % 4) || (second_column_location % 2) ||
-        (first_column_location + 2 != second_column_location)) {
-      throw std::runtime_error("Multiplication columns incorrectly placed!");
-    }
-    std::vector<int> params;
-    // TODO: Hardcoded to overwrite the first column at the moment!
-    operations_[current_process].column_locations.erase(
-        operations_[current_process].operation_columns[0]);
-    operations_[current_process].column_locations.insert(
-        {operations_[current_process].operation_columns[2],
-         first_column_location});
-    params.push_back(first_column_location / 16);
-    for (int i = 0; i < 8; i++) {
-      if (i == (first_column_location % 16) / 2) {
-        params.push_back(1);
-      } else {
-        params.push_back(0);
-      }
-    }
-    current_operation_params.insert(
-        {operation_specific_params_string, {params}});
+    SetMultiplicationStreamParams(current_process, current_operation_params);
+  } else if (current_operation == QueryOperationType::kFilter) {
+    SetFilterStreamParams(current_process, current_operation_params);
   } else {
     current_operation_params.insert({operation_specific_params_string, {}});
   }
+}
+
+void SQLQueryCreator::SetFilterStreamParams(
+    const std::string& current_process,
+    std::map<std::string, OperationParams>& current_operation_params) {
+  current_operation_params.insert({operation_specific_params_string, {}});
+}
+
+void SQLQueryCreator::SetMultiplicationStreamParams(
+    const std::string& current_process,
+    std::map<std::string, OperationParams>& current_operation_params) {
+  if (operations_[current_process].column_locations.find(
+          operations_[current_process].operation_columns[0]) ==
+          operations_[current_process].column_locations.end() ||
+      operations_[current_process].column_locations.find(
+          operations_[current_process].operation_columns[1]) ==
+          operations_[current_process].column_locations.end()) {
+    throw std::runtime_error("Multiplication column not found!");
+  }
+  auto first_column_location =
+      operations_[current_process]
+          .column_locations[operations_[current_process].operation_columns[0]];
+  auto second_column_location =
+      operations_[current_process]
+          .column_locations[operations_[current_process].operation_columns[1]];
+  if (first_column_location / 16 != second_column_location / 16 ||
+      (first_column_location % 4) || (second_column_location % 2) ||
+      (first_column_location + 2 != second_column_location)) {
+    throw std::runtime_error("Multiplication columns incorrectly placed!");
+  }
+  std::vector<int> params;
+  // TODO: Hardcoded to overwrite the first column at the moment!
+  operations_[current_process].column_locations.erase(
+      operations_[current_process].operation_columns[0]);
+  operations_[current_process].column_locations.insert(
+      {operations_[current_process].operation_columns[2],
+       first_column_location});
+  params.push_back(first_column_location / 16);
+  for (int i = 0; i < 8; i++) {
+    if (i == (first_column_location % 16) / 2) {
+      params.push_back(1);
+    } else {
+      params.push_back(0);
+    }
+  }
+  current_operation_params.insert({operation_specific_params_string, {params}});
+}
+void SQLQueryCreator::SetAggregationStreamParams(
+    const std::string& current_process,
+    std::map<std::string, OperationParams>& current_operation_params) {
+  if (operations_[current_process].column_locations.find(
+          operations_[current_process].operation_columns[0]) ==
+      operations_[current_process].column_locations.end()) {
+    throw std::runtime_error("Aggregation column not found!");
+  }
+  auto column_location =
+      operations_[current_process]
+          .column_locations[operations_[current_process].operation_columns[0]];
+  if (column_location % 2) {
+    throw std::runtime_error("Aggregation column incorrectly placed!");
+  }
+  OperationParams params;
+  std::vector<int> chunk_vector = {column_location / 16};
+  params.push_back(chunk_vector);
+  // TODO: Not sure if it has to be in range 16 or 8.
+  std::vector<int> position_vector = {column_location % 16};
+  params.push_back(position_vector);
+  current_operation_params.insert({operation_specific_params_string, params});
+}
+void SQLQueryCreator::SetAdditionStreamParams(
+    const std::string& current_process,
+    std::map<std::string, OperationParams>& current_operation_params) {
+  if (operations_[current_process].column_locations.find(
+          operations_[current_process].operation_columns[0]) ==
+      operations_[current_process].column_locations.end()) {
+    throw std::runtime_error("Addition column not found!");
+  }
+  auto column_location =
+      operations_[current_process]
+          .column_locations[operations_[current_process].operation_columns[0]];
+  if (column_location % 2) {
+    throw std::runtime_error("Aggregation column incorrectly placed!");
+  }
+  OperationParams params;
+  std::vector<int> chunk_vector = {column_location / 16};
+  params.push_back(chunk_vector);
+
+  auto given_operation_params = std::get<std::vector<int>>(
+      operations_[current_process].operation_params[0]);
+  std::vector<int> negation_vector(8, 0);
+  if (given_operation_params[0]) {
+    negation_vector[(column_location % 16) / 2] = 1;
+  }
+  params.push_back(negation_vector);
+
+  std::vector<int> value_vector(16, 0);
+  value_vector[(column_location % 16) + 1] = given_operation_params[1];
+  params.push_back(value_vector);
+  current_operation_params.insert({operation_specific_params_string, params});
 }
 
 auto SQLQueryCreator::SetIOStreamParams(const std::string& current_process)
@@ -409,7 +435,7 @@ int SQLQueryCreator::ProcessTableColumns(const std::string& current_process,
 void SQLQueryCreator::SetOutputsForDataMap(
     const std::string& current_process, InputNodeParameters& current_parameters,
     std::unordered_set<std::string>& processed_operations,
-    std::unordered_set<std::string>& operations_to_process) {  
+    std::unordered_set<std::string>& operations_to_process) {
   // TODO: Breaks when a final node has multiple outputs!
   std::vector<std::string> output_files;
   std::vector<std::string> output_nodes;
@@ -495,7 +521,8 @@ void SQLQueryCreator::UpdateRequiredColumns() {
               operations_.at(current_process).desired_columns[2];
           operations_.at(current_process)
               .desired_columns.erase(
-                  operations_.at(current_process).desired_columns.begin() + 2);*/
+                  operations_.at(current_process).desired_columns.begin() +
+          2);*/
         }
         for (const auto& column : transferred_columns) {
           if (std::find(operations_.at(parent).desired_columns.begin(),
@@ -571,6 +598,10 @@ auto SQLQueryCreator::RegisterTable(std::string filename,
 
 auto SQLQueryCreator::RegisterFilter(std::string input) -> std::string {
   auto new_name = RegisterOperation(QueryOperationType::kFilter, {input});
+  std::unordered_map<int, std::vector<int>> base_map = {0, {}};
+  filter_operations_relations_.insert({new_name, base_map});
+  filter_logic_.insert({new_name, {}});
+  filter_operations_.insert({new_name, {}});
   return new_name;
 }
 
@@ -652,7 +683,16 @@ auto SQLQueryCreator::AddStringComparison(std::string filter_id,
                 column_name) == operations_[filter_id].desired_columns.end()) {
     operations_[filter_id].desired_columns.push_back(column_name);
   }
-  return 0;
+
+  FilterOperation new_operation;
+  new_operation.column_name = column_name;
+  new_operation.operation = comparison_type;
+  new_operation.comparison_values =
+      std::make_pair(compare_value, columns_.at(column_name).second);
+
+  filter_operations_[filter_id].insert({operation_counter_, new_operation});
+
+  return operation_counter_++;
 }
 auto SQLQueryCreator::AddDateComparison(std::string filter_id,
                                         std::string column_name,
@@ -663,7 +703,17 @@ auto SQLQueryCreator::AddDateComparison(std::string filter_id,
                 column_name) == operations_[filter_id].desired_columns.end()) {
     operations_[filter_id].desired_columns.push_back(column_name);
   }
-  return 0;
+
+  FilterOperation new_operation;
+  new_operation.column_name = column_name;
+  new_operation.operation = comparison_type;
+  // TODO: Need checks that the format is correct!
+  std::vector<int> comparison_values = {year * 10000 + month * 100 + day};
+  new_operation.comparison_values = comparison_values;
+
+  filter_operations_[filter_id].insert({operation_counter_, new_operation});
+
+  return operation_counter_++;
 }
 auto SQLQueryCreator::AddIntegerComparison(std::string filter_id,
                                            std::string column_name,
@@ -674,7 +724,16 @@ auto SQLQueryCreator::AddIntegerComparison(std::string filter_id,
                 column_name) == operations_[filter_id].desired_columns.end()) {
     operations_[filter_id].desired_columns.push_back(column_name);
   }
-  return 0;
+
+  FilterOperation new_operation;
+  new_operation.column_name = column_name;
+  new_operation.operation = comparison_type;
+  std::vector<int> comparison_values = {compare_value};
+  new_operation.comparison_values = comparison_values;
+
+  filter_operations_[filter_id].insert({operation_counter_, new_operation});
+
+  return operation_counter_++;
 }
 auto SQLQueryCreator::AddDoubleComparison(std::string filter_id,
                                           std::string column_name,
@@ -685,20 +744,39 @@ auto SQLQueryCreator::AddDoubleComparison(std::string filter_id,
                 column_name) == operations_[filter_id].desired_columns.end()) {
     operations_[filter_id].desired_columns.push_back(column_name);
   }
-  return 0;
+
+  FilterOperation new_operation;
+  new_operation.column_name = column_name;
+  new_operation.operation = comparison_type;
+  std::vector<int> comparison_values = {0,
+                                        static_cast<int>(compare_value * 100)};
+  new_operation.comparison_values = comparison_values;
+
+  filter_operations_[filter_id].insert({operation_counter_, new_operation});
+
+  return operation_counter_++;
 }
 
 auto SQLQueryCreator::AddOr(std::string filter_id,
                             std::vector<int> comparison_ids) -> int {
-  return 0;
+  filter_operations_relations_[filter_id].insert(
+      {operation_counter_, comparison_ids});
+  filter_logic_[filter_id].insert({operation_counter_, false});
+  return operation_counter_++;
 }
 
 auto SQLQueryCreator::AddAnd(std::string filter_id,
                              std::vector<int> comparison_ids) -> int {
-  return 0;
+  filter_operations_relations_[filter_id].insert(
+      {operation_counter_, comparison_ids});
+  filter_logic_[filter_id].insert({operation_counter_, true});
+  return operation_counter_++;
 }
 
 auto SQLQueryCreator::AddNot(std::string filter_id,
                              std::vector<int> comparison_ids) -> int {
-  return 0;
+  // TODO: Have to figure out what can be NOTed.
+  // Only comparisons or add ANDs and ORs as well?
+  // Or optimise in the backend?
+  throw std::runtime_error("Not implemented yet.");
 }

@@ -39,6 +39,13 @@ enum class CompareFunctions {
   kNotEqual = 5,
 };
 
+struct FilterOperation {
+  CompareFunctions operation;
+  std::string column_name;
+  std::variant<std::vector<int>, std::pair<std::string, int>> comparison_values;
+  bool negated; // For future
+};
+
 struct TableColumn {
   ColumnDataType column_type;
   int column_size;

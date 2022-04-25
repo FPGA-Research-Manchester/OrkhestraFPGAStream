@@ -28,6 +28,7 @@ limitations under the License.
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 using orkhestrafs::core_interfaces::table_data::ColumnDataType;
 using orkhestrafs::sql_parsing::query_data::CompareFunctions;
+using orkhestrafs::sql_parsing::query_data::FilterOperation;
 using orkhestrafs::sql_parsing::query_data::OperationData;
 using orkhestrafs::sql_parsing::query_data::OperationParams;
 using orkhestrafs::sql_parsing::query_data::TableColumn;
@@ -83,6 +84,12 @@ class SQLQueryCreator {
       {ColumnDataType::kDecimal, 2},
       {ColumnDataType::kInteger, 1},
       {ColumnDataType::kNull, 1}};
+
+  std::unordered_map<std::string, std::unordered_map<int, std::vector<int>>>
+      filter_operations_relations_;
+  std::unordered_map<std::string, std::unordered_map<int, bool>> filter_logic_;
+  std::unordered_map<std::string, std::unordered_map<int, FilterOperation>>
+      filter_operations_;
   std::unordered_map<std::string, bool> is_table_;
   int operation_counter_ = 0;
   std::unordered_set<std::string> input_operations_;
@@ -90,6 +97,19 @@ class SQLQueryCreator {
   std::unordered_map<std::string, std::pair<ColumnDataType, int>> columns_;
   std::unordered_map<std::string, OperationData> operations_;
   std::unordered_map<std::string, std::vector<std::string>> tables_;
+
+  void SetAdditionStreamParams(
+      const std::string& current_process,
+      std::map<std::string, OperationParams>& current_operation_params);
+  void SetAggregationStreamParams(
+      const std::string& current_process,
+      std::map<std::string, OperationParams>& current_operation_params);
+  void SetMultiplicationStreamParams(
+      const std::string& current_process,
+      std::map<std::string, OperationParams>& current_operation_params);
+  void SetFilterStreamParams(
+      const std::string& current_process,
+      std::map<std::string, OperationParams>& current_operation_params);
 
   auto RegisterOperation(QueryOperationType operation_type,
                          std::vector<std::string> inputs) -> std::string;
@@ -123,7 +143,7 @@ class SQLQueryCreator {
   void FillDataMap(std::unordered_set<std::string> processed_operations,
                    std::unordered_set<std::string> operations_to_process,
                    std::map<std::string, InputNodeParameters>& data_to_write);
-  void SetOperationSpecifcStreamParamsForDataMap(
+  void SetOperationSpecificStreamParamsForDataMap(
       std::string current_process,
       std::map<std::string, OperationParams>& current_operation_params);
 
