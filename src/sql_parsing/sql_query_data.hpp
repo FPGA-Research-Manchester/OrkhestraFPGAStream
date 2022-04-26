@@ -43,7 +43,6 @@ struct FilterOperation {
   CompareFunctions operation;
   std::string column_name;
   std::variant<std::vector<int>, std::pair<std::string, int>> comparison_values;
-  bool negated; // For future
 };
 
 struct TableColumn {

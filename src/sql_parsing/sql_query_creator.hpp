@@ -84,6 +84,15 @@ class SQLQueryCreator {
       {ColumnDataType::kDecimal, 2},
       {ColumnDataType::kInteger, 1},
       {ColumnDataType::kNull, 1}};
+  // TODO: Has to be made global static variable - And be linked to the
+  // module_config_values.hpp!
+  const std::unordered_map<CompareFunctions, int> compare_function_mapping{
+      {CompareFunctions::kLessThan, 0},
+      {CompareFunctions::kLessThanOrEqual, 1},
+      {CompareFunctions::kEqual, 2},
+      {CompareFunctions::kGreaterThanOrEqual, 3},
+      {CompareFunctions::kGreaterThan, 4},
+      {CompareFunctions::kNotEqual, 5}};
 
   std::unordered_map<std::string, std::unordered_map<int, std::vector<int>>>
       filter_operations_relations_;
@@ -97,6 +106,15 @@ class SQLQueryCreator {
   std::unordered_map<std::string, std::pair<ColumnDataType, int>> columns_;
   std::unordered_map<std::string, OperationData> operations_;
   std::unordered_map<std::string, std::vector<std::string>> tables_;
+
+  auto FlattenClauses(const std::string& current_process, int child_term_id,
+                      int current_term_id, int new_current_term_id) -> int;
+  // Replace ORs in ANDs with A new big OR with ANDs to replace the big AND.
+  //
+  auto DistributeOrs(const std::string& current_process, int child_term_id,
+                     int current_term_id, int new_current_term_id) -> int;
+  auto TransofrmToDNF(const std::string& current_process, int clause_id) -> int;
+  auto IsLiteral(const std::string& current_process, int clause_id) -> bool;
 
   void SetAdditionStreamParams(
       const std::string& current_process,
