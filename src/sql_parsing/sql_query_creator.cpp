@@ -173,6 +173,9 @@ void SQLQueryCreator::SetFilterStreamParams(
       }
     }
     if (current_clauses.empty()) {
+      auto thing = filter_operations_.at(current_process).at(literal_id);
+      auto thing2 =
+          filter_operations_relations_[current_process][new_base_clause_id];
       throw std::runtime_error("Some literals were unused!");
     } else {
       clauses.insert({literal_id, current_clauses});
@@ -180,43 +183,119 @@ void SQLQueryCreator::SetFilterStreamParams(
   }
 
   OperationParams params;
+  // TODO: Currently hardcoding decimal comparison and ignoring negation
   for (const auto& [column_name, literal_ids] : operations_on_a_column) {
-    std::vector<int> location_vector;
     auto location = operations_[current_process].column_locations[column_name];
-    location_vector.push_back(location / 16);
-    location_vector.push_back(15 - (location % 16));
-    location_vector.push_back(literal_ids.size());
-    params.push_back(location_vector);
-    for (const auto& literal_id : literal_ids) {
-      std::vector<int> function_vector;
-      function_vector.push_back(compare_function_mapping.at(
-          filter_operations_[current_process][literal_id].operation));
-      params.push_back(function_vector);
-      if (std::holds_alternative<std::pair<std::string, int>>(
+    std::vector<CompareFunctions> function_vector;
+    std::vector<std::variant<std::pair<std::string, int>, int>>
+        comparison_values;
+    std::vector<std::vector<int>> clause_types;
+    std::vector<std::vector<int>> clause_ids;
+    if (std::holds_alternative<std::vector<int>>(
+            filter_operations_[current_process][literal_ids.front()]
+                .comparison_values) &&
+        std::get<std::vector<int>>(
+            filter_operations_[current_process][literal_ids.front()]
+                .comparison_values)
+                .size() != 1) {
+      // Decimal comparison.
+      for (const auto& literal_id : literal_ids) {
+        function_vector.push_back(
+            filter_operations_[current_process][literal_id].operation);
+        comparison_values.push_back(
+              {std::get<std::vector<int>>(
+                   filter_operations_[current_process][literal_id]
+                       .comparison_values)
+                 .at(1)});
+        clause_types.push_back({});
+        clause_ids.push_back(clauses.at(literal_id));
+      }
+      AddColumnFilteringParams(current_process, location + 1, function_vector,
+                               comparison_values, clause_types, clause_ids,
+                               params);
+      function_vector = {CompareFunctions::kEqual};
+      comparison_values = {0};
+      clause_types = {};
+      std::vector<int> new_clause_ids;
+      for (const auto& clause_id_vector : clause_ids) {
+        new_clause_ids.insert(new_clause_ids.end(), clause_id_vector.begin(),
+                              clause_id_vector.end());
+      }
+      clause_ids = {new_clause_ids};
+      AddColumnFilteringParams(current_process, location, function_vector,
+                               comparison_values, clause_types, clause_ids,
+                               params);
+
+    } else {
+
+      for (const auto& literal_id : literal_ids) {
+        function_vector.push_back(
+            filter_operations_[current_process][literal_id].operation);
+        if (std::holds_alternative<std::pair<std::string, int>>(
+                filter_operations_[current_process][literal_id]
+                    .comparison_values)) {
+          comparison_values.push_back(std::get<std::pair<std::string, int>>(
               filter_operations_[current_process][literal_id]
-                  .comparison_values)) {
-        params.push_back(std::get<std::pair<std::string, int>>(
-            filter_operations_[current_process][literal_id].comparison_values));
-      } else {
-        auto current_values = std::get<std::vector<int>>(
-            filter_operations_[current_process][literal_id].comparison_values);
-        if (current_values.size() == 1) {
-          std::vector<int> value_vector = {current_values.front()};
-          params.push_back(value_vector);
+                  .comparison_values));
         } else {
-          // Need to make an identical hardcoded comparisson for decimal values.
-          // In the future make it better!
-          // TODO: Finish this!
+          comparison_values.push_back(
+              {std::get<std::vector<int>>(
+                   filter_operations_[current_process][literal_id]
+                       .comparison_values)
+                   .front()});
         }
+        clause_types.push_back({});
+        clause_ids.push_back(clauses.at(literal_id));
       }
 
-      std::vector<int> clause_type_vector;
-      // TODO: We don't do Negation at the moment.
-      params.push_back(clause_type_vector);
-      params.push_back(clauses.at(literal_id));
+      AddColumnFilteringParams(current_process, location, function_vector,
+                               comparison_values, clause_types, clause_ids,
+                               params);
     }
   }
   current_operation_params.insert({operation_specific_params_string, params});
+}
+
+void SQLQueryCreator::AddColumnFilteringParams(
+    const std::string& current_process, int location,
+    const std::vector<CompareFunctions>& operations,
+    const std::vector<std::variant<std::pair<std::string, int>, int>>&
+        comparison_values,
+    const std::vector<std::vector<int>>& clause_types,
+    const std::vector<std::vector<int>>& clauses,
+    OperationParams& resulting_params) {
+  int operation_count = operations.size();
+
+  // TODO: Get rid of the bunch of arrays and make a single vector of structs!
+  if (comparison_values.size() != operation_count ||
+      clause_types.size() != operation_count ||
+      clauses.size() != operation_count) {
+    throw std::runtime_error(
+        "Incorrect parameters given for filtering param filling!");
+  }
+
+  std::vector<int> location_vector;
+  location_vector.push_back(location / 16);
+  location_vector.push_back(15 - (location % 16));
+  location_vector.push_back(operation_count);
+  resulting_params.push_back(location_vector);
+
+  for (int i = 0; i < operation_count; i++) {
+    std::vector<int> function_vector;
+    function_vector.push_back(compare_function_mapping.at(operations.at(i)));
+    resulting_params.push_back(function_vector);
+    if (std::holds_alternative<std::pair<std::string, int>>(
+            comparison_values.at(i))) {
+      resulting_params.push_back(
+          std::get<std::pair<std::string, int>>(comparison_values.at(i)));
+    } else {
+      auto current_value = std::get<int>(comparison_values.at(i));
+      std::vector<int> value_vector = {current_value};
+      resulting_params.push_back(value_vector);
+    }
+    resulting_params.push_back(clause_types.at(i));
+    resulting_params.push_back(clauses.at(i));
+  }
 }
 
 auto SQLQueryCreator::FlattenClauses(const std::string& current_process,
@@ -326,7 +405,7 @@ auto SQLQueryCreator::DistributeOrs(const std::string& current_process,
 
 auto SQLQueryCreator::IsLiteral(const std::string& current_process, int term_id)
     -> bool {
-  return filter_operations_[current_process].find(term_id) ==
+  return filter_operations_[current_process].find(term_id) !=
          filter_operations_[current_process].end();
 }
 
@@ -944,7 +1023,7 @@ auto SQLQueryCreator::AddStringComparison(std::string filter_id,
       std::make_pair(compare_value, columns_.at(column_name).second);
 
   filter_operations_[filter_id].insert({operation_counter_, new_operation});
-
+  filter_operations_relations_[filter_id][0].push_back(operation_counter_);
   return operation_counter_++;
 }
 auto SQLQueryCreator::AddDateComparison(std::string filter_id,
@@ -965,7 +1044,7 @@ auto SQLQueryCreator::AddDateComparison(std::string filter_id,
   new_operation.comparison_values = comparison_values;
 
   filter_operations_[filter_id].insert({operation_counter_, new_operation});
-
+  filter_operations_relations_[filter_id][0].push_back(operation_counter_);
   return operation_counter_++;
 }
 auto SQLQueryCreator::AddIntegerComparison(std::string filter_id,
@@ -985,7 +1064,7 @@ auto SQLQueryCreator::AddIntegerComparison(std::string filter_id,
   new_operation.comparison_values = comparison_values;
 
   filter_operations_[filter_id].insert({operation_counter_, new_operation});
-
+  filter_operations_relations_[filter_id][0].push_back(operation_counter_);
   return operation_counter_++;
 }
 auto SQLQueryCreator::AddDoubleComparison(std::string filter_id,
@@ -1006,7 +1085,7 @@ auto SQLQueryCreator::AddDoubleComparison(std::string filter_id,
   new_operation.comparison_values = comparison_values;
 
   filter_operations_[filter_id].insert({operation_counter_, new_operation});
-
+  filter_operations_relations_[filter_id][0].push_back(operation_counter_);
   return operation_counter_++;
 }
 
@@ -1015,6 +1094,13 @@ auto SQLQueryCreator::AddOr(std::string filter_id,
   filter_operations_relations_[filter_id].insert(
       {operation_counter_, comparison_ids});
   filter_logic_[filter_id].insert({operation_counter_, false});
+  for (auto const& used_id : comparison_ids) {
+    filter_operations_relations_[filter_id][0].erase(
+        std::remove(filter_operations_relations_[filter_id][0].begin(),
+                    filter_operations_relations_[filter_id][0].end(), used_id),
+        filter_operations_relations_[filter_id][0].end());
+  }
+  filter_operations_relations_[filter_id][0].push_back(operation_counter_);
   return operation_counter_++;
 }
 
@@ -1023,6 +1109,13 @@ auto SQLQueryCreator::AddAnd(std::string filter_id,
   filter_operations_relations_[filter_id].insert(
       {operation_counter_, comparison_ids});
   filter_logic_[filter_id].insert({operation_counter_, true});
+  for (auto const& used_id : comparison_ids) {
+    filter_operations_relations_[filter_id][0].erase(
+        std::remove(filter_operations_relations_[filter_id][0].begin(),
+                    filter_operations_relations_[filter_id][0].end(), used_id),
+        filter_operations_relations_[filter_id][0].end());
+  }
+  filter_operations_relations_[filter_id][0].push_back(operation_counter_);
   return operation_counter_++;
 }
 

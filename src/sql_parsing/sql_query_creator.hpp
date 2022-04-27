@@ -164,6 +164,14 @@ class SQLQueryCreator {
   void SetOperationSpecificStreamParamsForDataMap(
       std::string current_process,
       std::map<std::string, OperationParams>& current_operation_params);
+  void AddColumnFilteringParams(
+      const std::string& current_process, int location,
+      const std::vector<CompareFunctions>& operations,
+      const std::vector<std::variant<std::pair<std::string, int>, int>>&
+          comparison_values,
+      const std::vector<std::vector<int>>& clause_types,
+      const std::vector<std::vector<int>>& clauses,
+      OperationParams& resulting_params);
 
  public:
   auto ExportInputDef() -> std::string;
