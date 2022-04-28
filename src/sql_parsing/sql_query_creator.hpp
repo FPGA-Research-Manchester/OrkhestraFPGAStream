@@ -106,6 +106,7 @@ class SQLQueryCreator {
   std::unordered_map<std::string, std::pair<ColumnDataType, int>> columns_;
   std::unordered_map<std::string, OperationData> operations_;
   std::unordered_map<std::string, std::vector<std::string>> tables_;
+  std::unordered_map<std::string, std::pair<std::string, int>> column_renaming_map_;
 
   auto FlattenClauses(const std::string& current_process, int child_term_id,
                       int current_term_id, int new_current_term_id) -> int;

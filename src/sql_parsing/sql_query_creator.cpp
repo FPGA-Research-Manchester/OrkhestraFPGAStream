@@ -1026,6 +1026,12 @@ auto SQLQueryCreator::RegisterFilter(std::string input) -> std::string {
 
 auto SQLQueryCreator::RegisterSort(std::string input, std::string column_name)
     -> std::string {
+  // Check here if column has been renamed already!
+  if (column_renaming_map_.find(column_name) != column_renaming_map_.end() &&
+      column_renaming_map_.at(column_name).second == -1) {
+    column_name = column_renaming_map_.at(column_name).first;
+  }
+
   if ((is_table_.at(input) && tables_.at(input).front() == column_name) ||
       (!is_table_.at(input) &&
        operations_.at(input).sorted_by_column == column_name)) {
@@ -1039,6 +1045,10 @@ auto SQLQueryCreator::RegisterSort(std::string input, std::string column_name)
     operations_[lin_sort_name].sorted_by_column = column_name;
     operations_[merge_sort_name].desired_columns.push_back(column_name);
     operations_[merge_sort_name].sorted_by_column = column_name;
+    operations_[lin_sort_name].desired_column_locations.insert(
+        {column_name, {0}});
+    operations_[merge_sort_name].desired_column_locations.insert(
+        {column_name, {0}});
     return merge_sort_name;
   }
 }
@@ -1051,7 +1061,23 @@ auto SQLQueryCreator::RegisterJoin(std::string first_input,
   auto second_join_table = RegisterSort(second_input, second_join_key);
   auto join_name = RegisterOperation(QueryOperationType::kJoin,
                                      {first_join_table, second_join_table});
-  operations_[join_name].desired_columns.push_back(first_join_key);
+
+  // Check here if column has been renamed already!
+  if (column_renaming_map_.find(first_join_key) != column_renaming_map_.end() ||
+      column_renaming_map_.find(second_join_key) != column_renaming_map_.end()) {
+    // TODO: Temporary.
+    throw std::runtime_error("Join columns have been renamed already!");
+  }
+
+  auto base_column = std::to_string(operation_counter_++) + "_column";
+
+  column_renaming_map_.insert({first_join_key, {base_column, -1}});
+  column_renaming_map_.insert({second_join_key, {base_column, -1}});
+
+  operations_[join_name].desired_columns.push_back(base_column);
+  operations_[join_name].desired_column_locations.insert({base_column, {0}});
+  operations_[join_name].sorted_by_column = base_column;
+
   return join_name;
 }
 
@@ -1060,32 +1086,72 @@ auto SQLQueryCreator::RegisterAddition(std::string input,
                                        std::string column_name,
                                        bool make_negative, double value)
     -> std::string {
-  auto new_name = RegisterOperation(QueryOperationType::kAddition, {input});
-  operations_[new_name].desired_columns.push_back(column_name);
-  operations_[new_name].operation_columns.push_back(column_name);
+
+  // Check here if column has been renamed already!
+  if (column_renaming_map_.find(column_name) != column_renaming_map_.end() &&
+      column_renaming_map_.at(column_name).second == -1) {
+    column_name = column_renaming_map_.at(column_name).first;
+  }
+
+  auto addition_name =
+      RegisterOperation(QueryOperationType::kAddition, {input});
+  operations_[addition_name].desired_columns.push_back(column_name);
+  operations_[addition_name].operation_columns.push_back(column_name);
   std::vector<int> initial_addition_values = {make_negative,
                                               static_cast<int>(value * 100)};
-  operations_[new_name].operation_params.push_back(initial_addition_values);
-  return new_name;
+  operations_[addition_name].operation_params.push_back(
+      initial_addition_values);
+
+  operations_[addition_name].desired_column_locations.insert(
+      {column_name, {0, 2, 4, 6, 8, 10, 12, 14}});
+
+  return addition_name;
 }
 auto SQLQueryCreator::RegisterMultiplication(std::string input,
                                              std::string first_column_name,
                                              std::string second_column_name,
                                              std::string result_column_name)
     -> std::string {
+
+  // Check here if column has been renamed already!
+  if (column_renaming_map_.find(first_column_name) != column_renaming_map_.end() ||
+      column_renaming_map_.find(second_column_name) != column_renaming_map_.end() ||
+      column_renaming_map_.find(result_column_name) != column_renaming_map_.end()) {
+    // TODO: Temporary.
+    throw std::runtime_error("Multiplication columns have been renamed already!");
+  }
+
   columns_.insert({result_column_name, {ColumnDataType::kDecimal, 1}});
-  auto new_name =
+  auto multiplication_name =
       RegisterOperation(QueryOperationType::kMultiplication, {input});
-  operations_[new_name].desired_columns.push_back(first_column_name);
-  operations_[new_name].desired_columns.push_back(second_column_name);
-  operations_[new_name].operation_columns.push_back(first_column_name);
-  operations_[new_name].operation_columns.push_back(second_column_name);
-  operations_[new_name].operation_columns.push_back(result_column_name);
-  return new_name;
+
+  auto base_column = std::to_string(operation_counter_++) + "_column";
+  auto result_column = std::to_string(operation_counter_++) + "_column";
+
+  column_renaming_map_.insert({result_column_name, {result_column, -1}});
+  column_renaming_map_.insert({second_column_name, {result_column, -1}});
+
+  column_renaming_map_.insert({first_column_name, {base_column, 0}});
+  column_renaming_map_.insert({result_column, {base_column, 1}});
+
+  operations_[multiplication_name].desired_column_locations.insert(
+      {base_column, {0, 4, 8, 12}});
+
+  operations_[multiplication_name].desired_columns.push_back(base_column);
+  operations_[multiplication_name].operation_columns.push_back(base_column);
+  operations_[multiplication_name].operation_columns.push_back(result_column);
+  return multiplication_name;
 }
 auto SQLQueryCreator::RegisterAggregation(std::string input,
                                           std::string column_name)
     -> std::string {
+
+  // Check here if column has been renamed already!
+  if (column_renaming_map_.find(column_name) != column_renaming_map_.end() &&
+      column_renaming_map_.at(column_name).second == -1) {
+    column_name = column_renaming_map_.at(column_name).first;
+  }
+
   auto new_name =
       RegisterOperation(QueryOperationType::kAggregationSum, {input});
   operations_[new_name].desired_columns.push_back(column_name);

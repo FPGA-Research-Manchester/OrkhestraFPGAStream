@@ -71,6 +71,7 @@ struct OperationData {
   OperationParams operation_params;
   std::vector<std::vector<int>> input_params;
   std::vector<std::vector<int>> output_params;
+  std::unordered_map<std::string, std::vector<int>> desired_column_locations;
 };
 
 }  // namespace orkhestrafs::sql_parsing::query_data
