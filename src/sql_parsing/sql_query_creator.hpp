@@ -96,7 +96,7 @@ class SQLQueryCreator {
 
   std::unordered_map<std::string, std::unordered_map<int, std::vector<int>>>
       filter_operations_relations_;
-  std::unordered_map<std::string, std::unordered_map<int, bool>> filter_logic_;
+  std::unordered_map<std::string, std::unordered_map<int, bool>> is_and_;
   std::unordered_map<std::string, std::unordered_map<int, FilterOperation>>
       filter_operations_;
   std::unordered_map<std::string, bool> is_table_;
@@ -113,7 +113,7 @@ class SQLQueryCreator {
   //
   auto DistributeOrs(const std::string& current_process, int child_term_id,
                      int current_term_id, int new_current_term_id) -> int;
-  auto TransofrmToDNF(const std::string& current_process, int clause_id) -> int;
+  auto TransformToDnf(const std::string& current_process, int current_term_id) -> int;
   auto IsLiteral(const std::string& current_process, int clause_id) -> bool;
 
   void SetAdditionStreamParams(
@@ -172,6 +172,10 @@ class SQLQueryCreator {
       const std::vector<std::vector<int>>& clause_types,
       const std::vector<std::vector<int>>& clauses,
       OperationParams& resulting_params);
+  auto MakeACopyClause(const std::string& current_process, int original_term_id) -> int;
+  auto MakeANewClause(const std::string& current_process, const std::vector<int>& initial_child_clauses, bool is_and) -> int;
+  void RemoveFromClause(const std::string& current_process,
+                        int parent_term_id, int removable_term_id);
 
  public:
   auto ExportInputDef() -> std::string;
