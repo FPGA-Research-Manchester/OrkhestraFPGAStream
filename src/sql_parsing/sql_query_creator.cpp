@@ -574,11 +574,12 @@ void SQLQueryCreator::SetMultiplicationStreamParams(
   //  }
   std::vector<int> params;
   // TODO: Hardcoded to overwrite the first column at the moment!
-  operations_[current_process].column_locations.erase(
-      operations_[current_process].operation_columns[0]);
-  operations_[current_process].column_locations.insert(
-      {operations_[current_process].operation_columns[2],
-       first_column_location});
+  // Overwriting is done with hardcoded renaming.
+//  operations_[current_process].column_locations.erase(
+//      operations_[current_process].operation_columns[0]);
+//  operations_[current_process].column_locations.insert(
+//      {operations_[current_process].operation_columns[1],
+//       first_column_location});
   params.push_back(first_column_location / 16);
   for (int i = 0; i < 8; i++) {
     if (i == (first_column_location % 16) / 2) {
@@ -673,6 +674,7 @@ auto SQLQueryCreator::SetIOStreamParams(const std::string& current_process)
       //      observe2 = operations_[current_process].output_params[2];
       //      observe3 = operations_[current_process].output_params[3];
     } else {
+      // TODO: Need to check for moved columns!
       CopyOutputParamsOfParent(current_process, parent_index, parent);
       for (const auto& column : operations_[parent].desired_columns) {
         auto [data_type, data_size] = columns_.at(column);
@@ -796,6 +798,18 @@ int SQLQueryCreator::ProcessTableColumns(const std::string& current_process,
                                          std::string table_name) {
   int current_position_index = 0;
   int last_needed_column_index = 0;
+  // Quick and dirty rename of columns
+  // TODO: Place this more appropriately.
+  for (auto& column_name : tables_.at(table_name)){
+    if (column_renaming_map_.find(column_name) != column_renaming_map_.end()){
+      column_name = column_renaming_map_.at(column_name);
+    }
+  }
+  for (auto& column_name : operations_.at(current_process).desired_columns){
+    if (column_renaming_map_.find(column_name) != column_renaming_map_.end()){
+      column_name = column_renaming_map_.at(column_name);
+    }
+  }
   for (int column_index = 0; column_index < tables_.at(table_name).size();
        column_index++) {
     auto [data_type, data_size] =
@@ -807,10 +821,14 @@ int SQLQueryCreator::ProcessTableColumns(const std::string& current_process,
         .input_params[parent_index * io_param_vector_count + data_sizes_offset]
         .push_back(data_size);
     int column_length = column_sizes_.at(data_type) * data_size;
+
+
+
     if (std::find(operations_.at(current_process).desired_columns.begin(),
                   operations_.at(current_process).desired_columns.end(),
                   tables_.at(table_name).at(column_index)) !=
         operations_.at(current_process).desired_columns.end()) {
+      // TODO: Need to check for desired locations.
       operations_[current_process].column_locations.insert(
           {tables_.at(table_name).at(column_index), current_position_index});
       last_needed_column_index = column_index;
@@ -917,36 +935,31 @@ void SQLQueryCreator::UpdateRequiredColumns() {
     auto current_process = *operations_to_process.begin();
     operations_to_process.erase(current_process);
     processed_operations.insert(current_process);
-    // IF operation is join. Then the column of the second one is not needed in
-    // the second input (not in first either) Basically if join don't put the
-    // extra first element.
-    //
-    // If operation is Multiplication. Put the first two into previous. For the
-    // current one - replace first with third one. and remove third.
     for (const auto& parent : operations_.at(current_process).inputs) {
       if (!is_table_.at(parent)) {
-        auto transferred_columns =
-            operations_.at(current_process).desired_columns;
-        // TODO: How used columns is handled in these two cases is broken!
-        if (operations_.at(current_process).operation_type ==
-            QueryOperationType::kJoin) {
-          transferred_columns.erase(transferred_columns.begin());
-        } else if (operations_.at(current_process).operation_type ==
-                   QueryOperationType::kMultiplication) {
-          /*transferred_columns.erase(transferred_columns.begin() + 2);
-          operations_.at(current_process).desired_columns[0] =
-              operations_.at(current_process).desired_columns[2];
-          operations_.at(current_process)
-              .desired_columns.erase(
-                  operations_.at(current_process).desired_columns.begin() +
-          2);*/
-        }
-        for (const auto& column : transferred_columns) {
+        for (const auto& column :
+             operations_.at(current_process).desired_columns) {
+          // Dealing with renamed columns after.
           if (std::find(operations_.at(parent).desired_columns.begin(),
                         operations_.at(parent).desired_columns.end(), column) ==
               operations_.at(parent).desired_columns.end()) {
             operations_.at(parent).desired_columns.push_back(column);
           }
+          // TODO: Handle these without crashing!
+          if (operations_.at(parent).desired_column_locations.find(column) !=
+              operations_.at(parent).desired_column_locations.end()) {
+            throw std::runtime_error("Column location already specified!");
+          }
+          if (operations_.at(parent).paired_to_column.find(column) !=
+              operations_.at(parent).paired_to_column.end()) {
+            throw std::runtime_error("Column pairing already specified!");
+          }
+          operations_.at(parent).paired_to_column.insert(
+              {column,
+               operations_.at(current_process).paired_to_column.at(column)});
+          operations_.at(parent).desired_column_locations.insert(
+              {column, operations_.at(current_process)
+                           .desired_column_locations.at(column)});
         }
         if (std::all_of(operations_.at(parent).outputs.begin(),
                         operations_.at(parent).outputs.end(),
@@ -1027,9 +1040,8 @@ auto SQLQueryCreator::RegisterFilter(std::string input) -> std::string {
 auto SQLQueryCreator::RegisterSort(std::string input, std::string column_name)
     -> std::string {
   // Check here if column has been renamed already!
-  if (column_renaming_map_.find(column_name) != column_renaming_map_.end() &&
-      column_renaming_map_.at(column_name).second == -1) {
-    column_name = column_renaming_map_.at(column_name).first;
+  if (column_renaming_map_.find(column_name) != column_renaming_map_.end()) {
+    column_name = column_renaming_map_.at(column_name);
   }
 
   if ((is_table_.at(input) && tables_.at(input).front() == column_name) ||
@@ -1064,15 +1076,16 @@ auto SQLQueryCreator::RegisterJoin(std::string first_input,
 
   // Check here if column has been renamed already!
   if (column_renaming_map_.find(first_join_key) != column_renaming_map_.end() ||
-      column_renaming_map_.find(second_join_key) != column_renaming_map_.end()) {
+      column_renaming_map_.find(second_join_key) !=
+          column_renaming_map_.end()) {
     // TODO: Temporary.
     throw std::runtime_error("Join columns have been renamed already!");
   }
 
   auto base_column = std::to_string(operation_counter_++) + "_column";
 
-  column_renaming_map_.insert({first_join_key, {base_column, -1}});
-  column_renaming_map_.insert({second_join_key, {base_column, -1}});
+  column_renaming_map_.insert({first_join_key, base_column});
+  column_renaming_map_.insert({second_join_key, base_column});
 
   operations_[join_name].desired_columns.push_back(base_column);
   operations_[join_name].desired_column_locations.insert({base_column, {0}});
@@ -1086,11 +1099,9 @@ auto SQLQueryCreator::RegisterAddition(std::string input,
                                        std::string column_name,
                                        bool make_negative, double value)
     -> std::string {
-
   // Check here if column has been renamed already!
-  if (column_renaming_map_.find(column_name) != column_renaming_map_.end() &&
-      column_renaming_map_.at(column_name).second == -1) {
-    column_name = column_renaming_map_.at(column_name).first;
+  if (column_renaming_map_.find(column_name) != column_renaming_map_.end()) {
+    column_name = column_renaming_map_.at(column_name);
   }
 
   auto addition_name =
@@ -1112,44 +1123,43 @@ auto SQLQueryCreator::RegisterMultiplication(std::string input,
                                              std::string second_column_name,
                                              std::string result_column_name)
     -> std::string {
-
   // Check here if column has been renamed already!
-  if (column_renaming_map_.find(first_column_name) != column_renaming_map_.end() ||
-      column_renaming_map_.find(second_column_name) != column_renaming_map_.end() ||
-      column_renaming_map_.find(result_column_name) != column_renaming_map_.end()) {
+  if (column_renaming_map_.find(first_column_name) !=
+          column_renaming_map_.end() ||
+      column_renaming_map_.find(result_column_name) !=
+          column_renaming_map_.end()) {
     // TODO: Temporary.
-    throw std::runtime_error("Multiplication columns have been renamed already!");
+    throw std::runtime_error(
+        "Multiplication columns have been renamed already!");
   }
 
   columns_.insert({result_column_name, {ColumnDataType::kDecimal, 1}});
   auto multiplication_name =
       RegisterOperation(QueryOperationType::kMultiplication, {input});
 
-  auto base_column = std::to_string(operation_counter_++) + "_column";
   auto result_column = std::to_string(operation_counter_++) + "_column";
 
-  column_renaming_map_.insert({result_column_name, {result_column, -1}});
-  column_renaming_map_.insert({second_column_name, {result_column, -1}});
-
-  column_renaming_map_.insert({first_column_name, {base_column, 0}});
-  column_renaming_map_.insert({result_column, {base_column, 1}});
+  column_renaming_map_.insert({result_column_name, result_column});
+  column_renaming_map_.insert({first_column_name, result_column});
 
   operations_[multiplication_name].desired_column_locations.insert(
-      {base_column, {0, 4, 8, 12}});
+      {result_column, {0, 4, 8, 12}});
+  operations_[multiplication_name].paired_to_column.insert(
+      {second_column_name, result_column});
 
-  operations_[multiplication_name].desired_columns.push_back(base_column);
-  operations_[multiplication_name].operation_columns.push_back(base_column);
+  operations_[multiplication_name].desired_columns.push_back(result_column);
+  operations_[multiplication_name].desired_columns.push_back(
+      second_column_name);
+
   operations_[multiplication_name].operation_columns.push_back(result_column);
   return multiplication_name;
 }
 auto SQLQueryCreator::RegisterAggregation(std::string input,
                                           std::string column_name)
     -> std::string {
-
   // Check here if column has been renamed already!
-  if (column_renaming_map_.find(column_name) != column_renaming_map_.end() &&
-      column_renaming_map_.at(column_name).second == -1) {
-    column_name = column_renaming_map_.at(column_name).first;
+  if (column_renaming_map_.find(column_name) != column_renaming_map_.end()) {
+    column_name = column_renaming_map_.at(column_name);
   }
 
   auto new_name =
