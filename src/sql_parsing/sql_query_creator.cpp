@@ -28,23 +28,11 @@ using orkhestrafs::sql_parsing::SQLJSONWriter;
 using orkhestrafs::sql_parsing::SQLQueryCreator;
 
 auto SQLQueryCreator::ExportInputDef() -> std::string {
-  //  for (const auto& [process_name, is_table] : is_table_) {
-  //    if (!is_table) {
-  //      auto observe = operations_.at(process_name).desired_columns;
-  //      auto copy = observe;
-  //    }
-  //  }
   UpdateRequiredColumns();
-  //  for (const auto& [process_name, is_table] : is_table_) {
-  //    if (!is_table) {
-  //      auto observe = operations_.at(process_name).desired_columns;
-  //      auto copy = observe;
-  //    }
-  //  }
 
+  // Initialise starting points given input operations
   std::unordered_set<std::string> processed_operations;
   AddTablesToProcessedOperations(processed_operations);
-
   std::unordered_set<std::string> operations_to_process;
   for (const auto& process_name : input_operations_) {
     UpdateNextOperationsListIfAvailable(processed_operations,
@@ -575,11 +563,11 @@ void SQLQueryCreator::SetMultiplicationStreamParams(
   std::vector<int> params;
   // TODO: Hardcoded to overwrite the first column at the moment!
   // Overwriting is done with hardcoded renaming.
-//  operations_[current_process].column_locations.erase(
-//      operations_[current_process].operation_columns[0]);
-//  operations_[current_process].column_locations.insert(
-//      {operations_[current_process].operation_columns[1],
-//       first_column_location});
+  //  operations_[current_process].column_locations.erase(
+  //      operations_[current_process].operation_columns[0]);
+  //  operations_[current_process].column_locations.insert(
+  //      {operations_[current_process].operation_columns[1],
+  //       first_column_location});
   params.push_back(first_column_location / 16);
   for (int i = 0; i < 8; i++) {
     if (i == (first_column_location % 16) / 2) {
@@ -646,6 +634,8 @@ void SQLQueryCreator::SetAdditionStreamParams(
 
 auto SQLQueryCreator::SetIOStreamParams(const std::string& current_process)
     -> int {
+  // TODO: Figure out what do do with record size
+
   // TODO: Still with multiple outputs the current approach doesn't work.
   int record_size = 0;
   for (int parent_index = 0;
@@ -657,45 +647,179 @@ auto SQLQueryCreator::SetIOStreamParams(const std::string& current_process)
     operations_[current_process].output_params.insert(
         operations_[current_process].output_params.end(), {{}, {}, {}, {}});
     if (is_table_.at(parent)) {
-      //      auto observe0 = operations_[current_process].output_params[0];
-      //      auto observe1 = operations_[current_process].output_params[1];
-      //      auto observe2 = operations_[current_process].output_params[2];
-      //      auto observe3 = operations_[current_process].output_params[3];
-      int last_needed_column_index =
+      // TODO: For join already don't include the stuff for the second stream.
+      int last_used_column_index =
           ProcessTableColumns(current_process, parent_index, parent);
-      //      observe0 = operations_[current_process].output_params[0];
-      //      observe1 = operations_[current_process].output_params[1];
-      //      observe2 = operations_[current_process].output_params[2];
-      //      observe3 = operations_[current_process].output_params[3];
-      record_size += CompressNullColumns(current_process, parent_index, parent,
-                                         last_needed_column_index);
-      //      observe0 = operations_[current_process].output_params[0];
-      //      observe1 = operations_[current_process].output_params[1];
-      //      observe2 = operations_[current_process].output_params[2];
-      //      observe3 = operations_[current_process].output_params[3];
+
+      int used_column_count = PlaceColumnsToDesiredPositions(
+          current_process, parent_index, last_used_column_index, parent);
+
+      record_size +=
+          CompressNullColumns(current_process, parent_index, used_column_count);
     } else {
-      // TODO: Need to check for moved columns!
       CopyOutputParamsOfParent(current_process, parent_index, parent);
       for (const auto& column : operations_[parent].desired_columns) {
         auto [data_type, data_size] = columns_.at(column);
         record_size += column_sizes_.at(data_type) * data_size;
       }
     }
-    record_size -= GetDuplicatedColumnSizes(current_process, parent_index);
   }
   return record_size;
 }
+
+auto SQLQueryCreator::MapColumnPositions(
+    const std::string& current_process, int stream_index,
+    int last_needed_column_index, std::string table_name,
+    std::map<std::string, std::vector<int>>& column_positions) -> int {
+  int current_crossbar_index = 0;
+  auto current_data_types_vector =
+      operations_.at(current_process)
+          .output_params.at(stream_index * io_param_vector_count +
+                            data_types_offset);
+  for (int column_index = 0; column_index < last_needed_column_index;
+       column_index++) {
+    auto current_column_name = tables_.at(table_name).at(column_index);
+    auto [data_type, data_size] = columns_.at(current_column_name);
+    int column_length = column_sizes_.at(data_type) * data_size;
+    if (current_data_types_vector.at(column_index) !=
+        static_cast<int>(ColumnDataType::kNull)) {
+      std::vector<int> positions_vector;
+      for (int i = 0; i < column_length; i++) {
+        positions_vector.push_back(current_crossbar_index + i);
+      }
+      column_positions.insert({current_column_name, positions_vector});
+    }
+    current_crossbar_index += column_length;
+  }
+  return (current_crossbar_index + 15) / 16;
+}
+
+void SQLQueryCreator::PlaceColumnsThatSpanOverMultipleChunks(
+    std::vector<std::vector<int>>& crossbar_configuration,
+    std::vector<std::string>& chosen_columns,
+    const std::map<std::string, std::vector<int>>& column_positions,
+    const std::string& current_process) {
+  for (const auto& [column_name, position_vector] : column_positions) {
+    bool uses_multiple_chunks = false;
+    // Assuming the position vector is not empty
+    int first_position_chunk = position_vector.front() / 16;
+    for (int i = 1; i < position_vector.size(); i++) {
+      if (position_vector.at(i) / 16 != first_position_chunk) {
+        uses_multiple_chunks = true;
+      }
+    }
+    if (uses_multiple_chunks) {
+      // if it has position requirements - error
+      if (operations_.at(current_process)
+              .desired_column_locations.find(column_name) !=
+          operations_.at(current_process).desired_column_locations.end()) {
+        throw std::runtime_error("Current column relocation isn't implemented");
+      }
+      for (int i = 0; i < position_vector.size(); i++) {
+        chosen_columns[position_vector.at(i)] = column_name;
+        crossbar_configuration[position_vector.at(i) / 16]
+                              [position_vector.at(i) % 16] =
+                                  position_vector.at(i);
+      }
+    }
+  }
+}
+
+void SQLQueryCreator::GetCurrentAvailableDesiredPositions(
+    std::map<int, std::vector<std::string>>& current_available_desired_columns,
+    std::vector<std::string>& columns_with_requirements,
+    std::map<std::string, std::vector<int>>& left_over_availabilities,
+    int chunk_count) {}
+
+void SQLQueryCreator::RemoveUnavailablePositions(
+    std::map<int, std::vector<std::string>>& current_available_desired_columns,
+    std::map<std::string, std::vector<int>>& left_over_availabilities,
+    const std::vector<std::string>& chosen_columns) {
+
+}
+
+auto SQLQueryCreator::PlaceColumnsToDesiredPositions(
+    const std::string& current_process, int stream_index,
+    int last_needed_column_index, std::string table_name) -> int {
+  // Make a map for column positions
+  // Count chunks
+  // Make a new matrix - Place columns that go over multiple chunks
+  // Count desired locations
+  // Make a method for iterating desired locations with 1 candidate
+  // Expand that method to also check things with 2 or more
+
+  std::map<std::string, std::vector<int>> column_positions;
+  auto chunk_count = MapColumnPositions(current_process, stream_index,
+                                        last_needed_column_index, table_name,
+                                        column_positions);
+  std::vector<std::vector<int>> crossbar_configuration;
+  std::vector<std::string> chosen_columns;
+  std::vector<int> column_types;
+  std::vector<int> column_sizes;
+  // Non-optimal implementation for clarity
+  for (int i = 0; i < chunk_count; i++) {
+    std::vector<int> chunk_crossbar_configuration(16, -1);
+    crossbar_configuration.push_back(chunk_crossbar_configuration);
+    for (int j = 0; j < 16; j++) {
+      chosen_columns.push_back("");
+    }
+  }
+
+  PlaceColumnsThatSpanOverMultipleChunks(crossbar_configuration, chosen_columns,
+                                         column_positions, current_process);
+
+  std::map<int, std::vector<std::string>> current_available_desired_columns;
+  std::vector<std::string> columns_with_requirements;
+  std::map<std::string, std::vector<int>> left_over_availabilities;
+
+  GetCurrentAvailableDesiredPositions(current_available_desired_columns,
+                                      columns_with_requirements,
+                                      left_over_availabilities, chunk_count);
+  RemoveUnavailablePositions(current_available_desired_columns,
+                             left_over_availabilities, chosen_columns);
+
+  // TODO: 1. Fill in the above methods.
+  // TODO: 2. Make the loop - First with just 1
+  // TODO: 3. Improve the loop with more than 1.
+  // TODO: 4. Fill in the data from crossbar and column_types/sizes
+
+  // TODO: Think of Join. - Then the whole thing is done and should work - Also
+  // need to fill in JOIN params.
+
+  // auto operations_[current_process].desired_column_locations
+  //  Need to change input crossbar configuration
+  //  Need to change output data sizes and data types
+  //  Need to return the number of used columns
+
+//1. Count which columns are at which locations.
+//(1. If a whole chunk is -1 you can skip it. - Not really - Might make stuff difficult.)
+//2. Then you find out how many chunks you are dealing with.
+//3. Make a new vector of vectors for positions.
+//4. Place columns which span over multiple chunks
+//5. Then count all of the desired locations
+//6. Make a list of things with 1 choice
+//(If join and second) -> Take away options to place things in the first (-1) - Throw an error if you don't have space. We'll support this later.
+//7. Go through them and place what you can.
+//8. Update the list of things with 1 choice
+//9. Go until it is empty. (Including already used)
+//10. Then go through the rest of the things with more than 1 choice
+//11. For each one you place the one where it is the only choice.
+//12. If no such one is available - Just place one.
+//13. Check again if you have a list of things with 1 choice
+//14. Finally you've placed everything. - If not - error.
+
+
+
+
+  return column_types.size();
+}
+
 void SQLQueryCreator::CombineOutputStreamParams(
     const std::string& current_process) {
   for (int parent_index = 1;
        parent_index < operations_.at(current_process).inputs.size();
        parent_index++) {
-    int start_index = 0;
-    if (operations_.at(current_process).operation_type ==
-        QueryOperationType::kJoin) {
-      start_index++;
-    }
-    for (int i = start_index;
+    for (int i = 0;
          i < operations_[current_process]
                  .output_params[parent_index * io_param_vector_count +
                                 data_sizes_offset]
@@ -713,26 +837,7 @@ void SQLQueryCreator::CombineOutputStreamParams(
   }
   operations_[current_process].output_params.resize(io_param_vector_count);
 }
-int SQLQueryCreator::GetDuplicatedColumnSizes(
-    const std::string& current_process, int parent_index) {
-  int duplicated_record_size = 0;
-  if (operations_.at(current_process).operation_type ==
-          QueryOperationType::kJoin &&
-      parent_index == 1) {
-    // Find first column of join.
-    int data_type = operations_[current_process]
-                        .output_params[parent_index * io_param_vector_count +
-                                       data_types_offset]
-                        .front();
-    int data_size = operations_[current_process]
-                        .output_params[parent_index * io_param_vector_count +
-                                       data_sizes_offset]
-                        .front();
-    duplicated_record_size +=
-        column_sizes_.at(static_cast<ColumnDataType>(data_type)) * data_size;
-  }
-  return duplicated_record_size;
-}
+
 void SQLQueryCreator::CopyOutputParamsOfParent(
     const std::string& current_process, int parent_index, std::string parent) {
   operations_[current_process]
@@ -753,43 +858,48 @@ void SQLQueryCreator::CopyOutputParamsOfParent(
         {column_name, column_location});
   }
 }
+
 int SQLQueryCreator::CompressNullColumns(const std::string& current_process,
-                                         int parent_index,
-                                         std::string table_name,
-                                         int last_needed_column_index) {
+                                         int stream_index,
+                                         int used_column_count) {
   int record_size = 0;
   std::vector<int> new_data_types_concat;
   std::vector<int> new_data_sizes_concat;
   int crossbar_config_length = 0;
-  for (int column_index = 0; column_index <= last_needed_column_index;
+  for (int column_index = 0; column_index <= used_column_count;
        column_index++) {
-    auto [data_type, data_size] =
-        columns_.at(tables_.at(table_name).at(column_index));
-    int column_length = column_sizes_.at(data_type) * data_size;
+    auto data_size =
+        operations_.at(current_process)
+            .output_params
+            .at(stream_index * io_param_vector_count + data_sizes_offset)
+            .at(column_index);
+    auto data_type =
+        operations_.at(current_process)
+            .output_params
+            .at(stream_index * io_param_vector_count + data_types_offset)
+            .at(column_index);
+    int column_length =
+        column_sizes_.at(static_cast<ColumnDataType>(data_type)) * data_size;
     record_size += column_length;
-    int current_data_type =
-        operations_[current_process]
-            .output_params[parent_index * io_param_vector_count +
-                           data_types_offset][column_index];
     if (!new_data_types_concat.empty() &&
-        current_data_type == static_cast<int>(ColumnDataType::kNull) &&
+        data_type == static_cast<int>(ColumnDataType::kNull) &&
         new_data_types_concat.back() ==
             static_cast<int>(ColumnDataType::kNull)) {
-      new_data_sizes_concat.back() += column_length;
+      new_data_sizes_concat.back() += data_size;
     } else {
-      new_data_types_concat.push_back(current_data_type);
+      new_data_types_concat.push_back(data_type);
       new_data_sizes_concat.push_back(data_size);
     }
     crossbar_config_length += column_length;
   }
   operations_[current_process]
-      .output_params[parent_index * io_param_vector_count + data_sizes_offset] =
+      .output_params[stream_index * io_param_vector_count + data_sizes_offset] =
       new_data_sizes_concat;
   operations_[current_process]
-      .output_params[parent_index * io_param_vector_count + data_types_offset] =
+      .output_params[stream_index * io_param_vector_count + data_types_offset] =
       new_data_types_concat;
   operations_[current_process]
-      .input_params[parent_index * io_param_vector_count + crossbar_offset]
+      .input_params[stream_index * io_param_vector_count + crossbar_offset]
       .resize(crossbar_config_length);
   return record_size;
 }
@@ -797,23 +907,16 @@ int SQLQueryCreator::ProcessTableColumns(const std::string& current_process,
                                          int parent_index,
                                          std::string table_name) {
   int current_position_index = 0;
-  int last_needed_column_index = 0;
-  // Quick and dirty rename of columns
-  // TODO: Place this more appropriately.
-  for (auto& column_name : tables_.at(table_name)){
-    if (column_renaming_map_.find(column_name) != column_renaming_map_.end()){
-      column_name = column_renaming_map_.at(column_name);
-    }
-  }
-  for (auto& column_name : operations_.at(current_process).desired_columns){
-    if (column_renaming_map_.find(column_name) != column_renaming_map_.end()){
-      column_name = column_renaming_map_.at(column_name);
-    }
-  }
+  int last_used_column_index = 0;
   for (int column_index = 0; column_index < tables_.at(table_name).size();
        column_index++) {
-    auto [data_type, data_size] =
-        columns_.at(tables_.at(table_name).at(column_index));
+    auto current_column_name = tables_.at(table_name).at(column_index);
+    if (column_renaming_map_.find(current_column_name) !=
+        column_renaming_map_.end()) {
+      current_column_name = column_renaming_map_.at(current_column_name);
+    }
+    // Set original data types and sizes.
+    auto [data_type, data_size] = columns_.at(current_column_name);
     operations_[current_process]
         .input_params[parent_index * io_param_vector_count + data_types_offset]
         .push_back(static_cast<int>(data_type));
@@ -822,16 +925,14 @@ int SQLQueryCreator::ProcessTableColumns(const std::string& current_process,
         .push_back(data_size);
     int column_length = column_sizes_.at(data_type) * data_size;
 
-
-
     if (std::find(operations_.at(current_process).desired_columns.begin(),
                   operations_.at(current_process).desired_columns.end(),
-                  tables_.at(table_name).at(column_index)) !=
+                  current_column_name) !=
         operations_.at(current_process).desired_columns.end()) {
       // TODO: Need to check for desired locations.
       operations_[current_process].column_locations.insert(
-          {tables_.at(table_name).at(column_index), current_position_index});
-      last_needed_column_index = column_index;
+          {current_column_name, current_position_index});
+      last_used_column_index = column_index;
       for (int i = 0; i < column_length; i++) {
         operations_[current_process]
             .input_params[parent_index * io_param_vector_count +
@@ -865,7 +966,7 @@ int SQLQueryCreator::ProcessTableColumns(const std::string& current_process,
           .push_back(column_length);
     }
   }
-  return last_needed_column_index;
+  return last_used_column_index;
 }
 void SQLQueryCreator::SetOutputsForDataMap(
     const std::string& current_process, InputNodeParameters& current_parameters,
@@ -971,6 +1072,68 @@ void SQLQueryCreator::UpdateRequiredColumns() {
         }
       }
     }
+  }
+  RenameAllColumns();
+}
+
+void SQLQueryCreator::RenameAllColumns() {
+  for (auto& [operation_key, operation_data] : operations_) {
+    for (const auto& [renamed_column, new_name] : column_renaming_map_) {
+      if (std::find(operation_data.desired_columns.begin(),
+                    operation_data.desired_columns.end(),
+                    renamed_column) != operation_data.desired_columns.end()) {
+        operation_data.desired_columns.erase(
+            std::remove(operation_data.desired_columns.begin(),
+                        operation_data.desired_columns.end(), renamed_column),
+            operation_data.desired_columns.end());
+        if (std::find(operation_data.desired_columns.begin(),
+                      operation_data.desired_columns.end(),
+                      new_name) == operation_data.desired_columns.end()) {
+          operation_data.desired_columns.push_back(new_name);
+        }
+      }
+      // TODO: Refactor these 2 ifs.
+      if (operation_data.desired_column_locations.find(renamed_column) !=
+          operation_data.desired_column_locations.end()) {
+        if (operation_data.desired_column_locations.find(new_name) !=
+            operation_data.desired_column_locations.end()) {
+          if (operation_data.desired_column_locations.at(new_name) !=
+              operation_data.desired_column_locations.at(renamed_column)) {
+            throw std::runtime_error(
+                "Renamed columns have different specifications!");
+          }
+        } else {
+          operation_data.desired_column_locations.insert(
+              {new_name,
+               operation_data.desired_column_locations.at(renamed_column)});
+        }
+        operation_data.desired_column_locations.erase(renamed_column);
+      }
+      if (operation_data.paired_to_column.find(renamed_column) !=
+          operation_data.paired_to_column.end()) {
+        if (operation_data.paired_to_column.find(new_name) !=
+            operation_data.paired_to_column.end()) {
+          if (operation_data.paired_to_column.at(new_name) !=
+              operation_data.paired_to_column.at(renamed_column)) {
+            throw std::runtime_error(
+                "Renamed columns have different specifications!");
+          }
+        } else {
+          operation_data.paired_to_column.insert(
+              {new_name, operation_data.paired_to_column.at(renamed_column)});
+        }
+        operation_data.paired_to_column.erase(renamed_column);
+      }
+    }
+    for (const auto& [key, value] : operation_data.paired_to_column) {
+      if (column_renaming_map_.find(value) != column_renaming_map_.end()) {
+        operation_data.paired_to_column[key] = column_renaming_map_.at(value);
+      }
+    }
+  }
+
+  for (const auto& [renamed_column, new_name] : column_renaming_map_) {
+    columns_.insert({new_name, columns_.at(renamed_column)});
   }
 }
 

@@ -114,7 +114,8 @@ class SQLQueryCreator {
   //
   auto DistributeOrs(const std::string& current_process, int child_term_id,
                      int current_term_id, int new_current_term_id) -> int;
-  auto TransformToDnf(const std::string& current_process, int current_term_id) -> int;
+  auto TransformToDnf(const std::string& current_process, int current_term_id)
+      -> int;
   auto IsLiteral(const std::string& current_process, int clause_id) -> bool;
 
   void SetAdditionStreamParams(
@@ -148,13 +149,10 @@ class SQLQueryCreator {
       std::unordered_set<std::string>& operations_to_process);
   auto ProcessTableColumns(const std::string& current_process, int parent_index,
                            std::string table_name) -> int;
-  auto CompressNullColumns(const std::string& current_process, int parent_index,
-                           std::string table_name, int last_needed_column_index)
-      -> int;
+  auto CompressNullColumns(const std::string& current_process, int stream_index,
+                           int last_needed_column_index) -> int;
   void CopyOutputParamsOfParent(const std::string& current_process,
                                 int parent_index, std::string parent);
-  auto GetDuplicatedColumnSizes(const std::string& current_process,
-                                int parent_index) -> int;
   void CombineOutputStreamParams(const std::string& current_process);
   auto SetIOStreamParams(const std::string& current_process) -> int;
   void SetStreamParamsForDataMap(const std::string& current_process,
@@ -173,10 +171,36 @@ class SQLQueryCreator {
       const std::vector<std::vector<int>>& clause_types,
       const std::vector<std::vector<int>>& clauses,
       OperationParams& resulting_params);
-  auto MakeACopyClause(const std::string& current_process, int original_term_id) -> int;
-  auto MakeANewClause(const std::string& current_process, const std::vector<int>& initial_child_clauses, bool is_and) -> int;
-  void RemoveFromClause(const std::string& current_process,
-                        int parent_term_id, int removable_term_id);
+  auto MakeACopyClause(const std::string& current_process, int original_term_id)
+      -> int;
+  auto MakeANewClause(const std::string& current_process,
+                      const std::vector<int>& initial_child_clauses,
+                      bool is_and) -> int;
+  void RemoveFromClause(const std::string& current_process, int parent_term_id,
+                        int removable_term_id);
+  void RenameAllColumns();
+  auto PlaceColumnsToDesiredPositions(const std::string& current_process,
+                                      int stream_index,
+                                      int last_needed_column_index,
+                                      std::string table_name) -> int;
+  auto MapColumnPositions(
+      const std::string& current_process, int stream_index,
+      int last_needed_column_index, std::string table_name,
+      std::map<std::string, std::vector<int>>& column_positions) -> int;
+  void PlaceColumnsThatSpanOverMultipleChunks(
+      std::vector<std::vector<int>>& crossbar_configuration,
+      std::vector<std::string>& chosen_columns,
+      const std::map<std::string, std::vector<int>>& column_positions,
+      const std::string& current_process);
+  void GetCurrentAvailableDesiredPositions(
+      std::map<int, std::vector<std::string>>& current_available_desired_columns,
+      std::vector<std::string>& columns_with_requirements,
+      std::map<std::string, std::vector<int>>& left_over_availabilities,
+      int chunk_count);
+  void RemoveUnavailablePositions(
+      std::map<int, std::vector<std::string>>& current_available_desired_columns,
+      std::map<std::string, std::vector<int>>& left_over_availabilities,
+      const std::vector<std::string>& chosen_columns);
 
  public:
   auto ExportInputDef() -> std::string;
