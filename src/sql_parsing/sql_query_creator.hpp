@@ -193,14 +193,47 @@ class SQLQueryCreator {
       const std::map<std::string, std::vector<int>>& column_positions,
       const std::string& current_process);
   void GetCurrentAvailableDesiredPositions(
-      std::map<int, std::vector<std::string>>& current_available_desired_columns,
-      std::vector<std::string>& columns_with_requirements,
-      std::map<std::string, std::vector<int>>& left_over_availabilities,
-      int chunk_count);
+      const std::map<std::string, std::vector<int>>& column_positions,
+      const std::string& current_process,
+      std::map<int, std::vector<std::string>>&
+          current_available_desired_columns,
+      std::map<std::string, std::vector<int>>& left_over_availability);
   void RemoveUnavailablePositions(
-      std::map<int, std::vector<std::string>>& current_available_desired_columns,
-      std::map<std::string, std::vector<int>>& left_over_availabilities,
+      std::map<int, std::vector<std::string>>&
+          current_available_desired_columns,
+      std::map<std::string, std::vector<int>>& left_over_availability,
       const std::vector<std::string>& chosen_columns);
+  void RemoveAvailabliltyDueToJoinRequirements(
+      std::map<int, std::vector<std::string>>&
+          current_available_desired_columns,
+      std::map<std::string, std::vector<int>>& left_over_availability,
+      const std::string& current_process,
+      std::vector<std::vector<int>>& crossbar_configuration,
+      std::vector<std::string>& chosen_columns,
+      const std::map<std::string, std::vector<int>>& column_positions);
+  void SetColumnPlace(
+      std::map<int, std::vector<std::string>>&
+          current_available_desired_columns,
+      std::map<std::string, std::vector<int>>& left_over_availability,
+      std::vector<std::vector<int>>& crossbar_configuration,
+      std::vector<std::string>& chosen_columns,
+      const std::map<std::string, std::vector<int>>& column_positions,
+      const std::string& chosen_column_name, int chosen_location);
+  auto UsesMultipleChunks(std::vector<int> position_vector) -> bool;
+  void PlaceColumnsToPositionsWithOneAvailableLocation(
+      std::map<int, std::vector<std::string>>&
+          current_available_desired_columns,
+      std::map<std::string, std::vector<int>>& left_over_availability,
+      std::vector<std::vector<int>>& crossbar_configuration,
+      std::vector<std::string>& chosen_columns,
+      const std::map<std::string, std::vector<int>>& column_positions);
+  void PlaceGivenColumnsToGivenDesiredLocations(
+      std::map<int, std::vector<std::string>>&
+          current_available_desired_columns,
+      std::map<std::string, std::vector<int>>& left_over_availability,
+      std::vector<std::vector<int>>& crossbar_configuration,
+      std::vector<std::string>& chosen_columns,
+      const std::map<std::string, std::vector<int>>& column_positions);
 
  public:
   auto ExportInputDef() -> std::string;
