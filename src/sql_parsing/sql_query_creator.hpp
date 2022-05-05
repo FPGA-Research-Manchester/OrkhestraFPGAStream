@@ -182,7 +182,7 @@ class SQLQueryCreator {
   auto PlaceColumnsToDesiredPositions(const std::string& current_process,
                                       int stream_index,
                                       int last_needed_column_index,
-                                      std::string table_name) -> int;
+                                      std::string table_name, int record_size) -> int;
   auto MapColumnPositions(
       const std::string& current_process, int stream_index,
       int last_needed_column_index, std::string table_name,
@@ -210,7 +210,8 @@ class SQLQueryCreator {
       const std::string& current_process,
       std::vector<std::vector<int>>& crossbar_configuration,
       std::vector<std::string>& chosen_columns,
-      const std::map<std::string, std::vector<int>>& column_positions);
+      const std::map<std::string, std::vector<int>>& column_positions,
+      const std::map<std::string, std::string>& pairing_map);
   void SetColumnPlace(
       std::map<int, std::vector<std::string>>&
           current_available_desired_columns,
@@ -218,7 +219,8 @@ class SQLQueryCreator {
       std::vector<std::vector<int>>& crossbar_configuration,
       std::vector<std::string>& chosen_columns,
       const std::map<std::string, std::vector<int>>& column_positions,
-      const std::string& chosen_column_name, int chosen_location);
+      const std::string& chosen_column_name, int chosen_location,
+      const std::map<std::string, std::string>& pairing_map);
   auto UsesMultipleChunks(std::vector<int> position_vector) -> bool;
   void PlaceColumnsToPositionsWithOneAvailableLocation(
       std::map<int, std::vector<std::string>>&
@@ -226,14 +228,29 @@ class SQLQueryCreator {
       std::map<std::string, std::vector<int>>& left_over_availability,
       std::vector<std::vector<int>>& crossbar_configuration,
       std::vector<std::string>& chosen_columns,
-      const std::map<std::string, std::vector<int>>& column_positions);
+      const std::map<std::string, std::vector<int>>& column_positions,
+      const std::map<std::string, std::string>& pairing_map);
   void PlaceGivenColumnsToGivenDesiredLocations(
       std::map<int, std::vector<std::string>>&
           current_available_desired_columns,
       std::map<std::string, std::vector<int>>& left_over_availability,
       std::vector<std::vector<int>>& crossbar_configuration,
       std::vector<std::string>& chosen_columns,
-      const std::map<std::string, std::vector<int>>& column_positions);
+      const std::map<std::string, std::vector<int>>& column_positions,
+      const std::map<std::string, std::string>& pairing_map);
+  void SetJoinOffsetParam(const std::string& current_process);
+  void CleanAvailablePositionsAndPlaceColumns(
+      std::map<int, std::vector<std::string>>&
+          current_available_desired_columns,
+      std::map<std::string, std::vector<int>>& left_over_availability,
+      const std::string& current_process,
+      std::vector<std::vector<int>>& crossbar_configuration,
+      std::vector<std::string>& chosen_columns,
+      const std::map<std::string, std::vector<int>>& column_positions,
+      int stream_index, const std::map<std::string, std::string>& pairing_map);
+  void SetJoinStreamParams(
+      const std::string& current_process,
+      std::map<std::string, OperationParams>& current_operation_params);
 
  public:
   auto ExportInputDef() -> std::string;
