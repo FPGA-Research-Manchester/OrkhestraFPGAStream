@@ -177,8 +177,8 @@ target_include_directories(query_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 					                              ${CMAKE_CURRENT_SOURCE_DIR}/scheduling)
 
 target_link_libraries(query_execution PRIVATE core_interfaces)
-target_link_libraries(query_execution PUBLIC util)
+target_link_libraries(query_execution PRIVATE util)
 
 if (ENABLE_FPGA)
-	target_link_libraries(query_execution PUBLIC fos)
+	target_link_libraries(query_execution PRIVATE fos)
 endif()

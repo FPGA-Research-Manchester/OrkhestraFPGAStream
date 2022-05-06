@@ -1,5 +1,5 @@
 ﻿/*
-Copyright 2021 University of Manchester
+Copyright 2022 University of Manchester
 
 Licensed under the Apache License, Version 2.0(the "License");
 you may not use this file except in compliance with the License.
@@ -16,19 +16,16 @@ limitations under the License.
 
 #pragma once
 
-#include <string>
+#include "sql_query_creator.hpp"
 
-namespace orkhestrafs::core {
-/**
- * @brief Main class to run the whole library
- */
-class Core {
+using orkhestrafs::sql_parsing::InputNodeParameters;
+
+namespace orkhestrafs::sql_parsing {
+
+class SQLJSONWriter {
  public:
-  /**
-   * @brief Run the middleware
-   * @param input_filename Input definition filename.
-   * @param config_filename Config file contianing files to configure the HW.
-   */
-  static void Run(std::string input_filename, std::string config_filename);
+  static void WriteQuery(std::string filename,
+                         std::map<std::string, InputNodeParameters> data);
 };
-}  // namespace orkhestrafs::core
+
+}  // namespace orkhestrafs::sql_parsing

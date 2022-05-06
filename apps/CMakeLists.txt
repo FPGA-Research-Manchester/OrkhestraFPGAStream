@@ -338,6 +338,7 @@ endif()
 
 target_link_libraries(OrkhestraFPGAStream PRIVATE core)
 target_link_libraries(OrkhestraFPGAStream PRIVATE util)
+target_link_libraries(OrkhestraFPGAStream PRIVATE sql_parsing)
 #set_target_properties(OrkhestraFPGAStream PROPERTIES LINK_FLAGS "/PROFILE")
 
 file(COPY ${data} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
