@@ -47,8 +47,8 @@ auto SQLQueryCreator::ExportInputDef() -> std::string {
   // sort as output nodes as well!
   const std::string file_name = "Q19.json";
   SQLJSONWriter::WriteQuery(file_name, data_to_write);
-  // return file_name;
-  return "benchmark_Q19_SF001.json";
+  return file_name;
+  //return "benchmark_Q19_SF001.json";
 }
 void SQLQueryCreator::FillDataMap(
     std::unordered_set<std::string> processed_operations,
@@ -1368,7 +1368,7 @@ void SQLQueryCreator::SetInputsForDataMap(
     InputNodeParameters& current_parameters) {
   std::vector<std::string> input_files;
   std::vector<std::string> input_nodes;
-  for (const auto& parent : operations_.at(current_process).outputs) {
+  for (const auto& parent : operations_.at(current_process).inputs) {
     if (is_table_.at(parent)) {
       input_files.push_back(parent);
       input_nodes.push_back("");
