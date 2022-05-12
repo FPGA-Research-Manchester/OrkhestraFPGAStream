@@ -140,6 +140,7 @@ void MemoryManager::LoadBitstreamIfNew(const std::string& bitstream_name,
   }
 }
 
+// TODO: Change the memory manager to not give out unique_ptrs but raw ptrs!
 auto MemoryManager::GetAvailableMemoryBlock()
     -> std::unique_ptr<MemoryBlockInterface> {
   if (available_memory_blocks_.empty()) {

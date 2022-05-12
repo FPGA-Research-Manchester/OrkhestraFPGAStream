@@ -218,6 +218,7 @@ auto QueryManager::CreateStreamParams(
   for (int stream_index = 0; stream_index < stream_ids.size(); stream_index++) {
     volatile uint32_t* physical_address_ptr = nullptr;
     if (allocated_memory_blocks[stream_index]) {
+      // TODO: If offset in stream_parameters - Add the offset - Which is stream record size * count (stream_sizes)
       physical_address_ptr =
           allocated_memory_blocks[stream_index]->GetPhysicalAddress();
     }
@@ -338,16 +339,12 @@ auto QueryManager::SetupAccelerationNodesForExecution(
         node->module_locations.begin() + removable_parameter_count + 1,
         node->module_locations.end()};
     if (node->operation_type == QueryOperationType::kMergeSort) {
-      auto before = node->operation_parameters.operation_parameters;
       node->operation_parameters.operation_parameters = {
           node->operation_parameters.operation_parameters.begin() +
               removable_parameter_count *
                   node->operation_parameters.operation_parameters[0][1] +
               1,
           node->operation_parameters.operation_parameters.end()};
-
-      auto after = node->operation_parameters.operation_parameters;
-      auto after1 = node->operation_parameters.operation_parameters;
     }
 
     StoreStreamResultParameters(result_parameters, output_ids[node->node_name],
@@ -690,6 +687,9 @@ void QueryManager::FreeMemoryBlocks(
         auto target_node_name = target_input_streams.at(0).first;
         auto target_stream_index = target_input_streams.at(0).second;
         if (target_node_name == node_name) {
+          // TODO: Don't copy anything if the pointers are the same - Change the
+          // blocks to hold raw pointers while the unique ptrs are held in
+          // memory manager!
           CopyMemoryData(
               output_stream_sizes[node_name][output_stream_index].first *
                   output_stream_sizes[node_name][output_stream_index].second,

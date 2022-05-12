@@ -61,49 +61,95 @@ auto BlockingSortModuleSetup::UpdateDataTable(
   }
 
   const auto& table_name = input_table_names.front();
-  const auto& current_table_sorted_status =
-      resulting_tables.at(table_name).sorted_status;
-  const auto& current_table_record_count =
-      resulting_tables.at(table_name).record_count;
-
   std::vector<SortedSequence> new_sorted_sequences;
-  new_sorted_sequences.reserve(current_table_sorted_status.size());
-  if (current_table_sorted_status.empty()) {
+
+  new_sorted_sequences.reserve(
+      resulting_tables.at(table_name).sorted_status.size());
+  if (resulting_tables.at(table_name).sorted_status.empty()) {
     new_sorted_sequences.emplace_back(
-        0, std::min(module_capacity.front(), current_table_record_count));
+        0, std::min(module_capacity.front(),
+                    resulting_tables.at(table_name).record_count));
   } else {
-    int new_sequence_length = 0;
-    for (int sequence_index = 0;
-         sequence_index <
-         std::min(module_capacity.front(),
-                  static_cast<int>(current_table_sorted_status.size()));
-         sequence_index++) {
-      new_sequence_length +=
-          current_table_sorted_status.at(sequence_index).length;
-    }
-    if (module_capacity.front() > current_table_sorted_status.size() &&
-        new_sequence_length < current_table_record_count) {
-      new_sequence_length +=
-          module_capacity.front() - current_table_sorted_status.size();
-      new_sequence_length =
-          std::min(new_sequence_length, current_table_record_count);
-    }
-    new_sorted_sequences.emplace_back(0, new_sequence_length);
-    if (new_sequence_length < current_table_record_count &&
-        module_capacity.front() < current_table_sorted_status.size()) {
-      new_sorted_sequences.insert(
-          new_sorted_sequences.end(),
-          current_table_sorted_status.begin() + module_capacity.front(),
-          current_table_sorted_status.end());
-      /*for (int sequence_index = module_capacity.front();
-           sequence_index < current_sequences.size(); sequence_index++) {
-        new_sorted_sequences.push_back(current_sequences.at(sequence_index));
-      }*/
-    }
+    SortDataTableWhileMinimizingMinorRuns(
+        resulting_tables.at(table_name).sorted_status, new_sorted_sequences,
+        resulting_tables.at(table_name).record_count, module_capacity.front());
+    //  SortDataTableWhileMinimizingMajorRuns(
+    //      resulting_tables.at(table_name).sorted_status, new_sorted_sequences,
+    //      resulting_tables.at(table_name).record_count,
+    //      module_capacity.front());
   }
-  // Fix later
-  // current_table.sorted_status = {{0, current_table.record_count}};
+
   resulting_tables.at(table_name).sorted_status =
       std::move(new_sorted_sequences);
   return QuerySchedulingHelper::IsTableSorted(resulting_tables.at(table_name));
+}
+
+void BlockingSortModuleSetup::SortDataTableWhileMinimizingMinorRuns(
+    const std::vector<SortedSequence>& old_sorted_sequences,
+    std::vector<SortedSequence>& new_sorted_sequences, int record_count,
+    int module_capacity) {
+  int new_sequence_length = 0;
+  for (int sequence_index = 0;
+       sequence_index <
+       std::min(module_capacity, static_cast<int>(old_sorted_sequences.size()));
+       sequence_index++) {
+    new_sequence_length += old_sorted_sequences.at(sequence_index).length;
+  }
+  if (module_capacity > old_sorted_sequences.size() &&
+      new_sequence_length < record_count) {
+    new_sequence_length += module_capacity - old_sorted_sequences.size();
+    new_sequence_length = std::min(new_sequence_length, record_count);
+  }
+  new_sorted_sequences.emplace_back(0, new_sequence_length);
+  if (new_sequence_length < record_count &&
+      module_capacity < old_sorted_sequences.size()) {
+    new_sorted_sequences.insert(new_sorted_sequences.end(),
+                                old_sorted_sequences.begin() + module_capacity,
+                                old_sorted_sequences.end());
+  }
+}
+void BlockingSortModuleSetup::SortDataTableWhileMinimizingMajorRuns(
+    const std::vector<SortedSequence>& old_sorted_sequences,
+    std::vector<SortedSequence>& new_sorted_sequences, int record_count,
+    int module_capacity) {
+  // Assuming the sequences are not empty and they're in correct order.
+  // TODO: Remove this error
+  int old_sequence_length = 0;
+  for (const auto& sequence : old_sorted_sequences) {
+    old_sequence_length += sequence.length;
+  }
+  if (old_sequence_length < record_count) {
+    throw std::runtime_error(
+        "Sorting single elements is not supported currently!");
+  }
+  // If there are less sequences than that then just return one big sequence
+  if (old_sorted_sequences.size() < module_capacity){
+    new_sorted_sequences.emplace_back(0, old_sequence_length);
+  } else {
+    // Find the smallest set of sequences to merge - Not entirely optimal
+    int window_count = old_sorted_sequences.size() + 1 - module_capacity;
+    std::vector<int> window_lengths (window_count, 0);
+    // TODO: Make this one more clever.
+    for (int window_location = 0; window_location<window_count; window_location++){
+      for (int sequence_index = window_location; sequence_index<window_location+record_count; sequence_index++){
+        window_lengths[window_location]+=old_sorted_sequences[sequence_index].length;
+      }
+    }
+    int min_window_index = std::distance(window_lengths.begin(), std::min_element(window_lengths.begin(), window_lengths.end()));
+    // Add sequences before window
+    int start_point = 0;
+    for (int sequence_index = 0; sequence_index < min_window_index; sequence_index++){
+      start_point+= old_sorted_sequences[sequence_index].length;
+      new_sorted_sequences.push_back(old_sorted_sequences[sequence_index]);
+    }
+    // Add window
+    new_sorted_sequences.emplace_back(start_point, window_lengths.at(min_window_index));
+    // If there are sequences to add after the window - add them.
+    if (start_point + window_lengths.at(min_window_index) < record_count &&
+        module_capacity < old_sorted_sequences.size()) {
+      new_sorted_sequences.insert(new_sorted_sequences.end(),
+                                  old_sorted_sequences.begin() + min_window_index + module_capacity,
+                                  old_sorted_sequences.end());
+    }
+  }
 }
