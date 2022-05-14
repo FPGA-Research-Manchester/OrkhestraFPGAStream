@@ -41,9 +41,9 @@ class MemoryManagerInterface {
   virtual auto GetVirtualRegisterAddress(int offset) -> volatile uint32_t* = 0;
 
   virtual auto GetAvailableMemoryBlock()
-      -> std::unique_ptr<MemoryBlockInterface> = 0;
+      -> MemoryBlockInterface* = 0;
   virtual void FreeMemoryBlock(
-      std::unique_ptr<MemoryBlockInterface> memory_block_pointer) = 0;
+      MemoryBlockInterface* memory_block_pointer) = 0;
   virtual void LoadStatic() = 0;
   virtual void LoadPartialBitstream(
       const std::vector<std::string>& bitstream_name,
@@ -51,7 +51,7 @@ class MemoryManagerInterface {
 
  private:
   virtual auto AllocateMemoryBlock()
-      -> std::unique_ptr<MemoryBlockInterface> = 0;
+      -> MemoryBlockInterface* = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

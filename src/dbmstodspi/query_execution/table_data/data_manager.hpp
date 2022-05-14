@@ -76,7 +76,7 @@ class DataManager : public DataManagerInterface {
   [[nodiscard]] auto WriteDataFromCSVToMemory(
       const std::string& filename,
       const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
-      const std::unique_ptr<MemoryBlockInterface>& memory_device) const
+      MemoryBlockInterface* memory_device) const
       -> int override;
 
   /**

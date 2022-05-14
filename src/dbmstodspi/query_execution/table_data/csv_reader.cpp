@@ -32,7 +32,7 @@ using orkhestrafs::dbmstodspi::util::IsValidFile;
 
 auto CSVReader::IsMemoryLargeEnough(
     const std::string& filename,
-    const std::unique_ptr<MemoryBlockInterface>& memory_device) -> bool {
+    MemoryBlockInterface* memory_device) -> bool {
   try {
     auto data_size = std::filesystem::file_size(filename);
     auto memory_size = memory_device->GetSize();
@@ -89,7 +89,7 @@ auto CSVReader::ReadTableData(const std::string& filename, char separator,
 auto CSVReader::WriteTableFromFileToMemory(
     const std::string& filename, char separator,
     const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
-    const std::unique_ptr<MemoryBlockInterface>& memory_device) -> int {
+    MemoryBlockInterface* memory_device) -> int {
   if (!IsValidFile(filename)) {
     throw std::runtime_error(filename + " not found!");
   }

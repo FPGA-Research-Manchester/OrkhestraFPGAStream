@@ -33,7 +33,7 @@ class MockQueryManager : public QueryManagerInterface {
                 std::queue<std::pair<ConfigurableModulesVector,
                                      std::vector<std::shared_ptr<QueryNode>>>>>;
   using MappedMemoryBlocks =
-      std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>;
+      std::map<std::string, std::vector<MemoryBlockInterface*>>;
   using MappedRecordSizes =
       std::map<std::string, std::vector<RecordSizeAndCount>>;
   using TableMap = std::map<std::string, TableMetadata>;

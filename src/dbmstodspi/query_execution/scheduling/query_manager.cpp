@@ -54,10 +54,10 @@ auto QueryManager::GetCurrentLinks(
 }
 
 void QueryManager::InitialiseMemoryBlockVector(
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+    std::map<std::string, std::vector<MemoryBlockInterface*>>&
         memory_blocks,
     int stream_count, const std::string& node_name) {
-  std::vector<std::unique_ptr<MemoryBlockInterface>> empty_vector(stream_count);
+  std::vector<MemoryBlockInterface*> empty_vector(stream_count);
   std::fill(empty_vector.begin(), empty_vector.end(), nullptr);
   memory_blocks.insert({node_name, std::move(empty_vector)});
 }
@@ -73,9 +73,9 @@ void QueryManager::InitialiseStreamSizeVector(
 // Create map with correct amount of elements locations and data reuse links
 void QueryManager::InitialiseVectorSizes(
     const std::vector<std::shared_ptr<QueryNode>>& scheduled_nodes,
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+    std::map<std::string, std::vector<MemoryBlockInterface*>>&
         input_memory_blocks,
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+    std::map<std::string, std::vector<MemoryBlockInterface*>>&
         output_memory_blocks,
     std::map<std::string, std::vector<RecordSizeAndCount>>& input_stream_sizes,
     std::map<std::string, std::vector<RecordSizeAndCount>>&
@@ -132,7 +132,7 @@ auto QueryManager::GetRecordSizeFromParameters(
 void QueryManager::AllocateOutputMemoryBlocks(
     MemoryManagerInterface* memory_manager,
     const DataManagerInterface* data_manager,
-    std::vector<std::unique_ptr<MemoryBlockInterface>>& output_memory_blocks,
+    std::vector<MemoryBlockInterface*>& output_memory_blocks,
     const QueryNode& node,
     std::vector<RecordSizeAndCount>& output_stream_sizes) {
   for (int stream_index = 0; stream_index < node.next_nodes.size();
@@ -153,7 +153,7 @@ void QueryManager::AllocateOutputMemoryBlocks(
 void QueryManager::AllocateInputMemoryBlocks(
     MemoryManagerInterface* memory_manager,
     const DataManagerInterface* data_manager,
-    std::vector<std::unique_ptr<MemoryBlockInterface>>& input_memory_blocks,
+    std::vector<MemoryBlockInterface*>& input_memory_blocks,
     const QueryNode& node,
     const std::map<std::string, std::vector<RecordSizeAndCount>>&
         output_stream_sizes,
@@ -205,7 +205,7 @@ auto QueryManager::CreateStreamParams(
     bool is_input, const QueryNode& node,
     AcceleratorLibraryInterface* accelerator_library,
     const std::vector<int>& stream_ids,
-    const std::vector<std::unique_ptr<MemoryBlockInterface>>&
+    const std::vector<MemoryBlockInterface*>&
         allocated_memory_blocks,
     const std::vector<RecordSizeAndCount>& stream_sizes)
     -> std::vector<StreamDataParameters> {
@@ -255,7 +255,7 @@ void QueryManager::StoreStreamResultParameters(
     std::map<std::string, std::vector<StreamResultParameters>>&
         result_parameters,
     const std::vector<int>& stream_ids, const QueryNode& node,
-    const std::vector<std::unique_ptr<MemoryBlockInterface>>&
+    const std::vector<MemoryBlockInterface*>&
         allocated_memory_blocks) {
   std::vector<StreamResultParameters> result_parameters_vector;
   for (int stream_index = 0; stream_index < stream_ids.size(); stream_index++) {
@@ -273,13 +273,14 @@ void QueryManager::StoreStreamResultParameters(
 auto QueryManager::SetupAccelerationNodesForExecution(
     DataManagerInterface* data_manager, MemoryManagerInterface* memory_manager,
     AcceleratorLibraryInterface* accelerator_library,
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+    std::map<std::string, std::vector<MemoryBlockInterface*>>&
         input_memory_blocks,
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+    std::map<std::string, std::vector<MemoryBlockInterface*>>&
         output_memory_blocks,
     std::map<std::string, std::vector<RecordSizeAndCount>>& input_stream_sizes,
     std::map<std::string, std::vector<RecordSizeAndCount>>& output_stream_sizes,
-    const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes)
+    const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
+    const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links)
     -> std::pair<std::vector<AcceleratedQueryNode>,
                  std::map<std::string, std::vector<StreamResultParameters>>> {
   std::map<std::string, std::vector<StreamResultParameters>> result_parameters;
@@ -308,6 +309,25 @@ auto QueryManager::SetupAccelerationNodesForExecution(
     }
   }
 
+  // For printing out temp table.
+  /*for (const auto& node : current_query_nodes) {
+    if (input_memory_blocks.find(node->node_name) !=
+            input_memory_blocks.end() &&
+        !input_memory_blocks.at(node->node_name).empty() &&
+        input_memory_blocks.at(node->node_name).front() != nullptr) {
+      auto resulting_table = TableManager::ReadTableFromMemory(
+          data_manager, node->operation_parameters.input_stream_parameters, 0,
+          input_memory_blocks.at(node->node_name).front(),
+          input_stream_sizes.at(node->node_name).front().second);
+      TableManager::WriteResultTableFile(data_manager, resulting_table,
+                                         "test_print");
+    }
+  }*/
+
+  // Figure out how to read the table if it already exists.
+  // Then you can read all the stuff you reuse and make sure that it is correct. 
+  // First unsorted and then you get the other one!
+
   InitialiseVectorSizes(current_query_nodes, input_memory_blocks,
                         output_memory_blocks, input_stream_sizes,
                         output_stream_sizes);
@@ -322,6 +342,27 @@ auto QueryManager::SetupAccelerationNodesForExecution(
     AllocateInputMemoryBlocks(
         memory_manager, data_manager, input_memory_blocks[node->node_name],
         *node, output_stream_sizes, input_stream_sizes[node->node_name]);
+    
+    // TODO: For combining input and output.
+    /*if (reuse_links.find(node->node_name) != reuse_links.end() &&
+        reuse_links.at(node->node_name).find(0) !=
+            reuse_links.at(node->node_name).end() &&
+        !reuse_links.at(node->node_name).at(0).empty() &&
+        reuse_links.at(node->node_name).at(0).front().first ==
+            node->node_name) {
+      auto thing = output_memory_blocks[node->node_name];
+      auto thing2 = input_memory_blocks[node->node_name];
+
+      memory_manager->FreeMemoryBlock(
+          std::move(
+            output_memory_blocks[node->node_name][0]));
+      output_memory_blocks[node->node_name][0] =
+          input_memory_blocks[node->node_name][0];
+
+      auto thing3 = output_memory_blocks[node->node_name];
+      auto thing4 = input_memory_blocks[node->node_name];
+      auto thing5 = input_memory_blocks[node->node_name];
+    }*/
 
     // Check what is the input_stream_sizes over here
     auto input_params = CreateStreamParams(true, *node, accelerator_library,
@@ -571,7 +612,7 @@ void QueryManager::CheckTableData(const DataManagerInterface* data_manager,
 // which are different) a separate debug method should be added.
 void QueryManager::CheckResults(
     const DataManagerInterface* data_manager,
-    const std::unique_ptr<MemoryBlockInterface>& memory_device, int row_count,
+    MemoryBlockInterface* memory_device, int row_count,
     const std::string& filename,
     const std::vector<std::vector<int>>& node_parameters, int stream_index) {
   auto expected_table = TableManager::ReadTableFromFile(
@@ -583,7 +624,7 @@ void QueryManager::CheckResults(
 
 void QueryManager::WriteResults(
     const DataManagerInterface* data_manager,
-    const std::unique_ptr<MemoryBlockInterface>& memory_device, int row_count,
+    MemoryBlockInterface* memory_device, int row_count,
     const std::string& filename,
     const std::vector<std::vector<int>>& node_parameters, int stream_index) {
   std::chrono::steady_clock::time_point begin =
@@ -609,8 +650,8 @@ void QueryManager::WriteResults(
 
 void QueryManager::CopyMemoryData(
     int table_size,
-    const std::unique_ptr<MemoryBlockInterface>& source_memory_device,
-    const std::unique_ptr<MemoryBlockInterface>& target_memory_device) {
+    MemoryBlockInterface* source_memory_device,
+    MemoryBlockInterface* target_memory_device) {
   volatile uint32_t* source = source_memory_device->GetVirtualAddress();
   volatile uint32_t* target = target_memory_device->GetVirtualAddress();
   std::chrono::steady_clock::time_point begin =
@@ -633,7 +674,7 @@ void QueryManager::ProcessResults(
     const std::map<std::string, std::vector<StreamResultParameters>>&
         result_parameters,
     const std::map<std::string,
-                   std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+                   std::vector<MemoryBlockInterface*>>&
         allocated_memory_blocks,
     std::map<std::string, std::vector<RecordSizeAndCount>>&
         output_stream_sizes) {
@@ -666,9 +707,9 @@ void QueryManager::ProcessResults(
 
 void QueryManager::FreeMemoryBlocks(
     MemoryManagerInterface* memory_manager,
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+    std::map<std::string, std::vector<MemoryBlockInterface*>>&
         input_memory_blocks,
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+    std::map<std::string, std::vector<MemoryBlockInterface*>>&
         output_memory_blocks,
     std::map<std::string, std::vector<RecordSizeAndCount>>& input_stream_sizes,
     std::map<std::string, std::vector<RecordSizeAndCount>>& output_stream_sizes,
@@ -687,14 +728,16 @@ void QueryManager::FreeMemoryBlocks(
         auto target_node_name = target_input_streams.at(0).first;
         auto target_stream_index = target_input_streams.at(0).second;
         if (target_node_name == node_name) {
-          // TODO: Don't copy anything if the pointers are the same - Change the
-          // blocks to hold raw pointers while the unique ptrs are held in
-          // memory manager!
-          CopyMemoryData(
-              output_stream_sizes[node_name][output_stream_index].first *
-                  output_stream_sizes[node_name][output_stream_index].second,
-              output_memory_blocks[node_name][output_stream_index],
-              input_memory_blocks[target_node_name][target_stream_index]);
+          if (output_memory_blocks[node_name][output_stream_index] !=
+              input_memory_blocks[target_node_name][target_stream_index]) {
+            CopyMemoryData(
+                output_stream_sizes[node_name][output_stream_index].first *
+                    output_stream_sizes[node_name][output_stream_index].second,
+                output_memory_blocks[node_name][output_stream_index],
+                input_memory_blocks[target_node_name][target_stream_index]);
+          } else {
+            output_memory_blocks[node_name][output_stream_index] = nullptr;
+          }
           save_input.push_back(target_node_name);
         }
       }
@@ -772,7 +815,7 @@ void QueryManager::FreeMemoryBlocks(
 void QueryManager::ExecuteAndProcessResults(
     FPGAManagerInterface* fpga_manager,
     const DataManagerInterface* data_manager,
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+    std::map<std::string, std::vector<MemoryBlockInterface*>>&
         output_memory_blocks,
     std::map<std::string, std::vector<RecordSizeAndCount>>& output_stream_sizes,
     const std::map<std::string, std::vector<StreamResultParameters>>&

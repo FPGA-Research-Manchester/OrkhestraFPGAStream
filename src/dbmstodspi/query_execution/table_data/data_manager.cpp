@@ -59,7 +59,7 @@ auto DataManager::GetHeaderColumnVector(
 auto DataManager::WriteDataFromCSVToMemory(
     const std::string& filename,
     const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
-    const std::unique_ptr<MemoryBlockInterface>& memory_device) const -> int {
+    MemoryBlockInterface* memory_device) const -> int {
   return csv_reader_->WriteTableFromFileToMemory(
       filename, separator_, column_defs_vector,
       memory_device);  // Make the CSVReader and this function return the record

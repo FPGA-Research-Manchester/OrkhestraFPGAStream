@@ -27,14 +27,9 @@ using orkhestrafs::dbmstodspi::MemoryManagerInterface;
 
 class MockMemoryManager : public MemoryManagerInterface {
  public:
-  void FreeMemoryBlock(
-      std::unique_ptr<MemoryBlockInterface> memory_block_pointer) override {
-    return MockFreeMemoryBlock(memory_block_pointer.get());
-  };
-
-  MOCK_METHOD(std::unique_ptr<MemoryBlockInterface>, GetAvailableMemoryBlock,
+  MOCK_METHOD(MemoryBlockInterface*, GetAvailableMemoryBlock,
               (), (override));
-  MOCK_METHOD(void, MockFreeMemoryBlock,
+  MOCK_METHOD(void, FreeMemoryBlock,
               (MemoryBlockInterface * memory_block_pointer), ());
   MOCK_METHOD(volatile uint32_t*, GetVirtualRegisterAddress, (int offset),
               (override));
@@ -48,6 +43,6 @@ class MockMemoryManager : public MemoryManagerInterface {
               (override));
 
  private:
-  MOCK_METHOD(std::unique_ptr<MemoryBlockInterface>, AllocateMemoryBlock, (),
+  MOCK_METHOD(MemoryBlockInterface*, AllocateMemoryBlock, (),
               (override));
 };

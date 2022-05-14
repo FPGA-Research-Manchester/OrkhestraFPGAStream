@@ -130,7 +130,7 @@ void ExecutionManager::SetupNextRunData() {
           data_manager_.get(), memory_manager_.get(),
           accelerator_library_.get(), input_memory_blocks_,
           output_memory_blocks_, input_stream_sizes_, output_stream_sizes_,
-          next_scheduled_run_nodes);
+          next_scheduled_run_nodes, current_reuse_links_);
   query_nodes_ = std::move(execution_nodes_and_result_params.first);
   for (int module_pos = 0; module_pos < empty_modules.size(); module_pos++) {
     if (empty_modules.at(module_pos).second) {

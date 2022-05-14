@@ -259,9 +259,9 @@ TEST_F(QueryManagerTest, DISABLED_ExecuteAndProcessResultsCallsFPGAManager) {
 TEST_F(QueryManagerTest, DISABLED_FreeMemoryBlocksMovesLinkedMemoryBlocks) {
   QueryManager query_manager_under_test(nullptr);
   MockMemoryManager mock_memory_manager;
-  std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
+  std::map<std::string, std::vector<MemoryBlockInterface*>>
       input_memory_blocks;
-  std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
+  std::map<std::string, std::vector<MemoryBlockInterface*>>
       output_memory_blocks;
   std::map<std::string, std::vector<RecordSizeAndCount>> input_stream_sizes;
   std::map<std::string, std::vector<RecordSizeAndCount>> output_stream_sizes;
@@ -273,16 +273,16 @@ TEST_F(QueryManagerTest, DISABLED_FreeMemoryBlocksMovesLinkedMemoryBlocks) {
   auto *expected_physical_address = expected_memory_block->GetPhysicalAddress();
   std::string target_node_name = "target";
   std::string source_node_name = "source";
-  std::vector<std::unique_ptr<MemoryBlockInterface>> source_input_vector;
+  std::vector<MemoryBlockInterface*> source_input_vector;
   source_input_vector.push_back(nullptr);
-  std::vector<std::unique_ptr<MemoryBlockInterface>> target_input_vector;
+  std::vector<MemoryBlockInterface*> target_input_vector;
   target_input_vector.push_back(nullptr);
   input_memory_blocks.insert(
       {target_node_name, std::move(target_input_vector)});
   input_memory_blocks.insert(
       {source_node_name, std::move(source_input_vector)});
-  std::vector<std::unique_ptr<MemoryBlockInterface>> source_vector;
-  source_vector.push_back(std::move(expected_memory_block));
+  std::vector<MemoryBlockInterface*> source_vector;
+  source_vector.push_back(std::move(expected_memory_block.get()));
   output_memory_blocks.insert({source_node_name, std::move(source_vector)});
   RecordSizeAndCount expected_record_data = {11, 22};
   RecordSizeAndCount other_record_data = {0, 0};
@@ -320,9 +320,9 @@ TEST_F(QueryManagerTest,
        DISABLED_FreeMemoryBlocksRemovesMemoryBlocksAndStreamData) {
   QueryManager query_manager_under_test(nullptr);
   MockMemoryManager mock_memory_manager;
-  std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
+  std::map<std::string, std::vector<MemoryBlockInterface*>>
       input_memory_blocks;
-  std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
+  std::map<std::string, std::vector<MemoryBlockInterface*>>
       output_memory_blocks;
   std::map<std::string, std::vector<RecordSizeAndCount>> input_stream_sizes;
   std::map<std::string, std::vector<RecordSizeAndCount>> output_stream_sizes;
@@ -332,14 +332,14 @@ TEST_F(QueryManagerTest,
   std::string node_name = "node";
   std::unique_ptr<MemoryBlockInterface> expected_output_memory_block =
       std::make_unique<VirtualMemoryBlock>();
-  std::vector<std::unique_ptr<MemoryBlockInterface>> output_vector;
-  output_vector.push_back(std::move(expected_output_memory_block));
+  std::vector<MemoryBlockInterface*> output_vector;
+  output_vector.push_back(std::move(expected_output_memory_block.get()));
   output_memory_blocks.insert({node_name, std::move(output_vector)});
 
   std::unique_ptr<MemoryBlockInterface> expected_input_memory_block =
       std::make_unique<VirtualMemoryBlock>();
-  std::vector<std::unique_ptr<MemoryBlockInterface>> input_vector;
-  input_vector.push_back(std::move(expected_input_memory_block));
+  std::vector<MemoryBlockInterface*> input_vector;
+  input_vector.push_back(std::move(expected_input_memory_block.get()));
   input_memory_blocks.insert({node_name, std::move(input_vector)});
 
   RecordSizeAndCount record_data = {11, 22};

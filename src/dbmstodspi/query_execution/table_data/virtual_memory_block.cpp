@@ -21,11 +21,11 @@ using orkhestrafs::dbmstodspi::VirtualMemoryBlock;
 VirtualMemoryBlock::~VirtualMemoryBlock() = default;
 
 auto VirtualMemoryBlock::GetVirtualAddress() -> volatile uint32_t* {
-  return &memory_area_[0];
+  return &memory_area_.at(0);
 }
 
 auto VirtualMemoryBlock::GetPhysicalAddress() -> volatile uint32_t* {
-  return &memory_area_[0];
+  return &memory_area_.at(0);
 }
 
 auto VirtualMemoryBlock::GetSize() -> const uint32_t {

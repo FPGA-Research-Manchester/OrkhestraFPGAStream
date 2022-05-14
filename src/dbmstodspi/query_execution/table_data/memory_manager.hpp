@@ -19,14 +19,13 @@ limitations under the License.
 #include <memory>
 #include <stack>
 #include <string>
+#include <vector>
 
 #include "memory_block_interface.hpp"
 #include "memory_manager_interface.hpp"
 #ifdef FPGA_AVAILABLE
 #include "cynq.h"
 #include "udma.h"
-#else
-#include <vector>
 #endif
 
 namespace orkhestrafs::dbmstodspi {
@@ -37,7 +36,8 @@ namespace orkhestrafs::dbmstodspi {
  */
 class MemoryManager : public MemoryManagerInterface {
  private:
-  std::stack<std::unique_ptr<MemoryBlockInterface>> available_memory_blocks_;
+  std::vector<std::unique_ptr<MemoryBlockInterface>> current_memory_blocks_;
+  std::stack<MemoryBlockInterface*> available_memory_blocks_;
   int memory_block_count_ = 0;
   // Set in
   // https://github.com/FPGA-Research-Manchester/fos/blob/fdac37e188e217293d296d9973c22500c8a4367c/udmalib/setupUdma.sh#L4
@@ -77,13 +77,13 @@ class MemoryManager : public MemoryManagerInterface {
    * @return Pointer to a DDR memory block.
    */
   auto GetAvailableMemoryBlock()
-      -> std::unique_ptr<MemoryBlockInterface> override;
+      -> MemoryBlockInterface* override;
   /**
    * @brief Mark a memory block as free.
    * @param memory_block_pointer Pointer to the unused DDR memory block.
    */
   void FreeMemoryBlock(
-      std::unique_ptr<MemoryBlockInterface> memory_block_pointer) override;
+      MemoryBlockInterface* memory_block_pointer) override;
 
   // Quick methods to do PR loading.
   void LoadStatic() override;
@@ -91,7 +91,7 @@ class MemoryManager : public MemoryManagerInterface {
                             DMAInterface& dma_engine) override;
 
  private:
-  auto AllocateMemoryBlock() -> std::unique_ptr<MemoryBlockInterface> override;
+  auto AllocateMemoryBlock() -> MemoryBlockInterface* override;
   static void SetFPGAClockSpeed(int speed_value);
   static void SetFPGATo300MHz();
   static void SetFPGATo100MHz();

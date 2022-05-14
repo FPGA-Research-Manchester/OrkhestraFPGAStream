@@ -18,7 +18,6 @@ limitations under the License.
 
 #include <cstdint>
 #include <map>
-#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -45,7 +44,7 @@ class DataManagerInterface {
   [[nodiscard]] virtual auto WriteDataFromCSVToMemory(
       const std::string& filename,
       const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
-      const std::unique_ptr<MemoryBlockInterface>& memory_device) const
+      MemoryBlockInterface* memory_device) const
       -> int = 0;
 
   [[nodiscard]] virtual auto GetHeaderColumnVector(
