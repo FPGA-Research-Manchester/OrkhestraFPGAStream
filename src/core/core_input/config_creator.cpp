@@ -157,9 +157,22 @@ auto ConfigCreator::CreateTablesData(
         std::get<int>(table_meta_data_map.at(record_count_field));
     current_table.record_size =
         std::get<int>(table_meta_data_map.at(record_size_field));
-    for (const auto& sorted_sequence : std::get<std::vector<std::vector<int>>>(
-             table_meta_data_map.at(sorted_status_field))) {
-      current_table.sorted_status.push_back(sorted_sequence.at(0));
+    auto expanded_sorted_status = std::get<std::vector<std::vector<int>>>(
+        table_meta_data_map.at(sorted_status_field));
+    if (!expanded_sorted_status.empty()) {
+      if (expanded_sorted_status.size() == 1) {
+        current_table.sorted_status.push_back(current_table.record_count);
+      } else {
+          // Size of first sequence
+        current_table.sorted_status.push_back(
+            expanded_sorted_status.at(0).at(1));
+        // Number of other sequences
+        current_table.sorted_status.push_back(
+            expanded_sorted_status.size()-1);
+        // Size of other sequences
+        current_table.sorted_status.push_back(
+            expanded_sorted_status.at(1).at(1));
+      }
     }
     resulting_table_meta_data.insert({filename, std::move(current_table)});
   }

@@ -37,7 +37,7 @@ auto BlockingSortModuleSetup::GetWorstCaseProcessedTables(
     } else {
       auto new_table_name = table_name + "_fully_sorted";
       auto new_table_data = data_tables.at(table_name);
-      new_table_data.sorted_status = {{0, new_table_data.record_count}};
+      new_table_data.sorted_status = {new_table_data.record_count};
       resuling_tables.insert({new_table_name, new_table_data});
     }
   }
@@ -62,12 +62,17 @@ auto BlockingSortModuleSetup::UpdateDataTable(
   auto& sorted_status =
       resulting_tables.at(input_table_names.front()).sorted_status;
   const auto& module_capacity_value = module_capacity.front();
-  if (module_capacity_value > sorted_status.size()) {
+
+  if (module_capacity_value >= sorted_status.at(1) + 1) {
     sorted_status.clear();
-    sorted_status.push_back(0);
+    sorted_status.push_back(
+        resulting_tables.at(input_table_names.front()).record_count);
+    return true;
   } else {
-    sorted_status.erase(sorted_status.begin() + 1,
-                        sorted_status.begin() + module_capacity_value);
+    sorted_status[0] =
+        sorted_status.at(0) + (module_capacity_value - 1) * sorted_status.at(2);
+    sorted_status[1] -= (module_capacity_value - 1);
+    return false;
   }
 
   // TODO: Remove this old code 
@@ -91,8 +96,8 @@ auto BlockingSortModuleSetup::UpdateDataTable(
 
   //resulting_tables.at(table_name).sorted_status =
   //    std::move(new_sorted_sequences);
-  return QuerySchedulingHelper::IsTableSorted(
-      resulting_tables.at(input_table_names.front()));
+  /*return QuerySchedulingHelper::IsTableSorted(
+      resulting_tables.at(input_table_names.front()));*/
 }
 
 void BlockingSortModuleSetup::SortDataTableWhileMinimizingMinorRuns(

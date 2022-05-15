@@ -70,18 +70,16 @@ void LinearSortSetup::GetSortedSequenceWithCapacity(
   int sequence_count = record_count / bitstream_capacity;
   initial_sorted_sequence.clear();
   if (sequence_count == 0) {
-    initial_sorted_sequence.push_back(0);
+    initial_sorted_sequence.push_back(record_count);
     return;
   }
-  initial_sorted_sequence.reserve(sequence_count);
-  int current_location = 0;
-  for (int i = 0; i < sequence_count; i++) {
-    initial_sorted_sequence.emplace_back(current_location);
-    current_location += bitstream_capacity;
-  }
   if (bitstream_capacity * sequence_count != record_count) {
-    initial_sorted_sequence.emplace_back(bitstream_capacity * sequence_count);
+    sequence_count+=1;
   }
+  initial_sorted_sequence.reserve(3);
+  initial_sorted_sequence.emplace_back(bitstream_capacity);
+  initial_sorted_sequence.emplace_back(sequence_count);
+  initial_sorted_sequence.emplace_back(bitstream_capacity);
 }
 
 auto LinearSortSetup::GetWorstCaseProcessedTables(

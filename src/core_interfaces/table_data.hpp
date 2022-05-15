@@ -75,7 +75,10 @@ struct TableData {
 struct TableMetadata {
   int record_size;  // words
   int record_count;
-  std::vector<int> sorted_status; // Meant to show starting locations.
+  // 1. How many are sorted in 1st sequence
+  // 2. How many sequences there are afterwards
+  // 3. Size of the sequences afterwards
+  std::vector<int> sorted_status;
 };
 
 }  // namespace orkhestrafs::core_interfaces::table_data

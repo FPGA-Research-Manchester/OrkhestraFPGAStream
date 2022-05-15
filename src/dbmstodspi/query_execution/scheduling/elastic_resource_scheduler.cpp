@@ -347,15 +347,29 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
             });
         auto sorted_status = first_module->processed_table_data;
         for (int i = 0; i < node_counts[node->node_name]; i++) {
-          std::vector<int> channel_sizes(64, 0);
-          int offset = i * 64;
-          for (int j = 0; j < sorted_status.size() - offset && j < 64; j++) {
-            if (sorted_status.size() - 1 == j + offset) {
-              channel_sizes[j] =
-                  first_module->table_data_size - sorted_status[j + offset];
-            } else {
-              channel_sizes[j] =
-                  sorted_status[j + 1 + offset] - sorted_status[j + offset];
+          // TODO:Change hardcoded merge sort sizes!
+          int capacity = 64;
+          std::vector<int> channel_sizes(capacity, 0);
+          int offset = i * capacity;
+
+          // If i = 0 then you get the first channel size from the begginning
+          // For all others you can just put the 3rd argument
+          //
+
+          int starting_point = 0;
+          if (i == 0) {
+            starting_point++;
+            channel_sizes[0] = sorted_status.at(0);
+          }
+          for (int j = starting_point;
+               j < (sorted_status.at(1) + 1) - offset && j < capacity; j++) {
+            channel_sizes[j] = sorted_status.at(2);
+            if (sorted_status.at(1) == j + offset) {
+              int sorted_so_far =
+                  sorted_status.at(0) +
+                  (sorted_status.at(1) - 1) * sorted_status.at(2);
+              channel_sizes[j+1] =
+                  first_module->table_data_size - sorted_so_far;
             }
           }
           node->operation_parameters.operation_parameters.push_back(

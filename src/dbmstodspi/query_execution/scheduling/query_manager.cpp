@@ -919,16 +919,35 @@ void QueryManager::UpdateTableData(
 void QueryManager::CropSortedStatus(
     std::map<std::string, TableMetadata>& scheduling_table_data,
     const std::string& filename) {
-  auto current_data = scheduling_table_data.at(filename);
+  auto& current_data = scheduling_table_data.at(filename);
   if (!current_data.sorted_status.empty()) {
-    for (int resize_target = 0;
-         resize_target < current_data.sorted_status.size();
-         resize_target++) {
-      if (current_data.sorted_status.at(resize_target) >
+    if (current_data.sorted_status.size() == 1) {
+      current_data.sorted_status[0] = current_data.record_count;
+    } else {
+      if ((current_data.sorted_status.at(1) - 1) *
+              current_data.sorted_status.at(2) +
+              current_data.sorted_status.at(0) >
           current_data.record_count) {
-        scheduling_table_data.at(filename).sorted_status.resize(resize_target);
-        break;
-      }
+        if (current_data.record_count < current_data.sorted_status.at(0)) {
+          current_data.sorted_status.clear();
+          current_data.sorted_status.push_back(current_data.record_count);
+        } else {
+          int left_over_rows_to_sort =
+              current_data.record_count - current_data.sorted_status.at(0);
+          int left_over_sequence_count =
+              left_over_rows_to_sort / current_data.sorted_status.at(2);
+          if (left_over_sequence_count == 0) {
+            current_data.sorted_status[1] = 1;
+            current_data.sorted_status[2] = left_over_rows_to_sort;
+          } else {
+            if (left_over_sequence_count * current_data.sorted_status.at(2) !=
+                left_over_rows_to_sort) {
+              left_over_sequence_count++;
+            }
+            current_data.sorted_status[1] = left_over_sequence_count;
+          }
+        }
+      } // Else it's all fine!
     }
   }
 }
