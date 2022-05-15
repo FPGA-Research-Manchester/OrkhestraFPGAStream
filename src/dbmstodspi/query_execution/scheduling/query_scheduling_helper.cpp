@@ -44,10 +44,9 @@ auto QuerySchedulingHelper::FindNodePtrIndex(QueryNode* current_node,
 }
 
 // TODO(Kaspar): Check that it is sorted by the desired column.
-auto QuerySchedulingHelper::IsTableSorted(TableMetadata table_data) -> bool {
+auto QuerySchedulingHelper::IsTableSorted(const TableMetadata& table_data) -> bool {
   return table_data.sorted_status.size() == 1 &&
-         table_data.sorted_status.at(0).start_position == 0 &&
-         table_data.sorted_status.at(0).length == table_data.record_count;
+         table_data.sorted_status.front() == 0;
 }
 
 auto QuerySchedulingHelper::AddNewTableToNextNodes(

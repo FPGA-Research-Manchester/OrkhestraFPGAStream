@@ -22,7 +22,6 @@ limitations under the License.
 #include "query_scheduling_helper.hpp"
 #include "table_data.hpp"
 
-using orkhestrafs::core_interfaces::table_data::SortedSequence;
 using orkhestrafs::dbmstodspi::BlockingSortModuleSetup;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
@@ -60,35 +59,48 @@ auto BlockingSortModuleSetup::UpdateDataTable(
     throw std::runtime_error("Table is sorted already!");
   }
 
-  const auto& table_name = input_table_names.front();
-  std::vector<SortedSequence> new_sorted_sequences;
-
-  new_sorted_sequences.reserve(
-      resulting_tables.at(table_name).sorted_status.size());
-  if (resulting_tables.at(table_name).sorted_status.empty()) {
-    new_sorted_sequences.emplace_back(
-        0, std::min(module_capacity.front(),
-                    resulting_tables.at(table_name).record_count));
+  auto& sorted_status =
+      resulting_tables.at(input_table_names.front()).sorted_status;
+  const auto& module_capacity_value = module_capacity.front();
+  if (module_capacity_value > sorted_status.size()) {
+    sorted_status.clear();
+    sorted_status.push_back(0);
   } else {
-    SortDataTableWhileMinimizingMinorRuns(
-        resulting_tables.at(table_name).sorted_status, new_sorted_sequences,
-        resulting_tables.at(table_name).record_count, module_capacity.front());
-    //  SortDataTableWhileMinimizingMajorRuns(
-    //      resulting_tables.at(table_name).sorted_status, new_sorted_sequences,
-    //      resulting_tables.at(table_name).record_count,
-    //      module_capacity.front());
+    sorted_status.erase(sorted_status.begin() + 1,
+                        sorted_status.begin() + module_capacity_value);
   }
 
-  resulting_tables.at(table_name).sorted_status =
-      std::move(new_sorted_sequences);
-  return QuerySchedulingHelper::IsTableSorted(resulting_tables.at(table_name));
+  // TODO: Remove this old code 
+  //const auto& table_name = input_table_names.front();
+  //std::vector<int> new_sorted_sequences;
+
+  //new_sorted_sequences.reserve(
+  //    resulting_tables.at(table_name).sorted_status.size());
+  //if (resulting_tables.at(table_name).sorted_status.empty()) {
+  //    // TODO: Fix this.
+  //  throw std::runtime_error("Merge sorter can't sort from 0 currently");
+  //} else {
+  //  SortDataTableWhileMinimizingMinorRuns(
+  //      resulting_tables.at(table_name).sorted_status, new_sorted_sequences,
+  //      resulting_tables.at(table_name).record_count, module_capacity.front());
+  //  //  SortDataTableWhileMinimizingMajorRuns(
+  //  //      resulting_tables.at(table_name).sorted_status, new_sorted_sequences,
+  //  //      resulting_tables.at(table_name).record_count,
+  //  //      module_capacity.front());
+  //}
+
+  //resulting_tables.at(table_name).sorted_status =
+  //    std::move(new_sorted_sequences);
+  return QuerySchedulingHelper::IsTableSorted(
+      resulting_tables.at(input_table_names.front()));
 }
 
 void BlockingSortModuleSetup::SortDataTableWhileMinimizingMinorRuns(
-    const std::vector<SortedSequence>& old_sorted_sequences,
-    std::vector<SortedSequence>& new_sorted_sequences, int record_count,
+    const std::vector<int>& old_sorted_sequences,
+    std::vector<int>& new_sorted_sequences, int record_count,
     int module_capacity) {
-  int new_sequence_length = 0;
+  // Not supported currently. Assume that all elements belong to a sequence!
+  /*int new_sequence_length = 0;
   for (int sequence_index = 0;
        sequence_index <
        std::min(module_capacity, static_cast<int>(old_sorted_sequences.size()));
@@ -99,22 +111,22 @@ void BlockingSortModuleSetup::SortDataTableWhileMinimizingMinorRuns(
       new_sequence_length < record_count) {
     new_sequence_length += module_capacity - old_sorted_sequences.size();
     new_sequence_length = std::min(new_sequence_length, record_count);
-  }
-  new_sorted_sequences.emplace_back(0, new_sequence_length);
-  if (new_sequence_length < record_count &&
-      module_capacity < old_sorted_sequences.size()) {
+  }*/
+  new_sorted_sequences.emplace_back(0);
+  if (module_capacity < old_sorted_sequences.size()) {
     new_sorted_sequences.insert(new_sorted_sequences.end(),
                                 old_sorted_sequences.begin() + module_capacity,
                                 old_sorted_sequences.end());
   }
 }
 void BlockingSortModuleSetup::SortDataTableWhileMinimizingMajorRuns(
-    const std::vector<SortedSequence>& old_sorted_sequences,
-    std::vector<SortedSequence>& new_sorted_sequences, int record_count,
+    const std::vector<int>& old_sorted_sequences,
+    std::vector<int>& new_sorted_sequences, int record_count,
     int module_capacity) {
   // Assuming the sequences are not empty and they're in correct order.
   // TODO: Remove this error
-  int old_sequence_length = 0;
+    // Not supported currently!
+  /* int old_sequence_length = 0;
   for (const auto& sequence : old_sorted_sequences) {
     old_sequence_length += sequence.length;
   }
@@ -151,5 +163,5 @@ void BlockingSortModuleSetup::SortDataTableWhileMinimizingMajorRuns(
                                   old_sorted_sequences.begin() + min_window_index + module_capacity,
                                   old_sorted_sequences.end());
     }
-  }
+  }*/
 }

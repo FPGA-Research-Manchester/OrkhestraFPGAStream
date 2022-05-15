@@ -350,7 +350,13 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
           std::vector<int> channel_sizes(64, 0);
           int offset = i * 64;
           for (int j = 0; j < sorted_status.size() - offset && j < 64; j++) {
-            channel_sizes[j] = sorted_status[j + offset].length;
+            if (sorted_status.size() - 1 == j + offset) {
+              channel_sizes[j] =
+                  first_module->table_data_size - sorted_status[j + offset];
+            } else {
+              channel_sizes[j] =
+                  sorted_status[j + 1 + offset] - sorted_status[j + offset];
+            }
           }
           node->operation_parameters.operation_parameters.push_back(
               channel_sizes);

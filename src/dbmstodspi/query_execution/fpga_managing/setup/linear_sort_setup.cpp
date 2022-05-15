@@ -16,6 +16,7 @@ limitations under the License.
 
 #include "linear_sort_setup.hpp"
 
+#include <iostream>
 #include <stdexcept>
 
 #include "linear_sort.hpp"
@@ -63,25 +64,24 @@ auto LinearSortSetup::GetMinSortingRequirementsForTable(
   return {table_data.record_count};
 }
 
-auto LinearSortSetup::GetSortedSequenceWithCapacity(int bitstream_capacity,
-                                                    int record_count)
-    -> std::vector<SortedSequence> {
+void LinearSortSetup::GetSortedSequenceWithCapacity(
+    int bitstream_capacity, int record_count,
+    std::vector<int>& initial_sorted_sequence) {
   int sequence_count = record_count / bitstream_capacity;
+  initial_sorted_sequence.clear();
   if (sequence_count == 0) {
-    return {{0, record_count}};
+    initial_sorted_sequence.push_back(0);
+    return;
   }
-  std::vector<SortedSequence> new_sorted_sequences;
-  for (int sequence_index = 0; sequence_index < sequence_count;
-       sequence_index++) {
-    new_sorted_sequences.emplace_back(bitstream_capacity * sequence_index,
-                                      bitstream_capacity);
-    if (sequence_index == sequence_count - 1 &&
-        record_count % bitstream_capacity != 0) {
-      new_sorted_sequences.emplace_back(bitstream_capacity * sequence_count,
-                                        record_count % bitstream_capacity);
-    }
+  initial_sorted_sequence.reserve(sequence_count);
+  int current_location = 0;
+  for (int i = 0; i < sequence_count; i++) {
+    initial_sorted_sequence.emplace_back(current_location);
+    current_location += bitstream_capacity;
   }
-  return new_sorted_sequences;
+  if (bitstream_capacity * sequence_count != record_count) {
+    initial_sorted_sequence.emplace_back(bitstream_capacity * sequence_count);
+  }
 }
 
 auto LinearSortSetup::GetWorstCaseProcessedTables(
@@ -96,8 +96,9 @@ auto LinearSortSetup::GetWorstCaseProcessedTables(
   for (const auto& table_name : input_tables) {
     auto new_table_name = table_name;
     auto new_table_data = data_tables.at(table_name);
-    new_table_data.sorted_status = GetSortedSequenceWithCapacity(
-        min_capacity.front(), new_table_data.record_count);
+    GetSortedSequenceWithCapacity(min_capacity.front(),
+                                  new_table_data.record_count,
+                                  new_table_data.sorted_status);
     if (new_table_data.sorted_status.size() != 1) {
       new_table_name += "_half_sorted";
     } else {
@@ -118,10 +119,9 @@ auto LinearSortSetup::UpdateDataTable(
   if (module_capacity.size() != 1) {
     throw std::runtime_error("Wrong linear sort capacity given!");
   }
-  auto new_sorted_sequence = GetSortedSequenceWithCapacity(
+  GetSortedSequenceWithCapacity(
       module_capacity.front(),
-      resulting_tables.at(input_table_names.front()).record_count);
-  resulting_tables.at(input_table_names.front()).sorted_status = {
-      new_sorted_sequence};
+      resulting_tables.at(input_table_names.front()).record_count,
+      resulting_tables.at(input_table_names.front()).sorted_status);
   return true;
 }

@@ -70,20 +70,20 @@ auto ExecutionManager::IsBenchmarkDone() -> bool {
 }
 
 void ExecutionManager::SetupNextRunData() {
-  ConfigurableModulesVector next_set_of_operators;
+  /*ConfigurableModulesVector next_set_of_operators;*/
 
   // const auto first = query_node_runs_queue_.front();  // getting the first
   // query_node_runs_queue_.pop();                       // removing him
   // query_node_runs_queue_.push(first);
 
-  auto next_run = query_node_runs_queue_.front().first;
+  /*auto next_run = query_node_runs_queue_.front().first;
   for (auto& module_index : next_run) {
     next_set_of_operators.emplace_back(
         module_index.operation_type,
         config_.pr_hw_library.at(module_index.operation_type)
             .bitstream_map.at(module_index.bitstream)
             .capacity);
-  }
+  }*/
 
   // if (config_.accelerator_library.find(next_set_of_operators) ==
   //    config_.accelerator_library.end()) {
@@ -118,12 +118,36 @@ void ExecutionManager::SetupNextRunData() {
   /*query_manager_->LoadPRBitstreams(memory_manager_.get(),config_.debug_forced_pr_bitstreams,
    *accelerator_library_.get()); exit(0);*/
   auto next_scheduled_run_nodes = PopNextScheduledRun();
-
+  scheduled_node_names_.clear();
   for (const auto& node : next_scheduled_run_nodes) {
     scheduled_node_names_.push_back(node->node_name);
   }
 
   current_reuse_links_ = query_manager_->GetCurrentLinks(all_reuse_links_);
+
+  /*for (const auto& node_name : scheduled_node_names_) {
+    std::cout << node_name << " ";
+  }
+  std::cout << std::endl;
+  for (const auto& [op, used] : empty_modules) {
+    if (op == QueryOperationType::kAddition) {
+      std::cout << "Add: " << (used ? "true"
+                                   : "false")
+                                         << ";";
+    } else if (op == QueryOperationType::kAggregationSum) {
+      std::cout << "Sum: " << (used ? "true" : "false") << ";";
+    } else if (op == QueryOperationType::kFilter) {
+      std::cout << "Filter: " << (used ? "true" : "false") << ";";
+    } else if (op == QueryOperationType::kJoin) {
+      std::cout << "Join: " << (used ? "true" : "false") << ";";
+    } else if (op == QueryOperationType::kLinearSort) {
+      std::cout << "LinSort: " << (used ? "true" : "false") << ";";
+    } else if (op == QueryOperationType::kMergeSort) {
+      std::cout << "MergeSort: " << (used ? "true" : "false") << ";";
+    } else if (op == QueryOperationType::kMultiplication) {
+      std::cout << "Mul: " << (used ? "true" : "false") << ";";
+    }
+  }*/
 
   auto execution_nodes_and_result_params =
       query_manager_->SetupAccelerationNodesForExecution(
@@ -142,14 +166,6 @@ void ExecutionManager::SetupNextRunData() {
       query_nodes_.at(module_pos).operation_module_location = module_pos + 1;
     }
   }
-  // For debugging - manual insertion of passthrough modules
-  /*query_nodes_.insert(query_nodes_.begin(),
-                      accelerator_library_->GetEmptyModuleNode(QueryOperationType::kMergeSort,
-     2));*/
-  /* query_nodes_.insert(
-      query_nodes_.begin() + 2,
-      accelerator_library_->GetEmptyModuleNode(QueryOperationType::kFilter,
-     3));*/
   result_parameters_ = std::move(execution_nodes_and_result_params.second);
 }
 void ExecutionManager::ExecuteAndProcessResults() {
@@ -161,6 +177,7 @@ void ExecutionManager::ExecuteAndProcessResults() {
                                    output_memory_blocks_, input_stream_sizes_,
                                    output_stream_sizes_, current_reuse_links_,
                                    scheduled_node_names_);
+  scheduled_node_names_.clear();
 }
 // auto ExecutionManager::IsRunValid() -> bool {
 //  return query_manager_->IsRunValid(query_nodes_);

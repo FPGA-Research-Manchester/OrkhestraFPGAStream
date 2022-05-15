@@ -20,8 +20,6 @@ limitations under the License.
 #include "sorting_module_setup.hpp"
 #include "table_data.hpp"
 
-using orkhestrafs::core_interfaces::table_data::SortedSequence;
-
 namespace orkhestrafs::dbmstodspi {
 
 /**
@@ -31,9 +29,8 @@ namespace orkhestrafs::dbmstodspi {
 class LinearSortSetup : public virtual AccelerationModuleSetupInterface,
                         public SortingModuleSetup {
  private:
-  static auto GetSortedSequenceWithCapacity(int bitstream_capacity,
-                                            int record_count)
-      -> std::vector<SortedSequence>;
+  static void GetSortedSequenceWithCapacity(int bitstream_capacity,
+                                            int record_count, std::vector<int>& sorted_sequence);
 
  public:
   void SetupModule(AccelerationModule& acceleration_module,

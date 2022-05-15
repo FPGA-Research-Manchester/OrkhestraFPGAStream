@@ -19,7 +19,6 @@ limitations under the License.
 #include "acceleration_module_setup_interface.hpp"
 #include "table_data.hpp"
 
-using orkhestrafs::core_interfaces::table_data::SortedSequence;
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -30,12 +29,12 @@ class BlockingSortModuleSetup
     : public virtual AccelerationModuleSetupInterface {
  private:
   static void SortDataTableWhileMinimizingMinorRuns(
-      const std::vector<SortedSequence>& old_sorted_sequence,
-      std::vector<SortedSequence>& new_sorted_sequence, int record_count,
+      const std::vector<int>& old_sorted_sequence,
+      std::vector<int>& new_sorted_sequence, int record_count,
       int module_capacity);
   static void SortDataTableWhileMinimizingMajorRuns(
-      const std::vector<SortedSequence>& old_sorted_sequence,
-      std::vector<SortedSequence>& new_sorted_sequence, int record_count,
+      const std::vector<int>& old_sorted_sequence,
+      std::vector<int>& new_sorted_sequence, int record_count,
       int module_capacity);
 
  public:

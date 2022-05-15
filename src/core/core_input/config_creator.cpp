@@ -31,7 +31,6 @@ using orkhestrafs::core_interfaces::hw_library::PRModuleData;
 using orkhestrafs::core_interfaces::operation_types::QueryOperation;
 using orkhestrafs::core_interfaces::query_scheduling_data::kSupportedFunctions;
 using orkhestrafs::core_interfaces::table_data::kDataTypeNames;
-using orkhestrafs::core_interfaces::table_data::SortedSequence;
 
 auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string configurations_library = "CONFIGURATIONS_LIBRARY";
@@ -160,9 +159,7 @@ auto ConfigCreator::CreateTablesData(
         std::get<int>(table_meta_data_map.at(record_size_field));
     for (const auto& sorted_sequence : std::get<std::vector<std::vector<int>>>(
              table_meta_data_map.at(sorted_status_field))) {
-      SortedSequence current_sequence = {sorted_sequence.at(0),
-                                         sorted_sequence.at(1)};
-      current_table.sorted_status.push_back(current_sequence);
+      current_table.sorted_status.push_back(sorted_sequence.at(0));
     }
     resulting_table_meta_data.insert({filename, std::move(current_table)});
   }

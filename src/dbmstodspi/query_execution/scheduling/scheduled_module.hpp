@@ -23,7 +23,6 @@ limitations under the License.
 #include "table_data.hpp"
 
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
-using orkhestrafs::core_interfaces::table_data::SortedSequence;
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -36,7 +35,8 @@ struct ScheduledModule {
   QueryOperationType operation_type;
   std::string bitstream;
   std::pair<int, int> position;
-  std::vector<SortedSequence> processed_table_data;
+  std::vector<int> processed_table_data;
+  int table_data_size;
 
   // For map to work.
   auto operator<(const ScheduledModule& rhs) const -> bool {

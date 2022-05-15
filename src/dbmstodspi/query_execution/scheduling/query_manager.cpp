@@ -34,7 +34,6 @@ limitations under the License.
 #include "table_manager.hpp"
 #include "util.hpp"
 
-using orkhestrafs::core_interfaces::table_data::SortedSequence;
 using orkhestrafs::dbmstodspi::BitstreamConfigHelper;
 using orkhestrafs::dbmstodspi::QueryManager;
 using orkhestrafs::dbmstodspi::RunLinker;
@@ -922,21 +921,14 @@ void QueryManager::CropSortedStatus(
     const std::string& filename) {
   auto current_data = scheduling_table_data.at(filename);
   if (!current_data.sorted_status.empty()) {
-    if (current_data.sorted_status.back().start_position +
-            current_data.sorted_status.back().length >
-        current_data.record_count) {
-      std::vector<SortedSequence> cropped_sequences;
-      for (const auto& sequence : current_data.sorted_status) {
-        if (sequence.start_position + sequence.length <=
-            current_data.record_count) {
-          cropped_sequences.push_back(sequence);
-        } else if (sequence.start_position < current_data.record_count) {
-          cropped_sequences.emplace_back(
-              sequence.start_position,
-              current_data.record_count - sequence.start_position);
-        }
+    for (int resize_target = 0;
+         resize_target < current_data.sorted_status.size();
+         resize_target++) {
+      if (current_data.sorted_status.at(resize_target) >
+          current_data.record_count) {
+        scheduling_table_data.at(filename).sorted_status.resize(resize_target);
+        break;
       }
-      scheduling_table_data.at(filename).sorted_status = cropped_sequences;
     }
   }
 }

@@ -232,9 +232,9 @@ class ElasticSchedulingGraphParser {
       const std::vector<std::vector<ModuleSelection>>& heuristics,
       int min_position, const std::vector<std::pair<int, int>>& taken_positions,
       const std::vector<std::vector<std::string>>& bitstream_start_locations,
-      const std::vector<SortedSequence>& processed_table_data,
+      const std::vector<int>& processed_table_data,
       std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
-          module_placements) -> bool;
+          module_placements, int table_size) -> bool;
 
   auto CurrentRunHasFirstModule(const std::vector<ScheduledModule>& current_run,
                                 const std::string& node_name) -> bool;

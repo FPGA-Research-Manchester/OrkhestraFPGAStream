@@ -30,7 +30,6 @@ limitations under the License.
 #include "table_data.hpp"
 #include "time_limit_execption.hpp"
 
-using orkhestrafs::core_interfaces::table_data::SortedSequence;
 using orkhestrafs::dbmstodspi::ElasticSchedulingGraphParser;
 using orkhestrafs::dbmstodspi::PairHash;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
@@ -244,9 +243,9 @@ auto ElasticSchedulingGraphParser::GetChosenModulePlacements(
     const std::vector<std::vector<ModuleSelection>>& heuristics,
     int min_position, const std::vector<std::pair<int, int>>& taken_positions,
     const std::vector<std::vector<std::string>>& bitstream_start_locations,
-    const std::vector<SortedSequence>& processed_table_data,
+    const std::vector<int>& processed_table_data,
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
-        module_placements) -> bool {
+        module_placements, int table_size) -> bool {
   // Do I need to construct this every time?
   auto available_bitstreams = FindAllAvailableBitstreamsAfterMinPos(
       current_operation, min_position, taken_positions,
@@ -263,7 +262,8 @@ auto ElasticSchedulingGraphParser::GetChosenModulePlacements(
                            current_operation,
                            chosen_bitstream,
                            {chosen_column_position, end_index},
-                           processed_table_data}});
+                           processed_table_data,
+                           table_size}});
     }
     if (!new_modules.empty()) {
       statistics_counters_.first += new_modules.size();
@@ -304,13 +304,17 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPos(
     // Add new table status
     std::vector<std::pair<int, ScheduledModule>> found_placements(
         search->second.begin(), search->second.end());
-    std::vector<SortedSequence> processed_tables_data;
+    std::vector<int> processed_tables_data;
+    int data_size = 0;
     if (!graph.at(node_name).data_tables.at(0).empty()) {
       processed_tables_data =
           data_tables.at(graph.at(node_name).data_tables.at(0)).sorted_status;
+      data_size =
+          data_tables.at(graph.at(node_name).data_tables.at(0)).record_count;
     }
     for (auto& new_module_placement : found_placements) {
       new_module_placement.second.processed_table_data = processed_tables_data;
+      new_module_placement.second.table_data_size = data_size;
     }
     module_placements.insert(std::make_move_iterator(found_placements.begin()),
                              std::make_move_iterator(found_placements.end()));
@@ -324,11 +328,14 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPosOrig(
     const std::map<std::string, TableMetadata>& data_tables,
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
         module_placements) {
-  std::vector<SortedSequence> processed_tables_data;
+  std::vector<int> processed_tables_data;
+  int table_size = 0;
   // TODO(Kaspar): Change this hack later
   if (!graph.at(node_name).data_tables.at(0).empty()) {
     processed_tables_data =
         data_tables.at(graph.at(node_name).data_tables.at(0)).sorted_status;
+    table_size =
+        data_tables.at(graph.at(node_name).data_tables.at(0)).record_count;
   }
   /*std::vector<TableMetadata> processed_tables_data;
   for (const auto& table_name : graph.at(node_name).data_tables) {
@@ -345,14 +352,14 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPosOrig(
         node_name, graph.at(node_name).operation, heuristics_.first,
         min_position, taken_positions,
         graph.at(node_name).satisfying_bitstreams, processed_tables_data,
-        module_placements);
+        module_placements, table_size);
   }
   if (!modules_found) {
     GetChosenModulePlacements(
         node_name, graph.at(node_name).operation, heuristics_.second,
         min_position, taken_positions,
         hw_library_.at(graph.at(node_name).operation).starting_locations,
-        processed_tables_data, module_placements);
+        processed_tables_data, module_placements, table_size);
   }
 }
 
@@ -504,9 +511,8 @@ auto ElasticSchedulingGraphParser::IsTableEqualForGivenNode(
         !std::equal(old_table_data.sorted_status.begin(),
                     old_table_data.sorted_status.end(),
                     new_table_data.sorted_status.begin(),
-                    [](const SortedSequence& l, const SortedSequence& r) {
-                      return l.length == r.length &&
-                             l.start_position == r.start_position;
+                    [](const int& l, const int& r) {
+                      return l== r;
                     })) {
       return true;
     }

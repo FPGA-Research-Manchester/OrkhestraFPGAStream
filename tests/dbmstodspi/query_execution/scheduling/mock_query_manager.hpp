@@ -53,7 +53,8 @@ class MockQueryManager : public QueryManagerInterface {
        MappedMemoryBlocks& output_memory_blocks,
        MappedRecordSizes& input_stream_sizes,
        MappedRecordSizes& output_stream_sizes,
-       const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes),
+       const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes, const ReuseLinks&
+               reuse_links),
       (override));
   MOCK_METHOD(void, LoadNextBitstreamIfNew,
               (MemoryManagerInterface * memory_manager,
