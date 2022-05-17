@@ -19,6 +19,7 @@ limitations under the License.
 #include <algorithm>
 #include <iostream>
 #include <memory>
+#include <chrono>
 
 #include "query_scheduling_helper.hpp"
 
@@ -30,7 +31,7 @@ void ExecutionManager::SetFinishedFlag() { busy_flag_ = false; }
 void ExecutionManager::Execute(
     std::unique_ptr<ExecutionPlanGraphInterface> execution_graph) {
   unscheduled_graph_ = std::move(execution_graph);
-
+  auto begin = std::chrono::steady_clock::now();
   busy_flag_ = true;
   while (busy_flag_) {
     auto new_state = current_state_->Execute(this);
@@ -38,6 +39,18 @@ void ExecutionManager::Execute(
       current_state_ = std::move(new_state);
     }
   }
+  auto end = std::chrono::steady_clock::now();
+  std::cout << "TOTAL RUNTIME:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
+  /*Log(LogLevel::kInfo,
+      "Overall time = " +
+          to_string(
+              chrono::duration_cast<std::chrono::milliseconds>(end - begin)
+                  .count()) +
+          "[ms]");*/
 }
 
 auto ExecutionManager::IsUnscheduledNodesGraphEmpty() -> bool {
@@ -127,8 +140,8 @@ void ExecutionManager::SetupNextRunData() {
 
   /*for (const auto& node_name : scheduled_node_names_) {
     std::cout << node_name << " ";
-  }
-  std::cout << std::endl;
+  }*/
+  /*std::cout << std::endl;
   for (const auto& [op, used] : empty_modules) {
     if (op == QueryOperationType::kAddition) {
       std::cout << "Add: " << (used ? "true"

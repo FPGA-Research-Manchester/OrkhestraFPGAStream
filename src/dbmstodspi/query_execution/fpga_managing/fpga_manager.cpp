@@ -162,7 +162,7 @@ auto FPGAManager::RunQueryAcceleration()
                   .count()) +
           "[microseconds]");
 
-  PrintDebuggingData();
+  //PrintDebuggingData();
   return GetResultingStreamSizes(active_input_stream_ids,
                                  active_output_stream_ids);
 }

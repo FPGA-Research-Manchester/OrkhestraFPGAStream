@@ -182,7 +182,7 @@ auto MergeSortSetup::GetMinSortingRequirementsForTable(
   if (QuerySchedulingHelper::IsTableSorted(table_data)) {
     return {0};
   }
-  return {static_cast<int>(table_data.sorted_status.size())};
+  return {static_cast<int>(table_data.sorted_status.at(1) + 1)};
 }
 
 auto MergeSortSetup::IsDataSensitive() -> bool { return true; }
