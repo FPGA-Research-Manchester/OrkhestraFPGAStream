@@ -55,6 +55,22 @@ void GraphCreator::LinkDependentNodes(
     std::map<std::string, std::shared_ptr<QueryNode>>& graph_nodes_map,
     std::map<std::string, std::vector<std::string>>& previous_nodes,
     std::map<std::string, std::vector<std::string>>& next_nodes) {
+  // TODO: Improve performance of quick check
+  for (const auto& [node_name, dependent_nodes]:previous_nodes){
+    for (const auto& node: dependent_nodes){
+      if (!node.empty() && graph_nodes_map.find(node) == graph_nodes_map.end()){
+        throw std::runtime_error("Linked previous node doesn't exist!");
+      }
+    }
+  }
+  for (const auto& [node_name, dependent_nodes]:next_nodes){
+    for (const auto& node: dependent_nodes){
+      if (!node.empty() && graph_nodes_map.find(node) == graph_nodes_map.end()){
+        throw std::runtime_error("Linked next node doesn't exist!");
+      }
+    }
+  }
+
   for (auto& [node_name, node] : graph_nodes_map) {
     auto search_previous = previous_nodes.find(node_name);
     if (search_previous != previous_nodes.end()) {
