@@ -53,8 +53,7 @@ auto QueryManager::GetCurrentLinks(
 }
 
 void QueryManager::InitialiseMemoryBlockVector(
-    std::map<std::string, std::vector<MemoryBlockInterface*>>&
-        memory_blocks,
+    std::map<std::string, std::vector<MemoryBlockInterface*>>& memory_blocks,
     int stream_count, const std::string& node_name) {
   std::vector<MemoryBlockInterface*> empty_vector(stream_count);
   std::fill(empty_vector.begin(), empty_vector.end(), nullptr);
@@ -204,8 +203,7 @@ auto QueryManager::CreateStreamParams(
     bool is_input, const QueryNode& node,
     AcceleratorLibraryInterface* accelerator_library,
     const std::vector<int>& stream_ids,
-    const std::vector<MemoryBlockInterface*>&
-        allocated_memory_blocks,
+    const std::vector<MemoryBlockInterface*>& allocated_memory_blocks,
     const std::vector<RecordSizeAndCount>& stream_sizes)
     -> std::vector<StreamDataParameters> {
   auto node_parameters =
@@ -215,11 +213,18 @@ auto QueryManager::CreateStreamParams(
   std::vector<StreamDataParameters> parameters_for_acceleration;
 
   for (int stream_index = 0; stream_index < stream_ids.size(); stream_index++) {
-    volatile uint32_t* physical_address_ptr = nullptr;
+    std::map<volatile uint32_t*, std::vector<int>> physical_addresses_map;
+    int virtual_channel_count = -1;
     if (allocated_memory_blocks[stream_index]) {
-      // TODO: If offset in stream_parameters - Add the offset - Which is stream record size * count (stream_sizes)
-      physical_address_ptr =
+      auto physical_address_ptr =
           allocated_memory_blocks[stream_index]->GetPhysicalAddress();
+      auto [channel_count, records_per_channel] =
+          accelerator_library->GetMultiChannelParams(
+              is_input, stream_index, node.operation_type,
+              node.operation_parameters.operation_parameters);
+      virtual_channel_count = channel_count;
+      physical_addresses_map.insert(
+          {physical_address_ptr, records_per_channel});
     }
 
     int chunk_count = -1;
@@ -230,20 +235,15 @@ auto QueryManager::CreateStreamParams(
       chunk_count = chunk_count_def.at(0);
     }
 
-    auto [channel_count, records_per_channel] =
-        accelerator_library->GetMultiChannelParams(
-            is_input, stream_index, node.operation_type,
-            node.operation_parameters.operation_parameters);
     StreamDataParameters current_stream_parameters = {
         stream_ids[stream_index],
         stream_sizes[stream_index].first,
         stream_sizes[stream_index].second,
-        physical_address_ptr,
+        physical_addresses_map,
         node_parameters.at(stream_index * kIOStreamParamDefs.kStreamParamCount +
                            kIOStreamParamDefs.kProjectionOffset),
         chunk_count,
-        channel_count,
-        records_per_channel};
+        virtual_channel_count};
 
     parameters_for_acceleration.push_back(current_stream_parameters);
   }
@@ -254,8 +254,7 @@ void QueryManager::StoreStreamResultParameters(
     std::map<std::string, std::vector<StreamResultParameters>>&
         result_parameters,
     const std::vector<int>& stream_ids, const QueryNode& node,
-    const std::vector<MemoryBlockInterface*>&
-        allocated_memory_blocks) {
+    const std::vector<MemoryBlockInterface*>& allocated_memory_blocks) {
   std::vector<StreamResultParameters> result_parameters_vector;
   for (int stream_index = 0; stream_index < stream_ids.size(); stream_index++) {
     if (allocated_memory_blocks[stream_index]) {
@@ -324,7 +323,7 @@ auto QueryManager::SetupAccelerationNodesForExecution(
   }*/
 
   // Figure out how to read the table if it already exists.
-  // Then you can read all the stuff you reuse and make sure that it is correct. 
+  // Then you can read all the stuff you reuse and make sure that it is correct.
   // First unsorted and then you get the other one!
 
   InitialiseVectorSizes(current_query_nodes, input_memory_blocks,
@@ -341,7 +340,7 @@ auto QueryManager::SetupAccelerationNodesForExecution(
     AllocateInputMemoryBlocks(
         memory_manager, data_manager, input_memory_blocks[node->node_name],
         *node, output_stream_sizes, input_stream_sizes[node->node_name]);
-    
+
     // TODO: For combining input and output.
     /*if (reuse_links.find(node->node_name) != reuse_links.end() &&
         reuse_links.at(node->node_name).find(0) !=
@@ -647,10 +646,9 @@ void QueryManager::WriteResults(
           "[ms]");
 }
 
-void QueryManager::CopyMemoryData(
-    int table_size,
-    MemoryBlockInterface* source_memory_device,
-    MemoryBlockInterface* target_memory_device) {
+void QueryManager::CopyMemoryData(int table_size,
+                                  MemoryBlockInterface* source_memory_device,
+                                  MemoryBlockInterface* target_memory_device) {
   volatile uint32_t* source = source_memory_device->GetVirtualAddress();
   volatile uint32_t* target = target_memory_device->GetVirtualAddress();
   std::chrono::steady_clock::time_point begin =
@@ -672,8 +670,7 @@ void QueryManager::ProcessResults(
         result_sizes,
     const std::map<std::string, std::vector<StreamResultParameters>>&
         result_parameters,
-    const std::map<std::string,
-                   std::vector<MemoryBlockInterface*>>&
+    const std::map<std::string, std::vector<MemoryBlockInterface*>>&
         allocated_memory_blocks,
     std::map<std::string, std::vector<RecordSizeAndCount>>&
         output_stream_sizes) {
@@ -925,7 +922,7 @@ void QueryManager::CropSortedStatus(
       current_data.sorted_status[0] = current_data.record_count;
     } else {
       if ((current_data.sorted_status.at(1) - 1) *
-              current_data.sorted_status.at(2) +
+                  current_data.sorted_status.at(2) +
               current_data.sorted_status.at(0) >
           current_data.record_count) {
         if (current_data.record_count < current_data.sorted_status.at(0)) {
@@ -947,7 +944,7 @@ void QueryManager::CropSortedStatus(
             current_data.sorted_status[1] = left_over_sequence_count;
           }
         }
-      } // Else it's all fine!
+      }  // Else it's all fine!
     }
   }
 }
@@ -966,11 +963,11 @@ auto QueryManager::AddQueryNodes(
   std::sort(sorted_module_locations.begin(), sorted_module_locations.end());
   auto no_io_input_params = input_params;
   for (auto& stream_param : no_io_input_params) {
-    stream_param.physical_address = nullptr;
+    stream_param.physical_addresses_map.clear();
   }
   auto no_io_output_params = output_params;
   for (auto& stream_param : no_io_output_params) {
-    stream_param.physical_address = nullptr;
+    stream_param.physical_addresses_map.clear();
   }
   if (sorted_module_locations.size() == 1) {
     query_nodes_vector.push_back(

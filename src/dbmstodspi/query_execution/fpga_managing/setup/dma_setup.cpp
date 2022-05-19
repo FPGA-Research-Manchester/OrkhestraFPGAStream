@@ -135,75 +135,22 @@ void DMASetup::AllocateStreamBuffers(DMASetupData& stream_setup_data,
 void DMASetup::SetMultiChannelSetupData(
     const StreamDataParameters& stream_init_data,
     DMASetupData& stream_setup_data) {
-  /*stream_setup_data.active_channel_count =
-      (stream_init_data.stream_record_count +
-       stream_init_data.records_per_channel - 1) /
-      stream_init_data.records_per_channel;*/
   stream_setup_data.active_channel_count = stream_init_data.max_channel_count;
-  for (int j = 0; j < stream_init_data.records_per_channel.size(); j++) {
-    DMAChannelSetupData current_channel_setup_data{};
-    current_channel_setup_data.record_count =
-        stream_init_data.records_per_channel[j];
-    current_channel_setup_data.channel_id = j;
+  int channel_id = 0;
+  for (const auto& [address, records_per_channel] :
+       stream_init_data.physical_addresses_map) {
     int records_so_far = 0;
-    for (int z = 0; z < j; z++) {
-      records_so_far += stream_init_data.records_per_channel[z];
+    for (const auto& record_count : records_per_channel) {
+      DMAChannelSetupData current_channel_setup_data{};
+      current_channel_setup_data.record_count = record_count;
+      current_channel_setup_data.channel_id = channel_id++;
+      current_channel_setup_data.stream_address = reinterpret_cast<uintptr_t>(
+          address + (stream_init_data.stream_record_size * records_so_far));
+      stream_setup_data.channel_setup_data.push_back(
+          current_channel_setup_data);
+      records_so_far += record_count;
     }
-
-    current_channel_setup_data.stream_address = reinterpret_cast<uintptr_t>(
-        stream_init_data.physical_address +
-        (stream_init_data.stream_record_size * records_so_far));
-
-    stream_setup_data.channel_setup_data.push_back(current_channel_setup_data);
   }
-
-  /*for (int j = 0; j < stream_setup_data.active_channel_count; j++) {
-    DMAChannelSetupData current_channel_setup_data{};
-    if (j == stream_setup_data.active_channel_count - 1 &&
-        stream_init_data.stream_record_count %
-                stream_init_data.records_per_channel !=
-            0) {
-      current_channel_setup_data.record_count =
-          stream_init_data.stream_record_count %
-          stream_init_data.records_per_channel;
-    } else {
-      current_channel_setup_data.record_count =
-          stream_init_data.records_per_channel;
-    }
-
-    current_channel_setup_data.channel_id = j;
-    current_channel_setup_data.stream_address = reinterpret_cast<uintptr_t>(
-        stream_init_data.physical_address +
-        (stream_init_data.stream_record_size *
-         (stream_init_data.records_per_channel * j)));
-
-    stream_setup_data.channel_setup_data.push_back(current_channel_setup_data);
-  }*/
-
-  // Just in case setting the unused channels to 0 size and use the start
-  // address of the used channels.
-  /*for (int j = stream_setup_data.active_channel_count;
-       j < stream_init_data.max_channel_count; j++) {
-    DMAChannelSetupData current_channel_setup_data = {
-        reinterpret_cast<uintptr_t>(stream_init_data.physical_address), 0, j};
-    stream_setup_data.channel_setup_data.push_back(current_channel_setup_data);
-  }
-  stream_setup_data.active_channel_count = stream_init_data.max_channel_count;*/
-}
-
-// This is the most optimal channel record count for the given max channel
-// count. In reality the linear sort sorts 512 way and if one module worth of
-// channels (64) isn't enough two modules have to get used. Or if another
-// mergesorter run is used before then the sort can be more than 512 way! So
-// this method is deprecated and not used!
-auto DMASetup::CalculateMultiChannelStreamRecordCountPerChannel(
-    int stream_record_count, int max_channel_count, int record_size) -> int {
-  int channel_record_count =
-      (stream_record_count + max_channel_count - 1) / max_channel_count;
-  while (!((channel_record_count * record_size) % 16 == 0)) {
-    channel_record_count++;
-  }
-  return channel_record_count;
 }
 
 void DMASetup::SetSingleChannelSetupData(
@@ -217,8 +164,12 @@ void DMASetup::SetSingleChannelSetupData(
   } else {
     single_channel_stream_data.record_count = 0;
   }
-  single_channel_stream_data.stream_address =
-      reinterpret_cast<uintptr_t>(stream_init_data.physical_address);
+  if (stream_init_data.physical_addresses_map.size() != 1 &&
+      !stream_init_data.physical_addresses_map.begin()->second.empty()) {
+    throw std::runtime_error("Incorrect addresses given!");
+  }
+  single_channel_stream_data.stream_address = reinterpret_cast<uintptr_t>(
+      stream_init_data.physical_addresses_map.begin()->first);
   stream_setup_data.channel_setup_data.push_back(single_channel_stream_data);
 }
 

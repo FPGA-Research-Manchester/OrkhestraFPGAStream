@@ -120,7 +120,8 @@ void FPGAManager::FindIOStreams(
         stream_status_array) {
   for (const auto& current_stream : all_streams) {
     // Stream ID 15 reserved for passthrough
-    if (current_stream.physical_address && current_stream.stream_id != 15) {
+    if (!current_stream.physical_addresses_map.empty() &&
+        current_stream.stream_id != 15) {
       found_streams.push_back(current_stream);
       stream_status_array[current_stream.stream_id] = true;
       // To configure passthrough streams
@@ -162,7 +163,7 @@ auto FPGAManager::RunQueryAcceleration()
                   .count()) +
           "[microseconds]");
 
-  //PrintDebuggingData();
+  // PrintDebuggingData();
   return GetResultingStreamSizes(active_input_stream_ids,
                                  active_output_stream_ids);
 }

@@ -101,8 +101,8 @@ auto AccelerationModuleSetupInterface::IsDataSensitive() -> bool {
 auto AccelerationModuleSetupInterface::GetPassthroughInitParameters()
     -> AcceleratedQueryNode {
   AcceleratedQueryNode passthrough_module_node;
-  passthrough_module_node.input_streams = {{15, 0, 0, nullptr, {}}};
-  passthrough_module_node.output_streams = {{15, 0, 0, nullptr, {}}};
+  passthrough_module_node.input_streams = {{15, 0, 0, {}, {}}};
+  passthrough_module_node.output_streams = {{15, 0, 0, {}, {}}};
   passthrough_module_node.operation_parameters = {};
   return passthrough_module_node;
 }

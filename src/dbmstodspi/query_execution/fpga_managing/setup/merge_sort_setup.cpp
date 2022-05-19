@@ -70,7 +70,7 @@ auto MergeSortSetup::CreateModule(MemoryManagerInterface* memory_manager,
 void MergeSortSetup::SetupPassthroughMergeSort(
     MergeSortInterface& merge_sort_module) {
   merge_sort_module.SetStreamParams(15, 1);
-  //merge_sort_module.StartPrefetchingData(0, false);
+  // merge_sort_module.StartPrefetchingData(0, false);
 }
 
 void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
@@ -152,7 +152,7 @@ auto MergeSortSetup::GetMultiChannelParams(
     std::vector<std::vector<int>> operation_parameters)
     -> std::pair<int, std::vector<int>> {
   if (!is_input) {
-    return {-1, {-1}};
+    return {-1, {}};
   }
   int max_channel_count = 0;
   // Assuming all modules have the same records_per_channel
