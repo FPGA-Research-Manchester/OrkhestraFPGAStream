@@ -223,8 +223,8 @@ void ExecutionManager::SetupSchedulingData(bool setup_bitstreams) {
     // state!
     query_manager_->LoadInitialStaticBitstream(memory_manager_.get());
     // The empty routing should be part of the static really.
-    query_manager_->LoadEmptyRoutingPRRegion(memory_manager_.get(),
-                                             *accelerator_library_);
+    /*query_manager_->LoadEmptyRoutingPRRegion(memory_manager_.get(),
+                                             *accelerator_library_);*/
     current_available_node_pointers_ = unscheduled_graph_->ExportRootNodes();
   }
 }

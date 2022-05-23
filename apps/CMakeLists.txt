@@ -126,6 +126,9 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_Q19_SF1.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_Q17_SF011.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_Q17_SF012.json
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_Q17_SF01_beg.json
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_Q17_SF01_beg1.json
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_Q17_SF01_beg2.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem0.01.csv 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/part0.01.csv
     #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem0.1.csv 
@@ -184,6 +187,18 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_ConstArith64b_85_96.bin
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_DecMult64b_64_84.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_DecMult64b_64_84.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_DecMult64b_34_54.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_DecMult64b_34_54.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_DecMult64b_4_24.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_DecMult64b_4_24.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_ConstArith64b_25_36.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_ConstArith64b_25_36.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_ConstArith64b_55_66.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_ConstArith64b_55_66.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_AggregateGlobalSum_85_93.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_AggregateGlobalSum_85_93.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_AggregateGlobalSum_25_33.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_AggregateGlobalSum_25_33.bin
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/static.bin
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/static.json

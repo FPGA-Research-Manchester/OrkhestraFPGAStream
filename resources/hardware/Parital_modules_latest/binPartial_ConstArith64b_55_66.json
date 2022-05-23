@@ -1,0 +1,11 @@
+{
+  "name": "binPartial_ConstArith64b_55_66",
+  "address": "0xa0000000",
+  "bitfiles": [
+    {
+      "name": "binPartial_ConstArith64b_55_66.bin",
+      "region": "full"
+    }
+  ],
+  "registers": []
+}

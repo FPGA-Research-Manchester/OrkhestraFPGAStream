@@ -61,10 +61,16 @@ TEST(DMASetupTest, SetupDMAModuleSetsCorrectParams) {
   EXPECT_CALL(mock_dma, SetControllerStreamSize(false, kOutputStreamId, 0))
       .Times(1);
 
-  std::vector<StreamDataParameters> input_streams = {
-      {kInputStreamId, 18, expected_stream_size, mock_db_data.data(), {}}};
+  std::map<volatile uint32_t*, std::vector<int>> input_map = {
+      {mock_db_data.data(), {}}};
+  std::vector<StreamDataParameters> input_streams = {{kInputStreamId,
+                                                      18,
+                                                      expected_stream_size, input_map,
+                                                      {}}};
+  std::map<volatile uint32_t*, std::vector<int>> output_map = {
+      {mock_output_memory_address, {}}};
   std::vector<StreamDataParameters> output_streams = {
-      {kOutputStreamId, 18, 0, mock_output_memory_address, {}, 2}};
+      {kOutputStreamId, 18, 0, output_map, {}, 2}};
 
   DMASetup setup_under_test;
   setup_under_test.SetupDMAModule(mock_dma, input_streams, output_streams);
@@ -83,11 +89,14 @@ TEST(DMASetupTest, RecordSettings) {
       .Times(16);
   EXPECT_CALL(mock_dma, SetRecordChunkIDs(kInputStreamId, testing::_, 1))
       .Times(16);
-
+  std::map<volatile uint32_t*, std::vector<int>> input_map = {
+      {mock_db_data.data(), {}}};
+  std::map<volatile uint32_t*, std::vector<int>> output_map = {
+      {mock_output_memory_address, {}}};
   std::vector<StreamDataParameters> input_streams = {
-      {kInputStreamId, 18, 1000, mock_db_data.data(), {}}};
+      {kInputStreamId, 18, 1000, input_map, {}}};
   std::vector<StreamDataParameters> output_streams = {
-      {kOutputStreamId, 18, 0, mock_output_memory_address, {}, 2}};
+      {kOutputStreamId, 18, 0, output_map, {}, 2}};
 
   DMASetup setup_under_test;
   setup_under_test.SetupDMAModule(mock_dma, input_streams, output_streams);

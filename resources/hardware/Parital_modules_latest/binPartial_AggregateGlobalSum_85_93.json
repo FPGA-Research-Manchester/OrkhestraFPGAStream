@@ -1,0 +1,11 @@
+{
+  "name": "binPartial_AggregateGlobalSum_85_93",
+  "address": "0xa0000000",
+  "bitfiles": [
+    {
+      "name": "binPartial_AggregateGlobalSum_85_93.bin",
+      "region": "full"
+    }
+  ],
+  "registers": []
+}
