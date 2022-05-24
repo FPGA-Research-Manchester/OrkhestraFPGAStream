@@ -29,43 +29,48 @@ using orkhestrafs::dbmstodspi::GraphCreator;
 
 auto GraphCreator::MakeGraph(std::string graph_def_filename)
     -> std::unique_ptr<ExecutionPlanGraphInterface> {
-  std::map<std::string, std::shared_ptr<QueryNode>> graph_nodes_map;
+  std::map<std::string, QueryNode*> graph_nodes_map;
   std::map<std::string, std::vector<std::string>> previous_nodes;
   std::map<std::string, std::vector<std::string>> next_nodes;
 
+  // Make a vector in populate graph and move them into the graph.
+  // previous nodes and next nodes is already good.
+  // Basically instead of giving graph nodes_map to populate you get the
+  // unique_ptr back.
+
+  // Then you can return all of the pointers and make a map
+  // Then return the Graph
+
   auto data = json_reader_->ReadInputDefinition(std::move(graph_def_filename));
-  PopulateGraphNodesMapWithJSONData(data, graph_nodes_map, previous_nodes,
-                                    next_nodes);
+  auto graph =
+      PopulateGraphNodesMapWithJSONData(data, previous_nodes, next_nodes);
+
+  for (const auto& node_ptr : graph->GetAllNodesPtrs()) {
+    graph_nodes_map.insert({node_ptr->node_name, node_ptr});
+  }
 
   LinkDependentNodes(graph_nodes_map, previous_nodes, next_nodes);
 
-  std::vector<std::shared_ptr<QueryNode>> leaf_nodes;
-  for (auto const& [node_name, node] : graph_nodes_map) {
-    if (std::none_of(
-            node->previous_nodes.begin(), node->previous_nodes.end(),
-            [](const std::weak_ptr<QueryNode>& ptr) { return ptr.lock(); })) {
-      leaf_nodes.push_back(node);
-    }
-  }
-
-  return std::make_unique<Graph>(std::move(leaf_nodes));
+  return std::move(graph);
 }
 
 void GraphCreator::LinkDependentNodes(
-    std::map<std::string, std::shared_ptr<QueryNode>>& graph_nodes_map,
+    std::map<std::string, QueryNode*>& graph_nodes_map,
     std::map<std::string, std::vector<std::string>>& previous_nodes,
     std::map<std::string, std::vector<std::string>>& next_nodes) {
   // TODO: Improve performance of quick check
-  for (const auto& [node_name, dependent_nodes]:previous_nodes){
-    for (const auto& node: dependent_nodes){
-      if (!node.empty() && graph_nodes_map.find(node) == graph_nodes_map.end()){
+  for (const auto& [node_name, dependent_nodes] : previous_nodes) {
+    for (const auto& node : dependent_nodes) {
+      if (!node.empty() &&
+          graph_nodes_map.find(node) == graph_nodes_map.end()) {
         throw std::runtime_error("Linked previous node doesn't exist!");
       }
     }
   }
-  for (const auto& [node_name, dependent_nodes]:next_nodes){
-    for (const auto& node: dependent_nodes){
-      if (!node.empty() && graph_nodes_map.find(node) == graph_nodes_map.end()){
+  for (const auto& [node_name, dependent_nodes] : next_nodes) {
+    for (const auto& node : dependent_nodes) {
+      if (!node.empty() &&
+          graph_nodes_map.find(node) == graph_nodes_map.end()) {
         throw std::runtime_error("Linked next node doesn't exist!");
       }
     }
@@ -90,7 +95,7 @@ void GraphCreator::LinkDependentNodes(
           if (node->input_data_definition_files[i].empty()) {
             throw std::runtime_error("Input file required!");
           }
-          node->previous_nodes.push_back(std::weak_ptr<QueryNode>());
+          node->previous_nodes.push_back(nullptr);
         }
       }
     }
@@ -107,11 +112,11 @@ void GraphCreator::LinkDependentNodes(
   }
 }
 
-void GraphCreator::PopulateGraphNodesMapWithJSONData(
+auto GraphCreator::PopulateGraphNodesMapWithJSONData(
     std::map<std::string, JSONReaderInterface::InputNodeParameters>& data,
-    std::map<std::string, std::shared_ptr<QueryNode>>& graph_nodes_map,
     std::map<std::string, std::vector<std::string>>& previous_nodes,
-    std::map<std::string, std::vector<std::string>>& next_nodes) {
+    std::map<std::string, std::vector<std::string>>& next_nodes)
+    -> std::unique_ptr<ExecutionPlanGraphInterface> {
   using ParamsMap = std::map<std::string, std::vector<std::vector<int>>>;
   using orkhestrafs::core_interfaces::query_scheduling_data::
       NodeOperationParameters;
@@ -125,6 +130,8 @@ void GraphCreator::PopulateGraphNodesMapWithJSONData(
   std::string input_stream_params_field = "input_stream_params";
   std::string output_stream_params = "output_stream_params";
   std::string operation_params_field = "operation_params";
+
+  std::vector<QueryNode> all_nodes;
 
   for (auto const& [node_name, node_parameters] : data) {
     ParamsMap all_operation_parameters_map =
@@ -142,16 +149,13 @@ void GraphCreator::PopulateGraphNodesMapWithJSONData(
       is_checked.push_back(!filename.empty());
     }
 
-    graph_nodes_map.insert(
-        {node_name, std::make_shared<QueryNode>(
-                        std::get<std::vector<std::string>>(
-                            node_parameters.at(input_field)),
-                        output_filenames,
-                        kSupportedFunctions.at(std::get<std::string>(
-                            node_parameters.at(operation_field))),
-                        std::vector<std::shared_ptr<QueryNode>>(),
-                        std::vector<std::weak_ptr<QueryNode>>(),
-                        all_operation_parameters, node_name, is_checked)});
+    all_nodes.emplace_back(
+        std::get<std::vector<std::string>>(node_parameters.at(input_field)),
+        output_filenames,
+        kSupportedFunctions.at(
+            std::get<std::string>(node_parameters.at(operation_field))),
+        std::vector<QueryNode*>(), std::vector<QueryNode*>(),
+        all_operation_parameters, node_name, is_checked);
 
     auto search_previous = node_parameters.find(previous_nodes_field);
     if (search_previous != node_parameters.end()) {
@@ -164,4 +168,5 @@ void GraphCreator::PopulateGraphNodesMapWithJSONData(
           {node_name, std::get<std::vector<std::string>>(search_next->second)});
     }
   }
+  return std::make_unique<Graph>(std::move(all_nodes));
 }

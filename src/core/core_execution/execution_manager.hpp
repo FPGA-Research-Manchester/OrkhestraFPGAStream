@@ -81,7 +81,7 @@ class ExecutionManager : public ExecutionManagerInterface,
             driver_factory->CreateFPGAManager(accelerator_library_.get()))} {};
 
   void SetFinishedFlag() override;
-
+  void UpdateAvailableNodesGraph() override;
   void Execute(
       std::unique_ptr<ExecutionPlanGraphInterface> execution_graph) override;
 
@@ -117,11 +117,11 @@ class ExecutionManager : public ExecutionManagerInterface,
       memory_blocks_;
   std::unordered_map<std::string, SchedulingQueryNode> current_query_graph_;
 
-  std::unordered_set<std::string> current_available_nodes_;
+  std::unordered_set<std::string> current_available_node_names_;
   std::unordered_set<std::string> nodes_constrained_to_first_;
   std::unordered_set<std::string> processed_nodes_;
 
-  std::vector<std::shared_ptr<QueryNode>> current_available_node_pointers_;
+  std::vector<QueryNode*> current_available_node_pointers_;
 
   // Variables used throughout different states.
   std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>
@@ -135,7 +135,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::map<std::string, std::vector<RecordSizeAndCount>> output_stream_sizes_;
 
   std::queue<std::pair<std::vector<ScheduledModule>,
-                       std::vector<std::shared_ptr<QueryNode>>>>
+                       std::vector<QueryNode*>>>
       query_node_runs_queue_;
   std::vector<ScheduledModule> current_configuration_;
 

@@ -70,24 +70,24 @@ class NodeSchedulerInterface {
    * nodes to be accelerated next.
    */
   virtual auto GetNextSetOfRuns(
-      std::vector<std::shared_ptr<QueryNode>>& query_nodes,
+      std::vector<QueryNode*>& query_nodes,
       const std::unordered_set<std::string>& first_node_names,
-      std::unordered_set<std::string>& starting_nodes,
-      std::unordered_set<std::string>& processed_nodes,
-      std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      std::unordered_set<std::string> starting_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode> graph,
       AcceleratorLibraryInterface& drivers,
-      std::map<std::string, TableMetadata>& tables,
+      std::map<std::string, TableMetadata> tables,
       const std::vector<ScheduledModule>& current_configuration,
-      const Config& config)
+      const Config& config,
+      std::unordered_set<std::string>& skipped_nodes)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
-                              std::vector<std::shared_ptr<QueryNode>>>> = 0;
+                              std::vector<QueryNode*>>> = 0;
 
   // Core scheduling method for benchmarking
   virtual auto ScheduleAndGetAllPlans(
-      std::unordered_set<std::string>& starting_nodes,
-      std::unordered_set<std::string>& processed_nodes,
-      std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      std::map<std::string, TableMetadata>& tables, const Config& config)
+      const std::unordered_set<std::string>& starting_nodes,
+      const std::unordered_set<std::string>& processed_nodes,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::map<std::string, TableMetadata>& tables, const Config& config)
       -> std::tuple<int,
                     std::map<std::vector<std::vector<ScheduledModule>>,
                              ExecutionPlanSchedulingData>,
@@ -95,11 +95,11 @@ class NodeSchedulerInterface {
 
   virtual void BenchmarkScheduling(
       const std::unordered_set<std::string>& first_node_names,
-      std::unordered_set<std::string>& starting_nodes,
+      std::unordered_set<std::string> starting_nodes,
       std::unordered_set<std::string>& processed_nodes,
-      std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      std::unordered_map<std::string, SchedulingQueryNode> graph,
       AcceleratorLibraryInterface& drivers,
-      std::map<std::string, TableMetadata>& tables,
+      std::map<std::string, TableMetadata> tables,
       std::vector<ScheduledModule>& current_configuration, const Config& config,
       std::map<std::string, double>& benchmark_data) = 0;
 };

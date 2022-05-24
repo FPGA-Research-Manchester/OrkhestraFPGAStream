@@ -67,7 +67,7 @@ class ElasticSchedulingGraphParser {
 
   void PreprocessNodes(
       std::unordered_set<std::string>& available_nodes,
-      const std::unordered_set<std::string>& processed_nodes,
+      std::unordered_set<std::string>& processed_nodes,
       std::unordered_map<std::string, SchedulingQueryNode>& graph,
       std::map<std::string, TableMetadata>& data_tables);
 
@@ -152,10 +152,7 @@ class ElasticSchedulingGraphParser {
 
   void AddPlanToAllPlansAndMeasureTime(
       const std::vector<std::vector<ScheduledModule>>& current_plan,
-      const std::unordered_set<std::string>& available_nodes,
       const std::unordered_set<std::string>& processed_nodes,
-      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      const std::map<std::string, TableMetadata>& data_tables,
       int streamed_data_size);
 
   void GetAllAvailableModulePlacementsInCurrentRun(

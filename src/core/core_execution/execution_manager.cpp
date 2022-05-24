@@ -17,9 +17,9 @@ limitations under the License.
 #include "execution_manager.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <memory>
-#include <chrono>
 
 #include "query_scheduling_helper.hpp"
 
@@ -27,6 +27,22 @@ using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
 void ExecutionManager::SetFinishedFlag() { busy_flag_ = false; }
+
+void ExecutionManager::UpdateAvailableNodesGraph() {
+  if (!processed_nodes_.empty()){
+    unscheduled_graph_->DeleteNodes(std::move(processed_nodes_));
+    processed_nodes_.clear();
+  }
+
+  current_available_node_pointers_ = unscheduled_graph_->GetRootNodesPtrs();
+  for (const auto& node : current_available_node_pointers_) {
+    current_available_node_names_.insert(node->node_name);
+  }
+  SetupSchedulingGraphAndConstrainedNodes(
+      unscheduled_graph_->GetAllNodesPtrs(), current_query_graph_,
+      *accelerator_library_, nodes_constrained_to_first_);
+  // Table is updated immediately during execution.
+}
 
 void ExecutionManager::Execute(
     std::unique_ptr<ExecutionPlanGraphInterface> execution_graph) {
@@ -54,9 +70,7 @@ void ExecutionManager::Execute(
 }
 
 auto ExecutionManager::IsUnscheduledNodesGraphEmpty() -> bool {
-  return current_available_node_pointers_.empty();
-  // TODO(Kaspar): Change the usage of the graph. Currently it's pointless.
-  /*return unscheduled_graph_->IsEmpty();*/
+  return unscheduled_graph_->IsEmpty();
 }
 auto ExecutionManager::IsARunScheduled() -> bool {
   return !query_node_runs_queue_.empty();
@@ -68,18 +82,18 @@ auto ExecutionManager::IsRunReadyForExecution() -> bool {
 void ExecutionManager::ScheduleUnscheduledNodes() {
   query_node_runs_queue_ = query_manager_->ScheduleNextSetOfNodes(
       current_available_node_pointers_, nodes_constrained_to_first_,
-      current_available_nodes_, processed_nodes_, current_query_graph_,
+      current_available_node_names_, current_query_graph_,
       current_tables_metadata_, *accelerator_library_, config_, *scheduler_,
-      all_reuse_links_, current_configuration_);
+      all_reuse_links_, current_configuration_, processed_nodes_);
 }
 void ExecutionManager::BenchmarkScheduleUnscheduledNodes() {
   query_manager_->BenchmarkScheduling(
-      nodes_constrained_to_first_, current_available_nodes_, processed_nodes_,
-      current_query_graph_, current_tables_metadata_, *accelerator_library_,
-      config_, *scheduler_, current_configuration_);
+      nodes_constrained_to_first_, current_available_node_names_,
+      processed_nodes_, current_query_graph_, current_tables_metadata_,
+      *accelerator_library_, config_, *scheduler_, current_configuration_);
 }
 auto ExecutionManager::IsBenchmarkDone() -> bool {
-  return current_available_nodes_.empty();
+  return current_available_node_names_.empty();
 }
 
 void ExecutionManager::SetupNextRunData() {
@@ -162,6 +176,7 @@ void ExecutionManager::SetupNextRunData() {
     }
   }*/
 
+  // TODO: instead of memory blocks - give tables directly
   auto execution_nodes_and_result_params =
       query_manager_->SetupAccelerationNodesForExecution(
           data_manager_.get(), memory_manager_.get(),
@@ -208,24 +223,9 @@ void ExecutionManager::PrintCurrentStats() {
 }
 
 void ExecutionManager::SetupSchedulingData(bool setup_bitstreams) {
-  for (const auto& node : unscheduled_graph_->GetRootNodesPtrs()) {
-    current_available_nodes_.insert(node->node_name);
-  }
-
   current_tables_metadata_ = config_.initial_all_tables_metadata;
-
-  SetupSchedulingGraphAndConstrainedNodes(
-      unscheduled_graph_->GetAllNodesPtrs(), current_query_graph_,
-      *accelerator_library_, nodes_constrained_to_first_);
-
   if (setup_bitstreams) {
-    // TODO(Kaspar): The static bitstream loading should be moved to a different
-    // state!
     query_manager_->LoadInitialStaticBitstream(memory_manager_.get());
-    // The empty routing should be part of the static really.
-    /*query_manager_->LoadEmptyRoutingPRRegion(memory_manager_.get(),
-                                             *accelerator_library_);*/
-    current_available_node_pointers_ = unscheduled_graph_->ExportRootNodes();
   }
 }
 

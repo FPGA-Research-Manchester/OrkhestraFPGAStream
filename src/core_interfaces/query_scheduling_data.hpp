@@ -44,24 +44,35 @@ struct NodeOperationParameters {
   }
 };
 
+struct NodeRunData {
+  /// Input data files.
+  std::vector<std::string> input_data_definition_files;
+  /// Expected data files.
+  std::vector<std::string> output_data_definition_files;
+  /// Operation parameters to configure the streams with modules.
+  NodeOperationParameters operation_parameters;
+  /// Location of the module to be processing this node
+  std::vector<int> module_locations;
+};
+
 /**
  * @brief Struct for defining a query node.
  */
 struct QueryNode {
   /// Input data files.
-  std::vector<std::string> input_data_definition_files;
+  std::vector<std::string> given_input_data_definition_files;
   /// Expected data files.
-  std::vector<std::string> output_data_definition_files;
+  std::vector<std::string> given_output_data_definition_files;
   /// Query operation.
   QueryOperationType operation_type;
   /// Pointers to the next query nodes.
-  std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> next_nodes;
+  std::vector<QueryNode*> next_nodes;
   /// Pointers to the prerequisite query nodes
-  std::vector<std::weak_ptr<query_scheduling_data::QueryNode>> previous_nodes;
+  std::vector<QueryNode*> previous_nodes;
   /// Operation parameters to configure the streams with modules.
-  NodeOperationParameters operation_parameters;
-  /// Location of the module to be processing this node
-  std::vector<int> module_locations;
+  NodeOperationParameters given_operation_parameters;
+  /// Data of the module for each specific run
+  std::vector<NodeRunData> module_run_data;
   /// Name of the node for automatic file naming
   std::string node_name;
   /// Flag vector setting stream results to be checked
@@ -70,17 +81,7 @@ struct QueryNode {
   bool is_finished = true;
 
   auto operator==(const QueryNode& rhs) const -> bool {
-    bool are_prev_nodes_equal =
-        previous_nodes.size() == rhs.previous_nodes.size() &&
-        std::equal(
-            previous_nodes.begin(), previous_nodes.end(),
-            rhs.previous_nodes.begin(),
-            [](const std::weak_ptr<query_scheduling_data::QueryNode>& l,
-               const std::weak_ptr<query_scheduling_data::QueryNode>& r) {
-              return l.lock() == r.lock();
-            });
-
-    return are_prev_nodes_equal &&
+    return previous_nodes == rhs.previous_nodes &&
            input_data_definition_files == rhs.input_data_definition_files &&
            output_data_definition_files == rhs.output_data_definition_files &&
            operation_type == rhs.operation_type &&
@@ -93,8 +94,8 @@ struct QueryNode {
   QueryNode(
       std::vector<std::string> input, std::vector<std::string> output,
       QueryOperationType operation,
-      std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> next_nodes,
-      std::vector<std::weak_ptr<query_scheduling_data::QueryNode>>
+      std::vector<QueryNode*> next_nodes,
+      std::vector<QueryNode*>
           previous_nodes,
       NodeOperationParameters parameters, std::string node_name,
       std::vector<bool> is_checked)

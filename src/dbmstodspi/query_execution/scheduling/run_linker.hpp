@@ -45,18 +45,18 @@ class RunLinker {
    */
   static auto LinkPeripheralNodesFromGivenRuns(
       std::queue<std::pair<std::vector<ScheduledModule>,
-                           std::vector<std::shared_ptr<QueryNode>>>>
+                           std::vector<QueryNode*>>>
           query_node_runs_queue,
       std::queue<
           std::map<std::string,
                    std::map<int, std::vector<std::pair<std::string, int>>>>>&
           linked_nodes)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
-                              std::vector<std::shared_ptr<QueryNode>>>>;
+                              std::vector<QueryNode*>>>;
 
  private:
   static void CheckExternalLinks(
-      const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
+      const std::vector<QueryNode*>& current_query_nodes,
       std::queue<
           std::map<std::string,
                    std::map<int, std::vector<std::pair<std::string, int>>>>>&
@@ -65,12 +65,12 @@ class RunLinker {
   static auto ReuseMemory(const QueryNode& source_node,
                           const QueryNode& target_node) -> bool;
   static auto IsNodeMissingFromTheVector(
-      const std::shared_ptr<QueryNode>& linked_node,
-      const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes)
+      const QueryNode* linked_node,
+      const std::vector<QueryNode*>& current_query_nodes)
       -> bool;
   static auto FindPreviousNodeLocation(
-      const std::vector<std::weak_ptr<QueryNode>>& previous_nodes,
-      const std::shared_ptr<QueryNode>& previous_node) -> int;
+      const std::vector<QueryNode*>& previous_nodes,
+      const QueryNode* previous_node) -> int;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

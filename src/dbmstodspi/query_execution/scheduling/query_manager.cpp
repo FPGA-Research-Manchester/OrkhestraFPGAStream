@@ -334,6 +334,9 @@ auto QueryManager::SetupAccelerationNodesForExecution(
                                input_ids, output_ids);
 
   for (const auto& node : current_query_nodes) {
+    // output_memory_blocks has to be made into tables
+    // stream sizes can be got from tables.
+    // If they don't match throw error.
     AllocateOutputMemoryBlocks(memory_manager, data_manager,
                                output_memory_blocks[node->node_name], *node,
                                output_stream_sizes[node->node_name]);
@@ -363,6 +366,11 @@ auto QueryManager::SetupAccelerationNodesForExecution(
     }*/
 
     // Check what is the input_stream_sizes over here
+
+
+    // Here params get created that later get fed into the dma.
+    // If you have a block then you can get the address.
+
     auto input_params = CreateStreamParams(true, *node, accelerator_library,
                                            input_ids[node->node_name],
                                            input_memory_blocks[node->node_name],
@@ -437,10 +445,10 @@ void QueryManager::LoadPRBitstreams(
 
 void QueryManager::BenchmarkScheduling(
     const std::unordered_set<std::string>& first_node_names,
-    std::unordered_set<std::string>& starting_nodes,
+    const std::unordered_set<std::string>& starting_nodes,
     std::unordered_set<std::string>& processed_nodes,
-    std::unordered_map<std::string, SchedulingQueryNode>& graph,
-    std::map<std::string, TableMetadata>& tables,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    const std::map<std::string, TableMetadata>& tables,
     AcceleratorLibraryInterface& drivers, const Config& config,
     NodeSchedulerInterface& node_scheduler,
     std::vector<ScheduledModule>& current_configuration) {
@@ -457,22 +465,21 @@ void QueryManager::PrintBenchmarkStats() {
 }
 
 auto QueryManager::ScheduleNextSetOfNodes(
-    std::vector<std::shared_ptr<QueryNode>>& query_nodes,
+    std::vector<QueryNode*>& query_nodes,
     const std::unordered_set<std::string>& first_node_names,
-    std::unordered_set<std::string>& starting_nodes,
-    std::unordered_set<std::string>& processed_nodes,
-    std::unordered_map<std::string, SchedulingQueryNode>& graph,
-    std::map<std::string, TableMetadata>& tables,
+    const std::unordered_set<std::string>& starting_nodes,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    const std::map<std::string, TableMetadata>& tables,
     AcceleratorLibraryInterface& drivers, const Config& config,
     NodeSchedulerInterface& node_scheduler,
     std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>&
         all_reuse_links,
-    const std::vector<ScheduledModule>& current_configuration)
+    const std::vector<ScheduledModule>& current_configuration, std::unordered_set<std::string>& skipped_nodes)
     -> std::queue<std::pair<std::vector<ScheduledModule>,
-                            std::vector<std::shared_ptr<QueryNode>>>> {
+                            std::vector<QueryNode*>>> {
   auto current_queue = node_scheduler.GetNextSetOfRuns(
-      query_nodes, first_node_names, starting_nodes, processed_nodes, graph,
-      drivers, tables, current_configuration, config);
+      query_nodes, first_node_names, starting_nodes, graph,
+      drivers, tables, current_configuration, config, skipped_nodes);
   return RunLinker::LinkPeripheralNodesFromGivenRuns(current_queue,
                                                      all_reuse_links);
 }

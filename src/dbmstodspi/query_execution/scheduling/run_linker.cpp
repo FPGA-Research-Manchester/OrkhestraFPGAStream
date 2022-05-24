@@ -21,26 +21,29 @@ limitations under the License.
 
 using orkhestrafs::dbmstodspi::RunLinker;
 
+// Make a new queue with removed links that are saved in a separate data
+// structure. Todo: The link removing is useful for detecting I/O but the
+// separate data structure is not needed.
 auto RunLinker::LinkPeripheralNodesFromGivenRuns(
-    std::queue<std::pair<std::vector<ScheduledModule>,
-                         std::vector<std::shared_ptr<QueryNode>>>>
+    std::queue<std::pair<std::vector<ScheduledModule>, std::vector<QueryNode*>>>
         query_node_runs_queue,
     std::queue<std::map<
         std::string, std::map<int, std::vector<std::pair<std::string, int>>>>>&
         linked_nodes)
-    -> std::queue<std::pair<std::vector<ScheduledModule>,
-                            std::vector<std::shared_ptr<QueryNode>>>> {
-  std::queue<std::pair<std::vector<ScheduledModule>,
-                       std::vector<std::shared_ptr<QueryNode>>>>
+    -> std::queue<
+        std::pair<std::vector<ScheduledModule>, std::vector<QueryNode*>>> {
+  std::queue<std::pair<std::vector<ScheduledModule>, std::vector<QueryNode*>>>
       linked_nodes_queue;
+  // Keeping a counter
   std::map<std::string, int> run_counter;
   while (!query_node_runs_queue.empty()) {
+    // Read
     auto [current_set, current_query_nodes] = query_node_runs_queue.front();
     query_node_runs_queue.pop();
-
+    // Modify
     CheckExternalLinks(current_query_nodes, linked_nodes, run_counter);
-
-    linked_nodes_queue.push({current_set, current_query_nodes});
+    // Write (Config vector stays the same)
+    linked_nodes_queue.push({std::move(current_set), std::move(current_query_nodes)});
   }
   return linked_nodes_queue;
 }
@@ -48,7 +51,7 @@ auto RunLinker::LinkPeripheralNodesFromGivenRuns(
 // Method to remove next or previous nodes from a node once it has been
 // scheduled
 void RunLinker::CheckExternalLinks(
-    const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
+    const std::vector<QueryNode*>& current_query_nodes,
     std::queue<std::map<
         std::string, std::map<int, std::vector<std::pair<std::string, int>>>>>&
         linked_nodes,
@@ -108,16 +111,15 @@ void RunLinker::CheckExternalLinks(
       }
     }
     for (auto& previous_node : node->previous_nodes) {
-      auto observed_node = previous_node.lock();
-      if (IsNodeMissingFromTheVector(observed_node, current_query_nodes)) {
-        previous_node = std::weak_ptr<QueryNode>();
+      if (IsNodeMissingFromTheVector(previous_node, current_query_nodes)) {
+        previous_node = nullptr;
       }
     }
     if (!target_maps.empty()) {
       current_links.insert({node->node_name, target_maps});
     }
   }
-  linked_nodes.push(current_links);
+  linked_nodes.push(std::move(current_links));
 }
 
 auto RunLinker::ReuseMemory(const QueryNode& /*source_node*/,
@@ -127,20 +129,19 @@ auto RunLinker::ReuseMemory(const QueryNode& /*source_node*/,
 }
 
 auto RunLinker::IsNodeMissingFromTheVector(
-    const std::shared_ptr<QueryNode>& linked_node,
-    const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes)
-    -> bool {
+    const QueryNode* linked_node,
+    const std::vector<QueryNode*>& current_query_nodes) -> bool {
   return linked_node &&
          std::find(current_query_nodes.begin(), current_query_nodes.end(),
                    linked_node) == current_query_nodes.end();
 }
 
 auto RunLinker::FindPreviousNodeLocation(
-    const std::vector<std::weak_ptr<QueryNode>>& previous_nodes,
-    const std::shared_ptr<QueryNode>& previous_node) -> int {
+    const std::vector<QueryNode*>& previous_nodes,
+    const QueryNode* previous_node) -> int {
   for (int previous_node_index = 0; previous_node_index < previous_nodes.size();
        previous_node_index++) {
-    auto observed_node = previous_nodes[previous_node_index].lock();
+    auto observed_node = previous_nodes[previous_node_index];
     if (observed_node == previous_node) {
       return previous_node_index;
     }

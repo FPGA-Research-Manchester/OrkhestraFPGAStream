@@ -37,7 +37,7 @@ using orkhestrafs::dbmstodspi::TimeLimitException;
 
 void ElasticSchedulingGraphParser::PreprocessNodes(
     std::unordered_set<std::string>& available_nodes,
-    const std::unordered_set<std::string>& processed_nodes,
+    std::unordered_set<std::string>& processed_nodes,
     std::unordered_map<std::string, SchedulingQueryNode>& graph,
     std::map<std::string, TableMetadata>& data_tables) {
   pre_scheduler_.AddSatisfyingBitstreamLocationsToGraph(
@@ -725,13 +725,10 @@ void ElasticSchedulingGraphParser::GetAllAvailableModulePlacementsInCurrentRun(
 
 void ElasticSchedulingGraphParser::AddPlanToAllPlansAndMeasureTime(
     const std::vector<std::vector<ScheduledModule>>& current_plan,
-    const std::unordered_set<std::string>& available_nodes,
     const std::unordered_set<std::string>& processed_nodes,
-    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-    const std::map<std::string, TableMetadata>& data_tables,
     int streamed_data_size) {
   ExecutionPlanSchedulingData current_scheduling_data = {
-      processed_nodes, available_nodes, graph, data_tables, streamed_data_size};
+      processed_nodes, streamed_data_size};
   if (const auto& [it, inserted] =
           resulting_plan_.try_emplace(current_plan, current_scheduling_data);
       inserted) {
@@ -841,8 +838,8 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
   if (!current_run.empty()) {
     current_plan.push_back(std::move(current_run));
   }
-  AddPlanToAllPlansAndMeasureTime(current_plan, available_nodes,
-                                  processed_nodes, graph, data_tables,
+  AddPlanToAllPlansAndMeasureTime(current_plan,
+                                  processed_nodes,
                                   streamed_data_size);
 }
 

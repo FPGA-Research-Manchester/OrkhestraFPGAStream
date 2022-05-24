@@ -29,6 +29,7 @@ using orkhestrafs::dbmstodspi::logging::LogLevel;
 auto ScheduleState::Execute(GraphProcessingFSMInterface* fsm)
     -> std::unique_ptr<StateInterface> {
   Log(LogLevel::kTrace, "Schedule state");
+  fsm->UpdateAvailableNodesGraph();
   if (fsm->IsUnscheduledNodesGraphEmpty()) {
     fsm->SetFinishedFlag();
     return std::make_unique<ScheduleState>();

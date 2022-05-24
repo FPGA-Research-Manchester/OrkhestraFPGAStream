@@ -36,24 +36,22 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       : plan_evaluator_{std::move(plan_evaluator)} {}
 
   auto GetNextSetOfRuns(
-      std::vector<std::shared_ptr<QueryNode>> &available_nodes,
+      std::vector<QueryNode*> &available_nodes,
       const std::unordered_set<std::string> &first_node_names,
-      std::unordered_set<std::string> &starting_nodes,
-      std::unordered_set<std::string> &processed_nodes,
-      std::unordered_map<std::string, SchedulingQueryNode> &graph,
+      std::unordered_set<std::string>starting_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode>graph,
       AcceleratorLibraryInterface &drivers,
-      std::map<std::string, TableMetadata> &tables,
+      std::map<std::string, TableMetadata> tables,
       const std::vector<ScheduledModule> &current_configuration,
-      const Config &config)
-      -> std::queue<
-          std::pair<std::vector<ScheduledModule>,
-                    std::vector<std::shared_ptr<QueryNode>>>> override;
+      const Config &config, std::unordered_set<std::string>& skipped_nodes)
+      -> std::queue<std::pair<std::vector<ScheduledModule>,
+                              std::vector<QueryNode*>>> override;
 
   auto ScheduleAndGetAllPlans(
-      std::unordered_set<std::string> &starting_nodes,
-      std::unordered_set<std::string> &processed_nodes,
-      std::unordered_map<std::string, SchedulingQueryNode> &graph,
-      std::map<std::string, TableMetadata> &tables, const Config &config)
+      const std::unordered_set<std::string>& starting_nodes,
+      const std::unordered_set<std::string>& processed_nodes,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::map<std::string, TableMetadata> &tables, const Config &config)
       -> std::tuple<int,
                     std::map<std::vector<std::vector<ScheduledModule>>,
                              ExecutionPlanSchedulingData>,
@@ -61,11 +59,11 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
 
   void BenchmarkScheduling(
       const std::unordered_set<std::string> &first_node_names,
-      std::unordered_set<std::string> &starting_nodes,
+      std::unordered_set<std::string> starting_nodes,
       std::unordered_set<std::string> &processed_nodes,
-      std::unordered_map<std::string, SchedulingQueryNode> &graph,
+      std::unordered_map<std::string, SchedulingQueryNode> graph,
       AcceleratorLibraryInterface &drivers,
-      std::map<std::string, TableMetadata> &tables,
+      std::map<std::string, TableMetadata> tables,
       std::vector<ScheduledModule> &current_configuration, const Config &config,
       std::map<std::string, double> &benchmark_data) override;
 
@@ -78,7 +76,7 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       -> double;
   static auto FindSharedPointerFromRootNodes(
       const std::string &searched_node_name,
-      std::shared_ptr<QueryNode> current_node) -> std::shared_ptr<QueryNode>;
+      QueryNode* current_node) -> QueryNode*;
   static void RemoveUnnecessaryTables(
       const std::unordered_map<std::string, SchedulingQueryNode> &graph,
       std::map<std::string, TableMetadata> &tables);
@@ -86,17 +84,17 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       std::vector<std::pair<std::vector<std::vector<ModuleSelection>>,
                             std::vector<std::vector<ModuleSelection>>>>;
   static auto GetNodePointerWithName(
-      std::vector<std::shared_ptr<QueryNode>> &available_nodes,
-      const std::string &node_name) -> std::shared_ptr<QueryNode>;
+      std::vector<QueryNode*> &available_nodes,
+      const std::string &node_name) -> QueryNode*;
   static auto FindNewAvailableNodes(
       std::unordered_set<std::string> &starting_nodes,
-      std::vector<std::shared_ptr<QueryNode>> &available_nodes)
-      -> std::vector<std::shared_ptr<QueryNode>>;
+      std::vector<QueryNode*> &available_nodes)
+      -> std::vector<QueryNode*>;
   static auto GetQueueOfResultingRuns(
-      std::vector<std::shared_ptr<QueryNode>> &available_nodes,
+      std::vector<QueryNode*> &available_nodes,
       const std::vector<std::vector<ScheduledModule>> &best_plan)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
-                              std::vector<std::shared_ptr<QueryNode>>>>;
+                              std::vector<QueryNode*>>>;
   static auto GetLargestModulesSizes(
       const std::map<QueryOperationType, OperationPRModules> &hw_libary)
       -> std::unordered_map<QueryOperationType, int>;

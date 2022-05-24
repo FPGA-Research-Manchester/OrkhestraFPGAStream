@@ -151,10 +151,11 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     std::unordered_map<std::string, SchedulingQueryNode>& graph,
     std::map<std::string, TableMetadata>& data_tables,
     std::unordered_set<std::string>& available_nodes,
-    std::unordered_set<std::string> processed_nodes) {
+    std::unordered_set<std::string>& processed_nodes) {
   // Should know which table was updated, which node was updated.
   auto current_available_nodes = available_nodes;
   auto originally_processed_nodes = processed_nodes;
+  auto current_processed_nodes = processed_nodes;
   // While there are available nodes
   while (!current_available_nodes.empty()) {
     // Get a random available node
@@ -162,10 +163,10 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     // Remove chosen node from available nodes
     current_available_nodes.erase(current_available_nodes.begin());
     // Mark it processed
-    processed_nodes.insert(current_node_name);
+    current_processed_nodes.insert(current_node_name);
     // Find new available nodes after processing current node
     QuerySchedulingHelper::UpdateAvailableNodesAfterSchedulingGivenNode(
-        current_node_name, processed_nodes, graph, current_available_nodes);
+        current_node_name, current_processed_nodes, graph, current_available_nodes);
     // Find what are the minimum requirements for executing current node.
     auto min_requirements = GetMinRequirementsForFullyExecutingNode(
         current_node_name, graph, data_tables);
@@ -184,7 +185,7 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     // A module can't be skipped if no new table was added
     if (!new_table_added) {
       QuerySchedulingHelper::SetAllNodesAsProcessedAfterGivenNode(
-          current_node_name, processed_nodes, graph, current_available_nodes);
+          current_node_name, current_processed_nodes, graph, current_available_nodes);
       // TODO(Kaspar): Remove this check!
       if (min_requirements.size() == 1 && min_requirements.front() == 0) {
         throw std::runtime_error("Something went wrong!");
@@ -192,6 +193,7 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     }
     // If a module can be skipped the min_requirements is marked as 0
     else if (min_requirements.size() == 1 && min_requirements.front() == 0) {
+      current_processed_nodes.insert(current_node_name);
       if (available_nodes.find(current_node_name) != available_nodes.end()) {
         available_nodes.erase(current_node_name);
         auto processed_nodes_with_deleted_nodes = originally_processed_nodes;

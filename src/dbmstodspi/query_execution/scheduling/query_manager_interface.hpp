@@ -187,26 +187,26 @@ class QueryManagerInterface {
    * @return Queue of sets of runs.
    */
   virtual auto ScheduleNextSetOfNodes(
-      std::vector<std::shared_ptr<QueryNode>>& query_nodes,
+      std::vector<QueryNode*>& query_nodes,
       const std::unordered_set<std::string>& first_node_names,
-      std::unordered_set<std::string>& starting_nodes,
-      std::unordered_set<std::string>& processed_nodes,
-      std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      std::map<std::string, TableMetadata>& tables,
+      const std::unordered_set<std::string>& starting_nodes,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::map<std::string, TableMetadata>& tables,
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
       std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>&
           all_reuse_links,
-      const std::vector<ScheduledModule>& current_configuration)
+      const std::vector<ScheduledModule>& current_configuration,
+      std::unordered_set<std::string>& skipped_nodes)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
-                              std::vector<std::shared_ptr<QueryNode>>>> = 0;
+                              std::vector<QueryNode*>>> = 0;
 
   virtual void BenchmarkScheduling(
       const std::unordered_set<std::string>& first_node_names,
-      std::unordered_set<std::string>& starting_nodes,
+      const std::unordered_set<std::string>& starting_nodes,
       std::unordered_set<std::string>& processed_nodes,
-      std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      std::map<std::string, TableMetadata>& tables,
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::map<std::string, TableMetadata>& tables,
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
       std::vector<ScheduledModule>& current_configuration) = 0;

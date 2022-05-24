@@ -24,17 +24,18 @@ using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
 namespace orkhestrafs::dbmstodspi {
 class Graph : public ExecutionPlanGraphInterface {
  private:
-  std::vector<std::shared_ptr<QueryNode>> root_nodes_;
-  void AddNextNodeToVector(QueryNode* current_node,
-                           std::vector<QueryNode*>& all_nodes_vector);
+  std::vector<QueryNode> all_nodes_;
+  void DeleteNode(QueryNode* deleted_node);
+  void FindCurrentNodeAndSetToNull(const QueryNode* node_ptr,
+                                   QueryNode* output_ptr) const;
 
  public:
   ~Graph() override = default;
 
-  explicit Graph(std::vector<std::shared_ptr<QueryNode>> graph_data)
-      : root_nodes_{std::move(graph_data)} {}
+  explicit Graph(std::vector<QueryNode> graph_data)
+      : all_nodes_{std::move(graph_data)} {}
 
-  auto ExportRootNodes() -> std::vector<std::shared_ptr<QueryNode>> override;
+  void DeleteNodes(const std::unordered_set<std::string>& deleted_node_names) override;
   auto IsEmpty() -> bool override;
   auto GetRootNodesPtrs() -> std::vector<QueryNode*> override;
   auto GetAllNodesPtrs() -> std::vector<QueryNode*> override;
