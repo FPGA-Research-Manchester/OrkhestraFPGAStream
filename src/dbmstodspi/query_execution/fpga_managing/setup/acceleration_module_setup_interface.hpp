@@ -103,7 +103,8 @@ class AccelerationModuleSetupInterface {
   virtual auto GetWorstCaseProcessedTables(
       const std::vector<int>& min_capacity,
       const std::vector<std::string>& input_tables,
-      const std::map<std::string, TableMetadata>& data_tables)
+      const std::map<std::string, TableMetadata>& data_tables,
+      const std::vector<std::string>& output_table_names)
       -> std::map<std::string, TableMetadata>;
 
   /**

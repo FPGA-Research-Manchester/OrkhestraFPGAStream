@@ -76,7 +76,8 @@ class PreSchedulingProcessor {
       const std::vector<std::string>& input_tables,
       const std::vector<int>& min_capacity,
       std::map<std::string, TableMetadata>& data_tables,
-      QueryOperationType operation) -> std::vector<std::string>;
+      QueryOperationType operation,
+      const std::vector<std::string>& output_table_names) -> bool;
 
   const std::map<QueryOperationType, OperationPRModules> hw_library_;
   AcceleratorLibraryInterface& accelerator_library_;

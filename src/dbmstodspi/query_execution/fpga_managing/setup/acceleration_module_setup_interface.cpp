@@ -58,15 +58,18 @@ auto AccelerationModuleSetupInterface::IsSortingInputTable() -> bool {
 auto AccelerationModuleSetupInterface::GetWorstCaseProcessedTables(
     const std::vector<int>& /*min_capacity*/,
     const std::vector<std::string>& input_tables,
-    const std::map<std::string, TableMetadata>& data_tables)
+    const std::map<std::string, TableMetadata>& data_tables,
+    const std::vector<std::string>& output_table_names)
     -> std::map<std::string, TableMetadata> {
-  std::map<std::string, TableMetadata> resulting_tables;
-  for (const auto& input_table_name : input_tables) {
-    resulting_tables[input_table_name] = data_tables.at(input_table_name);
-    /*resulting_tables.insert(
-        {input_table_name, data_tables.at(input_table_name)});*/
+  if (input_tables.size() != 1 || output_table_names.size() != 1) {
+    throw std::runtime_error("Unsupporded table counts at preprocessing!");
   }
-  return resulting_tables;
+  std::map<std::string, TableMetadata> resulting_tables;
+  resulting_tables[output_table_names.front()] =
+      data_tables.at(output_table_names.front());
+  resulting_tables[output_table_names.front()].sorted_status =
+      data_tables.at(input_tables.front()).sorted_status;
+  return std::move(resulting_tables);
 }
 
 auto AccelerationModuleSetupInterface::UpdateDataTable(

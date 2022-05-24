@@ -118,11 +118,12 @@ auto AcceleratorLibrary::GetMinSortingRequirements(
 auto AcceleratorLibrary::GetWorstCaseProcessedTables(
     QueryOperationType operation_type, const std::vector<int>& min_capacity,
     const std::vector<std::string>& input_tables,
-    const std::map<std::string, TableMetadata>& data_tables)
+    const std::map<std::string, TableMetadata>& data_tables,
+    const std::vector<std::string>& output_table_names)
     -> std::map<std::string, TableMetadata> {
   auto* driver = GetDriver(operation_type);
   return driver->GetWorstCaseProcessedTables(min_capacity, input_tables,
-                                             data_tables);
+                                             data_tables, output_table_names);
 }
 
 auto AcceleratorLibrary::UpdateDataTable(

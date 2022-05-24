@@ -79,6 +79,12 @@ struct TableMetadata {
   // 2. How many sequences there are afterwards
   // 3. Size of the sequences afterwards
   std::vector<int> sorted_status;
+
+  auto operator==(const TableMetadata& rhs) const -> bool {
+    return record_size == rhs.record_size &&
+           record_count == rhs.record_count &&
+           sorted_status == rhs.sorted_status;
+  }
 };
 
 }  // namespace orkhestrafs::core_interfaces::table_data

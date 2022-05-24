@@ -74,7 +74,7 @@ void LinearSortSetup::GetSortedSequenceWithCapacity(
     return;
   }
   if (bitstream_capacity * sequence_count != record_count) {
-    sequence_count+=1;
+    sequence_count += 1;
   }
   initial_sorted_sequence.reserve(3);
   initial_sorted_sequence.emplace_back(bitstream_capacity);
@@ -85,25 +85,22 @@ void LinearSortSetup::GetSortedSequenceWithCapacity(
 auto LinearSortSetup::GetWorstCaseProcessedTables(
     const std::vector<int>& min_capacity,
     const std::vector<std::string>& input_tables,
-    const std::map<std::string, TableMetadata>& data_tables)
+    const std::map<std::string, TableMetadata>& data_tables,
+    const std::vector<std::string>& output_table_names)
     -> std::map<std::string, TableMetadata> {
   if (min_capacity.size() != 1) {
     throw std::runtime_error("Inncorrect capacity values given!");
   }
-  std::map<std::string, TableMetadata> resulting_tables;
-  for (const auto& table_name : input_tables) {
-    auto new_table_name = table_name;
-    auto new_table_data = data_tables.at(table_name);
-    GetSortedSequenceWithCapacity(min_capacity.front(),
-                                  new_table_data.record_count,
-                                  new_table_data.sorted_status);
-    if (new_table_data.sorted_status.size() != 1) {
-      new_table_name += "_half_sorted";
-    } else {
-      new_table_name += "_fully_sorted";
-    }
-    resulting_tables.insert({new_table_name, new_table_data});
+  if (input_tables.size() != 1 || output_table_names.size() != 1) {
+    throw std::runtime_error("Incorrect table counts for linear sorting!");
   }
+  std::map<std::string, TableMetadata> resulting_tables;
+  auto new_table_name = output_table_names.front();
+  auto new_table_data = data_tables.at(input_tables.front());
+  GetSortedSequenceWithCapacity(min_capacity.front(),
+                                new_table_data.record_count,
+                                new_table_data.sorted_status);
+  resulting_tables.insert({new_table_name, new_table_data});
   return resulting_tables;
 }
 

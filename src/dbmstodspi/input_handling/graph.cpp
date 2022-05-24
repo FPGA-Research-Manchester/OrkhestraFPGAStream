@@ -16,6 +16,7 @@ limitations under the License.
 #include "graph.hpp"
 
 #include <algorithm>
+#include <stdexcept>
 
 using orkhestrafs::dbmstodspi::Graph;
 
@@ -65,13 +66,14 @@ void Graph::DeleteNodes(
     }
   }
 }
+
 void Graph::FindCurrentNodeAndSetToNull(const QueryNode* node_ptr,
                                         QueryNode* output_ptr) const {
   bool found = false;
   for (int stream_id = 0; stream_id < output_ptr->previous_nodes.size();
        stream_id++) {
     if (output_ptr->previous_nodes.at(stream_id) == node_ptr) {
-      if (output_ptr->input_data_definition_files.at(stream_id).empty()) {
+      if (output_ptr->given_input_data_definition_files.at(stream_id).empty()) {
         throw std::runtime_error("Table not defined when deleting nodes!");
       } else {
         output_ptr->previous_nodes.at(stream_id) = nullptr;

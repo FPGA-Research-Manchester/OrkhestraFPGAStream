@@ -119,21 +119,32 @@ auto PreSchedulingProcessor::GetFittingBitstreamLocations(
 }
 
 auto PreSchedulingProcessor::GetWorstCaseProcessedTables(
-    const std::vector<std::string>& input_tables,
+    const std::vector<std::string>& input_table_names,
     const std::vector<int>& min_capacity,
     std::map<std::string, TableMetadata>& data_tables,
-    QueryOperationType operation) -> std::vector<std::string> {
+    QueryOperationType operation,
+    const std::vector<std::string>& output_table_names) -> bool {
+  // Assume that there are no duplicates in input_tables.
   std::map<std::string, TableMetadata> new_tables =
       accelerator_library_.GetWorstCaseProcessedTables(
-          operation, min_capacity, input_tables, data_tables);
+          operation, min_capacity, input_table_names, data_tables,
+          output_table_names);
 
-  std::vector<std::string> table_names;
-  table_names.reserve(new_tables.size());
-  for (const auto& [key, _] : new_tables) {
-    table_names.push_back(key);
+  if (new_tables.size() != output_table_names.size()) {
+    throw std::runtime_error("Unexpected worst case tables generated!");
   }
-  data_tables.merge(new_tables);
-  return table_names;
+
+  bool tables_updated = false;
+  for (const auto& table_name : output_table_names) {
+    if (new_tables.find(table_name) == new_tables.end()) {
+      throw std::runtime_error("Unexpected worst case table generated!");
+    }
+    if (data_tables.at(table_name) != new_tables.at(table_name)) {
+      tables_updated = true;
+      data_tables[table_name] = new_tables.at(table_name);
+    }
+  }
+  return tables_updated;
 }
 
 void PreSchedulingProcessor::UpdateOnlySatisfyingBitstreams(
@@ -166,26 +177,26 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     current_processed_nodes.insert(current_node_name);
     // Find new available nodes after processing current node
     QuerySchedulingHelper::UpdateAvailableNodesAfterSchedulingGivenNode(
-        current_node_name, current_processed_nodes, graph, current_available_nodes);
+        current_node_name, current_processed_nodes, graph,
+        current_available_nodes);
     // Find what are the minimum requirements for executing current node.
     auto min_requirements = GetMinRequirementsForFullyExecutingNode(
         current_node_name, graph, data_tables);
     // Find all bitstreams that meet minimum requirements and update graph.
     FindAdequateBitstreams(min_requirements, graph, current_node_name);
-    // Get worst case tables and update the graph - Because fitting ones might
-    // not have been used. If new tables are the exact same as old tables -
-    // don't do anything Set following stuff as processed and not available! ->
-    // Nice and universal!
-    auto new_table_added = QuerySchedulingHelper::AddNewTableToNextNodes(
-        graph, current_node_name,
-        GetWorstCaseProcessedTables(
-            graph.at(current_node_name).data_tables,
-            min_capacity_.at(graph.at(current_node_name).operation),
-            data_tables, graph.at(current_node_name).operation));
+
+    auto worst_case_updated = GetWorstCaseProcessedTables(
+        graph.at(current_node_name).data_tables,
+        min_capacity_.at(graph.at(current_node_name).operation), data_tables,
+        graph.at(current_node_name).operation,
+        graph.at(current_node_name)
+            .node_ptr->given_output_data_definition_files);
+
     // A module can't be skipped if no new table was added
-    if (!new_table_added) {
+    if (!worst_case_updated) {
       QuerySchedulingHelper::SetAllNodesAsProcessedAfterGivenNode(
-          current_node_name, current_processed_nodes, graph, current_available_nodes);
+          current_node_name, current_processed_nodes, graph,
+          current_available_nodes);
       // TODO(Kaspar): Remove this check!
       if (min_requirements.size() == 1 && min_requirements.front() == 0) {
         throw std::runtime_error("Something went wrong!");
@@ -193,6 +204,22 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     }
     // If a module can be skipped the min_requirements is marked as 0
     else if (min_requirements.size() == 1 && min_requirements.front() == 0) {
+      if (graph.at(current_node_name).after_nodes.size() != 1 ||
+          graph.at(current_node_name).before_nodes.size() != 1) {
+        throw std::runtime_error(
+            "Can't skip node with multiple inputs or outputs!");
+      }
+      // Move input table name to outputs input table.
+      const auto& after_node = graph.at(current_node_name).after_nodes.front();
+      int index = QuerySchedulingHelper::GetCurrentNodeIndexesByName(
+                      graph, after_node,
+                      current_node_name)
+                      .front()
+                      .first;
+      graph.at(after_node).node_ptr->given_input_data_definition_files[index] =
+          graph.at(current_node_name)
+              .node_ptr->given_input_data_definition_files.front();
+
       current_processed_nodes.insert(current_node_name);
       if (available_nodes.find(current_node_name) != available_nodes.end()) {
         available_nodes.erase(current_node_name);

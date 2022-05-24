@@ -41,7 +41,8 @@ class BlockingSortModuleSetup
   auto GetWorstCaseProcessedTables(
       const std::vector<int>& min_capacity,
       const std::vector<std::string>& input_tables,
-      const std::map<std::string, TableMetadata>& data_tables)
+      const std::map<std::string, TableMetadata>& data_tables,
+      const std::vector<std::string>& output_table_names)
       -> std::map<std::string, TableMetadata> override;
   auto UpdateDataTable(const std::vector<int>& module_capacity,
                        const std::vector<std::string>& input_table_names,

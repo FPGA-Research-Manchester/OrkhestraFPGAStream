@@ -28,20 +28,21 @@ using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 auto BlockingSortModuleSetup::GetWorstCaseProcessedTables(
     const std::vector<int>& min_capacity,
     const std::vector<std::string>& input_tables,
-    const std::map<std::string, TableMetadata>& data_tables)
+    const std::map<std::string, TableMetadata>& data_tables,
+    const std::vector<std::string>& output_table_names)
     -> std::map<std::string, TableMetadata> {
-  std::map<std::string, TableMetadata> resuling_tables;
-  for (const auto& table_name : input_tables) {
-    if (QuerySchedulingHelper::IsTableSorted(data_tables.at(table_name))) {
-      resuling_tables.insert({table_name, data_tables.at(table_name)});
-    } else {
-      auto new_table_name = table_name + "_fully_sorted";
-      auto new_table_data = data_tables.at(table_name);
-      new_table_data.sorted_status = {new_table_data.record_count};
-      resuling_tables.insert({new_table_name, new_table_data});
-    }
+  if (input_tables.size() != 1 || output_table_names.size() != 1) {
+    throw std::runtime_error("Unsupporded table counts at preprocessing!");
   }
-  return resuling_tables;
+  std::map<std::string, TableMetadata> resulting_tables;
+  resulting_tables[output_table_names.front()] =
+      data_tables.at(output_table_names.front());
+  throw std::runtime_error(
+      "Don't know how join sorted status will be generated yet!");
+  resulting_tables[output_table_names.front()].sorted_status =
+      data_tables.at(input_tables.front()).sorted_status;
+  return std::move(resulting_tables);
+
 }
 
 auto BlockingSortModuleSetup::UpdateDataTable(

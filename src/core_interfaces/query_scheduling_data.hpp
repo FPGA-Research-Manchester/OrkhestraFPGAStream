@@ -19,6 +19,7 @@ limitations under the License.
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -53,6 +54,13 @@ struct NodeRunData {
   NodeOperationParameters operation_parameters;
   /// Location of the module to be processing this node
   std::vector<int> module_locations;
+
+  auto operator==(const NodeRunData& rhs) const -> bool {
+    return input_data_definition_files == rhs.input_data_definition_files &&
+           output_data_definition_files == rhs.output_data_definition_files &&
+           operation_parameters == rhs.operation_parameters &&
+           module_locations == rhs.module_locations;
+  }
 };
 
 /**
@@ -79,32 +87,34 @@ struct QueryNode {
   std::vector<bool> is_checked;
   /// Flag for saying if this node will be fully executed in this run
   bool is_finished = true;
+  /// Temporarty tables used in different runs
+  std::unordered_set<std::string> temp_tables;
 
   auto operator==(const QueryNode& rhs) const -> bool {
     return previous_nodes == rhs.previous_nodes &&
-           input_data_definition_files == rhs.input_data_definition_files &&
-           output_data_definition_files == rhs.output_data_definition_files &&
+           given_input_data_definition_files ==
+               rhs.given_input_data_definition_files &&
+           given_output_data_definition_files ==
+               rhs.given_output_data_definition_files &&
            operation_type == rhs.operation_type &&
            next_nodes == rhs.next_nodes &&
-           operation_parameters == rhs.operation_parameters &&
-           module_locations == rhs.module_locations &&
-           node_name == rhs.node_name && is_checked == rhs.is_checked;
+           given_operation_parameters == rhs.given_operation_parameters &&
+           module_run_data == rhs.module_run_data &&
+           node_name == rhs.node_name && is_checked == rhs.is_checked &&
+           temp_tables == rhs.temp_tables;
   }
 
-  QueryNode(
-      std::vector<std::string> input, std::vector<std::string> output,
-      QueryOperationType operation,
-      std::vector<QueryNode*> next_nodes,
-      std::vector<QueryNode*>
-          previous_nodes,
-      NodeOperationParameters parameters, std::string node_name,
-      std::vector<bool> is_checked)
-      : input_data_definition_files{std::move(input)},
-        output_data_definition_files{std::move(output)},
+  QueryNode(std::vector<std::string> input, std::vector<std::string> output,
+            QueryOperationType operation, std::vector<QueryNode*> next_nodes,
+            std::vector<QueryNode*> previous_nodes,
+            NodeOperationParameters parameters, std::string node_name,
+            std::vector<bool> is_checked)
+      : given_input_data_definition_files{std::move(input)},
+        given_output_data_definition_files{std::move(output)},
         operation_type{operation},
         next_nodes{std::move(next_nodes)},
         previous_nodes{std::move(previous_nodes)},
-        operation_parameters{std::move(parameters)},
+        given_operation_parameters{std::move(parameters)},
         node_name{std::move(node_name)},
         is_checked{std::move(is_checked)} {};
 };
