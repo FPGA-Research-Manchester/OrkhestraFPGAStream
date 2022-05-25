@@ -43,10 +43,11 @@ auto QuerySchedulingHelper::FindNodePtrIndex(QueryNode* current_node,
   return index;
 }
 
-// TODO(Kaspar): Check that it is sorted by the desired column.
+// Assuming sorted by column is always first and the other parameters are legal.
 auto QuerySchedulingHelper::IsTableSorted(const TableMetadata& table_data) -> bool {
-  return table_data.sorted_status.size() == 1 &&
-         table_data.sorted_status.front() == table_data.record_count;
+  return table_data.sorted_status.size() == 4 &&
+             table_data.sorted_status.front() == 0 &&
+             table_data.sorted_status.at(2) == table_data.record_count;
 }
 
 auto QuerySchedulingHelper::AddNewTableToNextNodes(

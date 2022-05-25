@@ -122,14 +122,10 @@ auto RapidJSONReader::ReadAllTablesData(std::string json_filename)
     current_table_value_map.insert(
         {record_count_field,
          table_parameters[record_count_field.c_str()].GetInt()});
-    std::vector<std::vector<int>> sorted_sequences;
-    for (const auto& sorted_sequence :
+    std::vector<int> sorted_sequences;
+    for (const auto& sorted_sequence_param :
          table_parameters[sorted_status_field.c_str()].GetArray()) {
-      std::vector<int> sequence_params;
-      for (const auto& sequence_param : sorted_sequence.GetArray()) {
-        sequence_params.push_back(sequence_param.GetInt());
-      }
-      sorted_sequences.push_back(sequence_params);
+      sorted_sequences.push_back(sorted_sequence_param.GetInt());
     }
     current_table_value_map.insert({sorted_status_field, sorted_sequences});
     table_data_vector.push_back(current_table_value_map);

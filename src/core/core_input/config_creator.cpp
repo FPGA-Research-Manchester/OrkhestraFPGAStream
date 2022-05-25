@@ -140,7 +140,7 @@ auto ConfigCreator::ConvertStringMapToQueryOperations(
 auto ConfigCreator::CreateTablesData(
     const std::vector<
         std::map<std::string, std::variant<std::string, int,
-                                           std::vector<std::vector<int>>>>>&
+                                           std::vector<int>>>>&
         tables_data_in_string_form) -> std::map<std::string, TableMetadata> {
   std::map<std::string, TableMetadata> resulting_table_meta_data;
 
@@ -157,22 +157,13 @@ auto ConfigCreator::CreateTablesData(
         std::get<int>(table_meta_data_map.at(record_count_field));
     current_table.record_size =
         std::get<int>(table_meta_data_map.at(record_size_field));
-    auto expanded_sorted_status = std::get<std::vector<std::vector<int>>>(
-        table_meta_data_map.at(sorted_status_field));
-    if (!expanded_sorted_status.empty()) {
-      if (expanded_sorted_status.size() == 1) {
-        current_table.sorted_status.push_back(current_table.record_count);
-      } else {
-          // Size of first sequence
-        current_table.sorted_status.push_back(
-            expanded_sorted_status.at(0).at(1));
-        // Number of other sequences
-        current_table.sorted_status.push_back(
-            expanded_sorted_status.size()-1);
-        // Size of other sequences
-        current_table.sorted_status.push_back(
-            expanded_sorted_status.at(1).at(1));
-      }
+    current_table.sorted_status =
+        std::get<std::vector<std::vector<int>>>(
+            table_meta_data_map.at(sorted_status_field));
+    if (!current_table.sorted_status.empty() &&
+        current_table.sorted_status.at(0) != 0 &&
+        current_table.sorted_status.end()[-2] != current_table.record_count-1) {
+      throw std::runtime_error("Incomplete sorted status given!");
     }
     resulting_table_meta_data.insert({filename, std::move(current_table)});
   }

@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include<algorithm>
+
 #include "join_setup.hpp"
 
 #include "join.hpp"
@@ -138,10 +140,13 @@ auto JoinSetup::GetWorstCaseProcessedTables(
   std::map<std::string, TableMetadata> resulting_tables;
   resulting_tables[output_table_names.front()] =
       data_tables.at(output_table_names.front());
-  throw std::runtime_error(
-      "Don't know how join sorted status will be generated yet!");
-  resulting_tables[output_table_names.front()].sorted_status =
-      data_tables.at(input_tables.front()).sorted_status;
+  // Record count is an estimation
+  resulting_tables[output_table_names.front()].record_count =
+      std::min(data_tables.at(input_tables.front()).record_count,
+               data_tables.at(input_tables.back()).record_count);
+  resulting_tables[output_table_names.front()].sorted_status = {
+      0, resulting_tables[output_table_names.front()].record_count - 1,
+      resulting_tables[output_table_names.front()].record_count, 1};
   return std::move(resulting_tables);
 }
 

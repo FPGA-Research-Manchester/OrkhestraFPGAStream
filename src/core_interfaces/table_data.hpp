@@ -75,9 +75,11 @@ struct TableData {
 struct TableMetadata {
   int record_size;  // words
   int record_count;
-  // 1. How many are sorted in 1st sequence
-  // 2. How many sequences there are afterwards
-  // 3. Size of the sequences afterwards
+  // 1. Begin of first set of sequences
+  // 2. End of the first set of sequences
+  // 3. Size of the sequences
+  // 4. How many sequences
+  // ... Repeat
   std::vector<int> sorted_status;
 
   auto operator==(const TableMetadata& rhs) const -> bool {

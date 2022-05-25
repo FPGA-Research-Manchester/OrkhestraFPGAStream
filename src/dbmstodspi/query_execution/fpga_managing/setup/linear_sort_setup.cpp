@@ -64,22 +64,20 @@ auto LinearSortSetup::GetMinSortingRequirementsForTable(
   return {table_data.record_count};
 }
 
+// TODO: Think about when there are 0 records!
 void LinearSortSetup::GetSortedSequenceWithCapacity(
     int bitstream_capacity, int record_count,
     std::vector<int>& initial_sorted_sequence) {
-  int sequence_count = record_count / bitstream_capacity;
+  int sequence_count = (record_count + bitstream_capacity - 1) / bitstream_capacity;
   initial_sorted_sequence.clear();
-  if (sequence_count == 0) {
+  initial_sorted_sequence.push_back(0);
+  initial_sorted_sequence.push_back(record_count - 1);
+  if (sequence_count == 1) {
     initial_sorted_sequence.push_back(record_count);
-    return;
+  } else {
+    initial_sorted_sequence.push_back(bitstream_capacity);
   }
-  if (bitstream_capacity * sequence_count != record_count) {
-    sequence_count += 1;
-  }
-  initial_sorted_sequence.reserve(3);
-  initial_sorted_sequence.emplace_back(bitstream_capacity);
-  initial_sorted_sequence.emplace_back(sequence_count);
-  initial_sorted_sequence.emplace_back(bitstream_capacity);
+  initial_sorted_sequence.push_back(sequence_count);
 }
 
 auto LinearSortSetup::GetWorstCaseProcessedTables(

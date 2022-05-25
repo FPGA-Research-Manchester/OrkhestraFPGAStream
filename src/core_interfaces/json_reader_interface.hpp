@@ -42,7 +42,7 @@ class JSONReaderInterface {
    */
   using TableMetaDataStringMap =
       std::map<std::string,
-               std::variant<std::string, int, std::vector<std::vector<int>>>>;
+               std::variant<std::string, int, std::vector<int>>>;
 
   using HWLibraryStringMap = std::map<
       std::string,

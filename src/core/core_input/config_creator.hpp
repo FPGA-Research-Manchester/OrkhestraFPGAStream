@@ -59,7 +59,7 @@ class ConfigCreator {
   static auto CreateTablesData(
       const std::vector<
           std::map<std::string, std::variant<std::string, int,
-                                             std::vector<std::vector<int>>>>>&
+                                             std::vector<int>>>>&
           tables_data_in_string_form) -> std::map<std::string, TableMetadata>;
 
   static auto CreateHWLibrary(
