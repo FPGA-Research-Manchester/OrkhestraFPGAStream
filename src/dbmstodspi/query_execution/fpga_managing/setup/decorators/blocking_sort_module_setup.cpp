@@ -37,6 +37,8 @@ auto BlockingSortModuleSetup::GetWorstCaseProcessedTables(
   std::map<std::string, TableMetadata> resulting_tables;
   resulting_tables[output_table_names.front()] =
       data_tables.at(output_table_names.front());
+  resulting_tables[output_table_names.front()].record_count =
+      data_tables.at(input_tables.front()).record_count;
   resulting_tables[output_table_names.front()].sorted_status = {
       0, resulting_tables[output_table_names.front()].record_count - 1,
       resulting_tables[output_table_names.front()].record_count, 1};
@@ -58,6 +60,25 @@ auto BlockingSortModuleSetup::UpdateDataTable(
           resulting_tables.at(input_table_names.front()))) {
     throw std::runtime_error("Table is sorted already!");
   }
+
+  // What do I do with this?
+
+  // I have 0 clue!
+
+  // So you put stuff into a linked table?
+
+
+  // I take some sequences from current table.
+  // I merge them all to another table.
+  // If I can merge them all to a sorted table. -> Then just don't do anything -> Say somehow that this node is completed
+  // If not completed
+  // Then just yh update the current table by adding more sorted sequences.
+  // If we're creating a 
+
+
+
+
+
 
   auto& sorted_status =
       resulting_tables.at(input_table_names.front()).sorted_status;

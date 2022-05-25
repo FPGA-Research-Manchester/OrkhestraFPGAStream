@@ -99,6 +99,8 @@ auto LinearSortSetup::GetWorstCaseProcessedTables(
                                 new_table_data.record_count,
                                 new_table_data.sorted_status);
   resulting_tables.insert({new_table_name, new_table_data});
+  resulting_tables[output_table_names.front()].record_count =
+      data_tables.at(input_tables.front()).record_count;
   return resulting_tables;
 }
 
@@ -117,4 +119,27 @@ auto LinearSortSetup::UpdateDataTable(
       resulting_tables.at(input_table_names.front()).record_count,
       resulting_tables.at(input_table_names.front()).sorted_status);
   return true;
+}
+
+auto LinearSortSetup::GetWorstCaseNodeCapacity(const std::vector<int>& module_capacity,
+    const std::vector<std::string>& input_table_names,
+    const std::map<std::string, TableMetadata>& data_tables,
+    QueryOperationType next_operation_type) -> std::vector<int> {
+  if (next_operation_type != QueryOperationType::kMergeSort) {
+    throw std::runtime_error("Unsupported graph!");
+  }
+  if (input_table_names.size() != 1) {
+    throw std::runtime_error("Wrong number of tables!");
+  }
+  if (module_capacity.size() != 1) {
+    throw std::runtime_error("Wrong linear sort capacity given!");
+  }
+  /*auto sequence_count =
+      (data_tables.at(input_table_names.front()).record_count +
+       module_capacity.front() - 1) /
+      module_capacity.front()
+      ;*/
+  return {(data_tables.at(input_table_names.front()).record_count +
+           module_capacity.front() - 1) /
+          module_capacity.front()};
 }

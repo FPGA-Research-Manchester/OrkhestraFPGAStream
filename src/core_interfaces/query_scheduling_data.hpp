@@ -51,7 +51,7 @@ struct NodeRunData {
   /// Expected data files.
   std::vector<std::string> output_data_definition_files;
   /// Operation parameters to configure the streams with modules.
-  NodeOperationParameters operation_parameters;
+  std::vector<std::vector<int>> operation_parameters;
   /// Location of the module to be processing this node
   std::vector<int> module_locations;
 
@@ -88,7 +88,7 @@ struct QueryNode {
   /// Flag for saying if this node will be fully executed in this run
   bool is_finished = true;
   /// Temporarty tables used in different runs
-  std::unordered_set<std::string> temp_tables;
+  std::unordered_set<std::string> temp_tables; // TODO: Change into a map with counters - After each run you reduce the counter!
 
   auto operator==(const QueryNode& rhs) const -> bool {
     return previous_nodes == rhs.previous_nodes &&

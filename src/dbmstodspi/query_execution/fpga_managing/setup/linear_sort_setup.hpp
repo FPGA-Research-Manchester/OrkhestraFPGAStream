@@ -49,6 +49,10 @@ class LinearSortSetup : public virtual AccelerationModuleSetupInterface,
                        const std::vector<std::string>& input_table_names,
                        std::map<std::string, TableMetadata>& resulting_tables)
       -> bool override;
+  auto GetWorstCaseNodeCapacity(const std::vector<int>& min_capacity,
+      const std::vector<std::string>& input_tables,
+      const std::map<std::string, TableMetadata>& data_tables,
+      QueryOperationType next_operation_type) -> std::vector<int> override;
   /**
    * @brief Setup linear sort module by giving the stream data to be sorted.
    * @param linear_sort_module Module instance to access the configuration

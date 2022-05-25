@@ -118,7 +118,7 @@ auto PreSchedulingProcessor::GetFittingBitstreamLocations(
   return fitting_bitstream_locations;
 }
 
-auto PreSchedulingProcessor::GetWorstCaseProcessedTables(
+auto PreSchedulingProcessor::SetWorstCaseProcessedTables(
     const std::vector<std::string>& input_table_names,
     const std::vector<int>& min_capacity,
     std::map<std::string, TableMetadata>& data_tables,
@@ -156,6 +156,43 @@ void PreSchedulingProcessor::UpdateOnlySatisfyingBitstreams(
       graph, node_name);
 }
 
+auto PreSchedulingProcessor::SetWorstCaseNodeCapacity(
+    const std::string& node_name,
+    std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    const std::map<std::string, TableMetadata>& data_tables,
+    const std::vector<int>& min_capacity) -> bool {
+  // What I want is given the min_capacity and current tables, operation and
+  // next nodes operation is capacity values given back.
+  const auto& current_node = graph.at(node_name);
+  if (current_node.after_nodes.size() != 1) {
+    throw std::runtime_error("Multiple output nodes aren't supported!");
+  }
+  auto& next_node = graph.at(current_node.after_nodes.front());
+  auto capacity_values = accelerator_library_.GetWorstCaseNodeCapacity(
+      current_node.operation, min_capacity, current_node.data_tables,
+      data_tables, next_node.operation);
+  // This check is not needed as some capacity values can be 0.
+  /*if (capacity_values.size() != next_node.capacity.size()) {
+      throw std::runtime_error("Incorrect number of capacity values
+  calculated!");
+  }*/
+  bool updated_capacity_values = false;
+  if (!capacity_values.empty()) {
+    for (int capacity_id = 0; capacity_id < capacity_values.size();
+         capacity_id++) {
+      if (capacity_id >= next_node.capacity.size()) {
+        next_node.capacity.push_back(capacity_values.at(capacity_id));
+        updated_capacity_values = true;
+      } else if (capacity_values.at(capacity_id) !=
+                 next_node.capacity.at(capacity_id)) {
+        next_node.capacity[capacity_id] = capacity_values.at(capacity_id);
+        updated_capacity_values = true;
+      }
+    }
+  }
+  return updated_capacity_values;
+}
+
 // TODO(Kaspar): Need a special case check of 0 rows left - Can immediately cut
 // stuff out.
 void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
@@ -185,15 +222,24 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     // Find all bitstreams that meet minimum requirements and update graph.
     FindAdequateBitstreams(min_requirements, graph, current_node_name);
 
-    auto worst_case_updated = GetWorstCaseProcessedTables(
+    auto worst_case_table_updated = SetWorstCaseProcessedTables(
         graph.at(current_node_name).data_tables,
         min_capacity_.at(graph.at(current_node_name).operation), data_tables,
         graph.at(current_node_name).operation,
         graph.at(current_node_name)
             .node_ptr->given_output_data_definition_files);
+    auto worst_case_capacity_updated = SetWorstCaseNodeCapacity(
+        current_node_name, graph, data_tables,
+        min_capacity_.at(graph.at(current_node_name).operation));
+    // Lazily updating merge sort capacity if there is no linear sort before hand!
+    // This will reduce the requirements given a different linear sort choice or filtering.
+    if (graph.at(current_node_name).capacity != min_requirements) {
+      graph.at(current_node_name).capacity = min_requirements;
+      worst_case_capacity_updated = true; 
+    }
 
     // A module can't be skipped if no new table was added
-    if (!worst_case_updated) {
+    if (!worst_case_table_updated && !worst_case_capacity_updated) {
       QuerySchedulingHelper::SetAllNodesAsProcessedAfterGivenNode(
           current_node_name, current_processed_nodes, graph,
           current_available_nodes);
@@ -212,8 +258,7 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
       // Move input table name to outputs input table.
       const auto& after_node = graph.at(current_node_name).after_nodes.front();
       int index = QuerySchedulingHelper::GetCurrentNodeIndexesByName(
-                      graph, after_node,
-                      current_node_name)
+                      graph, after_node, current_node_name)
                       .front()
                       .first;
       graph.at(after_node).node_ptr->given_input_data_definition_files[index] =

@@ -35,8 +35,8 @@ struct ScheduledModule {
   QueryOperationType operation_type;
   std::string bitstream;
   std::pair<int, int> position; //First and last column indexes (inclusive)
-  std::vector<int> processed_table_data;
-  int table_data_size;
+  bool is_composed;
+
 
   // For map to work.
   auto operator<(const ScheduledModule& rhs) const -> bool {

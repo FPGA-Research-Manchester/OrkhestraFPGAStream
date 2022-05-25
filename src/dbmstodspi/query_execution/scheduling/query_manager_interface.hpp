@@ -255,6 +255,11 @@ class QueryManagerInterface {
                    std::vector<std::pair<QueryOperationType, bool>>> = 0;
 
   virtual void PrintBenchmarkStats() = 0;
+  virtual auto GetRecordSizeFromParameters(
+      const DataManagerInterface* data_manager,
+      const std::vector<std::vector<int>>& node_parameters,
+      int stream_index) const
+      ->int ;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

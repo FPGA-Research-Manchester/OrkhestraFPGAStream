@@ -44,6 +44,12 @@ class MergeSortSetup : public virtual AccelerationModuleSetupInterface,
   auto IsDataSensitive() -> bool override;
   auto GetMinSortingRequirementsForTable(const TableMetadata& table_data)
       -> std::vector<int> override;
+  /*auto IsSortingInputTable() -> bool override;*/
+  auto SetMissingFunctionalCapacity(const std::vector<int>& bitstream_capacity,
+                                    std::vector<int>& missing_capacity,
+                                    const std::vector<int>& node_capacity,
+                                    bool is_composed)
+      -> bool override;
   /**
    * @brief Calculate the correct configuration data and write the setup data
    * into the memory mapped registers.

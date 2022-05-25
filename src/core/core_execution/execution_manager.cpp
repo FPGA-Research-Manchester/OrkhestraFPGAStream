@@ -29,7 +29,7 @@ using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 void ExecutionManager::SetFinishedFlag() { busy_flag_ = false; }
 
 void ExecutionManager::UpdateAvailableNodesGraph() {
-  if (!processed_nodes_.empty()){
+  if (!processed_nodes_.empty()) {
     unscheduled_graph_->DeleteNodes(std::move(processed_nodes_));
     processed_nodes_.clear();
   }
@@ -41,7 +41,68 @@ void ExecutionManager::UpdateAvailableNodesGraph() {
   SetupSchedulingGraphAndConstrainedNodes(
       unscheduled_graph_->GetAllNodesPtrs(), current_query_graph_,
       *accelerator_library_, nodes_constrained_to_first_);
-  // Table is updated immediately during execution.
+
+  InitialiseTables(current_tables_metadata_, current_available_node_pointers_,
+                   query_manager_.get(), data_manager_.get());
+}
+
+void ExecutionManager::InitialiseTables(
+    std::map<std::string, TableMetadata>& tables_metadata,
+    std::vector<QueryNode*> current_available_node_pointers,
+    const QueryManagerInterface* query_manager,
+    const DataManagerInterface* data_manager) {
+  // Setup new unintialised tables
+  // Take table data
+  // Go through all of the nodes
+  // Processed nodes are ones that have a table.
+  while (!current_available_node_pointers.empty()) {
+    auto current_node = current_available_node_pointers.back();
+    current_available_node_pointers.pop_back();
+    bool all_tables_defined = false;
+    if (std::any_of(current_node->given_input_data_definition_files.begin(),
+                    current_node->given_input_data_definition_files.end(),
+                    [](const auto& filename) { return filename.empty(); })) {
+      throw std::runtime_error("Table initialisation has an empty table!");
+    }
+    for (int output_stream_id = 0;
+         output_stream_id < current_node->next_nodes.size();
+         output_stream_id++) {
+      const auto& output_node = current_node->next_nodes.at(output_stream_id);
+
+      int index = GetCurrentNodeIndexFromNextNode(current_node, output_node);
+      if (!output_node->given_input_data_definition_files.at(index).empty()) {
+        throw std::runtime_error("Table already defined!");
+      }
+      auto table_name =
+          current_node->node_name + "_" + std::to_string(output_stream_id);
+      TableMetadata new_data;
+      new_data.record_size = query_manager->GetRecordSizeFromParameters(
+          data_manager,
+          current_node->given_operation_parameters.output_stream_parameters,
+          output_stream_id);
+      // No records in the table yet.
+      new_data.record_count = -1;
+      output_node->given_input_data_definition_files[index] = table_name;
+      tables_metadata.insert({table_name, new_data});
+
+      if (std::all_of(output_node->given_input_data_definition_files.begin(),
+                      output_node->given_input_data_definition_files.end(),
+                      [](const auto& filename) { return !filename.empty(); })) {
+        current_available_node_pointers.push_back(output_node);
+      }
+    }
+  }
+}
+
+auto ExecutionManager::GetCurrentNodeIndexFromNextNode(QueryNode* current_node,
+                                                       QueryNode* next_node)
+    -> int {
+  for (int i = 0; i < next_node->previous_nodes.size(); i++) {
+    if (next_node->previous_nodes.at(i) == current_node) {
+      return i;
+    }
+  }
+  throw std::runtime_error("Node not found!");
 }
 
 void ExecutionManager::Execute(

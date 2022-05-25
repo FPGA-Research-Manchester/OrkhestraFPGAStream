@@ -126,6 +126,13 @@ class QueryManager : public QueryManagerInterface {
                    std::vector<std::pair<QueryOperationType, bool>>> override;
   void PrintBenchmarkStats() override;
 
+  // TODO: Put somewhere else!
+  auto GetRecordSizeFromParameters(
+      const DataManagerInterface* data_manager,
+      const std::vector<std::vector<int>>& node_parameters,
+      int stream_index) const
+      -> int  override;
+
  private:
   std::unique_ptr<JSONReaderInterface> json_reader_;
   std::map<std::string, double> benchmark_stats_ = {
@@ -178,10 +185,6 @@ class QueryManager : public QueryManagerInterface {
           allocated_memory_blocks,
       const std::vector<RecordSizeAndCount>& stream_sizes)
       -> std::vector<StreamDataParameters>;
-  static auto GetRecordSizeFromParameters(
-      const DataManagerInterface* data_manager,
-      const std::vector<std::vector<int>>& node_parameters, int stream_index)
-      -> int;
   static void AllocateOutputMemoryBlocks(
       MemoryManagerInterface* memory_manager,
       const DataManagerInterface* data_manager,

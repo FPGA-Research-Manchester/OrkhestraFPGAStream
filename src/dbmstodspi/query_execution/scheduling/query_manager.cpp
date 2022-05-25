@@ -115,7 +115,7 @@ void QueryManager::InitialiseVectorSizes(
 
 auto QueryManager::GetRecordSizeFromParameters(
     const DataManagerInterface* data_manager,
-    const std::vector<std::vector<int>>& node_parameters, int stream_index)
+    const std::vector<std::vector<int>>& node_parameters, int stream_index) const
     -> int {
   auto column_defs_vector = TableManager::GetColumnDefsVector(
       data_manager, node_parameters, stream_index);

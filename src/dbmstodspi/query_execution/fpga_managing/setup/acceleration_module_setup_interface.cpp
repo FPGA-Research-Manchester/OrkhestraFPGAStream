@@ -69,7 +69,34 @@ auto AccelerationModuleSetupInterface::GetWorstCaseProcessedTables(
       data_tables.at(output_table_names.front());
   resulting_tables[output_table_names.front()].sorted_status =
       data_tables.at(input_tables.front()).sorted_status;
+  resulting_tables[output_table_names.front()].record_count =
+      data_tables.at(input_tables.front()).record_count;
   return std::move(resulting_tables);
+}
+
+auto AccelerationModuleSetupInterface::GetWorstCaseNodeCapacity(const std::vector<int>& min_capacity,
+    const std::vector<std::string>& input_tables,
+    const std::map<std::string, TableMetadata>& data_tables,
+    QueryOperationType next_operation_type) -> std::vector<int> {
+  return {};
+}
+
+auto AccelerationModuleSetupInterface::SetMissingFunctionalCapacity(
+    const std::vector<int>& bitstream_capacity,
+    std::vector<int>& missing_capacity,
+    const std::vector<int>& node_capacity, bool is_composed)
+    ->bool {
+  bool is_node_fully_processed = true;
+  for (int capacity_parameter_index = 0;
+       capacity_parameter_index < bitstream_capacity.size();
+       capacity_parameter_index++) {
+    missing_capacity.push_back(node_capacity.at(capacity_parameter_index) -
+                               bitstream_capacity.at(capacity_parameter_index));
+    if (missing_capacity.at(capacity_parameter_index) > 0) {
+      is_node_fully_processed = false;
+    }
+  }
+  return is_node_fully_processed;
 }
 
 auto AccelerationModuleSetupInterface::UpdateDataTable(
