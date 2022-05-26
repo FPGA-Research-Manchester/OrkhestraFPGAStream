@@ -709,9 +709,10 @@ void ElasticSchedulingGraphParser::GetAllAvailableModulePlacementsInCurrentRun(
 void ElasticSchedulingGraphParser::AddPlanToAllPlansAndMeasureTime(
     const std::vector<std::vector<ScheduledModule>>& current_plan,
     const std::unordered_set<std::string>& processed_nodes,
+    const std::map<std::string, TableMetadata>& data_tables,
     int streamed_data_size) {
   ExecutionPlanSchedulingData current_scheduling_data = {
-      processed_nodes, streamed_data_size};
+      processed_nodes, data_tables, streamed_data_size};
   if (const auto& [it, inserted] =
           resulting_plan_.try_emplace(current_plan, current_scheduling_data);
       inserted) {
@@ -821,8 +822,7 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
   if (!current_run.empty()) {
     current_plan.push_back(std::move(current_run));
   }
-  AddPlanToAllPlansAndMeasureTime(current_plan,
-                                  processed_nodes,
+  AddPlanToAllPlansAndMeasureTime(current_plan, processed_nodes, data_tables,
                                   streamed_data_size);
 }
 

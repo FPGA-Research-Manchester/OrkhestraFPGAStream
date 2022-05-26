@@ -50,7 +50,8 @@ struct NodeRunData {
   std::vector<std::string> input_data_definition_files;
   /// Expected data files.
   std::vector<std::string> output_data_definition_files;
-  /// Operation parameters to configure the streams with modules.
+  /// Operation parameters to configure the streams with modules. - How do you say how many channels each gets?
+  // Each channel is defined by index of table, offset, count
   std::vector<std::vector<int>> operation_parameters;
   /// Location of the module to be processing this node
   std::vector<int> module_locations;
@@ -86,9 +87,9 @@ struct QueryNode {
   /// Flag vector setting stream results to be checked
   std::vector<bool> is_checked;
   /// Flag for saying if this node will be fully executed in this run
-  bool is_finished = true;
-  /// Temporarty tables used in different runs
-  std::unordered_set<std::string> temp_tables; // TODO: Change into a map with counters - After each run you reduce the counter!
+  bool is_finished = false;
+  /// Temporarty tables used in different runs and their counters
+  std::unordered_map<std::string, int> temp_tables;
 
   auto operator==(const QueryNode& rhs) const -> bool {
     return previous_nodes == rhs.previous_nodes &&

@@ -41,7 +41,7 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       std::unordered_set<std::string>starting_nodes,
       std::unordered_map<std::string, SchedulingQueryNode>graph,
       AcceleratorLibraryInterface &drivers,
-      std::map<std::string, TableMetadata> tables,
+      std::map<std::string, TableMetadata>& tables,
       const std::vector<ScheduledModule> &current_configuration,
       const Config &config, std::unordered_set<std::string>& skipped_nodes)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
@@ -63,11 +63,19 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       std::unordered_set<std::string> &processed_nodes,
       std::unordered_map<std::string, SchedulingQueryNode> graph,
       AcceleratorLibraryInterface &drivers,
-      std::map<std::string, TableMetadata> tables,
+      std::map<std::string, TableMetadata>& tables,
       std::vector<ScheduledModule> &current_configuration, const Config &config,
       std::map<std::string, double> &benchmark_data) override;
 
  private:
+
+     struct LengthOfSortedSequences {
+    int offset;
+       int numnber_of_sequences;
+    std::string table_name;
+  };
+  static void BuildInitialSequencesForMergeSorter(
+         std::map<int, LengthOfSortedSequences> &map_of_sequences);
   static auto CalculateTimeLimit(
       const std::unordered_map<std::string, SchedulingQueryNode> &graph,
       const std::map<std::string, TableMetadata> &data_tables,
@@ -92,7 +100,8 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       -> std::vector<QueryNode*>;
   static auto GetQueueOfResultingRuns(
       std::vector<QueryNode*> &available_nodes,
-      const std::vector<std::vector<ScheduledModule>> &best_plan)
+      const std::vector<std::vector<ScheduledModule>> &best_plan,
+      const std::map<QueryOperationType, OperationPRModules> &hw_library)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<QueryNode*>>>;
   static auto GetLargestModulesSizes(

@@ -34,6 +34,8 @@ using orkhestrafs::dbmstodspi::ElasticResourceNodeScheduler;
 using orkhestrafs::dbmstodspi::ElasticSchedulingGraphParser;
 using orkhestrafs::dbmstodspi::TimeLimitException;
 
+using orkhestrafs::core_interfaces::query_scheduling_data::NodeRunData;
+
 void ElasticResourceNodeScheduler::RemoveUnnecessaryTables(
     const std::unordered_map<std::string, SchedulingQueryNode> &graph,
     std::map<std::string, TableMetadata> &tables) {
@@ -139,7 +141,7 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
     std::unordered_set<std::string> &processed_nodes,
     std::unordered_map<std::string, SchedulingQueryNode> graph,
     AcceleratorLibraryInterface &drivers,
-    std::map<std::string, TableMetadata> tables,
+    std::map<std::string, TableMetadata> &tables,
     std::vector<ScheduledModule> &current_configuration, const Config &config,
     std::map<std::string, double> &benchmark_data) {
   Log(LogLevel::kTrace, "Schedule round");
@@ -231,7 +233,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     std::unordered_set<std::string> starting_nodes,
     std::unordered_map<std::string, SchedulingQueryNode> graph,
     AcceleratorLibraryInterface &drivers,
-    std::map<std::string, TableMetadata> tables,
+    std::map<std::string, TableMetadata> &tables,
     const std::vector<ScheduledModule> &current_configuration,
     const Config &config, std::unordered_set<std::string> &skipped_nodes)
     -> std::queue<
@@ -269,12 +271,23 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
           config.cost_of_columns, config.streaming_speed,
           config.configuration_speed);
   Log(LogLevel::kTrace, "Creating module queue.");
-  // starting_nodes = resulting_plans.at(best_plan).available_nodes;
-  skipped_nodes = resulting_plans.at(best_plan).processed_nodes;
+  // No need to update the following commented out values
+  // starting_nodes = resulting_plans.at(best_plan).available_nodes
   // graph = resulting_plans.at(best_plan).graph;
-  // tables = resulting_plans.at(best_plan).tables;
+  // We want skipped nodes for deleting them from the main Graph later
+  skipped_nodes = resulting_plans.at(best_plan).processed_nodes;
+  // The nodes that aren't in the graph aren't executed anyway and the tables
+  // have already been handled.
+  for (const auto &[node_name, parameters] : graph) {
+    if (skipped_nodes.find(node_name) != skipped_nodes.end()) {
+      parameters.node_ptr->is_finished = true;
+    }
+  }
+  // To update tables as normal execution doesn't update sorted statuses.
+  tables = resulting_plans.at(best_plan).data_tables;
 
-  auto resulting_runs = GetQueueOfResultingRuns(available_nodes, best_plan);
+  auto resulting_runs =
+      GetQueueOfResultingRuns(available_nodes, best_plan, config.pr_hw_library);
   // available_nodes = FindNewAvailableNodes(starting_nodes, available_nodes);
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   std::cout << "TOTAL SCHEDULING:"
@@ -294,91 +307,133 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   return resulting_runs;
 }
 
+void ElasticResourceNodeScheduler::BuildInitialSequencesForMergeSorter(
+    std::map<int, LengthOfSortedSequences> &map_of_sequences) {
+    // TODO: implement this!
+}
+
 // Method to get node pointers to runs from node names and set composed module
 // op params! Only thing missing is the resource elastic information. (Like
 // merge sort size)
 auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
     std::vector<QueryNode *> &available_nodes,
-    const std::vector<std::vector<ScheduledModule>> &best_plan)
+    const std::vector<std::vector<ScheduledModule>> &best_plan,
+    const std::map<QueryOperationType, OperationPRModules> &hw_library)
     -> std::queue<
         std::pair<std::vector<ScheduledModule>, std::vector<QueryNode *>>> {
   // Clear potentially unfinished nodes
   for (const auto &node : available_nodes) {
-    node->module_locations.clear();
+    node->module_run_data.clear();
     if (node->operation_type == QueryOperationType::kMergeSort) {
-      node->operation_parameters.operation_parameters.clear();
+      node->given_operation_parameters.operation_parameters.clear();
     }
   }
 
-  // How many nodes in each run?
-  std::unordered_map<std::string, int> node_counts;
-  const int merge_sort_run_param_count = 2;
+  std::unordered_map<std::string, QueryNode *> found_nodes;
+  
+  std::map<std::string, std::map<int, LengthOfSortedSequences>>
+      sorted_status_of_a_merge_node;
 
   std::queue<std::pair<std::vector<ScheduledModule>, std::vector<QueryNode *>>>
       resulting_runs;
   for (const auto &run : best_plan) {
+    std::unordered_map<std::string, NodeRunData> current_run_node_data;
+
     std::vector<QueryNode *> chosen_nodes;
     for (int module_index = 0; module_index < run.size(); module_index++) {
-      auto chosen_node = GetNodePointerWithName(available_nodes,
-                                                run.at(module_index).node_name);
-      node_counts[run.at(module_index).node_name] += 1;
-      chosen_node->module_locations.push_back(module_index + 1);
-      if (std::find(chosen_nodes.begin(), chosen_nodes.end(), chosen_node) ==
-          chosen_nodes.end()) {
-        chosen_nodes.push_back(chosen_node);
+      QueryNode *chosen_node;
+      NodeRunData *current_run_data;
+      const auto &current_module = run.at(module_index);
+      const auto &node_name = current_module.node_name;
+      // Check if we have the corrseponding node found before.
+      if (found_nodes.find(node_name) != found_nodes.end()) {
+        chosen_node = found_nodes.at(node_name);
+      } else {
+        found_nodes.insert(
+            {node_name, GetNodePointerWithName(available_nodes, node_name)});
       }
-    }
-    // Mark end of the run
+      // Check if it is the first occurence of this node in this run
+      if (current_run_node_data.find(node_name) !=
+          current_run_node_data.end()) {
+        current_run_data = &current_run_node_data.at(node_name);
 
-    for (auto &node : chosen_nodes) {
-      if (node->operation_type == QueryOperationType::kMergeSort) {
-        auto &merge_op_params = node->operation_parameters.operation_parameters;
-        if (!merge_op_params.empty() && merge_op_params.at(0).empty()) {
-          merge_op_params.erase(merge_op_params.begin());
-        }
+        chosen_node->given_operation_parameters.operation_parameters.back()
+            .push_back(hw_library.at(current_module.operation_type)
+                           .bitstream_map.at(current_module.bitstream)
+                           .capacity.front());
+      } else {
+        // Chosen nodes already selected here. The NodeRunData will be moved in
+        // the end.
+        current_run_node_data.insert({node_name, NodeRunData()});
+        current_run_data = &current_run_node_data.at(node_name);
+        chosen_nodes.push_back(chosen_node);
 
-        merge_op_params.push_back(
-            {node_counts[node->node_name], merge_sort_run_param_count});
-        // Find first in run with this node
-        auto first_module =
-            std::find_if(run.begin(), run.end(), [](auto module) {
-              return module.operation_type == QueryOperationType::kMergeSort;
-            });
-        // TODO: This is wrong!
-        auto sorted_status = first_module->processed_table_data;
-        for (int i = 0; i < node_counts[node->node_name]; i++) {
-          // TODO:Change hardcoded merge sort sizes!
-          int capacity = 64;
-          std::vector<int> channel_sizes(capacity, 0);
-          int offset = i * capacity;
-
-          // If i = 0 then you get the first channel size from the begginning
-          // For all others you can just put the 3rd argument
-          //
-
-          int starting_point = 0;
-          if (i == 0) {
-            starting_point++;
-            channel_sizes[0] = sorted_status.at(0);
-          }
-          for (int j = starting_point;
-               j < (sorted_status.at(1) + 1) - offset && j < capacity; j++) {
-            channel_sizes[j] = sorted_status.at(2);
-            if (sorted_status.at(1) == j + offset) {
-              int sorted_so_far =
-                  sorted_status.at(0) +
-                  (sorted_status.at(1) - 1) * sorted_status.at(2);
-              channel_sizes[j + 1] =
-                  first_module->table_data_size - sorted_so_far;
+        // TODO: Remove code duplication
+        // Are there any nodes placed afterwards?
+        for (int stream_id = 0; stream_id < chosen_node->next_nodes.size();
+             stream_id++) {
+          auto &after_node = chosen_node->next_nodes.at(stream_id);
+          bool is_io_stream = true;
+          if (after_node) {
+            for (int search_index = module_index + 1; search_index < run.size();
+                 search_index++) {
+              if (run.at(search_index).node_name == after_node->node_name) {
+                is_io_stream = false;
+                break;
+              }
             }
           }
-          merge_op_params.push_back(channel_sizes);
-          merge_op_params.push_back({offset});
+          if (is_io_stream) {
+            current_run_data->output_data_definition_files.push_back(
+                chosen_node->given_output_data_definition_files.at(stream_id));
+          } else {
+            current_run_data->output_data_definition_files.emplace_back("");
+          }
+        }
+        // We assume merge sort is always first currently. Deal with it
+        // separately.
+        if (chosen_node->operation_type != QueryOperationType::kMergeSort) {
+          // Are there any nodes placed before?
+          for (int stream_id = 0;
+               stream_id < chosen_node->previous_nodes.size(); stream_id++) {
+            auto &before_node = chosen_node->next_nodes.at(stream_id);
+            bool is_io_stream = true;
+            if (before_node) {
+              for (int search_index = module_index - 1; search_index >= 0;
+                   search_index--) {
+                if (run.at(search_index).node_name == before_node->node_name) {
+                  is_io_stream = false;
+                  break;
+                }
+              }
+            }
+            if (is_io_stream) {
+              current_run_data->input_data_definition_files.push_back(
+                  chosen_node->given_input_data_definition_files.at(stream_id));
+            } else {
+              current_run_data->input_data_definition_files.emplace_back("");
+            }
+          }
+        } else {
+          // First time seeing merge sort in this run. -> Let's check if it has
+          // been noticed before?
+          if (sorted_status_of_a_merge_node.find(node_name) ==
+              sorted_status_of_a_merge_node.end()) {
+            sorted_status_of_a_merge_node.insert({node_name, {}});
+            BuildInitialSequencesForMergeSorter(
+                sorted_status_of_a_merge_node.at(node_name));
+          }
+          chosen_node->given_operation_parameters.operation_parameters
+              .push_back({hw_library.at(current_module.operation_type)
+                              .bitstream_map.at(current_module.bitstream)
+                              .capacity.front()});
         }
       }
-
-      node->module_locations.push_back(-1);
-      node_counts[node->node_name] = 0;
+      current_run_data->module_locations.push_back(module_index);
+    }
+    // TODO:Update Merge sort stuff.
+    for (auto &[node_name, run_data] : current_run_node_data) {
+      found_nodes.at(node_name)->module_run_data.push_back(std::move(run_data));
     }
     resulting_runs.push({run, chosen_nodes});
   }

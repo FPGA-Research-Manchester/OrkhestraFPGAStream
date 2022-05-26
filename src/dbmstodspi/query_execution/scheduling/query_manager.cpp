@@ -448,7 +448,7 @@ void QueryManager::BenchmarkScheduling(
     const std::unordered_set<std::string>& starting_nodes,
     std::unordered_set<std::string>& processed_nodes,
     const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-    const std::map<std::string, TableMetadata>& tables,
+    std::map<std::string, TableMetadata>& tables,
     AcceleratorLibraryInterface& drivers, const Config& config,
     NodeSchedulerInterface& node_scheduler,
     std::vector<ScheduledModule>& current_configuration) {
@@ -469,7 +469,7 @@ auto QueryManager::ScheduleNextSetOfNodes(
     const std::unordered_set<std::string>& first_node_names,
     const std::unordered_set<std::string>& starting_nodes,
     const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-    const std::map<std::string, TableMetadata>& tables,
+    std::map<std::string, TableMetadata>& tables,
     AcceleratorLibraryInterface& drivers, const Config& config,
     NodeSchedulerInterface& node_scheduler,
     std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>&

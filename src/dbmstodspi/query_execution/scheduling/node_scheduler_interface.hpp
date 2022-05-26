@@ -75,7 +75,7 @@ class NodeSchedulerInterface {
       std::unordered_set<std::string> starting_nodes,
       std::unordered_map<std::string, SchedulingQueryNode> graph,
       AcceleratorLibraryInterface& drivers,
-      std::map<std::string, TableMetadata> tables,
+      std::map<std::string, TableMetadata>& tables,
       const std::vector<ScheduledModule>& current_configuration,
       const Config& config,
       std::unordered_set<std::string>& skipped_nodes)
@@ -99,7 +99,7 @@ class NodeSchedulerInterface {
       std::unordered_set<std::string>& processed_nodes,
       std::unordered_map<std::string, SchedulingQueryNode> graph,
       AcceleratorLibraryInterface& drivers,
-      std::map<std::string, TableMetadata> tables,
+      std::map<std::string, TableMetadata>& tables,
       std::vector<ScheduledModule>& current_configuration, const Config& config,
       std::map<std::string, double>& benchmark_data) = 0;
 };
