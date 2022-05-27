@@ -271,14 +271,7 @@ void QueryManager::StoreStreamResultParameters(
 auto QueryManager::SetupAccelerationNodesForExecution(
     DataManagerInterface* data_manager, MemoryManagerInterface* memory_manager,
     AcceleratorLibraryInterface* accelerator_library,
-    std::map<std::string, std::vector<MemoryBlockInterface*>>&
-        input_memory_blocks,
-    std::map<std::string, std::vector<MemoryBlockInterface*>>&
-        output_memory_blocks,
-    std::map<std::string, std::vector<RecordSizeAndCount>>& input_stream_sizes,
-    std::map<std::string, std::vector<RecordSizeAndCount>>& output_stream_sizes,
-    const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes,
-    const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links)
+    const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes)
     -> std::pair<std::vector<AcceleratedQueryNode>,
                  std::map<std::string, std::vector<StreamResultParameters>>> {
   std::map<std::string, std::vector<StreamResultParameters>> result_parameters;
@@ -287,6 +280,7 @@ auto QueryManager::SetupAccelerationNodesForExecution(
   std::map<std::string, std::vector<int>> output_ids;
   std::map<std::string, std::vector<int>> input_ids;
 
+  // TODO: Can I remove this?
   // Mending.
   // For all nodes. Check if previous node is in the current run and doesn't
   // point at current node then add the pointer back. Do just 1 for now.
@@ -326,6 +320,7 @@ auto QueryManager::SetupAccelerationNodesForExecution(
   // Then you can read all the stuff you reuse and make sure that it is correct.
   // First unsorted and then you get the other one!
 
+  // TODO: Maybe you can replace this with a pointer? Question is virtual or physical?
   InitialiseVectorSizes(current_query_nodes, input_memory_blocks,
                         output_memory_blocks, input_stream_sizes,
                         output_stream_sizes);
@@ -472,16 +467,12 @@ auto QueryManager::ScheduleNextSetOfNodes(
     std::map<std::string, TableMetadata>& tables,
     AcceleratorLibraryInterface& drivers, const Config& config,
     NodeSchedulerInterface& node_scheduler,
-    std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>&
-        all_reuse_links,
     const std::vector<ScheduledModule>& current_configuration, std::unordered_set<std::string>& skipped_nodes)
     -> std::queue<std::pair<std::vector<ScheduledModule>,
                             std::vector<QueryNode*>>> {
-  auto current_queue = node_scheduler.GetNextSetOfRuns(
+  return node_scheduler.GetNextSetOfRuns(
       query_nodes, first_node_names, starting_nodes, graph,
       drivers, tables, current_configuration, config, skipped_nodes);
-  return RunLinker::LinkPeripheralNodesFromGivenRuns(current_queue,
-                                                     all_reuse_links);
 }
 
 auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(

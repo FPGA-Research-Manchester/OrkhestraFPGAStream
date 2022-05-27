@@ -145,7 +145,7 @@ void ExecutionManager::ScheduleUnscheduledNodes() {
       current_available_node_pointers_, nodes_constrained_to_first_,
       current_available_node_names_, current_query_graph_,
       current_tables_metadata_, *accelerator_library_, config_, *scheduler_,
-      all_reuse_links_, current_configuration_, processed_nodes_);
+      current_configuration_, processed_nodes_);
 }
 void ExecutionManager::BenchmarkScheduleUnscheduledNodes() {
   query_manager_->BenchmarkScheduling(
@@ -211,8 +211,6 @@ void ExecutionManager::SetupNextRunData() {
     scheduled_node_names_.push_back(node->node_name);
   }
 
-  current_reuse_links_ = query_manager_->GetCurrentLinks(all_reuse_links_);
-
   /*for (const auto& node_name : scheduled_node_names_) {
     std::cout << node_name << " ";
   }*/
@@ -237,13 +235,11 @@ void ExecutionManager::SetupNextRunData() {
     }
   }*/
 
-  // TODO: instead of memory blocks - give tables directly
   auto execution_nodes_and_result_params =
       query_manager_->SetupAccelerationNodesForExecution(
           data_manager_.get(), memory_manager_.get(),
-          accelerator_library_.get(), input_memory_blocks_,
-          output_memory_blocks_, input_stream_sizes_, output_stream_sizes_,
-          next_scheduled_run_nodes, current_reuse_links_);
+          accelerator_library_.get()
+          next_scheduled_run_nodes);
   query_nodes_ = std::move(execution_nodes_and_result_params.first);
   for (int module_pos = 0; module_pos < empty_modules.size(); module_pos++) {
     if (empty_modules.at(module_pos).second) {
@@ -258,6 +254,7 @@ void ExecutionManager::SetupNextRunData() {
   result_parameters_ = std::move(execution_nodes_and_result_params.second);
 }
 void ExecutionManager::ExecuteAndProcessResults() {
+  // TODO: Figure out why these are needed and how to replace them
   query_manager_->ExecuteAndProcessResults(
       fpga_manager_.get(), data_manager_.get(), output_memory_blocks_,
       output_stream_sizes_, result_parameters_, query_nodes_,
@@ -272,8 +269,7 @@ void ExecutionManager::ExecuteAndProcessResults() {
 //  return query_manager_->IsRunValid(query_nodes_);
 //}
 
-auto ExecutionManager::PopNextScheduledRun()
-    -> std::vector<std::shared_ptr<QueryNode>> {
+auto ExecutionManager::PopNextScheduledRun() -> std::vector<QueryNode*> {
   const auto executable_query_nodes = query_node_runs_queue_.front().second;
   query_node_runs_queue_.pop();
   return executable_query_nodes;
@@ -333,22 +329,22 @@ void ExecutionManager::AddSchedulingNodeToGraph(
       current_node.after_nodes.emplace_back("");
     }
   }
-  for (const auto& previous_node : node->previous_nodes) {
-    auto previous_node_ptr = previous_node.lock();
+  for (const auto& previous_node_ptr : node->previous_nodes) {
     if (previous_node_ptr) {
       current_node.before_nodes.emplace_back(
-          previous_node_ptr->node_name, QuerySchedulingHelper::FindNodePtrIndex(
-                                            node, previous_node_ptr.get()));
+          previous_node_ptr->node_name,
+          QuerySchedulingHelper::FindNodePtrIndex(node, previous_node_ptr));
     } else {
       current_node.before_nodes.emplace_back("", -1);
     }
   }
-  for (const auto& input_files : node->input_data_definition_files) {
+  for (const auto& input_files : node->given_input_data_definition_files) {
     current_node.data_tables.push_back(input_files);
   }
   current_node.operation = node->operation_type;
   current_node.capacity = accelerator_library.GetNodeCapacity(
-      node->operation_type, node->operation_parameters.operation_parameters);
+      node->operation_type,
+      node->given_operation_parameters.operation_parameters);
   scheduling_graph.insert({node->node_name, current_node});
 }
 

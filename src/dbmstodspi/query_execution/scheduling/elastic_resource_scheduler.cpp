@@ -20,6 +20,7 @@ limitations under the License.
 #include <chrono>
 #include <iostream>
 #include <limits>
+#include <numeric>
 #include <stdexcept>
 
 #include "elastic_scheduling_graph_parser.hpp"
@@ -207,7 +208,7 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
   benchmark_data["data_amount"] += data_amount;
   // std::cout << "data_amount: " << std::to_string(data_amount) << std::endl;
   benchmark_data["configuration_amount"] += configuration_amount;
-  // std::cout << "configuration_amount: " <<
+  // std::cout << "configuration_amount: "
   // std::to_string(configuration_amount)
   //          << std::endl;
   benchmark_data["schedule_count"] += 1;
@@ -219,6 +220,7 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
 
   current_configuration = new_last_config;
 
+  // TODO: Need to update available nodes for next run!
   /*for (const auto &run : best_plan) {
     for (const auto &node : run) {
       std::cout << " " << node.node_name << " ";
@@ -286,8 +288,8 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   // To update tables as normal execution doesn't update sorted statuses.
   tables = resulting_plans.at(best_plan).data_tables;
 
-  auto resulting_runs =
-      GetQueueOfResultingRuns(available_nodes, best_plan, config.pr_hw_library);
+  auto resulting_runs = GetQueueOfResultingRuns(available_nodes, best_plan,
+                                                config.pr_hw_library, tables);
   // available_nodes = FindNewAvailableNodes(starting_nodes, available_nodes);
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   std::cout << "TOTAL SCHEDULING:"
@@ -307,9 +309,61 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   return resulting_runs;
 }
 
+// LengthOfSortedSequences = offset, number_of_sequences, table_name
 void ElasticResourceNodeScheduler::BuildInitialSequencesForMergeSorter(
-    std::map<int, LengthOfSortedSequences> &map_of_sequences) {
-    // TODO: implement this!
+    std::map<int, std::vector<LengthOfSortedSequences>> &map_of_sequences,
+    const TableMetadata &table_data, std::string table_name) {
+  // We have sorted status
+  // 1. Begin of first set of sequences
+  // 2. End of the first set of sequences
+  // 3. Size of the sequences
+  // 4. How many sequences
+  const int param_count = 4;
+  const int begin_offset = 0;
+  const int end_offset = 1;
+  const int size_offset = 2;
+  const int count_offset = 3;
+  const auto &sorted_status = table_data.sorted_status;
+  for (int set_of_sequences_id = 0;
+       set_of_sequences_id <= sorted_status.size() - param_count;
+       set_of_sequences_id += param_count) {
+    const int number_of_data_rows =
+        sorted_status.at(set_of_sequences_id + end_offset) -
+        sorted_status.at(set_of_sequences_id + begin_offset) + 1;
+    int number_of_sequences =
+        sorted_status.at(set_of_sequences_id + count_offset);
+    // IF the last one doesn't have the same size then reduce the number of
+    // sequences and add another size.
+    if (number_of_sequences *
+            sorted_status.at(set_of_sequences_id + size_offset) !=
+        number_of_data_rows) {
+      number_of_sequences -= 1;
+      const int left_over_size =
+          number_of_data_rows -
+          number_of_sequences *
+              sorted_status.at(set_of_sequences_id + size_offset);
+      LengthOfSortedSequences new_sequence = {
+          sorted_status.at(set_of_sequences_id + begin_offset), 1, table_name};
+      auto search = map_of_sequences.find(left_over_size);
+      if (search == map_of_sequences.end()) {
+        map_of_sequences.insert({left_over_size, {new_sequence}});
+      } else {
+        search->second.push_back(new_sequence);
+      }
+    }
+    LengthOfSortedSequences new_sequence = {
+        sorted_status.at(set_of_sequences_id + begin_offset),
+        number_of_sequences, table_name};
+    auto search = map_of_sequences.find(
+        sorted_status.at(set_of_sequences_id + count_offset));
+    if (search == map_of_sequences.end()) {
+      map_of_sequences.insert(
+          {sorted_status.at(set_of_sequences_id + count_offset),
+           {new_sequence}});
+    } else {
+      search->second.push_back(new_sequence);
+    }
+  }
 }
 
 // Method to get node pointers to runs from node names and set composed module
@@ -318,7 +372,8 @@ void ElasticResourceNodeScheduler::BuildInitialSequencesForMergeSorter(
 auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
     std::vector<QueryNode *> &available_nodes,
     const std::vector<std::vector<ScheduledModule>> &best_plan,
-    const std::map<QueryOperationType, OperationPRModules> &hw_library)
+    const std::map<QueryOperationType, OperationPRModules> &hw_library,
+    std::map<std::string, TableMetadata> &table_data)
     -> std::queue<
         std::pair<std::vector<ScheduledModule>, std::vector<QueryNode *>>> {
   // Clear potentially unfinished nodes
@@ -330,8 +385,9 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
   }
 
   std::unordered_map<std::string, QueryNode *> found_nodes;
-  
-  std::map<std::string, std::map<int, LengthOfSortedSequences>>
+  std::unordered_map<std::string, int> run_counter;
+
+  std::map<std::string, std::map<int, std::vector<LengthOfSortedSequences>>>
       sorted_status_of_a_merge_node;
 
   std::queue<std::pair<std::vector<ScheduledModule>, std::vector<QueryNode *>>>
@@ -345,14 +401,14 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
       NodeRunData *current_run_data;
       const auto &current_module = run.at(module_index);
       const auto &node_name = current_module.node_name;
-      // Check if we have the corrseponding node found before.
+      // Check if we have the corresponding node found before.
       if (found_nodes.find(node_name) != found_nodes.end()) {
         chosen_node = found_nodes.at(node_name);
       } else {
         found_nodes.insert(
             {node_name, GetNodePointerWithName(available_nodes, node_name)});
       }
-      // Check if it is the first occurence of this node in this run
+      // Check if it is the first occurrence of this node in this run
       if (current_run_node_data.find(node_name) !=
           current_run_node_data.end()) {
         current_run_data = &current_run_node_data.at(node_name);
@@ -362,6 +418,11 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
                            .bitstream_map.at(current_module.bitstream)
                            .capacity.front());
       } else {
+        if (const auto &[it, inserted] = run_counter.try_emplace(node_name, 1);
+            !inserted) {
+          it->second++;
+        }
+
         // Chosen nodes already selected here. The NodeRunData will be moved in
         // the end.
         current_run_node_data.insert({node_name, NodeRunData()});
@@ -420,8 +481,12 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
           if (sorted_status_of_a_merge_node.find(node_name) ==
               sorted_status_of_a_merge_node.end()) {
             sorted_status_of_a_merge_node.insert({node_name, {}});
+            // Assuming merge sort has one table given
+            const auto &table_name =
+                chosen_node->given_input_data_definition_files.front();
             BuildInitialSequencesForMergeSorter(
-                sorted_status_of_a_merge_node.at(node_name));
+                sorted_status_of_a_merge_node[node_name],
+                table_data.at(table_name), table_name);
           }
           chosen_node->given_operation_parameters.operation_parameters
               .push_back({hw_library.at(current_module.operation_type)
@@ -431,13 +496,177 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
       }
       current_run_data->module_locations.push_back(module_index);
     }
-    // TODO:Update Merge sort stuff.
     for (auto &[node_name, run_data] : current_run_node_data) {
       found_nodes.at(node_name)->module_run_data.push_back(std::move(run_data));
     }
     resulting_runs.push({run, chosen_nodes});
   }
+  for (auto &[merge_sort_node_name, sort_status] :
+       sorted_status_of_a_merge_node) {
+    // If run count is 0 or missing - Something went wrong.
+    // If the number of parameters or run_data doesn't match the run_count -
+    // Something went wrong. Assuming the above is correct!
+    auto &sort_node = found_nodes.at(merge_sort_node_name);
+    auto &run_data = sort_node->module_run_data;
+    auto &parameters =
+        sort_node->given_operation_parameters.operation_parameters;
+    for (int run_id = 0; run_id < run_counter.at(merge_sort_node_name);
+         run_id++) {
+      std::vector<int> next_run_capacities;
+      if (run_id + 1 != run_counter.at(merge_sort_node_name)) {
+        next_run_capacities = parameters[run_id + 1];
+      }
+      UpdateSortedStatusAndRunData(
+          sort_status, run_data[run_id], parameters[run_id], table_data,
+          sort_node, next_run_capacities,
+          run_id == (run_counter.at(merge_sort_node_name) - 2));
+    }
+    // Could also check that the number of sorted rows is correct rather than
+    // that all sequences have been processed.
+    if (!sort_status.empty()) {
+      throw std::runtime_error("Not enough sorting modules scheduled!");
+    }
+  }
   return resulting_runs;
+}
+
+auto ElasticResourceNodeScheduler::GetCapacityForPenultimateRun(
+    int next_run_capacity,
+    const std::map<int, std::vector<LengthOfSortedSequences>> &sort_status)
+    -> int {
+  // The last run capacity must be equal to
+  // current_sequence.number_of_sequences; With all sort statuses.
+  int current_sequences = 0;
+  for (const auto &[size, sequences] : sort_status) {
+    for (const auto &sequence : sequences) {
+      current_sequences += sequence.number_of_sequences;
+    }
+  }
+
+  return current_sequences + 1 - next_run_capacity;
+}
+
+void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
+    std::map<int, std::vector<LengthOfSortedSequences>> &sort_status,
+    NodeRunData &run_data, const std::vector<int> &capacities,
+    std::map<std::string, TableMetadata> &table_data, QueryNode *merge_node,
+    const std::vector<int> &next_run_capacities, bool is_penultimate) {
+  if (sort_status.empty()) {
+    throw std::runtime_error("Too many merge sort modules scheduled!");
+  }
+  int leftover_capacity = 0;
+  if (is_penultimate) {
+    leftover_capacity = GetCapacityForPenultimateRun(
+        std::accumulate(next_run_capacities.begin(), next_run_capacities.end(),
+                        0),
+        sort_status);
+    if (leftover_capacity >
+            std::accumulate(capacities.begin(), capacities.end(), 0) ||
+        leftover_capacity <= 0) {
+      throw std::runtime_error("Incorrect penultimate capacity!");
+    }
+  } else {
+    leftover_capacity =
+        std::accumulate(capacities.begin(), capacities.end(), 0);
+  }
+  int new_sequence_size = 0;
+  while (leftover_capacity != 0 && !sort_status.empty()) {
+    int current_sequence_size = sort_status.begin()->first;
+    auto &current_sequence = sort_status.begin()->second.back();
+    // LengthOfSortedSequences = offset, number_of_sequences, table_name
+    int original_leftover_capacity = leftover_capacity;
+    int original_number_of_sequences = current_sequence.number_of_sequences;
+    for (int i = 0;
+         i < original_leftover_capacity && i < original_number_of_sequences;
+         i++) {
+      auto find_it = std::find(run_data.input_data_definition_files.begin(),
+                               run_data.input_data_definition_files.end(),
+                               current_sequence.table_name);
+      if (find_it == run_data.input_data_definition_files.end()) {
+        run_data.input_data_definition_files.push_back(
+            current_sequence.table_name);
+        if (merge_node->temp_tables.find(current_sequence.table_name) ==
+            merge_node->temp_tables.end()) {
+          merge_node->temp_tables.insert({current_sequence.table_name, 0});
+        }
+      }
+      int table_index = find_it - run_data.input_data_definition_files.begin();
+      new_sequence_size += current_sequence_size;
+      run_data.operation_parameters.push_back(
+          {table_index, current_sequence.offset, current_sequence_size});
+
+      leftover_capacity--;
+      current_sequence.number_of_sequences--;
+      merge_node->temp_tables[current_sequence.table_name]++;
+      current_sequence.offset += current_sequence_size;
+    }
+    if (current_sequence.number_of_sequences == 0) {
+      sort_status.begin()->second.pop_back();
+      if (sort_status.begin()->second.empty()) {
+        sort_status.erase(current_sequence_size);
+      }
+    }
+  }
+  if (!sort_status.empty()) {
+    // Else you put a new sequence back and set output.
+
+    // I need a new table name
+    int max_iteration = 0;
+    for (const auto &input_table_name : run_data.input_data_definition_files) {
+      max_iteration = std::max(
+          max_iteration,
+          static_cast<int>('a') - static_cast<int>(input_table_name.back()));
+    }
+    auto output_table_name =
+        merge_node->given_input_data_definition_files.front();
+    output_table_name.pop_back();
+    output_table_name += std::to_string(max_iteration + 1);
+    // Check if table exists.
+    if (table_data.find(output_table_name) == table_data.end()) {
+      TableMetadata new_data = {
+          table_data.at(merge_node->given_input_data_definition_files.front())
+              .record_size,
+          0,
+          {}};
+      new_data.record_count = 0;
+      table_data.insert({output_table_name, std::move(new_data)});
+    }
+    // I also need the size of the table for the offset
+    run_data.output_offset = table_data.at(output_table_name).record_count;
+    // Then check if it exists already or not.
+    bool sequence_merged = false;
+    if (sort_status.find(new_sequence_size) != sort_status.end()) {
+      // If exists check all of the vectors and see if you can just +1 the count
+      // of sequences where the table name matches and offset is at the end of
+      // the table. Offset required for just +1
+      int required_output_offset_for_merge =
+          run_data.output_offset - new_sequence_size;
+      if (required_output_offset_for_merge > 0) {
+        for (auto &sequences : sort_status.at(new_sequence_size)) {
+          if (sequences.table_name == output_table_name &&
+              sequences.offset == required_output_offset_for_merge) {
+            sequences.number_of_sequences++;
+            sequence_merged = true;
+          }
+        }
+      }
+    }
+    if (!sequence_merged) {
+      LengthOfSortedSequences new_sequence = {run_data.output_offset, 1,
+                                              output_table_name};
+      sort_status.insert({new_sequence_size, {std::move(new_sequence)}});
+    }
+    table_data[output_table_name].record_count += new_sequence_size;
+    // Half sorted stuff always gets written to temp file
+    run_data.output_data_definition_files.clear();
+    run_data.output_data_definition_files.push_back(output_table_name);
+  } else {
+    // if empty check that all nodes have been sorted!
+    if (table_data.at(merge_node->given_input_data_definition_files.front())
+            .record_count != new_sequence_size) {
+      throw std::runtime_error("Incorrect number of records have been sorted!");
+    }
+  }
 }
 
 auto ElasticResourceNodeScheduler::FindNewAvailableNodes(

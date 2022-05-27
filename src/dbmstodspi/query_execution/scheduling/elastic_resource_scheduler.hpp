@@ -23,6 +23,8 @@ limitations under the License.
 #include "node_scheduler_interface.hpp"
 #include "plan_evaluator_interface.hpp"
 
+using orkhestrafs::core_interfaces::query_scheduling_data::NodeRunData;
+
 namespace orkhestrafs::dbmstodspi {
 
 /**
@@ -36,21 +38,21 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       : plan_evaluator_{std::move(plan_evaluator)} {}
 
   auto GetNextSetOfRuns(
-      std::vector<QueryNode*> &available_nodes,
+      std::vector<QueryNode *> &available_nodes,
       const std::unordered_set<std::string> &first_node_names,
-      std::unordered_set<std::string>starting_nodes,
-      std::unordered_map<std::string, SchedulingQueryNode>graph,
+      std::unordered_set<std::string> starting_nodes,
+      std::unordered_map<std::string, SchedulingQueryNode> graph,
       AcceleratorLibraryInterface &drivers,
-      std::map<std::string, TableMetadata>& tables,
+      std::map<std::string, TableMetadata> &tables,
       const std::vector<ScheduledModule> &current_configuration,
-      const Config &config, std::unordered_set<std::string>& skipped_nodes)
+      const Config &config, std::unordered_set<std::string> &skipped_nodes)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
-                              std::vector<QueryNode*>>> override;
+                              std::vector<QueryNode *>>> override;
 
   auto ScheduleAndGetAllPlans(
-      const std::unordered_set<std::string>& starting_nodes,
-      const std::unordered_set<std::string>& processed_nodes,
-      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::unordered_set<std::string> &starting_nodes,
+      const std::unordered_set<std::string> &processed_nodes,
+      const std::unordered_map<std::string, SchedulingQueryNode> &graph,
       const std::map<std::string, TableMetadata> &tables, const Config &config)
       -> std::tuple<int,
                     std::map<std::vector<std::vector<ScheduledModule>>,
@@ -63,19 +65,28 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       std::unordered_set<std::string> &processed_nodes,
       std::unordered_map<std::string, SchedulingQueryNode> graph,
       AcceleratorLibraryInterface &drivers,
-      std::map<std::string, TableMetadata>& tables,
+      std::map<std::string, TableMetadata> &tables,
       std::vector<ScheduledModule> &current_configuration, const Config &config,
       std::map<std::string, double> &benchmark_data) override;
 
  private:
-
-     struct LengthOfSortedSequences {
+  struct LengthOfSortedSequences {
     int offset;
-       int numnber_of_sequences;
+    int number_of_sequences;
     std::string table_name;
   };
+  static auto GetCapacityForPenultimateRun(
+      int next_run_capacity,
+      const std::map<int, std::vector<LengthOfSortedSequences>> &sort_status)
+      -> int;
+  static void UpdateSortedStatusAndRunData(
+      std::map<int, std::vector<LengthOfSortedSequences>> &sort_status,
+      NodeRunData &run_data, const std::vector<int> &capacities,
+      std::map<std::string, TableMetadata> &table_data, QueryNode *merge_node,
+      const std::vector<int> &next_run_capacities, bool is_penultimate);
   static void BuildInitialSequencesForMergeSorter(
-         std::map<int, LengthOfSortedSequences> &map_of_sequences);
+      std::map<int, std::vector<LengthOfSortedSequences>> &map_of_sequences,
+      const TableMetadata &table_data, std::string table_name);
   static auto CalculateTimeLimit(
       const std::unordered_map<std::string, SchedulingQueryNode> &graph,
       const std::map<std::string, TableMetadata> &data_tables,
@@ -83,27 +94,27 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       const std::unordered_map<QueryOperationType, int> &operation_costs)
       -> double;
   static auto FindSharedPointerFromRootNodes(
-      const std::string &searched_node_name,
-      QueryNode* current_node) -> QueryNode*;
+      const std::string &searched_node_name, QueryNode *current_node)
+      -> QueryNode *;
   static void RemoveUnnecessaryTables(
       const std::unordered_map<std::string, SchedulingQueryNode> &graph,
       std::map<std::string, TableMetadata> &tables);
   static auto GetDefaultHeuristics() -> const
       std::vector<std::pair<std::vector<std::vector<ModuleSelection>>,
                             std::vector<std::vector<ModuleSelection>>>>;
-  static auto GetNodePointerWithName(
-      std::vector<QueryNode*> &available_nodes,
-      const std::string &node_name) -> QueryNode*;
+  static auto GetNodePointerWithName(std::vector<QueryNode *> &available_nodes,
+                                     const std::string &node_name)
+      -> QueryNode *;
   static auto FindNewAvailableNodes(
       std::unordered_set<std::string> &starting_nodes,
-      std::vector<QueryNode*> &available_nodes)
-      -> std::vector<QueryNode*>;
+      std::vector<QueryNode *> &available_nodes) -> std::vector<QueryNode *>;
   static auto GetQueueOfResultingRuns(
-      std::vector<QueryNode*> &available_nodes,
+      std::vector<QueryNode *> &available_nodes,
       const std::vector<std::vector<ScheduledModule>> &best_plan,
-      const std::map<QueryOperationType, OperationPRModules> &hw_library)
-      -> std::queue<std::pair<std::vector<ScheduledModule>,
-                              std::vector<QueryNode*>>>;
+      const std::map<QueryOperationType, OperationPRModules> &hw_library,
+      std::map<std::string, TableMetadata> &table_data)
+      -> std::queue<
+          std::pair<std::vector<ScheduledModule>, std::vector<QueryNode *>>>;
   static auto GetLargestModulesSizes(
       const std::map<QueryOperationType, OperationPRModules> &hw_libary)
       -> std::unordered_map<QueryOperationType, int>;

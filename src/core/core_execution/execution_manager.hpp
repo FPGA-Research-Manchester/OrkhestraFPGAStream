@@ -113,8 +113,6 @@ class ExecutionManager : public ExecutionManagerInterface,
   bool busy_flag_ = false;
   // New TableMetadata variables.
   std::map<std::string, TableMetadata> current_tables_metadata_;
-  std::map<std::string, std::vector<MemoryBlockInterface*>>
-      memory_blocks_;
   std::unordered_map<std::string, SchedulingQueryNode> current_query_graph_;
 
   std::unordered_set<std::string> current_available_node_names_;
@@ -122,17 +120,6 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::unordered_set<std::string> processed_nodes_;
 
   std::vector<QueryNode*> current_available_node_pointers_;
-
-  // Variables used throughout different states.
-  std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>
-      all_reuse_links_;
-  std::map<std::string, std::map<int, MemoryReuseTargets>> current_reuse_links_;
-  std::map<std::string, std::vector<MemoryBlockInterface*>>
-      input_memory_blocks_;
-  std::map<std::string, std::vector<MemoryBlockInterface*>>
-      output_memory_blocks_;
-  std::map<std::string, std::vector<RecordSizeAndCount>> input_stream_sizes_;
-  std::map<std::string, std::vector<RecordSizeAndCount>> output_stream_sizes_;
 
   std::queue<std::pair<std::vector<ScheduledModule>,
                        std::vector<QueryNode*>>>
@@ -144,7 +131,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::vector<AcceleratedQueryNode> query_nodes_;
   std::vector<std::string> scheduled_node_names_;
 
-  auto PopNextScheduledRun() -> std::vector<std::shared_ptr<QueryNode>>;
+  auto PopNextScheduledRun() -> std::vector<QueryNode*>;
 
   // TODO(Kaspar): Move this to a different class
   static auto GetCurrentNodeIndexFromNextNode(QueryNode* current_node, QueryNode* next_node) -> int;

@@ -86,17 +86,7 @@ class QueryManagerInterface {
       DataManagerInterface* data_manager,
       MemoryManagerInterface* memory_manager,
       AcceleratorLibraryInterface* accelerator_library,
-      std::map<std::string, std::vector<MemoryBlockInterface*>>&
-          input_memory_blocks,
-      std::map<std::string, std::vector<MemoryBlockInterface*>>&
-          output_memory_blocks,
-      std::map<std::string, std::vector<RecordSizeAndCount>>&
-          input_stream_sizes,
-      std::map<std::string, std::vector<RecordSizeAndCount>>&
-          output_stream_sizes,
-      const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes, 
-      const std::map<std::string, std::map<int, MemoryReuseTargets>>&
-          reuse_links)
+      const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes)
       -> std::pair<
           std::vector<AcceleratedQueryNode>,
           std::map<std::string, std::vector<StreamResultParameters>>> = 0;
@@ -191,11 +181,9 @@ class QueryManagerInterface {
       const std::unordered_set<std::string>& first_node_names,
       const std::unordered_set<std::string>& starting_nodes,
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      const std::map<std::string, TableMetadata>& tables,
+      std::map<std::string, TableMetadata>& tables,
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
-      std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>&
-          all_reuse_links,
       const std::vector<ScheduledModule>& current_configuration,
       std::unordered_set<std::string>& skipped_nodes)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
@@ -206,7 +194,7 @@ class QueryManagerInterface {
       const std::unordered_set<std::string>& starting_nodes,
       std::unordered_set<std::string>& processed_nodes,
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      const std::map<std::string, TableMetadata>& tables,
+      std::map<std::string, TableMetadata>& tables,
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
       std::vector<ScheduledModule>& current_configuration) = 0;

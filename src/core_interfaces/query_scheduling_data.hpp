@@ -22,6 +22,7 @@ limitations under the License.
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <unordered_map>
 
 #include "operation_types.hpp"
 
@@ -50,6 +51,8 @@ struct NodeRunData {
   std::vector<std::string> input_data_definition_files;
   /// Expected data files.
   std::vector<std::string> output_data_definition_files;
+  /// Output offset
+  int output_offset = 0;
   /// Operation parameters to configure the streams with modules. - How do you say how many channels each gets?
   // Each channel is defined by index of table, offset, count
   std::vector<std::vector<int>> operation_parameters;
@@ -88,7 +91,7 @@ struct QueryNode {
   std::vector<bool> is_checked;
   /// Flag for saying if this node will be fully executed in this run
   bool is_finished = false;
-  /// Temporarty tables used in different runs and their counters
+  /// Temporary tables used in different runs and their counters
   std::unordered_map<std::string, int> temp_tables;
 
   auto operator==(const QueryNode& rhs) const -> bool {
