@@ -19,6 +19,7 @@ limitations under the License.
 #include <chrono>
 #include <iostream>
 #include <stdexcept>
+#include <numeric>
 
 #include "logger.hpp"
 
@@ -35,6 +36,40 @@ using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 
 MemoryManager::~MemoryManager() = default;
+
+void MemoryManager::TestConfigurationTimes(std::vector<std::string>&bitstream_name, int repetition_count) {
+#ifdef FPGA_AVAILABLE
+  const int register_space_size = 10 * 1024 * 1024;
+  std::unordered_map<std::string, int> min_times;
+  acceleration_instance_ =
+      pr_manager_.fpgaLoadStatic("static", register_space_size);
+  for (const auto& name : bitstream_name) {
+    min_times[name] = std::numeric_limits<int>::max();
+  }
+  FPGAManager fpga_manager(0);
+  for (int i = 0; i < repetition_count; i++) {
+    for (const auto& name : bitstream_name) {
+      auto begin = std::chrono::steady_clock::now();
+      fpga_manager.loadPartial(name);
+      auto end = std::chrono::steady_clock::now();
+      auto time =
+          std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+              .count();
+      if (time < min_times[name]) {
+        min_times[name] = time;
+      }
+    }
+  }
+
+  for (const auto& [name, time] : min_times) {
+    std::cout << name << "CONFIGURATION:" << std::to_string(time)
+              << std::endl;
+  }
+  
+  acceleration_instance_ =
+      pr_manager_.fpgaLoadStatic("static", register_space_size);
+#endif
+}
 
 void MemoryManager::LoadStatic() {
   // Addressable register space on the FPGA. No need to preserve space for the
