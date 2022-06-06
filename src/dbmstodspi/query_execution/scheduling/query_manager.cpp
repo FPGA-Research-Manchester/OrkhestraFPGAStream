@@ -115,8 +115,8 @@ void QueryManager::InitialiseVectorSizes(
 
 auto QueryManager::GetRecordSizeFromParameters(
     const DataManagerInterface* data_manager,
-    const std::vector<std::vector<int>>& node_parameters, int stream_index) const
-    -> int {
+    const std::vector<std::vector<int>>& node_parameters,
+    int stream_index) const -> int {
   auto column_defs_vector = TableManager::GetColumnDefsVector(
       data_manager, node_parameters, stream_index);
 
@@ -200,22 +200,45 @@ void QueryManager::AllocateInputMemoryBlocks(
 }
 
 auto QueryManager::CreateStreamParams(
-    bool is_input, const QueryNode& node,
+    bool is_input, const QueryNode* node,
     AcceleratorLibraryInterface* accelerator_library,
-    const std::vector<int>& stream_ids,
-    const std::vector<MemoryBlockInterface*>& allocated_memory_blocks,
-    const std::vector<RecordSizeAndCount>& stream_sizes)
+    const std::vector<int>& stream_ids, const NodeRunData& run_data,
+    MemoryManagerInterface* memory_manager)
     -> std::vector<StreamDataParameters> {
   auto node_parameters =
-      (is_input) ? node.operation_parameters.input_stream_parameters
-                 : node.operation_parameters.output_stream_parameters;
+      (is_input) ? node->given_operation_parameters.input_stream_parameters
+                 : node->given_operation_parameters.output_stream_parameters;
 
   std::vector<StreamDataParameters> parameters_for_acceleration;
 
+  // The physical addresses map comes with filenames.
   for (int stream_index = 0; stream_index < stream_ids.size(); stream_index++) {
     std::map<volatile uint32_t*, std::vector<int>> physical_addresses_map;
     int virtual_channel_count = -1;
-    if (allocated_memory_blocks[stream_index]) {
+    if (is_input &&
+        !run_data.input_data_definition_files.at(stream_index).empty()) {
+      if (node->operation_type == QueryOperationType::kMergeSort) {
+        // Then iterate over all of the operation_parameters in run data.
+        // For each in the vector: 1. Table index, 2. Offset, 3. count.
+        // If you can
+        // virtual channel count is the size of the vector - We assume this is
+        // correct with the overall parameters.
+        auto physical_address_ptr = memory_manager->GetPhysicalAddress();
+        virtual_channel_count = channel_count;
+        physical_addresses_map.insert(
+            {physical_address_ptr, records_per_channel});
+      } else {
+        // Let's do getting a physical address first!
+        auto physical_address_ptr = memory_manager->GetPhysicalAddress(
+            run_data.input_data_definition_files.at(stream_index), is_input);
+        physical_addresses_map.insert({physical_address_ptr, {-1}});
+      }
+    } else if (!is_input &&
+               !run_data.output_data_definition_files.at(stream_index)
+                    .empty()) {
+      // Get the address + add the output_offset
+    }
+    if (run_data.[stream_index]) {
       auto physical_address_ptr =
           allocated_memory_blocks[stream_index]->GetPhysicalAddress();
       auto [channel_count, records_per_channel] =
@@ -235,6 +258,7 @@ auto QueryManager::CreateStreamParams(
       chunk_count = chunk_count_def.at(0);
     }
 
+    // The stream sizes come from the main + table data.
     StreamDataParameters current_stream_parameters = {
         stream_ids[stream_index],
         stream_sizes[stream_index].first,
@@ -271,7 +295,9 @@ void QueryManager::StoreStreamResultParameters(
 auto QueryManager::SetupAccelerationNodesForExecution(
     DataManagerInterface* data_manager, MemoryManagerInterface* memory_manager,
     AcceleratorLibraryInterface* accelerator_library,
-    const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes)
+    const std::vector<QueryNode*>& current_query_nodes,
+    const std::map<std::string, TableMetadata>& current_tables_metadata,
+    std::map<std::string, MemoryBlockInterface>& table_memory_blocks)
     -> std::pair<std::vector<AcceleratedQueryNode>,
                  std::map<std::string, std::vector<StreamResultParameters>>> {
   std::map<std::string, std::vector<StreamResultParameters>> result_parameters;
@@ -284,22 +310,23 @@ auto QueryManager::SetupAccelerationNodesForExecution(
   // Mending.
   // For all nodes. Check if previous node is in the current run and doesn't
   // point at current node then add the pointer back. Do just 1 for now.
-  for (const auto& node : current_query_nodes) {
-    for (const auto& previous_node : node->previous_nodes) {
-      auto previous_node_ptr = previous_node.lock();
-      if (previous_node_ptr) {
-        auto current_run_find =
-            std::find_if(current_query_nodes.begin(), current_query_nodes.end(),
-                         [&](auto current_run_node) {
-                           return previous_node_ptr->node_name ==
-                                  current_run_node->node_name;
-                         });
-        if (current_run_find != current_query_nodes.end()) {
-          current_run_find->get()->next_nodes[0] = node;
-        }
-      }
-    }
-  }
+  //  for (const auto& node : current_query_nodes) {
+  //    for (const auto& previous_node : node->previous_nodes) {
+  //      auto previous_node_ptr = previous_node.lock();
+  //      if (previous_node_ptr) {
+  //        auto current_run_find =
+  //            std::find_if(current_query_nodes.begin(),
+  //            current_query_nodes.end(),
+  //                         [&](auto current_run_node) {
+  //                           return previous_node_ptr->node_name ==
+  //                                  current_run_node->node_name;
+  //                         });
+  //        if (current_run_find != current_query_nodes.end()) {
+  //          current_run_find->get()->next_nodes[0] = node;
+  //        }
+  //      }
+  //    }
+  //  }
 
   // For printing out temp table.
   /*for (const auto& node : current_query_nodes) {
@@ -320,24 +347,50 @@ auto QueryManager::SetupAccelerationNodesForExecution(
   // Then you can read all the stuff you reuse and make sure that it is correct.
   // First unsorted and then you get the other one!
 
-  // TODO: Maybe you can replace this with a pointer? Question is virtual or physical?
-  InitialiseVectorSizes(current_query_nodes, input_memory_blocks,
-                        output_memory_blocks, input_stream_sizes,
-                        output_stream_sizes);
+  // This method is pure mess!
+  // We need to create the acceleration modules and the result params.
+  // What are the result params for?
+  // Result params is for everything you get out of the FPGA.
+  // If there is a file - Do we write it or do we check?
+  // If no file then just update tables.
 
-  IDManager::AllocateStreamIDs(CreateReferenceVector(current_query_nodes),
-                               input_ids, output_ids);
+  // Basically:
+  // Find output pointer
+  // Find input pointer
+  // If new output pointer - Just reserve
+  // If new input pointer - Write the data in as well.
+  // Sizes you can get from tables.
+  // IDs you have already
+  // Params you have already
+  // Just for each node you pop a run_data element
+  // And for merge sorter you add -1 to the end
+  // Will have to find stuff from multiple places
+  // Here you should be able to build!
+  // Then after execution you check stuff and then update the table accordingly.
+  // Then you also have to think about adding some counter which ticks down to
+  // clear the memory and table. Check what is the procedure to remove stuff
+  // from the graph! Then you can run the benchmark!
+
+  // TODO: Maybe you can replace this with a pointer? Question is virtual or
+  // physical?
+  //  InitialiseVectorSizes(current_query_nodes, input_memory_blocks,
+  //                        output_memory_blocks, input_stream_sizes,
+  //                        output_stream_sizes);
+
+  IDManager::AllocateStreamIDs(current_query_nodes, input_ids, output_ids);
 
   for (const auto& node : current_query_nodes) {
     // output_memory_blocks has to be made into tables
     // stream sizes can be got from tables.
     // If they don't match throw error.
-    AllocateOutputMemoryBlocks(memory_manager, data_manager,
-                               output_memory_blocks[node->node_name], *node,
-                               output_stream_sizes[node->node_name]);
-    AllocateInputMemoryBlocks(
-        memory_manager, data_manager, input_memory_blocks[node->node_name],
-        *node, output_stream_sizes, input_stream_sizes[node->node_name]);
+    //    AllocateOutputMemoryBlocks(memory_manager, data_manager,
+    //                               output_memory_blocks[node->node_name],
+    //                               node,
+    //                               output_stream_sizes[node->node_name]);
+    //    AllocateInputMemoryBlocks(
+    //        memory_manager, data_manager,
+    //        input_memory_blocks[node->node_name], *node, output_stream_sizes,
+    //        input_stream_sizes[node->node_name]);
 
     // TODO: For combining input and output.
     /*if (reuse_links.find(node->node_name) != reuse_links.end() &&
@@ -362,32 +415,44 @@ auto QueryManager::SetupAccelerationNodesForExecution(
 
     // Check what is the input_stream_sizes over here
 
-
     // Here params get created that later get fed into the dma.
     // If you have a block then you can get the address.
+    auto current_run_params = std::move(node->module_run_data.back());
 
-    auto input_params = CreateStreamParams(true, *node, accelerator_library,
+    // Set this stuff right
+    // Then we're close to getting it build!
+    node->module_run_data.pop_back();
+        AllocateOutputMemoryBlocks(memory_manager, data_manager,
+                               current_run_params,
+                               current_tables_metadata, table_memory_blocks);
+        AllocateInputMemoryBlocks(
+            memory_manager, data_manager,
+            current_run_params,
+            current_tables_metadata, table_memory_blocks)
+
+    auto input_params = CreateStreamParams(true, node, accelerator_library,
                                            input_ids[node->node_name],
-                                           input_memory_blocks[node->node_name],
-                                           input_stream_sizes[node->node_name]);
-    auto output_params = CreateStreamParams(
-        false, *node, accelerator_library, output_ids[node->node_name],
-        output_memory_blocks[node->node_name],
-        output_stream_sizes[node->node_name]);
+                                           current_run_params, current_tables_metadata, table_memory_blocks);
+    auto output_params = CreateStreamParams(false, node, accelerator_library,
+                                            output_ids[node->node_name],
+                                            current_run_params, current_tables_metadata, table_memory_blocks);
 
     auto removable_parameter_count = AddQueryNodes(
-        query_nodes, std::move(input_params), std::move(output_params), *node);
-    node->module_locations = {
-        node->module_locations.begin() + removable_parameter_count + 1,
-        node->module_locations.end()};
-    if (node->operation_type == QueryOperationType::kMergeSort) {
-      node->operation_parameters.operation_parameters = {
-          node->operation_parameters.operation_parameters.begin() +
-              removable_parameter_count *
-                  node->operation_parameters.operation_parameters[0][1] +
-              1,
-          node->operation_parameters.operation_parameters.end()};
-    }
+        query_nodes, std::move(input_params), std::move(output_params), node);
+
+    // TODO: Update merge sort operation params!
+
+    //    node->module_locations = {
+    //        node->module_locations.begin() + removable_parameter_count + 1,
+    //        node->module_locations.end()};
+    //    if (node->operation_type == QueryOperationType::kMergeSort) {
+    //      node->operation_parameters.operation_parameters = {
+    //          node->operation_parameters.operation_parameters.begin() +
+    //              removable_parameter_count *
+    //                  node->operation_parameters.operation_parameters[0][1] +
+    //              1,
+    //          node->operation_parameters.operation_parameters.end()};
+    //    }
 
     StoreStreamResultParameters(result_parameters, output_ids[node->node_name],
                                 *node, output_memory_blocks[node->node_name]);
@@ -467,12 +532,13 @@ auto QueryManager::ScheduleNextSetOfNodes(
     std::map<std::string, TableMetadata>& tables,
     AcceleratorLibraryInterface& drivers, const Config& config,
     NodeSchedulerInterface& node_scheduler,
-    const std::vector<ScheduledModule>& current_configuration, std::unordered_set<std::string>& skipped_nodes)
-    -> std::queue<std::pair<std::vector<ScheduledModule>,
-                            std::vector<QueryNode*>>> {
+    const std::vector<ScheduledModule>& current_configuration,
+    std::unordered_set<std::string>& skipped_nodes)
+    -> std::queue<
+        std::pair<std::vector<ScheduledModule>, std::vector<QueryNode*>>> {
   return node_scheduler.GetNextSetOfRuns(
-      query_nodes, first_node_names, starting_nodes, graph,
-      drivers, tables, current_configuration, config, skipped_nodes);
+      query_nodes, first_node_names, starting_nodes, graph, drivers, tables,
+      current_configuration, config, skipped_nodes);
 }
 
 auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(

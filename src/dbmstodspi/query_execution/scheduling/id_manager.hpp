@@ -35,9 +35,8 @@ class IDManager {
    * @param element Element whose location in the vector we want to know.
    * @return Integer showing the element's location.
    */
-  static auto FindStreamIndex(
-      const std::vector<std::shared_ptr<QueryNode>> &stream_vector,
-      const QueryNode &node) -> int;
+  static auto FindStreamIndex(const std::vector<QueryNode *> &stream_vector,
+                              const QueryNode *node) -> int;
 
   /**
    * @brief Allocate IDs which the input and output streams share.
@@ -47,7 +46,7 @@ class IDManager {
    * @param current_node_output_ids Current output IDs vector.
    */
   static void AllocateInputIDs(
-      const QueryNode &current_node, std::vector<int> &current_node_input_ids,
+      const QueryNode *current_node, std::vector<int> &current_node_input_ids,
       std::map<std::string, std::vector<int>> &output_ids,
       std::vector<int> &current_node_output_ids,
       std::stack<int> &available_ids);
@@ -57,7 +56,7 @@ class IDManager {
    * @param current_node_output_ids Vector of currently assigned output IDs.
    */
   static void AllocateLeftoverOutputIDs(
-      const QueryNode &current_node, std::vector<int> &current_node_output_ids,
+      const QueryNode *current_node, std::vector<int> &current_node_output_ids,
       std::stack<int> &available_ids);
 
   static auto SetUpAvailableIDs() -> std::stack<int>;
@@ -71,7 +70,7 @@ class IDManager {
    * @param output_ids Map of all assigned output IDs.
    */
   static void AllocateStreamIDs(
-      const std::vector<QueryNode> &all_nodes,
+      const std::vector<QueryNode *> &all_nodes,
       std::map<std::string, std::vector<int>> &input_ids,
       std::map<std::string, std::vector<int>> &output_ids);
 };

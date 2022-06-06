@@ -17,8 +17,10 @@ limitations under the License.
 #pragma once
 #include "json_reader_interface.hpp"
 #include "query_manager_interface.hpp"
+#include "query_scheduling_data.hpp"
 
 using orkhestrafs::core_interfaces::JSONReaderInterface;
+using orkhestrafs::core_interfaces::query_scheduling_data::NodeRunData;
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -35,7 +37,9 @@ class QueryManager : public QueryManagerInterface {
       DataManagerInterface* data_manager,
       MemoryManagerInterface* memory_manager,
       AcceleratorLibraryInterface* accelerator_library,
-      const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes)
+      const std::vector<QueryNode*>& current_query_nodes,
+      const std::map<std::string, TableMetadata>& current_tables_metadata,
+      std::map<std::string, MemoryBlockInterface>& table_memory_blocks)
       -> std::pair<
           std::vector<AcceleratedQueryNode>,
           std::map<std::string, std::vector<StreamResultParameters>>> override;
@@ -82,9 +86,8 @@ class QueryManager : public QueryManagerInterface {
       NodeSchedulerInterface& node_scheduler,
       const std::vector<ScheduledModule>& current_configuration,
       std::unordered_set<std::string>& skipped_nodes)
-      -> std::queue<
-          std::pair<std::vector<ScheduledModule>,
-                    std::vector<QueryNode*>>> override;
+      -> std::queue<std::pair<std::vector<ScheduledModule>,
+                              std::vector<QueryNode*>>> override;
 
   void BenchmarkScheduling(
       const std::unordered_set<std::string>& first_node_names,
@@ -118,8 +121,7 @@ class QueryManager : public QueryManagerInterface {
   auto GetRecordSizeFromParameters(
       const DataManagerInterface* data_manager,
       const std::vector<std::vector<int>>& node_parameters,
-      int stream_index) const
-      -> int  override;
+      int stream_index) const -> int override;
 
  private:
   std::unique_ptr<JSONReaderInterface> json_reader_;
@@ -134,28 +136,26 @@ class QueryManager : public QueryManagerInterface {
   static void CheckTableData(const DataManagerInterface* data_manager,
                              const TableData& expected_table,
                              const TableData& resulting_table);
-  static void CheckResults(
-      const DataManagerInterface* data_manager,
-      MemoryBlockInterface* memory_device, int row_count,
-      const std::string& filename,
-      const std::vector<std::vector<int>>& node_parameters, int stream_index);
-  static void WriteResults(
-      const DataManagerInterface* data_manager,
-      MemoryBlockInterface* memory_device, int row_count,
-      const std::string& filename,
-      const std::vector<std::vector<int>>& node_parameters, int stream_index);
-  static void CopyMemoryData(
-      int table_size,
-      MemoryBlockInterface* source_memory_device,
-      MemoryBlockInterface* target_memory_device);
+  static void CheckResults(const DataManagerInterface* data_manager,
+                           MemoryBlockInterface* memory_device, int row_count,
+                           const std::string& filename,
+                           const std::vector<std::vector<int>>& node_parameters,
+                           int stream_index);
+  static void WriteResults(const DataManagerInterface* data_manager,
+                           MemoryBlockInterface* memory_device, int row_count,
+                           const std::string& filename,
+                           const std::vector<std::vector<int>>& node_parameters,
+                           int stream_index);
+  static void CopyMemoryData(int table_size,
+                             MemoryBlockInterface* source_memory_device,
+                             MemoryBlockInterface* target_memory_device);
   static void ProcessResults(
       const DataManagerInterface* data_manager,
       std::array<int, query_acceleration_constants::kMaxIOStreamCount>
           result_sizes,
       const std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
-      const std::map<std::string,
-                     std::vector<MemoryBlockInterface*>>&
+      const std::map<std::string, std::vector<MemoryBlockInterface*>>&
           allocated_memory_blocks,
       std::map<std::string, std::vector<RecordSizeAndCount>>&
           output_stream_sizes);
@@ -163,15 +163,12 @@ class QueryManager : public QueryManagerInterface {
       std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
       const std::vector<int>& stream_ids, const QueryNode& node,
-      const std::vector<MemoryBlockInterface*>&
-          allocated_memory_blocks);
+      const std::vector<MemoryBlockInterface*>& allocated_memory_blocks);
   static auto CreateStreamParams(
-      bool is_input, const QueryNode& node,
+      bool is_input, const QueryNode* node,
       AcceleratorLibraryInterface* accelerator_library,
-      const std::vector<int>& stream_ids,
-      const std::vector<MemoryBlockInterface*>&
-          allocated_memory_blocks,
-      const std::vector<RecordSizeAndCount>& stream_sizes)
+      const std::vector<int>& stream_ids, const NodeRunData& run_data,
+      MemoryManagerInterface* memory_manager)
       -> std::vector<StreamDataParameters>;
   static void AllocateOutputMemoryBlocks(
       MemoryManagerInterface* memory_manager,
@@ -191,8 +188,7 @@ class QueryManager : public QueryManagerInterface {
       std::map<std::string, std::vector<RecordSizeAndCount>>& stream_sizes,
       int stream_count, const std::string& node_name);
   static void InitialiseMemoryBlockVector(
-      std::map<std::string, std::vector<MemoryBlockInterface*>>&
-          memory_blocks,
+      std::map<std::string, std::vector<MemoryBlockInterface*>>& memory_blocks,
       int stream_count, const std::string& node_name);
   static void InitialiseVectorSizes(
       const std::vector<std::shared_ptr<QueryNode>>& scheduled_nodes,

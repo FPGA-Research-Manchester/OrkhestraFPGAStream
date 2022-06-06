@@ -113,6 +113,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   bool busy_flag_ = false;
   // New TableMetadata variables.
   std::map<std::string, TableMetadata> current_tables_metadata_;
+  std::map<std::string, MemoryBlockInterface> table_memory_blocks_;
   std::unordered_map<std::string, SchedulingQueryNode> current_query_graph_;
 
   std::unordered_set<std::string> current_available_node_names_;

@@ -86,7 +86,8 @@ class QueryManagerInterface {
       DataManagerInterface* data_manager,
       MemoryManagerInterface* memory_manager,
       AcceleratorLibraryInterface* accelerator_library,
-      const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes)
+      const std::vector<QueryNode*>& current_query_nodes, const std::map<std::string, TableMetadata>& current_tables_metadata,
+      std::map<std::string, MemoryBlockInterface>& table_memory_blocks)
       -> std::pair<
           std::vector<AcceleratedQueryNode>,
           std::map<std::string, std::vector<StreamResultParameters>>> = 0;

@@ -238,8 +238,8 @@ void ExecutionManager::SetupNextRunData() {
   auto execution_nodes_and_result_params =
       query_manager_->SetupAccelerationNodesForExecution(
           data_manager_.get(), memory_manager_.get(),
-          accelerator_library_.get()
-          next_scheduled_run_nodes);
+          accelerator_library_.get(),
+          next_scheduled_run_nodes, table_memory_blocks_, current_tables_metadata_);
   query_nodes_ = std::move(execution_nodes_and_result_params.first);
   for (int module_pos = 0; module_pos < empty_modules.size(); module_pos++) {
     if (empty_modules.at(module_pos).second) {

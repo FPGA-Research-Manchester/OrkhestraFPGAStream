@@ -378,7 +378,8 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
         std::pair<std::vector<ScheduledModule>, std::vector<QueryNode *>>> {
   // Clear potentially unfinished nodes
   for (const auto &node : available_nodes) {
-    node->module_run_data.clear();
+    node->module_run_data = {};
+    // For merge sort it is used to say the module sizes for each run.
     if (node->operation_type == QueryOperationType::kMergeSort) {
       node->given_operation_parameters.operation_parameters.clear();
     }
@@ -413,10 +414,13 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
           current_run_node_data.end()) {
         current_run_data = &current_run_node_data.at(node_name);
 
-        chosen_node->given_operation_parameters.operation_parameters.back()
-            .push_back(hw_library.at(current_module.operation_type)
-                           .bitstream_map.at(current_module.bitstream)
-                           .capacity.front());
+        if (chosen_node->operation_type == QueryOperationType::kMergeSort){
+          chosen_node->given_operation_parameters.operation_parameters.back()
+              .push_back(hw_library.at(current_module.operation_type)
+                             .bitstream_map.at(current_module.bitstream)
+                             .capacity.front());
+        }
+
       } else {
         if (const auto &[it, inserted] = run_counter.try_emplace(node_name, 1);
             !inserted) {
@@ -428,6 +432,7 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
         current_run_node_data.insert({node_name, NodeRunData()});
         current_run_data = &current_run_node_data.at(node_name);
         chosen_nodes.push_back(chosen_node);
+        current_run_data->run_index=run_counter.at(node_name)-1;
 
         // TODO: Remove code duplication
         // Are there any nodes placed afterwards?
@@ -513,11 +518,12 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
     for (int run_id = 0; run_id < run_counter.at(merge_sort_node_name);
          run_id++) {
       std::vector<int> next_run_capacities;
-      if (run_id + 1 != run_counter.at(merge_sort_node_name)) {
+      // If penultimate run - set next run capabilities as well.
+      if (run_id + 2 == run_counter.at(merge_sort_node_name)) {
         next_run_capacities = parameters[run_id + 1];
       }
       UpdateSortedStatusAndRunData(
-          sort_status, run_data[run_id], parameters[run_id], table_data,
+          sort_status, run_data.at(run_id), parameters[run_id], table_data,
           sort_node, next_run_capacities,
           run_id == (run_counter.at(merge_sort_node_name) - 2));
     }

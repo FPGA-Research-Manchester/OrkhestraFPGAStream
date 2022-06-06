@@ -23,6 +23,7 @@ limitations under the License.
 #include <utility>
 #include <vector>
 #include <unordered_map>
+#include <deque>
 
 #include "operation_types.hpp"
 
@@ -58,6 +59,8 @@ struct NodeRunData {
   std::vector<std::vector<int>> operation_parameters;
   /// Location of the module to be processing this node
   std::vector<int> module_locations;
+  /// Run_index
+  int run_index = 0;
 
   auto operator==(const NodeRunData& rhs) const -> bool {
     return input_data_definition_files == rhs.input_data_definition_files &&
@@ -84,7 +87,7 @@ struct QueryNode {
   /// Operation parameters to configure the streams with modules.
   NodeOperationParameters given_operation_parameters;
   /// Data of the module for each specific run
-  std::vector<NodeRunData> module_run_data;
+  std::deque<NodeRunData> module_run_data;
   /// Name of the node for automatic file naming
   std::string node_name;
   /// Flag vector setting stream results to be checked
