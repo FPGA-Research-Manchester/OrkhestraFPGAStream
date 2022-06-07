@@ -58,68 +58,68 @@ void RunLinker::CheckExternalLinks(
     std::map<std::string, int>& run_counter) {
   std::map<std::string, std::map<int, std::vector<std::pair<std::string, int>>>>
       current_links;
-  for (const auto& node : current_query_nodes) {
-    std::map<int, std::vector<std::pair<std::string, int>>> target_maps;
-    for (int next_node_index = 0; next_node_index < node->next_nodes.size();
-         next_node_index++) {
-      std::vector<std::pair<std::string, int>> targets;
-      int required_run_count = std::count(node->module_locations.begin(),
-                                          node->module_locations.end(), -1);
-      if (!node->next_nodes[next_node_index]) {
-        if (required_run_count - 1 != run_counter[node->node_name]) {
-          run_counter[node->node_name]++;
-          targets.emplace_back(node->node_name, 0);
-        }
-        if (node->output_data_definition_files[next_node_index].empty()) {
-          node->output_data_definition_files[next_node_index] =
-              node->node_name + "_" + std::to_string(next_node_index) + ".csv";
-        }
-      } else if (IsNodeMissingFromTheVector(node->next_nodes[next_node_index],
-                                            current_query_nodes)) {
-        int current_node_location = FindPreviousNodeLocation(
-            node->next_nodes[next_node_index]->previous_nodes, node);
-        auto current_filename =
-            node->output_data_definition_files[next_node_index];
-        if (current_filename.empty() &&
-            ReuseMemory(*node, *node->next_nodes[next_node_index])) {
-          // Need to do a choice here. If node finished. Put it into the next
-          // one. If not finished. Do self.
-          if (node->is_finished &&
-              required_run_count - 1 == run_counter[node->node_name]) {
-            targets.emplace_back(node->next_nodes[next_node_index]->node_name,
-                                 current_node_location);
-          } else {
-            run_counter[node->node_name]++;
-            targets.emplace_back(node->node_name, 0);
-          }
-          // Hardcoded self linking.
-        } else {
-          if (current_filename.empty()) {
-            current_filename = node->node_name + "_" +
-                               std::to_string(next_node_index) + ".csv";
-            node->output_data_definition_files[next_node_index] =
-                current_filename;
-          }
-          node->next_nodes[next_node_index]
-              ->input_data_definition_files[current_node_location] =
-              current_filename;
-          node->next_nodes[next_node_index] = nullptr;
-        }
-      }
-      if (!targets.empty()) {
-        target_maps.insert({next_node_index, targets});
-      }
-    }
-    for (auto& previous_node : node->previous_nodes) {
-      if (IsNodeMissingFromTheVector(previous_node, current_query_nodes)) {
-        previous_node = nullptr;
-      }
-    }
-    if (!target_maps.empty()) {
-      current_links.insert({node->node_name, target_maps});
-    }
-  }
-  linked_nodes.push(std::move(current_links));
+//  for (const auto& node : current_query_nodes) {
+//    std::map<int, std::vector<std::pair<std::string, int>>> target_maps;
+//    for (int next_node_index = 0; next_node_index < node->next_nodes.size();
+//         next_node_index++) {
+//      std::vector<std::pair<std::string, int>> targets;
+//      int required_run_count = std::count(node->module_locations.begin(),
+//                                          node->module_locations.end(), -1);
+//      if (!node->next_nodes[next_node_index]) {
+//        if (required_run_count - 1 != run_counter[node->node_name]) {
+//          run_counter[node->node_name]++;
+//          targets.emplace_back(node->node_name, 0);
+//        }
+//        if (node->output_data_definition_files[next_node_index].empty()) {
+//          node->output_data_definition_files[next_node_index] =
+//              node->node_name + "_" + std::to_string(next_node_index) + ".csv";
+//        }
+//      } else if (IsNodeMissingFromTheVector(node->next_nodes[next_node_index],
+//                                            current_query_nodes)) {
+//        int current_node_location = FindPreviousNodeLocation(
+//            node->next_nodes[next_node_index]->previous_nodes, node);
+//        auto current_filename =
+//            node->output_data_definition_files[next_node_index];
+//        if (current_filename.empty() &&
+//            ReuseMemory(*node, *node->next_nodes[next_node_index])) {
+//          // Need to do a choice here. If node finished. Put it into the next
+//          // one. If not finished. Do self.
+//          if (node->is_finished &&
+//              required_run_count - 1 == run_counter[node->node_name]) {
+//            targets.emplace_back(node->next_nodes[next_node_index]->node_name,
+//                                 current_node_location);
+//          } else {
+//            run_counter[node->node_name]++;
+//            targets.emplace_back(node->node_name, 0);
+//          }
+//          // Hardcoded self linking.
+//        } else {
+//          if (current_filename.empty()) {
+//            current_filename = node->node_name + "_" +
+//                               std::to_string(next_node_index) + ".csv";
+//            node->output_data_definition_files[next_node_index] =
+//                current_filename;
+//          }
+//          node->next_nodes[next_node_index]
+//              ->input_data_definition_files[current_node_location] =
+//              current_filename;
+//          node->next_nodes[next_node_index] = nullptr;
+//        }
+//      }
+//      if (!targets.empty()) {
+//        target_maps.insert({next_node_index, targets});
+//      }
+//    }
+//    for (auto& previous_node : node->previous_nodes) {
+//      if (IsNodeMissingFromTheVector(previous_node, current_query_nodes)) {
+//        previous_node = nullptr;
+//      }
+//    }
+//    if (!target_maps.empty()) {
+//      current_links.insert({node->node_name, target_maps});
+//    }
+//  }
+//  linked_nodes.push(std::move(current_links));
 }
 
 auto RunLinker::ReuseMemory(const QueryNode& /*source_node*/,

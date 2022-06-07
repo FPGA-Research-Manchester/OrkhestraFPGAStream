@@ -237,7 +237,8 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     AcceleratorLibraryInterface &drivers,
     std::map<std::string, TableMetadata> &tables,
     const std::vector<ScheduledModule> &current_configuration,
-    const Config &config, std::unordered_set<std::string> &skipped_nodes)
+    const Config &config, std::unordered_set<std::string> &skipped_nodes,
+    std::unordered_map<std::string, int> &table_counter)
     -> std::queue<
         std::pair<std::vector<ScheduledModule>, std::vector<QueryNode *>>> {
   std::chrono::steady_clock::time_point start =
@@ -280,6 +281,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   skipped_nodes = resulting_plans.at(best_plan).processed_nodes;
   // The nodes that aren't in the graph aren't executed anyway and the tables
   // have already been handled.
+  // TODO: Potentially remove this boolean!
   for (const auto &[node_name, parameters] : graph) {
     if (skipped_nodes.find(node_name) != skipped_nodes.end()) {
       parameters.node_ptr->is_finished = true;
@@ -288,8 +290,8 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   // To update tables as normal execution doesn't update sorted statuses.
   tables = resulting_plans.at(best_plan).data_tables;
 
-  auto resulting_runs = GetQueueOfResultingRuns(available_nodes, best_plan,
-                                                config.pr_hw_library, tables);
+  auto resulting_runs = GetQueueOfResultingRuns(
+      available_nodes, best_plan, config.pr_hw_library, tables, table_counter);
   // available_nodes = FindNewAvailableNodes(starting_nodes, available_nodes);
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   std::cout << "TOTAL SCHEDULING:"
@@ -367,13 +369,13 @@ void ElasticResourceNodeScheduler::BuildInitialSequencesForMergeSorter(
 }
 
 // Method to get node pointers to runs from node names and set composed module
-// op params! Only thing missing is the resource elastic information. (Like
-// merge sort size)
+// op params!
 auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
     std::vector<QueryNode *> &available_nodes,
     const std::vector<std::vector<ScheduledModule>> &best_plan,
     const std::map<QueryOperationType, OperationPRModules> &hw_library,
-    std::map<std::string, TableMetadata> &table_data)
+    std::map<std::string, TableMetadata> &table_data,
+    std::unordered_map<std::string, int> &table_counter)
     -> std::queue<
         std::pair<std::vector<ScheduledModule>, std::vector<QueryNode *>>> {
   // Clear potentially unfinished nodes
@@ -414,7 +416,7 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
           current_run_node_data.end()) {
         current_run_data = &current_run_node_data.at(node_name);
 
-        if (chosen_node->operation_type == QueryOperationType::kMergeSort){
+        if (chosen_node->operation_type == QueryOperationType::kMergeSort) {
           chosen_node->given_operation_parameters.operation_parameters.back()
               .push_back(hw_library.at(current_module.operation_type)
                              .bitstream_map.at(current_module.bitstream)
@@ -432,7 +434,7 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
         current_run_node_data.insert({node_name, NodeRunData()});
         current_run_data = &current_run_node_data.at(node_name);
         chosen_nodes.push_back(chosen_node);
-        current_run_data->run_index=run_counter.at(node_name)-1;
+        current_run_data->run_index = run_counter.at(node_name) - 1;
 
         // TODO: Remove code duplication
         // Are there any nodes placed afterwards?
@@ -449,9 +451,17 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
               }
             }
           }
+          current_run_data->output_offset.push_back(0);
           if (is_io_stream) {
             current_run_data->output_data_definition_files.push_back(
                 chosen_node->given_output_data_definition_files.at(stream_id));
+            if (const auto &[it, inserted] = table_counter.try_emplace(
+                    chosen_node->given_output_data_definition_files.at(
+                        stream_id),
+                    1);
+                !inserted) {
+              it->second++;
+            }
           } else {
             current_run_data->output_data_definition_files.emplace_back("");
           }
@@ -476,6 +486,13 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
             if (is_io_stream) {
               current_run_data->input_data_definition_files.push_back(
                   chosen_node->given_input_data_definition_files.at(stream_id));
+              if (const auto &[it, inserted] = table_counter.try_emplace(
+                      chosen_node->given_input_data_definition_files.at(
+                          stream_id),
+                      1);
+                  !inserted) {
+                it->second++;
+              }
             } else {
               current_run_data->input_data_definition_files.emplace_back("");
             }
@@ -525,7 +542,7 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
       UpdateSortedStatusAndRunData(
           sort_status, run_data.at(run_id), parameters[run_id], table_data,
           sort_node, next_run_capacities,
-          run_id == (run_counter.at(merge_sort_node_name) - 2));
+          run_id == (run_counter.at(merge_sort_node_name) - 2), table_counter);
     }
     // Could also check that the number of sorted rows is correct rather than
     // that all sequences have been processed.
@@ -556,7 +573,8 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
     std::map<int, std::vector<LengthOfSortedSequences>> &sort_status,
     NodeRunData &run_data, const std::vector<int> &capacities,
     std::map<std::string, TableMetadata> &table_data, QueryNode *merge_node,
-    const std::vector<int> &next_run_capacities, bool is_penultimate) {
+    const std::vector<int> &next_run_capacities, bool is_penultimate,
+    std::unordered_map<std::string, int> &table_counter) {
   if (sort_status.empty()) {
     throw std::runtime_error("Too many merge sort modules scheduled!");
   }
@@ -591,10 +609,6 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
       if (find_it == run_data.input_data_definition_files.end()) {
         run_data.input_data_definition_files.push_back(
             current_sequence.table_name);
-        if (merge_node->temp_tables.find(current_sequence.table_name) ==
-            merge_node->temp_tables.end()) {
-          merge_node->temp_tables.insert({current_sequence.table_name, 0});
-        }
       }
       int table_index = find_it - run_data.input_data_definition_files.begin();
       new_sequence_size += current_sequence_size;
@@ -603,7 +617,6 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
 
       leftover_capacity--;
       current_sequence.number_of_sequences--;
-      merge_node->temp_tables[current_sequence.table_name]++;
       current_sequence.offset += current_sequence_size;
     }
     if (current_sequence.number_of_sequences == 0) {
@@ -611,6 +624,12 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
       if (sort_status.begin()->second.empty()) {
         sort_status.erase(current_sequence_size);
       }
+    }
+  }
+  for (const auto &input_table : run_data.input_data_definition_files) {
+    if (const auto &[it, inserted] = table_counter.try_emplace(input_table, 1);
+        !inserted) {
+      it->second++;
     }
   }
   if (!sort_status.empty()) {
@@ -638,7 +657,8 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
       table_data.insert({output_table_name, std::move(new_data)});
     }
     // I also need the size of the table for the offset
-    run_data.output_offset = table_data.at(output_table_name).record_count;
+    // Since this is merge sort we assume a single output stream
+    run_data.output_offset = {table_data.at(output_table_name).record_count};
     // Then check if it exists already or not.
     bool sequence_merged = false;
     if (sort_status.find(new_sequence_size) != sort_status.end()) {
@@ -646,7 +666,7 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
       // of sequences where the table name matches and offset is at the end of
       // the table. Offset required for just +1
       int required_output_offset_for_merge =
-          run_data.output_offset - new_sequence_size;
+          run_data.output_offset.front() - new_sequence_size;
       if (required_output_offset_for_merge > 0) {
         for (auto &sequences : sort_status.at(new_sequence_size)) {
           if (sequences.table_name == output_table_name &&
@@ -658,14 +678,20 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
       }
     }
     if (!sequence_merged) {
-      LengthOfSortedSequences new_sequence = {run_data.output_offset, 1,
+      LengthOfSortedSequences new_sequence = {run_data.output_offset.front(), 1,
                                               output_table_name};
       sort_status.insert({new_sequence_size, {std::move(new_sequence)}});
     }
     table_data[output_table_name].record_count += new_sequence_size;
     // Half sorted stuff always gets written to temp file
+    table_counter[run_data.output_data_definition_files.front()]--;
     run_data.output_data_definition_files.clear();
     run_data.output_data_definition_files.push_back(output_table_name);
+    if (const auto &[it, inserted] =
+            table_counter.try_emplace(output_table_name, 1);
+        !inserted) {
+      it->second++;
+    }
   } else {
     // if empty check that all nodes have been sorted!
     if (table_data.at(merge_node->given_input_data_definition_files.front())

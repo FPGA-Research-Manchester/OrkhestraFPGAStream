@@ -145,7 +145,7 @@ void ExecutionManager::ScheduleUnscheduledNodes() {
       current_available_node_pointers_, nodes_constrained_to_first_,
       current_available_node_names_, current_query_graph_,
       current_tables_metadata_, *accelerator_library_, config_, *scheduler_,
-      current_configuration_, processed_nodes_);
+      current_configuration_, processed_nodes_, table_counter_);
 }
 void ExecutionManager::BenchmarkScheduleUnscheduledNodes() {
   query_manager_->BenchmarkScheduling(
@@ -238,8 +238,8 @@ void ExecutionManager::SetupNextRunData() {
   auto execution_nodes_and_result_params =
       query_manager_->SetupAccelerationNodesForExecution(
           data_manager_.get(), memory_manager_.get(),
-          accelerator_library_.get(),
-          next_scheduled_run_nodes, table_memory_blocks_, current_tables_metadata_);
+          accelerator_library_.get(), next_scheduled_run_nodes,
+          current_tables_metadata_, table_memory_blocks_, table_counter_);
   query_nodes_ = std::move(execution_nodes_and_result_params.first);
   for (int module_pos = 0; module_pos < empty_modules.size(); module_pos++) {
     if (empty_modules.at(module_pos).second) {
@@ -254,15 +254,11 @@ void ExecutionManager::SetupNextRunData() {
   result_parameters_ = std::move(execution_nodes_and_result_params.second);
 }
 void ExecutionManager::ExecuteAndProcessResults() {
-  // TODO: Figure out why these are needed and how to replace them
   query_manager_->ExecuteAndProcessResults(
-      fpga_manager_.get(), data_manager_.get(), output_memory_blocks_,
-      output_stream_sizes_, result_parameters_, query_nodes_,
-      current_tables_metadata_, current_reuse_links_, current_query_graph_);
-  query_manager_->FreeMemoryBlocks(memory_manager_.get(), input_memory_blocks_,
-                                   output_memory_blocks_, input_stream_sizes_,
-                                   output_stream_sizes_, current_reuse_links_,
-                                   scheduled_node_names_);
+      memory_manager_.get(), fpga_manager_.get(), data_manager_.get(),
+      table_memory_blocks_, result_parameters_, query_nodes_,
+      current_tables_metadata_, table_counter_);
+  // TODO:Remove this
   scheduled_node_names_.clear();
 }
 // auto ExecutionManager::IsRunValid() -> bool {

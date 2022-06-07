@@ -113,8 +113,9 @@ class ExecutionManager : public ExecutionManagerInterface,
   bool busy_flag_ = false;
   // New TableMetadata variables.
   std::map<std::string, TableMetadata> current_tables_metadata_;
-  std::map<std::string, MemoryBlockInterface> table_memory_blocks_;
+  std::unordered_map<std::string, MemoryBlockInterface*> table_memory_blocks_;
   std::unordered_map<std::string, SchedulingQueryNode> current_query_graph_;
+  std::unordered_map<std::string, int> table_counter_;
 
   std::unordered_set<std::string> current_available_node_names_;
   std::unordered_set<std::string> nodes_constrained_to_first_;
@@ -122,8 +123,7 @@ class ExecutionManager : public ExecutionManagerInterface,
 
   std::vector<QueryNode*> current_available_node_pointers_;
 
-  std::queue<std::pair<std::vector<ScheduledModule>,
-                       std::vector<QueryNode*>>>
+  std::queue<std::pair<std::vector<ScheduledModule>, std::vector<QueryNode*>>>
       query_node_runs_queue_;
   std::vector<ScheduledModule> current_configuration_;
 
@@ -135,10 +135,11 @@ class ExecutionManager : public ExecutionManagerInterface,
   auto PopNextScheduledRun() -> std::vector<QueryNode*>;
 
   // TODO(Kaspar): Move this to a different class
-  static auto GetCurrentNodeIndexFromNextNode(QueryNode* current_node, QueryNode* next_node) -> int;
+  static auto GetCurrentNodeIndexFromNextNode(QueryNode* current_node,
+                                              QueryNode* next_node) -> int;
   static void InitialiseTables(
       std::map<std::string, TableMetadata>& tables_metadata,
-      std::vector<QueryNode*> current_available_node_pointers, 
+      std::vector<QueryNode*> current_available_node_pointers,
       const QueryManagerInterface* query_manager,
       const DataManagerInterface* data_manager);
   static void SetupSchedulingGraphAndConstrainedNodes(

@@ -78,7 +78,8 @@ class NodeSchedulerInterface {
       std::map<std::string, TableMetadata>& tables,
       const std::vector<ScheduledModule>& current_configuration,
       const Config& config,
-      std::unordered_set<std::string>& skipped_nodes)
+      std::unordered_set<std::string>& skipped_nodes,
+      std::unordered_map<std::string, int>& table_counter)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<QueryNode*>>> = 0;
 

@@ -45,7 +45,8 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       AcceleratorLibraryInterface &drivers,
       std::map<std::string, TableMetadata> &tables,
       const std::vector<ScheduledModule> &current_configuration,
-      const Config &config, std::unordered_set<std::string> &skipped_nodes)
+      const Config &config, std::unordered_set<std::string> &skipped_nodes,
+      std::unordered_map<std::string, int>& table_counter)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<QueryNode *>>> override;
 
@@ -83,7 +84,8 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       std::map<int, std::vector<LengthOfSortedSequences>> &sort_status,
       NodeRunData &run_data, const std::vector<int> &capacities,
       std::map<std::string, TableMetadata> &table_data, QueryNode *merge_node,
-      const std::vector<int> &next_run_capacities, bool is_penultimate);
+      const std::vector<int> &next_run_capacities, bool is_penultimate,
+      std::unordered_map<std::string, int> &table_counter);
   static void BuildInitialSequencesForMergeSorter(
       std::map<int, std::vector<LengthOfSortedSequences>> &map_of_sequences,
       const TableMetadata &table_data, std::string table_name);
@@ -112,7 +114,8 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       std::vector<QueryNode *> &available_nodes,
       const std::vector<std::vector<ScheduledModule>> &best_plan,
       const std::map<QueryOperationType, OperationPRModules> &hw_library,
-      std::map<std::string, TableMetadata> &table_data)
+      std::map<std::string, TableMetadata> &table_data,
+      std::unordered_map<std::string, int>& table_counter)
       -> std::queue<
           std::pair<std::vector<ScheduledModule>, std::vector<QueryNode *>>>;
   static auto GetLargestModulesSizes(

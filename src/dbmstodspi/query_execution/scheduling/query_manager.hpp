@@ -39,7 +39,9 @@ class QueryManager : public QueryManagerInterface {
       AcceleratorLibraryInterface* accelerator_library,
       const std::vector<QueryNode*>& current_query_nodes,
       const std::map<std::string, TableMetadata>& current_tables_metadata,
-      std::map<std::string, MemoryBlockInterface>& table_memory_blocks)
+      std::unordered_map<std::string, MemoryBlockInterface*>&
+          table_memory_blocks,
+      std::unordered_map<std::string, int>& table_counter)
       -> std::pair<
           std::vector<AcceleratedQueryNode>,
           std::map<std::string, std::vector<StreamResultParameters>>> override;
@@ -49,20 +51,16 @@ class QueryManager : public QueryManagerInterface {
   // auto IsRunValid(std::vector<AcceleratedQueryNode> current_run)
   //    -> bool override;
   void ExecuteAndProcessResults(
+      MemoryManagerInterface* memory_manager,
       FPGAManagerInterface* fpga_manager,
       const DataManagerInterface* data_manager,
-      std::map<std::string, std::vector<MemoryBlockInterface*>>&
-          output_memory_blocks,
-      std::map<std::string, std::vector<RecordSizeAndCount>>&
-          output_stream_sizes,
+      std::unordered_map<std::string, MemoryBlockInterface*>&
+          table_memory_blocks,
       const std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
       const std::vector<AcceleratedQueryNode>& execution_query_nodes,
       std::map<std::string, TableMetadata>& scheduling_table_data,
-      const std::map<std::string, std::map<int, MemoryReuseTargets>>&
-          reuse_links,
-      std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph)
-      override;
+      std::unordered_map<std::string, int>& table_counter) override;
   void FreeMemoryBlocks(
       MemoryManagerInterface* memory_manager,
       std::map<std::string, std::vector<MemoryBlockInterface*>>&
@@ -85,7 +83,8 @@ class QueryManager : public QueryManagerInterface {
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
       const std::vector<ScheduledModule>& current_configuration,
-      std::unordered_set<std::string>& skipped_nodes)
+      std::unordered_set<std::string>& skipped_nodes,
+      std::unordered_map<std::string, int>& table_counter)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<QueryNode*>>> override;
 
@@ -155,35 +154,31 @@ class QueryManager : public QueryManagerInterface {
           result_sizes,
       const std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
-      const std::map<std::string, std::vector<MemoryBlockInterface*>>&
+      const std::unordered_map<std::string, MemoryBlockInterface*>&
           allocated_memory_blocks,
-      std::map<std::string, std::vector<RecordSizeAndCount>>&
-          output_stream_sizes);
+      std::map<std::string, TableMetadata>& scheduling_table_data);
   static void StoreStreamResultParameters(
       std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
-      const std::vector<int>& stream_ids, const QueryNode& node,
-      const std::vector<MemoryBlockInterface*>& allocated_memory_blocks);
+      const std::vector<int>& stream_ids, const QueryNode* node,
+      const NodeRunData& run_data);
   static auto CreateStreamParams(
-      bool is_input, const QueryNode* node,
-      AcceleratorLibraryInterface* accelerator_library,
-      const std::vector<int>& stream_ids, const NodeRunData& run_data,
-      MemoryManagerInterface* memory_manager)
-      -> std::vector<StreamDataParameters>;
+      bool is_input, const QueryNode* node, const std::vector<int>& stream_ids,
+      const NodeRunData& run_data,
+      const std::map<std::string, TableMetadata>& current_tables_metadata,
+      const std::unordered_map<std::string, MemoryBlockInterface*>&
+          table_memory_blocks) -> std::vector<StreamDataParameters>;
   static void AllocateOutputMemoryBlocks(
-      MemoryManagerInterface* memory_manager,
-      const DataManagerInterface* data_manager,
-      std::vector<MemoryBlockInterface*>& output_memory_blocks,
-      const QueryNode& node,
-      std::vector<RecordSizeAndCount>& output_stream_sizes);
+      MemoryManagerInterface* memory_manager, const NodeRunData& run_data,
+      std::unordered_map<std::string, MemoryBlockInterface*>&
+          table_memory_blocks);
   static void AllocateInputMemoryBlocks(
       MemoryManagerInterface* memory_manager,
-      const DataManagerInterface* data_manager,
-      std::vector<MemoryBlockInterface*>& input_memory_blocks,
-      const QueryNode& node,
-      const std::map<std::string, std::vector<RecordSizeAndCount>>&
-          output_stream_sizes,
-      std::vector<RecordSizeAndCount>& input_stream_sizes);
+      const DataManagerInterface* data_manager, const NodeRunData& run_data,
+      const std::vector<std::vector<int>>& input_stream_parameters,
+      const std::map<std::string, TableMetadata>& current_tables_metadata,
+      std::unordered_map<std::string, MemoryBlockInterface*>&
+          table_memory_blocks);
   static void InitialiseStreamSizeVector(
       std::map<std::string, std::vector<RecordSizeAndCount>>& stream_sizes,
       int stream_count, const std::string& node_name);
@@ -200,11 +195,11 @@ class QueryManager : public QueryManagerInterface {
           input_stream_sizes,
       std::map<std::string, std::vector<RecordSizeAndCount>>&
           output_stream_sizes);
-  static auto AddQueryNodes(
+  static void AddQueryNodes(
       std::vector<AcceleratedQueryNode>& query_nodes_vector,
       std::vector<StreamDataParameters>&& input_params,
-      std::vector<StreamDataParameters>&& output_params, const QueryNode& node)
-      -> int;
+      std::vector<StreamDataParameters>&& output_params, QueryNode* node,
+      const NodeRunData& run_data);
   static void UpdateTableData(
       const std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,

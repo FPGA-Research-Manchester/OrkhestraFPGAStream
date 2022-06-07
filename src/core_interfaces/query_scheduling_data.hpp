@@ -53,7 +53,7 @@ struct NodeRunData {
   /// Expected data files.
   std::vector<std::string> output_data_definition_files;
   /// Output offset
-  int output_offset = 0;
+  std::vector<int> output_offset;
   /// Operation parameters to configure the streams with modules. - How do you say how many channels each gets?
   // Each channel is defined by index of table, offset, count
   std::vector<std::vector<int>> operation_parameters;
@@ -94,8 +94,6 @@ struct QueryNode {
   std::vector<bool> is_checked;
   /// Flag for saying if this node will be fully executed in this run
   bool is_finished = false;
-  /// Temporary tables used in different runs and their counters
-  std::unordered_map<std::string, int> temp_tables;
 
   auto operator==(const QueryNode& rhs) const -> bool {
     return previous_nodes == rhs.previous_nodes &&
@@ -107,8 +105,7 @@ struct QueryNode {
            next_nodes == rhs.next_nodes &&
            given_operation_parameters == rhs.given_operation_parameters &&
            module_run_data == rhs.module_run_data &&
-           node_name == rhs.node_name && is_checked == rhs.is_checked &&
-           temp_tables == rhs.temp_tables;
+           node_name == rhs.node_name && is_checked == rhs.is_checked;
   }
 
   QueryNode(std::vector<std::string> input, std::vector<std::string> output,
@@ -143,21 +140,26 @@ struct StreamResultParameters {
   int output_id;
   std::string filename;
   bool check_results;
+  bool update_table_sizes_only;
   std::vector<std::vector<int>> stream_specifications;
+  int output_offset;
 
   StreamResultParameters(int stream_index, int output_id, std::string filename,
                          bool check_results,
-                         std::vector<std::vector<int>> stream_specifications)
+                         bool update_table_sizes_only,
+                         std::vector<std::vector<int>> stream_specifications, int output_offset)
       : stream_index{stream_index},
         output_id{output_id},
         filename{std::move(filename)},
         check_results{check_results},
-        stream_specifications{std::move(stream_specifications)} {};
+        stream_specifications{std::move(stream_specifications)},
+        update_table_sizes_only{update_table_sizes_only},
+        output_offset{output_offset}{};
 
   auto operator==(const StreamResultParameters& rhs) const -> bool {
     return stream_index == rhs.stream_index && output_id == rhs.output_id &&
            filename == rhs.filename && check_results == rhs.check_results &&
-           stream_specifications == rhs.stream_specifications;
+           stream_specifications == rhs.stream_specifications && update_table_sizes_only == rhs.update_table_sizes_only && output_offset==rhs.output_offset;
   }
 };
 

@@ -86,8 +86,11 @@ class QueryManagerInterface {
       DataManagerInterface* data_manager,
       MemoryManagerInterface* memory_manager,
       AcceleratorLibraryInterface* accelerator_library,
-      const std::vector<QueryNode*>& current_query_nodes, const std::map<std::string, TableMetadata>& current_tables_metadata,
-      std::map<std::string, MemoryBlockInterface>& table_memory_blocks)
+      const std::vector<QueryNode*>& current_query_nodes,
+      const std::map<std::string, TableMetadata>& current_tables_metadata,
+      std::unordered_map<std::string, MemoryBlockInterface*>&
+          table_memory_blocks,
+      std::unordered_map<std::string, int>& table_counter)
       -> std::pair<
           std::vector<AcceleratedQueryNode>,
           std::map<std::string, std::vector<StreamResultParameters>>> = 0;
@@ -121,20 +124,16 @@ class QueryManagerInterface {
    * @param scheduling_graph To update next nodes.
    */
   virtual void ExecuteAndProcessResults(
+      MemoryManagerInterface* memory_manager,
       FPGAManagerInterface* fpga_manager,
       const DataManagerInterface* data_manager,
-      std::map<std::string, std::vector<MemoryBlockInterface*>>&
-          output_memory_blocks,
-      std::map<std::string, std::vector<RecordSizeAndCount>>&
-          output_stream_sizes,
+      std::unordered_map<std::string, MemoryBlockInterface*>&
+          table_memory_blocks,
       const std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
       const std::vector<AcceleratedQueryNode>& execution_query_nodes,
       std::map<std::string, TableMetadata>& scheduling_table_data,
-      const std::map<std::string, std::map<int, MemoryReuseTargets>>&
-          reuse_links,
-      std::unordered_map<std::string, SchedulingQueryNode>&
-          scheduling_graph) = 0;
+      std::unordered_map<std::string, int>& table_counter) = 0;
 
   /**
    * @brief Method to move reusable output memory blocks to input maps. And the
@@ -186,9 +185,10 @@ class QueryManagerInterface {
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
       const std::vector<ScheduledModule>& current_configuration,
-      std::unordered_set<std::string>& skipped_nodes)
-      -> std::queue<std::pair<std::vector<ScheduledModule>,
-                              std::vector<QueryNode*>>> = 0;
+      std::unordered_set<std::string>& skipped_nodes,
+      std::unordered_map<std::string, int>& table_counter)
+      -> std::queue<
+          std::pair<std::vector<ScheduledModule>, std::vector<QueryNode*>>> = 0;
 
   virtual void BenchmarkScheduling(
       const std::unordered_set<std::string>& first_node_names,
@@ -247,8 +247,7 @@ class QueryManagerInterface {
   virtual auto GetRecordSizeFromParameters(
       const DataManagerInterface* data_manager,
       const std::vector<std::vector<int>>& node_parameters,
-      int stream_index) const
-      ->int ;
+      int stream_index) const -> int;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

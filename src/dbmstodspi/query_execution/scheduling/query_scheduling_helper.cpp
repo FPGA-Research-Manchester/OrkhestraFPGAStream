@@ -27,7 +27,7 @@ auto QuerySchedulingHelper::FindNodePtrIndex(QueryNode* current_node,
   int counter = 0;
   for (const auto& potential_current_node : previous_node->next_nodes) {
     if (potential_current_node != nullptr &&
-        potential_current_node.get() == current_node) {
+        potential_current_node == current_node) {
       if (index != -1) {
         throw std::runtime_error(
             "Currently can't support the same module taking multiple inputs "
