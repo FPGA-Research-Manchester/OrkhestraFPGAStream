@@ -131,7 +131,7 @@ auto GraphCreator::PopulateGraphNodesMapWithJSONData(
   std::string output_stream_params = "output_stream_params";
   std::string operation_params_field = "operation_params";
 
-  std::vector<QueryNode> all_nodes;
+  std::vector<std::unique_ptr<QueryNode>> all_nodes;
 
   for (auto const& [node_name, node_parameters] : data) {
     ParamsMap all_operation_parameters_map =
@@ -149,13 +149,13 @@ auto GraphCreator::PopulateGraphNodesMapWithJSONData(
       is_checked.push_back(!filename.empty());
     }
 
-    all_nodes.emplace_back(
+    all_nodes.push_back(std::make_unique<QueryNode>(
         std::get<std::vector<std::string>>(node_parameters.at(input_field)),
         output_filenames,
         kSupportedFunctions.at(
             std::get<std::string>(node_parameters.at(operation_field))),
         std::vector<QueryNode*>(), std::vector<QueryNode*>(),
-        all_operation_parameters, node_name, is_checked);
+        all_operation_parameters, node_name, is_checked));
 
     auto search_previous = node_parameters.find(previous_nodes_field);
     if (search_previous != node_parameters.end()) {

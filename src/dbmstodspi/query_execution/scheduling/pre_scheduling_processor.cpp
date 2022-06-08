@@ -167,30 +167,33 @@ auto PreSchedulingProcessor::SetWorstCaseNodeCapacity(
   if (current_node.after_nodes.size() != 1) {
     throw std::runtime_error("Multiple output nodes aren't supported!");
   }
-  auto& next_node = graph.at(current_node.after_nodes.front());
-  auto capacity_values = accelerator_library_.GetWorstCaseNodeCapacity(
-      current_node.operation, min_capacity, current_node.data_tables,
-      data_tables, next_node.operation);
-  // This check is not needed as some capacity values can be 0.
-  /*if (capacity_values.size() != next_node.capacity.size()) {
-      throw std::runtime_error("Incorrect number of capacity values
-  calculated!");
-  }*/
-  bool updated_capacity_values = false;
-  if (!capacity_values.empty()) {
-    for (int capacity_id = 0; capacity_id < capacity_values.size();
-         capacity_id++) {
-      if (capacity_id >= next_node.capacity.size()) {
-        next_node.capacity.push_back(capacity_values.at(capacity_id));
-        updated_capacity_values = true;
-      } else if (capacity_values.at(capacity_id) !=
-                 next_node.capacity.at(capacity_id)) {
-        next_node.capacity[capacity_id] = capacity_values.at(capacity_id);
-        updated_capacity_values = true;
+  if (!current_node.after_nodes.front().empty()){
+    auto& next_node = graph.at(current_node.after_nodes.front());
+    auto capacity_values = accelerator_library_.GetWorstCaseNodeCapacity(
+        current_node.operation, min_capacity, current_node.data_tables,
+        data_tables, next_node.operation);
+    // This check is not needed as some capacity values can be 0.
+    /*if (capacity_values.size() != next_node.capacity.size()) {
+        throw std::runtime_error("Incorrect number of capacity values
+    calculated!");
+    }*/
+    bool updated_capacity_values = false;
+    if (!capacity_values.empty()) {
+      for (int capacity_id = 0; capacity_id < capacity_values.size();
+           capacity_id++) {
+        if (capacity_id >= next_node.capacity.size()) {
+          next_node.capacity.push_back(capacity_values.at(capacity_id));
+          updated_capacity_values = true;
+        } else if (capacity_values.at(capacity_id) !=
+                   next_node.capacity.at(capacity_id)) {
+          next_node.capacity[capacity_id] = capacity_values.at(capacity_id);
+          updated_capacity_values = true;
+        }
       }
     }
+    return updated_capacity_values;
   }
-  return updated_capacity_values;
+  return false;
 }
 
 // TODO(Kaspar): Need a special case check of 0 rows left - Can immediately cut

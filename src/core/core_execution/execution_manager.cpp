@@ -35,30 +35,58 @@ void ExecutionManager::UpdateAvailableNodesGraph() {
   }
 
   current_available_node_pointers_ = unscheduled_graph_->GetRootNodesPtrs();
+  current_available_node_names_.clear();
   for (const auto& node : current_available_node_pointers_) {
     current_available_node_names_.insert(node->node_name);
   }
+  RemoveUnusedTables(current_tables_metadata_,
+                     unscheduled_graph_->GetAllNodesPtrs());
+  InitialiseTables(current_tables_metadata_, current_available_node_pointers_,
+                   query_manager_.get(), data_manager_.get());
   SetupSchedulingGraphAndConstrainedNodes(
       unscheduled_graph_->GetAllNodesPtrs(), current_query_graph_,
       *accelerator_library_, nodes_constrained_to_first_);
-
-  InitialiseTables(current_tables_metadata_, current_available_node_pointers_,
-                   query_manager_.get(), data_manager_.get());
 }
 
+void ExecutionManager::RemoveUnusedTables(
+    std::map<std::string, TableMetadata>& tables_metadata,
+    std::vector<QueryNode*> all_nodes) {
+  // TODO: Possibly reserve some space beforehand.
+  std::unordered_set<std::string> required_tables;
+  for (const auto& node : all_nodes) {
+    for (const auto& input : node->given_input_data_definition_files) {
+      if (!input.empty()) {
+        required_tables.insert(input);
+      }
+    }
+    for (const auto& output : node->given_output_data_definition_files) {
+      if (!output.empty()) {
+        required_tables.insert(output);
+      }
+    }
+  }
+  std::vector<std::string> tables_to_delete;
+  for (const auto& [table_name, data] : tables_metadata) {
+    if (required_tables.find(table_name) == required_tables.end()) {
+      tables_to_delete.push_back(table_name);
+    }
+  }
+  for (const auto& table_to_delete : tables_to_delete) {
+    tables_metadata.erase(table_to_delete);
+  }
+}
+
+// Initially only input nodes have input tables defined.
+// This method names all the rest of the tables.
 void ExecutionManager::InitialiseTables(
     std::map<std::string, TableMetadata>& tables_metadata,
     std::vector<QueryNode*> current_available_node_pointers,
     const QueryManagerInterface* query_manager,
     const DataManagerInterface* data_manager) {
   // Setup new unintialised tables
-  // Take table data
-  // Go through all of the nodes
-  // Processed nodes are ones that have a table.
   while (!current_available_node_pointers.empty()) {
     auto current_node = current_available_node_pointers.back();
     current_available_node_pointers.pop_back();
-    bool all_tables_defined = false;
     if (std::any_of(current_node->given_input_data_definition_files.begin(),
                     current_node->given_input_data_definition_files.end(),
                     [](const auto& filename) { return filename.empty(); })) {
@@ -67,28 +95,34 @@ void ExecutionManager::InitialiseTables(
     for (int output_stream_id = 0;
          output_stream_id < current_node->next_nodes.size();
          output_stream_id++) {
-      const auto& output_node = current_node->next_nodes.at(output_stream_id);
-
-      int index = GetCurrentNodeIndexFromNextNode(current_node, output_node);
-      if (!output_node->given_input_data_definition_files.at(index).empty()) {
-        throw std::runtime_error("Table already defined!");
+      auto& table_name =
+          current_node->given_output_data_definition_files.at(output_stream_id);
+      if (table_name.empty()) {
+        table_name = current_node->node_name + "_" +
+                     std::to_string(output_stream_id) + ".csv";
+        TableMetadata new_data;
+        new_data.record_size = query_manager->GetRecordSizeFromParameters(
+            data_manager,
+            current_node->given_operation_parameters.output_stream_parameters,
+            output_stream_id);
+        new_data.record_count = -1;
+        tables_metadata.insert({table_name, new_data});
       }
-      auto table_name =
-          current_node->node_name + "_" + std::to_string(output_stream_id);
-      TableMetadata new_data;
-      new_data.record_size = query_manager->GetRecordSizeFromParameters(
-          data_manager,
-          current_node->given_operation_parameters.output_stream_parameters,
-          output_stream_id);
-      // No records in the table yet.
-      new_data.record_count = -1;
-      output_node->given_input_data_definition_files[index] = table_name;
-      tables_metadata.insert({table_name, new_data});
 
-      if (std::all_of(output_node->given_input_data_definition_files.begin(),
-                      output_node->given_input_data_definition_files.end(),
-                      [](const auto& filename) { return !filename.empty(); })) {
-        current_available_node_pointers.push_back(output_node);
+      const auto& output_node = current_node->next_nodes.at(output_stream_id);
+      if (output_node) {
+        int index = GetCurrentNodeIndexFromNextNode(current_node, output_node);
+        if (output_node->given_input_data_definition_files.at(index).empty()) {
+          output_node->given_input_data_definition_files[index] = table_name;
+
+          if (std::all_of(
+                  output_node->given_input_data_definition_files.begin(),
+                  output_node->given_input_data_definition_files.end(),
+                  [](const auto& filename) { return !filename.empty(); })) {
+            current_available_node_pointers.push_back(output_node);
+          }
+        }
+        // Else the table names have been already given to the output node.
       }
     }
   }
@@ -117,7 +151,7 @@ void ExecutionManager::Execute(
     }
   }
   auto end = std::chrono::steady_clock::now();
-  std::cout << "TOTAL RUNTIME:"
+  std::cout << "TOTAL EXECUTION RUNTIME:"
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      begin)
                    .count()
@@ -341,6 +375,7 @@ void ExecutionManager::AddSchedulingNodeToGraph(
   current_node.capacity = accelerator_library.GetNodeCapacity(
       node->operation_type,
       node->given_operation_parameters.operation_parameters);
+  current_node.node_ptr = node;
   scheduling_graph.insert({node->node_name, current_node});
 }
 

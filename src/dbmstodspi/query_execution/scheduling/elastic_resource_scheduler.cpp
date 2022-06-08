@@ -40,17 +40,17 @@ using orkhestrafs::core_interfaces::query_scheduling_data::NodeRunData;
 void ElasticResourceNodeScheduler::RemoveUnnecessaryTables(
     const std::unordered_map<std::string, SchedulingQueryNode> &graph,
     std::map<std::string, TableMetadata> &tables) {
-  //  std::map<std::string, TableMetadata> resulting_tables;
-  //  for (const auto &[table_name, table_data] : tables) {
-  //    if (std::any_of(graph.begin(), graph.end(), [&](const auto &p) {
-  //          return std::find(p.second.data_tables.begin(),
-  //                           p.second.data_tables.end(),
-  //                           table_name) != p.second.data_tables.end();
-  //        })) {
-  //      resulting_tables.insert({table_name, table_data});
-  //    }
-  //  }
-  //  tables = resulting_tables;
+//    std::map<std::string, TableMetadata> resulting_tables;
+//    for (const auto &[table_name, table_data] : tables) {
+//      if (std::any_of(graph.begin(), graph.end(), [&](const auto &p) {
+//            return std::find(p.second.data_tables.begin(),
+//                             p.second.data_tables.end(),
+//                             table_name) != p.second.data_tables.end();
+//          })) {
+//        resulting_tables.insert({table_name, table_data});
+//      }
+//    }
+//    tables = resulting_tables;
 }
 
 auto ElasticResourceNodeScheduler::CalculateTimeLimit(
@@ -155,7 +155,6 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
         first_node_names, drivers, config.use_max_runs_cap,
         config.reduce_single_runs);
   }
-  // RemoveUnnecessaryTables(graph, tables);
   scheduler_->PreprocessNodes(starting_nodes, processed_nodes, graph, tables);
   std::chrono::steady_clock::time_point end_pre_process =
       std::chrono::steady_clock::now();
@@ -190,43 +189,43 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
   std::cout << "plan_count: " << std::to_string(resulting_plans.size())
             << std::endl;
   benchmark_data["pre_process_time"] += pre_process_time;
-  // std::cout << "pre_process_time: " << std::to_string(pre_process_time)
-  //          << std::endl;
+   std::cout << "pre_process_time: " << std::to_string(pre_process_time)
+            << std::endl;
   benchmark_data["schedule_time"] += scheduling_time;
-  // std::cout << "schedule_time: " << std::to_string(scheduling_time)
-  //          << std::endl;
+   std::cout << "schedule_time: " << std::to_string(scheduling_time)
+            << std::endl;
   benchmark_data["timeout"] += static_cast<double>(timed_out);
-  // std::cout << "timeout: " << std::to_string(timed_out) << std::endl;
+   std::cout << "timeout: " << std::to_string(timed_out) << std::endl;
   benchmark_data["cost_eval_time"] += cost_eval_time;
-  // std::cout << "cost_eval_time: " << std::to_string(cost_eval_time)
-  //          << std::endl;
+   std::cout << "cost_eval_time: " << std::to_string(cost_eval_time)
+            << std::endl;
   benchmark_data["overall_time"] += overall_time;
   std::cout << "overall_time: " << std::to_string(overall_time) << std::endl;
   benchmark_data["run_count"] += best_plan.size();
-  // std::cout << "run_count: " << std::to_string(best_plan.size()) <<
-  // std::endl;
+   std::cout << "run_count: " << std::to_string(best_plan.size()) <<
+   std::endl;
   benchmark_data["data_amount"] += data_amount;
-  // std::cout << "data_amount: " << std::to_string(data_amount) << std::endl;
+   std::cout << "data_amount: " << std::to_string(data_amount) << std::endl;
   benchmark_data["configuration_amount"] += configuration_amount;
-  // std::cout << "configuration_amount: "
-  // std::to_string(configuration_amount)
-  //          << std::endl;
+   std::cout << "configuration_amount: " <<
+   std::to_string(configuration_amount)
+            << std::endl;
   benchmark_data["schedule_count"] += 1;
 
   // starting_nodes = resulting_plans.at(best_plan).available_nodes;
   processed_nodes = resulting_plans.at(best_plan).processed_nodes;
   // graph = resulting_plans.at(best_plan).graph;
-  // tables = resulting_plans.at(best_plan).tables;
+  tables = resulting_plans.at(best_plan).data_tables;
 
   current_configuration = new_last_config;
 
   // TODO: Need to update available nodes for next run!
-  /*for (const auto &run : best_plan) {
+  for (const auto &run : best_plan) {
     for (const auto &node : run) {
       std::cout << " " << node.node_name << " ";
     }
     std::cout << std::endl;
-  }*/
+  }
 }
 
 auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
