@@ -158,7 +158,7 @@ auto ConfigCreator::CreateTablesData(
     current_table.record_size =
         std::get<int>(table_meta_data_map.at(record_size_field));
     current_table.sorted_status =
-        std::get<std::vector<std::vector<int>>>(
+        std::get<std::vector<int>>(
             table_meta_data_map.at(sorted_status_field));
     if (!current_table.sorted_status.empty() &&
         current_table.sorted_status.at(0) != 0 &&

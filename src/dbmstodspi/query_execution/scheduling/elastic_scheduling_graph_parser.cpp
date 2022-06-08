@@ -377,7 +377,7 @@ auto ElasticSchedulingGraphParser::FindMissingUtility(
   if (bitstream_capacity.size() != node_capacity.size()) {
     throw std::runtime_error("Capacity parameters don't match!");
   }
-  return ;
+  throw std::runtime_error("Not implemented method!");
 }
 
 void ElasticSchedulingGraphParser::UpdateGraphCapacities(

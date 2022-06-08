@@ -80,19 +80,19 @@ void GraphCreator::LinkDependentNodes(
     auto search_previous = previous_nodes.find(node_name);
     if (search_previous != previous_nodes.end()) {
       if (search_previous->second.size() !=
-          node->input_data_definition_files.size()) {
+          node->given_input_data_definition_files.size()) {
         throw std::runtime_error(
             "Incorrect number of input file definitions found!");
       }
       for (int i = 0; i < search_previous->second.size(); i++) {
         if (!search_previous->second[i].empty()) {
-          if (!node->input_data_definition_files[i].empty()) {
+          if (!node->given_input_data_definition_files[i].empty()) {
             throw std::runtime_error("Input file not required!");
           }
           node->previous_nodes.push_back(
               graph_nodes_map.at(search_previous->second[i]));
         } else {
-          if (node->input_data_definition_files[i].empty()) {
+          if (node->given_input_data_definition_files[i].empty()) {
             throw std::runtime_error("Input file required!");
           }
           node->previous_nodes.push_back(nullptr);

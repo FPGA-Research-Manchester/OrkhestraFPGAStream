@@ -247,7 +247,7 @@ class QueryManagerInterface {
   virtual auto GetRecordSizeFromParameters(
       const DataManagerInterface* data_manager,
       const std::vector<std::vector<int>>& node_parameters,
-      int stream_index) const -> int;
+      int stream_index) const -> int = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

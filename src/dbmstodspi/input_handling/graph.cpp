@@ -109,9 +109,10 @@ auto Graph::GetRootNodesPtrs() -> std::vector<QueryNode*> {
 }
 
 auto Graph::GetAllNodesPtrs() -> std::vector<QueryNode*> {
-  std::vector<QueryNode*> node_ptrs(all_nodes_.size());
-  for (auto& node : all_nodes_) {
-    node_ptrs.push_back(&node);
+  std::vector<QueryNode*> node_ptrs;
+  node_ptrs.reserve(all_nodes_.size());
+  for (int node_i = 0; node_i<all_nodes_.size(); node_i++) {
+    node_ptrs.push_back(all_nodes_.data()+node_i);
   }
   return std::move(node_ptrs);
 }
