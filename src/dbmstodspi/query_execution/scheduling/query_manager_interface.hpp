@@ -136,32 +136,6 @@ class QueryManagerInterface {
       std::unordered_map<std::string, int>& table_counter) = 0;
 
   /**
-   * @brief Method to move reusable output memory blocks to input maps. And the
-   * rest of the memory blocks get freed.
-   * @param memory_manager Manager to handle memory blocks and reading and
-   * writing to memory mapped addresses.
-   * @param input_memory_blocks Memory for input streams.
-   * @param output_memory_blocks Memory for output streams.
-   * @param input_stream_sizes Map for input stream size parameters.
-   * @param output_stream_sizes Map for output stream size parameters.
-   * @param reuse_links Map for reusing memory blocks for next runs.
-   * @param scheduled_node_names Names of the currently executed nodes.
-   */
-  virtual void FreeMemoryBlocks(
-      MemoryManagerInterface* memory_manager,
-      std::map<std::string, std::vector<MemoryBlockInterface*>>&
-          input_memory_blocks,
-      std::map<std::string, std::vector<MemoryBlockInterface*>>&
-          output_memory_blocks,
-      std::map<std::string, std::vector<RecordSizeAndCount>>&
-          input_stream_sizes,
-      std::map<std::string, std::vector<RecordSizeAndCount>>&
-          output_stream_sizes,
-      const std::map<std::string, std::map<int, MemoryReuseTargets>>&
-          reuse_links,
-      const std::vector<std::string>& scheduled_node_names) = 0;
-
-  /**
    * Method to schedule next set of nodes based on PR graph nodes.
    * @param query_nodes Root query nodes
    * @param first_node_names Node names which are constrained to first pos

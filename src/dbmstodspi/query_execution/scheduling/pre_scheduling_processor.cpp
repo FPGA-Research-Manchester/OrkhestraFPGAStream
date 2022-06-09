@@ -260,13 +260,16 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
       }
       // Move input table name to outputs input table.
       const auto& after_node = graph.at(current_node_name).after_nodes.front();
-      int index = QuerySchedulingHelper::GetCurrentNodeIndexesByName(
-                      graph, after_node, current_node_name)
-                      .front()
-                      .first;
-      graph.at(after_node).node_ptr->given_input_data_definition_files[index] =
-          graph.at(current_node_name)
-              .node_ptr->given_input_data_definition_files.front();
+      if (!after_node.empty()) {
+        int index = QuerySchedulingHelper::GetCurrentNodeIndexesByName(
+                        graph, after_node, current_node_name)
+                        .front()
+                        .first;
+        graph.at(after_node)
+            .node_ptr->given_input_data_definition_files[index] =
+            graph.at(current_node_name)
+                .node_ptr->given_input_data_definition_files.front();
+      }
 
       current_processed_nodes.insert(current_node_name);
       if (available_nodes.find(current_node_name) != available_nodes.end()) {

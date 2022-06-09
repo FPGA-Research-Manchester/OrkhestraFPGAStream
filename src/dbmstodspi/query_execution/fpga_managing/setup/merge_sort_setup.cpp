@@ -183,7 +183,7 @@ auto MergeSortSetup::GetMinSortingRequirementsForTable(
     return {0};
   }
   int required_capacity = 0;
-  for (int i = 4; i < table_data.sorted_status.size(); i += 4) {
+  for (int i = 3; i < table_data.sorted_status.size(); i += 4) {
     required_capacity += table_data.sorted_status.at(i);
   }
   return {required_capacity};

@@ -47,15 +47,14 @@ class IDManagerTest : public ::testing::Test {
   const std::string third_node_name_ = "C";
 
   const std::vector<std::string> one_data_file_vector_ = {""};
-  std::vector<std::weak_ptr<QueryNode>> empty_previous_nodes_vector_ = {};
-  std::vector<std::shared_ptr<QueryNode>> empty_next_nodes_vector_ = {};
+  std::vector<QueryNode*> empty_previous_nodes_vector_ = {};
+  std::vector<QueryNode*> empty_next_nodes_vector_ = {};
 };
 
 TEST_F(IDManagerTest, SingleNode1In1Out) {
   // Don't have to be nullptrs
-  std::vector<std::weak_ptr<QueryNode>> previous_nodes = {
-      std::weak_ptr<QueryNode>()};
-  std::vector<std::shared_ptr<QueryNode>> next_nodes = {nullptr};
+  std::vector<QueryNode*> previous_nodes = {nullptr};
+  std::vector<QueryNode*> next_nodes = {nullptr};
 
   QueryNode first_node(one_data_file_vector_, one_data_file_vector_,
                        base_operation_type_, next_nodes, previous_nodes,
@@ -65,16 +64,14 @@ TEST_F(IDManagerTest, SingleNode1In1Out) {
   expected_input_ids_.insert({first_node_name_, {0}});
   expected_output_ids_.insert({first_node_name_, {0}});
 
-  IDManager::AllocateStreamIDs({first_node}, input_ids_, output_ids_);
+  IDManager::AllocateStreamIDs({&first_node}, input_ids_, output_ids_);
   ASSERT_EQ(expected_input_ids_, input_ids_);
   ASSERT_EQ(expected_output_ids_, output_ids_);
 }
 
 TEST_F(IDManagerTest, SingleNodeNIn1Out) {
-  std::vector<std::weak_ptr<QueryNode>> previous_nodes = {
-      std::weak_ptr<QueryNode>(), std::weak_ptr<QueryNode>(),
-      std::weak_ptr<QueryNode>()};
-  std::vector<std::shared_ptr<QueryNode>> next_nodes = {nullptr};
+  std::vector<QueryNode*> previous_nodes = {nullptr, nullptr, nullptr};
+  std::vector<QueryNode*> next_nodes = {nullptr};
 
   std::vector<std::string> input_data_files = {"", "", ""};
   std::vector<std::string> output_data_files = {""};
@@ -87,15 +84,15 @@ TEST_F(IDManagerTest, SingleNodeNIn1Out) {
   expected_input_ids_.insert({first_node_name_, {0, 1, 2}});
   expected_output_ids_.insert({first_node_name_, {0}});
 
-  IDManager::AllocateStreamIDs({first_node}, input_ids_, output_ids_);
+  IDManager::AllocateStreamIDs({&first_node}, input_ids_, output_ids_);
   ASSERT_EQ(expected_input_ids_, input_ids_);
   ASSERT_EQ(expected_output_ids_, output_ids_);
 }
 
 TEST_F(IDManagerTest, SingleNode1InMOut) {
-  std::vector<std::weak_ptr<QueryNode>> previous_nodes = {
-      std::weak_ptr<QueryNode>()};
-  std::vector<std::shared_ptr<QueryNode>> next_nodes = {nullptr, nullptr,
+  std::vector<QueryNode*> previous_nodes = {
+      nullptr};
+  std::vector<QueryNode*> next_nodes = {nullptr, nullptr,
                                                         nullptr, nullptr};
 
   std::vector<std::string> input_data_files = {""};
@@ -109,15 +106,14 @@ TEST_F(IDManagerTest, SingleNode1InMOut) {
   expected_input_ids_.insert({first_node_name_, {0}});
   expected_output_ids_.insert({first_node_name_, {0, 1, 2, 3}});
 
-  IDManager::AllocateStreamIDs({first_node}, input_ids_, output_ids_);
+  IDManager::AllocateStreamIDs({&first_node}, input_ids_, output_ids_);
   ASSERT_EQ(expected_input_ids_, input_ids_);
   ASSERT_EQ(expected_output_ids_, output_ids_);
 }
 
 TEST_F(IDManagerTest, SingleNodeNInMOut) {
-  std::vector<std::weak_ptr<QueryNode>> previous_nodes = {
-      std::weak_ptr<QueryNode>(), std::weak_ptr<QueryNode>()};
-  std::vector<std::shared_ptr<QueryNode>> next_nodes = {nullptr, nullptr,
+  std::vector<QueryNode*> previous_nodes = {nullptr, nullptr};
+  std::vector<QueryNode*> next_nodes = {nullptr, nullptr,
                                                         nullptr};
 
   std::vector<std::string> input_data_files = {"", ""};
@@ -131,41 +127,45 @@ TEST_F(IDManagerTest, SingleNodeNInMOut) {
   expected_input_ids_.insert({first_node_name_, {0, 1}});
   expected_output_ids_.insert({first_node_name_, {0, 1, 2}});
 
-  IDManager::AllocateStreamIDs({first_node}, input_ids_, output_ids_);
+  IDManager::AllocateStreamIDs({&first_node}, input_ids_, output_ids_);
   ASSERT_EQ(expected_input_ids_, input_ids_);
   ASSERT_EQ(expected_output_ids_, output_ids_);
 }
 
 TEST_F(IDManagerTest, TwoPipelinedNodes) {
-  auto first_node = std::make_shared<QueryNode>(
-      one_data_file_vector_, one_data_file_vector_, base_operation_type_,
-      empty_next_nodes_vector_, empty_previous_nodes_vector_,
-      any_operation_parameters_, first_node_name_, any_is_checked_);
-  auto second_node = std::make_shared<QueryNode>(
+  auto first_node = QueryNode(one_data_file_vector_,
+                          one_data_file_vector_,
+                          base_operation_type_,
+                          empty_next_nodes_vector_,
+                          empty_previous_nodes_vector_,
+                          any_operation_parameters_,
+                          first_node_name_,
+                          any_is_checked_);
+  auto second_node = QueryNode(
       one_data_file_vector_, one_data_file_vector_, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
       any_operation_parameters_, second_node_name_, any_is_checked_);
 
-  first_node->next_nodes.push_back(second_node);
-  first_node->previous_nodes.push_back(std::weak_ptr<QueryNode>());
-  second_node->next_nodes.push_back(nullptr);
-  second_node->previous_nodes.push_back(first_node);
+  first_node.next_nodes.push_back(&second_node);
+  first_node.previous_nodes.push_back(nullptr);
+  second_node.next_nodes.push_back(nullptr);
+  second_node.previous_nodes.push_back(&first_node);
 
   expected_input_ids_.insert({first_node_name_, {0}});
   expected_input_ids_.insert({second_node_name_, {0}});
   expected_output_ids_.insert({first_node_name_, {0}});
   expected_output_ids_.insert({second_node_name_, {0}});
 
-  IDManager::AllocateStreamIDs({*first_node, *second_node}, input_ids_,
+  IDManager::AllocateStreamIDs({&first_node, &second_node}, input_ids_,
                                output_ids_);
   ASSERT_EQ(expected_input_ids_, input_ids_);
   ASSERT_EQ(expected_output_ids_, output_ids_);
 }
 
 TEST_F(IDManagerTest, TwoIndependentNodes) {
-  std::vector<std::weak_ptr<QueryNode>> previous_nodes = {
-      std::weak_ptr<QueryNode>()};
-  std::vector<std::shared_ptr<QueryNode>> next_nodes = {nullptr};
+  std::vector<QueryNode*> previous_nodes = {
+      nullptr};
+  std::vector<QueryNode*> next_nodes = {nullptr};
 
   QueryNode first_node(one_data_file_vector_, one_data_file_vector_,
                        base_operation_type_, next_nodes, previous_nodes,
@@ -181,32 +181,32 @@ TEST_F(IDManagerTest, TwoIndependentNodes) {
   expected_output_ids_.insert({first_node_name_, {0}});
   expected_output_ids_.insert({second_node_name_, {1}});
 
-  IDManager::AllocateStreamIDs({first_node, second_node}, input_ids_,
+  IDManager::AllocateStreamIDs({&first_node, &second_node}, input_ids_,
                                output_ids_);
   ASSERT_EQ(expected_input_ids_, input_ids_);
   ASSERT_EQ(expected_output_ids_, output_ids_);
 }
 
 TEST_F(IDManagerTest, TwoPipelinedNodesAndOneIndependent) {
-  auto first_node = std::make_shared<QueryNode>(
+  auto first_node = QueryNode(
       one_data_file_vector_, one_data_file_vector_, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
       any_operation_parameters_, first_node_name_, any_is_checked_);
-  auto second_node = std::make_shared<QueryNode>(
+  auto second_node = QueryNode(
       one_data_file_vector_, one_data_file_vector_, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
       any_operation_parameters_, second_node_name_, any_is_checked_);
-  auto third_node = std::make_shared<QueryNode>(
+  auto third_node = QueryNode(
       one_data_file_vector_, one_data_file_vector_, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
       any_operation_parameters_, third_node_name_, any_is_checked_);
 
-  first_node->next_nodes.push_back(second_node);
-  first_node->previous_nodes.push_back(std::weak_ptr<QueryNode>());
-  second_node->next_nodes.push_back(nullptr);
-  second_node->previous_nodes.push_back(first_node);
-  third_node->previous_nodes.push_back(std::weak_ptr<QueryNode>());
-  third_node->next_nodes.push_back(nullptr);
+  first_node.next_nodes.push_back(&second_node);
+  first_node.previous_nodes.push_back(nullptr);
+  second_node.next_nodes.push_back(nullptr);
+  second_node.previous_nodes.push_back(&first_node);
+  third_node.previous_nodes.push_back(nullptr);
+  third_node.next_nodes.push_back(nullptr);
 
   expected_input_ids_.insert({first_node_name_, {0}});
   expected_input_ids_.insert({second_node_name_, {0}});
@@ -215,7 +215,7 @@ TEST_F(IDManagerTest, TwoPipelinedNodesAndOneIndependent) {
   expected_output_ids_.insert({second_node_name_, {0}});
   expected_output_ids_.insert({third_node_name_, {1}});
 
-  IDManager::AllocateStreamIDs({*first_node, *second_node, *third_node},
+  IDManager::AllocateStreamIDs({&first_node, &second_node, &third_node},
                                input_ids_, output_ids_);
   ASSERT_EQ(expected_input_ids_, input_ids_);
   ASSERT_EQ(expected_output_ids_, output_ids_);
@@ -225,28 +225,28 @@ TEST_F(IDManagerTest, TwoPipelineNodesWithDanglingOutputs) {
   std::vector<std::string> input_data_file_vector = {""};
   std::vector<std::string> output_data_file_vector = {"", ""};
 
-  auto first_node = std::make_shared<QueryNode>(
+  auto first_node = QueryNode(
       input_data_file_vector, output_data_file_vector, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
       any_operation_parameters_, first_node_name_, any_is_checked_);
-  auto second_node = std::make_shared<QueryNode>(
+  auto second_node = QueryNode(
       input_data_file_vector, output_data_file_vector, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
       any_operation_parameters_, second_node_name_, any_is_checked_);
 
-  first_node->next_nodes.push_back(nullptr);
-  first_node->next_nodes.push_back(second_node);
-  first_node->previous_nodes.push_back(std::weak_ptr<QueryNode>());
-  second_node->next_nodes.push_back(nullptr);
-  second_node->next_nodes.push_back(nullptr);
-  second_node->previous_nodes.push_back(first_node);
+  first_node.next_nodes.push_back(nullptr);
+  first_node.next_nodes.push_back(&second_node);
+  first_node.previous_nodes.push_back(nullptr);
+  second_node.next_nodes.push_back(nullptr);
+  second_node.next_nodes.push_back(nullptr);
+  second_node.previous_nodes.push_back(&first_node);
 
   expected_input_ids_.insert({first_node_name_, {0}});
   expected_input_ids_.insert({second_node_name_, {1}});
   expected_output_ids_.insert({first_node_name_, {0, 1}});
   expected_output_ids_.insert({second_node_name_, {1, 2}});
 
-  IDManager::AllocateStreamIDs({*first_node, *second_node}, input_ids_,
+  IDManager::AllocateStreamIDs({&first_node, &second_node}, input_ids_,
                                output_ids_);
   ASSERT_EQ(expected_input_ids_, input_ids_);
   ASSERT_EQ(expected_output_ids_, output_ids_);
@@ -256,37 +256,37 @@ TEST_F(IDManagerTest, TwoPipelinedNodesWithDanglingInputs) {
   std::vector<std::string> output_data_file_vector = {""};
   std::vector<std::string> input_data_file_vector = {"", ""};
 
-  auto first_node = std::make_shared<QueryNode>(
+  auto first_node = QueryNode(
       input_data_file_vector, output_data_file_vector, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
       any_operation_parameters_, first_node_name_, any_is_checked_);
-  auto second_node = std::make_shared<QueryNode>(
+  auto second_node = QueryNode(
       input_data_file_vector, output_data_file_vector, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
       any_operation_parameters_, second_node_name_, any_is_checked_);
 
-  first_node->next_nodes.push_back(second_node);
-  first_node->previous_nodes.push_back(std::weak_ptr<QueryNode>());
-  first_node->previous_nodes.push_back(std::weak_ptr<QueryNode>());
-  second_node->next_nodes.push_back(nullptr);
-  second_node->previous_nodes.push_back(std::weak_ptr<QueryNode>());
-  second_node->previous_nodes.push_back(first_node);
+  first_node.next_nodes.push_back(&second_node);
+  first_node.previous_nodes.push_back(nullptr);
+  first_node.previous_nodes.push_back(nullptr);
+  second_node.next_nodes.push_back(nullptr);
+  second_node.previous_nodes.push_back(nullptr);
+  second_node.previous_nodes.push_back(&first_node);
 
   expected_input_ids_.insert({first_node_name_, {0, 1}});
   expected_input_ids_.insert({second_node_name_, {2, 0}});
   expected_output_ids_.insert({first_node_name_, {0}});
   expected_output_ids_.insert({second_node_name_, {2}});
 
-  IDManager::AllocateStreamIDs({*first_node, *second_node}, input_ids_,
+  IDManager::AllocateStreamIDs({&first_node, &second_node}, input_ids_,
                                output_ids_);
   ASSERT_EQ(expected_input_ids_, input_ids_);
   ASSERT_EQ(expected_output_ids_, output_ids_);
 }
 
 TEST_F(IDManagerTest, TooManyStreamsError) {
-  std::vector<std::weak_ptr<QueryNode>> previous_nodes = {
-      std::weak_ptr<QueryNode>()};
-  std::vector<std::shared_ptr<QueryNode>> next_nodes = {nullptr};
+  std::vector<QueryNode*> previous_nodes = {
+      nullptr};
+  std::vector<QueryNode*> next_nodes = {nullptr};
 
   std::vector<QueryNode> all_nodes;
 
@@ -297,7 +297,12 @@ TEST_F(IDManagerTest, TooManyStreamsError) {
                            any_is_checked_);
   }
 
-  ASSERT_THROW(IDManager::AllocateStreamIDs(all_nodes, input_ids_, output_ids_),
+  std::vector<QueryNode*> node_ptrs;
+  for (auto& node : all_nodes) {
+    node_ptrs.push_back(&node);
+  }
+
+  ASSERT_THROW(IDManager::AllocateStreamIDs(node_ptrs, input_ids_, output_ids_),
                std::runtime_error);
 }
 

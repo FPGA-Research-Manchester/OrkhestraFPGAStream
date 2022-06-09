@@ -61,19 +61,6 @@ class QueryManager : public QueryManagerInterface {
       const std::vector<AcceleratedQueryNode>& execution_query_nodes,
       std::map<std::string, TableMetadata>& scheduling_table_data,
       std::unordered_map<std::string, int>& table_counter) override;
-  void FreeMemoryBlocks(
-      MemoryManagerInterface* memory_manager,
-      std::map<std::string, std::vector<MemoryBlockInterface*>>&
-          input_memory_blocks,
-      std::map<std::string, std::vector<MemoryBlockInterface*>>&
-          output_memory_blocks,
-      std::map<std::string, std::vector<RecordSizeAndCount>>&
-          input_stream_sizes,
-      std::map<std::string, std::vector<RecordSizeAndCount>>&
-          output_stream_sizes,
-      const std::map<std::string, std::map<int, MemoryReuseTargets>>&
-          reuse_links,
-      const std::vector<std::string>& scheduled_node_names) override;
   auto ScheduleNextSetOfNodes(
       std::vector<QueryNode*>& query_nodes,
       const std::unordered_set<std::string>& first_node_names,

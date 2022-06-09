@@ -64,7 +64,8 @@ class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
               (QueryOperationType operation_type,
                const std::vector<int>& min_capacity,
                const std::vector<std::string>& input_tables,
-               const TableMap& data_tables),
+               const TableMap& data_tables,
+               const std::vector<std::string>& output_table_names),
               (override));
   MOCK_METHOD((bool), UpdateDataTable,
               (QueryOperationType operation_type,
@@ -86,4 +87,16 @@ class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
   MOCK_METHOD((orkhestrafs::dbmstodspi::AcceleratedQueryNode),
               GetEmptyModuleNode,
               (QueryOperationType operation, int module_position), (override));
+  MOCK_METHOD((bool), SetMissingFunctionalCapacity,
+              (const std::vector<int>& bitstream_capacity,
+              std::vector<int>& missing_capacity,
+              const std::vector<int>& node_capacity, bool is_composed,
+              QueryOperationType operation_type), (override));
+  MOCK_METHOD((std::vector<int>), GetWorstCaseNodeCapacity,
+              (QueryOperationType operation_type,
+               const std::vector<int>& min_capacity,
+               const std::vector<std::string>& input_tables,
+               const TableMap& data_tables,
+               QueryOperationType next_operation_type),
+              (override));
 };
