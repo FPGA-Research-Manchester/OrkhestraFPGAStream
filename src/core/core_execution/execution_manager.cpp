@@ -99,7 +99,7 @@ void ExecutionManager::InitialiseTables(
           current_node->given_output_data_definition_files.at(output_stream_id);
       if (table_name.empty()) {
         table_name = current_node->node_name + "_" +
-                     std::to_string(output_stream_id) + ".csv";
+                     std::to_string(output_stream_id);
         TableMetadata new_data;
         new_data.record_size = query_manager->GetRecordSizeFromParameters(
             data_manager,

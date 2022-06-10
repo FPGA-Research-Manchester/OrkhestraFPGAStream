@@ -344,7 +344,9 @@ void ElasticResourceNodeScheduler::BuildInitialSequencesForMergeSorter(
           number_of_sequences *
               sorted_status.at(set_of_sequences_id + size_offset);
       LengthOfSortedSequences new_sequence = {
-          sorted_status.at(set_of_sequences_id + begin_offset), 1, table_name};
+          sorted_status.at(set_of_sequences_id + begin_offset) +
+              number_of_sequences,
+          1, table_name};
       auto search = map_of_sequences.find(left_over_size);
       if (search == map_of_sequences.end()) {
         map_of_sequences.insert({left_over_size, {new_sequence}});
@@ -356,10 +358,10 @@ void ElasticResourceNodeScheduler::BuildInitialSequencesForMergeSorter(
         sorted_status.at(set_of_sequences_id + begin_offset),
         number_of_sequences, table_name};
     auto search = map_of_sequences.find(
-        sorted_status.at(set_of_sequences_id + count_offset));
+        sorted_status.at(set_of_sequences_id + size_offset));
     if (search == map_of_sequences.end()) {
       map_of_sequences.insert(
-          {sorted_status.at(set_of_sequences_id + count_offset),
+          {sorted_status.at(set_of_sequences_id + size_offset),
            {new_sequence}});
     } else {
       search->second.push_back(new_sequence);
@@ -404,12 +406,17 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
       const auto &current_module = run.at(module_index);
       const auto &node_name = current_module.node_name;
       // Check if we have the corresponding node found before.
-      if (found_nodes.find(node_name) != found_nodes.end()) {
-        chosen_node = found_nodes.at(node_name);
-      } else {
+      if (found_nodes.find(node_name) == found_nodes.end()) {
         found_nodes.insert(
             {node_name, GetNodePointerWithName(available_nodes, node_name)});
+        // Clear empty parameters
+        if (found_nodes.at(node_name)->operation_type ==
+            QueryOperationType::kMergeSort) {
+          found_nodes.at(node_name)
+              ->given_operation_parameters.operation_parameters.clear();
+        }
       }
+      chosen_node = found_nodes.at(node_name);
       // Check if it is the first occurrence of this node in this run
       if (current_run_node_data.find(node_name) !=
           current_run_node_data.end()) {
@@ -471,7 +478,7 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
           // Are there any nodes placed before?
           for (int stream_id = 0;
                stream_id < chosen_node->previous_nodes.size(); stream_id++) {
-            auto &before_node = chosen_node->next_nodes.at(stream_id);
+            auto &before_node = chosen_node->previous_nodes.at(stream_id);
             bool is_io_stream = true;
             if (before_node) {
               for (int search_index = module_index - 1; search_index >= 0;
@@ -524,13 +531,18 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
   }
   for (auto &[merge_sort_node_name, sort_status] :
        sorted_status_of_a_merge_node) {
-    // If run count is 0 or missing - Something went wrong.
-    // If the number of parameters or run_data doesn't match the run_count -
-    // Something went wrong. Assuming the above is correct!
     auto &sort_node = found_nodes.at(merge_sort_node_name);
     auto &run_data = sort_node->module_run_data;
     auto &parameters =
         sort_node->given_operation_parameters.operation_parameters;
+    // If run count is 0 or missing - Something went wrong.
+    // Or If the number of parameters or run_data doesn't match the run_count
+    if (run_counter.find(merge_sort_node_name) == run_counter.end() ||
+        run_data.size() != parameters.size() ||
+        run_counter.at(merge_sort_node_name) != run_data.size()) {
+      throw std::runtime_error("Parameter's don't match run count!");
+    }
+    
     for (int run_id = 0; run_id < run_counter.at(merge_sort_node_name);
          run_id++) {
       std::vector<int> next_run_capacities;
@@ -589,8 +601,15 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
       throw std::runtime_error("Incorrect penultimate capacity!");
     }
   } else {
+    int required_capacity = 0;
+    for (const auto &[size, sequences] : sort_status) {
+      for (const auto &sequence : sequences) {
+        required_capacity += sequence.number_of_sequences;
+      }
+    }
     leftover_capacity =
         std::accumulate(capacities.begin(), capacities.end(), 0);
+    int difference = required_capacity - leftover_capacity;
   }
   int new_sequence_size = 0;
   while (leftover_capacity != 0 && !sort_status.empty()) {
@@ -608,6 +627,7 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
       if (find_it == run_data.input_data_definition_files.end()) {
         run_data.input_data_definition_files.push_back(
             current_sequence.table_name);
+        find_it = run_data.input_data_definition_files.end() - 1;
       }
       int table_index = find_it - run_data.input_data_definition_files.begin();
       new_sequence_size += current_sequence_size;
@@ -639,7 +659,7 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
     for (const auto &input_table_name : run_data.input_data_definition_files) {
       max_iteration = std::max(
           max_iteration,
-          static_cast<int>('a') - static_cast<int>(input_table_name.back()));
+          static_cast<int>(input_table_name.back() - static_cast<int>('0')));
     }
     auto output_table_name =
         merge_node->given_input_data_definition_files.front();
@@ -664,15 +684,25 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
       // If exists check all of the vectors and see if you can just +1 the count
       // of sequences where the table name matches and offset is at the end of
       // the table. Offset required for just +1
-      int required_output_offset_for_merge =
+      /*int required_output_offset_for_merge =
           run_data.output_offset.front() - new_sequence_size;
       if (required_output_offset_for_merge > 0) {
-        for (auto &sequences : sort_status.at(new_sequence_size)) {
+        for (auto &sequences : sort_status[new_sequence_size]) {
           if (sequences.table_name == output_table_name &&
-              sequences.offset == required_output_offset_for_merge) {
+              sequences.offset + (new_sequence_size * sequences.number_of_sequences) ==
+                  run_data.output_offset.front()) {
             sequences.number_of_sequences++;
             sequence_merged = true;
           }
+        }
+      }*/
+      for (auto &sequences : sort_status[new_sequence_size]) {
+        if (sequences.table_name == output_table_name &&
+            sequences.offset +
+                    (new_sequence_size * sequences.number_of_sequences) ==
+                run_data.output_offset.front()) {
+          sequences.number_of_sequences++;
+          sequence_merged = true;
         }
       }
     }
@@ -693,6 +723,10 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
     }
   } else {
     // if empty check that all nodes have been sorted!
+    int thing = new_sequence_size;
+    int thing2 =
+        table_data.at(merge_node->given_input_data_definition_files.front())
+            .record_count;
     if (table_data.at(merge_node->given_input_data_definition_files.front())
             .record_count != new_sequence_size) {
       throw std::runtime_error("Incorrect number of records have been sorted!");

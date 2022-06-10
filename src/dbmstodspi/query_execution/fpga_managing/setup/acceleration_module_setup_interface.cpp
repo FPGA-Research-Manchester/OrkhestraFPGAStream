@@ -74,7 +74,8 @@ auto AccelerationModuleSetupInterface::GetWorstCaseProcessedTables(
   return std::move(resulting_tables);
 }
 
-auto AccelerationModuleSetupInterface::GetWorstCaseNodeCapacity(const std::vector<int>& min_capacity,
+auto AccelerationModuleSetupInterface::GetWorstCaseNodeCapacity(
+    const std::vector<int>& min_capacity,
     const std::vector<std::string>& input_tables,
     const std::map<std::string, TableMetadata>& data_tables,
     QueryOperationType next_operation_type) -> std::vector<int> {
@@ -83,9 +84,11 @@ auto AccelerationModuleSetupInterface::GetWorstCaseNodeCapacity(const std::vecto
 
 auto AccelerationModuleSetupInterface::SetMissingFunctionalCapacity(
     const std::vector<int>& bitstream_capacity,
-    std::vector<int>& missing_capacity,
-    const std::vector<int>& node_capacity, bool is_composed)
-    ->bool {
+    std::vector<int>& missing_capacity, const std::vector<int>& node_capacity,
+    bool is_composed) -> bool {
+  if (bitstream_capacity.size() != node_capacity.size()) {
+    throw std::runtime_error("Capacities don't match!");
+  }
   bool is_node_fully_processed = true;
   for (int capacity_parameter_index = 0;
        capacity_parameter_index < bitstream_capacity.size();

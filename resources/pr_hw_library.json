@@ -239,6 +239,20 @@
 				"capacity": [],
 				"string": "MMDM",
 				"is_backwards": 0
+			},
+			"binPartial_ConstArith64b_55_66.bin": {
+				"locations": [ 10 ],
+				"length": 4,
+				"capacity": [],
+				"string": "MMDM",
+				"is_backwards": 0
+			},
+			"binPartial_ConstArith64b_25_36.bin": {
+				"locations": [ 20 ],
+				"length": 4,
+				"capacity": [],
+				"string": "MMDM",
+				"is_backwards": 0
 			}
 		},
 		"start_locations": [
@@ -252,6 +266,7 @@
 			[],
 			[],
 			[],
+			[ "binPartial_ConstArith64b_55_66.bin" ],
 			[],
 			[],
 			[],
@@ -261,8 +276,7 @@
 			[],
 			[],
 			[],
-			[],
-			[],
+			[ "binPartial_ConstArith64b_25_36.bin" ],
 			[],
 			[],
 			[],
@@ -279,6 +293,20 @@
 		"bitstreams": {
 			"binPartial_DecMult64b_64_84.bin": {
 				"locations": [ 4 ],
+				"length": 7,
+				"capacity": [],
+				"string": "DBMMDBM",
+				"is_backwards": 0
+			},
+			"binPartial_DecMult64b_34_54.bin": {
+				"locations": [ 14 ],
+				"length": 7,
+				"capacity": [],
+				"string": "DBMMDBM",
+				"is_backwards": 0
+			},
+			"binPartial_DecMult64b_4_24.bin": {
+				"locations": [ 24 ],
 				"length": 7,
 				"capacity": [],
 				"string": "DBMMDBM",
@@ -300,6 +328,7 @@
 			[],
 			[],
 			[],
+			[ "binPartial_DecMult64b_34_54.bin" ],
 			[],
 			[],
 			[],
@@ -309,8 +338,7 @@
 			[],
 			[],
 			[],
-			[],
-			[],
+			[ "binPartial_DecMult64b_4_24.bin" ],
 			[],
 			[],
 			[],
@@ -327,10 +355,25 @@
 				"capacity": [],
 				"string": "DMD",
 				"is_backwards": 0
+			},
+			"binPartial_AggregateGlobalSum_85_93.bin": {
+				"locations": [ 1 ],
+				"length": 3,
+				"capacity": [],
+				"string": "DMD",
+				"is_backwards": 0
+			},
+			"binPartial_AggregateGlobalSum_25_33.bin": {
+				"locations": [ 21 ],
+				"length": 3,
+				"capacity": [],
+				"string": "DMD",
+				"is_backwards": 0
 			}
 		},
 		"start_locations": [
 			[],
+			[ "binPartial_AggregateGlobalSum_85_93.bin" ],
 			[],
 			[],
 			[],
@@ -340,7 +383,6 @@
 			[],
 			[],
 			[],
-			[  ],
 			[ "binPartial_AggregateGlobalSum_55_63.bin" ],
 			[],
 			[],
@@ -351,7 +393,7 @@
 			[],
 			[],
 			[],
-			[],
+			[ "binPartial_AggregateGlobalSum_25_33.bin" ],
 			[],
 			[],
 			[],

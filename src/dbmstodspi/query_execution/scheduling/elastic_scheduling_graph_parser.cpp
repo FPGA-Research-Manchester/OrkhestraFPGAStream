@@ -244,7 +244,8 @@ auto ElasticSchedulingGraphParser::GetChosenModulePlacements(
     int min_position, const std::vector<std::pair<int, int>>& taken_positions,
     const std::vector<std::vector<std::string>>& bitstream_start_locations,
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
-        module_placements, bool is_composed) -> bool {
+        module_placements,
+    bool is_composed) -> bool {
   // Do I need to construct this every time?
   auto available_bitstreams = FindAllAvailableBitstreamsAfterMinPos(
       current_operation, min_position, taken_positions,
@@ -293,17 +294,18 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPos(
       found_placements;
   auto search = saved_placements_.find(current_query);
   if (search == saved_placements_.end()) {
-      // Not found
+    // Not found
     bool is_composed = std::any_of(
         current_run.begin(), current_run.end(),
-          [&](const auto& module) { return module.node_name == node_name; });
+        [&](const auto& module) { return module.node_name == node_name; });
     GetScheduledModulesForNodeAfterPosOrig(
         graph, GetMinPositionInCurrentRun(current_run, node_name, graph),
-        node_name, GetTakenColumns(current_run), data_tables, found_placements, is_composed);
+        node_name, GetTakenColumns(current_run), data_tables, found_placements,
+        is_composed);
     saved_placements_.insert({current_query, found_placements});
     module_placements.merge(found_placements);
   } else {
-      // "Cached"
+    // "Cached"
     std::vector<std::pair<int, ScheduledModule>> found_placements(
         search->second.begin(), search->second.end());
     // Composed status currently is saved as well!
@@ -324,7 +326,8 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPosOrig(
     const std::vector<std::pair<int, int>>& taken_positions,
     const std::map<std::string, TableMetadata>& data_tables,
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
-        module_placements, bool is_composed) {
+        module_placements,
+    bool is_composed) {
   auto modules_found = false;
   if (!graph.at(node_name).satisfying_bitstreams.empty() &&
       !heuristics_.first.empty()) {
@@ -371,9 +374,8 @@ auto ElasticSchedulingGraphParser::CheckForSkippableSortOperations(
 auto ElasticSchedulingGraphParser::FindMissingUtility(
     const std::vector<int>& bitstream_capacity,
     std::vector<int>& missing_capacity, const std::vector<int>& node_capacity,
-    QueryOperationType operation_type, bool is_composed)
-    -> bool {
-    // You can get rid of this error check one day and make it module specific.
+    QueryOperationType operation_type, bool is_composed) -> bool {
+  // You can get rid of this error check one day and make it module specific.
   if (bitstream_capacity.size() != node_capacity.size()) {
     throw std::runtime_error("Capacity parameters don't match!");
   }
@@ -426,36 +428,44 @@ auto ElasticSchedulingGraphParser::UpdateGraphCapacitiesAndTables(
     std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
     std::map<std::string, TableMetadata>& new_data_tables,
     const std::string& bitstream, const std::string& node_name,
-    const std::vector<int>& capacity, QueryOperationType operation, bool is_composed) -> bool {
+    const std::vector<int>& capacity, QueryOperationType operation,
+    bool is_composed) -> bool {
   bool is_node_fully_processed = false;
   if (operation == QueryOperationType::kLinearSort) {
-      // Just linear sort. It always gets fully processed and no need to look at capacity. Make it more generic in the future!
+    // Just linear sort. It always gets fully processed and no need to look at
+    // capacity. Make it more generic in the future!
     // TODO: Assuming single next node.
     is_node_fully_processed = drivers_.UpdateDataTable(
         operation,
         hw_library_.at(operation).bitstream_map.at(bitstream).capacity,
-          new_graph.at(new_graph.at(node_name).after_nodes.front()).data_tables,
-          new_data_tables);
-      drivers_.GetWorstCaseNodeCapacity(
+        new_graph.at(node_name).node_ptr->given_output_data_definition_files,
+        new_data_tables);
+    const auto& next_node_name = new_graph.at(node_name).after_nodes.front();
+    if (!next_node_name.empty()) {
+      auto required_merge_capacity = drivers_.GetWorstCaseNodeCapacity(
           operation,
           hw_library_.at(operation).bitstream_map.at(bitstream).capacity,
-        new_graph.at(node_name).data_tables, new_data_tables,
-        new_graph.at(new_graph.at(node_name).after_nodes.front()).operation);
+          new_graph.at(node_name).data_tables, new_data_tables,
+          new_graph.at(next_node_name).operation);
+      new_graph[next_node_name].capacity = required_merge_capacity;
+    }
+
     //    if (is_node_fully_processed) {
     //      skipped_nodes = CheckForSkippableSortOperations(
     //          new_graph, new_data_tables, node_name);
     //    }
   } else {
     std::vector<int> missing_utility;
+    auto placed_module_capacity =
+        hw_library_.at(operation).bitstream_map.at(bitstream).capacity;
     is_node_fully_processed = drivers_.SetMissingFunctionalCapacity(
         hw_library_.at(operation).bitstream_map.at(bitstream).capacity,
-        missing_utility, capacity,
-        is_composed, operation);
+        missing_utility, capacity, is_composed, operation);
     UpdateGraphCapacities(missing_utility, new_graph, node_name,
                           is_node_fully_processed);
   }
   // No need for this anymore! Maybe add 90% filtering here later
-  //if (is_node_fully_processed) {
+  // if (is_node_fully_processed) {
   //    // Check this resulting tables BS
   //  auto resulting_table = GetResultingTables(
   //      new_graph.at(node_name).data_tables, new_data_tables, operation);
@@ -494,9 +504,7 @@ auto ElasticSchedulingGraphParser::IsTableEqualForGivenNode(
         !std::equal(old_table_data.sorted_status.begin(),
                     old_table_data.sorted_status.end(),
                     new_table_data.sorted_status.begin(),
-                    [](const int& l, const int& r) {
-                      return l== r;
-                    })) {
+                    [](const int& l, const int& r) { return l == r; })) {
       return true;
     }
   }
@@ -636,7 +644,8 @@ void ElasticSchedulingGraphParser::UpdateGraphAndTableValuesGivenPlacement(
       new_graph, new_data_tables, module_placement.bitstream,
       module_placement.node_name,
       new_graph.at(module_placement.node_name).capacity,
-      new_graph.at(module_placement.node_name).operation, module_placement.is_composed);
+      new_graph.at(module_placement.node_name).operation,
+      module_placement.is_composed);
 
   UpdateAvailableNodesAndSatisfyingBitstreamsList(
       module_placement.node_name, new_graph, new_available_nodes,

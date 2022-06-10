@@ -191,18 +191,17 @@ auto MergeSortSetup::GetMinSortingRequirementsForTable(
 
 auto MergeSortSetup::IsDataSensitive() -> bool { return true; }
 // TODO: Just a weird quirk - Make it more logical later!
-//auto MergeSortSetup::IsSortingInputTable() -> bool { return false; }
+// auto MergeSortSetup::IsSortingInputTable() -> bool { return false; }
 
 auto MergeSortSetup::SetMissingFunctionalCapacity(
     const std::vector<int>& bitstream_capacity,
     std::vector<int>& missing_capacity, const std::vector<int>& node_capacity,
-    bool is_composed)
-    -> bool {
+    bool is_composed) -> bool {
   if (bitstream_capacity.size() != 1 || node_capacity.size() != 1) {
     throw std::runtime_error("Incorrect capacity values for merge sorter!");
   }
   int missing_capacity_value =
-      bitstream_capacity.front() - (node_capacity.front() + int(is_composed));
+      node_capacity.front() - (bitstream_capacity.front() + int(is_composed));
   if (missing_capacity_value > 0) {
     missing_capacity.push_back(++missing_capacity_value);
     return false;
