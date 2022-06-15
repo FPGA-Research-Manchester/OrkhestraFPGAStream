@@ -150,6 +150,18 @@
 		"sorted_status": [ 0, 999, 16, 63 ]
 	},
 	{
+		"filename": "CAR_DATA_HALF_SORTED_8K_64WAY.csv",
+		"record_size": 18,
+		"record_count": 8000,
+		"sorted_status": [ 0, 7999, 64, 125 ]
+	},
+	{
+		"filename": "CAR_DATA_SORTED_8K.csv",
+		"record_size": 18,
+		"record_count": 8000,
+		"sorted_status": [ 0, 7999, 8000, 1 ]
+	},
+	{
 		"filename": "lineitem_linear_sort_SF001.csv",
 		"record_size": 7,
 		"record_count": 1201,

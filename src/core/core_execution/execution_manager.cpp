@@ -99,8 +99,8 @@ void ExecutionManager::InitialiseTables(
       auto& table_name =
           current_node->given_output_data_definition_files.at(output_stream_id);
       if (table_name.empty()) {
-        table_name = current_node->node_name + "_" +
-                     std::to_string(output_stream_id);
+        table_name =
+            current_node->node_name + "_" + std::to_string(output_stream_id);
         TableMetadata new_data;
         new_data.record_size = query_manager->GetRecordSizeFromParameters(
             data_manager,
@@ -338,11 +338,17 @@ void ExecutionManager::AddSavedNodesToConstrainedList(
     QueryNode* const& node,
     std::unordered_set<std::string>& constrained_nodes) {
   for (int node_index = 0; node_index < node->is_checked.size(); node_index++) {
-    if (node->is_checked[node_index]) {
-      auto constrained_node_name = node->next_nodes[node_index]->node_name;
-      if (constrained_nodes.find(constrained_node_name) ==
-          constrained_nodes.end()) {
-        constrained_nodes.insert(constrained_node_name);
+    if (node->is_checked[node_index] &&
+        std::any_of(
+            node->next_nodes.begin(), node->next_nodes.end(),
+            [](const auto& next_node) { return next_node != nullptr; })) {
+      auto& next_node = node->next_nodes[node_index];
+      if (next_node != nullptr) {
+        auto& constrained_node_name = node->next_nodes[node_index]->node_name;
+        if (constrained_nodes.find(constrained_node_name) ==
+            constrained_nodes.end()) {
+          constrained_nodes.insert(constrained_node_name);
+        }
       }
     }
   }

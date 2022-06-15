@@ -544,7 +544,7 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
                               .capacity.front()});
         }
       }
-      current_run_data->module_locations.push_back(module_index);
+      current_run_data->module_locations.push_back(module_index + 1);
     }
     for (auto &[node_name, run_data] : current_run_node_data) {
       found_nodes.at(node_name)->module_run_data.push_back(std::move(run_data));
