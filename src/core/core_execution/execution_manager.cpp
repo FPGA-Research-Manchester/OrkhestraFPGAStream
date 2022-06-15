@@ -41,6 +41,7 @@ void ExecutionManager::UpdateAvailableNodesGraph() {
   }
   RemoveUnusedTables(current_tables_metadata_,
                      unscheduled_graph_->GetAllNodesPtrs());
+  table_counter_.clear();
   InitialiseTables(current_tables_metadata_, current_available_node_pointers_,
                    query_manager_.get(), data_manager_.get());
   current_query_graph_.clear();

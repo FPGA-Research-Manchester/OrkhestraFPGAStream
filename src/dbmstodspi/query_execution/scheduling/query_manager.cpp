@@ -226,6 +226,7 @@ auto QueryManager::CreateStreamParams(
             run_data.operation_parameters.front().at(table_offset);
         int current_offset =
             run_data.operation_parameters.front().at(offset_offset);
+        int write_offset = current_offset;
         for (const auto& sequence : run_data.operation_parameters) {
           if (current_table_index == sequence.at(table_offset) &&
               current_offset == sequence.at(offset_offset)) {
@@ -237,24 +238,42 @@ auto QueryManager::CreateStreamParams(
                          .at(run_data.input_data_definition_files.at(
                              current_table_index))
                          ->GetPhysicalAddress() +
-                     current_offset,
+                     write_offset,
                  std::move(current_sequences)});
+            
             current_sequences = {sequence.at(count_offset)};
             current_table_index = sequence.at(table_offset);
+            write_offset = sequence.at(offset_offset);
             current_offset =
                 sequence.at(offset_offset) + sequence.at(count_offset);
           }
         }
+        // virtual channel count is the size of the vector - We assume this is
+        // correct with the overall parameters.
+        virtual_channel_count = run_data.operation_parameters.size();
+        // Need to make virtual channel count be equal to the sum of the
+        // modules. Need to add the missing amount of 0 reads.
+        int max_channel_count = 0;
+        for (const auto& capacity :
+             node->given_operation_parameters.operation_parameters.at(
+                 run_data.run_index)) {
+          max_channel_count += capacity;
+        }
+        std::vector<int> empty_sequences(
+            max_channel_count - virtual_channel_count, 0);
+        current_sequences.insert(current_sequences.end(),
+                                 empty_sequences.begin(),
+                                 empty_sequences.end());
+
         physical_addresses_map.insert(
             {table_memory_blocks
                      .at(run_data.input_data_definition_files.at(
                          current_table_index))
                      ->GetPhysicalAddress() +
-                 current_offset,
+                 write_offset,
              std::move(current_sequences)});
-        // virtual channel count is the size of the vector - We assume this is
-        // correct with the overall parameters.
-        virtual_channel_count = run_data.operation_parameters.size();
+
+        virtual_channel_count = max_channel_count;
       } else {
         auto physical_address_ptr =
             table_memory_blocks.at(table_name)->GetPhysicalAddress();

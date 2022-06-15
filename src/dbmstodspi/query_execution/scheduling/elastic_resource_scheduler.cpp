@@ -367,7 +367,8 @@ void ElasticResourceNodeScheduler::BuildInitialSequencesForMergeSorter(
               sorted_status.at(set_of_sequences_id + size_offset);
       LengthOfSortedSequences new_sequence = {
           sorted_status.at(set_of_sequences_id + begin_offset) +
-              number_of_sequences,
+              number_of_sequences *
+                  sorted_status.at(set_of_sequences_id + size_offset),
           1, table_name};
       auto search = map_of_sequences.find(left_over_size);
       if (search == map_of_sequences.end()) {
