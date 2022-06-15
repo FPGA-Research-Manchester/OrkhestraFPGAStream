@@ -442,12 +442,19 @@ auto ElasticSchedulingGraphParser::UpdateGraphCapacitiesAndTables(
         new_data_tables);
     const auto& next_node_name = new_graph.at(node_name).after_nodes.front();
     if (!next_node_name.empty()) {
-      auto required_merge_capacity = drivers_.GetWorstCaseNodeCapacity(
-          operation,
-          hw_library_.at(operation).bitstream_map.at(bitstream).capacity,
-          new_graph.at(node_name).data_tables, new_data_tables,
-          new_graph.at(next_node_name).operation);
-      new_graph[next_node_name].capacity = required_merge_capacity;
+      if (new_graph.at(next_node_name).operation ==
+          QueryOperationType::kMergeSort) {
+        auto required_merge_capacity = drivers_.GetWorstCaseNodeCapacity(
+            operation,
+            hw_library_.at(operation).bitstream_map.at(bitstream).capacity,
+            new_graph.at(node_name).data_tables, new_data_tables,
+            new_graph.at(next_node_name).operation);
+        new_graph[next_node_name].capacity = required_merge_capacity;
+      } else {
+        // Assume the sort has been skipped and there isn't a sort later in the graph.
+          // TODO: Fix this assumption!
+      }
+      
     }
 
     //    if (is_node_fully_processed) {

@@ -36,7 +36,7 @@ class VirtualMemoryBlock : public MemoryBlockInterface {
 
  public:
   ~VirtualMemoryBlock() override;
-  explicit VirtualMemoryBlock() : memory_area_(3 * 1024 * 1024){};
+  explicit VirtualMemoryBlock() : memory_area_(700 * 1024 * 1024){};
   auto GetVirtualAddress() -> volatile uint32_t* override;
   auto GetPhysicalAddress() -> volatile uint32_t* override;
   auto GetSize() -> const uint32_t override;

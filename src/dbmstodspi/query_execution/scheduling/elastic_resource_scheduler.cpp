@@ -40,17 +40,17 @@ using orkhestrafs::core_interfaces::query_scheduling_data::NodeRunData;
 void ElasticResourceNodeScheduler::RemoveUnnecessaryTables(
     const std::unordered_map<std::string, SchedulingQueryNode> &graph,
     std::map<std::string, TableMetadata> &tables) {
-//    std::map<std::string, TableMetadata> resulting_tables;
-//    for (const auto &[table_name, table_data] : tables) {
-//      if (std::any_of(graph.begin(), graph.end(), [&](const auto &p) {
-//            return std::find(p.second.data_tables.begin(),
-//                             p.second.data_tables.end(),
-//                             table_name) != p.second.data_tables.end();
-//          })) {
-//        resulting_tables.insert({table_name, table_data});
-//      }
-//    }
-//    tables = resulting_tables;
+  //    std::map<std::string, TableMetadata> resulting_tables;
+  //    for (const auto &[table_name, table_data] : tables) {
+  //      if (std::any_of(graph.begin(), graph.end(), [&](const auto &p) {
+  //            return std::find(p.second.data_tables.begin(),
+  //                             p.second.data_tables.end(),
+  //                             table_name) != p.second.data_tables.end();
+  //          })) {
+  //        resulting_tables.insert({table_name, table_data});
+  //      }
+  //    }
+  //    tables = resulting_tables;
 }
 
 auto ElasticResourceNodeScheduler::CalculateTimeLimit(
@@ -189,26 +189,24 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
   std::cout << "plan_count: " << std::to_string(resulting_plans.size())
             << std::endl;
   benchmark_data["pre_process_time"] += pre_process_time;
-   std::cout << "pre_process_time: " << std::to_string(pre_process_time)
+  std::cout << "pre_process_time: " << std::to_string(pre_process_time)
             << std::endl;
   benchmark_data["schedule_time"] += scheduling_time;
-   std::cout << "schedule_time: " << std::to_string(scheduling_time)
+  std::cout << "schedule_time: " << std::to_string(scheduling_time)
             << std::endl;
   benchmark_data["timeout"] += static_cast<double>(timed_out);
-   std::cout << "timeout: " << std::to_string(timed_out) << std::endl;
+  std::cout << "timeout: " << std::to_string(timed_out) << std::endl;
   benchmark_data["cost_eval_time"] += cost_eval_time;
-   std::cout << "cost_eval_time: " << std::to_string(cost_eval_time)
+  std::cout << "cost_eval_time: " << std::to_string(cost_eval_time)
             << std::endl;
   benchmark_data["overall_time"] += overall_time;
   std::cout << "overall_time: " << std::to_string(overall_time) << std::endl;
   benchmark_data["run_count"] += best_plan.size();
-   std::cout << "run_count: " << std::to_string(best_plan.size()) <<
-   std::endl;
+  std::cout << "run_count: " << std::to_string(best_plan.size()) << std::endl;
   benchmark_data["data_amount"] += data_amount;
-   std::cout << "data_amount: " << std::to_string(data_amount) << std::endl;
+  std::cout << "data_amount: " << std::to_string(data_amount) << std::endl;
   benchmark_data["configuration_amount"] += configuration_amount;
-   std::cout << "configuration_amount: " <<
-   std::to_string(configuration_amount)
+  std::cout << "configuration_amount: " << std::to_string(configuration_amount)
             << std::endl;
   benchmark_data["schedule_count"] += 1;
 
@@ -277,7 +275,8 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   // starting_nodes = resulting_plans.at(best_plan).available_nodes
   // graph = resulting_plans.at(best_plan).graph;
   // We want skipped nodes for deleting them from the main Graph later
-  skipped_nodes = resulting_plans.at(best_plan).processed_nodes;
+  skipped_nodes.merge(resulting_plans.at(best_plan).processed_nodes);
+  //skipped_nodes = resulting_plans.at(best_plan).processed_nodes;
   // The nodes that aren't in the graph aren't executed anyway and the tables
   // have already been handled.
   // TODO: Potentially remove this boolean!
@@ -291,6 +290,29 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
 
   auto resulting_runs = GetQueueOfResultingRuns(
       available_nodes, best_plan, config.pr_hw_library, tables, table_counter);
+
+  for (const auto &[node_name, parameters] : graph) {
+    if (parameters.node_ptr->is_finished) {
+      for (int output_stream_id = 0;
+           output_stream_id <
+           parameters.node_ptr->given_output_data_definition_files.size();
+           output_stream_id++) {
+        // If there is a next node, and it is not finished and the current node
+        // is an IO stream - Set the table counter to be too large to be
+        // deleted.
+        if (parameters.node_ptr->next_nodes.at(output_stream_id) != nullptr &&
+            !parameters.node_ptr->next_nodes.at(output_stream_id)
+                 ->is_finished &&
+            !parameters.node_ptr->module_run_data.back()
+                 .output_data_definition_files.at(output_stream_id)
+                 .empty()) {
+          table_counter[parameters.node_ptr->module_run_data.back()
+                            .output_data_definition_files.at(
+                                output_stream_id)]++;
+        }
+      }
+    }
+  }
   // available_nodes = FindNewAvailableNodes(starting_nodes, available_nodes);
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   std::cout << "TOTAL SCHEDULING:"
@@ -542,7 +564,7 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
         run_counter.at(merge_sort_node_name) != run_data.size()) {
       throw std::runtime_error("Parameter's don't match run count!");
     }
-    
+
     for (int run_id = 0; run_id < run_counter.at(merge_sort_node_name);
          run_id++) {
       std::vector<int> next_run_capacities;
@@ -689,8 +711,8 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
       if (required_output_offset_for_merge > 0) {
         for (auto &sequences : sort_status[new_sequence_size]) {
           if (sequences.table_name == output_table_name &&
-              sequences.offset + (new_sequence_size * sequences.number_of_sequences) ==
-                  run_data.output_offset.front()) {
+              sequences.offset + (new_sequence_size *
+      sequences.number_of_sequences) == run_data.output_offset.front()) {
             sequences.number_of_sequences++;
             sequence_merged = true;
           }
@@ -723,10 +745,6 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
     }
   } else {
     // if empty check that all nodes have been sorted!
-    int thing = new_sequence_size;
-    int thing2 =
-        table_data.at(merge_node->given_input_data_definition_files.front())
-            .record_count;
     if (table_data.at(merge_node->given_input_data_definition_files.front())
             .record_count != new_sequence_size) {
       throw std::runtime_error("Incorrect number of records have been sorted!");

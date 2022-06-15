@@ -90,8 +90,8 @@ void MemoryManager::LoadStatic() {
 
   register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
 
-  SetFPGATo300MHz();
-  // SetFPGATo100MHz();
+  //SetFPGATo300MHz();
+  SetFPGATo100MHz();
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   std::cout << "STATIC CONFIGURATION:"

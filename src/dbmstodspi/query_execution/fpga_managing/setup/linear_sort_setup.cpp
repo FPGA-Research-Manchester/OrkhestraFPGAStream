@@ -94,13 +94,13 @@ auto LinearSortSetup::GetWorstCaseProcessedTables(
   }
   std::map<std::string, TableMetadata> resulting_tables;
   auto new_table_name = output_table_names.front();
-  auto new_table_data = data_tables.at(input_tables.front());
+  auto new_table_data = data_tables.at(output_table_names.front());
+  new_table_data.record_count =
+      data_tables.at(input_tables.front()).record_count;
   GetSortedSequenceWithCapacity(min_capacity.front(),
                                 new_table_data.record_count,
                                 new_table_data.sorted_status);
   resulting_tables.insert({new_table_name, new_table_data});
-  resulting_tables[output_table_names.front()].record_count =
-      data_tables.at(input_tables.front()).record_count;
   return resulting_tables;
 }
 

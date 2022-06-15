@@ -45,14 +45,18 @@ void MergeSortSetup::SetupModule(
                  module_parameters.composed_module_locations.begin();
 
     bool is_first = index == 0;
-    // TODO(Kaspar): For now assuming all modules are the same!
-    int base_id = module_parameters.operation_parameters.at(2).at(0);
+    // Calculate how many have been before and the sum of them is the index.
+    // Then you can also feed the size of this module to the setup.
+    int base_id = 0;
+    for (int current_index = 0; current_index < index; current_index++) {
+      base_id += module_parameters.operation_parameters.at(1).at(current_index);
+    }
 
     MergeSortSetup::SetupMergeSortModule(
         dynamic_cast<MergeSortInterface&>(acceleration_module),
         module_parameters.input_streams[0].stream_id,
         GetStreamRecordSize(module_parameters.input_streams[0]), base_id,
-        is_first);
+        is_first, module_parameters.operation_parameters.at(1).at(index));
   } else {
     /*throw std::runtime_error(
         "Can't configure merge sort to passthrough on stream ID");*/
@@ -75,7 +79,7 @@ void MergeSortSetup::SetupPassthroughMergeSort(
 
 void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
                                           int stream_id, int record_size,
-                                          int base_channel_id, bool is_first) {
+                                          int base_channel_id, bool is_first, int module_size) {
   int chunks_per_record =
       StreamParameterCalculator::CalculateChunksPerRecord(record_size);
 
@@ -86,10 +90,12 @@ void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
 
   merge_sort_module.SetStreamParams(stream_id, chunks_per_record);
 
+  int buffer_space = (module_size / 32) * 1024;
   // TODO(Kaspar): Remove hardcoded parameters
   // int sort_buffer_size = CalculateSortBufferSize(4096, 128,
   // chunks_per_record);
-  int sort_buffer_size = CalculateSortBufferSize(2048, 64, chunks_per_record);
+      int sort_buffer_size =
+          CalculateSortBufferSize(buffer_space, module_size, chunks_per_record);
   int record_count_per_fetch =
       CalculateRecordCountPerFetch(sort_buffer_size, record_size);
 

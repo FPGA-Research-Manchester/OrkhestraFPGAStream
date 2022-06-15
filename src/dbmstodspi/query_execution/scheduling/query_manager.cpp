@@ -211,8 +211,12 @@ auto QueryManager::CreateStreamParams(
   const int count_offset = 2;
 
   for (int stream_index = 0; stream_index < stream_ids.size(); stream_index++) {
-    const auto& table_name =
-        run_data.input_data_definition_files.at(stream_index);
+    std::string table_name;
+    if (is_input) {
+      table_name = run_data.input_data_definition_files.at(stream_index);
+    } else {
+      table_name = run_data.output_data_definition_files.at(stream_index);
+    }
     std::map<volatile uint32_t*, std::vector<int>> physical_addresses_map;
     int virtual_channel_count = -1;
     if (is_input && !table_name.empty()) {
@@ -256,13 +260,18 @@ auto QueryManager::CreateStreamParams(
             table_memory_blocks.at(table_name)->GetPhysicalAddress();
         physical_addresses_map.insert({physical_address_ptr, {-1}});
       }
-    } else if (!is_input &&
-               !run_data.output_data_definition_files.at(stream_index)
-                    .empty()) {
+    } else if (!is_input && !table_name.empty()) {
       auto physical_address_ptr =
           table_memory_blocks.at(table_name)->GetPhysicalAddress() +
           run_data.output_offset.at(stream_index);
       physical_addresses_map.insert({physical_address_ptr, {-1}});
+    } else {
+      // Leave address map empty!
+      if (is_input) {
+        table_name = node->given_input_data_definition_files.at(stream_index);
+      } else {
+        table_name = node->given_output_data_definition_files.at(stream_index);
+      }
     }
 
     int chunk_count = -1;
@@ -659,9 +668,13 @@ void QueryManager::ProcessResults(
               record_count, result_params.filename,
               result_params.stream_specifications, result_params.stream_index);
         } else {
+          std::string filename = result_params.filename;
+          if (filename.back() != 'v') {
+            filename += ".csv";
+          }
           WriteResults(
               data_manager, table_memory_blocks.at(result_params.filename),
-              record_count, result_params.filename,
+              record_count, filename,
               result_params.stream_specifications, result_params.stream_index);
         }
       }
@@ -712,8 +725,12 @@ void QueryManager::ExecuteAndProcessResults(
                  table_memory_blocks, scheduling_table_data);
   std::vector<std::string> removable_tables;
   for (const auto& [table_name, counter] : table_counter) {
-    if (counter == 0) {
+    if (counter < 0) {
+      throw std::runtime_error("Incorrect table counting!");
+    } else if (counter == 0) {
       removable_tables.push_back(table_name);
+    } else {
+      CropSortedStatus(scheduling_table_data, table_name);
     }
   }
   for (const auto& table_name : removable_tables) {
@@ -786,33 +803,31 @@ void QueryManager::UpdateTableData(
 void QueryManager::CropSortedStatus(
     std::map<std::string, TableMetadata>& scheduling_table_data,
     const std::string& filename) {
+  const int begin_offset = 0;
+  const int end_offset = 1;
+  const int size_offset = 2;
+  const int sequence_count = 3;
+
+  // We crop only assuming that there was a filter or a join before a sorter -
+  // Therefore there was less to sort and we have to crop.
   auto& current_data = scheduling_table_data.at(filename);
   if (!current_data.sorted_status.empty()) {
-    if (current_data.sorted_status.size() == 1) {
-      current_data.sorted_status[0] = current_data.record_count;
+    if (current_data.sorted_status.size() != 4) {
+      throw std::runtime_error(
+          "Cropping odd sorted sequence structures not supported currently!");
     } else {
-      if ((current_data.sorted_status.at(1) - 1) *
-                  current_data.sorted_status.at(2) +
-              current_data.sorted_status.at(0) >
+      // Assuming the sorted status is correct.
+      if (current_data.sorted_status.at(end_offset) + 1 >
           current_data.record_count) {
-        if (current_data.record_count < current_data.sorted_status.at(0)) {
-          current_data.sorted_status.clear();
-          current_data.sorted_status.push_back(current_data.record_count);
-        } else {
-          int left_over_rows_to_sort =
-              current_data.record_count - current_data.sorted_status.at(0);
-          int left_over_sequence_count =
-              left_over_rows_to_sort / current_data.sorted_status.at(2);
-          if (left_over_sequence_count == 0) {
-            current_data.sorted_status[1] = 1;
-            current_data.sorted_status[2] = left_over_rows_to_sort;
-          } else {
-            if (left_over_sequence_count * current_data.sorted_status.at(2) !=
-                left_over_rows_to_sort) {
-              left_over_sequence_count++;
-            }
-            current_data.sorted_status[1] = left_over_sequence_count;
-          }
+        current_data.sorted_status[end_offset] =
+            std::max(current_data.record_count - 1, 0);
+        current_data.sorted_status[sequence_count] =
+            (current_data.record_count +
+             current_data.sorted_status[size_offset] - 1) /
+            current_data.sorted_status[size_offset];
+        // Check if it got cropped so much that it got sorted.
+        if (current_data.sorted_status[sequence_count] == 1) {
+          current_data.sorted_status[size_offset] = current_data.record_count;
         }
       }  // Else it's all fine!
     }

@@ -39,6 +39,7 @@ auto BlockingSortModuleSetup::GetWorstCaseProcessedTables(
       data_tables.at(output_table_names.front());
   resulting_tables[output_table_names.front()].record_count =
       data_tables.at(input_tables.front()).record_count;
+  // There will be a -1 if the size is 0 but it shouldn't be a problem
   resulting_tables[output_table_names.front()].sorted_status = {
       0, resulting_tables[output_table_names.front()].record_count - 1,
       resulting_tables[output_table_names.front()].record_count, 1};

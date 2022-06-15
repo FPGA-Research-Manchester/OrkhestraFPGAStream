@@ -62,7 +62,7 @@ class MergeSortSetup : public virtual AccelerationModuleSetupInterface,
    */
   static void SetupMergeSortModule(MergeSortInterface& merge_sort_module,
                                    int stream_id, int record_size,
-                                   int base_channel_id, bool is_first);
+                                   int base_channel_id, bool is_first, int sort_size);
   /**
    * @brief Calculate how many records are fetched each time.
    * @param sort_buffer_size Buffer size of the merge sort module.

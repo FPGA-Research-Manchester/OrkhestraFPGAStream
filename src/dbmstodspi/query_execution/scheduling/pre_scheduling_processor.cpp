@@ -258,6 +258,7 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
         throw std::runtime_error(
             "Can't skip node with multiple inputs or outputs!");
       }
+      
       // Move input table name to outputs input table.
       const auto& after_node = graph.at(current_node_name).after_nodes.front();
       if (!after_node.empty()) {
@@ -270,7 +271,7 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
             graph.at(current_node_name)
                 .node_ptr->given_input_data_definition_files.front();
       }
-
+      processed_nodes.insert(current_node_name);
       current_processed_nodes.insert(current_node_name);
       if (available_nodes.find(current_node_name) != available_nodes.end()) {
         available_nodes.erase(current_node_name);

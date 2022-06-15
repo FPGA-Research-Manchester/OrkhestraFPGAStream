@@ -43,6 +43,7 @@ void ExecutionManager::UpdateAvailableNodesGraph() {
                      unscheduled_graph_->GetAllNodesPtrs());
   InitialiseTables(current_tables_metadata_, current_available_node_pointers_,
                    query_manager_.get(), data_manager_.get());
+  current_query_graph_.clear();
   SetupSchedulingGraphAndConstrainedNodes(
       unscheduled_graph_->GetAllNodesPtrs(), current_query_graph_,
       *accelerator_library_, nodes_constrained_to_first_);
