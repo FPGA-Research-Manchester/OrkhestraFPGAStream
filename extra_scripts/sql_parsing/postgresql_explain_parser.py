@@ -16,13 +16,15 @@ import json
 import sys
 from dataclasses import dataclass
 
+
 @dataclass
 class Node:
     type: str
     id: int
     params: list
     inputs: list
-    tables:list
+    tables: list
+
 
 def print_node(node_data):
     print(f"Node Type: {node_data['Node Type']}")
@@ -48,14 +50,22 @@ def SetInitialNodes(node_data, all_nodes, counter, parent_counter):
         child_to_parent_counter = current_node_counter
         counter[0] += 1
         if (node_data['Node Type'] == "Aggregate"):
-            all_nodes[current_node_counter] = Node("Aggregate", current_node_counter, node_data['Output'], [], [])
+            all_nodes[current_node_counter] = Node(
+                "Aggregate", current_node_counter, node_data['Output'], [], [])
         elif (node_data['Node Type'] == "Merge Join"):
-            all_nodes[current_node_counter] = Node("Join", current_node_counter, [node_data['Merge Cond']], [], [])
+            all_nodes[current_node_counter] = Node(
+                "Join", current_node_counter, [
+                    node_data['Merge Cond']], [], [])
             child_to_parent_counter = counter[0]
             counter[0] += 1
-            all_nodes[child_to_parent_counter] = Node("Filter", child_to_parent_counter, [node_data['Join Filter']], [current_node_counter], [])
+            all_nodes[child_to_parent_counter] = Node(
+                "Filter", child_to_parent_counter, [
+                    node_data['Join Filter']], [current_node_counter], [])
         elif (node_data['Node Type'] == "Seq Scan"):
-            all_nodes[current_node_counter] = Node("Filter", current_node_counter, [node_data['Filter']], [], [node_data['Alias']])
+            all_nodes[current_node_counter] = Node(
+                "Filter", current_node_counter, [
+                    node_data['Filter']], [], [
+                    node_data['Alias']])
         else:
             print(node_data['Node Type'])
             raise RuntimeError("Unknown node type!")
@@ -71,7 +81,7 @@ def TokenizeParams(node):
     all_tokens = []
     quotes_active = False
     skipped_chars = {"\\", ":", "[", "]", "'", "{", "}", "\"", ","}
-    single_chars = {"(",")","*"}
+    single_chars = {"(", ")", "*"}
     for char in node.params[0]:
         if (quotes_active):
             if (char == "'"):
@@ -106,11 +116,11 @@ def TokenizeParams(node):
         split_tokens = token.split('.')
         if (token in skipped_tokens):
             pass
-        elif (len(split_tokens)!= 1):
+        elif (len(split_tokens) != 1):
             trimmed_tokens.append(split_tokens[1].upper())
         else:
             for char in removable_characters:
-                token = token.replace(char,'')
+                token = token.replace(char, '')
             split_tokens = token.split(',')
             for new_token in split_tokens:
                 trimmed_tokens.append(new_token)
@@ -119,9 +129,9 @@ def TokenizeParams(node):
 
 
 def ParseJoinNode(all_nodes, key):
-    removable_tokens = {'(','=',')'}
+    removable_tokens = {'(', '=', ')'}
     new_tokens = []
-    for token in all_nodes[key]:
+    for token in all_nodes[key].params:
         if (token not in removable_tokens):
             new_tokens.append(token)
     # Assuming they are in the correct order
@@ -129,16 +139,90 @@ def ParseJoinNode(all_nodes, key):
 
 
 def ParseFilterNode(all_nodes, key):
-    pass
+    reverse_notation = GetReversePolishNotation(all_nodes[key].params)
+    all_nodes[key].params = reverse_notation
 
+
+def GetReversePolishNotation(tokens):
+    # Shunting Yard
+    stack = []
+    result = []
+    operations = {
+        "sum",
+        "-",
+        "+",
+        "*",
+        "/",
+        "=",
+        "!=",
+        "<",
+        ">",
+        "<=",
+        ">=",
+        "AND",
+        "OR",
+        "NOT"
+        "avg",
+        "min",
+        "max"}
+    for token in tokens:
+        if token in operations or token == '(':
+            # Assuming everything bracketed
+            stack.append(token)
+        elif token == ')':
+            popped = stack.pop()
+            while popped != '(':
+                result.append(popped)
+                popped = stack.pop()
+        else:
+            result.append(token)
+    stack_size = len(stack)
+    for i in range(stack_size):
+        result.append(stack.pop())
+    return result
 
 
 def ParseAggregateNode(all_nodes, key, counter):
-    # Get functions and literals.
-    # Shunting_yard_algorithm
-    operations = {"sum", "-", "+", "*", "/", "=", "!=", "<", ">", "<=", ">=", "AND", "OR", "avg", "min", "max"}
-    #GetReversePolishNotation()
-    pass
+    reverse_notation = GetReversePolishNotation(all_nodes[key].params)
+    all_nodes[key].params = reverse_notation
+    operations = {
+        "sum",
+        "-",
+        "+",
+        "*",
+        "/",
+        "avg",
+        "min",
+        "max"}
+    operand_count = {
+        "sum": 1,
+        "-": 2,
+        "+": 2,
+        "*": 2,
+        "/": 2,
+        "avg": 1,
+        "min": 1,
+        "max": 1}
+    stack = []
+    for token in all_nodes[key].params:
+        if token in operations:
+            if (operand_count[token] == 2):
+                second_operand = stack.pop()
+                first_operand = stack.pop()
+            else:
+                first_operand = stack.pop()
+            if (token == "sum"):
+                print("sum:" + first_operand)
+            elif(token == "-"):
+                print(first_operand + "-" + second_operand)
+                stack.append(second_operand)
+            elif(token == "*"):
+                print(first_operand + "*" + second_operand)
+                stack.append("TEMP_MUL")
+        else:
+            stack.append(token)
+    # Keep putting stuff on a stack!
+    # When you hit an operation
 
 
 def main(argv):
@@ -158,16 +242,15 @@ def main(argv):
     # Just the leaf nodes that have extra space can have the table added.
     # Deal with the tables - Clean up!
 
-
-    # Then the params are a lot cleaner and then you can deal with the notation:
+    # Then the params are a lot cleaner and then you can deal with the
+    # notation:
     for key in all_nodes.keys():
         # Remove all spaces
         # Remove all "\"
         # Make into a list of tokens!
         # If letter keep collecting until it's no longer a letter.
-        #print(f"{key}:{all_nodes[key].params}")
+        # print(f"{key}:{all_nodes[key].params}")
         TokenizeParams(all_nodes[key])
-        print(f"{key}:{all_nodes[key]}")
         if (all_nodes[key].type == "Aggregate"):
             ParseAggregateNode(all_nodes, key, counter)
         elif (all_nodes[key].type == "Join"):
@@ -176,6 +259,7 @@ def main(argv):
             ParseFilterNode(all_nodes, key)
         else:
             raise RuntimeError("Incorrect type!")
+        print(f"{key}:{all_nodes[key]}")
 
     # Then you can parse the Aggregation to further nodes!
     # Then you can do the filter parsing
