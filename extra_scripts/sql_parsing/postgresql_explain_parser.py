@@ -204,28 +204,54 @@ def ParseAggregateNode(all_nodes, key, counter):
         "min": 1,
         "max": 1}
     stack = []
+    new_operations = []
     for token in all_nodes[key].params:
         if token in operations:
-            if (operand_count[token] == 2):
+            if operand_count[token] == 2:
                 second_operand = stack.pop()
                 first_operand = stack.pop()
             else:
                 first_operand = stack.pop()
-            if (token == "sum"):
-                print("sum:" + first_operand)
-            elif(token == "-"):
-                print(first_operand + "-" + second_operand)
+                second_operand = "ERROR"
+            if token == "sum":
+                new_operations.append({"name":"Aggregation", "params":[first_operand]})
+                #print("sum:" + first_operand)
+            elif token == "-":
+                new_operations.append({"name":"Addition", "params": [second_operand, "TRUE", first_operand]})
+                #print(first_operand + "-" + second_operand)
                 stack.append(second_operand)
-            elif(token == "*"):
-                print(first_operand + "*" + second_operand)
+            elif token == "*":
+                new_operations.append({"name":"Multiplication", "params": [first_operand, second_operand, "TEMP_MUL"]})
+                #print(first_operand + "*" + second_operand)
                 stack.append("TEMP_MUL")
+            else:
+                raise RuntimeError("Incorrect operation")
         else:
             stack.append(token)
-    # Keep putting stuff on a stack!
-    # When you hit an operation
+    # Remove current
+    current = all_nodes[key]
+    current_inputs = current.inputs
+    current_tables = current.tables
+    del all_nodes[key]
+    for operation in new_operations:
+        # Not really needed but just in case
+        if (operation["name"] == "Aggregation"):
+            params = operation["params"]
+        elif(operation["name"] == "Addition"):
+            params = operation["params"]
+        elif (operation["name"] == "Multiplication"):
+            params = operation["params"]
+        else:
+            raise RuntimeError("Incorrect operation")
+        all_nodes[counter[0]] = Node(operation["name"], counter[0], [
+                    params], current_inputs, current_tables)
+        current_inputs = [counter[0]]
+        current_tables = []
+        counter[0] += 1
 
 
 def main(argv):
+    # Add the PostgreSQL parsing here
     argv.append("q19.json")
     with open(argv[0]) as graph_json:
         input_query_graph = json.load(graph_json)
@@ -244,7 +270,8 @@ def main(argv):
 
     # Then the params are a lot cleaner and then you can deal with the
     # notation:
-    for key in all_nodes.keys():
+    orig_nodes = all_nodes.copy()
+    for key in orig_nodes.keys():
         # Remove all spaces
         # Remove all "\"
         # Make into a list of tokens!
@@ -259,6 +286,14 @@ def main(argv):
             ParseFilterNode(all_nodes, key)
         else:
             raise RuntimeError("Incorrect type!")
+        #print(f"{key}:{all_nodes[key]}")
+
+    # Need to the filter parsing and then you can just print out the Function calls
+    # Then the function calls get added to some JSON I guess that gets parsed by the C++
+    # This stuff you can do on Monday Tuesday
+    # - Then you have the full from one end to another parsing
+    # - Then fix the Benchmark stuff and try to get the benchmark data.
+    for key in all_nodes.keys():
         print(f"{key}:{all_nodes[key]}")
 
     # Then you can parse the Aggregation to further nodes!
