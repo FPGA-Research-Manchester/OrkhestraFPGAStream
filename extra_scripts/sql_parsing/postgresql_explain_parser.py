@@ -164,21 +164,52 @@ def GetReversePolishNotation(tokens):
         "NOT"
         "avg",
         "min",
-        "max"}
+        "max",
+        "ANY"}
+    any_stack = []
+    is_any = False
     for token in tokens:
         if token in operations or token == '(':
-            # Assuming everything bracketed
-            stack.append(token)
+            if token == "ANY":
+                is_any = True
+                # Assuming we have = at the top of the stack. And that the
+                # column is before =
+            else:
+                # Assuming everything bracketed
+                stack.append(token)
         elif token == ')':
             popped = stack.pop()
             while popped != '(':
+                if is_any:
+                    raise RuntimeError("Unknown error")
                 result.append(popped)
                 popped = stack.pop()
+            if is_any:
+                # Assuming we have = at the top of the stack.
+                equals_token = stack.pop()
+                equals_first_arg = result.pop()
+                number_of_any_args = len(any_stack)
+                while any_stack:
+                    any_arg = any_stack.pop()
+                    result.append(equals_first_arg)
+                    result.append(any_arg)
+                    result.append(equals_token)
+                for i in range(number_of_any_args - 1):
+                    stack.append("OR")
+                is_any = False
         else:
-            result.append(token)
+            if is_any:
+                any_stack.append(token)
+            else:
+                result.append(token)
     stack_size = len(stack)
     for i in range(stack_size):
         result.append(stack.pop())
+    # print("TOKENS:")
+    # print(tokens)
+    # print("vs")
+    # print(result)
+    # print()
     return result
 
 
@@ -214,14 +245,17 @@ def ParseAggregateNode(all_nodes, key, counter):
                 first_operand = stack.pop()
                 second_operand = "ERROR"
             if token == "sum":
-                new_operations.append({"name":"Aggregation", "params":[first_operand]})
+                new_operations.append(
+                    {"name": "Aggregation", "params": [first_operand]})
                 #print("sum:" + first_operand)
             elif token == "-":
-                new_operations.append({"name":"Addition", "params": [second_operand, "TRUE", first_operand]})
+                new_operations.append({"name": "Addition", "params": [
+                                      second_operand, "TRUE", first_operand]})
                 #print(first_operand + "-" + second_operand)
                 stack.append(second_operand)
             elif token == "*":
-                new_operations.append({"name":"Multiplication", "params": [first_operand, second_operand, "TEMP_MUL"]})
+                new_operations.append({"name": "Multiplication", "params": [
+                                      first_operand, second_operand, "TEMP_MUL"]})
                 #print(first_operand + "*" + second_operand)
                 stack.append("TEMP_MUL")
             else:
@@ -243,11 +277,61 @@ def ParseAggregateNode(all_nodes, key, counter):
             params = operation["params"]
         else:
             raise RuntimeError("Incorrect operation")
-        all_nodes[counter[0]] = Node(operation["name"], counter[0], [
-                    params], current_inputs, current_tables)
+        all_nodes[counter[0]] = Node(operation["name"], counter[0],
+                                     params, current_inputs, current_tables)
         current_inputs = [counter[0]]
         current_tables = []
         counter[0] += 1
+
+
+def PrintFilterAPICalls(params):
+    operations = {
+        "=",
+        "!=",
+        "<",
+        ">",
+        "<=",
+        ">=",
+        "AND",
+        "OR",
+        "NOT"}
+    stack = []
+    counter = 0
+    for token in params:
+        if token in operations:
+            if token == "NOT":
+                first_operand = stack.pop()
+                relation_name = "relation_" + str(counter)
+                counter += 1
+                print(f"{relation_name} : {token} {first_operand}")
+                stack.append(relation_name)
+            else:
+                second_operand = stack.pop()
+                first_operand = stack.pop()
+                relation_name = "relation_" + str(counter)
+                counter += 1
+                print(f"{relation_name} : {first_operand} {token} {second_operand}")
+                stack.append(relation_name)
+        else:
+            stack.append(token)
+    print("STACK:")
+    print(stack)
+
+
+def PrintAPICalls(all_nodes, key):
+    if (all_nodes[key].type == "Aggregate"):
+        print(f"RegisterAggregation({all_nodes[key].params[0]})")
+    elif (all_nodes[key].type == "Join"):
+        print(
+            f"RegisterJoin({all_nodes[key].params[0]}, {all_nodes[key].params[1]})")
+    elif (all_nodes[key].type == "Filter"):
+        PrintFilterAPICalls(all_nodes[key].params)
+    elif (all_nodes[key].type == "Multiplication"):
+        print(
+            f"RegisterMultiplication({all_nodes[key].params[0]}, {all_nodes[key].params[1]}, {all_nodes[key].params[2]})")
+    elif (all_nodes[key].type == "Addition"):
+        print(
+            f"RegisterAddition({all_nodes[key].params[0]}, {all_nodes[key].params[1]}, {all_nodes[key].params[2]})")
 
 
 def main(argv):
@@ -278,6 +362,7 @@ def main(argv):
         # If letter keep collecting until it's no longer a letter.
         # print(f"{key}:{all_nodes[key].params}")
         TokenizeParams(all_nodes[key])
+        # print(f"{key}:{all_nodes[key]}")
         if (all_nodes[key].type == "Aggregate"):
             ParseAggregateNode(all_nodes, key, counter)
         elif (all_nodes[key].type == "Join"):
@@ -286,18 +371,19 @@ def main(argv):
             ParseFilterNode(all_nodes, key)
         else:
             raise RuntimeError("Incorrect type!")
-        #print(f"{key}:{all_nodes[key]}")
+        # print(f"{key}:{all_nodes[key]}")
 
     # Need to the filter parsing and then you can just print out the Function calls
     # Then the function calls get added to some JSON I guess that gets parsed by the C++
     # This stuff you can do on Monday Tuesday
     # - Then you have the full from one end to another parsing
     # - Then fix the Benchmark stuff and try to get the benchmark data.
+
+    # YOu need to parse from children and check which parent is available!
+    # THis is just for printing!
     for key in all_nodes.keys():
         print(f"{key}:{all_nodes[key]}")
-
-    # Then you can parse the Aggregation to further nodes!
-    # Then you can do the filter parsing
+        PrintAPICalls(all_nodes, key)
 
     # Print out the API calls
     # Put table calls inside
