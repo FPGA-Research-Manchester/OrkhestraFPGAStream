@@ -64,7 +64,7 @@ def SetInitialNodes(node_data, all_nodes, counter, parent_counter):
         elif (node_data['Node Type'] == "Seq Scan"):
             all_nodes[current_node_counter] = Node(
                 "Filter", current_node_counter, [
-                    node_data['Filter']], [], [
+                    node_data['Filter']], [-1], [
                     node_data['Alias']])
         else:
             print(node_data['Node Type'])
@@ -318,18 +318,72 @@ def PrintFilterAPICalls(params):
     print(stack)
 
 
+def AddFilterCondiditions(params, json_data, counter, filter_key):
+    operations = {
+        "=",
+        "!=",
+        "<",
+        ">",
+        "<=",
+        ">=",
+        "AND",
+        "OR",
+        "NOT"}
+    stack = []
+    for token in params:
+        if token in operations:
+            if token == "NOT":
+                first_operand = stack.pop()
+                json_data[counter[0]] = {"type": "COMP", "params": [filter_key, token, first_operand]}
+            else:
+                second_operand = stack.pop()
+                first_operand = stack.pop()
+                json_data[counter[0]] = {"type": "COMP", "params": [filter_key, token, first_operand, second_operand]}
+            stack.append(counter[0])
+            counter[0] += 1
+        else:
+            stack.append(token)
+
+
+def AddJSONData(all_nodes,key,json_data, counter):
+    # Currently Seq Scan Filters are hardcoded to have tables
+    if key in json_data:
+        raise RuntimeError("Inserting key multiple times!")
+    for input_i in range(len(all_nodes[key].inputs)):
+        if all_nodes[key].inputs[input_i] == -1:
+            if input_i >= len(all_nodes[key].tables):
+                raise RuntimeError("Incorrect number of tables given")
+            # TODO: Parse table here!
+
+    if all_nodes[key].type == "Aggregate":
+        json_data[key] = {"type":"Aggregate", "params":[all_nodes[key].inputs[0],all_nodes[key].params[0]]}
+    elif all_nodes[key].type == "Join":
+        json_data[key] = {"type": "Join", "params": [all_nodes[key].inputs[0], all_nodes[key].params[0], all_nodes[key].inputs[1], all_nodes[key].params[1]]}
+    elif all_nodes[key].type == "Filter":
+        json_data[key] = {"type": "Filter", "params": [all_nodes[key].inputs[0]]}
+        AddFilterCondiditions(all_nodes[key].params, json_data, counter, key)
+    elif all_nodes[key].type == "Multiplication":
+        json_data[key] = {"type": "Multiplication",
+                          "params": [all_nodes[key].inputs[0], all_nodes[key].params[0], all_nodes[key].params[1],
+                                     all_nodes[key].params[2]]}
+    elif all_nodes[key].type == "Addition":
+        json_data[key] = {"type": "Addition",
+                          "params": [all_nodes[key].inputs[0], all_nodes[key].params[0], all_nodes[key].params[1],
+                                     all_nodes[key].params[2]]}
+
+
 def PrintAPICalls(all_nodes, key):
-    if (all_nodes[key].type == "Aggregate"):
+    if all_nodes[key].type == "Aggregate":
         print(f"RegisterAggregation({all_nodes[key].params[0]})")
-    elif (all_nodes[key].type == "Join"):
+    elif all_nodes[key].type == "Join":
         print(
             f"RegisterJoin({all_nodes[key].params[0]}, {all_nodes[key].params[1]})")
-    elif (all_nodes[key].type == "Filter"):
+    elif all_nodes[key].type == "Filter":
         PrintFilterAPICalls(all_nodes[key].params)
-    elif (all_nodes[key].type == "Multiplication"):
+    elif all_nodes[key].type == "Multiplication":
         print(
             f"RegisterMultiplication({all_nodes[key].params[0]}, {all_nodes[key].params[1]}, {all_nodes[key].params[2]})")
-    elif (all_nodes[key].type == "Addition"):
+    elif all_nodes[key].type == "Addition":
         print(
             f"RegisterAddition({all_nodes[key].params[0]}, {all_nodes[key].params[1]}, {all_nodes[key].params[2]})")
 
@@ -349,8 +403,6 @@ def main(argv):
         SetInitialNodes(independent_query["Plan"], all_nodes, counter, -1)
 
     # Let's assume we don't explicitly have to deal with table checking.
-    # Just the leaf nodes that have extra space can have the table added.
-    # Deal with the tables - Clean up!
 
     # Then the params are a lot cleaner and then you can deal with the
     # notation:
@@ -360,9 +412,9 @@ def main(argv):
         # Remove all "\"
         # Make into a list of tokens!
         # If letter keep collecting until it's no longer a letter.
-        # print(f"{key}:{all_nodes[key].params}")
+        #print(f"{key}:{all_nodes[key]}")
         TokenizeParams(all_nodes[key])
-        # print(f"{key}:{all_nodes[key]}")
+        #print(f"{key}:{all_nodes[key]}")
         if (all_nodes[key].type == "Aggregate"):
             ParseAggregateNode(all_nodes, key, counter)
         elif (all_nodes[key].type == "Join"):
@@ -373,20 +425,19 @@ def main(argv):
             raise RuntimeError("Incorrect type!")
         # print(f"{key}:{all_nodes[key]}")
 
-    # Need to the filter parsing and then you can just print out the Function calls
-    # Then the function calls get added to some JSON I guess that gets parsed by the C++
-    # This stuff you can do on Monday Tuesday
-    # - Then you have the full from one end to another parsing
-    # - Then fix the Benchmark stuff and try to get the benchmark data.
-
-    # YOu need to parse from children and check which parent is available!
-    # THis is just for printing!
+    json_data = dict()
     for key in all_nodes.keys():
-        print(f"{key}:{all_nodes[key]}")
-        PrintAPICalls(all_nodes, key)
+        pass
+        # print(f"{key}:{all_nodes[key]}")
+        # PrintAPICalls(all_nodes, key)
+        AddJSONData(all_nodes, key, json_data, counter)
 
-    # Print out the API calls
-    # Put table calls inside
+    # for key in json_data.keys():
+    #     print(f"{key}:{json_data[key]}")
+    with open('result.json', 'w') as fp:
+        json.dump(json_data, fp)
+
+
     # Integrate with PostgreSQL
     # Done.
 
