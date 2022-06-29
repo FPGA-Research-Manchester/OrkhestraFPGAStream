@@ -15,6 +15,9 @@
 import json
 import sys
 from dataclasses import dataclass
+import subprocess
+import os
+from os.path import exists
 
 
 @dataclass
@@ -247,16 +250,16 @@ def ParseAggregateNode(all_nodes, key, counter):
             if token == "sum":
                 new_operations.append(
                     {"name": "Aggregation", "params": [first_operand]})
-                #print("sum:" + first_operand)
+                # print("sum:" + first_operand)
             elif token == "-":
                 new_operations.append({"name": "Addition", "params": [
-                                      second_operand, "TRUE", first_operand]})
-                #print(first_operand + "-" + second_operand)
+                    second_operand, "TRUE", first_operand]})
+                # print(first_operand + "-" + second_operand)
                 stack.append(second_operand)
             elif token == "*":
                 new_operations.append({"name": "Multiplication", "params": [
-                                      first_operand, second_operand, "TEMP_MUL"]})
-                #print(first_operand + "*" + second_operand)
+                    first_operand, second_operand, "TEMP_MUL"]})
+                # print(first_operand + "*" + second_operand)
                 stack.append("TEMP_MUL")
             else:
                 raise RuntimeError("Incorrect operation")
@@ -271,7 +274,7 @@ def ParseAggregateNode(all_nodes, key, counter):
         # Not really needed but just in case
         if (operation["name"] == "Aggregation"):
             params = operation["params"]
-        elif(operation["name"] == "Addition"):
+        elif (operation["name"] == "Addition"):
             params = operation["params"]
         elif (operation["name"] == "Multiplication"):
             params = operation["params"]
@@ -334,42 +337,118 @@ def AddFilterCondiditions(params, json_data, counter, filter_key):
         if token in operations:
             if token == "NOT":
                 first_operand = stack.pop()
-                json_data[counter[0]] = {"type": "COMP", "params": [filter_key, token, first_operand]}
+                AddJSONKey(json_data, counter[0], "COMP",
+                           [filter_key, token, first_operand])
             else:
                 second_operand = stack.pop()
                 first_operand = stack.pop()
-                json_data[counter[0]] = {"type": "COMP", "params": [filter_key, token, first_operand, second_operand]}
+                AddJSONKey(json_data, counter[0], "COMP",
+                           [filter_key, token, first_operand, second_operand])
             stack.append(counter[0])
             counter[0] += 1
         else:
             stack.append(token)
 
 
-def AddJSONData(all_nodes,key,json_data, counter):
+def CheckTableIsExported(table_name):
+    # Check for CPP parsing
+    csv_filename = table_name + ".csv"
+    if not exists(csv_filename):
+        raise RuntimeError(f"{csv_filename} doesn't exist!")
+        # TODO: Fix this automatically!
+    return csv_filename
+
+
+def GetTableRowCount(table_name, database_name):
+    column_count_command = f"echo 'SELECT count(*) FROM {table_name}' | psql {database_name}"
+    count_output = subprocess.check_output(column_count_command, shell=True, text=True)
+    count_lines = count_output.split("\n")
+    return count_lines[2].strip()
+
+
+def GetDataType(datatype_string):
+    size_params = datatype_string.split("(")
+    datatype_name = size_params[0]
+    data_size = 1
+    if len(size_params) != 1:
+        data_size = size_params[1][:-1]
+    datatype_dict = {
+        "bigint": "integer",
+        "integer": "integer",
+        "numeric": "decimal",
+        "character": "varchar",
+        "date": "date",
+        "character varying": "varchar"}
+    return (datatype_dict[datatype_name], data_size)
+
+
+def AddTableColumnsToJSON(json_data, counter, table_name, database_name):
+    # exported_table_name = CheckTableIsExported(table_name)
+    exported_table_name = table_name + ".csv"
+
+    row_count = GetTableRowCount(table_name, database_name)
+    table_key = counter[0]
+    counter[0] += 1
+    columns_key = counter[0]
+    counter[0] += 1
+    AddJSONKey(json_data, table_key, "Table",
+               [row_count, columns_key, exported_table_name])
+
+    # Assume this works problem free - the programs exists and no file problems
+    # TODO: Remove the assumption and do error checking!
+    command = f"echo '\d {table_name}' | psql {database_name}"
+    output_filename = f"{table_name}.txt"
+    os.system(f"{command} > {output_filename}")
+    with open(output_filename) as f:
+        lines = f.readlines()[3:]
+
+    columns_keys = []
+    for line in lines:
+        values = line.split("|")[:2]
+        if (len(values) > 1):
+            data_type, data_size = GetDataType(values[1].strip())
+            AddJSONKey(json_data, counter[0], "Column",
+                       [values[0].strip().upper(), data_size, data_type])
+            columns_keys.append(counter[0])
+            counter[0] += 1
+    AddJSONKey(json_data, columns_key, "Columns", columns_keys)
+
+
+def AddJSONKey(json_data, key, type, params):
+    json_data[key] = {"type": type, "params": params}
+
+
+def AddJSONData(all_nodes, key, json_data, counter, database_name):
     # Currently Seq Scan Filters are hardcoded to have tables
+    # TODO: Improve explain reading to get tables from elsewhere
     if key in json_data:
         raise RuntimeError("Inserting key multiple times!")
     for input_i in range(len(all_nodes[key].inputs)):
         if all_nodes[key].inputs[input_i] == -1:
             if input_i >= len(all_nodes[key].tables):
                 raise RuntimeError("Incorrect number of tables given")
-            # TODO: Parse table here!
+            all_nodes[key].inputs[input_i] = counter[0]
+            # TODO: Check if the same table is used for any other query - Need to also add the pointer there
+            AddTableColumnsToJSON(json_data, counter, all_nodes[key].tables[input_i], database_name)
 
     if all_nodes[key].type == "Aggregate":
-        json_data[key] = {"type":"Aggregate", "params":[all_nodes[key].inputs[0],all_nodes[key].params[0]]}
+        AddJSONKey(json_data, key, "Aggregate", [all_nodes[key].inputs[0], all_nodes[key].params[0]])
     elif all_nodes[key].type == "Join":
-        json_data[key] = {"type": "Join", "params": [all_nodes[key].inputs[0], all_nodes[key].params[0], all_nodes[key].inputs[1], all_nodes[key].params[1]]}
+        AddJSONKey(json_data, key, "Join",
+                   [all_nodes[key].inputs[0], all_nodes[key].params[0], all_nodes[key].inputs[1],
+                    all_nodes[key].params[1]])
     elif all_nodes[key].type == "Filter":
-        json_data[key] = {"type": "Filter", "params": [all_nodes[key].inputs[0]]}
+        AddJSONKey(json_data, key, "Filter",
+                   [all_nodes[key].inputs[0]])
         AddFilterCondiditions(all_nodes[key].params, json_data, counter, key)
     elif all_nodes[key].type == "Multiplication":
-        json_data[key] = {"type": "Multiplication",
-                          "params": [all_nodes[key].inputs[0], all_nodes[key].params[0], all_nodes[key].params[1],
-                                     all_nodes[key].params[2]]}
+        AddJSONKey(json_data, key, "Multiplication",
+                   [all_nodes[key].inputs[0], all_nodes[key].params[0], all_nodes[key].params[1],
+                    all_nodes[key].params[2]])
     elif all_nodes[key].type == "Addition":
-        json_data[key] = {"type": "Addition",
-                          "params": [all_nodes[key].inputs[0], all_nodes[key].params[0], all_nodes[key].params[1],
-                                     all_nodes[key].params[2]]}
+        AddJSONKey(json_data, key, "Addition",
+                   [all_nodes[key].inputs[0], all_nodes[key].params[0], all_nodes[key].params[1],
+                    all_nodes[key].params[2]])
 
 
 def PrintAPICalls(all_nodes, key):
@@ -388,10 +467,37 @@ def PrintAPICalls(all_nodes, key):
             f"RegisterAddition({all_nodes[key].params[0]}, {all_nodes[key].params[1]}, {all_nodes[key].params[2]})")
 
 
+def CheckPostgreSQL(database_name):
+    # TODO: Also check that the database exists
+    print("Checking PostgreSQL version:")
+    result = subprocess.run(["psql", "--version"])
+    try:
+        result.check_returncode()
+    except:
+        print("No PostgreSQL!")
+
+
+def GetExplainJSON(database_name, query_file):
+    with open(query_file) as f:
+        query = f.read()
+    explain_command = f"EXPLAIN (VERBOSE TRUE, FORMAT JSON) {query}"
+    command = f"echo \"{explain_command}\" | psql -t -A {database_name}"
+    result = "temp"
+    output_filename = f"{result}.json"
+    os.system(f"{command} > {output_filename}")
+    return output_filename
+
+
 def main(argv):
-    # Add the PostgreSQL parsing here
-    argv.append("q19.json")
-    with open(argv[0]) as graph_json:
+    # argv is supposed to be the query in a file and the database name.
+    # database_name = "tpch_001"
+    database_name = argv[0]
+    CheckPostgreSQL(database_name)
+
+    # query_file = "q19.txt"
+    query_file = argv[1]
+    explain_output = GetExplainJSON(database_name, query_file)
+    with open(explain_output) as graph_json:
         input_query_graph = json.load(graph_json)
 
     # for independent_query in input_query_graph:
@@ -412,9 +518,9 @@ def main(argv):
         # Remove all "\"
         # Make into a list of tokens!
         # If letter keep collecting until it's no longer a letter.
-        #print(f"{key}:{all_nodes[key]}")
+        # print(f"{key}:{all_nodes[key]}")
         TokenizeParams(all_nodes[key])
-        #print(f"{key}:{all_nodes[key]}")
+        # print(f"{key}:{all_nodes[key]}")
         if (all_nodes[key].type == "Aggregate"):
             ParseAggregateNode(all_nodes, key, counter)
         elif (all_nodes[key].type == "Join"):
@@ -430,18 +536,14 @@ def main(argv):
         pass
         # print(f"{key}:{all_nodes[key]}")
         # PrintAPICalls(all_nodes, key)
-        AddJSONData(all_nodes, key, json_data, counter)
+        AddJSONData(all_nodes, key, json_data, counter, database_name)
 
     # for key in json_data.keys():
     #     print(f"{key}:{json_data[key]}")
-    with open('result.json', 'w') as fp:
+    result_file = 'parsed.json'
+    with open(result_file, 'w') as fp:
         json.dump(json_data, fp)
-
-
-    # Integrate with PostgreSQL
-    # Done.
-
-    # Start thinking how to integrate with C++
+    print(f"Data in {result_file}")
 
 
 if __name__ == '__main__':
