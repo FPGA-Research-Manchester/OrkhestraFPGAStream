@@ -124,7 +124,7 @@ auto main(int argc, char* argv[]) -> int {
       "c,config", "Config file for used hardware",
       cxxopts::value<std::string>())("v,verbose", "Additional debug messages")(
       "t,trace", "Enable all trace signals")("q,quiet", "Disable all logging")(
-      "h,help", "Print usage")("r,run", "Run SQL query (if empty we run example Q19)", cxxopts::value<std::string>());
+      "h,help", "Print usage")("r,run", "Run SQL query provided in the file given. Or type example for Q19.", cxxopts::value<std::string>());
 
   auto result = options.parse(argc, argv);
 
@@ -158,11 +158,12 @@ auto main(int argc, char* argv[]) -> int {
   }
 
   if (result.count("run")) {
-    if (result["run"].as<string>().empty()){
+    if (result["run"].as<string>() == "example"){
       cout<<"Executing default Q19 example!"<<endl;
       RunCodedQuery(config_name);
+    } else {
+      RunSQLQuery(result["run"].as<string>(), config_name);
     }
-    RunSQLQuery(result["run"].as<string>(), config_name);
   } else {
     MeasureOverallTimeOfParsedPlan(result["input"].as<string>(),
                        config_name);
