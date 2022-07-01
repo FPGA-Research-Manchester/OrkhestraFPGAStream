@@ -70,16 +70,25 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
   std::map<int, std::set<int>> output_dependencies;
   std::map<int, std::string> registered_entities_map;
   std::map<int, int> registered_comparisons;
-  std::map<std::string, std::string> column_types;
+  std::map<std::string, ColumnDataType> column_types;
   std::set<int> available_to_register;
   const std::unordered_set<std::string> default_operations = {
       "Aggregate", "Filter", "Multiplication", "Addition"};
+  const std::unordered_map<std::string, CompareFunctions> comparison_functions =
+      {
+          {"<", CompareFunctions::kLessThan},
+          {"<=", CompareFunctions::kGreaterThanOrEqual},
+          {"=", CompareFunctions::kEqual},
+          {"!=", CompareFunctions::kNotEqual},
+          {">", CompareFunctions::kGreaterThan},
+          {">=", CompareFunctions::kGreaterThanOrEqual}
+      };
   // Should be made more "pretty"
   // Assuming params are correct!
   for (const auto& [key, params] : explain_data) {
     std::set<int> key_set = {key};
     if (params[0] == "Column") {
-      column_types.insert({params[1], params[3]});
+      column_types.insert({params[1], kDataTypeNames.at(params[3])});
     } else if (params[0] == "Columns") {
       // Do nothing
     } else if (params[0] == "Table") {
@@ -142,10 +151,13 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
   while (!available_to_register.empty()) {
     auto current_op_node = *available_to_register.begin();
     available_to_register.erase(available_to_register.begin());
-    for (const auto output_key : output_dependencies.at(current_op_node)) {
-      input_dependencies[output_key].erase(current_op_node);
-      if (input_dependencies[output_key].empty()) {
-        available_to_register.insert(output_key);
+    if (output_dependencies.find(current_op_node) !=
+        output_dependencies.end()) {
+      for (const auto output_key : output_dependencies.at(current_op_node)) {
+        input_dependencies[output_key].erase(current_op_node);
+        if (input_dependencies[output_key].empty()) {
+          available_to_register.insert(output_key);
+        }
       }
     }
 
@@ -179,13 +191,49 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
                  {registered_comparisons.at(
                      std::stoi(explain_data.at(current_op_node).at(3)))})});
       } else {
-        // TODO: Do the comparison!
+        auto compare_function =
+            comparison_functions.at(explain_data.at(current_op_node).at(2));
+        // TODO: Check that the column is the first or second argument!
+        auto datatype = column_types.at(explain_data.at(current_op_node).at(3));
+        switch (datatype) {
+          case ColumnDataType::kInteger:
+            registered_comparisons.insert(
+                {current_op_node,
+                 sql_creator.AddIntegerComparison(
+                     registered_entities_map.at(
+                         std::stoi(explain_data.at(current_op_node).at(1))),
+                     explain_data.at(current_op_node).at(3), compare_function,
+                      std::stoi(explain_data.at(current_op_node).at(4)))});
+            break;
+          case ColumnDataType::kVarchar:
+            registered_comparisons.insert(
+                {current_op_node,
+                 sql_creator.AddStringComparison(
+                     registered_entities_map.at(
+                         std::stoi(explain_data.at(current_op_node).at(1))),
+                     explain_data.at(current_op_node).at(3), compare_function,
+                     explain_data.at(current_op_node).at(4))});
+            break;
+          case ColumnDataType::kDecimal:
+            registered_comparisons.insert(
+                {current_op_node,
+                 sql_creator.AddDoubleComparison(
+                     registered_entities_map.at(
+                         std::stoi(explain_data.at(current_op_node).at(1))),
+                     explain_data.at(current_op_node).at(3), compare_function,
+                     std::stod(explain_data.at(current_op_node).at(4)))});
+            break;
+          case ColumnDataType::kDate:
+            throw std::runtime_error("Unsupported data type still!");
+          default:
+            throw std::runtime_error("Unsupported data type!");
+        }
       }
     } else if (explain_data.at(current_op_node).front() == "Table") {
       std::vector<TableColumn> columns;
       for (const auto& column_key :
-           explain_data.at(std::stoi(explain_data.at(current_op_node).at(3)))) {
-        if (column_key == "Column") {
+           explain_data.at(std::stoi(explain_data.at(current_op_node).at(2)))) {
+        if (column_key == "Columns") {
           // Ignore
         } else {
           auto& column_params = explain_data.at(std::stoi(column_key));

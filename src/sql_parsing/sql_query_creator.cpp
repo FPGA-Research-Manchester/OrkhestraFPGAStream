@@ -48,7 +48,7 @@ auto SQLQueryCreator::ExportInputDef() -> std::string {
   const std::string file_name = "Q19.json";
   SQLJSONWriter::WriteQuery(file_name, data_to_write);
   return file_name;
-  //return "benchmark_Q19_SF001.json";
+  // return "benchmark_Q19_SF001.json";
 }
 void SQLQueryCreator::FillDataMap(
     std::unordered_set<std::string> processed_operations,
@@ -132,8 +132,14 @@ void SQLQueryCreator::SetFilterStreamParams(
     const std::string& current_process,
     std::map<std::string, OperationParams>& current_operation_params) {
   int new_base_clause_id = TransformToDnf(current_process, 0);
+  auto& current_filter_operations =
+      filter_operations_relations_[current_process];
 
   std::set<std::vector<int>> all_clauses;
+
+  auto clauses_after_base =
+      filter_operations_relations_[current_process][new_base_clause_id];
+
   for (const auto& child_clause_id :
        filter_operations_relations_[current_process][new_base_clause_id]) {
     if (IsLiteral(current_process, child_clause_id)) {
@@ -142,6 +148,12 @@ void SQLQueryCreator::SetFilterStreamParams(
       auto new_clause =
           filter_operations_relations_[current_process][child_clause_id];
       std::sort(new_clause.begin(), new_clause.end());
+      for (const auto literal_test : new_clause) {
+        if (filter_operations_relations_[current_process].find(literal_test) !=
+            filter_operations_relations_[current_process].end()) {
+          throw std::runtime_error("Transform was unsuccessful!");
+        }
+      }
       all_clauses.insert(new_clause);
     }
   }
@@ -150,6 +162,7 @@ void SQLQueryCreator::SetFilterStreamParams(
   std::unordered_map<int, std::vector<int>> clauses;
 
   auto thing = filter_operations_[current_process];
+  std::vector<int> unused_literals;
 
   for (const auto& [literal_id, literal_params] :
        filter_operations_[current_process]) {
@@ -175,11 +188,14 @@ void SQLQueryCreator::SetFilterStreamParams(
       }
     }
     if (current_clauses.empty()) {
-      throw std::runtime_error("Some literals were unused!");
+      unused_literals.push_back(literal_id);
+      //throw std::runtime_error("Some literals were unused!");
     } else {
       clauses.insert({literal_id, current_clauses});
     }
   }
+
+
 
   OperationParams params;
   // TODO: Currently hardcoding decimal comparison and ignoring negation
@@ -697,7 +713,7 @@ void SQLQueryCreator::GetCurrentAvailableDesiredPositions(
       }
       left_over_availability.insert({column_name, translated_positions});
     } else {
-    // From some other table
+      // From some other table
     }
   }
 }
@@ -739,15 +755,18 @@ void SQLQueryCreator::SetJoinOffsetParam(const std::string& current_process) {
       operations_.at(current_process)
           .input_params.at(0 * io_param_vector_count + crossbar_offset);
   if (first_crossbar.empty()) {
-      // Assuming the data sizes and types are collected correctly from the previous operation.
-    auto data_sizes = operations_.at(current_process)
-        .input_params.at(0 * io_param_vector_count + data_sizes_offset);
+    // Assuming the data sizes and types are collected correctly from the
+    // previous operation.
+    auto data_sizes =
+        operations_.at(current_process)
+            .input_params.at(0 * io_param_vector_count + data_sizes_offset);
     auto data_types =
         operations_.at(current_process)
             .input_params.at(0 * io_param_vector_count + data_types_offset);
     for (int i = 0; i < data_sizes.size(); i++) {
-      join_offset += data_sizes.at(i) *
-                     column_sizes_.at(static_cast<ColumnDataType>(data_types.at(i)));
+      join_offset +=
+          data_sizes.at(i) *
+          column_sizes_.at(static_cast<ColumnDataType>(data_types.at(i)));
     }
   } else {
     join_offset = first_crossbar.size();
@@ -974,33 +993,33 @@ void SQLQueryCreator::PlaceGivenColumnsToGivenDesiredLocations(
           crossbar_configuration, chosen_columns, column_positions,
           pairing_map);
     } else {*/
-      for (const auto& [position, desired_columns] :
-           current_available_desired_columns) {
-        if (desired_columns.size() == min_alternative_count) {
-          int min_alternative_count_for_current_columns =
-              std::numeric_limits<int>::max();
-          std::string chosen_colum;
-          for (const auto& current_column : desired_columns) {
-            if (min_alternative_count_for_current_columns == 1 &&
-                left_over_availability.at(current_column).size() == 1) {
-              throw std::runtime_error(
-                  "Can't choose between mutliple columns that have the same "
-                  "only choice!");
-            }
-            if (left_over_availability.at(current_column).size() <
-                min_alternative_count_for_current_columns) {
-              min_alternative_count_for_current_columns =
-                  left_over_availability.at(current_column).size();
-              chosen_colum = current_column;
-            }
+    for (const auto& [position, desired_columns] :
+         current_available_desired_columns) {
+      if (desired_columns.size() == min_alternative_count) {
+        int min_alternative_count_for_current_columns =
+            std::numeric_limits<int>::max();
+        std::string chosen_colum;
+        for (const auto& current_column : desired_columns) {
+          if (min_alternative_count_for_current_columns == 1 &&
+              left_over_availability.at(current_column).size() == 1) {
+            throw std::runtime_error(
+                "Can't choose between mutliple columns that have the same "
+                "only choice!");
           }
-          SetColumnPlace(current_available_desired_columns,
-                         left_over_availability, crossbar_configuration,
-                         chosen_columns, column_positions, chosen_colum,
-                         position, pairing_map);
-          break;
+          if (left_over_availability.at(current_column).size() <
+              min_alternative_count_for_current_columns) {
+            min_alternative_count_for_current_columns =
+                left_over_availability.at(current_column).size();
+            chosen_colum = current_column;
+          }
         }
+        SetColumnPlace(current_available_desired_columns,
+                       left_over_availability, crossbar_configuration,
+                       chosen_columns, column_positions, chosen_colum, position,
+                       pairing_map);
+        break;
       }
+    }
     /*}*/
   }
 }
@@ -1435,7 +1454,7 @@ void SQLQueryCreator::UpdateRequiredColumns() {
                              .desired_column_locations.at(column)});
           }
           if (operations_.at(current_process).paired_to_column.find(column) !=
-                  operations_.at(current_process).paired_to_column.end()) {
+              operations_.at(current_process).paired_to_column.end()) {
             if (operations_.at(parent).paired_to_column.find(column) !=
                     operations_.at(parent).paired_to_column.end() &&
                 operations_.at(parent).paired_to_column.at(column) !=
@@ -1724,6 +1743,11 @@ auto SQLQueryCreator::AddStringComparison(std::string filter_id,
                                           std::string column_name,
                                           CompareFunctions comparison_type,
                                           std::string compare_value) -> int {
+  std::cout << operation_counter_ << ":";
+  std::cout << "String " << filter_id;
+  std::cout << " " << column_name;
+  std::cout << " " << compare_value;
+  std::cout << std::endl;
   if (std::find(operations_[filter_id].desired_columns.begin(),
                 operations_[filter_id].desired_columns.end(),
                 column_name) == operations_[filter_id].desired_columns.end()) {
@@ -1745,6 +1769,13 @@ auto SQLQueryCreator::AddDateComparison(std::string filter_id,
                                         std::string column_name,
                                         CompareFunctions comparison_type,
                                         int year, int month, int day) -> int {
+  std::cout << operation_counter_ << ":";
+  std::cout << "Date: " << filter_id;
+  std::cout << " " << column_name;
+  std::cout << " " << std::to_string(year);
+  std::cout << " " << std::to_string(month);
+  std::cout << " " << std::to_string(day);
+  std::cout << std::endl;
   if (std::find(operations_[filter_id].desired_columns.begin(),
                 operations_[filter_id].desired_columns.end(),
                 column_name) == operations_[filter_id].desired_columns.end()) {
@@ -1766,6 +1797,11 @@ auto SQLQueryCreator::AddIntegerComparison(std::string filter_id,
                                            std::string column_name,
                                            CompareFunctions comparison_type,
                                            int compare_value) -> int {
+  std::cout << operation_counter_ << ":";
+  std::cout << "Integer: " << filter_id;
+  std::cout << " " << column_name;
+  std::cout << " " << std::to_string(compare_value);
+  std::cout << std::endl;
   if (std::find(operations_[filter_id].desired_columns.begin(),
                 operations_[filter_id].desired_columns.end(),
                 column_name) == operations_[filter_id].desired_columns.end()) {
@@ -1786,6 +1822,11 @@ auto SQLQueryCreator::AddDoubleComparison(std::string filter_id,
                                           std::string column_name,
                                           CompareFunctions comparison_type,
                                           double compare_value) -> int {
+  std::cout << operation_counter_ << ":";
+  std::cout << "Double: " << filter_id;
+  std::cout << " " << column_name;
+  std::cout << " " << std::to_string(compare_value);
+  std::cout << std::endl;
   if (std::find(operations_[filter_id].desired_columns.begin(),
                 operations_[filter_id].desired_columns.end(),
                 column_name) == operations_[filter_id].desired_columns.end()) {
@@ -1806,6 +1847,12 @@ auto SQLQueryCreator::AddDoubleComparison(std::string filter_id,
 
 auto SQLQueryCreator::AddOr(std::string filter_id,
                             std::vector<int> comparison_ids) -> int {
+  std::cout << operation_counter_ << ":";
+  std::cout << "OR: " << filter_id;
+  for (const auto id : comparison_ids) {
+    std::cout << " " << std::to_string(id);
+  }
+  std::cout << std::endl;
   auto or_id = MakeANewClause(filter_id, comparison_ids, false);
   for (auto const& used_id : comparison_ids) {
     RemoveFromClause(filter_id, 0, used_id);
@@ -1816,6 +1863,12 @@ auto SQLQueryCreator::AddOr(std::string filter_id,
 
 auto SQLQueryCreator::AddAnd(std::string filter_id,
                              std::vector<int> comparison_ids) -> int {
+  std::cout << operation_counter_ << ":";
+  std::cout << "AND: " << filter_id;
+  for (const auto id : comparison_ids) {
+    std::cout << " " << std::to_string(id);
+  }
+  std::cout << std::endl;
   auto and_id = MakeANewClause(filter_id, comparison_ids, true);
   for (auto const& used_id : comparison_ids) {
     RemoveFromClause(filter_id, 0, used_id);
@@ -1828,5 +1881,11 @@ auto SQLQueryCreator::AddNot(std::string filter_id,
                              std::vector<int> comparison_ids) -> int {
   // For each AND or OR clause when you hold a literal you have to say if it is
   // negative or positive.
+  std::cout << operation_counter_ << ":";
+  std::cout << "NOT: " << filter_id;
+  for (const auto id : comparison_ids) {
+    std::cout << " " << std::to_string(id);
+  }
+  std::cout << std::endl;
   throw std::runtime_error("Not implemented yet.");
 }
