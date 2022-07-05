@@ -28,15 +28,19 @@ using orkhestrafs::sql_parsing::SQLParser;
 
 void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
                            std::string query_filename) {
+  // TODO: Add logging
   const std::string default_database_name = "tpch_001";
-  std::cout << "Parsing: " << query_filename << std::endl;
+  //std::cout << "Parsing: " << query_filename << std::endl;
   std::map<int, std::vector<std::string>> explain_data;
   // TODO: Should do more checks!
   if (std::system(nullptr)) {
     std::string command = "python3 postgresql_explain_parser.py";
     command += " " + default_database_name + " " + query_filename;
-    std::cout << command << std::endl;
-    std::system(command.c_str());
+    //std::cout << command << std::endl;
+    auto return_val = std::system(command.c_str());
+    if (return_val) {
+      throw std::runtime_error("Python call unsuccessful!");
+    }
   } else {
     throw std::runtime_error("Can't execute any subprocesses");
   }
@@ -44,24 +48,6 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
   std::string parsed_filename = "parsed.json";
   // Actually the query needs to get parsed by the Python script first!
   SQLJSONReader::ReadQuery(parsed_filename, explain_data);
-  // After reading the data in you just use the API to write everything in.
-  //
-  // You have a bunch of params you don't know what to do with them
-  // Parse them into an actual tree?
-  // Find all Tables
-  // Put them into another map with tables and columns and column data
-  // Then Put COMP stuff into another map
-  // And the rest put into a third map
-  //
-  // While you are putting things into a map you also attach the inputs. You
-  // create a map which is int -> set{int} All places where it is needed I also
-  // need the reverse map -> To reduce it until it is 0 to say I can now process
-  // it.
-  //
-  // All numbers have also the number from sql creator attached to them.
-  //
-  // Then You parse the table - Check all thing in the rest that have the table
-  // as an input
 
   // Initial data parsing to get dependencies.
   // For key to be available all input_dependencies must be done!

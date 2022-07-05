@@ -383,7 +383,7 @@ def GetDataType(datatype_string):
 
 
 def AddTableColumnsToJSON(json_data, counter, table_name, database_name):
-    # exported_table_name = CheckTableIsExported(table_name)
+    exported_table_name = CheckTableIsExported(table_name)
     exported_table_name = table_name + ".csv"
 
     row_count = GetTableRowCount(table_name, database_name)

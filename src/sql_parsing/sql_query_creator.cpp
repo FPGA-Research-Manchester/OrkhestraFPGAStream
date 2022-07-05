@@ -132,13 +132,13 @@ void SQLQueryCreator::SetFilterStreamParams(
     const std::string& current_process,
     std::map<std::string, OperationParams>& current_operation_params) {
   int new_base_clause_id = TransformToDnf(current_process, 0);
-  auto& current_filter_operations =
-      filter_operations_relations_[current_process];
+  /*auto& current_filter_operations =
+      filter_operations_relations_[current_process];*/
 
   std::set<std::vector<int>> all_clauses;
 
-  auto clauses_after_base =
-      filter_operations_relations_[current_process][new_base_clause_id];
+  /*auto clauses_after_base =
+      filter_operations_relations_[current_process][new_base_clause_id];*/
 
   for (const auto& child_clause_id :
        filter_operations_relations_[current_process][new_base_clause_id]) {
@@ -148,21 +148,19 @@ void SQLQueryCreator::SetFilterStreamParams(
       auto new_clause =
           filter_operations_relations_[current_process][child_clause_id];
       std::sort(new_clause.begin(), new_clause.end());
-      for (const auto literal_test : new_clause) {
+      // For check
+      /*for (const auto literal_test : new_clause) {
         if (filter_operations_relations_[current_process].find(literal_test) !=
             filter_operations_relations_[current_process].end()) {
           throw std::runtime_error("Transform was unsuccessful!");
         }
-      }
+      }*/
       all_clauses.insert(new_clause);
     }
   }
 
   std::unordered_map<std::string, std::vector<int>> operations_on_a_column;
   std::unordered_map<int, std::vector<int>> clauses;
-
-  auto thing = filter_operations_[current_process];
-  std::vector<int> unused_literals;
 
   for (const auto& [literal_id, literal_params] :
        filter_operations_[current_process]) {
@@ -188,8 +186,7 @@ void SQLQueryCreator::SetFilterStreamParams(
       }
     }
     if (current_clauses.empty()) {
-      unused_literals.push_back(literal_id);
-      //throw std::runtime_error("Some literals were unused!");
+      throw std::runtime_error("Some literals were unused!");
     } else {
       clauses.insert({literal_id, current_clauses});
     }
@@ -437,12 +434,16 @@ auto SQLQueryCreator::TransformToDnf(const std::string& current_process,
     for (const auto& child_term_id : initial_child_clauses) {
       auto new_child_term_id = TransformToDnf(current_process, child_term_id);
       if (!IsLiteral(current_process, new_child_term_id)) {
+        // Did it get transformed?
         if (new_child_term_id != child_term_id) {
+          // Has current term been altered yet?
           if (new_current_term_id == -1) {
             new_current_term_id =
                 MakeACopyClause(current_process, current_term_id);
           }
+          // Remove original
           RemoveFromClause(current_process, new_current_term_id, child_term_id);
+          // Add in new
           filter_operations_relations_[current_process][new_current_term_id]
               .push_back(new_child_term_id);
         }
@@ -452,7 +453,8 @@ auto SQLQueryCreator::TransformToDnf(const std::string& current_process,
               FlattenClauses(current_process, new_child_term_id,
                              current_term_id, new_current_term_id);
         } else {
-          if (!is_and_[current_process][child_term_id]) {
+          // Either OR (AND) or AND (OR)
+          if (!is_and_[current_process][new_child_term_id]) {
             // OR inside AND
             need_to_distribute_ors = true;
           }
@@ -473,8 +475,41 @@ auto SQLQueryCreator::TransformToDnf(const std::string& current_process,
             DistributeOrs(current_process, child_term_id, current_term_id,
                           new_current_term_id);
       }
+
+      //bool is_and = is_and_[current_process][new_current_term_id];
+      //// If AND can throw an error if has any more ORs under it.
+      //std::vector<int> child_ids =
+      //    filter_operations_relations_[current_process][new_current_term_id];
+      //std::vector<std::string>
+      //        childs;
+      //for (const auto& id: child_ids) {
+      //  if (IsLiteral(current_process, id)) {
+      //    childs.push_back("LITERAL");
+      //  } else if (is_and_[current_process][id]) {
+      //    childs.push_back("AND");
+      //  } else {
+      //      // Can throw an error here
+      //    childs.push_back("OR");
+      //  }
+      //}
+
       return new_current_term_id;
     } else {
+
+      /*bool is_and = is_and_[current_process][current_term_id];
+      std::vector<int> child_ids =
+          filter_operations_relations_[current_process][current_term_id];
+      std::vector<std::string> childs;
+      for (const auto& id : child_ids) {
+        if (IsLiteral(current_process, id)) {
+          childs.push_back("LITERAL");
+        } else if (is_and_[current_process][id]) {
+          childs.push_back("AND");
+        } else {
+          childs.push_back("OR");
+        }
+      }*/
+
       return current_term_id;
     }
   }
@@ -1743,11 +1778,11 @@ auto SQLQueryCreator::AddStringComparison(std::string filter_id,
                                           std::string column_name,
                                           CompareFunctions comparison_type,
                                           std::string compare_value) -> int {
-  std::cout << operation_counter_ << ":";
+  /*std::cout << operation_counter_ << ":";
   std::cout << "String " << filter_id;
   std::cout << " " << column_name;
   std::cout << " " << compare_value;
-  std::cout << std::endl;
+  std::cout << std::endl;*/
   if (std::find(operations_[filter_id].desired_columns.begin(),
                 operations_[filter_id].desired_columns.end(),
                 column_name) == operations_[filter_id].desired_columns.end()) {
@@ -1758,8 +1793,9 @@ auto SQLQueryCreator::AddStringComparison(std::string filter_id,
   new_operation.column_name = column_name;
   new_operation.operation = comparison_type;
   new_operation.comparison_values = std::make_pair(
-      compare_value, columns_.at(column_name).second *
-                         column_sizes_.at(columns_.at(column_name).first));
+          compare_value,
+          static_cast<int>(columns_.at(column_name).second *
+                           column_sizes_.at(columns_.at(column_name).first)));
 
   filter_operations_[filter_id].insert({operation_counter_, new_operation});
   filter_operations_relations_[filter_id][0].push_back(operation_counter_);
@@ -1769,13 +1805,13 @@ auto SQLQueryCreator::AddDateComparison(std::string filter_id,
                                         std::string column_name,
                                         CompareFunctions comparison_type,
                                         int year, int month, int day) -> int {
-  std::cout << operation_counter_ << ":";
+  /*std::cout << operation_counter_ << ":";
   std::cout << "Date: " << filter_id;
   std::cout << " " << column_name;
   std::cout << " " << std::to_string(year);
   std::cout << " " << std::to_string(month);
   std::cout << " " << std::to_string(day);
-  std::cout << std::endl;
+  std::cout << std::endl;*/
   if (std::find(operations_[filter_id].desired_columns.begin(),
                 operations_[filter_id].desired_columns.end(),
                 column_name) == operations_[filter_id].desired_columns.end()) {
@@ -1797,11 +1833,11 @@ auto SQLQueryCreator::AddIntegerComparison(std::string filter_id,
                                            std::string column_name,
                                            CompareFunctions comparison_type,
                                            int compare_value) -> int {
-  std::cout << operation_counter_ << ":";
+  /*std::cout << operation_counter_ << ":";
   std::cout << "Integer: " << filter_id;
   std::cout << " " << column_name;
   std::cout << " " << std::to_string(compare_value);
-  std::cout << std::endl;
+  std::cout << std::endl;*/
   if (std::find(operations_[filter_id].desired_columns.begin(),
                 operations_[filter_id].desired_columns.end(),
                 column_name) == operations_[filter_id].desired_columns.end()) {
@@ -1822,11 +1858,11 @@ auto SQLQueryCreator::AddDoubleComparison(std::string filter_id,
                                           std::string column_name,
                                           CompareFunctions comparison_type,
                                           double compare_value) -> int {
-  std::cout << operation_counter_ << ":";
+  /*std::cout << operation_counter_ << ":";
   std::cout << "Double: " << filter_id;
   std::cout << " " << column_name;
   std::cout << " " << std::to_string(compare_value);
-  std::cout << std::endl;
+  std::cout << std::endl;*/
   if (std::find(operations_[filter_id].desired_columns.begin(),
                 operations_[filter_id].desired_columns.end(),
                 column_name) == operations_[filter_id].desired_columns.end()) {
@@ -1847,12 +1883,12 @@ auto SQLQueryCreator::AddDoubleComparison(std::string filter_id,
 
 auto SQLQueryCreator::AddOr(std::string filter_id,
                             std::vector<int> comparison_ids) -> int {
-  std::cout << operation_counter_ << ":";
+  /*std::cout << operation_counter_ << ":";
   std::cout << "OR: " << filter_id;
   for (const auto id : comparison_ids) {
     std::cout << " " << std::to_string(id);
   }
-  std::cout << std::endl;
+  std::cout << std::endl;*/
   auto or_id = MakeANewClause(filter_id, comparison_ids, false);
   for (auto const& used_id : comparison_ids) {
     RemoveFromClause(filter_id, 0, used_id);
@@ -1863,15 +1899,15 @@ auto SQLQueryCreator::AddOr(std::string filter_id,
 
 auto SQLQueryCreator::AddAnd(std::string filter_id,
                              std::vector<int> comparison_ids) -> int {
-  std::cout << operation_counter_ << ":";
+  /*std::cout << operation_counter_ << ":";
   std::cout << "AND: " << filter_id;
   for (const auto id : comparison_ids) {
     std::cout << " " << std::to_string(id);
   }
-  std::cout << std::endl;
+  std::cout << std::endl;*/
   auto and_id = MakeANewClause(filter_id, comparison_ids, true);
   for (auto const& used_id : comparison_ids) {
-    RemoveFromClause(filter_id, 0, used_id);
+    RemoveFromClause(filter_id, 0, used_id); 
   }
   filter_operations_relations_[filter_id][0].push_back(and_id);
   return and_id;
@@ -1881,11 +1917,11 @@ auto SQLQueryCreator::AddNot(std::string filter_id,
                              std::vector<int> comparison_ids) -> int {
   // For each AND or OR clause when you hold a literal you have to say if it is
   // negative or positive.
-  std::cout << operation_counter_ << ":";
+  /*std::cout << operation_counter_ << ":";
   std::cout << "NOT: " << filter_id;
   for (const auto id : comparison_ids) {
     std::cout << " " << std::to_string(id);
   }
-  std::cout << std::endl;
+  std::cout << std::endl;*/
   throw std::runtime_error("Not implemented yet.");
 }
