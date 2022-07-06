@@ -63,7 +63,7 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
   const std::unordered_map<std::string, CompareFunctions> comparison_functions =
       {
           {"<", CompareFunctions::kLessThan},
-          {"<=", CompareFunctions::kGreaterThanOrEqual},
+          {"<=", CompareFunctions::kLessThanOrEqual},
           {"=", CompareFunctions::kEqual},
           {"!=", CompareFunctions::kNotEqual},
           {">", CompareFunctions::kGreaterThan},
@@ -182,16 +182,17 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
         // TODO: Check that the column is the first or second argument!
         auto datatype = column_types.at(explain_data.at(current_op_node).at(3));
         switch (datatype) {
-          case ColumnDataType::kInteger:
+          case ColumnDataType::kInteger: {
             registered_comparisons.insert(
                 {current_op_node,
                  sql_creator.AddIntegerComparison(
                      registered_entities_map.at(
                          std::stoi(explain_data.at(current_op_node).at(1))),
                      explain_data.at(current_op_node).at(3), compare_function,
-                      std::stoi(explain_data.at(current_op_node).at(4)))});
+                     std::stoi(explain_data.at(current_op_node).at(4)))});
             break;
-          case ColumnDataType::kVarchar:
+          }
+          case ColumnDataType::kVarchar: {
             registered_comparisons.insert(
                 {current_op_node,
                  sql_creator.AddStringComparison(
@@ -200,7 +201,8 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
                      explain_data.at(current_op_node).at(3), compare_function,
                      explain_data.at(current_op_node).at(4))});
             break;
-          case ColumnDataType::kDecimal:
+          }
+          case ColumnDataType::kDecimal: {
             registered_comparisons.insert(
                 {current_op_node,
                  sql_creator.AddDoubleComparison(
@@ -209,8 +211,28 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
                      explain_data.at(current_op_node).at(3), compare_function,
                      std::stod(explain_data.at(current_op_node).at(4)))});
             break;
-          case ColumnDataType::kDate:
-            throw std::runtime_error("Unsupported data type still!");
+          }
+          case ColumnDataType::kDate: {
+            auto date_string = explain_data.at(current_op_node).at(4);
+            std::vector<int> date_values;
+            size_t pos = 0;
+            std::string token;
+            while ((pos = date_string.find("-")) != std::string::npos) {
+              token = date_string.substr(0, pos);
+              date_values.push_back(std::stoi(token));
+              date_string.erase(0, pos + 1);
+            }
+            date_values.push_back(std::stoi(date_string));
+
+            registered_comparisons.insert(
+                {current_op_node,
+                 sql_creator.AddDateComparison(
+                     registered_entities_map.at(
+                         std::stoi(explain_data.at(current_op_node).at(1))),
+                     explain_data.at(current_op_node).at(3), compare_function,
+                     date_values[0], date_values[1], date_values[2])});
+            break;
+          }
           default:
             throw std::runtime_error("Unsupported data type!");
         }

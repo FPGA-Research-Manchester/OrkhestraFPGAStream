@@ -83,7 +83,7 @@ def TokenizeParams(node):
     current_token = ""
     all_tokens = []
     quotes_active = False
-    skipped_chars = {"\\", ":", "[", "]", "'", "{", "}", "\"", ","}
+    skipped_chars = {"\\", "[", "]", "'", "{", "}", "\"", ","}
     single_chars = {"(", ")", "*"}
     for char in node.params[0]:
         if (quotes_active):
@@ -112,21 +112,40 @@ def TokenizeParams(node):
                 current_token += char
     if (current_token):
         all_tokens.append(current_token)
+
+    value_tokens = []
+    skipped_token_count = 0
+    # First we process tokens with ::
+    for token_i in range(len(all_tokens)):
+        if skipped_token_count != 0:
+            skipped_token_count -= 1
+        else:
+            token = all_tokens[token_i]
+            # TODO: Taking some assumptions here - Make this more robust!
+            if token[0] == ":":
+                if token == "::timestamp" and all_tokens[token_i +
+                                                         1] == "without":
+                    skipped_token_count = 3
+                    value_tokens[-1] = value_tokens[-1].split(' ')[0]
+            else:
+                value_tokens.append(token)
+
     trimmed_tokens = []
-    skipped_tokens = {"numeric", "bpchar"}
     removable_characters = {"\"", "{", "}"}
-    for token in all_tokens:
+    for token in value_tokens:
         split_tokens = token.split('.')
-        if (token in skipped_tokens):
-            pass
-        elif (len(split_tokens) != 1):
-            trimmed_tokens.append(split_tokens[1].upper())
+        if (len(split_tokens) != 1):
+            # Is a numeric token not a table + column token.
+            if (split_tokens[0].isnumeric()):
+                trimmed_tokens.append(split_tokens[0] + "." + split_tokens[1])
+            else:
+                trimmed_tokens.append(split_tokens[1].upper())
         else:
             for char in removable_characters:
                 token = token.replace(char, '')
             split_tokens = token.split(',')
             for new_token in split_tokens:
-                trimmed_tokens.append(new_token)
+                trimmed_tokens.append(new_token.upper())
 
     node.params = trimmed_tokens
 
@@ -151,7 +170,7 @@ def GetReversePolishNotation(tokens):
     stack = []
     result = []
     operations = {
-        "sum",
+        "SUM",
         "-",
         "+",
         "*",
@@ -165,9 +184,9 @@ def GetReversePolishNotation(tokens):
         "AND",
         "OR",
         "NOT"
-        "avg",
-        "min",
-        "max",
+        "AVG",
+        "MIN",
+        "MAX",
         "ANY"}
     any_stack = []
     is_any = False
@@ -220,23 +239,23 @@ def ParseAggregateNode(all_nodes, key, counter):
     reverse_notation = GetReversePolishNotation(all_nodes[key].params)
     all_nodes[key].params = reverse_notation
     operations = {
-        "sum",
+        "SUM",
         "-",
         "+",
         "*",
         "/",
-        "avg",
-        "min",
-        "max"}
+        "AVG",
+        "MIN",
+        "MAX"}
     operand_count = {
-        "sum": 1,
+        "SUM": 1,
         "-": 2,
         "+": 2,
         "*": 2,
         "/": 2,
-        "avg": 1,
-        "min": 1,
-        "max": 1}
+        "AVG": 1,
+        "MIN": 1,
+        "MAX": 1}
     stack = []
     new_operations = []
     for token in all_nodes[key].params:
@@ -247,7 +266,7 @@ def ParseAggregateNode(all_nodes, key, counter):
             else:
                 first_operand = stack.pop()
                 second_operand = "ERROR"
-            if token == "sum":
+            if token == "SUM":
                 new_operations.append(
                     {"name": "Aggregation", "params": [first_operand]})
                 # print("sum:" + first_operand)
@@ -361,7 +380,8 @@ def CheckTableIsExported(table_name):
 
 def GetTableRowCount(table_name, database_name):
     column_count_command = f"echo 'SELECT count(*) FROM {table_name}' | psql {database_name}"
-    count_output = subprocess.check_output(column_count_command, shell=True, text=True)
+    count_output = subprocess.check_output(
+        column_count_command, shell=True, text=True)
     count_lines = count_output.split("\n")
     return count_lines[2].strip()
 
@@ -396,7 +416,7 @@ def AddTableColumnsToJSON(json_data, counter, table_name, database_name):
 
     # Assume this works problem free - the programs exists and no file problems
     # TODO: Remove the assumption and do error checking!
-    command = f"echo '\d {table_name}' | psql {database_name}"
+    command = f"echo '\\d {table_name}' | psql {database_name}"
     output_filename = f"{table_name}.txt"
     os.system(f"{command} > {output_filename}")
     with open(output_filename) as f:
@@ -428,11 +448,18 @@ def AddJSONData(all_nodes, key, json_data, counter, database_name):
             if input_i >= len(all_nodes[key].tables):
                 raise RuntimeError("Incorrect number of tables given")
             all_nodes[key].inputs[input_i] = counter[0]
-            # TODO: Check if the same table is used for any other query - Need to also add the pointer there
-            AddTableColumnsToJSON(json_data, counter, all_nodes[key].tables[input_i], database_name)
+            # TODO: Check if the same table is used for any other query - Need
+            # to also add the pointer there
+            AddTableColumnsToJSON(
+                json_data,
+                counter,
+                all_nodes[key].tables[input_i],
+                database_name)
 
     if all_nodes[key].type == "Aggregate":
-        AddJSONKey(json_data, key, "Aggregate", [all_nodes[key].inputs[0], all_nodes[key].params[0]])
+        AddJSONKey(
+            json_data, key, "Aggregate", [
+                all_nodes[key].inputs[0], all_nodes[key].params[0]])
     elif all_nodes[key].type == "Join":
         AddJSONKey(json_data, key, "Join",
                    [all_nodes[key].inputs[0], all_nodes[key].params[0], all_nodes[key].inputs[1],
@@ -473,7 +500,7 @@ def CheckPostgreSQL(database_name):
     result = subprocess.run(["psql", "--version"])
     try:
         result.check_returncode()
-    except:
+    except BaseException:
         print("No PostgreSQL!")
 
 
@@ -503,6 +530,8 @@ def main(argv):
     # for independent_query in input_query_graph:
     #     print_node(independent_query["Plan"])
 
+    # print(json.dumps(input_query_graph, indent=4, sort_keys=True))
+
     all_nodes = dict()
     counter = [0]
     for independent_query in input_query_graph:
@@ -520,7 +549,9 @@ def main(argv):
         # If letter keep collecting until it's no longer a letter.
         # print(f"{key}:{all_nodes[key]}")
         TokenizeParams(all_nodes[key])
+        # print("BEFORE:")
         # print(f"{key}:{all_nodes[key]}")
+        # print()
         if (all_nodes[key].type == "Aggregate"):
             ParseAggregateNode(all_nodes, key, counter)
         elif (all_nodes[key].type == "Join"):
@@ -529,8 +560,11 @@ def main(argv):
             ParseFilterNode(all_nodes, key)
         else:
             raise RuntimeError("Incorrect type!")
+        # print("AFTER:")
         # print(f"{key}:{all_nodes[key]}")
+        # print()
 
+    # raise RuntimeError("STOP!")
     json_data = dict()
     for key in all_nodes.keys():
         pass

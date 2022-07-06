@@ -1872,6 +1872,7 @@ auto SQLQueryCreator::AddDoubleComparison(std::string filter_id,
   FilterOperation new_operation;
   new_operation.column_name = column_name;
   new_operation.operation = comparison_type;
+  // TODO: Fix this hardcoded stuff!
   std::vector<int> comparison_values = {0,
                                         static_cast<int>(compare_value * 100)};
   new_operation.comparison_values = comparison_values;

@@ -321,6 +321,7 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Route_through/TAA_95.json
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q19.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q6.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/lineitem.csv
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/part.csv
 
