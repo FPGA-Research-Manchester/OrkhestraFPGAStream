@@ -1,0 +1,11 @@
+{
+  "name": "binPartial_LinearSort1024_37_78",
+  "address": "0xa0000000",
+  "bitfiles": [
+    {
+      "name": "binPartial_LinearSort1024_37_78.bin",
+      "region": "full"
+    }
+  ],
+  "registers": []
+}

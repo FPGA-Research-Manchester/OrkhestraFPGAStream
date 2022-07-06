@@ -335,6 +335,21 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Route_through/TAA_92.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Route_through/TAA_95.json
 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort32_46_66.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort32_46_66.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort32_16_36.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort32_16_36.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_LinearSort1024_37_78.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_LinearSort1024_37_78.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_LinearSort1024_7_48.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_LinearSort1024_7_48.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort128_49_96.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort128_49_96.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort128_19_66.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort128_19_66.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort32_76_96.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort32_76_96.bin
+
     ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/setupUdma.pl)
 
 add_executable (OrkhestraFPGAStream main.cpp ${data})
