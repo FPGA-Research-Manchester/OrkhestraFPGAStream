@@ -21,7 +21,11 @@ add_library(sql_parsing
             sql_json_writer.cpp
             sql_json_writer.hpp
 	    q19_creator.hpp
-	    q19_creator.cpp)
+	    q19_creator.cpp
+	    sql_parser.hpp
+	    sql_parser.cpp
+	    sql_json_reader.cpp
+	    sql_json_reader.hpp)
 
 FetchContent_Declare(
         rapidjson

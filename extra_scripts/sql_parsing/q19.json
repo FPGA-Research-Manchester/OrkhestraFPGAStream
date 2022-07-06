@@ -1,0 +1,114 @@
+[{
+  "Plan": {
+    "Node Type": "Aggregate",
+    "Strategy": "Plain",
+    "Partial Mode": "Simple",
+    "Parallel Aware": false,
+    "Startup Cost": 32259.63,
+    "Total Cost": 32259.64,
+    "Plan Rows": 1,
+    "Plan Width": 32,
+    "Output": [
+      "sum((lineitem.l_extendedprice * ('1'::numeric - lineitem.l_discount)))"
+    ],
+    "Plans": [
+      {
+        "Node Type": "Merge Join",
+        "Parent Relationship": "Outer",
+        "Parallel Aware": false,
+        "Join Type": "Inner",
+        "Startup Cost": 32201.57,
+        "Total Cost": 32259.55,
+        "Plan Rows": 11,
+        "Plan Width": 12,
+        "Output": [
+          "lineitem.l_extendedprice",
+          "lineitem.l_discount"
+        ],
+        "Inner Unique": false,
+        "Merge Cond": "(lineitem.l_partkey = part.p_partkey)",
+        "Join Filter": "(((part.p_brand = 'Brand#12'::bpchar) AND (part.p_container = ANY ('{\"SM CASE\",\"SM BOX\",\"SM PACK\",\"SM PKG\"}'::bpchar[])) AND (lineitem.l_quantity >= '1'::numeric) AND (lineitem.l_quantity <= '11'::numeric) AND (part.p_size <= 5)) OR ((part.p_brand = 'Brand#23'::bpchar) AND (part.p_container = ANY ('{\"MED BAG\",\"MED BOX\",\"MED PKG\",\"MED PACK\"}'::bpchar[])) AND (lineitem.l_quantity >= '10'::numeric) AND (lineitem.l_quantity <= '20'::numeric) AND (part.p_size <= 10)) OR ((part.p_brand = 'Brand#34'::bpchar) AND (part.p_container = ANY ('{\"LG CASE\",\"LG BOX\",\"LG PACK\",\"LG PKG\"}'::bpchar[])) AND (lineitem.l_quantity >= '20'::numeric) AND (lineitem.l_quantity <= '30'::numeric) AND (part.p_size <= 15)))",
+        "Plans": [
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Startup Cost": 30940.23,
+            "Total Cost": 30968.35,
+            "Plan Rows": 11251,
+            "Plan Width": 25,
+            "Output": [
+              "lineitem.l_extendedprice",
+              "lineitem.l_discount",
+              "lineitem.l_partkey",
+              "lineitem.l_quantity"
+            ],
+            "Sort Key": [
+              "lineitem.l_partkey"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Seq Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Relation Name": "lineitem",
+                "Schema": "public",
+                "Alias": "lineitem",
+                "Startup Cost": 0,
+                "Total Cost": 30183.16,
+                "Plan Rows": 11251,
+                "Plan Width": 25,
+                "Output": [
+                  "lineitem.l_extendedprice",
+                  "lineitem.l_discount",
+                  "lineitem.l_partkey",
+                  "lineitem.l_quantity"
+                ],
+                "Filter": "((lineitem.l_shipmode = ANY ('{AIR,\"AIR REG\"}'::bpchar[])) AND (lineitem.l_shipinstruct = 'DELIVER IN PERSON'::bpchar) AND (((lineitem.l_quantity >= '1'::numeric) AND (lineitem.l_quantity <= '11'::numeric)) OR ((lineitem.l_quantity >= '10'::numeric) AND (lineitem.l_quantity <= '20'::numeric)) OR ((lineitem.l_quantity >= '20'::numeric) AND (lineitem.l_quantity <= '30'::numeric))))"
+              }
+            ]
+          },
+          {
+            "Node Type": "Sort",
+            "Parent Relationship": "Inner",
+            "Parallel Aware": false,
+            "Startup Cost": 1261.34,
+            "Total Cost": 1261.46,
+            "Plan Rows": 48,
+            "Plan Width": 30,
+            "Output": [
+              "part.p_partkey",
+              "part.p_brand",
+              "part.p_container",
+              "part.p_size"
+            ],
+            "Sort Key": [
+              "part.p_partkey"
+            ],
+            "Plans": [
+              {
+                "Node Type": "Seq Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Relation Name": "part",
+                "Schema": "public",
+                "Alias": "part",
+                "Startup Cost": 0,
+                "Total Cost": 1260,
+                "Plan Rows": 48,
+                "Plan Width": 30,
+                "Output": [
+                  "part.p_partkey",
+                  "part.p_brand",
+                  "part.p_container",
+                  "part.p_size"
+                ],
+                "Filter": "((part.p_size >= 1) AND (((part.p_brand = 'Brand#12'::bpchar) AND (part.p_container = ANY ('{\"SM CASE\",\"SM BOX\",\"SM PACK\",\"SM PKG\"}'::bpchar[])) AND (part.p_size <= 5)) OR ((part.p_brand = 'Brand#23'::bpchar) AND (part.p_container = ANY ('{\"MED BAG\",\"MED BOX\",\"MED PKG\",\"MED PACK\"}'::bpchar[])) AND (part.p_size <= 10)) OR ((part.p_brand = 'Brand#34'::bpchar) AND (part.p_container = ANY ('{\"LG CASE\",\"LG BOX\",\"LG PACK\",\"LG PKG\"}'::bpchar[])) AND (part.p_size <= 15))))"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}]
