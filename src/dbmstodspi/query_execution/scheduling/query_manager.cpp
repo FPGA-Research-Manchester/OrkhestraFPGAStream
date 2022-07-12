@@ -866,6 +866,9 @@ void QueryManager::AddQueryNodes(
       operation_params.push_back(
           node->given_operation_parameters.operation_parameters.at(
               run_data.run_index));
+      // For merge sort it is only 1 input - Give min module size for calculating buffer size.
+      input_params[0].smallest_module_size = *std::min_element(
+          operation_params.at(1).begin(), operation_params.at(1).end());
     }
     // Just for debugging marking used operations params.
     node->given_operation_parameters.operation_parameters[run_data.run_index]

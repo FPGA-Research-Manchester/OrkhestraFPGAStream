@@ -26,7 +26,7 @@ using orkhestrafs::dbmstodspi::StreamParameterCalculator;
 
 void StreamParameterCalculator::CalculateDMAStreamSetupData(
     DMASetupData& stream_setup_data, const int record_size,
-    bool is_multichannel_stream) {
+    bool is_multichannel_stream, int smallest_module_size) {
   // Temporarily for now. Possibly wrong for output which is reduced in chunks!
   for (int i = 0; i < query_acceleration_constants::kDatapathLength; i++) {
     stream_setup_data.record_chunk_ids.emplace_back(
@@ -34,8 +34,11 @@ void StreamParameterCalculator::CalculateDMAStreamSetupData(
   }
 
   if (is_multichannel_stream) {
+    int buffer_space = (smallest_module_size / 32) * 1024;
     int sort_buffer_size = MergeSortSetup::CalculateSortBufferSize(
-        2048, 64, stream_setup_data.chunks_per_record);
+        buffer_space, smallest_module_size,
+        stream_setup_data
+            .chunks_per_record);
     stream_setup_data.records_per_ddr_burst =
         MergeSortSetup::CalculateRecordCountPerFetch(sort_buffer_size,
                                                      record_size);

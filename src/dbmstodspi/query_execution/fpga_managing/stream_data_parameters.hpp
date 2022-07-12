@@ -45,6 +45,8 @@ struct StreamDataParameters {
   int max_channel_count = -1;
   /// How many records will there be for each channel.
   // std::vector<int> records_per_channel = {-1};
+  /// Required for the merge sorting to know how big is the buffer size.
+  int smallest_module_size = -1;
 
   auto operator==(const StreamDataParameters& rhs) const -> bool {
     return stream_id == rhs.stream_id &&

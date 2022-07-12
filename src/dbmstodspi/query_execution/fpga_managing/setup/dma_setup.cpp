@@ -105,7 +105,7 @@ void DMASetup::SetupDMAModuleDirection(
     }
     StreamParameterCalculator::CalculateDMAStreamSetupData(
         stream_setup_data, stream_init_data.stream_record_size,
-        is_multichannel_stream);
+        is_multichannel_stream, stream_init_data.smallest_module_size);
 
     SetUpDMAIOStream(stream_setup_data, dma_engine);
 

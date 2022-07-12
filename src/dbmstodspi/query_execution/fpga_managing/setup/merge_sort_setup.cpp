@@ -56,7 +56,9 @@ void MergeSortSetup::SetupModule(
         dynamic_cast<MergeSortInterface&>(acceleration_module),
         module_parameters.input_streams[0].stream_id,
         GetStreamRecordSize(module_parameters.input_streams[0]), base_id,
-        is_first, module_parameters.operation_parameters.at(1).at(index));
+        is_first,
+        *std::min_element(module_parameters.operation_parameters.at(1).begin(),
+                         module_parameters.operation_parameters.at(1).end()));
   } else {
     /*throw std::runtime_error(
         "Can't configure merge sort to passthrough on stream ID");*/

@@ -189,7 +189,7 @@
 			}
 		},
 		"start_locations": [
-			[ "binPartial_MergeSort64_67_96.bin", "binPartial_MergeSort32_67_96", "binPartial_MergeSort128_49_96.bin" ],
+			[ "binPartial_MergeSort64_67_96.bin", "binPartial_MergeSort32_76_96.bin", "binPartial_MergeSort128_49_96.bin" ],
 			[],
 			[],
 			[],
@@ -199,7 +199,7 @@
 			[],
 			[],
 			[],
-			[ "binPartial_MergeSort64_37_66.bin", "binPartial_MergeSort32_37_66", "binPartial_MergeSort128_19_66.bin" ],
+			[ "binPartial_MergeSort64_37_66.bin", "binPartial_MergeSort32_46_66.bin", "binPartial_MergeSort128_19_66.bin" ],
 			[],
 			[],
 			[],
@@ -209,7 +209,7 @@
 			[],
 			[],
 			[],
-			[ "binPartial_MergeSort64_7_36.bin", "binPartial_MergeSort32_7_36" ],
+			[ "binPartial_MergeSort64_7_36.bin", "binPartial_MergeSort32_16_36.bin" ],
 			[],
 			[],
 			[],
