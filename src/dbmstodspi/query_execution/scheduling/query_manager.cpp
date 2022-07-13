@@ -221,6 +221,8 @@ auto QueryManager::CreateStreamParams(
     int virtual_channel_count = -1;
     if (is_input && !table_name.empty()) {
       if (node->operation_type == QueryOperationType::kMergeSort) {
+        int current_record_size =
+            current_tables_metadata.at(table_name).record_size;
         std::vector<int> current_sequences;
         int current_table_index =
             run_data.operation_parameters.front().at(table_offset);
@@ -238,7 +240,7 @@ auto QueryManager::CreateStreamParams(
                          .at(run_data.input_data_definition_files.at(
                              current_table_index))
                          ->GetPhysicalAddress() +
-                     write_offset,
+                     write_offset * current_record_size,
                  std::move(current_sequences)});
             
             current_sequences = {sequence.at(count_offset)};
@@ -270,7 +272,7 @@ auto QueryManager::CreateStreamParams(
                      .at(run_data.input_data_definition_files.at(
                          current_table_index))
                      ->GetPhysicalAddress() +
-                 write_offset,
+                 write_offset * current_record_size,
              std::move(current_sequences)});
 
         virtual_channel_count = max_channel_count;
@@ -282,7 +284,8 @@ auto QueryManager::CreateStreamParams(
     } else if (!is_input && !table_name.empty()) {
       auto physical_address_ptr =
           table_memory_blocks.at(table_name)->GetPhysicalAddress() +
-          run_data.output_offset.at(stream_index);
+          run_data.output_offset.at(stream_index) *
+              current_tables_metadata.at(table_name).record_size;
       physical_addresses_map.insert({physical_address_ptr, {-1}});
     } else {
       // Leave address map empty!
@@ -355,8 +358,8 @@ auto QueryManager::SetupAccelerationNodesForExecution(
   IDManager::AllocateStreamIDs(current_query_nodes, input_ids, output_ids);
 
   for (auto& node : current_query_nodes) {
-    auto current_run_params = std::move(node->module_run_data.back());
-    node->module_run_data.pop_back();
+    auto current_run_params = std::move(node->module_run_data.front());
+    node->module_run_data.pop_front();
     for (const auto& table : current_run_params.input_data_definition_files) {
       if (!table.empty()) {
         table_counter[table]--;
@@ -678,8 +681,15 @@ void QueryManager::ProcessResults(
           node_name + "_" + std::to_string(result_params.stream_index) +
               " has " +
               std::to_string(record_count - result_params.output_offset) +
-              " rows!");
+              " new resulting rows!");
       scheduling_table_data[result_params.filename].record_count = record_count;
+      std::string filename = result_params.filename;
+      if (filename.back() != 'v') {
+        filename += ".csv";
+      }
+      WriteResults(data_manager, table_memory_blocks.at(result_params.filename),
+                   record_count, filename, result_params.stream_specifications,
+                   result_params.stream_index);
       if (!result_params.update_table_sizes_only) {
         if (result_params.check_results) {
           CheckResults(

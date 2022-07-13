@@ -76,6 +76,7 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
     int number_of_sequences;
     std::string table_name;
   };
+  static auto IsNumber(const std::string &input_string) -> bool;
   static auto GetCapacityForPenultimateRun(
       int next_run_capacity,
       const std::map<int, std::vector<LengthOfSortedSequences>> &sort_status)

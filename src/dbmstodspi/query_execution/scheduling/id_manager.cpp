@@ -58,12 +58,12 @@ void IDManager::AllocateInputIDs(
     const QueryNode *current_node, std::vector<int> &current_node_input_ids,
     std::map<std::string, std::vector<int>> &output_ids,
     std::vector<int> &current_node_output_ids, std::stack<int> &available_ids) {
-  // TODO: Change the check to an assert!
-  if (current_node->given_input_data_definition_files.size() <
+  // This check is incorrect - Merge sort needs 1 stream but can have multiple file inputs
+  /*if (current_node->given_input_data_definition_files.size() <
       current_node->module_run_data.front()
           .input_data_definition_files.size()) {
     throw std::runtime_error("Incorrect number of inputs given for run!");
-  }
+  }*/
   for (int current_stream_index = 0;
        current_stream_index <
        current_node->given_input_data_definition_files.size();

@@ -411,18 +411,24 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
     }
   }
 
+  // Node name to node map
   std::unordered_map<std::string, QueryNode *> found_nodes;
+  // How many runs a node name needs
   std::unordered_map<std::string, int> run_counter;
 
+  // Node name -> Map of {size of sequence -> {table, offset, number of sequences}}
   std::map<std::string, std::map<int, std::vector<LengthOfSortedSequences>>>
       sorted_status_of_a_merge_node;
 
+  // Result -> What modules and what nodes are being executed each run
   std::queue<std::pair<std::vector<ScheduledModule>, std::vector<QueryNode *>>>
       resulting_runs;
   for (const auto &run : best_plan) {
+    // Node name -> run specific information
     std::unordered_map<std::string, NodeRunData> current_run_node_data;
 
     std::vector<QueryNode *> chosen_nodes;
+    // Go through all of the nodes in the run
     for (int module_index = 0; module_index < run.size(); module_index++) {
       QueryNode *chosen_node;
       NodeRunData *current_run_data;
@@ -443,8 +449,11 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
       // Check if it is the first occurrence of this node in this run
       if (current_run_node_data.find(node_name) !=
           current_run_node_data.end()) {
+          // Get current run data to update module locations in it later.
         current_run_data = &current_run_node_data.at(node_name);
 
+        // Push back the size of the module to params to configure the sorters
+        // TODO: Make generic!
         if (chosen_node->operation_type == QueryOperationType::kMergeSort) {
           chosen_node->given_operation_parameters.operation_parameters.back()
               .push_back(hw_library.at(current_module.operation_type)
@@ -453,6 +462,7 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
         }
 
       } else {
+        // The module hasn't appeared in this run so we update the counter.
         if (const auto &[it, inserted] = run_counter.try_emplace(node_name, 1);
             !inserted) {
           it->second++;
@@ -465,6 +475,7 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
         chosen_nodes.push_back(chosen_node);
         current_run_data->run_index = run_counter.at(node_name) - 1;
 
+        // Do output!
         // TODO: Remove code duplication
         // Are there any nodes placed afterwards?
         for (int stream_id = 0; stream_id < chosen_node->next_nodes.size();
@@ -482,8 +493,10 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
           }
           current_run_data->output_offset.push_back(0);
           if (is_io_stream) {
+            // Setting output stream filename here
             current_run_data->output_data_definition_files.push_back(
                 chosen_node->given_output_data_definition_files.at(stream_id));
+            // Update table counter
             if (const auto &[it, inserted] = table_counter.try_emplace(
                     chosen_node->given_output_data_definition_files.at(
                         stream_id),
@@ -495,6 +508,8 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
             current_run_data->output_data_definition_files.emplace_back("");
           }
         }
+        // Now we do input!
+
         // We assume merge sort is always first currently. Deal with it
         // separately.
         if (chosen_node->operation_type != QueryOperationType::kMergeSort) {
@@ -552,6 +567,7 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
     }
     resulting_runs.push({run, chosen_nodes});
   }
+  // Now we deal with all of the merge sorters
   for (auto &[merge_sort_node_name, sort_status] :
        sorted_status_of_a_merge_node) {
     auto &sort_node = found_nodes.at(merge_sort_node_name);
@@ -578,10 +594,19 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
           sort_node, next_run_capacities,
           run_id == (run_counter.at(merge_sort_node_name) - 2), table_counter);
     }
-    // Could also check that the number of sorted rows is correct rather than
-    // that all sequences have been processed.
+    //Check that sort_status has been emptied
     if (!sort_status.empty()) {
       throw std::runtime_error("Not enough sorting modules scheduled!");
+    }
+    // Check that all rows have been sorted in the last run!
+    int sorted_row_count = 0;
+    for (const auto &channel_data : run_data.back().operation_parameters) {
+      sorted_row_count += channel_data.at(2);
+    }
+    if (sorted_row_count != table_data.at(found_nodes.at(merge_sort_node_name)
+                    ->given_input_data_definition_files.at(0))
+            .record_count) {
+      throw std::runtime_error("Incorrect number of rows sorted!");
     }
   }
   return resulting_runs;
@@ -603,6 +628,15 @@ auto ElasticResourceNodeScheduler::GetCapacityForPenultimateRun(
   return current_sequences + 1 - next_run_capacity;
 }
 
+auto ElasticResourceNodeScheduler::IsNumber(const std::string &input_string) -> bool {
+  return !input_string.empty() &&
+         std::find_if(input_string.begin(), input_string.end(),
+                                    [](unsigned char c) {
+                         return !std::isdigit(c); }) ==
+             input_string.end();
+}
+
+// Problem is that output is set for everyone always. So if you add a new temp output table -> Remove the old one! - Also need to update the table counter!
 void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
     std::map<int, std::vector<LengthOfSortedSequences>> &sort_status,
     NodeRunData &run_data, const std::vector<int> &capacities,
@@ -676,17 +710,42 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
   }
   if (!sort_status.empty()) {
     // Else you put a new sequence back and set output.
-
     // I need a new table name
+    std::string output_table_name = "";
     int max_iteration = 0;
     for (const auto &input_table_name : run_data.input_data_definition_files) {
-      max_iteration = std::max(
-          max_iteration,
-          static_cast<int>(input_table_name.back() - static_cast<int>('0')));
+      if (input_table_name.find(".csv") != std::string::npos) {
+        if (run_data.input_data_definition_files.size() == 1) {
+          output_table_name = input_table_name;
+          size_t delete_pos = output_table_name.find_last_of(".csv");
+          output_table_name.erase(delete_pos - 3, 4);
+          output_table_name += "_";
+        } else {
+          // Do nothing. Assume that there is another file name which has an
+          // iteration number.
+        }
+      } else {
+        auto parsed_name = input_table_name;
+
+        size_t string_i = 0;
+        std::string throw_away;
+        while ((string_i = parsed_name.find("_")) != std::string::npos) {
+          throw_away = parsed_name.substr(0, string_i);
+          parsed_name.erase(0, string_i + 1);
+        }
+        output_table_name = input_table_name;
+        size_t delete_pos = output_table_name.find_last_of(parsed_name);
+        output_table_name.erase(delete_pos - parsed_name.size() + 1,
+                                parsed_name.size());
+        if (!IsNumber(parsed_name)) {
+          throw std::runtime_error(
+              "Expected a number at the end of the filename!");        
+        } else {
+          max_iteration = std::max(max_iteration, stoi(parsed_name));
+        }
+      }
     }
-    auto output_table_name =
-        merge_node->given_input_data_definition_files.front();
-    output_table_name.pop_back();
+
     output_table_name += std::to_string(max_iteration + 1);
     // Check if table exists.
     if (table_data.find(output_table_name) == table_data.end()) {
@@ -735,7 +794,7 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
       sort_status.insert({new_sequence_size, {std::move(new_sequence)}});
     }
     table_data[output_table_name].record_count += new_sequence_size;
-    // Half sorted stuff always gets written to temp file
+    // Half sorted stuff always gets written to temp file - Remove the normal output first
     table_counter[run_data.output_data_definition_files.front()]--;
     run_data.output_data_definition_files.clear();
     run_data.output_data_definition_files.push_back(output_table_name);
