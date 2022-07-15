@@ -24,6 +24,7 @@ limitations under the License.
 #include "query_scheduling_data.hpp"
 
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
+using orkhestrafs::core_interfaces::query_scheduling_data::QueryNode;
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -37,5 +38,6 @@ struct SchedulingQueryNode {
   std::vector<std::string> after_nodes;
   std::vector<std::string> data_tables;
   std::vector<std::vector<std::string>> satisfying_bitstreams;
+  QueryNode* node_ptr;
 };
 }  // namespace orkhestrafs::dbmstodspi

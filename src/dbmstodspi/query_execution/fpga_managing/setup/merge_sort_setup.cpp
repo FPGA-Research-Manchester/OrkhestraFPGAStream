@@ -45,14 +45,20 @@ void MergeSortSetup::SetupModule(
                  module_parameters.composed_module_locations.begin();
 
     bool is_first = index == 0;
-    // TODO(Kaspar): For now assuming all modules are the same!
-    int base_id = module_parameters.operation_parameters.at(2).at(0);
+    // Calculate how many have been before and the sum of them is the index.
+    // Then you can also feed the size of this module to the setup.
+    int base_id = 0;
+    for (int current_index = 0; current_index < index; current_index++) {
+      base_id += module_parameters.operation_parameters.at(1).at(current_index);
+    }
 
     MergeSortSetup::SetupMergeSortModule(
         dynamic_cast<MergeSortInterface&>(acceleration_module),
         module_parameters.input_streams[0].stream_id,
         GetStreamRecordSize(module_parameters.input_streams[0]), base_id,
-        is_first);
+        is_first,
+        *std::min_element(module_parameters.operation_parameters.at(1).begin(),
+                         module_parameters.operation_parameters.at(1).end()));
   } else {
     /*throw std::runtime_error(
         "Can't configure merge sort to passthrough on stream ID");*/
@@ -70,12 +76,12 @@ auto MergeSortSetup::CreateModule(MemoryManagerInterface* memory_manager,
 void MergeSortSetup::SetupPassthroughMergeSort(
     MergeSortInterface& merge_sort_module) {
   merge_sort_module.SetStreamParams(15, 1);
-  //merge_sort_module.StartPrefetchingData(0, false);
+  // merge_sort_module.StartPrefetchingData(0, false);
 }
 
 void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
                                           int stream_id, int record_size,
-                                          int base_channel_id, bool is_first) {
+                                          int base_channel_id, bool is_first, int module_size) {
   int chunks_per_record =
       StreamParameterCalculator::CalculateChunksPerRecord(record_size);
 
@@ -86,10 +92,12 @@ void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
 
   merge_sort_module.SetStreamParams(stream_id, chunks_per_record);
 
+  int buffer_space = (module_size / 32) * 1024;
   // TODO(Kaspar): Remove hardcoded parameters
   // int sort_buffer_size = CalculateSortBufferSize(4096, 128,
   // chunks_per_record);
-  int sort_buffer_size = CalculateSortBufferSize(2048, 64, chunks_per_record);
+      int sort_buffer_size =
+          CalculateSortBufferSize(buffer_space, module_size, chunks_per_record);
   int record_count_per_fetch =
       CalculateRecordCountPerFetch(sort_buffer_size, record_size);
 
@@ -111,7 +119,7 @@ auto MergeSortSetup::CalculateSortBufferSize(int buffer_space,
   int max_buffered_record_count = buffer_space / chunks_per_record -
                                   16;  // -16 for records in the pipelines.
 
-  return std::min(2 * buffer_space / channel_count,
+  return std::min(buffer_space / channel_count,
                   (max_buffered_record_count - internal_logic_buffer_reserve) /
                       channel_count);
 }
@@ -152,7 +160,7 @@ auto MergeSortSetup::GetMultiChannelParams(
     std::vector<std::vector<int>> operation_parameters)
     -> std::pair<int, std::vector<int>> {
   if (!is_input) {
-    return {-1, {-1}};
+    return {-1, {}};
   }
   int max_channel_count = 0;
   // Assuming all modules have the same records_per_channel
@@ -176,21 +184,37 @@ auto MergeSortSetup::GetMultiChannelParams(
 auto MergeSortSetup::GetMinSortingRequirementsForTable(
     const TableMetadata& table_data) -> std::vector<int> {
   if (table_data.sorted_status.empty()) {
-    return {table_data.record_count};
+    /*return {table_data.record_count};*/
+    throw std::runtime_error("Incorrect sorted meta data");
   }
   if (QuerySchedulingHelper::IsTableSorted(table_data)) {
     return {0};
   }
-  int pos_of_last_sorted_element =
-      table_data.sorted_status.back().start_position +
-      table_data.sorted_status.back().length;
-  if (pos_of_last_sorted_element > table_data.record_count) {
-    throw std::runtime_error("Incorrect sorted meta data");
+  int required_capacity = 0;
+  for (int i = 3; i < table_data.sorted_status.size(); i += 4) {
+    required_capacity += table_data.sorted_status.at(i);
   }
-  int unsorted_tail_length =
-      table_data.record_count - pos_of_last_sorted_element;
-  return {static_cast<int>(table_data.sorted_status.size()) +
-          unsorted_tail_length};
+  return {required_capacity};
 }
 
 auto MergeSortSetup::IsDataSensitive() -> bool { return true; }
+// TODO: Just a weird quirk - Make it more logical later!
+// auto MergeSortSetup::IsSortingInputTable() -> bool { return false; }
+
+auto MergeSortSetup::SetMissingFunctionalCapacity(
+    const std::vector<int>& bitstream_capacity,
+    std::vector<int>& missing_capacity, const std::vector<int>& node_capacity,
+    bool is_composed) -> bool {
+  if (bitstream_capacity.size() != 1 || node_capacity.size() != 1) {
+    throw std::runtime_error("Incorrect capacity values for merge sorter!");
+  }
+  int missing_capacity_value =
+      node_capacity.front() - (bitstream_capacity.front() + int(is_composed));
+  if (missing_capacity_value > 0) {
+    missing_capacity.push_back(++missing_capacity_value);
+    return false;
+  } else {
+    missing_capacity.push_back(missing_capacity_value);
+    return true;
+  }
+}

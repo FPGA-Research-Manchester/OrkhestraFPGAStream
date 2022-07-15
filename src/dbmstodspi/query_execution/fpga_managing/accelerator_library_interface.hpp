@@ -65,8 +65,14 @@ class AcceleratorLibraryInterface {
   virtual auto GetWorstCaseProcessedTables(
       QueryOperationType operation_type, const std::vector<int>& min_capacity,
       const std::vector<std::string>& input_tables,
-      const std::map<std::string, TableMetadata>& data_tables)
+      const std::map<std::string, TableMetadata>& data_tables,
+      const std::vector<std::string>& output_table_names)
       -> std::map<std::string, TableMetadata> = 0;
+  virtual auto GetWorstCaseNodeCapacity(
+      QueryOperationType operation_type, const std::vector<int>& min_capacity,
+      const std::vector<std::string>& input_tables,
+      const std::map<std::string, TableMetadata>& data_tables,
+      QueryOperationType next_operation_type) -> std::vector<int> = 0;
   virtual auto UpdateDataTable(
       QueryOperationType operation_type,
       const std::vector<int>& module_capacity,
@@ -86,6 +92,11 @@ class AcceleratorLibraryInterface {
   virtual auto GetEmptyModuleNode(QueryOperationType operation,
                                   int module_position)
       -> AcceleratedQueryNode = 0;
+  virtual auto SetMissingFunctionalCapacity(
+      const std::vector<int>& bitstream_capacity,
+      std::vector<int>& missing_capacity, const std::vector<int>& node_capacity,
+      bool is_composed,
+      QueryOperationType operation_type) -> bool = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

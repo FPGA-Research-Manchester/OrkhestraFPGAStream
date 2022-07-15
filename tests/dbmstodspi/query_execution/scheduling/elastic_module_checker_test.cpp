@@ -39,9 +39,11 @@ TEST_F(ElasticModuleCheckerTest, MergeSortIsValid) {
   int stream_record_count_to_sort = 1;
   int stream_id = 0;
 
-  StreamDataParameters stream_parameters = {
-      stream_id, any_stream_record_size_, stream_record_count_to_sort,
-      any_address_pointer_, any_stream_specification_};
+  StreamDataParameters stream_parameters = {stream_id,
+                                            any_stream_record_size_,
+                                            stream_record_count_to_sort,
+                                            {{any_address_pointer_, {}}},
+                                            any_stream_specification_};
 
   input_stream_parameters_.push_back(stream_parameters);
   operation_parameters_.push_back({max_channel_count, sorted_sequences_count});
@@ -57,9 +59,11 @@ TEST_F(ElasticModuleCheckerTest, MergeSortHasTooManyStreams) {
   int stream_record_count_to_sort = 1;
   int stream_id = 0;
 
-  StreamDataParameters stream_parameters = {
-      stream_id, any_stream_record_size_, stream_record_count_to_sort,
-      any_address_pointer_, any_stream_specification_};
+  StreamDataParameters stream_parameters = {stream_id,
+                                            any_stream_record_size_,
+                                            stream_record_count_to_sort,
+                                            {{any_address_pointer_, {}}},
+                                            any_stream_specification_};
 
   input_stream_parameters_.push_back(stream_parameters);
   input_stream_parameters_.push_back(stream_parameters);
@@ -84,9 +88,11 @@ TEST_F(ElasticModuleCheckerTest, MergeSortHasIncorrectOperationParams) {
   int stream_id = 0;
   int random_param = 0;
 
-  StreamDataParameters stream_parameters = {
-      stream_id, any_stream_record_size_, stream_record_count_to_sort,
-      any_address_pointer_, any_stream_specification_};
+  StreamDataParameters stream_parameters = {stream_id,
+                                            any_stream_record_size_,
+                                            stream_record_count_to_sort,
+                                            {{any_address_pointer_, {}}},
+                                            any_stream_specification_};
 
   input_stream_parameters_.push_back(stream_parameters);
   operation_parameters_.push_back(
@@ -110,9 +116,11 @@ TEST_F(ElasticModuleCheckerTest, MergeSorterIsNotBigEnough) {
   int stream_record_count_to_sort = 2;
   int stream_id = 0;
 
-  StreamDataParameters stream_parameters = {
-      stream_id, any_stream_record_size_, stream_record_count_to_sort,
-      any_address_pointer_, any_stream_specification_};
+  StreamDataParameters stream_parameters = {stream_id,
+                                            any_stream_record_size_,
+                                            stream_record_count_to_sort,
+                                            {{any_address_pointer_, {}}},
+                                            any_stream_specification_};
 
   input_stream_parameters_.push_back(stream_parameters);
   operation_parameters_.push_back({max_channel_count, sorted_sequences_count});
@@ -126,9 +134,11 @@ TEST_F(ElasticModuleCheckerTest, FilterPassesMergeSortCheck) {
   int stream_record_count = 100;
   int stream_id = 0;
 
-  StreamDataParameters stream_parameters = {
-      stream_id, any_stream_record_size_, stream_record_count,
-      any_address_pointer_, any_stream_specification_};
+  StreamDataParameters stream_parameters = {stream_id,
+                                            any_stream_record_size_,
+                                            stream_record_count,
+                                            {{any_address_pointer_, {}}},
+                                            any_stream_specification_};
 
   input_stream_parameters_.push_back(stream_parameters);
   operation_parameters_.emplace_back();

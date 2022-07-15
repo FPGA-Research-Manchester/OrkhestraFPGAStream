@@ -17,6 +17,8 @@ limitations under the License.
 #pragma once
 
 #include "acceleration_module_setup_interface.hpp"
+#include "table_data.hpp"
+
 
 namespace orkhestrafs::dbmstodspi {
 
@@ -25,11 +27,22 @@ namespace orkhestrafs::dbmstodspi {
  */
 class BlockingSortModuleSetup
     : public virtual AccelerationModuleSetupInterface {
+ private:
+  static void SortDataTableWhileMinimizingMinorRuns(
+      const std::vector<int>& old_sorted_sequence,
+      std::vector<int>& new_sorted_sequence, int record_count,
+      int module_capacity);
+  static void SortDataTableWhileMinimizingMajorRuns(
+      const std::vector<int>& old_sorted_sequence,
+      std::vector<int>& new_sorted_sequence, int record_count,
+      int module_capacity);
+
  public:
   auto GetWorstCaseProcessedTables(
       const std::vector<int>& min_capacity,
       const std::vector<std::string>& input_tables,
-      const std::map<std::string, TableMetadata>& data_tables)
+      const std::map<std::string, TableMetadata>& data_tables,
+      const std::vector<std::string>& output_table_names)
       -> std::map<std::string, TableMetadata> override;
   auto UpdateDataTable(const std::vector<int>& module_capacity,
                        const std::vector<std::string>& input_table_names,

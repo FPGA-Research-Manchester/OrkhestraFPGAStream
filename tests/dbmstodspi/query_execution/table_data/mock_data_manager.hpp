@@ -28,24 +28,15 @@ class MockDataManager : public DataManagerInterface {
   using ColumDefsVector = std::vector<std::pair<ColumnDataType, int>>;
 
  public:
-  auto WriteDataFromCSVToMemory(
-      const std::string& filename,
-      const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
-      const std::unique_ptr<MemoryBlockInterface>& memory_device) const
-      -> int override {
-    return MockWriteDataFromCSVToMemory(filename, column_defs_vector,
-                                        memory_device.get());
-  }
-
   MOCK_METHOD(TableData, ParseDataFromCSV,
               (const std::string& filename,
                const std::vector<ColumnDataType>& column_data_types,
                const std::vector<int>& column_sizes, int& rows_already_read),
               (const, override));
-  MOCK_METHOD(int, MockWriteDataFromCSVToMemory,
+  MOCK_METHOD(int, WriteDataFromCSVToMemory,
               (const std::string& filename,
                const ColumDefsVector& column_defs_vector,
-               const MemoryBlockInterface* memory_device),
+               MemoryBlockInterface* memory_device),
               (const));
   MOCK_METHOD(ColumDefsVector, GetHeaderColumnVector,
               (const std::vector<ColumnDataType>& column_data_types,

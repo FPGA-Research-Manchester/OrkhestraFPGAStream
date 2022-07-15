@@ -30,7 +30,6 @@ limitations under the License.
 #include "table_data.hpp"
 #include "time_limit_execption.hpp"
 
-using orkhestrafs::core_interfaces::table_data::SortedSequence;
 using orkhestrafs::dbmstodspi::ElasticSchedulingGraphParser;
 using orkhestrafs::dbmstodspi::PairHash;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
@@ -38,7 +37,7 @@ using orkhestrafs::dbmstodspi::TimeLimitException;
 
 void ElasticSchedulingGraphParser::PreprocessNodes(
     std::unordered_set<std::string>& available_nodes,
-    const std::unordered_set<std::string>& processed_nodes,
+    std::unordered_set<std::string>& processed_nodes,
     std::unordered_map<std::string, SchedulingQueryNode>& graph,
     std::map<std::string, TableMetadata>& data_tables) {
   pre_scheduler_.AddSatisfyingBitstreamLocationsToGraph(
@@ -244,9 +243,9 @@ auto ElasticSchedulingGraphParser::GetChosenModulePlacements(
     const std::vector<std::vector<ModuleSelection>>& heuristics,
     int min_position, const std::vector<std::pair<int, int>>& taken_positions,
     const std::vector<std::vector<std::string>>& bitstream_start_locations,
-    const std::vector<SortedSequence>& processed_table_data,
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
-        module_placements) -> bool {
+        module_placements,
+    bool is_composed) -> bool {
   // Do I need to construct this every time?
   auto available_bitstreams = FindAllAvailableBitstreamsAfterMinPos(
       current_operation, min_position, taken_positions,
@@ -263,7 +262,7 @@ auto ElasticSchedulingGraphParser::GetChosenModulePlacements(
                            current_operation,
                            chosen_bitstream,
                            {chosen_column_position, end_index},
-                           processed_table_data}});
+                           is_composed}});
     }
     if (!new_modules.empty()) {
       statistics_counters_.first += new_modules.size();
@@ -295,23 +294,27 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPos(
       found_placements;
   auto search = saved_placements_.find(current_query);
   if (search == saved_placements_.end()) {
+    // Not found
+    bool is_composed = std::any_of(
+        current_run.begin(), current_run.end(),
+        [&](const auto& module) { return module.node_name == node_name; });
     GetScheduledModulesForNodeAfterPosOrig(
         graph, GetMinPositionInCurrentRun(current_run, node_name, graph),
-        node_name, GetTakenColumns(current_run), data_tables, found_placements);
+        node_name, GetTakenColumns(current_run), data_tables, found_placements,
+        is_composed);
     saved_placements_.insert({current_query, found_placements});
     module_placements.merge(found_placements);
   } else {
-    // Add new table status
+    // "Cached"
     std::vector<std::pair<int, ScheduledModule>> found_placements(
         search->second.begin(), search->second.end());
-    std::vector<SortedSequence> processed_tables_data;
-    if (!graph.at(node_name).data_tables.at(0).empty()) {
-      processed_tables_data =
-          data_tables.at(graph.at(node_name).data_tables.at(0)).sorted_status;
-    }
+    // Composed status currently is saved as well!
+    /*bool is_composed = std::any_of(
+        current_run.begin(), current_run.end(),
+        [&](const auto& module) { return module.node_name == node_name });
     for (auto& new_module_placement : found_placements) {
-      new_module_placement.second.processed_table_data = processed_tables_data;
-    }
+      new_module_placement.second.is_composed = is_composed;
+    }*/
     module_placements.insert(std::make_move_iterator(found_placements.begin()),
                              std::make_move_iterator(found_placements.end()));
   }
@@ -323,36 +326,23 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPosOrig(
     const std::vector<std::pair<int, int>>& taken_positions,
     const std::map<std::string, TableMetadata>& data_tables,
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
-        module_placements) {
-  std::vector<SortedSequence> processed_tables_data;
-  // TODO(Kaspar): Change this hack later
-  if (!graph.at(node_name).data_tables.at(0).empty()) {
-    processed_tables_data =
-        data_tables.at(graph.at(node_name).data_tables.at(0)).sorted_status;
-  }
-  /*std::vector<TableMetadata> processed_tables_data;
-  for (const auto& table_name : graph.at(node_name).data_tables) {
-    if (table_name.empty()) {
-      processed_tables_data.push_back({-1, -1, {}});
-    } else {
-      processed_tables_data.push_back(data_tables.at(table_name));
-    }
-  }*/
+        module_placements,
+    bool is_composed) {
   auto modules_found = false;
   if (!graph.at(node_name).satisfying_bitstreams.empty() &&
       !heuristics_.first.empty()) {
     modules_found = GetChosenModulePlacements(
         node_name, graph.at(node_name).operation, heuristics_.first,
         min_position, taken_positions,
-        graph.at(node_name).satisfying_bitstreams, processed_tables_data,
-        module_placements);
+        graph.at(node_name).satisfying_bitstreams, module_placements,
+        is_composed);
   }
   if (!modules_found) {
     GetChosenModulePlacements(
         node_name, graph.at(node_name).operation, heuristics_.second,
         min_position, taken_positions,
         hw_library_.at(graph.at(node_name).operation).starting_locations,
-        processed_tables_data, module_placements);
+        module_placements, is_composed);
   }
 }
 
@@ -383,22 +373,13 @@ auto ElasticSchedulingGraphParser::CheckForSkippableSortOperations(
 
 auto ElasticSchedulingGraphParser::FindMissingUtility(
     const std::vector<int>& bitstream_capacity,
-    std::vector<int>& missing_capacity, const std::vector<int>& node_capacity)
-    -> bool {
-  bool is_node_fully_processed = true;
+    std::vector<int>& missing_capacity, const std::vector<int>& node_capacity,
+    QueryOperationType operation_type, bool is_composed) -> bool {
+  // You can get rid of this error check one day and make it module specific.
   if (bitstream_capacity.size() != node_capacity.size()) {
     throw std::runtime_error("Capacity parameters don't match!");
   }
-  for (int capacity_parameter_index = 0;
-       capacity_parameter_index < bitstream_capacity.size();
-       capacity_parameter_index++) {
-    missing_capacity.push_back(node_capacity.at(capacity_parameter_index) -
-                               bitstream_capacity.at(capacity_parameter_index));
-    if (missing_capacity.at(capacity_parameter_index) > 0) {
-      is_node_fully_processed = false;
-    }
-  }
-  return is_node_fully_processed;
+  throw std::runtime_error("Not implemented method!");
 }
 
 void ElasticSchedulingGraphParser::UpdateGraphCapacities(
@@ -447,30 +428,56 @@ auto ElasticSchedulingGraphParser::UpdateGraphCapacitiesAndTables(
     std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
     std::map<std::string, TableMetadata>& new_data_tables,
     const std::string& bitstream, const std::string& node_name,
-    const std::vector<int>& capacity, QueryOperationType operation) -> bool {
+    const std::vector<int>& capacity, QueryOperationType operation,
+    bool is_composed) -> bool {
   bool is_node_fully_processed = false;
-  if (drivers_.IsOperationSorting(operation)) {
+  if (operation == QueryOperationType::kLinearSort) {
+    // Just linear sort. It always gets fully processed and no need to look at
+    // capacity. Make it more generic in the future!
+    // TODO: Assuming single next node.
     is_node_fully_processed = drivers_.UpdateDataTable(
         operation,
         hw_library_.at(operation).bitstream_map.at(bitstream).capacity,
-        new_graph.at(node_name).data_tables, new_data_tables);
+        new_graph.at(node_name).node_ptr->given_output_data_definition_files,
+        new_data_tables);
+    const auto& next_node_name = new_graph.at(node_name).after_nodes.front();
+    if (!next_node_name.empty()) {
+      if (new_graph.at(next_node_name).operation ==
+          QueryOperationType::kMergeSort) {
+        auto required_merge_capacity = drivers_.GetWorstCaseNodeCapacity(
+            operation,
+            hw_library_.at(operation).bitstream_map.at(bitstream).capacity,
+            new_graph.at(node_name).data_tables, new_data_tables,
+            new_graph.at(next_node_name).operation);
+        new_graph[next_node_name].capacity = required_merge_capacity;
+      } else {
+        // Assume the sort has been skipped and there isn't a sort later in the graph.
+          // TODO: Fix this assumption!
+      }
+      
+    }
+
     //    if (is_node_fully_processed) {
     //      skipped_nodes = CheckForSkippableSortOperations(
     //          new_graph, new_data_tables, node_name);
     //    }
   } else {
     std::vector<int> missing_utility;
-    is_node_fully_processed = FindMissingUtility(
+    auto placed_module_capacity =
+        hw_library_.at(operation).bitstream_map.at(bitstream).capacity;
+    is_node_fully_processed = drivers_.SetMissingFunctionalCapacity(
         hw_library_.at(operation).bitstream_map.at(bitstream).capacity,
-        missing_utility, capacity);
+        missing_utility, capacity, is_composed, operation);
     UpdateGraphCapacities(missing_utility, new_graph, node_name,
                           is_node_fully_processed);
   }
-  if (is_node_fully_processed) {
-    auto resulting_table = GetResultingTables(
-        new_graph.at(node_name).data_tables, new_data_tables, operation);
-    UpdateNextNodeTables(node_name, new_graph, resulting_table);
-  }
+  // No need for this anymore! Maybe add 90% filtering here later
+  // if (is_node_fully_processed) {
+  //    // Check this resulting tables BS
+  //  auto resulting_table = GetResultingTables(
+  //      new_graph.at(node_name).data_tables, new_data_tables, operation);
+  //  UpdateNextNodeTables(node_name, new_graph, resulting_table);
+  //}
   return is_node_fully_processed;
 }
 
@@ -504,10 +511,7 @@ auto ElasticSchedulingGraphParser::IsTableEqualForGivenNode(
         !std::equal(old_table_data.sorted_status.begin(),
                     old_table_data.sorted_status.end(),
                     new_table_data.sorted_status.begin(),
-                    [](const SortedSequence& l, const SortedSequence& r) {
-                      return l.length == r.length &&
-                             l.start_position == r.start_position;
-                    })) {
+                    [](const int& l, const int& r) { return l == r; })) {
       return true;
     }
   }
@@ -647,7 +651,8 @@ void ElasticSchedulingGraphParser::UpdateGraphAndTableValuesGivenPlacement(
       new_graph, new_data_tables, module_placement.bitstream,
       module_placement.node_name,
       new_graph.at(module_placement.node_name).capacity,
-      new_graph.at(module_placement.node_name).operation);
+      new_graph.at(module_placement.node_name).operation,
+      module_placement.is_composed);
 
   UpdateAvailableNodesAndSatisfyingBitstreamsList(
       module_placement.node_name, new_graph, new_available_nodes,
@@ -719,13 +724,11 @@ void ElasticSchedulingGraphParser::GetAllAvailableModulePlacementsInCurrentRun(
 
 void ElasticSchedulingGraphParser::AddPlanToAllPlansAndMeasureTime(
     const std::vector<std::vector<ScheduledModule>>& current_plan,
-    const std::unordered_set<std::string>& available_nodes,
     const std::unordered_set<std::string>& processed_nodes,
-    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
     const std::map<std::string, TableMetadata>& data_tables,
     int streamed_data_size) {
   ExecutionPlanSchedulingData current_scheduling_data = {
-      processed_nodes, available_nodes, graph, data_tables, streamed_data_size};
+      processed_nodes, data_tables, streamed_data_size};
   if (const auto& [it, inserted] =
           resulting_plan_.try_emplace(current_plan, current_scheduling_data);
       inserted) {
@@ -835,8 +838,7 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
   if (!current_run.empty()) {
     current_plan.push_back(std::move(current_run));
   }
-  AddPlanToAllPlansAndMeasureTime(current_plan, available_nodes,
-                                  processed_nodes, graph, data_tables,
+  AddPlanToAllPlansAndMeasureTime(current_plan, processed_nodes, data_tables,
                                   streamed_data_size);
 }
 

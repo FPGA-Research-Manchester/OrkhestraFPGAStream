@@ -56,7 +56,7 @@ class TableManager {
       std::vector<TableData>& output_tables,
       const std::array<int, query_acceleration_constants::kMaxIOStreamCount>&
           result_record_counts,
-      std::vector<std::unique_ptr<MemoryBlockInterface>>&
+      std::vector<MemoryBlockInterface*>&
           allocated_memory_blocks);
 
   /**
@@ -82,7 +82,7 @@ class TableManager {
       const DataManagerInterface* data_manager,
       const std::vector<std::vector<int>>& stream_specification,
       int stream_index,
-      const std::unique_ptr<MemoryBlockInterface>& memory_device,
+      MemoryBlockInterface* memory_device,
       const std::string& filename) -> std::pair<int, int>;
 
   /**
@@ -98,7 +98,7 @@ class TableManager {
       const DataManagerInterface* data_manager,
       const std::vector<std::vector<int>>& stream_specification,
       int stream_index,
-      const std::unique_ptr<MemoryBlockInterface>& memory_device, int row_count)
+      MemoryBlockInterface* memory_device, int row_count)
       -> TableData;
   /**
    * @brief Get TableData object from the given file.
@@ -132,7 +132,7 @@ class TableManager {
    * @param result_size How many rows should be read.
    */
   static void ReadOutputDataFromMemoryBlock(
-      const std::unique_ptr<MemoryBlockInterface>& output_device,
+      MemoryBlockInterface* output_device,
       TableData& resulting_table, const int& result_size);
   /**
    * @brief Write data from table object to memory.
@@ -142,7 +142,7 @@ class TableManager {
    * already.
    */
   static void WriteInputDataToMemoryBlock(
-      const std::unique_ptr<MemoryBlockInterface>& input_device,
+      MemoryBlockInterface* input_device,
       const TableData& input_table, int previous_record_count);
   /**
    * @brief Print data written to memory.
@@ -153,7 +153,7 @@ class TableManager {
    */
   static void PrintWrittenData(
       const DataManagerInterface* data_manager, const std::string& table_name,
-      const std::unique_ptr<MemoryBlockInterface>& input_device,
+      MemoryBlockInterface* input_device,
       const TableData& input_table);
   /**
    * @brief Method to print how big the table is.

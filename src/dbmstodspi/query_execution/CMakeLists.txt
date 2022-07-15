@@ -180,5 +180,5 @@ target_link_libraries(query_execution PRIVATE core_interfaces)
 target_link_libraries(query_execution PRIVATE util)
 
 if (ENABLE_FPGA)
-	target_link_libraries(query_execution PRIVATE fos)
+	target_link_libraries(query_execution PUBLIC fos)
 endif()

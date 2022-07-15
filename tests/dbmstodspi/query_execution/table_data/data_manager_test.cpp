@@ -47,7 +47,7 @@ TEST_F(DataManagerTest, WriteDataFromCSVToMemoryUsesReader) {
   std::unique_ptr<MemoryBlockInterface> memory_device =
       std::make_unique<VirtualMemoryBlock>();
 
-  EXPECT_CALL(mock_csv_reader_, MockWriteTableFromFileToMemory(
+  EXPECT_CALL(mock_csv_reader_, WriteTableFromFileToMemory(
                                     test_filename, any_separator_,
                                     column_defs_vector, memory_device.get()))
       .WillOnce(testing::Return(expected_return));
@@ -55,7 +55,7 @@ TEST_F(DataManagerTest, WriteDataFromCSVToMemoryUsesReader) {
                                       std::move(csv_reader_ptr_));
   ASSERT_EQ(expected_return,
             data_manager_under_test.WriteDataFromCSVToMemory(
-                test_filename, column_defs_vector, memory_device));
+                test_filename, column_defs_vector, memory_device.get()));
 }
 
 TEST_F(DataManagerTest, GetHeaderColumnVectorReturnsModifiedSizes) {

@@ -43,8 +43,8 @@ class QueryManagerTest : public ::testing::Test {
   NodeOperationParameters any_operation_params_ = {{}, {}, {}};
   std::string base_node_name_ = "base";
   std::vector<std::string> data_files_vector_;
-  std::vector<std::shared_ptr<QueryNode>> next_nodes_;
-  std::vector<std::weak_ptr<QueryNode>> previous_nodes_;
+  std::vector<QueryNode*> next_nodes_;
+  std::vector<QueryNode*> previous_nodes_;
   std::vector<bool> is_checked_;
 
   void SetUp() override {
@@ -254,109 +254,6 @@ TEST_F(QueryManagerTest, DISABLED_ExecuteAndProcessResultsCallsFPGAManager) {
   /*query_manager_under_test.ExecuteAndProcessResults(
       &mock_fpga_manager, &mock_data_manager, output_memory_blocks,
       output_stream_sizes, result_parameters, execution_query_nodes);*/
-}
-
-TEST_F(QueryManagerTest, DISABLED_FreeMemoryBlocksMovesLinkedMemoryBlocks) {
-  QueryManager query_manager_under_test(nullptr);
-  MockMemoryManager mock_memory_manager;
-  std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
-      input_memory_blocks;
-  std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
-      output_memory_blocks;
-  std::map<std::string, std::vector<RecordSizeAndCount>> input_stream_sizes;
-  std::map<std::string, std::vector<RecordSizeAndCount>> output_stream_sizes;
-  std::map<std::string, std::map<int, MemoryReuseTargets>> reuse_links;
-  std::vector<std::string> scheduled_node_names;
-
-  std::unique_ptr<MemoryBlockInterface> expected_memory_block =
-      std::make_unique<VirtualMemoryBlock>();
-  auto *expected_physical_address = expected_memory_block->GetPhysicalAddress();
-  std::string target_node_name = "target";
-  std::string source_node_name = "source";
-  std::vector<std::unique_ptr<MemoryBlockInterface>> source_input_vector;
-  source_input_vector.push_back(nullptr);
-  std::vector<std::unique_ptr<MemoryBlockInterface>> target_input_vector;
-  target_input_vector.push_back(nullptr);
-  input_memory_blocks.insert(
-      {target_node_name, std::move(target_input_vector)});
-  input_memory_blocks.insert(
-      {source_node_name, std::move(source_input_vector)});
-  std::vector<std::unique_ptr<MemoryBlockInterface>> source_vector;
-  source_vector.push_back(std::move(expected_memory_block));
-  output_memory_blocks.insert({source_node_name, std::move(source_vector)});
-  RecordSizeAndCount expected_record_data = {11, 22};
-  RecordSizeAndCount other_record_data = {0, 0};
-  input_stream_sizes.insert({target_node_name, {other_record_data}});
-  input_stream_sizes.insert({source_node_name, {other_record_data}});
-  output_stream_sizes.insert({source_node_name, {expected_record_data}});
-
-  std::map<int, MemoryReuseTargets> target_reuse_link;
-  target_reuse_link.insert({0, {{target_node_name, 0}}});
-  reuse_links.insert({source_node_name, target_reuse_link});
-
-  scheduled_node_names.push_back(source_node_name);
-
-  query_manager_under_test.FreeMemoryBlocks(
-      &mock_memory_manager, input_memory_blocks, output_memory_blocks,
-      input_stream_sizes, output_stream_sizes, reuse_links,
-      scheduled_node_names);
-
-  ASSERT_EQ(1, input_memory_blocks.size());
-  ASSERT_EQ(1, input_memory_blocks.at(target_node_name).size());
-  ASSERT_EQ(
-      expected_physical_address,
-      input_memory_blocks.at(target_node_name).at(0)->GetPhysicalAddress());
-  ASSERT_EQ(0, output_memory_blocks.size());
-  ASSERT_EQ(1, input_stream_sizes.size());
-  ASSERT_EQ(1, input_stream_sizes.at(target_node_name).size());
-  ASSERT_EQ(expected_record_data.first,
-            input_stream_sizes.at(target_node_name).at(0).first);
-  ASSERT_EQ(expected_record_data.second,
-            input_stream_sizes.at(target_node_name).at(0).second);
-  ASSERT_EQ(0, output_stream_sizes.size());
-}
-
-TEST_F(QueryManagerTest,
-       DISABLED_FreeMemoryBlocksRemovesMemoryBlocksAndStreamData) {
-  QueryManager query_manager_under_test(nullptr);
-  MockMemoryManager mock_memory_manager;
-  std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
-      input_memory_blocks;
-  std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
-      output_memory_blocks;
-  std::map<std::string, std::vector<RecordSizeAndCount>> input_stream_sizes;
-  std::map<std::string, std::vector<RecordSizeAndCount>> output_stream_sizes;
-  std::map<std::string, std::map<int, MemoryReuseTargets>> reuse_links;
-  std::vector<std::string> scheduled_node_names;
-
-  std::string node_name = "node";
-  std::unique_ptr<MemoryBlockInterface> expected_output_memory_block =
-      std::make_unique<VirtualMemoryBlock>();
-  std::vector<std::unique_ptr<MemoryBlockInterface>> output_vector;
-  output_vector.push_back(std::move(expected_output_memory_block));
-  output_memory_blocks.insert({node_name, std::move(output_vector)});
-
-  std::unique_ptr<MemoryBlockInterface> expected_input_memory_block =
-      std::make_unique<VirtualMemoryBlock>();
-  std::vector<std::unique_ptr<MemoryBlockInterface>> input_vector;
-  input_vector.push_back(std::move(expected_input_memory_block));
-  input_memory_blocks.insert({node_name, std::move(input_vector)});
-
-  RecordSizeAndCount record_data = {11, 22};
-  input_stream_sizes.insert({node_name, {record_data}});
-  output_stream_sizes.insert({node_name, {record_data}});
-
-  scheduled_node_names.push_back(node_name);
-
-  query_manager_under_test.FreeMemoryBlocks(
-      &mock_memory_manager, input_memory_blocks, output_memory_blocks,
-      input_stream_sizes, output_stream_sizes, reuse_links,
-      scheduled_node_names);
-
-  ASSERT_EQ(0, input_memory_blocks.size());
-  ASSERT_EQ(0, output_memory_blocks.size());
-  ASSERT_EQ(0, input_stream_sizes.size());
-  ASSERT_EQ(0, output_stream_sizes.size());
 }
 
 }  // namespace

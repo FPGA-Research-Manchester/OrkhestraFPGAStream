@@ -32,7 +32,7 @@ using orkhestrafs::dbmstodspi::util::IsValidFile;
 
 auto CSVReader::IsMemoryLargeEnough(
     const std::string& filename,
-    const std::unique_ptr<MemoryBlockInterface>& memory_device) -> bool {
+    MemoryBlockInterface* memory_device) -> bool {
   try {
     auto data_size = std::filesystem::file_size(filename);
     auto memory_size = memory_device->GetSize();
@@ -49,9 +49,10 @@ auto CSVReader::IsMemoryLargeEnough(
 
 void CSVReader::WriteDataToMemory(const std::vector<uint32_t>& data,
                                   volatile uint32_t* address, int offset) {
-  for (int i = 0; i < data.size(); i++) {
+  std::copy(data.begin(), data.end(), &address[offset]);
+  /*for (int i = 0; i < data.size(); i++) {
     address[i + offset] = data[i];
-  }
+  }*/
 }
 
 auto CSVReader::ReadTableData(const std::string& filename, char separator,
@@ -89,7 +90,7 @@ auto CSVReader::ReadTableData(const std::string& filename, char separator,
 auto CSVReader::WriteTableFromFileToMemory(
     const std::string& filename, char separator,
     const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
-    const std::unique_ptr<MemoryBlockInterface>& memory_device) -> int {
+    MemoryBlockInterface* memory_device) -> int {
   if (!IsValidFile(filename)) {
     throw std::runtime_error(filename + " not found!");
   }
@@ -113,21 +114,24 @@ auto CSVReader::WriteTableFromFileToMemory(
 
   while (std::getline(filestream, line)) {
     tokens.clear();
-    std::stringstream linestream(line);
+    std::stringstream linestream(std::move(line));
     while (getline(linestream, token_string, separator)) {
       if (!token_string.empty() &&
           token_string[token_string.size() - 1] == '\r') {
         token_string.erase(token_string.size() - 1);
       }
 
-      tokens.push_back(token_string);
+      tokens.push_back(std::move(token_string));
     }
 
     integer_data.clear();
     TypesConverter::ConvertRecordStringToIntegers(tokens, column_defs_vector,
                                                   integer_data);
-    WriteDataToMemory(integer_data, input, row_counter * record_size);
+    std::copy(integer_data.begin(), integer_data.end(),
+              &input[row_counter * record_size]);
+    //WriteDataToMemory(integer_data, input, row_counter * record_size);
     row_counter++;
   }
+
   return row_counter;
 }

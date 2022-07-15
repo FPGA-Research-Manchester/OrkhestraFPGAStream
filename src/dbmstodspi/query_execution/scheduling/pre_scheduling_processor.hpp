@@ -72,11 +72,18 @@ class PreSchedulingProcessor {
 
   // def get_worst_case_fully_processed_tables(input_tables,
   // current_node_decorators, data_tables, min_capacity)
-  auto GetWorstCaseProcessedTables(
+  auto SetWorstCaseProcessedTables(
       const std::vector<std::string>& input_tables,
       const std::vector<int>& min_capacity,
       std::map<std::string, TableMetadata>& data_tables,
-      QueryOperationType operation) -> std::vector<std::string>;
+      QueryOperationType operation,
+      const std::vector<std::string>& output_table_names) -> bool;
+
+  auto SetWorstCaseNodeCapacity(
+      const std::string& node_name,
+      std::unordered_map<std::string, SchedulingQueryNode>& graph,
+      const std::map<std::string, TableMetadata>& data_tables,
+      const std::vector<int>& min_capacity) -> bool;
 
   const std::map<QueryOperationType, OperationPRModules> hw_library_;
   AcceleratorLibraryInterface& accelerator_library_;
@@ -96,7 +103,7 @@ class PreSchedulingProcessor {
       std::unordered_map<std::string, SchedulingQueryNode>& graph,
       std::map<std::string, TableMetadata>& data_tables,
       std::unordered_set<std::string>& available_nodes,
-      std::unordered_set<std::string> processed_nodes);
+      std::unordered_set<std::string>& processed_nodes);
 
   void UpdateOnlySatisfyingBitstreams(
       const std::string& node_name,

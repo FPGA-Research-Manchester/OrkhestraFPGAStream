@@ -58,15 +58,48 @@ auto AccelerationModuleSetupInterface::IsSortingInputTable() -> bool {
 auto AccelerationModuleSetupInterface::GetWorstCaseProcessedTables(
     const std::vector<int>& /*min_capacity*/,
     const std::vector<std::string>& input_tables,
-    const std::map<std::string, TableMetadata>& data_tables)
+    const std::map<std::string, TableMetadata>& data_tables,
+    const std::vector<std::string>& output_table_names)
     -> std::map<std::string, TableMetadata> {
-  std::map<std::string, TableMetadata> resulting_tables;
-  for (const auto& input_table_name : input_tables) {
-    resulting_tables[input_table_name] = data_tables.at(input_table_name);
-    /*resulting_tables.insert(
-        {input_table_name, data_tables.at(input_table_name)});*/
+  if (input_tables.size() != 1 || output_table_names.size() != 1) {
+    throw std::runtime_error("Unsupporded table counts at preprocessing!");
   }
-  return resulting_tables;
+  std::map<std::string, TableMetadata> resulting_tables;
+  resulting_tables[output_table_names.front()] =
+      data_tables.at(output_table_names.front());
+  resulting_tables[output_table_names.front()].sorted_status =
+      data_tables.at(input_tables.front()).sorted_status;
+  resulting_tables[output_table_names.front()].record_count =
+      data_tables.at(input_tables.front()).record_count;
+  return std::move(resulting_tables);
+}
+
+auto AccelerationModuleSetupInterface::GetWorstCaseNodeCapacity(
+    const std::vector<int>& min_capacity,
+    const std::vector<std::string>& input_tables,
+    const std::map<std::string, TableMetadata>& data_tables,
+    QueryOperationType next_operation_type) -> std::vector<int> {
+  return {};
+}
+
+auto AccelerationModuleSetupInterface::SetMissingFunctionalCapacity(
+    const std::vector<int>& bitstream_capacity,
+    std::vector<int>& missing_capacity, const std::vector<int>& node_capacity,
+    bool is_composed) -> bool {
+  if (bitstream_capacity.size() != node_capacity.size()) {
+    throw std::runtime_error("Capacities don't match!");
+  }
+  bool is_node_fully_processed = true;
+  for (int capacity_parameter_index = 0;
+       capacity_parameter_index < bitstream_capacity.size();
+       capacity_parameter_index++) {
+    missing_capacity.push_back(node_capacity.at(capacity_parameter_index) -
+                               bitstream_capacity.at(capacity_parameter_index));
+    if (missing_capacity.at(capacity_parameter_index) > 0) {
+      is_node_fully_processed = false;
+    }
+  }
+  return is_node_fully_processed;
 }
 
 auto AccelerationModuleSetupInterface::UpdateDataTable(
@@ -101,8 +134,8 @@ auto AccelerationModuleSetupInterface::IsDataSensitive() -> bool {
 auto AccelerationModuleSetupInterface::GetPassthroughInitParameters()
     -> AcceleratedQueryNode {
   AcceleratedQueryNode passthrough_module_node;
-  passthrough_module_node.input_streams = {{15, 0, 0, nullptr, {}}};
-  passthrough_module_node.output_streams = {{15, 0, 0, nullptr, {}}};
+  passthrough_module_node.input_streams = {{15, 0, 0, {}, {}}};
+  passthrough_module_node.output_streams = {{15, 0, 0, {}, {}}};
   passthrough_module_node.operation_parameters = {};
   return passthrough_module_node;
 }

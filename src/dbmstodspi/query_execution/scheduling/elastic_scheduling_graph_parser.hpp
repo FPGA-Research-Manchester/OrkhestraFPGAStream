@@ -67,7 +67,7 @@ class ElasticSchedulingGraphParser {
 
   void PreprocessNodes(
       std::unordered_set<std::string>& available_nodes,
-      const std::unordered_set<std::string>& processed_nodes,
+      std::unordered_set<std::string>& processed_nodes,
       std::unordered_map<std::string, SchedulingQueryNode>& graph,
       std::map<std::string, TableMetadata>& data_tables);
 
@@ -152,9 +152,7 @@ class ElasticSchedulingGraphParser {
 
   void AddPlanToAllPlansAndMeasureTime(
       const std::vector<std::vector<ScheduledModule>>& current_plan,
-      const std::unordered_set<std::string>& available_nodes,
       const std::unordered_set<std::string>& processed_nodes,
-      const std::unordered_map<std::string, SchedulingQueryNode>& graph,
       const std::map<std::string, TableMetadata>& data_tables,
       int streamed_data_size);
 
@@ -200,7 +198,9 @@ class ElasticSchedulingGraphParser {
 
   static auto FindMissingUtility(const std::vector<int>& bitstream_capacity,
                                  std::vector<int>& missing_capacity,
-                                 const std::vector<int>& node_capacity) -> bool;
+                                 const std::vector<int>& node_capacity,
+                                 QueryOperationType operation_type,
+                                 bool is_composed) -> bool;
 
   auto CheckForSkippableSortOperations(
       const std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
@@ -232,9 +232,9 @@ class ElasticSchedulingGraphParser {
       const std::vector<std::vector<ModuleSelection>>& heuristics,
       int min_position, const std::vector<std::pair<int, int>>& taken_positions,
       const std::vector<std::vector<std::string>>& bitstream_start_locations,
-      const std::vector<SortedSequence>& processed_table_data,
       std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
-          module_placements) -> bool;
+          module_placements,
+      bool is_composed) -> bool;
 
   auto CurrentRunHasFirstModule(const std::vector<ScheduledModule>& current_run,
                                 const std::string& node_name) -> bool;
@@ -260,7 +260,8 @@ class ElasticSchedulingGraphParser {
       const std::vector<std::pair<int, int>>& taken_positions,
       const std::map<std::string, TableMetadata>& data_tables,
       std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
-          module_placements);
+          module_placements,
+      bool is_composed);
   void GetScheduledModulesForNodeAfterPos(
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
       const std::vector<ScheduledModule>& current_run,
@@ -282,7 +283,8 @@ class ElasticSchedulingGraphParser {
       std::unordered_map<std::string, SchedulingQueryNode>& new_graph,
       std::map<std::string, TableMetadata>& new_data_tables,
       const std::string& bitstream, const std::string& node_name,
-      const std::vector<int>& capacity, QueryOperationType operation) -> bool;
+      const std::vector<int>& capacity, QueryOperationType operation,
+      bool is_composed) -> bool;
 
   static auto CreateNewAvailableNodes(
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,

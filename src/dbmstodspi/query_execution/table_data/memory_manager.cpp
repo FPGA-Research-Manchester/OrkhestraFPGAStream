@@ -19,6 +19,7 @@ limitations under the License.
 #include <chrono>
 #include <iostream>
 #include <stdexcept>
+#include <numeric>
 
 #include "logger.hpp"
 
@@ -36,6 +37,40 @@ using orkhestrafs::dbmstodspi::logging::LogLevel;
 
 MemoryManager::~MemoryManager() = default;
 
+void MemoryManager::TestConfigurationTimes(std::vector<std::string>&bitstream_name, int repetition_count) {
+#ifdef FPGA_AVAILABLE
+  const int register_space_size = 10 * 1024 * 1024;
+  std::unordered_map<std::string, int> min_times;
+  acceleration_instance_ =
+      pr_manager_.fpgaLoadStatic("static", register_space_size);
+  for (const auto& name : bitstream_name) {
+    min_times[name] = std::numeric_limits<int>::max();
+  }
+  FPGAManager fpga_manager(0);
+  for (int i = 0; i < repetition_count; i++) {
+    for (const auto& name : bitstream_name) {
+      auto begin = std::chrono::steady_clock::now();
+      fpga_manager.loadPartial(name);
+      auto end = std::chrono::steady_clock::now();
+      auto time =
+          std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+              .count();
+      if (time < min_times[name]) {
+        min_times[name] = time;
+      }
+    }
+  }
+
+  for (const auto& [name, time] : min_times) {
+    std::cout << name << "CONFIGURATION:" << std::to_string(time)
+              << std::endl;
+  }
+  
+  acceleration_instance_ =
+      pr_manager_.fpgaLoadStatic("static", register_space_size);
+#endif
+}
+
 void MemoryManager::LoadStatic() {
   // Addressable register space on the FPGA. No need to preserve space for the
   // whole addressable space, for the supported library 10 MB is enough.
@@ -51,12 +86,12 @@ void MemoryManager::LoadStatic() {
   acceleration_instance_ =
       pr_manager_.fpgaLoadStatic(static_bitstream, register_space_size);
   /*acceleration_instance_ =
-      pr_manager_.fpgaLoadStatic("DSPI_merge_sorting", register_space_size);*/
+      pr_manager_.fpgaLoadStatic("DSPI_filtering_linear_sort", register_space_size);*/
 
   register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
 
   SetFPGATo300MHz();
-  // SetFPGATo100MHz();
+  //SetFPGATo100MHz();
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   std::cout << "STATIC CONFIGURATION:"
@@ -85,11 +120,132 @@ void MemoryManager::LoadPartialBitstream(
   if (loaded_bitstream_ != "static") {
     throw std::runtime_error("Can't load partial bitstreams without static!");
   }
+
 #ifdef FPGA_AVAILABLE
   dma_engine.DecoupleFromPRRegion();
   FPGAManager fpga_manager(0);
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
+  /*std::chrono::steady_clock::time_point begin =
+      std::chrono::steady_clock::now();
+  fpga_manager.loadPartial("l1024.bin");
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  std::cout << "L1024 PR CONFIGURATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
+  begin = std::chrono::steady_clock::now();
+  fpga_manager.loadPartial("m128.bin");
+  end = std::chrono::steady_clock::now();
+  std::cout << "m128 PR CONFIGURATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
+
+  begin = std::chrono::steady_clock::now();
+  fpga_manager.loadPartial("pr_region.bin");
+  end = std::chrono::steady_clock::now();
+  std::cout << "pr_region PR CONFIGURATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
+
+  begin = std::chrono::steady_clock::now();
+  fpga_manager.loadPartial("m32.bin");
+  end = std::chrono::steady_clock::now();
+  std::cout << "m32 PR CONFIGURATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
+
+  begin = std::chrono::steady_clock::now();
+  fpga_manager.loadPartial("sum.bin");
+  end = std::chrono::steady_clock::now();
+  std::cout << "SUM PR CONFIGURATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
+
+  begin = std::chrono::steady_clock::now();
+  fpga_manager.loadPartial("add.bin");
+  end = std::chrono::steady_clock::now();
+  std::cout << "ADD PR CONFIGURATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
+  
+  begin = std::chrono::steady_clock::now();
+  fpga_manager.loadPartial("mul.bin");
+  end = std::chrono::steady_clock::now();
+  std::cout << "MUL PR CONFIGURATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
+
+  begin = std::chrono::steady_clock::now();
+  fpga_manager.loadPartial("v2binPartial_LinearSort512_7_36.bin");
+  end = std::chrono::steady_clock::now();
+  std::cout << "L512 PR CONFIGURATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
+  begin = std::chrono::steady_clock::now();
+  fpga_manager.loadPartial("b_col.bin");
+  end = std::chrono::steady_clock::now();
+  std::cout << "b_col PR CONFIGURATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
+  begin = std::chrono::steady_clock::now();
+  fpga_manager.loadPartial("d_col.bin");
+  end = std::chrono::steady_clock::now();
+  std::cout << "d_col PR CONFIGURATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
+  begin = std::chrono::steady_clock::now();
+  fpga_manager.loadPartial("m_col.bin");
+  end = std::chrono::steady_clock::now();
+  std::cout << "m_col PR CONFIGURATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
+  begin = std::chrono::steady_clock::now();
+  fpga_manager.loadPartial("join.bin");
+  end = std::chrono::steady_clock::now();
+  std::cout << "join PR CONFIGURATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
+  begin = std::chrono::steady_clock::now();
+  fpga_manager.loadPartial("m64.bin");
+  end = std::chrono::steady_clock::now();
+  std::cout << "m64 PR CONFIGURATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;
+  begin = std::chrono::steady_clock::now();
+  fpga_manager.loadPartial("filter.bin");
+  end = std::chrono::steady_clock::now();
+  std::cout << "filter PR CONFIGURATION:"
+            << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                     begin)
+                   .count()
+            << std::endl;*/
+
   for (const auto& name : bitstream_name) {
     Log(LogLevel::kDebug, "Loading PR bitstream:" + name);
     fpga_manager.loadPartial(name);
@@ -141,11 +297,11 @@ void MemoryManager::LoadBitstreamIfNew(const std::string& bitstream_name,
 }
 
 auto MemoryManager::GetAvailableMemoryBlock()
-    -> std::unique_ptr<MemoryBlockInterface> {
+    -> MemoryBlockInterface* {
   if (available_memory_blocks_.empty()) {
     return AllocateMemoryBlock();
   }
-  std::unique_ptr<MemoryBlockInterface> available_memory_block =
+  MemoryBlockInterface* available_memory_block =
       std::move(available_memory_blocks_.top());
   available_memory_blocks_.pop();
   return available_memory_block;
@@ -164,20 +320,21 @@ auto MemoryManager::GetVirtualRegisterAddress(int offset)
 }
 
 auto MemoryManager::AllocateMemoryBlock()
-    -> std::unique_ptr<MemoryBlockInterface> {
+    -> MemoryBlockInterface* {
   if (memory_block_count_++ >= kMaxPossibleAllocations) {
     throw std::runtime_error("Can't allocate any more memory!");
   }
 #ifdef FPGA_AVAILABLE
-  return std::make_unique<UDMAMemoryBlock>(
-      udma_repo_.device(memory_block_count_ - 1));
+  current_memory_blocks_.push_back(std::move(std::make_unique<UDMAMemoryBlock>(
+      udma_repo_.device(memory_block_count_ - 1))));
 #else
-  return std::make_unique<VirtualMemoryBlock>();
+  current_memory_blocks_.push_back(std::move(std::make_unique<VirtualMemoryBlock>()));
 #endif
+  return current_memory_blocks_.back().get();
 }
 
 void MemoryManager::FreeMemoryBlock(
-    std::unique_ptr<MemoryBlockInterface> memory_block_pointer) {
+    MemoryBlockInterface* memory_block_pointer) {
   available_memory_blocks_.push(std::move(memory_block_pointer));
 }
 

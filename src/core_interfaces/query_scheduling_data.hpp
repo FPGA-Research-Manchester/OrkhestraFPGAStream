@@ -19,8 +19,11 @@ limitations under the License.
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
+#include <unordered_map>
+#include <deque>
 
 #include "operation_types.hpp"
 
@@ -44,66 +47,78 @@ struct NodeOperationParameters {
   }
 };
 
+struct NodeRunData {
+  /// Input data files.
+  std::vector<std::string> input_data_definition_files;
+  /// Expected data files.
+  std::vector<std::string> output_data_definition_files;
+  /// Output offset
+  std::vector<int> output_offset;
+  /// Operation parameters to configure the streams with modules. - How do you say how many channels each gets?
+  // Each channel is defined by index of table, offset, count
+  std::vector<std::vector<int>> operation_parameters;
+  /// Location of the module to be processing this node
+  std::vector<int> module_locations;
+  /// Run_index
+  int run_index = 0;
+
+  auto operator==(const NodeRunData& rhs) const -> bool {
+    return input_data_definition_files == rhs.input_data_definition_files &&
+           output_data_definition_files == rhs.output_data_definition_files &&
+           operation_parameters == rhs.operation_parameters &&
+           module_locations == rhs.module_locations;
+  }
+};
+
 /**
  * @brief Struct for defining a query node.
  */
 struct QueryNode {
   /// Input data files.
-  std::vector<std::string> input_data_definition_files;
+  std::vector<std::string> given_input_data_definition_files;
   /// Expected data files.
-  std::vector<std::string> output_data_definition_files;
+  std::vector<std::string> given_output_data_definition_files;
   /// Query operation.
   QueryOperationType operation_type;
   /// Pointers to the next query nodes.
-  std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> next_nodes;
+  std::vector<QueryNode*> next_nodes;
   /// Pointers to the prerequisite query nodes
-  std::vector<std::weak_ptr<query_scheduling_data::QueryNode>> previous_nodes;
+  std::vector<QueryNode*> previous_nodes;
   /// Operation parameters to configure the streams with modules.
-  NodeOperationParameters operation_parameters;
-  /// Location of the module to be processing this node
-  std::vector<int> module_locations;
+  NodeOperationParameters given_operation_parameters;
+  /// Data of the module for each specific run
+  std::deque<NodeRunData> module_run_data;
   /// Name of the node for automatic file naming
   std::string node_name;
   /// Flag vector setting stream results to be checked
   std::vector<bool> is_checked;
   /// Flag for saying if this node will be fully executed in this run
-  bool is_finished = true;
+  bool is_finished = false;
 
   auto operator==(const QueryNode& rhs) const -> bool {
-    bool are_prev_nodes_equal =
-        previous_nodes.size() == rhs.previous_nodes.size() &&
-        std::equal(
-            previous_nodes.begin(), previous_nodes.end(),
-            rhs.previous_nodes.begin(),
-            [](const std::weak_ptr<query_scheduling_data::QueryNode>& l,
-               const std::weak_ptr<query_scheduling_data::QueryNode>& r) {
-              return l.lock() == r.lock();
-            });
-
-    return are_prev_nodes_equal &&
-           input_data_definition_files == rhs.input_data_definition_files &&
-           output_data_definition_files == rhs.output_data_definition_files &&
+    return previous_nodes == rhs.previous_nodes &&
+           given_input_data_definition_files ==
+               rhs.given_input_data_definition_files &&
+           given_output_data_definition_files ==
+               rhs.given_output_data_definition_files &&
            operation_type == rhs.operation_type &&
            next_nodes == rhs.next_nodes &&
-           operation_parameters == rhs.operation_parameters &&
-           module_locations == rhs.module_locations &&
+           given_operation_parameters == rhs.given_operation_parameters &&
+           module_run_data == rhs.module_run_data &&
            node_name == rhs.node_name && is_checked == rhs.is_checked;
   }
 
-  QueryNode(
-      std::vector<std::string> input, std::vector<std::string> output,
-      QueryOperationType operation,
-      std::vector<std::shared_ptr<query_scheduling_data::QueryNode>> next_nodes,
-      std::vector<std::weak_ptr<query_scheduling_data::QueryNode>>
-          previous_nodes,
-      NodeOperationParameters parameters, std::string node_name,
-      std::vector<bool> is_checked)
-      : input_data_definition_files{std::move(input)},
-        output_data_definition_files{std::move(output)},
+  QueryNode(std::vector<std::string> input, std::vector<std::string> output,
+            QueryOperationType operation, std::vector<QueryNode*> next_nodes,
+            std::vector<QueryNode*> previous_nodes,
+            NodeOperationParameters parameters, std::string node_name,
+            std::vector<bool> is_checked)
+      : given_input_data_definition_files{std::move(input)},
+        given_output_data_definition_files{std::move(output)},
         operation_type{operation},
         next_nodes{std::move(next_nodes)},
         previous_nodes{std::move(previous_nodes)},
-        operation_parameters{std::move(parameters)},
+        given_operation_parameters{std::move(parameters)},
         node_name{std::move(node_name)},
         is_checked{std::move(is_checked)} {};
 };
@@ -125,21 +140,26 @@ struct StreamResultParameters {
   int output_id;
   std::string filename;
   bool check_results;
+  bool update_table_sizes_only;
   std::vector<std::vector<int>> stream_specifications;
+  int output_offset;
 
   StreamResultParameters(int stream_index, int output_id, std::string filename,
                          bool check_results,
-                         std::vector<std::vector<int>> stream_specifications)
+                         bool update_table_sizes_only,
+                         std::vector<std::vector<int>> stream_specifications, int output_offset)
       : stream_index{stream_index},
         output_id{output_id},
         filename{std::move(filename)},
         check_results{check_results},
-        stream_specifications{std::move(stream_specifications)} {};
+        stream_specifications{std::move(stream_specifications)},
+        update_table_sizes_only{update_table_sizes_only},
+        output_offset{output_offset}{};
 
   auto operator==(const StreamResultParameters& rhs) const -> bool {
     return stream_index == rhs.stream_index && output_id == rhs.output_id &&
            filename == rhs.filename && check_results == rhs.check_results &&
-           stream_specifications == rhs.stream_specifications;
+           stream_specifications == rhs.stream_specifications && update_table_sizes_only == rhs.update_table_sizes_only && output_offset==rhs.output_offset;
   }
 };
 

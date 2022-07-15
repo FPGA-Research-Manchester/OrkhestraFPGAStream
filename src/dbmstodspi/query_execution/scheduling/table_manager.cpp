@@ -42,16 +42,16 @@ auto TableManager::GetRecordSizeFromTable(const TableData& input_table) -> int {
 }
 
 void TableManager::ReadOutputDataFromMemoryBlock(
-    const std::unique_ptr<MemoryBlockInterface>& output_device,
-    TableData& resulting_table, const int& result_size) {
+    MemoryBlockInterface* output_device, TableData& resulting_table,
+    const int& result_size) {
   volatile uint32_t* output = output_device->GetVirtualAddress();
   resulting_table.table_data_vector = std::vector<uint32_t>(
       output, output + (result_size * GetRecordSizeFromTable(resulting_table)));
 }
 
 void TableManager::WriteInputDataToMemoryBlock(
-    const std::unique_ptr<MemoryBlockInterface>& input_device,
-    const TableData& input_table, int previous_record_count) {
+    MemoryBlockInterface* input_device, const TableData& input_table,
+    int previous_record_count) {
   PrintDataSize(input_table);
   if (input_table.table_data_vector.size() * 4 > input_device->GetSize()) {
     throw std::runtime_error(
@@ -69,10 +69,10 @@ void TableManager::WriteInputDataToMemoryBlock(
 }
 
 // Debug method
-void TableManager::PrintWrittenData(
-    const DataManagerInterface* data_manager, const std::string& table_name,
-    const std::unique_ptr<MemoryBlockInterface>& input_device,
-    const TableData& input_table) {
+void TableManager::PrintWrittenData(const DataManagerInterface* data_manager,
+                                    const std::string& table_name,
+                                    MemoryBlockInterface* input_device,
+                                    const TableData& input_table) {
   auto log_level = LogLevel::kTrace;
   if (ShouldLog(log_level)) {
     std::stringstream ss;
@@ -95,8 +95,8 @@ void TableManager::PrintWrittenData(
 auto TableManager::WriteDataToMemory(
     const DataManagerInterface* data_manager,
     const std::vector<std::vector<int>>& stream_specification, int stream_index,
-    const std::unique_ptr<MemoryBlockInterface>& memory_device,
-    const std::string& filename) -> std::pair<int, int> {
+    MemoryBlockInterface* memory_device, const std::string& filename)
+    -> std::pair<int, int> {
   auto column_defs_vector =
       GetColumnDefsVector(data_manager, stream_specification, stream_index);
 
@@ -118,8 +118,7 @@ auto TableManager::WriteDataToMemory(
 auto TableManager::ReadTableFromMemory(
     const DataManagerInterface* data_manager,
     const std::vector<std::vector<int>>& stream_specification, int stream_index,
-    const std::unique_ptr<MemoryBlockInterface>& memory_device, int row_count)
-    -> TableData {
+    MemoryBlockInterface* memory_device, int row_count) -> TableData {
   auto column_data_types =
       GetColumnDataTypesFromSpecification(stream_specification, stream_index);
 
@@ -178,11 +177,11 @@ void TableManager::ReadResultTables(
     std::vector<TableData>& output_tables,
     const std::array<int, query_acceleration_constants::kMaxIOStreamCount>&
         result_record_counts,
-    std::vector<std::unique_ptr<MemoryBlockInterface>>&
-        allocated_memory_blocks) {
+    std::vector<MemoryBlockInterface*>& allocated_memory_blocks) {
   for (int stream_index = 0; stream_index < allocated_memory_blocks.size();
        stream_index++) {
-    if (output_stream_parameters.at(stream_index).physical_address) {
+    if (!output_stream_parameters.at(stream_index)
+             .physical_addresses_map.empty()) {
       TableManager::ReadOutputDataFromMemoryBlock(
           allocated_memory_blocks[stream_index],
           output_tables[output_stream_parameters.at(stream_index).stream_id],

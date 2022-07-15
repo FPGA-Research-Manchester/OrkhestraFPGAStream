@@ -34,7 +34,6 @@ limitations under the License.
 #include "table_manager.hpp"
 #include "util.hpp"
 
-using orkhestrafs::core_interfaces::table_data::SortedSequence;
 using orkhestrafs::dbmstodspi::BitstreamConfigHelper;
 using orkhestrafs::dbmstodspi::QueryManager;
 using orkhestrafs::dbmstodspi::RunLinker;
@@ -54,10 +53,9 @@ auto QueryManager::GetCurrentLinks(
 }
 
 void QueryManager::InitialiseMemoryBlockVector(
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
-        memory_blocks,
+    std::map<std::string, std::vector<MemoryBlockInterface*>>& memory_blocks,
     int stream_count, const std::string& node_name) {
-  std::vector<std::unique_ptr<MemoryBlockInterface>> empty_vector(stream_count);
+  std::vector<MemoryBlockInterface*> empty_vector(stream_count);
   std::fill(empty_vector.begin(), empty_vector.end(), nullptr);
   memory_blocks.insert({node_name, std::move(empty_vector)});
 }
@@ -73,52 +71,56 @@ void QueryManager::InitialiseStreamSizeVector(
 // Create map with correct amount of elements locations and data reuse links
 void QueryManager::InitialiseVectorSizes(
     const std::vector<std::shared_ptr<QueryNode>>& scheduled_nodes,
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+    std::map<std::string, std::vector<MemoryBlockInterface*>>&
         input_memory_blocks,
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
+    std::map<std::string, std::vector<MemoryBlockInterface*>>&
         output_memory_blocks,
     std::map<std::string, std::vector<RecordSizeAndCount>>& input_stream_sizes,
     std::map<std::string, std::vector<RecordSizeAndCount>>&
         output_stream_sizes) {
-  for (const auto& node : scheduled_nodes) {
-    // Input could be defined from previous runs
-    if (input_memory_blocks.find(node->node_name) ==
-        input_memory_blocks.end()) {
-      InitialiseMemoryBlockVector(input_memory_blocks,
-                                  node->previous_nodes.size(), node->node_name);
-      InitialiseStreamSizeVector(input_stream_sizes,
-                                 node->previous_nodes.size(), node->node_name);
-    }
-
-    InitialiseMemoryBlockVector(output_memory_blocks, node->next_nodes.size(),
-                                node->node_name);
-    InitialiseStreamSizeVector(output_stream_sizes, node->previous_nodes.size(),
-                               node->node_name);
-
-    for (auto& output_node : node->next_nodes) {
-      if (output_node) {
-        if (input_memory_blocks.find(output_node->node_name) ==
-            input_memory_blocks.end()) {
-          InitialiseMemoryBlockVector(input_memory_blocks,
-                                      output_node->previous_nodes.size(),
-                                      output_node->node_name);
-          InitialiseStreamSizeVector(input_stream_sizes,
-                                     output_node->previous_nodes.size(),
-                                     output_node->node_name);
-        }
-        if (std::find(scheduled_nodes.begin(), scheduled_nodes.end(),
-                      output_node) == scheduled_nodes.end()) {
-          output_node = nullptr;
-        }
-      }
-    }
-  }
+  //  for (const auto& node : scheduled_nodes) {
+  //    // Input could be defined from previous runs
+  //    if (input_memory_blocks.find(node->node_name) ==
+  //        input_memory_blocks.end()) {
+  //      InitialiseMemoryBlockVector(input_memory_blocks,
+  //                                  node->previous_nodes.size(),
+  //                                  node->node_name);
+  //      InitialiseStreamSizeVector(input_stream_sizes,
+  //                                 node->previous_nodes.size(),
+  //                                 node->node_name);
+  //    }
+  //
+  //    InitialiseMemoryBlockVector(output_memory_blocks,
+  //    node->next_nodes.size(),
+  //                                node->node_name);
+  //    InitialiseStreamSizeVector(output_stream_sizes,
+  //    node->previous_nodes.size(),
+  //                               node->node_name);
+  //
+  //    for (auto& output_node : node->next_nodes) {
+  //      if (output_node) {
+  //        if (input_memory_blocks.find(output_node->node_name) ==
+  //            input_memory_blocks.end()) {
+  //          InitialiseMemoryBlockVector(input_memory_blocks,
+  //                                      output_node->previous_nodes.size(),
+  //                                      output_node->node_name);
+  //          InitialiseStreamSizeVector(input_stream_sizes,
+  //                                     output_node->previous_nodes.size(),
+  //                                     output_node->node_name);
+  //        }
+  //        if (std::find(scheduled_nodes.begin(), scheduled_nodes.end(),
+  //                      output_node) == scheduled_nodes.end()) {
+  //          output_node = nullptr;
+  //        }
+  //      }
+  //    }
+  //  }
 }
 
 auto QueryManager::GetRecordSizeFromParameters(
     const DataManagerInterface* data_manager,
-    const std::vector<std::vector<int>>& node_parameters, int stream_index)
-    -> int {
+    const std::vector<std::vector<int>>& node_parameters,
+    int stream_index) const -> int {
   auto column_defs_vector = TableManager::GetColumnDefsVector(
       data_manager, node_parameters, stream_index);
 
@@ -130,47 +132,43 @@ auto QueryManager::GetRecordSizeFromParameters(
 }
 
 void QueryManager::AllocateOutputMemoryBlocks(
-    MemoryManagerInterface* memory_manager,
-    const DataManagerInterface* data_manager,
-    std::vector<std::unique_ptr<MemoryBlockInterface>>& output_memory_blocks,
-    const QueryNode& node,
-    std::vector<RecordSizeAndCount>& output_stream_sizes) {
-  for (int stream_index = 0; stream_index < node.next_nodes.size();
-       stream_index++) {
-    if (!node.next_nodes[stream_index]) {
-      output_memory_blocks[stream_index] =
+    MemoryManagerInterface* memory_manager, const NodeRunData& run_data,
+    std::unordered_map<std::string, MemoryBlockInterface*>&
+        table_memory_blocks) {
+  for (const auto& output_table : run_data.output_data_definition_files) {
+    if (!output_table.empty() &&
+        table_memory_blocks.find(output_table) == table_memory_blocks.end()) {
+      table_memory_blocks[output_table] =
           std::move(memory_manager->GetAvailableMemoryBlock());
       // Uncomment to check overwriting.
       /*for (int i = 0; i < 100000; i++) {
         output_memory_blocks[stream_index]->GetVirtualAddress()[i] = -1;
       }*/
     }
-    output_stream_sizes[stream_index].first = GetRecordSizeFromParameters(
-        data_manager, node.operation_parameters.output_stream_parameters,
-        stream_index);
   }
 }
 void QueryManager::AllocateInputMemoryBlocks(
     MemoryManagerInterface* memory_manager,
-    const DataManagerInterface* data_manager,
-    std::vector<std::unique_ptr<MemoryBlockInterface>>& input_memory_blocks,
-    const QueryNode& node,
-    const std::map<std::string, std::vector<RecordSizeAndCount>>&
-        output_stream_sizes,
-    std::vector<RecordSizeAndCount>& input_stream_sizes) {
-  for (int stream_index = 0; stream_index < node.previous_nodes.size();
+    const DataManagerInterface* data_manager, const NodeRunData& run_data,
+    const std::vector<std::vector<int>>& input_stream_parameters,
+    const std::map<std::string, TableMetadata>& current_tables_metadata,
+    std::unordered_map<std::string, MemoryBlockInterface*>&
+        table_memory_blocks) {
+  for (int stream_index = 0;
+       stream_index < run_data.input_data_definition_files.size();
        stream_index++) {
-    auto observed_node = node.previous_nodes[stream_index].lock();
-    if (!observed_node && !input_memory_blocks[stream_index]) {
-      input_memory_blocks[stream_index] =
+    const auto& input_table =
+        run_data.input_data_definition_files.at(stream_index);
+    if (!input_table.empty() &&
+        table_memory_blocks.find(input_table) == table_memory_blocks.end()) {
+      table_memory_blocks[input_table] =
           std::move(memory_manager->GetAvailableMemoryBlock());
       std::chrono::steady_clock::time_point begin =
           std::chrono::steady_clock::now();
 
-      input_stream_sizes[stream_index] = TableManager::WriteDataToMemory(
-          data_manager, node.operation_parameters.input_stream_parameters,
-          stream_index, input_memory_blocks[stream_index],
-          node.input_data_definition_files[stream_index]);
+      auto [record_size, record_count] = TableManager::WriteDataToMemory(
+          data_manager, input_stream_parameters, stream_index,
+          table_memory_blocks[input_table], input_table);
 
       std::chrono::steady_clock::time_point end =
           std::chrono::steady_clock::now();
@@ -186,40 +184,116 @@ void QueryManager::AllocateInputMemoryBlocks(
                                                                         begin)
                       .count()) +
               "[ms]");
-    } else if (observed_node) {  // Can also be moved to output memory blocks
-                                 // allocation
-      for (int current_node_index = 0;
-           current_node_index < observed_node->next_nodes.size();
-           current_node_index++) {
-        if (node == *observed_node->next_nodes[current_node_index]) {
-          input_stream_sizes[stream_index] = output_stream_sizes.at(
-              observed_node->node_name)[current_node_index];
-          break;
-        }
+      if (record_size != current_tables_metadata.at(input_table).record_size ||
+          record_count !=
+              current_tables_metadata.at(input_table).record_count) {
+        throw std::runtime_error(
+            "Mismatch of table sizes after reading table data!");
       }
     }
   }
 }
 
 auto QueryManager::CreateStreamParams(
-    bool is_input, const QueryNode& node,
-    AcceleratorLibraryInterface* accelerator_library,
-    const std::vector<int>& stream_ids,
-    const std::vector<std::unique_ptr<MemoryBlockInterface>>&
-        allocated_memory_blocks,
-    const std::vector<RecordSizeAndCount>& stream_sizes)
-    -> std::vector<StreamDataParameters> {
+    bool is_input, const QueryNode* node, const std::vector<int>& stream_ids,
+    const NodeRunData& run_data,
+    const std::map<std::string, TableMetadata>& current_tables_metadata,
+    const std::unordered_map<std::string, MemoryBlockInterface*>&
+        table_memory_blocks) -> std::vector<StreamDataParameters> {
   auto node_parameters =
-      (is_input) ? node.operation_parameters.input_stream_parameters
-                 : node.operation_parameters.output_stream_parameters;
+      (is_input) ? node->given_operation_parameters.input_stream_parameters
+                 : node->given_operation_parameters.output_stream_parameters;
 
   std::vector<StreamDataParameters> parameters_for_acceleration;
 
+  const int table_offset = 0;
+  const int offset_offset = 1;
+  const int count_offset = 2;
+
   for (int stream_index = 0; stream_index < stream_ids.size(); stream_index++) {
-    volatile uint32_t* physical_address_ptr = nullptr;
-    if (allocated_memory_blocks[stream_index]) {
-      physical_address_ptr =
-          allocated_memory_blocks[stream_index]->GetPhysicalAddress();
+    std::string table_name;
+    if (is_input) {
+      table_name = run_data.input_data_definition_files.at(stream_index);
+    } else {
+      table_name = run_data.output_data_definition_files.at(stream_index);
+    }
+    std::map<volatile uint32_t*, std::vector<int>> physical_addresses_map;
+    int virtual_channel_count = -1;
+    if (is_input && !table_name.empty()) {
+      if (node->operation_type == QueryOperationType::kMergeSort) {
+        int current_record_size =
+            current_tables_metadata.at(table_name).record_size;
+        std::vector<int> current_sequences;
+        int current_table_index =
+            run_data.operation_parameters.front().at(table_offset);
+        int current_offset =
+            run_data.operation_parameters.front().at(offset_offset);
+        int write_offset = current_offset;
+        for (const auto& sequence : run_data.operation_parameters) {
+          if (current_table_index == sequence.at(table_offset) &&
+              current_offset == sequence.at(offset_offset)) {
+            current_sequences.push_back(sequence.at(count_offset));
+            current_offset += sequence.at(count_offset);
+          } else {
+            physical_addresses_map.insert(
+                {table_memory_blocks
+                         .at(run_data.input_data_definition_files.at(
+                             current_table_index))
+                         ->GetPhysicalAddress() +
+                     write_offset * current_record_size,
+                 std::move(current_sequences)});
+            
+            current_sequences = {sequence.at(count_offset)};
+            current_table_index = sequence.at(table_offset);
+            write_offset = sequence.at(offset_offset);
+            current_offset =
+                sequence.at(offset_offset) + sequence.at(count_offset);
+          }
+        }
+        // virtual channel count is the size of the vector - We assume this is
+        // correct with the overall parameters.
+        virtual_channel_count = run_data.operation_parameters.size();
+        // Need to make virtual channel count be equal to the sum of the
+        // modules. Need to add the missing amount of 0 reads.
+        int max_channel_count = 0;
+        for (const auto& capacity :
+             node->given_operation_parameters.operation_parameters.at(
+                 run_data.run_index)) {
+          max_channel_count += capacity;
+        }
+        std::vector<int> empty_sequences(
+            max_channel_count - virtual_channel_count, 0);
+        current_sequences.insert(current_sequences.end(),
+                                 empty_sequences.begin(),
+                                 empty_sequences.end());
+
+        physical_addresses_map.insert(
+            {table_memory_blocks
+                     .at(run_data.input_data_definition_files.at(
+                         current_table_index))
+                     ->GetPhysicalAddress() +
+                 write_offset * current_record_size,
+             std::move(current_sequences)});
+
+        virtual_channel_count = max_channel_count;
+      } else {
+        auto physical_address_ptr =
+            table_memory_blocks.at(table_name)->GetPhysicalAddress();
+        physical_addresses_map.insert({physical_address_ptr, {-1}});
+      }
+    } else if (!is_input && !table_name.empty()) {
+      auto physical_address_ptr =
+          table_memory_blocks.at(table_name)->GetPhysicalAddress() +
+          run_data.output_offset.at(stream_index) *
+              current_tables_metadata.at(table_name).record_size;
+      physical_addresses_map.insert({physical_address_ptr, {-1}});
+    } else {
+      // Leave address map empty!
+      if (is_input) {
+        table_name = node->given_input_data_definition_files.at(stream_index);
+      } else {
+        table_name = node->given_output_data_definition_files.at(stream_index);
+      }
     }
 
     int chunk_count = -1;
@@ -230,20 +304,16 @@ auto QueryManager::CreateStreamParams(
       chunk_count = chunk_count_def.at(0);
     }
 
-    auto [channel_count, records_per_channel] =
-        accelerator_library->GetMultiChannelParams(
-            is_input, stream_index, node.operation_type,
-            node.operation_parameters.operation_parameters);
+    // The stream sizes come from the main + table data.
     StreamDataParameters current_stream_parameters = {
         stream_ids[stream_index],
-        stream_sizes[stream_index].first,
-        stream_sizes[stream_index].second,
-        physical_address_ptr,
+        current_tables_metadata.at(table_name).record_size,
+        current_tables_metadata.at(table_name).record_count,
+        physical_addresses_map,
         node_parameters.at(stream_index * kIOStreamParamDefs.kStreamParamCount +
                            kIOStreamParamDefs.kProjectionOffset),
         chunk_count,
-        channel_count,
-        records_per_channel};
+        virtual_channel_count};
 
     parameters_for_acceleration.push_back(current_stream_parameters);
   }
@@ -253,32 +323,30 @@ auto QueryManager::CreateStreamParams(
 void QueryManager::StoreStreamResultParameters(
     std::map<std::string, std::vector<StreamResultParameters>>&
         result_parameters,
-    const std::vector<int>& stream_ids, const QueryNode& node,
-    const std::vector<std::unique_ptr<MemoryBlockInterface>>&
-        allocated_memory_blocks) {
+    const std::vector<int>& stream_ids, const QueryNode* node,
+    const NodeRunData& run_data) {
   std::vector<StreamResultParameters> result_parameters_vector;
   for (int stream_index = 0; stream_index < stream_ids.size(); stream_index++) {
-    if (allocated_memory_blocks[stream_index]) {
+    if (!run_data.output_data_definition_files.at(stream_index).empty()) {
       result_parameters_vector.emplace_back(
           stream_index, stream_ids[stream_index],
-          node.output_data_definition_files[stream_index],
-          node.is_checked[stream_index],
-          node.operation_parameters.output_stream_parameters);
+          run_data.output_data_definition_files.at(stream_index),
+          node->is_checked.at(stream_index),
+          node->next_nodes.at(stream_index) != nullptr,
+          node->given_operation_parameters.output_stream_parameters,
+          run_data.output_offset.at(stream_index));
     }
   }
-  result_parameters.insert({node.node_name, result_parameters_vector});
+  result_parameters.insert({node->node_name, result_parameters_vector});
 }
 
 auto QueryManager::SetupAccelerationNodesForExecution(
     DataManagerInterface* data_manager, MemoryManagerInterface* memory_manager,
     AcceleratorLibraryInterface* accelerator_library,
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
-        input_memory_blocks,
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
-        output_memory_blocks,
-    std::map<std::string, std::vector<RecordSizeAndCount>>& input_stream_sizes,
-    std::map<std::string, std::vector<RecordSizeAndCount>>& output_stream_sizes,
-    const std::vector<std::shared_ptr<QueryNode>>& current_query_nodes)
+    const std::vector<QueryNode*>& current_query_nodes,
+    const std::map<std::string, TableMetadata>& current_tables_metadata,
+    std::unordered_map<std::string, MemoryBlockInterface*>& table_memory_blocks,
+    std::unordered_map<std::string, int>& table_counter)
     -> std::pair<std::vector<AcceleratedQueryNode>,
                  std::map<std::string, std::vector<StreamResultParameters>>> {
   std::map<std::string, std::vector<StreamResultParameters>> result_parameters;
@@ -287,71 +355,40 @@ auto QueryManager::SetupAccelerationNodesForExecution(
   std::map<std::string, std::vector<int>> output_ids;
   std::map<std::string, std::vector<int>> input_ids;
 
-  // Mending.
-  // For all nodes. Check if previous node is in the current run and doesn't
-  // point at current node then add the pointer back. Do just 1 for now.
-  for (const auto& node : current_query_nodes) {
-    for (const auto& previous_node : node->previous_nodes) {
-      auto previous_node_ptr = previous_node.lock();
-      if (previous_node_ptr) {
-        auto current_run_find =
-            std::find_if(current_query_nodes.begin(), current_query_nodes.end(),
-                         [&](auto current_run_node) {
-                           return previous_node_ptr->node_name ==
-                                  current_run_node->node_name;
-                         });
-        if (current_run_find != current_query_nodes.end()) {
-          current_run_find->get()->next_nodes[0] = node;
-        }
+  IDManager::AllocateStreamIDs(current_query_nodes, input_ids, output_ids);
+
+  for (auto& node : current_query_nodes) {
+    auto current_run_params = std::move(node->module_run_data.front());
+    node->module_run_data.pop_front();
+    for (const auto& table : current_run_params.input_data_definition_files) {
+      if (!table.empty()) {
+        table_counter[table]--;
       }
     }
-  }
-
-  InitialiseVectorSizes(current_query_nodes, input_memory_blocks,
-                        output_memory_blocks, input_stream_sizes,
-                        output_stream_sizes);
-
-  IDManager::AllocateStreamIDs(CreateReferenceVector(current_query_nodes),
-                               input_ids, output_ids);
-
-  for (const auto& node : current_query_nodes) {
-    AllocateOutputMemoryBlocks(memory_manager, data_manager,
-                               output_memory_blocks[node->node_name], *node,
-                               output_stream_sizes[node->node_name]);
-    AllocateInputMemoryBlocks(
-        memory_manager, data_manager, input_memory_blocks[node->node_name],
-        *node, output_stream_sizes, input_stream_sizes[node->node_name]);
-
-    // Check what is the input_stream_sizes over here
-    auto input_params = CreateStreamParams(true, *node, accelerator_library,
-                                           input_ids[node->node_name],
-                                           input_memory_blocks[node->node_name],
-                                           input_stream_sizes[node->node_name]);
-    auto output_params = CreateStreamParams(
-        false, *node, accelerator_library, output_ids[node->node_name],
-        output_memory_blocks[node->node_name],
-        output_stream_sizes[node->node_name]);
-
-    auto removable_parameter_count = AddQueryNodes(
-        query_nodes, std::move(input_params), std::move(output_params), *node);
-    node->module_locations = {
-        node->module_locations.begin() + removable_parameter_count + 1,
-        node->module_locations.end()};
-    if (node->operation_type == QueryOperationType::kMergeSort) {
-      auto before = node->operation_parameters.operation_parameters;
-      node->operation_parameters.operation_parameters = {
-          node->operation_parameters.operation_parameters.begin() +
-              removable_parameter_count *
-                  node->operation_parameters.operation_parameters[0][1] +
-              1,
-          node->operation_parameters.operation_parameters.end()};
-
-      auto after = node->operation_parameters.operation_parameters;
-      auto after1 = node->operation_parameters.operation_parameters;
+    for (const auto& table : current_run_params.output_data_definition_files) {
+      if (!table.empty()) {
+        table_counter[table]--;
+      }
     }
+    AllocateOutputMemoryBlocks(memory_manager, current_run_params,
+                               table_memory_blocks);
+    AllocateInputMemoryBlocks(
+        memory_manager, data_manager, current_run_params,
+        node->given_operation_parameters.input_stream_parameters,
+        current_tables_metadata, table_memory_blocks);
+
+    auto input_params = CreateStreamParams(
+        true, node, input_ids[node->node_name], current_run_params,
+        current_tables_metadata, table_memory_blocks);
+    auto output_params = CreateStreamParams(
+        false, node, output_ids[node->node_name], current_run_params,
+        current_tables_metadata, table_memory_blocks);
+
+    AddQueryNodes(query_nodes, std::move(input_params),
+                  std::move(output_params), node, current_run_params);
 
     StoreStreamResultParameters(result_parameters, output_ids[node->node_name],
-                                *node, output_memory_blocks[node->node_name]);
+                                node, current_run_params);
   }
 
   std::sort(query_nodes.begin(), query_nodes.end(),
@@ -401,9 +438,9 @@ void QueryManager::LoadPRBitstreams(
 
 void QueryManager::BenchmarkScheduling(
     const std::unordered_set<std::string>& first_node_names,
-    std::unordered_set<std::string>& starting_nodes,
+    const std::unordered_set<std::string>& starting_nodes,
     std::unordered_set<std::string>& processed_nodes,
-    std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
     std::map<std::string, TableMetadata>& tables,
     AcceleratorLibraryInterface& drivers, const Config& config,
     NodeSchedulerInterface& node_scheduler,
@@ -421,24 +458,21 @@ void QueryManager::PrintBenchmarkStats() {
 }
 
 auto QueryManager::ScheduleNextSetOfNodes(
-    std::vector<std::shared_ptr<QueryNode>>& query_nodes,
+    std::vector<QueryNode*>& query_nodes,
     const std::unordered_set<std::string>& first_node_names,
-    std::unordered_set<std::string>& starting_nodes,
-    std::unordered_set<std::string>& processed_nodes,
-    std::unordered_map<std::string, SchedulingQueryNode>& graph,
+    const std::unordered_set<std::string>& starting_nodes,
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph,
     std::map<std::string, TableMetadata>& tables,
     AcceleratorLibraryInterface& drivers, const Config& config,
     NodeSchedulerInterface& node_scheduler,
-    std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>&
-        all_reuse_links,
-    const std::vector<ScheduledModule>& current_configuration)
-    -> std::queue<std::pair<std::vector<ScheduledModule>,
-                            std::vector<std::shared_ptr<QueryNode>>>> {
-  auto current_queue = node_scheduler.GetNextSetOfRuns(
-      query_nodes, first_node_names, starting_nodes, processed_nodes, graph,
-      drivers, tables, current_configuration, config);
-  return RunLinker::LinkPeripheralNodesFromGivenRuns(current_queue,
-                                                     all_reuse_links);
+    const std::vector<ScheduledModule>& current_configuration,
+    std::unordered_set<std::string>& skipped_nodes,
+    std::unordered_map<std::string, int>& table_counter)
+    -> std::queue<
+        std::pair<std::vector<ScheduledModule>, std::vector<QueryNode*>>> {
+  return node_scheduler.GetNextSetOfRuns(
+      query_nodes, first_node_names, starting_nodes, graph, drivers, tables,
+      current_configuration, config, skipped_nodes, table_counter);
 }
 
 auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
@@ -574,7 +608,7 @@ void QueryManager::CheckTableData(const DataManagerInterface* data_manager,
 // which are different) a separate debug method should be added.
 void QueryManager::CheckResults(
     const DataManagerInterface* data_manager,
-    const std::unique_ptr<MemoryBlockInterface>& memory_device, int row_count,
+    MemoryBlockInterface* memory_device, int row_count,
     const std::string& filename,
     const std::vector<std::vector<int>>& node_parameters, int stream_index) {
   auto expected_table = TableManager::ReadTableFromFile(
@@ -586,7 +620,7 @@ void QueryManager::CheckResults(
 
 void QueryManager::WriteResults(
     const DataManagerInterface* data_manager,
-    const std::unique_ptr<MemoryBlockInterface>& memory_device, int row_count,
+    MemoryBlockInterface* memory_device, int row_count,
     const std::string& filename,
     const std::vector<std::vector<int>>& node_parameters, int stream_index) {
   std::chrono::steady_clock::time_point begin =
@@ -610,10 +644,9 @@ void QueryManager::WriteResults(
           "[ms]");
 }
 
-void QueryManager::CopyMemoryData(
-    int table_size,
-    const std::unique_ptr<MemoryBlockInterface>& source_memory_device,
-    const std::unique_ptr<MemoryBlockInterface>& target_memory_device) {
+void QueryManager::CopyMemoryData(int table_size,
+                                  MemoryBlockInterface* source_memory_device,
+                                  MemoryBlockInterface* target_memory_device) {
   volatile uint32_t* source = source_memory_device->GetVirtualAddress();
   volatile uint32_t* target = target_memory_device->GetVirtualAddress();
   std::chrono::steady_clock::time_point begin =
@@ -635,152 +668,51 @@ void QueryManager::ProcessResults(
         result_sizes,
     const std::map<std::string, std::vector<StreamResultParameters>>&
         result_parameters,
-    const std::map<std::string,
-                   std::vector<std::unique_ptr<MemoryBlockInterface>>>&
-        allocated_memory_blocks,
-    std::map<std::string, std::vector<RecordSizeAndCount>>&
-        output_stream_sizes) {
+    const std::unordered_map<std::string, MemoryBlockInterface*>&
+        table_memory_blocks,
+    std::map<std::string, TableMetadata>& scheduling_table_data) {
   for (auto const& [node_name, result_parameter_vector] : result_parameters) {
     for (auto const& result_params : result_parameter_vector) {
-      int record_count = result_sizes.at(result_params.output_id);
+      // Assuming there's nothing after the offset and everything is valid
+      // before offset!
+      int record_count = result_sizes.at(result_params.output_id) +
+                         result_params.output_offset;
       Log(LogLevel::kDebug,
           node_name + "_" + std::to_string(result_params.stream_index) +
-              " has " + std::to_string(record_count) + " rows!");
-      output_stream_sizes[node_name][result_params.stream_index].second =
-          record_count;
-      if (!result_params.filename.empty()) {
+              " has " +
+              std::to_string(record_count - result_params.output_offset) +
+              " new resulting rows!");
+      scheduling_table_data[result_params.filename].record_count = record_count;
+      if (!result_params.update_table_sizes_only) {
         if (result_params.check_results) {
           CheckResults(
-              data_manager,
-              allocated_memory_blocks.at(node_name)[result_params.stream_index],
+              data_manager, table_memory_blocks.at(result_params.filename),
               record_count, result_params.filename,
               result_params.stream_specifications, result_params.stream_index);
         } else {
-          WriteResults(
-              data_manager,
-              allocated_memory_blocks.at(node_name)[result_params.stream_index],
-              record_count, result_params.filename,
-              result_params.stream_specifications, result_params.stream_index);
-        }
-      }
-    }
-  }
-}
-
-void QueryManager::FreeMemoryBlocks(
-    MemoryManagerInterface* memory_manager,
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
-        input_memory_blocks,
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
-        output_memory_blocks,
-    std::map<std::string, std::vector<RecordSizeAndCount>>& input_stream_sizes,
-    std::map<std::string, std::vector<RecordSizeAndCount>>& output_stream_sizes,
-    const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links,
-    const std::vector<std::string>& scheduled_node_names) {
-  // For all reuse links where it is doing self linking. Just write output to
-  // input and don't clear the memory block. Then remove the link from the
-  // vector.
-  // vec.erase(std::remove(vec.begin(), vec.end(), 8), vec.end());
-
-  std::vector<std::string> save_input;
-  for (const auto& [node_name, data_mapping] : reuse_links) {
-    for (const auto& [output_stream_index, target_input_streams] :
-         data_mapping) {
-      if (target_input_streams.size() == 1) {
-        auto target_node_name = target_input_streams.at(0).first;
-        auto target_stream_index = target_input_streams.at(0).second;
-        if (target_node_name == node_name) {
-          CopyMemoryData(
-              output_stream_sizes[node_name][output_stream_index].first *
-                  output_stream_sizes[node_name][output_stream_index].second,
-              output_memory_blocks[node_name][output_stream_index],
-              input_memory_blocks[target_node_name][target_stream_index]);
-          save_input.push_back(target_node_name);
-        }
-      }
-    }
-  }
-
-  // Check when does stuff get saved
-  /*std::vector<std::string> removable_vectors;*/
-  for (const auto& name : scheduled_node_names) {
-    if (std::find(save_input.begin(), save_input.end(), name) ==
-        save_input.end()) {
-      for (auto& memory_block : input_memory_blocks[name]) {
-        if (memory_block) {
-          memory_manager->FreeMemoryBlock(std::move(memory_block));
-        }
-        memory_block = nullptr;
-      }
-      // Should only be erased when it's not a target in reuse_links
-      // input_stream_sizes.erase(name);
-      // input_memory_blocks.erase(name);
-    }
-  }
-
-  for (const auto& [node_name, data_mapping] : reuse_links) {
-    if (std::find(save_input.begin(), save_input.end(), node_name) ==
-        save_input.end()) {
-      for (const auto& [output_stream_index, target_input_streams] :
-           data_mapping) {
-        if (target_input_streams.size() == 1) {
-          auto target_node_name = target_input_streams.at(0).first;
-          auto target_stream_index = target_input_streams.at(0).second;
-          /*removable_vectors.erase(
-              std::remove(removable_vectors.begin(), removable_vectors.end(),
-                          target_node_name),
-              removable_vectors.end());*/
-          input_memory_blocks[target_node_name][target_stream_index] =
-              std::move(output_memory_blocks[node_name][output_stream_index]);
-          output_memory_blocks[node_name][output_stream_index] = nullptr;
-          input_stream_sizes[target_node_name][target_stream_index] =
-              output_stream_sizes[node_name][output_stream_index];
-        } else {
-          for (const auto& [target_node_name, target_stream_index] :
-               target_input_streams) {
-            /*removable_vectors.erase(
-                std::remove(removable_vectors.begin(), removable_vectors.end(),
-                            target_node_name),
-                removable_vectors.end());*/
-            input_memory_blocks[target_node_name][target_stream_index] =
-                std::move(memory_manager->GetAvailableMemoryBlock());
-            CopyMemoryData(
-                output_stream_sizes[node_name][output_stream_index].first *
-                    output_stream_sizes[node_name][output_stream_index].second,
-                output_memory_blocks[node_name][output_stream_index],
-                input_memory_blocks[target_node_name][target_stream_index]);
-            input_stream_sizes[target_node_name][target_stream_index] =
-                output_stream_sizes[node_name][output_stream_index];
+          std::string filename = result_params.filename;
+          if (filename.back() != 'v') {
+            filename += ".csv";
           }
+          WriteResults(
+              data_manager, table_memory_blocks.at(result_params.filename),
+              record_count, filename,
+              result_params.stream_specifications, result_params.stream_index);
         }
       }
     }
   }
-
-  for (auto& [node_name, memory_block_vector] : output_memory_blocks) {
-    for (auto& memory_block : memory_block_vector) {
-      if (memory_block) {
-        memory_manager->FreeMemoryBlock(std::move(memory_block));
-      }
-    }
-  }
-
-  output_memory_blocks.clear();
-  output_stream_sizes.clear();
 }
 
 void QueryManager::ExecuteAndProcessResults(
-    FPGAManagerInterface* fpga_manager,
+    MemoryManagerInterface* memory_manager, FPGAManagerInterface* fpga_manager,
     const DataManagerInterface* data_manager,
-    std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>&
-        output_memory_blocks,
-    std::map<std::string, std::vector<RecordSizeAndCount>>& output_stream_sizes,
+    std::unordered_map<std::string, MemoryBlockInterface*>& table_memory_blocks,
     const std::map<std::string, std::vector<StreamResultParameters>>&
         result_parameters,
     const std::vector<AcceleratedQueryNode>& execution_query_nodes,
     std::map<std::string, TableMetadata>& scheduling_table_data,
-    const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links,
-    std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph) {
+    std::unordered_map<std::string, int>& table_counter) {
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
 
@@ -812,10 +744,23 @@ void QueryManager::ExecuteAndProcessResults(
           "[microseconds]");
 
   ProcessResults(data_manager, result_sizes, result_parameters,
-                 output_memory_blocks, output_stream_sizes);
-
-  UpdateTableData(result_parameters, output_stream_sizes, scheduling_table_data,
-                  reuse_links, scheduling_graph);
+                 table_memory_blocks, scheduling_table_data);
+  std::vector<std::string> removable_tables;
+  for (const auto& [table_name, counter] : table_counter) {
+    if (counter < 0) {
+      throw std::runtime_error("Incorrect table counting!");
+    } else if (counter == 0) {
+      removable_tables.push_back(table_name);
+    } else {
+      CropSortedStatus(scheduling_table_data, table_name);
+    }
+  }
+  for (const auto& table_name : removable_tables) {
+    table_counter.erase(table_name);
+    scheduling_table_data.erase(table_name);
+    memory_manager->FreeMemoryBlock(table_memory_blocks.at(table_name));
+    table_memory_blocks.erase(table_name);
+  }
 }
 
 void QueryManager::UpdateTableData(
@@ -826,6 +771,9 @@ void QueryManager::UpdateTableData(
     std::map<std::string, TableMetadata>& scheduling_table_data,
     const std::map<std::string, std::map<int, MemoryReuseTargets>>& reuse_links,
     std::unordered_map<std::string, SchedulingQueryNode>& scheduling_graph) {
+  // Only thing we need to do is crop sorted status
+  // And set record counts.
+
   // TODO(Kaspar): This needs to get tested!!!
   // Also this is assuming that there always is a link. There might not be.
   for (const auto& [node_name, stream_parameters] : result_parameters) {
@@ -877,66 +825,88 @@ void QueryManager::UpdateTableData(
 void QueryManager::CropSortedStatus(
     std::map<std::string, TableMetadata>& scheduling_table_data,
     const std::string& filename) {
-  auto current_data = scheduling_table_data.at(filename);
+  const int begin_offset = 0;
+  const int end_offset = 1;
+  const int size_offset = 2;
+  const int sequence_count = 3;
+
+  // We crop only assuming that there was a filter or a join before a sorter -
+  // Therefore there was less to sort and we have to crop.
+  auto& current_data = scheduling_table_data.at(filename);
   if (!current_data.sorted_status.empty()) {
-    if (current_data.sorted_status.back().start_position +
-            current_data.sorted_status.back().length >
-        current_data.record_count) {
-      std::vector<SortedSequence> cropped_sequences;
-      for (const auto& sequence : current_data.sorted_status) {
-        if (sequence.start_position + sequence.length <=
-            current_data.record_count) {
-          cropped_sequences.push_back(sequence);
-        } else if (sequence.start_position < current_data.record_count) {
-          cropped_sequences.emplace_back(
-              sequence.start_position,
-              current_data.record_count - sequence.start_position);
+    if (current_data.sorted_status.size() != 4) {
+      throw std::runtime_error(
+          "Cropping odd sorted sequence structures not supported currently!");
+    } else {
+      // Assuming the sorted status is correct.
+      if (current_data.sorted_status.at(end_offset) + 1 >
+          current_data.record_count) {
+        current_data.sorted_status[end_offset] =
+            std::max(current_data.record_count - 1, 0);
+        current_data.sorted_status[sequence_count] =
+            (current_data.record_count +
+             current_data.sorted_status[size_offset] - 1) /
+            current_data.sorted_status[size_offset];
+        // Check if it got cropped so much that it got sorted.
+        if (current_data.sorted_status[sequence_count] == 1) {
+          current_data.sorted_status[size_offset] = current_data.record_count;
         }
-      }
-      scheduling_table_data.at(filename).sorted_status = cropped_sequences;
+      }  // Else it's all fine!
     }
   }
 }
 
-auto QueryManager::AddQueryNodes(
+void QueryManager::AddQueryNodes(
     std::vector<AcceleratedQueryNode>& query_nodes_vector,
     std::vector<StreamDataParameters>&& input_params,
-    std::vector<StreamDataParameters>&& output_params, const QueryNode& node)
-    -> int {
-  auto run_itr =
-      std::find(node.module_locations.begin(), node.module_locations.end(), -1);
-  std::vector<int> sorted_module_locations = {node.module_locations.begin(),
-                                              run_itr};
-  /*std::vector<int> leftover_module_locations = {run_itr + 1,
-                                                node.module_locations.end()};*/
-  std::sort(sorted_module_locations.begin(), sorted_module_locations.end());
+    std::vector<StreamDataParameters>&& output_params, QueryNode* node,
+    const NodeRunData& run_data) {
+  std::vector<std::vector<int>> operation_params;
+  if (node->operation_type == QueryOperationType::kMergeSort) {
+    operation_params.push_back(
+        {static_cast<int>(run_data.module_locations.size()), 1});
+    for (int i = 0; i < run_data.module_locations.size(); i++) {
+      operation_params.push_back(
+          node->given_operation_parameters.operation_parameters.at(
+              run_data.run_index));
+      // For merge sort it is only 1 input - Give min module size for calculating buffer size.
+      input_params[0].smallest_module_size = *std::min_element(
+          operation_params.at(1).begin(), operation_params.at(1).end());
+    }
+    // Just for debugging marking used operations params.
+    node->given_operation_parameters.operation_parameters[run_data.run_index]
+        .push_back(-1);
+  } else {
+    operation_params = node->given_operation_parameters.operation_parameters;
+  }
+  // Assume the locations are sorted.
+  const auto& sorted_module_locations = run_data.module_locations;
   auto no_io_input_params = input_params;
   for (auto& stream_param : no_io_input_params) {
-    stream_param.physical_address = nullptr;
+    stream_param.physical_addresses_map.clear();
   }
   auto no_io_output_params = output_params;
   for (auto& stream_param : no_io_output_params) {
-    stream_param.physical_address = nullptr;
+    stream_param.physical_addresses_map.clear();
   }
   if (sorted_module_locations.size() == 1) {
-    query_nodes_vector.push_back(
-        {std::move(input_params),
-         std::move(output_params),
-         node.operation_type,
-         sorted_module_locations.at(0),
-         {},
-         node.operation_parameters.operation_parameters});
-  } else if (node.operation_parameters.operation_parameters.empty()) {
+    query_nodes_vector.push_back({std::move(input_params),
+                                  std::move(output_params),
+                                  node->operation_type,
+                                  sorted_module_locations.at(0),
+                                  {},
+                                  operation_params});
+  } else if (operation_params.empty()) {
     // Multiple composed modules
     for (int i = 0; i < sorted_module_locations.size(); i++) {
       auto current_input = (i == 0) ? input_params : no_io_input_params;
       auto current_output = (i == sorted_module_locations.size() - 1)
                                 ? output_params
                                 : no_io_output_params;
-      query_nodes_vector.push_back(
-          {current_input, current_output, node.operation_type,
-           sorted_module_locations.at(i), sorted_module_locations,
-           node.operation_parameters.operation_parameters});
+      query_nodes_vector.push_back({current_input, current_output,
+                                    node->operation_type,
+                                    sorted_module_locations.at(i),
+                                    sorted_module_locations, operation_params});
     }
   } else {
     // Multiple resource elastic modules.
@@ -954,7 +924,7 @@ auto QueryManager::AddQueryNodes(
              node.operation_parameters.operation_parameters[0][1]}}});
     }*/
 
-    auto all_module_params = node.operation_parameters.operation_parameters;
+    auto all_module_params = operation_params;
     if (all_module_params.at(0).at(0) != sorted_module_locations.size()) {
       throw std::runtime_error("Wrong parameters given!");
     }
@@ -970,10 +940,9 @@ auto QueryManager::AddQueryNodes(
       single_module_params.insert(single_module_params.begin(),
                                   all_module_params[0]);
       query_nodes_vector.push_back(
-          {current_input, current_output, node.operation_type,
+          {current_input, current_output, node->operation_type,
            sorted_module_locations.at(i), sorted_module_locations,
            single_module_params});
     }
   }
-  return run_itr - node.module_locations.begin();
 }

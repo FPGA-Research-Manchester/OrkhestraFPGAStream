@@ -23,7 +23,8 @@ using orkhestrafs::core_interfaces::ExecutionPlanGraphInterface;
 
 class MockGraph : public ExecutionPlanGraphInterface {
  public:
-  MOCK_METHOD(std::vector<std::shared_ptr<QueryNode>>, ExportRootNodes, (),
+  MOCK_METHOD(void, DeleteNodes,
+              (const std::unordered_set<std::string>& deleted_node_names),
               (override));
   MOCK_METHOD(bool, IsEmpty, (), (override));
   MOCK_METHOD(std::vector<QueryNode*>, GetRootNodesPtrs, (), (override));

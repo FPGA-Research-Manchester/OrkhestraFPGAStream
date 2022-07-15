@@ -20,8 +20,6 @@ limitations under the License.
 #include "sorting_module_setup.hpp"
 #include "table_data.hpp"
 
-using orkhestrafs::core_interfaces::table_data::SortedSequence;
-
 namespace orkhestrafs::dbmstodspi {
 
 /**
@@ -31,9 +29,8 @@ namespace orkhestrafs::dbmstodspi {
 class LinearSortSetup : public virtual AccelerationModuleSetupInterface,
                         public SortingModuleSetup {
  private:
-  static auto GetSortedSequenceWithCapacity(int bitstream_capacity,
-                                            int record_count)
-      -> std::vector<SortedSequence>;
+  static void GetSortedSequenceWithCapacity(int bitstream_capacity,
+                                            int record_count, std::vector<int>& sorted_sequence);
 
  public:
   void SetupModule(AccelerationModule& acceleration_module,
@@ -45,12 +42,17 @@ class LinearSortSetup : public virtual AccelerationModuleSetupInterface,
   auto GetWorstCaseProcessedTables(
       const std::vector<int>& min_capacity,
       const std::vector<std::string>& input_tables,
-      const std::map<std::string, TableMetadata>& data_tables)
+      const std::map<std::string, TableMetadata>& data_tables,
+      const std::vector<std::string>& output_table_names)
       -> std::map<std::string, TableMetadata> override;
   auto UpdateDataTable(const std::vector<int>& module_capacity,
                        const std::vector<std::string>& input_table_names,
                        std::map<std::string, TableMetadata>& resulting_tables)
       -> bool override;
+  auto GetWorstCaseNodeCapacity(const std::vector<int>& min_capacity,
+      const std::vector<std::string>& input_tables,
+      const std::map<std::string, TableMetadata>& data_tables,
+      QueryOperationType next_operation_type) -> std::vector<int> override;
   /**
    * @brief Setup linear sort module by giving the stream data to be sorted.
    * @param linear_sort_module Module instance to access the configuration

@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include<algorithm>
+
 #include "join_setup.hpp"
 
 #include "join.hpp"
@@ -129,22 +131,23 @@ void JoinSetup::SetupTimeMultiplexer(JoinInterface& join_module,
 auto JoinSetup::GetWorstCaseProcessedTables(
     const std::vector<int>& /*min_capacity*/,
     const std::vector<std::string>& input_tables,
-    const std::map<std::string, TableMetadata>& data_tables)
+    const std::map<std::string, TableMetadata>& data_tables,
+    const std::vector<std::string>& output_table_names)
     -> std::map<std::string, TableMetadata> {
-  int max_record_count = 0;
-  int new_record_size = 0;
-  std::string new_table_name;
-  for (const auto& table_name : input_tables) {
-    new_record_size += data_tables.at(table_name).record_size;
-    if (data_tables.at(table_name).record_count > max_record_count) {
-      new_table_name = table_name;
-      max_record_count = data_tables.at(table_name).record_count;
-    }
+  if (input_tables.size() != 2 || output_table_names.size() != 1) {
+    throw std::runtime_error("Unsupporded table counts at join preprocessing!");
   }
-  std::map<std::string, TableMetadata> resulting_table;
-  resulting_table.insert({new_table_name + "_after_join",
-                          {new_record_size, max_record_count, {}}});
-  return resulting_table;
+  std::map<std::string, TableMetadata> resulting_tables;
+  resulting_tables[output_table_names.front()] =
+      data_tables.at(output_table_names.front());
+  // Record count is an estimation
+  resulting_tables[output_table_names.front()].record_count =
+      std::min(data_tables.at(input_tables.front()).record_count,
+               data_tables.at(input_tables.back()).record_count);
+  resulting_tables[output_table_names.front()].sorted_status = {
+      0, resulting_tables[output_table_names.front()].record_count - 1,
+      resulting_tables[output_table_names.front()].record_count, 1};
+  return std::move(resulting_tables);
 }
 
 auto JoinSetup::InputHasToBeSorted() -> bool { return true; }

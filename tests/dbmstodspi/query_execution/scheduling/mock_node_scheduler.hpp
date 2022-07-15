@@ -23,7 +23,7 @@ using orkhestrafs::dbmstodspi::NodeSchedulerInterface;
 
 class MockNodeScheduler : public NodeSchedulerInterface {
  private:
-  using NodeVector = std::vector<std::shared_ptr<QueryNode>>;
+  using NodeVector = std::vector<QueryNode*>;
   using ResultingPlanQueue =
       std::queue<std::pair<std::vector<ScheduledModule>, NodeVector>>;
   using AcceleratorMap = std::map<ConfigurableModulesVector, std::string>;
@@ -42,33 +42,35 @@ class MockNodeScheduler : public NodeSchedulerInterface {
                           ExecutionPlanSchedulingData>,
                  long long, bool, std::pair<int, int>>;
   using BenchmarkMap = std::map<std::string, double>;
+  using Counter = std::unordered_map<std::string, int>;
+  using ConfigurationVector = std::vector<ScheduledModule>;
 
  public:
   MOCK_METHOD(ResultingPlanQueue, GetNextSetOfRuns,
-              (NodeVector & query_nodes,
+              (std::vector<QueryNode*> & query_nodes,
                const std::unordered_set<std::string>& first_node_names,
-               std::unordered_set<std::string>& starting_nodes,
-               std::unordered_set<std::string>& processed_nodes,
-               SchedulingNodeMap& graph, AcceleratorLibraryInterface& drivers,
-               TableMap& tables,
-               const std::vector<ScheduledModule>& current_configuration,
-               const Config& config),
+               std::unordered_set<std::string> starting_nodes, SchedulingNodeMap graph,
+               AcceleratorLibraryInterface& drivers, TableMap& tables,
+               const ConfigurationVector& current_configuration,
+               const Config& config,
+               std::unordered_set<std::string>& skipped_nodes,
+               Counter& table_counter),
               (override));
 
   MOCK_METHOD(AllPlans, ScheduleAndGetAllPlans,
-              (std::unordered_set<std::string> & starting_nodes,
-               std::unordered_set<std::string>& processed_nodes,
-               SchedulingNodeMap& graph, TableMap& tables,
+              (const std::unordered_set<std::string> & starting_nodes,
+               const std::unordered_set<std::string>& processed_nodes,
+               const SchedulingNodeMap& graph, const TableMap& tables,
                const Config& config),
               (override));
 
   MOCK_METHOD(void, BenchmarkScheduling,
               (const std::unordered_set<std::string>& first_node_names,
-               std::unordered_set<std::string>& starting_nodes,
+               std::unordered_set<std::string> starting_nodes,
                std::unordered_set<std::string>& processed_nodes,
-               SchedulingNodeMap& graph, AcceleratorLibraryInterface& drivers,
-               TableMap& tables,
-               std::vector<ScheduledModule>& current_configuration,
+               SchedulingNodeMap graph,
+               AcceleratorLibraryInterface& drivers, TableMap& tables,
+               ConfigurationVector& current_configuration,
                const Config& config, BenchmarkMap& benchmark_data),
               (override));
 };

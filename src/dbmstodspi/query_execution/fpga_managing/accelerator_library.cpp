@@ -118,11 +118,12 @@ auto AcceleratorLibrary::GetMinSortingRequirements(
 auto AcceleratorLibrary::GetWorstCaseProcessedTables(
     QueryOperationType operation_type, const std::vector<int>& min_capacity,
     const std::vector<std::string>& input_tables,
-    const std::map<std::string, TableMetadata>& data_tables)
+    const std::map<std::string, TableMetadata>& data_tables,
+    const std::vector<std::string>& output_table_names)
     -> std::map<std::string, TableMetadata> {
   auto* driver = GetDriver(operation_type);
   return driver->GetWorstCaseProcessedTables(min_capacity, input_tables,
-                                             data_tables);
+                                             data_tables, output_table_names);
 }
 
 auto AcceleratorLibrary::UpdateDataTable(
@@ -132,6 +133,16 @@ auto AcceleratorLibrary::UpdateDataTable(
   auto* driver = GetDriver(operation_type);
   return driver->UpdateDataTable(module_capacity, input_table_names,
                                  resulting_tables);
+}
+
+auto AcceleratorLibrary::SetMissingFunctionalCapacity(
+    const std::vector<int>& bitstream_capacity,
+    std::vector<int>& missing_capacity, const std::vector<int>& node_capacity,
+    bool is_composed,
+    QueryOperationType operation_type) -> bool {
+  auto* driver = GetDriver(operation_type);
+  return driver->SetMissingFunctionalCapacity(bitstream_capacity,
+                                              missing_capacity, node_capacity, is_composed);
 }
 
 auto AcceleratorLibrary::IsInputSupposedToBeSorted(
@@ -170,4 +181,14 @@ auto AcceleratorLibrary::GetEmptyModuleNode(QueryOperationType operation,
   passthrough_module_node.operation_module_location = module_position;
   passthrough_module_node.composed_module_locations = {};
   return passthrough_module_node;
+}
+
+auto AcceleratorLibrary::GetWorstCaseNodeCapacity(
+    QueryOperationType operation_type, const std::vector<int>& min_capacity,
+    const std::vector<std::string>& input_tables,
+    const std::map<std::string, TableMetadata>& data_tables,
+    QueryOperationType next_operation_type) -> std::vector<int> {
+  auto* driver = GetDriver(operation_type);
+  return driver->GetWorstCaseNodeCapacity(min_capacity, input_tables,
+                                          data_tables, next_operation_type);
 }

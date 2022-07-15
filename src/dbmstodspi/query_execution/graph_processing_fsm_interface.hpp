@@ -96,5 +96,7 @@ class GraphProcessingFSMInterface {
    * @return Boolean flag showing if there are no more nodes to schedule.
    */
   virtual auto IsBenchmarkDone() -> bool = 0;
+
+  virtual void UpdateAvailableNodesGraph() = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

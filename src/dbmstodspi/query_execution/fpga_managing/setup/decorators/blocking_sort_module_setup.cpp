@@ -22,27 +22,29 @@ limitations under the License.
 #include "query_scheduling_helper.hpp"
 #include "table_data.hpp"
 
-using orkhestrafs::core_interfaces::table_data::SortedSequence;
 using orkhestrafs::dbmstodspi::BlockingSortModuleSetup;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
 auto BlockingSortModuleSetup::GetWorstCaseProcessedTables(
     const std::vector<int>& min_capacity,
     const std::vector<std::string>& input_tables,
-    const std::map<std::string, TableMetadata>& data_tables)
+    const std::map<std::string, TableMetadata>& data_tables,
+    const std::vector<std::string>& output_table_names)
     -> std::map<std::string, TableMetadata> {
-  std::map<std::string, TableMetadata> resuling_tables;
-  for (const auto& table_name : input_tables) {
-    if (QuerySchedulingHelper::IsTableSorted(data_tables.at(table_name))) {
-      resuling_tables.insert({table_name, data_tables.at(table_name)});
-    } else {
-      auto new_table_name = table_name + "_fully_sorted";
-      auto new_table_data = data_tables.at(table_name);
-      new_table_data.sorted_status = {{0, new_table_data.record_count}};
-      resuling_tables.insert({new_table_name, new_table_data});
-    }
+  if (input_tables.size() != 1 || output_table_names.size() != 1) {
+    throw std::runtime_error("Unsupporded table counts at preprocessing!");
   }
-  return resuling_tables;
+  std::map<std::string, TableMetadata> resulting_tables;
+  resulting_tables[output_table_names.front()] =
+      data_tables.at(output_table_names.front());
+  resulting_tables[output_table_names.front()].record_count =
+      data_tables.at(input_tables.front()).record_count;
+  // There will be a -1 if the size is 0 but it shouldn't be a problem
+  resulting_tables[output_table_names.front()].sorted_status = {
+      0, resulting_tables[output_table_names.front()].record_count - 1,
+      resulting_tables[output_table_names.front()].record_count, 1};
+  return std::move(resulting_tables);
+
 }
 
 auto BlockingSortModuleSetup::UpdateDataTable(
@@ -60,50 +62,133 @@ auto BlockingSortModuleSetup::UpdateDataTable(
     throw std::runtime_error("Table is sorted already!");
   }
 
-  const auto& table_name = input_table_names.front();
-  const auto& current_table_sorted_status =
-      resulting_tables.at(table_name).sorted_status;
-  const auto& current_table_record_count =
-      resulting_tables.at(table_name).record_count;
+  // What do I do with this?
 
-  std::vector<SortedSequence> new_sorted_sequences;
-  new_sorted_sequences.reserve(current_table_sorted_status.size());
-  if (current_table_sorted_status.empty()) {
-    new_sorted_sequences.emplace_back(
-        0, std::min(module_capacity.front(), current_table_record_count));
+  // I have 0 clue!
+
+  // So you put stuff into a linked table?
+
+
+  // I take some sequences from current table.
+  // I merge them all to another table.
+  // If I can merge them all to a sorted table. -> Then just don't do anything -> Say somehow that this node is completed
+  // If not completed
+  // Then just yh update the current table by adding more sorted sequences.
+  // If we're creating a 
+
+
+
+
+
+
+  auto& sorted_status =
+      resulting_tables.at(input_table_names.front()).sorted_status;
+  const auto& module_capacity_value = module_capacity.front();
+
+  if (module_capacity_value >= sorted_status.at(1) + 1) {
+    sorted_status.clear();
+    sorted_status.push_back(
+        resulting_tables.at(input_table_names.front()).record_count);
+    return true;
   } else {
-    int new_sequence_length = 0;
-    for (int sequence_index = 0;
-         sequence_index <
-         std::min(module_capacity.front(),
-                  static_cast<int>(current_table_sorted_status.size()));
-         sequence_index++) {
-      new_sequence_length +=
-          current_table_sorted_status.at(sequence_index).length;
-    }
-    if (module_capacity.front() > current_table_sorted_status.size() &&
-        new_sequence_length < current_table_record_count) {
-      new_sequence_length +=
-          module_capacity.front() - current_table_sorted_status.size();
-      new_sequence_length =
-          std::min(new_sequence_length, current_table_record_count);
-    }
-    new_sorted_sequences.emplace_back(0, new_sequence_length);
-    if (new_sequence_length < current_table_record_count &&
-        module_capacity.front() < current_table_sorted_status.size()) {
-      new_sorted_sequences.insert(
-          new_sorted_sequences.end(),
-          current_table_sorted_status.begin() + module_capacity.front(),
-          current_table_sorted_status.end());
-      /*for (int sequence_index = module_capacity.front();
-           sequence_index < current_sequences.size(); sequence_index++) {
-        new_sorted_sequences.push_back(current_sequences.at(sequence_index));
-      }*/
-    }
+    sorted_status[0] =
+        sorted_status.at(0) + (module_capacity_value - 1) * sorted_status.at(2);
+    sorted_status[1] -= (module_capacity_value - 1);
+    return false;
   }
-  // Fix later
-  // current_table.sorted_status = {{0, current_table.record_count}};
-  resulting_tables.at(table_name).sorted_status =
-      std::move(new_sorted_sequences);
-  return QuerySchedulingHelper::IsTableSorted(resulting_tables.at(table_name));
+
+  // TODO: Remove this old code 
+  //const auto& table_name = input_table_names.front();
+  //std::vector<int> new_sorted_sequences;
+
+  //new_sorted_sequences.reserve(
+  //    resulting_tables.at(table_name).sorted_status.size());
+  //if (resulting_tables.at(table_name).sorted_status.empty()) {
+  //    // TODO: Fix this.
+  //  throw std::runtime_error("Merge sorter can't sort from 0 currently");
+  //} else {
+  //  SortDataTableWhileMinimizingMinorRuns(
+  //      resulting_tables.at(table_name).sorted_status, new_sorted_sequences,
+  //      resulting_tables.at(table_name).record_count, module_capacity.front());
+  //  //  SortDataTableWhileMinimizingMajorRuns(
+  //  //      resulting_tables.at(table_name).sorted_status, new_sorted_sequences,
+  //  //      resulting_tables.at(table_name).record_count,
+  //  //      module_capacity.front());
+  //}
+
+  //resulting_tables.at(table_name).sorted_status =
+  //    std::move(new_sorted_sequences);
+  /*return QuerySchedulingHelper::IsTableSorted(
+      resulting_tables.at(input_table_names.front()));*/
+}
+
+void BlockingSortModuleSetup::SortDataTableWhileMinimizingMinorRuns(
+    const std::vector<int>& old_sorted_sequences,
+    std::vector<int>& new_sorted_sequences, int record_count,
+    int module_capacity) {
+  // Not supported currently. Assume that all elements belong to a sequence!
+  /*int new_sequence_length = 0;
+  for (int sequence_index = 0;
+       sequence_index <
+       std::min(module_capacity, static_cast<int>(old_sorted_sequences.size()));
+       sequence_index++) {
+    new_sequence_length += old_sorted_sequences.at(sequence_index).length;
+  }
+  if (module_capacity > old_sorted_sequences.size() &&
+      new_sequence_length < record_count) {
+    new_sequence_length += module_capacity - old_sorted_sequences.size();
+    new_sequence_length = std::min(new_sequence_length, record_count);
+  }*/
+  new_sorted_sequences.emplace_back(0);
+  if (module_capacity < old_sorted_sequences.size()) {
+    new_sorted_sequences.insert(new_sorted_sequences.end(),
+                                old_sorted_sequences.begin() + module_capacity,
+                                old_sorted_sequences.end());
+  }
+}
+void BlockingSortModuleSetup::SortDataTableWhileMinimizingMajorRuns(
+    const std::vector<int>& old_sorted_sequences,
+    std::vector<int>& new_sorted_sequences, int record_count,
+    int module_capacity) {
+  // Assuming the sequences are not empty and they're in correct order.
+  // TODO: Remove this error
+    // Not supported currently!
+  /* int old_sequence_length = 0;
+  for (const auto& sequence : old_sorted_sequences) {
+    old_sequence_length += sequence.length;
+  }
+  if (old_sequence_length < record_count) {
+    throw std::runtime_error(
+        "Sorting single elements is not supported currently!");
+  }
+  // If there are less sequences than that then just return one big sequence
+  if (old_sorted_sequences.size() < module_capacity){
+    new_sorted_sequences.emplace_back(0, old_sequence_length);
+  } else {
+    // Find the smallest set of sequences to merge - Not entirely optimal
+    int window_count = old_sorted_sequences.size() + 1 - module_capacity;
+    std::vector<int> window_lengths (window_count, 0);
+    // TODO: Make this one more clever.
+    for (int window_location = 0; window_location<window_count; window_location++){
+      for (int sequence_index = window_location; sequence_index<window_location+record_count; sequence_index++){
+        window_lengths[window_location]+=old_sorted_sequences[sequence_index].length;
+      }
+    }
+    int min_window_index = std::distance(window_lengths.begin(), std::min_element(window_lengths.begin(), window_lengths.end()));
+    // Add sequences before window
+    int start_point = 0;
+    for (int sequence_index = 0; sequence_index < min_window_index; sequence_index++){
+      start_point+= old_sorted_sequences[sequence_index].length;
+      new_sorted_sequences.push_back(old_sorted_sequences[sequence_index]);
+    }
+    // Add window
+    new_sorted_sequences.emplace_back(start_point, window_lengths.at(min_window_index));
+    // If there are sequences to add after the window - add them.
+    if (start_point + window_lengths.at(min_window_index) < record_count &&
+        module_capacity < old_sorted_sequences.size()) {
+      new_sorted_sequences.insert(new_sorted_sequences.end(),
+                                  old_sorted_sequences.begin() + min_window_index + module_capacity,
+                                  old_sorted_sequences.end());
+    }
+  }*/
 }

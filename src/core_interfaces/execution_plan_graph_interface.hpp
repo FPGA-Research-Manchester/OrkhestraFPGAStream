@@ -17,6 +17,7 @@ limitations under the License.
 #pragma once
 
 #include <string>
+#include <unordered_set>
 
 #include "query_scheduling_data.hpp"
 
@@ -29,11 +30,8 @@ namespace orkhestrafs::core_interfaces {
 class ExecutionPlanGraphInterface {
  public:
   virtual ~ExecutionPlanGraphInterface() = default;
-  /**
-   * @brief Move all of the root nodes.
-   * @return Nodes vectors which have no dependencies.
-   */
-  virtual auto ExportRootNodes() -> std::vector<std::shared_ptr<QueryNode>> = 0;
+
+  virtual void DeleteNodes(const std::unordered_set<std::string>& deleted_node_names) = 0;
   /**
    * @brief Check if there are any nodes held.
    * @return Boolean flag noting if there are any nodes.

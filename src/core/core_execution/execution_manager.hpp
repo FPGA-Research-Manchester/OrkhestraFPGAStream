@@ -81,7 +81,7 @@ class ExecutionManager : public ExecutionManagerInterface,
             driver_factory->CreateFPGAManager(accelerator_library_.get()))} {};
 
   void SetFinishedFlag() override;
-
+  void UpdateAvailableNodesGraph() override;
   void Execute(
       std::unique_ptr<ExecutionPlanGraphInterface> execution_graph) override;
 
@@ -113,29 +113,17 @@ class ExecutionManager : public ExecutionManagerInterface,
   bool busy_flag_ = false;
   // New TableMetadata variables.
   std::map<std::string, TableMetadata> current_tables_metadata_;
-  std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
-      memory_blocks_;
+  std::unordered_map<std::string, MemoryBlockInterface*> table_memory_blocks_;
   std::unordered_map<std::string, SchedulingQueryNode> current_query_graph_;
+  std::unordered_map<std::string, int> table_counter_;
 
-  std::unordered_set<std::string> current_available_nodes_;
+  std::unordered_set<std::string> current_available_node_names_;
   std::unordered_set<std::string> nodes_constrained_to_first_;
   std::unordered_set<std::string> processed_nodes_;
 
-  std::vector<std::shared_ptr<QueryNode>> current_available_node_pointers_;
+  std::vector<QueryNode*> current_available_node_pointers_;
 
-  // Variables used throughout different states.
-  std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>
-      all_reuse_links_;
-  std::map<std::string, std::map<int, MemoryReuseTargets>> current_reuse_links_;
-  std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
-      input_memory_blocks_;
-  std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
-      output_memory_blocks_;
-  std::map<std::string, std::vector<RecordSizeAndCount>> input_stream_sizes_;
-  std::map<std::string, std::vector<RecordSizeAndCount>> output_stream_sizes_;
-
-  std::queue<std::pair<std::vector<ScheduledModule>,
-                       std::vector<std::shared_ptr<QueryNode>>>>
+  std::queue<std::pair<std::vector<ScheduledModule>, std::vector<QueryNode*>>>
       query_node_runs_queue_;
   std::vector<ScheduledModule> current_configuration_;
 
@@ -144,15 +132,23 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::vector<AcceleratedQueryNode> query_nodes_;
   std::vector<std::string> scheduled_node_names_;
 
-  auto PopNextScheduledRun() -> std::vector<std::shared_ptr<QueryNode>>;
+  auto PopNextScheduledRun() -> std::vector<QueryNode*>;
 
   // TODO(Kaspar): Move this to a different class
+  static auto GetCurrentNodeIndexFromNextNode(QueryNode* current_node,
+                                              QueryNode* next_node) -> int;
+  static void InitialiseTables(
+      std::map<std::string, TableMetadata>& tables_metadata,
+      std::vector<QueryNode*> current_available_node_pointers,
+      const QueryManagerInterface* query_manager,
+      const DataManagerInterface* data_manager);
   static void SetupSchedulingGraphAndConstrainedNodes(
       const std::vector<QueryNode*>& all_query_nodes,
       std::unordered_map<std::string, SchedulingQueryNode>&
           current_scheduling_graph,
       AcceleratorLibraryInterface& hw_library,
       std::unordered_set<std::string>& constrained_nodes_vector);
+  static void RemoveUnusedTables(std::map<std::string, TableMetadata>& tables_metadata, std::vector<QueryNode*> all_nodes);
 
   static void AddSchedulingNodeToGraph(
       QueryNode* const& node,

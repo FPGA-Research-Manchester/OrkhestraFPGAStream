@@ -54,7 +54,7 @@ void MeasureOverallTimeOfParsedPlan(string input_def_filename, string config_fil
   auto begin = chrono::steady_clock::now();
   Core::Run(std::move(input_def_filename), std::move(config_filename));
   auto end = chrono::steady_clock::now();
-  std::cout << "TOTAL RUNTIME:"
+  std::cout << "TOTAL RUNTIME INCLUDING CONFIG READING:"
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      begin)
                    .count()

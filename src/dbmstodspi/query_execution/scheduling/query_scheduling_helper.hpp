@@ -50,7 +50,7 @@ class QuerySchedulingHelper {
    * @return Boolean flag checking if there is only one sorted sequence covering
    * the whole table.
    */
-  static auto IsTableSorted(TableMetadata table_data) -> bool;
+  static auto IsTableSorted(const TableMetadata& table_data) -> bool;
 
   /**
    * @brief Method to find new available nodes

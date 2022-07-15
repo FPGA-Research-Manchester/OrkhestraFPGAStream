@@ -41,7 +41,7 @@ class CSVReaderInterface {
   virtual auto WriteTableFromFileToMemory(
       const std::string& filename, char separator,
       const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
-      const std::unique_ptr<MemoryBlockInterface>& memory_device) -> int = 0;
+      MemoryBlockInterface* memory_device) -> int = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

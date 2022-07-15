@@ -29,6 +29,7 @@ using orkhestrafs::dbmstodspi::logging::LogLevel;
 auto BenchmarkScheduleState::Execute(GraphProcessingFSMInterface* fsm)
     -> std::unique_ptr<StateInterface> {
   Log(LogLevel::kTrace, "Benchmark schedule state");
+  fsm->UpdateAvailableNodesGraph();
   if (fsm->IsBenchmarkDone()) {
     return std::make_unique<PrintBenchmarkState>();
   }

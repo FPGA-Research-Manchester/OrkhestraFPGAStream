@@ -36,7 +36,7 @@ class CSVReader : public CSVReaderInterface {
    */
   static auto IsMemoryLargeEnough(
       const std::string& filename,
-      const std::unique_ptr<MemoryBlockInterface>& memory_device) -> bool;
+      MemoryBlockInterface* memory_device) -> bool;
   /**
    * @brief Write data to given memory pointer with the given offset.
    * @param data 32bit integer data to be written to memory.
@@ -70,7 +70,7 @@ class CSVReader : public CSVReaderInterface {
   auto WriteTableFromFileToMemory(
       const std::string& filename, char separator,
       const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
-      const std::unique_ptr<MemoryBlockInterface>& memory_device)
+      MemoryBlockInterface* memory_device)
       -> int override;
 };
 

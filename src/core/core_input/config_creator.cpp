@@ -31,7 +31,6 @@ using orkhestrafs::core_interfaces::hw_library::PRModuleData;
 using orkhestrafs::core_interfaces::operation_types::QueryOperation;
 using orkhestrafs::core_interfaces::query_scheduling_data::kSupportedFunctions;
 using orkhestrafs::core_interfaces::table_data::kDataTypeNames;
-using orkhestrafs::core_interfaces::table_data::SortedSequence;
 
 auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string configurations_library = "CONFIGURATIONS_LIBRARY";
@@ -141,7 +140,7 @@ auto ConfigCreator::ConvertStringMapToQueryOperations(
 auto ConfigCreator::CreateTablesData(
     const std::vector<
         std::map<std::string, std::variant<std::string, int,
-                                           std::vector<std::vector<int>>>>>&
+                                           std::vector<int>>>>&
         tables_data_in_string_form) -> std::map<std::string, TableMetadata> {
   std::map<std::string, TableMetadata> resulting_table_meta_data;
 
@@ -158,11 +157,13 @@ auto ConfigCreator::CreateTablesData(
         std::get<int>(table_meta_data_map.at(record_count_field));
     current_table.record_size =
         std::get<int>(table_meta_data_map.at(record_size_field));
-    for (const auto& sorted_sequence : std::get<std::vector<std::vector<int>>>(
-             table_meta_data_map.at(sorted_status_field))) {
-      SortedSequence current_sequence = {sorted_sequence.at(0),
-                                         sorted_sequence.at(1)};
-      current_table.sorted_status.push_back(current_sequence);
+    current_table.sorted_status =
+        std::get<std::vector<int>>(
+            table_meta_data_map.at(sorted_status_field));
+    if (!current_table.sorted_status.empty() &&
+        current_table.sorted_status.at(0) != 0 &&
+        current_table.sorted_status.end()[-2] != current_table.record_count-1) {
+      throw std::runtime_error("Incomplete sorted status given!");
     }
     resulting_table_meta_data.insert({filename, std::move(current_table)});
   }

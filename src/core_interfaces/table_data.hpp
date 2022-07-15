@@ -60,14 +60,14 @@ struct TableData {
 /**
  * @brief Struct to hold information about a sorted sequence
  */
-struct SortedSequence {
-  int start_position;
-  int length;
-  // TODO(Kaspar): add sorted by column
-
-  SortedSequence(int start_position, int length)
-      : start_position(start_position), length(length){};
-};
+//struct SortedSequence {
+//  int start_position;
+//  int length;
+//  // TODO(Kaspar): add sorted by column
+//
+//  SortedSequence(int start_position, int length)
+//      : start_position(start_position), length(length){};
+//};
 
 /**
  * @brief Struct to hold information about a database table.
@@ -75,7 +75,24 @@ struct SortedSequence {
 struct TableMetadata {
   int record_size;  // words
   int record_count;
-  std::vector<SortedSequence> sorted_status;
+  // 1. Begin of first set of sequences
+  // 2. End of the first set of sequences
+  // 3. Size of the sequences
+  // 4. How many sequences
+  // ... Repeat
+  std::vector<int> sorted_status;
+
+  auto operator==(const TableMetadata& rhs) const -> bool {
+    return record_size == rhs.record_size &&
+           record_count == rhs.record_count &&
+           sorted_status == rhs.sorted_status;
+  }
+
+  auto operator!=(const TableMetadata& rhs) const -> bool {
+    return record_size != rhs.record_size ||
+           record_count != rhs.record_count ||
+           sorted_status != rhs.sorted_status;
+  }
 };
 
 }  // namespace orkhestrafs::core_interfaces::table_data

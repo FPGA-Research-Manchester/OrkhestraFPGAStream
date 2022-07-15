@@ -103,7 +103,8 @@ class AccelerationModuleSetupInterface {
   virtual auto GetWorstCaseProcessedTables(
       const std::vector<int>& min_capacity,
       const std::vector<std::string>& input_tables,
-      const std::map<std::string, TableMetadata>& data_tables)
+      const std::map<std::string, TableMetadata>& data_tables,
+      const std::vector<std::string>& output_table_names)
       -> std::map<std::string, TableMetadata>;
 
   /**
@@ -154,6 +155,16 @@ class AccelerationModuleSetupInterface {
    * @return Operation parameters.
    */
   virtual auto GetPassthroughInitParameters() -> AcceleratedQueryNode;
+
+  virtual auto GetWorstCaseNodeCapacity(const std::vector<int>& min_capacity,
+      const std::vector<std::string>& input_tables,
+      const std::map<std::string, TableMetadata>& data_tables,
+      QueryOperationType next_operation_type) -> std::vector<int>;
+
+  virtual auto SetMissingFunctionalCapacity(
+      const std::vector<int>& bitstream_capacity,
+      std::vector<int>& missing_capacity, const std::vector<int>& node_capacity,
+      bool is_composed) -> bool;
 
  protected:
   static auto GetStreamRecordSize(const StreamDataParameters& stream_parameters)

@@ -27,7 +27,7 @@ auto QuerySchedulingHelper::FindNodePtrIndex(QueryNode* current_node,
   int counter = 0;
   for (const auto& potential_current_node : previous_node->next_nodes) {
     if (potential_current_node != nullptr &&
-        potential_current_node.get() == current_node) {
+        potential_current_node == current_node) {
       if (index != -1) {
         throw std::runtime_error(
             "Currently can't support the same module taking multiple inputs "
@@ -43,11 +43,10 @@ auto QuerySchedulingHelper::FindNodePtrIndex(QueryNode* current_node,
   return index;
 }
 
-// TODO(Kaspar): Check that it is sorted by the desired column.
-auto QuerySchedulingHelper::IsTableSorted(TableMetadata table_data) -> bool {
-  return table_data.sorted_status.size() == 1 &&
-         table_data.sorted_status.at(0).start_position == 0 &&
-         table_data.sorted_status.at(0).length == table_data.record_count;
+// Assuming sorted by column is always first and the other parameters are legal.
+auto QuerySchedulingHelper::IsTableSorted(const TableMetadata& table_data) -> bool {
+  return table_data.record_count == 0 || table_data.sorted_status.size() == 4 &&
+         table_data.sorted_status.at(2) == table_data.record_count - 1;
 }
 
 auto QuerySchedulingHelper::AddNewTableToNextNodes(
