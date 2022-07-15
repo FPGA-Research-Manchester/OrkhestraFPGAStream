@@ -77,7 +77,7 @@
     {
       "name": "Ubuntu_FPGA",
       "generator": "Ninja",
-      "configurationType": "Release",
+      "configurationType": "Debug",
       "cmakeExecutable": "cmake",
       "remoteCopySourcesExclusionList": [ ".vs", ".git", "out" ],
       "cmakeCommandArgs": "-DENABLE_TESTS=False -DENABLE_FPGA=True",
@@ -94,6 +94,26 @@
       "remoteCopySourcesMethod": "rsync",
       "remotePrebuildCommand": "rmmod u-dma-buf.ko",
       "remotePostbuildCommand": "perl $HOME/.vs/${projectDirName}/${workspaceHash}/out/build/${name}/apps/setupUdma.pl"
+    },
+    {
+      "name": "Ubuntu_FPGA_Release",
+      "generator": "Ninja",
+      "configurationType": "Release",
+      "cmakeExecutable": "cmake",
+      "remoteCopySourcesExclusionList": [ ".vs", ".git", "out" ],
+      "cmakeCommandArgs": "-DENABLE_TESTS=False -DENABLE_FPGA=True",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "linux_arm" ],
+      "remoteMachineName": "1252585813;192.168.1.33 (username=root, port=22, authentication=Password)",
+      "remoteCMakeListsRoot": "$HOME/.vs/${projectDirName}/${workspaceHash}/src",
+      "remoteBuildRoot": "$HOME/.vs/${projectDirName}/${workspaceHash}/out/build/${name}",
+      "remoteInstallRoot": "$HOME/.vs/${projectDirName}/${workspaceHash}/out/install/${name}",
+      "remoteCopySources": true,
+      "rsyncCommandArgs": "-t --delete --delete-excluded",
+      "remoteCopyBuildOutput": false,
+      "remoteCopySourcesMethod": "rsync",
+      "variables": []
     }
   ]
 }

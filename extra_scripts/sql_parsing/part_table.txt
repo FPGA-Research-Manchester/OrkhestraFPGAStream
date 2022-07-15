@@ -1,0 +1,12 @@
+                                          Table "public.part"
+    Column     |         Type          | Collation | Nullable |                 Default
+---------------+-----------------------+-----------+----------+-----------------------------------------
+ p_partkey     | integer               |           | not null | nextval('part_p_partkey_seq'::regclass)
+ p_name        | character varying(55) |           |          |
+ p_mfgr        | character(25)         |           |          |
+ p_brand       | character(10)         |           |          |
+ p_type        | character varying(25) |           |          |
+ p_size        | integer               |           |          |
+ p_container   | character(10)         |           |          |
+ p_retailprice | numeric               |           |          |
+ p_comment     | character varying(23) |           |          |

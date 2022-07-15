@@ -350,7 +350,13 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort32_76_96.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort32_76_96.bin
 
-    ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/setupUdma.pl)
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q19.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q6.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/lineitem.csv
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/part.csv
+
+    ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/setupUdma.pl
+    ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/sql_parsing/postgresql_explain_parser.py)
 
 add_executable (OrkhestraFPGAStream main.cpp ${data})
 
