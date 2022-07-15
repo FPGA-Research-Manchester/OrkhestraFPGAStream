@@ -162,6 +162,24 @@
 		"sorted_status": [ 0, 7999, 8000, 1 ]
 	},
 	{
+		"filename": "filter_input.csv",
+		"record_size": 26,
+		"record_count": 128371,
+		"sorted_status": []
+	},
+	{
+		"filename": "lineitem_linear_sort.csv",
+		"record_size": 9,
+		"record_count": 128371,
+		"sorted_status": [ 0, 128370, 1024, 126 ]
+	},
+	{
+		"filename": "addition_input.csv",
+		"record_size": 4,
+		"record_count": 121,
+		"sorted_status": [0, 120, 1, 121]
+	},
+	{
 		"filename": "lineitem_linear_sort_SF001.csv",
 		"record_size": 7,
 		"record_count": 1201,

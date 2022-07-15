@@ -683,13 +683,6 @@ void QueryManager::ProcessResults(
               std::to_string(record_count - result_params.output_offset) +
               " new resulting rows!");
       scheduling_table_data[result_params.filename].record_count = record_count;
-      std::string filename = result_params.filename;
-      if (filename.back() != 'v') {
-        filename += ".csv";
-      }
-      WriteResults(data_manager, table_memory_blocks.at(result_params.filename),
-                   record_count, filename, result_params.stream_specifications,
-                   result_params.stream_index);
       if (!result_params.update_table_sizes_only) {
         if (result_params.check_results) {
           CheckResults(
