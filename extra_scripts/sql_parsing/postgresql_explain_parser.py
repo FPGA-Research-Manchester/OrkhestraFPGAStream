@@ -268,7 +268,7 @@ def ParseAggregateNode(all_nodes, key, counter):
                 second_operand = "ERROR"
             if token == "SUM":
                 new_operations.append(
-                    {"name": "Aggregation", "params": [first_operand]})
+                    {"name": "Aggregate", "params": [first_operand]})
                 # print("sum:" + first_operand)
             elif token == "-":
                 new_operations.append({"name": "Addition", "params": [
@@ -291,7 +291,7 @@ def ParseAggregateNode(all_nodes, key, counter):
     del all_nodes[key]
     for operation in new_operations:
         # Not really needed but just in case
-        if (operation["name"] == "Aggregation"):
+        if (operation["name"] == "Aggregate"):
             params = operation["params"]
         elif (operation["name"] == "Addition"):
             params = operation["params"]

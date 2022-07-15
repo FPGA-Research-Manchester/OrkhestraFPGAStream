@@ -220,7 +220,8 @@ class SQLQueryCreator {
       std::vector<std::string>& chosen_columns,
       const std::map<std::string, std::vector<int>>& column_positions,
       const std::string& chosen_column_name, int chosen_location,
-      const std::map<std::string, std::string>& pairing_map);
+      const std::map<std::string, std::string>& pairing_map,
+      const std::string& current_process);
   auto UsesMultipleChunks(std::vector<int> position_vector) -> bool;
   void PlaceColumnsToPositionsWithOneAvailableLocation(
       std::map<int, std::vector<std::string>>&
@@ -229,7 +230,8 @@ class SQLQueryCreator {
       std::vector<std::vector<int>>& crossbar_configuration,
       std::vector<std::string>& chosen_columns,
       const std::map<std::string, std::vector<int>>& column_positions,
-      const std::map<std::string, std::string>& pairing_map);
+      const std::map<std::string, std::string>& pairing_map,
+      const std::string current_process);
   void PlaceGivenColumnsToGivenDesiredLocations(
       std::map<int, std::vector<std::string>>&
           current_available_desired_columns,
@@ -237,7 +239,8 @@ class SQLQueryCreator {
       std::vector<std::vector<int>>& crossbar_configuration,
       std::vector<std::string>& chosen_columns,
       const std::map<std::string, std::vector<int>>& column_positions,
-      const std::map<std::string, std::string>& pairing_map);
+      const std::map<std::string, std::string>& pairing_map,
+      const std::string current_process);
   void SetJoinOffsetParam(const std::string& current_process);
   void CleanAvailablePositionsAndPlaceColumns(
       std::map<int, std::vector<std::string>>&

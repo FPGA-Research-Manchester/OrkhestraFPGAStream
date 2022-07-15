@@ -54,6 +54,12 @@
 		"sorted_status": []
 	},
 	{
+		"filename": "lineitem.csv",
+		"record_size": 38,
+		"record_count": 60175,
+		"sorted_status": []
+	},
+	{
 		"filename": "lineitem10.csv",
 		"record_size": 38,
 		"record_count": 60012150,
@@ -76,6 +82,12 @@
 		"record_size": 44,
 		"record_count": 200000,
 		"sorted_status": [ 0, 199999, 200000, 1 ]
+	},
+	{
+		"filename": "part.csv",
+		"record_size": 44,
+		"record_count": 2000,
+		"sorted_status": [ 0, 1999, 2000, 1 ]
 	},
 	{
 		"filename": "part3.csv",
@@ -177,7 +189,7 @@
 		"filename": "addition_input.csv",
 		"record_size": 4,
 		"record_count": 121,
-		"sorted_status": [0, 120, 1, 121]
+		"sorted_status": [ 0, 120, 1, 121 ]
 	},
 	{
 		"filename": "lineitem_linear_sort_SF001.csv",

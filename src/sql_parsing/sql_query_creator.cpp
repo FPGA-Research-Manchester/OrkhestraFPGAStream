@@ -662,7 +662,7 @@ auto SQLQueryCreator::MapColumnPositions(
       operations_.at(current_process)
           .output_params.at(stream_index * io_param_vector_count +
                             data_types_offset);
-  for (int column_index = 0; column_index < last_needed_column_index;
+  for (int column_index = 0; column_index <= last_needed_column_index;
        column_index++) {
     auto current_column_name = tables_.at(table_name).at(column_index);
     if (column_renaming_map_.find(current_column_name) !=
@@ -718,10 +718,13 @@ void SQLQueryCreator::PlaceColumnsThatSpanOverMultipleChunks(
                               [position_vector.at(i) % 16] =
                                   position_vector.at(i);
       }
+      operations_.at(current_process).column_locations[column_name] =
+          position_vector.front();
     }
   }
 }
 
+// Column positions says which locations does the column occupy at the moment
 void SQLQueryCreator::GetCurrentAvailableDesiredPositions(
     const std::map<std::string, std::vector<int>>& column_positions,
     const std::string& current_process,
@@ -847,7 +850,7 @@ void SQLQueryCreator::RemoveAvailabliltyDueToJoinRequirements(
     SetColumnPlace(current_available_desired_columns, left_over_availability,
                    crossbar_configuration, chosen_columns, column_positions,
                    operations_.at(current_process).sorted_by_column, 0,
-                   pairing_map);
+                   pairing_map, current_process);
   }
 
   for (int i = 1;
@@ -859,7 +862,7 @@ void SQLQueryCreator::RemoveAvailabliltyDueToJoinRequirements(
         current_available_desired_columns.end()) {
       SetColumnPlace(current_available_desired_columns, left_over_availability,
                      crossbar_configuration, chosen_columns, column_positions,
-                     "", i, pairing_map);
+                     "", i, pairing_map, current_process);
     }
   }
 }
@@ -871,7 +874,8 @@ void SQLQueryCreator::SetColumnPlace(
     std::vector<std::string>& chosen_columns,
     const std::map<std::string, std::vector<int>>& column_positions,
     const std::string& chosen_column_name, int chosen_location,
-    const std::map<std::string, std::string>& pairing_map) {
+    const std::map<std::string, std::string>& pairing_map,
+    const std::string& current_process) {
   // You can also use this method with "" to just clear postions.
   if (std::find(current_available_desired_columns.at(chosen_location).begin(),
                 current_available_desired_columns.at(chosen_location).end(),
@@ -907,7 +911,8 @@ void SQLQueryCreator::SetColumnPlace(
     }
     SetColumnPlace(current_available_desired_columns, left_over_availability,
                    crossbar_configuration, chosen_columns, column_positions,
-                   paired_column, paired_location, pairing_map);
+                   paired_column, paired_location, pairing_map,
+                   current_process);
   }
 
   auto all_columns_allocated_for_current_location =
@@ -944,7 +949,10 @@ void SQLQueryCreator::SetColumnPlace(
         crossbar_configuration[position_vector.at(i) / 16]
                               [position_vector.at(i) % 16] =
                                   column_positions.at(chosen_column_name).at(i);
+
       }
+      operations_.at(current_process).column_locations[chosen_column_name] =
+          position_vector.front();
     } else {
       left_over_availability[current_location_candidate].erase(
           std::remove(
@@ -967,7 +975,8 @@ void SQLQueryCreator::PlaceColumnsToPositionsWithOneAvailableLocation(
     std::vector<std::vector<int>>& crossbar_configuration,
     std::vector<std::string>& chosen_columns,
     const std::map<std::string, std::vector<int>>& column_positions,
-    const std::map<std::string, std::string>& pairing_map) {
+    const std::map<std::string, std::string>& pairing_map, 
+    const std::string current_process) {
   std::set<int> positions_with_one_alternative;
   for (const auto& [position, desired_columns] :
        current_available_desired_columns) {
@@ -1003,7 +1012,8 @@ void SQLQueryCreator::PlaceColumnsToPositionsWithOneAvailableLocation(
 
     SetColumnPlace(current_available_desired_columns, left_over_availability,
                    crossbar_configuration, chosen_columns, column_positions,
-                   next_column_to_place, next_postion_to_place, pairing_map);
+                   next_column_to_place, next_postion_to_place, pairing_map,
+                   current_process);
   }
 }
 
@@ -1013,7 +1023,8 @@ void SQLQueryCreator::PlaceGivenColumnsToGivenDesiredLocations(
     std::vector<std::vector<int>>& crossbar_configuration,
     std::vector<std::string>& chosen_columns,
     const std::map<std::string, std::vector<int>>& column_positions,
-    const std::map<std::string, std::string>& pairing_map) {
+    const std::map<std::string, std::string>& pairing_map,
+    const std::string current_process) {
   while (!current_available_desired_columns.empty()) {
     int min_alternative_count = std::numeric_limits<int>::max();
     for (const auto& [position, desired_columns] :
@@ -1051,7 +1062,7 @@ void SQLQueryCreator::PlaceGivenColumnsToGivenDesiredLocations(
         SetColumnPlace(current_available_desired_columns,
                        left_over_availability, crossbar_configuration,
                        chosen_columns, column_positions, chosen_colum, position,
-                       pairing_map);
+                       pairing_map, current_process);
         break;
       }
     }
@@ -1080,7 +1091,8 @@ void SQLQueryCreator::CleanAvailablePositionsAndPlaceColumns(
   }
   PlaceGivenColumnsToGivenDesiredLocations(
       current_available_desired_columns, left_over_availability,
-      crossbar_configuration, chosen_columns, column_positions, pairing_map);
+      crossbar_configuration, chosen_columns, column_positions, pairing_map,
+      current_process);
 }
 
 auto SQLQueryCreator::PlaceColumnsToDesiredPositions(
