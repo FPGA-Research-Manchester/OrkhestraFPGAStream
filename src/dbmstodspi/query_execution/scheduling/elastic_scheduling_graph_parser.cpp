@@ -34,6 +34,10 @@ using orkhestrafs::dbmstodspi::ElasticSchedulingGraphParser;
 using orkhestrafs::dbmstodspi::PairHash;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 using orkhestrafs::dbmstodspi::TimeLimitException;
+#ifdef FPGA_AVAILALBLE
+using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
+#endif  // FPGA_AVAILALBLE
+
 
 void ElasticSchedulingGraphParser::PreprocessNodes(
     std::unordered_set<std::string>& available_nodes,
@@ -338,11 +342,18 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPosOrig(
         is_composed);
   }
   if (!modules_found) {
-    GetChosenModulePlacements(
+  modules_found = GetChosenModulePlacements(
         node_name, graph.at(node_name).operation, heuristics_.second,
         min_position, taken_positions,
         hw_library_.at(graph.at(node_name).operation).starting_locations,
         module_placements, is_composed);
+#ifdef FPGA_AVAILABLE
+  if (modules_found && graph.at(node_name).operation ==
+      QueryOperationType::kFilter) {
+      throw std::runtime_error(
+          "Currently resource elastic filter support is broken!");
+    }
+#endif
   }
 }
 

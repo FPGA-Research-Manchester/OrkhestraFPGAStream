@@ -60,6 +60,9 @@ void GraphCreator::LinkDependentNodes(
     std::map<std::string, std::vector<std::string>>& next_nodes) {
   // TODO: Improve performance of quick check
   for (const auto& [node_name, dependent_nodes] : previous_nodes) {
+    if (dependent_nodes.empty()) {
+      throw std::runtime_error("Previous nodes left empty (no null either)!");
+    }
     for (const auto& node : dependent_nodes) {
       if (!node.empty() &&
           graph_nodes_map.find(node) == graph_nodes_map.end()) {
@@ -68,6 +71,9 @@ void GraphCreator::LinkDependentNodes(
     }
   }
   for (const auto& [node_name, dependent_nodes] : next_nodes) {
+    if (dependent_nodes.empty()) {
+      throw std::runtime_error("Previous nodes left empty (no null either)!");
+    }
     for (const auto& node : dependent_nodes) {
       if (!node.empty() &&
           graph_nodes_map.find(node) == graph_nodes_map.end()) {

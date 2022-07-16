@@ -87,6 +87,8 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
       json_reader_->ReadAllTablesData(config_values[table_metadata]);
 
   config.initial_all_tables_metadata = CreateTablesData(all_tables_json_data);
+  // TODO: Enable this check! Removed now as there are a lot of theoretical tables given.
+  //CheckTablesExist(config.initial_all_tables_metadata);
 
   auto hw_library_json_data =
       json_reader_->ReadHWLibraryData(config_values[hw_library]);
@@ -108,6 +110,18 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
       json_reader_->ReadReqMemorySpace(config_values[memory_requirements]);
   config.csv_separator = config_values[data_separator].c_str()[0];
   return config;
+}
+
+void ConfigCreator::CheckTablesExist(
+    const std::map<std::string, TableMetadata>& tables_data) {
+  for (const auto& [table_name, _] : tables_data) {
+    if (FILE* file = fopen(table_name.c_str(), "r")) {
+      fclose(file);
+    } else {
+      throw std::runtime_error(table_name + " doesn't exist!");
+    }
+  }
+  
 }
 
 auto ConfigCreator::SetCommaSeparatedValues(const std::string& original_string)

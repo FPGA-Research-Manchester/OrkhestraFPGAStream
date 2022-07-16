@@ -505,6 +505,12 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
               it->second++;
             }
           } else {
+            if (!chosen_node->given_operation_parameters
+                     .output_stream_parameters.at(0)
+                     .empty()) {
+              throw std::runtime_error(
+                  "Can't do projection in the middle of a run!");
+            }
             current_run_data->output_data_definition_files.emplace_back("");
           }
         }
@@ -538,6 +544,12 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
                 it->second++;
               }
             } else {
+              if (!chosen_node->given_operation_parameters
+                       .input_stream_parameters.at(0)
+                       .empty()) {
+                throw std::runtime_error(
+                    "Can't do projection in the middle of a run!");
+              }
               current_run_data->input_data_definition_files.emplace_back("");
             }
           }

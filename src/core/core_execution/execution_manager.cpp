@@ -68,10 +68,16 @@ void ExecutionManager::RemoveUnusedTables(
     }
   }
   std::vector<std::string> tables_to_delete;
+  auto missing_tables = required_tables;
   for (const auto& [table_name, data] : tables_metadata) {
+    missing_tables.erase(table_name);
     if (required_tables.find(table_name) == required_tables.end()) {
       tables_to_delete.push_back(table_name);
     }
+  }
+  if (!missing_tables.empty()) {
+    throw std::runtime_error(
+        "There are tables required that are not available!");
   }
   for (const auto& table_to_delete : tables_to_delete) {
     tables_metadata.erase(table_to_delete);

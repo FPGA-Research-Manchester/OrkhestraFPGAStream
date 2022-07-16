@@ -46,6 +46,9 @@ class ConfigCreator {
   std::unique_ptr<JSONValidatorInterface> json_validator_;
   std::unique_ptr<ConfigValueCheckerInterface> config_validator_;
 
+  static void CheckTablesExist(
+      const std::map<std::string, TableMetadata>& tables_data);
+
   static auto ConvertStringMapToQueryOperations(
       const std::map<std::vector<std::pair<std::string, std::vector<int>>>,
                      std::string>& string_map)

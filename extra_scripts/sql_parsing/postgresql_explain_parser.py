@@ -70,8 +70,7 @@ def SetInitialNodes(node_data, all_nodes, counter, parent_counter):
                     node_data['Filter']], [-1], [
                     node_data['Alias']])
         else:
-            print(node_data['Node Type'])
-            raise RuntimeError("Unknown node type!")
+            raise RuntimeError(f"Unknown node type: {node_data['Node Type']}!")
         if (parent_counter != -1):
             all_nodes[parent_counter].inputs.append(child_to_parent_counter)
     if ("Plans" in node_data):
@@ -399,6 +398,8 @@ def GetDataType(datatype_string):
         "character": "varchar",
         "date": "date",
         "character varying": "varchar"}
+    if datatype_name not in datatype_dict:
+        raise RuntimeError(f"Unsopperted type: {datatype_name}")
     return (datatype_dict[datatype_name], data_size)
 
 
@@ -476,6 +477,8 @@ def AddJSONData(all_nodes, key, json_data, counter, database_name):
         AddJSONKey(json_data, key, "Addition",
                    [all_nodes[key].inputs[0], all_nodes[key].params[0], all_nodes[key].params[1],
                     all_nodes[key].params[2]])
+    else:
+        raise RuntimeError(f"Unsopperted type: {all_nodes[key].type}")
 
 
 def PrintAPICalls(all_nodes, key):
@@ -492,6 +495,8 @@ def PrintAPICalls(all_nodes, key):
     elif all_nodes[key].type == "Addition":
         print(
             f"RegisterAddition({all_nodes[key].params[0]}, {all_nodes[key].params[1]}, {all_nodes[key].params[2]})")
+    else:
+        raise RuntimeError(f"Unsopperted type: {all_nodes[key].type}")
 
 
 def CheckPostgreSQL(database_name):
@@ -501,7 +506,7 @@ def CheckPostgreSQL(database_name):
     try:
         result.check_returncode()
     except BaseException:
-        print("No PostgreSQL!")
+        raise RuntimeError("No PostgreSQL!")
 
 
 def GetExplainJSON(database_name, query_file):
