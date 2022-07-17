@@ -56,6 +56,9 @@ class MemoryManager : public MemoryManagerInterface {
   std::vector<uint32_t> register_space_;
 #endif
  public:
+  void MeasureConfigurationSpeed(
+      const std::set<std::string>& bitstreams_to_measure) override;
+  
   ~MemoryManager() override;
 
   /**

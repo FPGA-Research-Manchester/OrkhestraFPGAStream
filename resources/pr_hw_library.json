@@ -60,14 +60,14 @@
 	"kLinearSort": {
 		"bitstreams": {
 			"binPartial_LinearSort1024_7_48.bin": {
-				"locations": [ 14 ],
+				"locations": [ 16 ],
 				"length": 14,
 				"capacity": [ 1024 ],
 				"string": "MMDBMMDMDBMMDB",
 				"is_backwards": 0
 			},
 			"binPartial_LinearSort1024_37_78.bin": {
-				"locations": [ 4 ],
+				"locations": [ 6 ],
 				"length": 14,
 				"capacity": [ 1024 ],
 				"string": "MMDBMMDMDBMMDB",

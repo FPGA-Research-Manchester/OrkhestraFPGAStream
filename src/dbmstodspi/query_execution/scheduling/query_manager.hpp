@@ -26,6 +26,9 @@ namespace orkhestrafs::dbmstodspi {
 
 class QueryManager : public QueryManagerInterface {
  public:
+  void MeasureBitstreamConfigurationSpeed(
+      const std::map<QueryOperationType, OperationPRModules>& hw_library,
+      MemoryManagerInterface* memory_manager) override;
   explicit QueryManager(std::unique_ptr<JSONReaderInterface> json_reader)
       : json_reader_{std::move(json_reader)} {};
   ~QueryManager() override = default;

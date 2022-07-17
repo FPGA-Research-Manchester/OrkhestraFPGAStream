@@ -20,6 +20,7 @@ limitations under the License.
 #include <chrono>
 #include <iostream>
 #include <stdexcept>
+#include <set>
 
 #include "bitstream_config_helper.hpp"
 #include "elastic_module_checker.hpp"
@@ -42,6 +43,35 @@ using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::query_acceleration_constants::kIOStreamParamDefs;
 using orkhestrafs::dbmstodspi::util::CreateReferenceVector;
+
+void QueryManager::MeasureBitstreamConfigurationSpeed(
+    const std::map<QueryOperationType, OperationPRModules>& hw_library,
+    MemoryManagerInterface* memory_manager) {
+  std::set<std::string> bitstreams_to_measure;
+  for (const auto& [operation, bitstreams_info] : hw_library) {
+    for (const auto& [bitstream_name, bitstream_info] :
+         bitstreams_info.bitstream_map) {
+      bitstreams_to_measure.insert(bitstream_name);
+    }
+  }
+  // TODO: Move this elsewhere
+  std::set<std::string> routing_bitstreams = {
+      "RT_95.bin", "RT_92.bin", "RT_89.bin", "RT_86.bin", "RT_83.bin",
+      "RT_80.bin", "RT_77.bin", "RT_74.bin", "RT_71.bin", "RT_68.bin",
+      "RT_65.bin", "RT_62.bin", "RT_59.bin", "RT_56.bin", "RT_53.bin",
+      "RT_50.bin", "RT_47.bin", "RT_44.bin", "RT_41.bin", "RT_38.bin",
+      "RT_35.bin", "RT_32.bin", "RT_29.bin", "RT_26.bin", "RT_23.bin",
+      "RT_20.bin", "RT_17.bin", "RT_14.bin", "RT_11.bin", "RT_8.bin",
+      "RT_5.bin",  "RT_2.bin",  "TAA_95.bin", "TAA_92.bin", "TAA_89.bin",
+      "TAA_86.bin", "TAA_83.bin", "TAA_80.bin", "TAA_77.bin", "TAA_74.bin",
+      "TAA_71.bin", "TAA_68.bin", "TAA_65.bin", "TAA_62.bin", "TAA_59.bin",
+      "TAA_56.bin", "TAA_53.bin", "TAA_50.bin", "TAA_47.bin", "TAA_44.bin",
+      "TAA_41.bin", "TAA_38.bin", "TAA_35.bin", "TAA_32.bin", "TAA_29.bin",
+      "TAA_26.bin", "TAA_23.bin", "TAA_20.bin", "TAA_17.bin", "TAA_14.bin",
+      "TAA_11.bin", "TAA_8.bin",  "TAA_5.bin",  "TAA_2.bin"};
+  bitstreams_to_measure.merge(routing_bitstreams);
+  memory_manager->MeasureConfigurationSpeed(bitstreams_to_measure);
+}
 
 auto QueryManager::GetCurrentLinks(
     std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>&

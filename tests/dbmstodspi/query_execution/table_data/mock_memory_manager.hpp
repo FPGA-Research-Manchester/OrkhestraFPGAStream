@@ -41,6 +41,9 @@ class MockMemoryManager : public MemoryManagerInterface {
               (const std::vector<std::string>& bitstream_name,
                DMAInterface& dma_engine),
               (override));
+  MOCK_METHOD(void, MeasureConfigurationSpeed,
+              (const std::set<std::string>& bitstreams_to_measure),
+              (override));
 
  private:
   MOCK_METHOD(MemoryBlockInterface*, AllocateMemoryBlock, (),

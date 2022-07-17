@@ -20,6 +20,7 @@ limitations under the License.
 #include <iostream>
 #include <stdexcept>
 #include <numeric>
+#include <filesystem>
 
 #include "logger.hpp"
 
@@ -27,6 +28,7 @@ limitations under the License.
 #include "fpga.h"
 #include "mmio.h"
 #include "udma_memory_block.hpp"
+#include <cstdlib>
 #else
 #include "virtual_memory_block.hpp"
 #endif
@@ -112,6 +114,57 @@ void MemoryManager::LoadStatic() {
 #endif
   loaded_register_space_size_ = register_space_size;
   loaded_bitstream_ = "static";
+}
+
+// This is a debug method with the FPGA available.
+void MemoryManager::MeasureConfigurationSpeed(
+    const std::set<std::string>& bitstreams_to_measure) {
+#ifdef FPGA_AVAILABLE
+  std::unordered_map<std::string, std::vector<int>> configuration_times;
+    for (const auto& bitstream : bitstreams_to_measure) {
+    configuration_times.insert({bitstream, {}});
+  }
+    FPGAManager fpga_manager(0);
+    const int repetition_count = 100;
+  for (int i = 0; i < repetition_count; i++) {
+      for (const auto& bitstream : bitstreams_to_measure) {
+      std::chrono::steady_clock::time_point begin =
+          std::chrono::steady_clock::now();
+        fpga_manager.loadPartial(bitstream);
+      std::chrono::steady_clock::time_point end =
+          std::chrono::steady_clock::now();
+        configuration_times.at(bitstream).push_back(
+            std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+                .count());
+      }
+  }
+  for (const auto& [bitstream_name, bitstream_config_times] :
+       configuration_times) {
+    auto min_config_time_microseconds = *min_element(bitstream_config_times.begin(),
+                                             bitstream_config_times.end());
+    std::filesystem::path p{bitstream_name};
+    auto size_bytes = std::filesystem::file_size(p);
+    // Just to show we are reporting MB/s
+    auto configuration_speed =
+        (static_cast<double>(size_bytes) / 1000000.0) /
+        (static_cast<double>(min_config_time_microseconds) / 1000000.0);
+    std::cout << bitstream_name << " MIN CONFIGURATION: "
+              << std::to_string(min_config_time_microseconds)
+              << std::endl;
+    
+    std::cout << bitstream_name << " SIZE IN BYTES: " << std::to_string(size_bytes)
+              << std::endl;
+
+    std::cout << bitstream_name
+              << " CONFIG SPEED MB/s: " << std::to_string(configuration_speed)
+              << std::endl;
+  }
+  std::exit(0);
+  
+#else
+  throw std::runtime_error(
+      "We can measure bitstream configuration times only with an FPGA!");
+#endif
 }
 
 void MemoryManager::LoadPartialBitstream(

@@ -140,6 +140,8 @@ set(data
     #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/part1.csv
     #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem1.csv 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem_linear_sort.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/addition_input.csv 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/filter_input.csv 
     
     
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark.pl
@@ -352,6 +354,7 @@ set(data
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q19.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q6.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q1.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/lineitem.csv
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/part.csv
 

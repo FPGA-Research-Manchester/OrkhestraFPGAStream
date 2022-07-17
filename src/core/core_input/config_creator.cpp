@@ -94,6 +94,9 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
       json_reader_->ReadHWLibraryData(config_values[hw_library]);
 
   config.pr_hw_library = CreateHWLibrary(hw_library_json_data);
+  // TODO: Enable this check! Removed now as there are a lot of theoretical
+  // tables given.
+  CheckBitstreamsExist(config.pr_hw_library);
 
   auto column_sizes = json_reader_->ReadValueMap(config_values[column_cost]);
   for (const auto& [column_type, size] : column_sizes) {
@@ -110,6 +113,35 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
       json_reader_->ReadReqMemorySpace(config_values[memory_requirements]);
   config.csv_separator = config_values[data_separator].c_str()[0];
   return config;
+}
+
+void ConfigCreator::CheckBitstreamsExist(
+    const std::map<QueryOperationType, OperationPRModules>& hw_library) {
+  for (const auto& [operation, bitstreams_info] : hw_library) {
+    for (const auto& [bitstream_name, bitstream_info] :
+         bitstreams_info.bitstream_map) {
+      if (FILE* file = fopen(bitstream_name.c_str(), "r")) {
+        fclose(file);
+      } else {
+        throw std::runtime_error(bitstream_name + " doesn't exist!");
+      }
+    }
+    for (int location = 0; location < bitstreams_info.starting_locations.size();
+         location++) {
+      for (const auto& bitstream_name :
+           bitstreams_info.starting_locations.at(location)) {
+        if (bitstreams_info.bitstream_map.find(bitstream_name) ==
+            bitstreams_info.bitstream_map.end()) {
+          throw std::runtime_error(bitstream_name + " parameters are not defined!");
+        } else if (bitstreams_info.bitstream_map.at(bitstream_name)
+                       .fitting_locations.at(0) != location) {
+            // Currently we don't do runtime relocation so just one location.
+          throw std::runtime_error(bitstream_name +
+                                   " is incorrectly placed!");
+        }
+      }
+    }
+  }
 }
 
 void ConfigCreator::CheckTablesExist(

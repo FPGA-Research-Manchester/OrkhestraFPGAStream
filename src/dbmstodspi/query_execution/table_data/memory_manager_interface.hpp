@@ -19,6 +19,7 @@ limitations under the License.
 #include <memory>
 #include <string>
 #include <vector>
+#include <set>
 
 #include "dma_interface.hpp"
 #include "memory_block_interface.hpp"
@@ -33,6 +34,7 @@ namespace orkhestrafs::dbmstodspi {
  */
 class MemoryManagerInterface {
  public:
+  virtual void MeasureConfigurationSpeed(const std::set<std::string>& bitstreams_to_measure) = 0;
   virtual ~MemoryManagerInterface() = default;
 
   virtual void LoadBitstreamIfNew(const std::string& bitstream_name,

@@ -46,6 +46,9 @@ class ConfigCreator {
   std::unique_ptr<JSONValidatorInterface> json_validator_;
   std::unique_ptr<ConfigValueCheckerInterface> config_validator_;
 
+  static void CheckBitstreamsExist(
+      const std::map<QueryOperationType, OperationPRModules>& hw_library);
+
   static void CheckTablesExist(
       const std::map<std::string, TableMetadata>& tables_data);
 

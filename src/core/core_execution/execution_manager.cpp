@@ -277,6 +277,8 @@ void ExecutionManager::SetupNextRunData() {
     }
   }*/
 
+  query_manager_->MeasureBitstreamConfigurationSpeed(config_.pr_hw_library, memory_manager_.get());
+
   auto execution_nodes_and_result_params =
       query_manager_->SetupAccelerationNodesForExecution(
           data_manager_.get(), memory_manager_.get(),

@@ -42,8 +42,13 @@ class MockQueryManager : public QueryManagerInterface {
   using QueryNodeVector = std::vector<QueryNode*>;
   using Counter = std::unordered_map<std::string, int>;
   using Matrix = std::vector<std::vector<int>>;
+  using HWLibrary = std::map<QueryOperationType, OperationPRModules>;
 
  public:
+  MOCK_METHOD(void, MeasureBitstreamConfigurationSpeed,
+              (const HWLibrary& hw_library,
+               MemoryManagerInterface* memory_manager),
+              (override));
   MOCK_METHOD(ReuseLinks, GetCurrentLinks,
               (std::queue<ReuseLinks> & all_reuse_links), (override));
   MOCK_METHOD(ExecutionReadyNodes, SetupAccelerationNodesForExecution,
