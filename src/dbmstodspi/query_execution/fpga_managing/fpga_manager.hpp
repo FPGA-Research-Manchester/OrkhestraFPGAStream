@@ -96,9 +96,9 @@ class FPGAManager : public FPGAManagerInterface {
    */
   explicit FPGAManager(AcceleratorLibraryInterface* module_library)
       : module_library_{module_library},
-        dma_engine_{std::move(module_library_->GetDMAModule())},
+        dma_engine_{module_library_->GetDMAModule()},
         dma_setup_{module_library_->GetDMAModuleSetup()},
-        ila_module_{std::move(module_library_->GetILAModule())} {};
+        ila_module_{module_library_->GetILAModule()} {};
 };
 
 }  // namespace orkhestrafs::dbmstodspi

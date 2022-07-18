@@ -24,8 +24,9 @@ namespace orkhestrafs::sql_parsing {
 
 class SQLJSONWriter {
  public:
-  static void WriteQuery(std::string filename,
-                         std::map<std::string, InputNodeParameters> data);
+  static void WriteQuery(
+      const std::string& filename,
+      const std::map<std::string, InputNodeParameters>& data);
 };
 
 }  // namespace orkhestrafs::sql_parsing

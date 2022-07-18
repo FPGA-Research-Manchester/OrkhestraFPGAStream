@@ -140,7 +140,7 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
   auto GetWorstCaseProcessedTables(
       QueryOperationType operation_type, const std::vector<int>& min_capacity,
       const std::vector<std::string>& input_tables,
-      const std::map<std::string, TableMetadata>& data_tables, 
+      const std::map<std::string, TableMetadata>& data_tables,
       const std::vector<std::string>& output_table_names)
       -> std::map<std::string, TableMetadata> override;
 
@@ -212,7 +212,7 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
   auto SetMissingFunctionalCapacity(const std::vector<int>& bitstream_capacity,
                                     std::vector<int>& missing_capacity,
                                     const std::vector<int>& node_capacity,
-      bool is_composed,
+                                    bool is_composed,
                                     QueryOperationType operation_type)
       -> bool override;
 

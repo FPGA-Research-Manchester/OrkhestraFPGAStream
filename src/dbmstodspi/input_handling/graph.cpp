@@ -27,12 +27,12 @@ using orkhestrafs::dbmstodspi::Graph;
 // input table is "" throw error.
 void Graph::DeleteNodes(
     const std::unordered_set<std::string>& deleted_node_names) {
-  // TODO: This method is a mess!
+  // TODO(Kaspar): This method is a mess!
   for (const auto& node_ptr : GetAllNodesPtrs()) {
     if (deleted_node_names.find(node_ptr->node_name) !=
         deleted_node_names.end()) {
       // Check all inputs
-      for (const auto input_ptr : node_ptr->previous_nodes) {
+      for (auto* const input_ptr : node_ptr->previous_nodes) {
         // Input is not deleted - This is a skipped node
         if (input_ptr != nullptr &&
             deleted_node_names.find(input_ptr->node_name) ==
@@ -41,26 +41,22 @@ void Graph::DeleteNodes(
             throw std::runtime_error("Can't skip nodes with multiple inputs!");
           }
           // All outputs of a skipped node
-          for (const auto output_ptr : node_ptr->next_nodes) {
+          for (auto* const output_ptr : node_ptr->next_nodes) {
             if (output_ptr != nullptr) {
               // Output is skipped
               if (deleted_node_names.find(output_ptr->node_name) !=
                   deleted_node_names.end()) {
                 throw std::runtime_error(
                     "Not supporting multiple skipped nodes!");
-              } else {
-                for (int stream_id = 0;
-                     stream_id < output_ptr->previous_nodes.size();
-                     stream_id++) {
-                  if (output_ptr->previous_nodes.at(stream_id) == node_ptr) {
-                    output_ptr->previous_nodes.at(stream_id) = input_ptr;
-                  }
+              }
+              for (auto& previous_node : output_ptr->previous_nodes) {
+                if (previous_node == node_ptr) {
+                  previous_node = input_ptr;
                 }
-                for (int stream_id = 0;
-                     stream_id < input_ptr->next_nodes.size(); stream_id++) {
-                  if (input_ptr->next_nodes.at(stream_id) == node_ptr) {
-                    input_ptr->next_nodes.at(stream_id) = output_ptr;
-                  }
+              }
+              for (auto& next_node : input_ptr->next_nodes) {
+                if (next_node == node_ptr) {
+                  next_node = output_ptr;
                 }
               }
             }
@@ -69,7 +65,7 @@ void Graph::DeleteNodes(
       }
       // Check all outputs of nodes that are not skipped - Need to read from
       // file.
-      for (const auto output_ptr : node_ptr->next_nodes) {
+      for (auto* const output_ptr : node_ptr->next_nodes) {
         if (output_ptr != nullptr &&
             deleted_node_names.find(output_ptr->node_name) ==
                 deleted_node_names.end()) {
@@ -87,17 +83,16 @@ void Graph::DeleteNodes(
 }
 
 void Graph::FindCurrentNodeAndSetToNull(const QueryNode* node_ptr,
-                                        QueryNode* output_ptr) const {
+                                        QueryNode* output_ptr) {
   bool found = false;
   for (int stream_id = 0; stream_id < output_ptr->previous_nodes.size();
        stream_id++) {
     if (output_ptr->previous_nodes.at(stream_id) == node_ptr) {
       if (output_ptr->given_input_data_definition_files.at(stream_id).empty()) {
         throw std::runtime_error("Table not defined when deleting nodes!");
-      } else {
-        output_ptr->previous_nodes.at(stream_id) = nullptr;
-        found = true;
       }
+      output_ptr->previous_nodes.at(stream_id) = nullptr;
+      found = true;
     }
   }
   if (!found) {
@@ -107,7 +102,7 @@ void Graph::FindCurrentNodeAndSetToNull(const QueryNode* node_ptr,
   }
 }
 
-// TODO: Find better way to do this
+// TODO(Kaspar): Find better way to do this
 void Graph::DeleteNode(QueryNode* deleted_node) {
   for (auto& node : all_nodes_) {
     if (node && *node == *deleted_node) {

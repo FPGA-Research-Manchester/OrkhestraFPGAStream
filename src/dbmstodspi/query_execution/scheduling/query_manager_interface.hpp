@@ -60,7 +60,7 @@ class QueryManagerInterface {
   virtual void MeasureBitstreamConfigurationSpeed(
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
       MemoryManagerInterface* memory_manager) = 0;
-  
+
   virtual ~QueryManagerInterface() = default;
   /**
    * @brief Get memory dependencies in the current run to save memory block

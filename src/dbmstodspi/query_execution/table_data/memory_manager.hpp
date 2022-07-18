@@ -58,7 +58,7 @@ class MemoryManager : public MemoryManagerInterface {
  public:
   void MeasureConfigurationSpeed(
       const std::set<std::string>& bitstreams_to_measure) override;
-  
+
   ~MemoryManager() override;
 
   /**
@@ -79,14 +79,12 @@ class MemoryManager : public MemoryManagerInterface {
    * @brief Get a pointer to a memory block which isn't used.
    * @return Pointer to a DDR memory block.
    */
-  auto GetAvailableMemoryBlock()
-      -> MemoryBlockInterface* override;
+  auto GetAvailableMemoryBlock() -> MemoryBlockInterface* override;
   /**
    * @brief Mark a memory block as free.
    * @param memory_block_pointer Pointer to the unused DDR memory block.
    */
-  void FreeMemoryBlock(
-      MemoryBlockInterface* memory_block_pointer) override;
+  void FreeMemoryBlock(MemoryBlockInterface* memory_block_pointer) override;
 
   // Quick methods to do PR loading.
   void LoadStatic() override;
@@ -100,8 +98,8 @@ class MemoryManager : public MemoryManagerInterface {
   static void SetFPGATo100MHz();
   static void UnSetPCAP();
   void TestConfigurationTimes(std::vector<std::string>& bitstream_name,
-                                     int repetition_count);
-  std::vector<std::string> all_bitstreams = {
+                              int repetition_count);
+  std::vector<std::string> all_bitstreams_ = {
       "TAA_2.bin",
       "TAA_5.bin",
       "TAA_8.bin",

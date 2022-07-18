@@ -87,15 +87,16 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
       json_reader_->ReadAllTablesData(config_values[table_metadata]);
 
   config.initial_all_tables_metadata = CreateTablesData(all_tables_json_data);
-  // TODO: Enable this check! Removed now as there are a lot of theoretical tables given.
-  //CheckTablesExist(config.initial_all_tables_metadata);
+  // TODO(Kaspar): Enable this check! Removed now as there are a lot of
+  // theoretical tables given.
+  // CheckTablesExist(config.initial_all_tables_metadata);
 
   auto hw_library_json_data =
       json_reader_->ReadHWLibraryData(config_values[hw_library]);
 
   config.pr_hw_library = CreateHWLibrary(hw_library_json_data);
-  // TODO: Enable this check! Removed now as there are a lot of theoretical
-  // tables given.
+  // TODO(Kaspar): Enable this check! Removed now as there are a lot of
+  // theoretical tables given.
   CheckBitstreamsExist(config.pr_hw_library);
 
   auto column_sizes = json_reader_->ReadValueMap(config_values[column_cost]);
@@ -132,12 +133,13 @@ void ConfigCreator::CheckBitstreamsExist(
            bitstreams_info.starting_locations.at(location)) {
         if (bitstreams_info.bitstream_map.find(bitstream_name) ==
             bitstreams_info.bitstream_map.end()) {
-          throw std::runtime_error(bitstream_name + " parameters are not defined!");
-        } else if (bitstreams_info.bitstream_map.at(bitstream_name)
-                       .fitting_locations.at(0) != location) {
-            // Currently we don't do runtime relocation so just one location.
           throw std::runtime_error(bitstream_name +
-                                   " is incorrectly placed!");
+                                   " parameters are not defined!");
+        }
+        if (bitstreams_info.bitstream_map.at(bitstream_name)
+                .fitting_locations.at(0) != location) {
+          // Currently we don't do runtime relocation so just one location.
+          throw std::runtime_error(bitstream_name + " is incorrectly placed!");
         }
       }
     }
@@ -153,7 +155,6 @@ void ConfigCreator::CheckTablesExist(
       throw std::runtime_error(table_name + " doesn't exist!");
     }
   }
-  
 }
 
 auto ConfigCreator::SetCommaSeparatedValues(const std::string& original_string)
@@ -184,9 +185,8 @@ auto ConfigCreator::ConvertStringMapToQueryOperations(
 }
 
 auto ConfigCreator::CreateTablesData(
-    const std::vector<
-        std::map<std::string, std::variant<std::string, int,
-                                           std::vector<int>>>>&
+    const std::vector<std::map<
+        std::string, std::variant<std::string, int, std::vector<int>>>>&
         tables_data_in_string_form) -> std::map<std::string, TableMetadata> {
   std::map<std::string, TableMetadata> resulting_table_meta_data;
 
@@ -204,11 +204,11 @@ auto ConfigCreator::CreateTablesData(
     current_table.record_size =
         std::get<int>(table_meta_data_map.at(record_size_field));
     current_table.sorted_status =
-        std::get<std::vector<int>>(
-            table_meta_data_map.at(sorted_status_field));
+        std::get<std::vector<int>>(table_meta_data_map.at(sorted_status_field));
     if (!current_table.sorted_status.empty() &&
         current_table.sorted_status.at(0) != 0 &&
-        current_table.sorted_status.end()[-2] != current_table.record_count-1) {
+        current_table.sorted_status.end()[-2] !=
+            current_table.record_count - 1) {
       throw std::runtime_error("Incomplete sorted status given!");
     }
     resulting_table_meta_data.insert({filename, std::move(current_table)});

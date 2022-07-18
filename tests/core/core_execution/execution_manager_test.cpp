@@ -34,7 +34,6 @@ limitations under the License.
 namespace {
 
 using orkhestrafs::core::core_execution::ExecutionManager;
-using testing::_;
 
 class ExecutionManagerTest : public ::testing::Test {
  protected:

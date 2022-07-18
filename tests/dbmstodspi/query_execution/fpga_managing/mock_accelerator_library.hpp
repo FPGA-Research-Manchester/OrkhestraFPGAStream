@@ -89,9 +89,10 @@ class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
               (QueryOperationType operation, int module_position), (override));
   MOCK_METHOD((bool), SetMissingFunctionalCapacity,
               (const std::vector<int>& bitstream_capacity,
-              std::vector<int>& missing_capacity,
-              const std::vector<int>& node_capacity, bool is_composed,
-              QueryOperationType operation_type), (override));
+               std::vector<int>& missing_capacity,
+               const std::vector<int>& node_capacity, bool is_composed,
+               QueryOperationType operation_type),
+              (override));
   MOCK_METHOD((std::vector<int>), GetWorstCaseNodeCapacity,
               (QueryOperationType operation_type,
                const std::vector<int>& min_capacity,

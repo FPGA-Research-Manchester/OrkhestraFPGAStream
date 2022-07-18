@@ -16,7 +16,6 @@ limitations under the License.
 
 #include "core.hpp"
 
-
 #include "core_execution/execution_manager_factory.hpp"
 #include "core_input/input_manager_factory.hpp"
 #include "input_manager_interface.hpp"

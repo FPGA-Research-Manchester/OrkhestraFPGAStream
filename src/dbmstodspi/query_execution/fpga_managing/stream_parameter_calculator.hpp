@@ -33,12 +33,13 @@ class StreamParameterCalculator {
    * @param stream_setup_data Where the results will be stored.
    * @param record_size How many integers worth of data there is in each record.
    * @param is_multichannel_stream Is the given stream a multi-channel stream.
-   * @param smallest_module_size Temp param for calculating multi-channel params for sorting.
+   * @param smallest_module_size Temp param for calculating multi-channel params
+   * for sorting.
    */
   static void CalculateDMAStreamSetupData(DMASetupData& stream_setup_data,
                                           int record_size,
                                           bool is_multichannel_stream,
-      int smallest_module_size);
+                                          int smallest_module_size);
   /**
    * @brief Find if it would be more efficient to transfer less than max amount
    * of records each DDR burst.

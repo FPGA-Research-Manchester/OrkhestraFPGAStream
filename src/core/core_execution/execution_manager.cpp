@@ -30,7 +30,7 @@ void ExecutionManager::SetFinishedFlag() { busy_flag_ = false; }
 
 void ExecutionManager::UpdateAvailableNodesGraph() {
   if (!processed_nodes_.empty()) {
-    unscheduled_graph_->DeleteNodes(std::move(processed_nodes_));
+    unscheduled_graph_->DeleteNodes(processed_nodes_);
     processed_nodes_.clear();
   }
 
@@ -52,8 +52,8 @@ void ExecutionManager::UpdateAvailableNodesGraph() {
 
 void ExecutionManager::RemoveUnusedTables(
     std::map<std::string, TableMetadata>& tables_metadata,
-    std::vector<QueryNode*> all_nodes) {
-  // TODO: Possibly reserve some space beforehand.
+    const std::vector<QueryNode*>& all_nodes) {
+  // TODO(Kaspar): Possibly reserve some space beforehand.
   std::unordered_set<std::string> required_tables;
   for (const auto& node : all_nodes) {
     for (const auto& input : node->given_input_data_definition_files) {
@@ -93,7 +93,7 @@ void ExecutionManager::InitialiseTables(
     const DataManagerInterface* data_manager) {
   // Setup new unintialised tables
   while (!current_available_node_pointers.empty()) {
-    auto current_node = current_available_node_pointers.back();
+    auto* current_node = current_available_node_pointers.back();
     current_available_node_pointers.pop_back();
     if (std::any_of(current_node->given_input_data_definition_files.begin(),
                     current_node->given_input_data_definition_files.end(),
@@ -277,7 +277,8 @@ void ExecutionManager::SetupNextRunData() {
     }
   }*/
 
-  query_manager_->MeasureBitstreamConfigurationSpeed(config_.pr_hw_library, memory_manager_.get());
+  //query_manager_->MeasureBitstreamConfigurationSpeed(config_.pr_hw_library,
+  //                                                   memory_manager_.get());
 
   auto execution_nodes_and_result_params =
       query_manager_->SetupAccelerationNodesForExecution(
@@ -302,7 +303,7 @@ void ExecutionManager::ExecuteAndProcessResults() {
       memory_manager_.get(), fpga_manager_.get(), data_manager_.get(),
       table_memory_blocks_, result_parameters_, query_nodes_,
       current_tables_metadata_, table_counter_);
-  // TODO:Remove this
+  // TODO(Kaspar): Remove this
   scheduled_node_names_.clear();
 }
 // auto ExecutionManager::IsRunValid() -> bool {

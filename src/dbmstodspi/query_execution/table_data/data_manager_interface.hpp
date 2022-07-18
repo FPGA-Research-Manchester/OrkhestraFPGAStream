@@ -44,8 +44,7 @@ class DataManagerInterface {
   [[nodiscard]] virtual auto WriteDataFromCSVToMemory(
       const std::string& filename,
       const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
-      MemoryBlockInterface* memory_device) const
-      -> int = 0;
+      MemoryBlockInterface* memory_device) const -> int = 0;
 
   [[nodiscard]] virtual auto GetHeaderColumnVector(
       const std::vector<ColumnDataType>& column_data_types,

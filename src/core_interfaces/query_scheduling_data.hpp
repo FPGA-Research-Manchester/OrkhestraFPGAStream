@@ -15,15 +15,15 @@ limitations under the License.
 */
 
 #pragma once
+#include <deque>
 #include <map>
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <unordered_map>
-#include <deque>
 
 #include "operation_types.hpp"
 
@@ -54,7 +54,8 @@ struct NodeRunData {
   std::vector<std::string> output_data_definition_files;
   /// Output offset
   std::vector<int> output_offset;
-  /// Operation parameters to configure the streams with modules. - How do you say how many channels each gets?
+  /// Operation parameters to configure the streams with modules. - How do you
+  /// say how many channels each gets?
   // Each channel is defined by index of table, offset, count
   std::vector<std::vector<int>> operation_parameters;
   /// Location of the module to be processing this node
@@ -145,21 +146,23 @@ struct StreamResultParameters {
   int output_offset;
 
   StreamResultParameters(int stream_index, int output_id, std::string filename,
-                         bool check_results,
-                         bool update_table_sizes_only,
-                         std::vector<std::vector<int>> stream_specifications, int output_offset)
+                         bool check_results, bool update_table_sizes_only,
+                         std::vector<std::vector<int>> stream_specifications,
+                         int output_offset)
       : stream_index{stream_index},
         output_id{output_id},
         filename{std::move(filename)},
         check_results{check_results},
         stream_specifications{std::move(stream_specifications)},
         update_table_sizes_only{update_table_sizes_only},
-        output_offset{output_offset}{};
+        output_offset{output_offset} {};
 
   auto operator==(const StreamResultParameters& rhs) const -> bool {
     return stream_index == rhs.stream_index && output_id == rhs.output_id &&
            filename == rhs.filename && check_results == rhs.check_results &&
-           stream_specifications == rhs.stream_specifications && update_table_sizes_only == rhs.update_table_sizes_only && output_offset==rhs.output_offset;
+           stream_specifications == rhs.stream_specifications &&
+           update_table_sizes_only == rhs.update_table_sizes_only &&
+           output_offset == rhs.output_offset;
   }
 };
 

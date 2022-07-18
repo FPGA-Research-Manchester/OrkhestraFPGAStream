@@ -38,7 +38,6 @@ using orkhestrafs::dbmstodspi::TimeLimitException;
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
 #endif  // FPGA_AVAILALBLE
 
-
 void ElasticSchedulingGraphParser::PreprocessNodes(
     std::unordered_set<std::string>& available_nodes,
     std::unordered_set<std::string>& processed_nodes,
@@ -328,7 +327,7 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPosOrig(
     const std::unordered_map<std::string, SchedulingQueryNode>& graph,
     int min_position, const std::string& node_name,
     const std::vector<std::pair<int, int>>& taken_positions,
-    const std::map<std::string, TableMetadata>& data_tables,
+    const std::map<std::string, TableMetadata>& /*data_tables*/,
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
         module_placements,
     bool is_composed) {
@@ -342,14 +341,14 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPosOrig(
         is_composed);
   }
   if (!modules_found) {
-  modules_found = GetChosenModulePlacements(
+    modules_found = GetChosenModulePlacements(
         node_name, graph.at(node_name).operation, heuristics_.second,
         min_position, taken_positions,
         hw_library_.at(graph.at(node_name).operation).starting_locations,
         module_placements, is_composed);
 #ifdef FPGA_AVAILABLE
-  if (modules_found && graph.at(node_name).operation ==
-      QueryOperationType::kFilter) {
+    if (modules_found &&
+        graph.at(node_name).operation == QueryOperationType::kFilter) {
       throw std::runtime_error(
           "Currently resource elastic filter support is broken!");
     }
@@ -384,8 +383,9 @@ auto ElasticSchedulingGraphParser::CheckForSkippableSortOperations(
 
 auto ElasticSchedulingGraphParser::FindMissingUtility(
     const std::vector<int>& bitstream_capacity,
-    std::vector<int>& missing_capacity, const std::vector<int>& node_capacity,
-    QueryOperationType operation_type, bool is_composed) -> bool {
+    std::vector<int>& /*missing_capacity*/,
+    const std::vector<int>& node_capacity,
+    QueryOperationType /*operation_type*/, bool /*is_composed*/) -> bool {
   // You can get rid of this error check one day and make it module specific.
   if (bitstream_capacity.size() != node_capacity.size()) {
     throw std::runtime_error("Capacity parameters don't match!");
@@ -445,7 +445,7 @@ auto ElasticSchedulingGraphParser::UpdateGraphCapacitiesAndTables(
   if (operation == QueryOperationType::kLinearSort) {
     // Just linear sort. It always gets fully processed and no need to look at
     // capacity. Make it more generic in the future!
-    // TODO: Assuming single next node.
+    // TODO(Kaspar): Assuming single next node.
     is_node_fully_processed = drivers_.UpdateDataTable(
         operation,
         hw_library_.at(operation).bitstream_map.at(bitstream).capacity,
@@ -462,10 +462,10 @@ auto ElasticSchedulingGraphParser::UpdateGraphCapacitiesAndTables(
             new_graph.at(next_node_name).operation);
         new_graph[next_node_name].capacity = required_merge_capacity;
       } else {
-        // Assume the sort has been skipped and there isn't a sort later in the graph.
-          // TODO: Fix this assumption!
+        // Assume the sort has been skipped and there isn't a sort later in the
+        // graph.
+        // TODO(Kaspar): Fix this assumption!
       }
-      
     }
 
     //    if (is_node_fully_processed) {

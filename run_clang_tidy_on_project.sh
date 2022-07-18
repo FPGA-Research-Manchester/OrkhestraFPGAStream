@@ -39,6 +39,7 @@ set_project_files "./tests/dbmstodspi/query_execution/scheduling/*"
 set_project_files "./tests/dbmstodspi/query_execution/states/*"
 set_project_files "./tests/dbmstodspi/query_execution/table_data/*"
 set_project_files "./tests/dbmstodspi/util/*"
+set_project_files "./src/sql_parsing/*"
 
 tempArray=()
 for file in ${projectFiles[@]}

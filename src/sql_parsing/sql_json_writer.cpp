@@ -20,18 +20,18 @@ limitations under the License.
 
 #include "rapidjson/document.h"
 #include "rapidjson/filewritestream.h"
-#include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
+#include "rapidjson/writer.h"
 
 using orkhestrafs::sql_parsing::SQLJSONWriter;
 using rapidjson::Document;
 using rapidjson::FileWriteStream;
-using rapidjson::Value;
-using rapidjson::Writer;
 using rapidjson::PrettyWriter;
+using rapidjson::Value;
 
 void SQLJSONWriter::WriteQuery(
-    std::string filename, std::map<std::string, InputNodeParameters> data) {
+    const std::string& filename,
+    const std::map<std::string, InputNodeParameters>& data) {
   Document document;
   document.SetObject();
   for (const auto& [node_name, node_value_map] : data) {

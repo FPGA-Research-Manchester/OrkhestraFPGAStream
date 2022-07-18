@@ -95,8 +95,7 @@ class AcceleratorLibraryInterface {
   virtual auto SetMissingFunctionalCapacity(
       const std::vector<int>& bitstream_capacity,
       std::vector<int>& missing_capacity, const std::vector<int>& node_capacity,
-      bool is_composed,
-      QueryOperationType operation_type) -> bool = 0;
+      bool is_composed, QueryOperationType operation_type) -> bool = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

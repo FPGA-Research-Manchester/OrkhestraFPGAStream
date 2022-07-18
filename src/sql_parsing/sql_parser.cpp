@@ -27,16 +27,16 @@ using orkhestrafs::sql_parsing::SQLJSONReader;
 using orkhestrafs::sql_parsing::SQLParser;
 
 void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
-                           std::string query_filename) {
-  // TODO: Add logging
+                           const std::string& query_filename) {
+  // TODO(Kaspar): Add logging
   const std::string default_database_name = "tpch_001";
-  //std::cout << "Parsing: " << query_filename << std::endl;
+  // std::cout << "Parsing: " << query_filename << std::endl;
   std::map<int, std::vector<std::string>> explain_data;
-  // TODO: Should do more checks!
+  // TODO(Kaspar): Should do more checks!
   if (std::system(nullptr)) {
     std::string command = "python3 postgresql_explain_parser.py";
     command += " " + default_database_name + " " + query_filename;
-    //std::cout << command << std::endl;
+    // std::cout << command << std::endl;
     auto return_val = std::system(command.c_str());
     if (return_val) {
       throw std::runtime_error("Python call unsuccessful!");
@@ -44,7 +44,7 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
   } else {
     throw std::runtime_error("Can't execute any subprocesses");
   }
-  // TODO: Hardcoded for now
+  // TODO(Kaspar): Hardcoded for now
   std::string parsed_filename = "parsed.json";
   // Actually the query needs to get parsed by the Python script first!
   SQLJSONReader::ReadQuery(parsed_filename, explain_data);
@@ -61,14 +61,12 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
   const std::unordered_set<std::string> default_operations = {
       "Aggregate", "Filter", "Multiplication", "Addition"};
   const std::unordered_map<std::string, CompareFunctions> comparison_functions =
-      {
-          {"<", CompareFunctions::kLessThan},
-          {"<=", CompareFunctions::kLessThanOrEqual},
-          {"=", CompareFunctions::kEqual},
-          {"!=", CompareFunctions::kNotEqual},
-          {">", CompareFunctions::kGreaterThan},
-          {">=", CompareFunctions::kGreaterThanOrEqual}
-      };
+      {{"<", CompareFunctions::kLessThan},
+       {"<=", CompareFunctions::kLessThanOrEqual},
+       {"=", CompareFunctions::kEqual},
+       {"!=", CompareFunctions::kNotEqual},
+       {">", CompareFunctions::kGreaterThan},
+       {">=", CompareFunctions::kGreaterThanOrEqual}};
   // Should be made more "pretty"
   // Assuming params are correct!
   for (const auto& [key, params] : explain_data) {
@@ -179,7 +177,7 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
       } else {
         auto compare_function =
             comparison_functions.at(explain_data.at(current_op_node).at(2));
-        // TODO: Check that the column is the first or second argument!
+        // TODO(Kaspar): Check that the column is the first or second argument!
         auto datatype = column_types.at(explain_data.at(current_op_node).at(3));
         switch (datatype) {
           case ColumnDataType::kInteger: {
@@ -217,7 +215,7 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
             std::vector<int> date_values;
             size_t pos = 0;
             std::string token;
-            while ((pos = date_string.find("-")) != std::string::npos) {
+            while ((pos = date_string.find('-')) != std::string::npos) {
               token = date_string.substr(0, pos);
               date_values.push_back(std::stoi(token));
               date_string.erase(0, pos + 1);

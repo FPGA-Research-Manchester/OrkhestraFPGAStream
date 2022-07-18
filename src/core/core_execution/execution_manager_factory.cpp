@@ -41,9 +41,10 @@ using orkhestrafs::dbmstodspi::PlanEvaluator;
 using orkhestrafs::dbmstodspi::QueryManager;
 using orkhestrafs::dbmstodspi::RapidJSONReader;
 #ifdef FPGA_AVAILABLE
-using orkhestrafs::dbmstodspi::SetupSchedulingState;
-#else
 //using orkhestrafs::dbmstodspi::SetupSchedulingState;
+using orkhestrafs::dbmstodspi::SetupBenchmarkScheduleState;
+#else
+// using orkhestrafs::dbmstodspi::SetupSchedulingState;
 using orkhestrafs::dbmstodspi::SetupBenchmarkScheduleState;
 #endif
 
@@ -53,9 +54,10 @@ auto ExecutionManagerFactory::GetManager(const Config& config)
       std::make_unique<PlanEvaluator>());
 
 #ifdef FPGA_AVAILABLE
-  auto start_state = std::make_unique<SetupSchedulingState>();
-#else
   //auto start_state = std::make_unique<SetupSchedulingState>();
+  auto start_state = std::make_unique<SetupBenchmarkScheduleState>();
+#else
+  // auto start_state = std::make_unique<SetupSchedulingState>();
   auto start_state = std::make_unique<SetupBenchmarkScheduleState>();
 #endif
 

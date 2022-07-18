@@ -47,7 +47,7 @@ class MockQueryManager : public QueryManagerInterface {
  public:
   MOCK_METHOD(void, MeasureBitstreamConfigurationSpeed,
               (const HWLibrary& hw_library,
-               MemoryManagerInterface* memory_manager),
+               orkhestrafs::dbmstodspi::MemoryManagerInterface* memory_manager),
               (override));
   MOCK_METHOD(ReuseLinks, GetCurrentLinks,
               (std::queue<ReuseLinks> & all_reuse_links), (override));
@@ -114,7 +114,8 @@ class MockQueryManager : public QueryManagerInterface {
                std::vector<ScheduledModule>& current_configuration),
               (override));
   MOCK_METHOD((void), PrintBenchmarkStats, (), (override));
-  MOCK_METHOD((int), GetRecordSizeFromParameters, (const DataManagerInterface* data_manager,
-               const Matrix& node_parameters,
-      int stream_index), (const override));
+  MOCK_METHOD((int), GetRecordSizeFromParameters,
+              (const DataManagerInterface* data_manager,
+               const Matrix& node_parameters, int stream_index),
+              (const override));
 };

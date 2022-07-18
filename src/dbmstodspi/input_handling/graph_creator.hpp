@@ -38,9 +38,10 @@ class GraphCreator : public GraphCreatorInterface {
   static auto PopulateGraphNodesMapWithJSONData(
       std::map<std::string, JSONReaderInterface::InputNodeParameters> &data,
       std::map<std::string, std::vector<std::string>> &previous_nodes,
-      std::map<std::string, std::vector<std::string>> &next_nodes) -> std::unique_ptr<ExecutionPlanGraphInterface>;
+      std::map<std::string, std::vector<std::string>> &next_nodes)
+      -> std::unique_ptr<ExecutionPlanGraphInterface>;
   static void LinkDependentNodes(
-      std::map<std::string, QueryNode*> &graph_nodes_map,
+      std::map<std::string, QueryNode *> &graph_nodes_map,
       std::map<std::string, std::vector<std::string>> &previous_nodes,
       std::map<std::string, std::vector<std::string>> &next_nodes);
 

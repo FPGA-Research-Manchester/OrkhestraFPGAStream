@@ -32,7 +32,6 @@ limitations under the License.
 using orkhestrafs::core_interfaces::query_scheduling_data::
     NodeOperationParameters;
 using orkhestrafs::dbmstodspi::QueryManager;
-using orkhestrafs::dbmstodspi::VirtualMemoryBlock;
 
 namespace {
 

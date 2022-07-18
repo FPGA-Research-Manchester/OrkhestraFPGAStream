@@ -37,8 +37,7 @@ void StreamParameterCalculator::CalculateDMAStreamSetupData(
     int buffer_space = (smallest_module_size / 32) * 1024;
     int sort_buffer_size = MergeSortSetup::CalculateSortBufferSize(
         buffer_space, smallest_module_size,
-        stream_setup_data
-            .chunks_per_record);
+        stream_setup_data.chunks_per_record);
     stream_setup_data.records_per_ddr_burst =
         MergeSortSetup::CalculateRecordCountPerFetch(sort_buffer_size,
                                                      record_size);

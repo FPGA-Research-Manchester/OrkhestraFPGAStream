@@ -156,7 +156,8 @@ class AccelerationModuleSetupInterface {
    */
   virtual auto GetPassthroughInitParameters() -> AcceleratedQueryNode;
 
-  virtual auto GetWorstCaseNodeCapacity(const std::vector<int>& min_capacity,
+  virtual auto GetWorstCaseNodeCapacity(
+      const std::vector<int>& min_capacity,
       const std::vector<std::string>& input_tables,
       const std::map<std::string, TableMetadata>& data_tables,
       QueryOperationType next_operation_type) -> std::vector<int>;

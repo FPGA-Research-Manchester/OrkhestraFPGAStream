@@ -56,8 +56,7 @@ class TableManager {
       std::vector<TableData>& output_tables,
       const std::array<int, query_acceleration_constants::kMaxIOStreamCount>&
           result_record_counts,
-      std::vector<MemoryBlockInterface*>&
-          allocated_memory_blocks);
+      std::vector<MemoryBlockInterface*>& allocated_memory_blocks);
 
   /**
    * @brief Write the table to a CSV file with a timestamp
@@ -81,8 +80,7 @@ class TableManager {
   static auto WriteDataToMemory(
       const DataManagerInterface* data_manager,
       const std::vector<std::vector<int>>& stream_specification,
-      int stream_index,
-      MemoryBlockInterface* memory_device,
+      int stream_index, MemoryBlockInterface* memory_device,
       const std::string& filename) -> std::pair<int, int>;
 
   /**
@@ -97,8 +95,7 @@ class TableManager {
   static auto ReadTableFromMemory(
       const DataManagerInterface* data_manager,
       const std::vector<std::vector<int>>& stream_specification,
-      int stream_index,
-      MemoryBlockInterface* memory_device, int row_count)
+      int stream_index, MemoryBlockInterface* memory_device, int row_count)
       -> TableData;
   /**
    * @brief Get TableData object from the given file.
@@ -131,9 +128,9 @@ class TableManager {
    * @param resulting_table Table object with the column types.
    * @param result_size How many rows should be read.
    */
-  static void ReadOutputDataFromMemoryBlock(
-      MemoryBlockInterface* output_device,
-      TableData& resulting_table, const int& result_size);
+  static void ReadOutputDataFromMemoryBlock(MemoryBlockInterface* output_device,
+                                            TableData& resulting_table,
+                                            const int& result_size);
   /**
    * @brief Write data from table object to memory.
    * @param input_device Memory block.
@@ -141,9 +138,9 @@ class TableManager {
    * @param previous_record_count How many records have been written to memory
    * already.
    */
-  static void WriteInputDataToMemoryBlock(
-      MemoryBlockInterface* input_device,
-      const TableData& input_table, int previous_record_count);
+  static void WriteInputDataToMemoryBlock(MemoryBlockInterface* input_device,
+                                          const TableData& input_table,
+                                          int previous_record_count);
   /**
    * @brief Print data written to memory.
    * @param data_manager Data managing object to print data with.
@@ -151,10 +148,10 @@ class TableManager {
    * @param input_device Memory pointer
    * @param input_table Table data holding column types information.
    */
-  static void PrintWrittenData(
-      const DataManagerInterface* data_manager, const std::string& table_name,
-      MemoryBlockInterface* input_device,
-      const TableData& input_table);
+  static void PrintWrittenData(const DataManagerInterface* data_manager,
+                               const std::string& table_name,
+                               MemoryBlockInterface* input_device,
+                               const TableData& input_table);
   /**
    * @brief Method to print how big the table is.
    * @param data_table Data object.

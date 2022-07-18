@@ -27,7 +27,6 @@ limitations under the License.
 #include "table_data.hpp"
 
 using orkhestrafs::core_interfaces::table_data::TableMetadata;
-using orkhestrafs::dbmstodspi::SchedulingQueryNode;
 
 namespace orkhestrafs::dbmstodspi::scheduling_data {
 

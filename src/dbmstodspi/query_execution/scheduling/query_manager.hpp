@@ -67,7 +67,7 @@ class QueryManager : public QueryManagerInterface {
   auto ScheduleNextSetOfNodes(
       std::vector<QueryNode*>& query_nodes,
       const std::unordered_set<std::string>& first_node_names,
-      const std::unordered_set<std::string>& starting_node_names,
+      const std::unordered_set<std::string>& starting_nodes,
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
       std::map<std::string, TableMetadata>& tables,
       AcceleratorLibraryInterface& drivers, const Config& config,
@@ -106,7 +106,7 @@ class QueryManager : public QueryManagerInterface {
                    std::vector<std::pair<QueryOperationType, bool>>> override;
   void PrintBenchmarkStats() override;
 
-  // TODO: Put somewhere else!
+  // TODO(Kaspar): Put somewhere else!
   auto GetRecordSizeFromParameters(
       const DataManagerInterface* data_manager,
       const std::vector<std::vector<int>>& node_parameters,
@@ -145,7 +145,7 @@ class QueryManager : public QueryManagerInterface {
       const std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,
       const std::unordered_map<std::string, MemoryBlockInterface*>&
-          allocated_memory_blocks,
+          table_memory_blocks,
       std::map<std::string, TableMetadata>& scheduling_table_data);
   static void StoreStreamResultParameters(
       std::map<std::string, std::vector<StreamResultParameters>>&

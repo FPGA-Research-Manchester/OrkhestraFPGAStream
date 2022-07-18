@@ -19,8 +19,8 @@ limitations under the License.
 #include <algorithm>
 #include <chrono>
 #include <iostream>
-#include <stdexcept>
 #include <set>
+#include <stdexcept>
 
 #include "bitstream_config_helper.hpp"
 #include "elastic_module_checker.hpp"
@@ -37,12 +37,10 @@ limitations under the License.
 
 using orkhestrafs::dbmstodspi::BitstreamConfigHelper;
 using orkhestrafs::dbmstodspi::QueryManager;
-using orkhestrafs::dbmstodspi::RunLinker;
 using orkhestrafs::dbmstodspi::StreamDataParameters;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::query_acceleration_constants::kIOStreamParamDefs;
-using orkhestrafs::dbmstodspi::util::CreateReferenceVector;
 
 void QueryManager::MeasureBitstreamConfigurationSpeed(
     const std::map<QueryOperationType, OperationPRModules>& hw_library,
@@ -54,15 +52,15 @@ void QueryManager::MeasureBitstreamConfigurationSpeed(
       bitstreams_to_measure.insert(bitstream_name);
     }
   }
-  // TODO: Move this elsewhere
+  // TODO(Kaspar): Move this elsewhere
   std::set<std::string> routing_bitstreams = {
-      "RT_95.bin", "RT_92.bin", "RT_89.bin", "RT_86.bin", "RT_83.bin",
-      "RT_80.bin", "RT_77.bin", "RT_74.bin", "RT_71.bin", "RT_68.bin",
-      "RT_65.bin", "RT_62.bin", "RT_59.bin", "RT_56.bin", "RT_53.bin",
-      "RT_50.bin", "RT_47.bin", "RT_44.bin", "RT_41.bin", "RT_38.bin",
-      "RT_35.bin", "RT_32.bin", "RT_29.bin", "RT_26.bin", "RT_23.bin",
-      "RT_20.bin", "RT_17.bin", "RT_14.bin", "RT_11.bin", "RT_8.bin",
-      "RT_5.bin",  "RT_2.bin",  "TAA_95.bin", "TAA_92.bin", "TAA_89.bin",
+      "RT_95.bin",  "RT_92.bin",  "RT_89.bin",  "RT_86.bin",  "RT_83.bin",
+      "RT_80.bin",  "RT_77.bin",  "RT_74.bin",  "RT_71.bin",  "RT_68.bin",
+      "RT_65.bin",  "RT_62.bin",  "RT_59.bin",  "RT_56.bin",  "RT_53.bin",
+      "RT_50.bin",  "RT_47.bin",  "RT_44.bin",  "RT_41.bin",  "RT_38.bin",
+      "RT_35.bin",  "RT_32.bin",  "RT_29.bin",  "RT_26.bin",  "RT_23.bin",
+      "RT_20.bin",  "RT_17.bin",  "RT_14.bin",  "RT_11.bin",  "RT_8.bin",
+      "RT_5.bin",   "RT_2.bin",   "TAA_95.bin", "TAA_92.bin", "TAA_89.bin",
       "TAA_86.bin", "TAA_83.bin", "TAA_80.bin", "TAA_77.bin", "TAA_74.bin",
       "TAA_71.bin", "TAA_68.bin", "TAA_65.bin", "TAA_62.bin", "TAA_59.bin",
       "TAA_56.bin", "TAA_53.bin", "TAA_50.bin", "TAA_47.bin", "TAA_44.bin",
@@ -169,7 +167,7 @@ void QueryManager::AllocateOutputMemoryBlocks(
     if (!output_table.empty() &&
         table_memory_blocks.find(output_table) == table_memory_blocks.end()) {
       table_memory_blocks[output_table] =
-          std::move(memory_manager->GetAvailableMemoryBlock());
+          memory_manager->GetAvailableMemoryBlock();
       // Uncomment to check overwriting.
       /*for (int i = 0; i < 100000; i++) {
         output_memory_blocks[stream_index]->GetVirtualAddress()[i] = -1;
@@ -192,7 +190,7 @@ void QueryManager::AllocateInputMemoryBlocks(
     if (!input_table.empty() &&
         table_memory_blocks.find(input_table) == table_memory_blocks.end()) {
       table_memory_blocks[input_table] =
-          std::move(memory_manager->GetAvailableMemoryBlock());
+          memory_manager->GetAvailableMemoryBlock();
       std::chrono::steady_clock::time_point begin =
           std::chrono::steady_clock::now();
 
@@ -272,7 +270,7 @@ auto QueryManager::CreateStreamParams(
                          ->GetPhysicalAddress() +
                      write_offset * current_record_size,
                  std::move(current_sequences)});
-            
+
             current_sequences = {sequence.at(count_offset)};
             current_table_index = sequence.at(table_offset);
             write_offset = sequence.at(offset_offset);
@@ -307,12 +305,12 @@ auto QueryManager::CreateStreamParams(
 
         virtual_channel_count = max_channel_count;
       } else {
-        auto physical_address_ptr =
+        auto* physical_address_ptr =
             table_memory_blocks.at(table_name)->GetPhysicalAddress();
         physical_addresses_map.insert({physical_address_ptr, {-1}});
       }
     } else if (!is_input && !table_name.empty()) {
-      auto physical_address_ptr =
+      auto* physical_address_ptr =
           table_memory_blocks.at(table_name)->GetPhysicalAddress() +
           run_data.output_offset.at(stream_index) *
               current_tables_metadata.at(table_name).record_size;
@@ -372,7 +370,7 @@ void QueryManager::StoreStreamResultParameters(
 
 auto QueryManager::SetupAccelerationNodesForExecution(
     DataManagerInterface* data_manager, MemoryManagerInterface* memory_manager,
-    AcceleratorLibraryInterface* accelerator_library,
+    AcceleratorLibraryInterface* /*accelerator_library*/,
     const std::vector<QueryNode*>& current_query_nodes,
     const std::map<std::string, TableMetadata>& current_tables_metadata,
     std::unordered_map<std::string, MemoryBlockInterface*>& table_memory_blocks,
@@ -387,7 +385,7 @@ auto QueryManager::SetupAccelerationNodesForExecution(
 
   IDManager::AllocateStreamIDs(current_query_nodes, input_ids, output_ids);
 
-  for (auto& node : current_query_nodes) {
+  for (const auto& node : current_query_nodes) {
     auto current_run_params = std::move(node->module_run_data.front());
     node->module_run_data.pop_front();
     for (const auto& table : current_run_params.input_data_definition_files) {
@@ -726,8 +724,8 @@ void QueryManager::ProcessResults(
           }
           WriteResults(
               data_manager, table_memory_blocks.at(result_params.filename),
-              record_count, filename,
-              result_params.stream_specifications, result_params.stream_index);
+              record_count, filename, result_params.stream_specifications,
+              result_params.stream_index);
         }
       }
     }
@@ -779,7 +777,8 @@ void QueryManager::ExecuteAndProcessResults(
   for (const auto& [table_name, counter] : table_counter) {
     if (counter < 0) {
       throw std::runtime_error("Incorrect table counting!");
-    } else if (counter == 0) {
+    }
+    if (counter == 0) {
       removable_tables.push_back(table_name);
     } else {
       CropSortedStatus(scheduling_table_data, table_name);
@@ -867,22 +866,20 @@ void QueryManager::CropSortedStatus(
     if (current_data.sorted_status.size() != 4) {
       throw std::runtime_error(
           "Cropping odd sorted sequence structures not supported currently!");
-    } else {
-      // Assuming the sorted status is correct.
-      if (current_data.sorted_status.at(end_offset) + 1 >
-          current_data.record_count) {
-        current_data.sorted_status[end_offset] =
-            std::max(current_data.record_count - 1, 0);
-        current_data.sorted_status[sequence_count] =
-            (current_data.record_count +
-             current_data.sorted_status[size_offset] - 1) /
-            current_data.sorted_status[size_offset];
-        // Check if it got cropped so much that it got sorted.
-        if (current_data.sorted_status[sequence_count] == 1) {
-          current_data.sorted_status[size_offset] = current_data.record_count;
-        }
-      }  // Else it's all fine!
-    }
+    }  // Assuming the sorted status is correct.
+    if (current_data.sorted_status.at(end_offset) + 1 >
+        current_data.record_count) {
+      current_data.sorted_status[end_offset] =
+          std::max(current_data.record_count - 1, 0);
+      current_data.sorted_status[sequence_count] =
+          (current_data.record_count + current_data.sorted_status[size_offset] -
+           1) /
+          current_data.sorted_status[size_offset];
+      // Check if it got cropped so much that it got sorted.
+      if (current_data.sorted_status[sequence_count] == 1) {
+        current_data.sorted_status[size_offset] = current_data.record_count;
+      }
+    }  // Else it's all fine!
   }
 }
 
@@ -899,7 +896,8 @@ void QueryManager::AddQueryNodes(
       operation_params.push_back(
           node->given_operation_parameters.operation_parameters.at(
               run_data.run_index));
-      // For merge sort it is only 1 input - Give min module size for calculating buffer size.
+      // For merge sort it is only 1 input - Give min module size for
+      // calculating buffer size.
       input_params[0].smallest_module_size = *std::min_element(
           operation_params.at(1).begin(), operation_params.at(1).end());
     }

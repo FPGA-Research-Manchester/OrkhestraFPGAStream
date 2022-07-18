@@ -148,7 +148,9 @@ class ExecutionManager : public ExecutionManagerInterface,
           current_scheduling_graph,
       AcceleratorLibraryInterface& hw_library,
       std::unordered_set<std::string>& constrained_nodes_vector);
-  static void RemoveUnusedTables(std::map<std::string, TableMetadata>& tables_metadata, std::vector<QueryNode*> all_nodes);
+  static void RemoveUnusedTables(
+      std::map<std::string, TableMetadata>& tables_metadata,
+      const std::vector<QueryNode*>& all_nodes);
 
   static void AddSchedulingNodeToGraph(
       QueryNode* const& node,

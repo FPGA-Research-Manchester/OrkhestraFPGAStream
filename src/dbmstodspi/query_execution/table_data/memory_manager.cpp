@@ -17,29 +17,31 @@ limitations under the License.
 #include "memory_manager.hpp"
 
 #include <chrono>
-#include <iostream>
-#include <stdexcept>
-#include <numeric>
 #include <filesystem>
+#include <iostream>
+#include <numeric>
+#include <stdexcept>
 
 #include "logger.hpp"
 
 #ifdef FPGA_AVAILABLE
+#include <cstdlib>
+
 #include "fpga.h"
 #include "mmio.h"
 #include "udma_memory_block.hpp"
-#include <cstdlib>
 #else
 #include "virtual_memory_block.hpp"
 #endif
 
-using orkhestrafs::dbmstodspi::MemoryManager;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
+using orkhestrafs::dbmstodspi::MemoryManager;
 
 MemoryManager::~MemoryManager() = default;
 
-void MemoryManager::TestConfigurationTimes(std::vector<std::string>&bitstream_name, int repetition_count) {
+void MemoryManager::TestConfigurationTimes(
+    std::vector<std::string>& bitstream_name, int repetition_count) {
 #ifdef FPGA_AVAILABLE
   const int register_space_size = 10 * 1024 * 1024;
   std::unordered_map<std::string, int> min_times;
@@ -64,10 +66,9 @@ void MemoryManager::TestConfigurationTimes(std::vector<std::string>&bitstream_na
   }
 
   for (const auto& [name, time] : min_times) {
-    std::cout << name << "CONFIGURATION:" << std::to_string(time)
-              << std::endl;
+    std::cout << name << "CONFIGURATION:" << std::to_string(time) << std::endl;
   }
-  
+
   acceleration_instance_ =
       pr_manager_.fpgaLoadStatic("static", register_space_size);
 #endif
@@ -88,12 +89,13 @@ void MemoryManager::LoadStatic() {
   acceleration_instance_ =
       pr_manager_.fpgaLoadStatic(static_bitstream, register_space_size);
   /*acceleration_instance_ =
-      pr_manager_.fpgaLoadStatic("DSPI_filtering_linear_sort", register_space_size);*/
+      pr_manager_.fpgaLoadStatic("DSPI_filtering_linear_sort",
+     register_space_size);*/
 
   register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
 
   SetFPGATo300MHz();
-  //SetFPGATo100MHz();
+  // SetFPGATo100MHz();
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   std::cout << "STATIC CONFIGURATION:"
@@ -121,27 +123,27 @@ void MemoryManager::MeasureConfigurationSpeed(
     const std::set<std::string>& bitstreams_to_measure) {
 #ifdef FPGA_AVAILABLE
   std::unordered_map<std::string, std::vector<int>> configuration_times;
-    for (const auto& bitstream : bitstreams_to_measure) {
+  for (const auto& bitstream : bitstreams_to_measure) {
     configuration_times.insert({bitstream, {}});
   }
-    FPGAManager fpga_manager(0);
-    const int repetition_count = 100;
+  FPGAManager fpga_manager(0);
+  const int repetition_count = 500;
   for (int i = 0; i < repetition_count; i++) {
-      for (const auto& bitstream : bitstreams_to_measure) {
+    for (const auto& bitstream : bitstreams_to_measure) {
       std::chrono::steady_clock::time_point begin =
           std::chrono::steady_clock::now();
-        fpga_manager.loadPartial(bitstream);
+      fpga_manager.loadPartial(bitstream);
       std::chrono::steady_clock::time_point end =
           std::chrono::steady_clock::now();
-        configuration_times.at(bitstream).push_back(
-            std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
-                .count());
-      }
+      configuration_times.at(bitstream).push_back(
+          std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+              .count());
+    }
   }
   for (const auto& [bitstream_name, bitstream_config_times] :
        configuration_times) {
-    auto min_config_time_microseconds = *min_element(bitstream_config_times.begin(),
-                                             bitstream_config_times.end());
+    auto min_config_time_microseconds = *min_element(
+        bitstream_config_times.begin(), bitstream_config_times.end());
     std::filesystem::path p{bitstream_name};
     auto size_bytes = std::filesystem::file_size(p);
     // Just to show we are reporting MB/s
@@ -149,18 +151,17 @@ void MemoryManager::MeasureConfigurationSpeed(
         (static_cast<double>(size_bytes) / 1000000.0) /
         (static_cast<double>(min_config_time_microseconds) / 1000000.0);
     std::cout << bitstream_name << " MIN CONFIGURATION: "
-              << std::to_string(min_config_time_microseconds)
-              << std::endl;
-    
-    std::cout << bitstream_name << " SIZE IN BYTES: " << std::to_string(size_bytes)
-              << std::endl;
+              << std::to_string(min_config_time_microseconds) << std::endl;
+
+    std::cout << bitstream_name
+              << " SIZE IN BYTES: " << std::to_string(size_bytes) << std::endl;
 
     std::cout << bitstream_name
               << " CONFIG SPEED MB/s: " << std::to_string(configuration_speed)
               << std::endl;
   }
   std::exit(0);
-  
+
 #else
   throw std::runtime_error(
       "We can measure bitstream configuration times only with an FPGA!");
@@ -232,7 +233,7 @@ void MemoryManager::LoadPartialBitstream(
                                                                      begin)
                    .count()
             << std::endl;
-  
+
   begin = std::chrono::steady_clock::now();
   fpga_manager.loadPartial("mul.bin");
   end = std::chrono::steady_clock::now();
@@ -349,13 +350,11 @@ void MemoryManager::LoadBitstreamIfNew(const std::string& bitstream_name,
   }
 }
 
-auto MemoryManager::GetAvailableMemoryBlock()
-    -> MemoryBlockInterface* {
+auto MemoryManager::GetAvailableMemoryBlock() -> MemoryBlockInterface* {
   if (available_memory_blocks_.empty()) {
     return AllocateMemoryBlock();
   }
-  MemoryBlockInterface* available_memory_block =
-      std::move(available_memory_blocks_.top());
+  MemoryBlockInterface* available_memory_block = available_memory_blocks_.top();
   available_memory_blocks_.pop();
   return available_memory_block;
 }
@@ -372,8 +371,7 @@ auto MemoryManager::GetVirtualRegisterAddress(int offset)
 #endif
 }
 
-auto MemoryManager::AllocateMemoryBlock()
-    -> MemoryBlockInterface* {
+auto MemoryManager::AllocateMemoryBlock() -> MemoryBlockInterface* {
   if (memory_block_count_++ >= kMaxPossibleAllocations) {
     throw std::runtime_error("Can't allocate any more memory!");
   }
@@ -381,14 +379,15 @@ auto MemoryManager::AllocateMemoryBlock()
   current_memory_blocks_.push_back(std::move(std::make_unique<UDMAMemoryBlock>(
       udma_repo_.device(memory_block_count_ - 1))));
 #else
-  current_memory_blocks_.push_back(std::move(std::make_unique<VirtualMemoryBlock>()));
+  current_memory_blocks_.push_back(
+      std::move(std::make_unique<VirtualMemoryBlock>()));
 #endif
   return current_memory_blocks_.back().get();
 }
 
 void MemoryManager::FreeMemoryBlock(
     MemoryBlockInterface* memory_block_pointer) {
-  available_memory_blocks_.push(std::move(memory_block_pointer));
+  available_memory_blocks_.push(memory_block_pointer);
 }
 
 void MemoryManager::SetFPGATo300MHz() { SetFPGAClockSpeed(0x10500); }

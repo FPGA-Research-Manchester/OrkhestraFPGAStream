@@ -58,7 +58,7 @@ void MergeSortSetup::SetupModule(
         GetStreamRecordSize(module_parameters.input_streams[0]), base_id,
         is_first,
         *std::min_element(module_parameters.operation_parameters.at(1).begin(),
-                         module_parameters.operation_parameters.at(1).end()));
+                          module_parameters.operation_parameters.at(1).end()));
   } else {
     /*throw std::runtime_error(
         "Can't configure merge sort to passthrough on stream ID");*/
@@ -81,7 +81,8 @@ void MergeSortSetup::SetupPassthroughMergeSort(
 
 void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
                                           int stream_id, int record_size,
-                                          int base_channel_id, bool is_first, int module_size) {
+                                          int base_channel_id, bool is_first,
+                                          int module_size) {
   int chunks_per_record =
       StreamParameterCalculator::CalculateChunksPerRecord(record_size);
 
@@ -96,8 +97,8 @@ void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
   // TODO(Kaspar): Remove hardcoded parameters
   // int sort_buffer_size = CalculateSortBufferSize(4096, 128,
   // chunks_per_record);
-      int sort_buffer_size =
-          CalculateSortBufferSize(buffer_space, module_size, chunks_per_record);
+  int sort_buffer_size =
+      CalculateSortBufferSize(buffer_space, module_size, chunks_per_record);
   int record_count_per_fetch =
       CalculateRecordCountPerFetch(sort_buffer_size, record_size);
 
@@ -198,7 +199,7 @@ auto MergeSortSetup::GetMinSortingRequirementsForTable(
 }
 
 auto MergeSortSetup::IsDataSensitive() -> bool { return true; }
-// TODO: Just a weird quirk - Make it more logical later!
+// TODO(Kaspar): Just a weird quirk - Make it more logical later!
 // auto MergeSortSetup::IsSortingInputTable() -> bool { return false; }
 
 auto MergeSortSetup::SetMissingFunctionalCapacity(
@@ -213,8 +214,7 @@ auto MergeSortSetup::SetMissingFunctionalCapacity(
   if (missing_capacity_value > 0) {
     missing_capacity.push_back(++missing_capacity_value);
     return false;
-  } else {
-    missing_capacity.push_back(missing_capacity_value);
-    return true;
   }
+  missing_capacity.push_back(missing_capacity_value);
+  return true;
 }

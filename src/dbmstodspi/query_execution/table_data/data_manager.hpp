@@ -76,8 +76,7 @@ class DataManager : public DataManagerInterface {
   [[nodiscard]] auto WriteDataFromCSVToMemory(
       const std::string& filename,
       const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
-      MemoryBlockInterface* memory_device) const
-      -> int override;
+      MemoryBlockInterface* memory_device) const -> int override;
 
   /**
    * @brief Calculate column sizes given types and configured scales.

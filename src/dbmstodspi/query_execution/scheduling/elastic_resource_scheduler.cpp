@@ -119,9 +119,8 @@ auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
 
   // Configure the runtime_error behaviour
   try {
-    scheduler_->PlaceNodesRecursively(
-        std::move(starting_nodes), std::move(processed_nodes), std::move(graph),
-        {}, {}, tables, {}, {}, 0);
+    scheduler_->PlaceNodesRecursively(starting_nodes, processed_nodes, graph,
+                                      {}, {}, tables, {}, {}, 0);
   } catch (TimeLimitException &e) {
     Log(LogLevel::kInfo, "Timeout of " +
                              std::to_string(time_limit_duration_in_seconds) +
@@ -166,7 +165,7 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
                              config);
   std::chrono::steady_clock::time_point begin_cost_eval =
       std::chrono::steady_clock::now();
-  // TODO: Make a separate method for non benchmark for performance
+  // TODO(Kaspar): Make a separate method for non benchmark for performance
   auto [best_plan, new_last_config, data_amount, configuration_amount] =
       plan_evaluator_->GetBestPlan(
           min_runs, current_configuration, config.resource_string,
@@ -183,7 +182,9 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
   auto overall_time = std::chrono::duration_cast<std::chrono::microseconds>(
                           end_cost_eval - begin_pre_process)
                           .count();
-  benchmark_data["discarded_placements"] += stats.second;
+  std::cout << "schedule_time (Microseconds): " << std::to_string(scheduling_time)
+            << std::endl;
+  /*benchmark_data["discarded_placements"] += stats.second;
   benchmark_data["placed_nodes"] += stats.first;
   benchmark_data["plan_count"] += resulting_plans.size();
   std::cout << "plan_count: " << std::to_string(resulting_plans.size())
@@ -195,7 +196,8 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
   std::cout << "schedule_time: " << std::to_string(scheduling_time)
             << std::endl;
   benchmark_data["timeout"] += static_cast<double>(timed_out);
-  std::cout << "timeout: " << std::to_string(timed_out) << std::endl;
+  std::cout << "timeout: " << std::to_string(static_cast<int>(timed_out))
+            << std::endl;
   benchmark_data["cost_eval_time"] += cost_eval_time;
   std::cout << "cost_eval_time: " << std::to_string(cost_eval_time)
             << std::endl;
@@ -208,7 +210,7 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
   benchmark_data["configuration_amount"] += configuration_amount;
   std::cout << "configuration_amount: " << std::to_string(configuration_amount)
             << std::endl;
-  benchmark_data["schedule_count"] += 1;
+  benchmark_data["schedule_count"] += 1;*/
 
   // starting_nodes = resulting_plans.at(best_plan).available_nodes;
   processed_nodes = resulting_plans.at(best_plan).processed_nodes;
@@ -217,10 +219,11 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
 
   current_configuration = new_last_config;
 
-  // TODO: Need to update available nodes for next run!
+  // TODO(Kaspar): Need to update available nodes for next run!
   for (const auto &run : best_plan) {
     for (const auto &node : run) {
-      std::cout << " " << node.node_name << " ";
+      std::cout << " " << node.bitstream
+                << " ";
     }
     std::cout << std::endl;
   }
@@ -276,10 +279,10 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   // graph = resulting_plans.at(best_plan).graph;
   // We want skipped nodes for deleting them from the main Graph later
   skipped_nodes.merge(resulting_plans.at(best_plan).processed_nodes);
-  //skipped_nodes = resulting_plans.at(best_plan).processed_nodes;
+  // skipped_nodes = resulting_plans.at(best_plan).processed_nodes;
   // The nodes that aren't in the graph aren't executed anyway and the tables
   // have already been handled.
-  // TODO: Potentially remove this boolean!
+  // TODO(Kaspar): Potentially remove this boolean!
   for (const auto &[node_name, parameters] : graph) {
     if (skipped_nodes.find(node_name) != skipped_nodes.end()) {
       parameters.node_ptr->is_finished = true;
@@ -335,7 +338,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
 // LengthOfSortedSequences = offset, number_of_sequences, table_name
 void ElasticResourceNodeScheduler::BuildInitialSequencesForMergeSorter(
     std::map<int, std::vector<LengthOfSortedSequences>> &map_of_sequences,
-    const TableMetadata &table_data, std::string table_name) {
+    const TableMetadata &table_data, const std::string &table_name) {
   // We have sorted status
   // 1. Begin of first set of sequences
   // 2. End of the first set of sequences
@@ -416,7 +419,8 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
   // How many runs a node name needs
   std::unordered_map<std::string, int> run_counter;
 
-  // Node name -> Map of {size of sequence -> {table, offset, number of sequences}}
+  // Node name -> Map of {size of sequence -> {table, offset, number of
+  // sequences}}
   std::map<std::string, std::map<int, std::vector<LengthOfSortedSequences>>>
       sorted_status_of_a_merge_node;
 
@@ -430,8 +434,8 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
     std::vector<QueryNode *> chosen_nodes;
     // Go through all of the nodes in the run
     for (int module_index = 0; module_index < run.size(); module_index++) {
-      QueryNode *chosen_node;
-      NodeRunData *current_run_data;
+      QueryNode *chosen_node = nullptr;
+      NodeRunData *current_run_data = nullptr;
       const auto &current_module = run.at(module_index);
       const auto &node_name = current_module.node_name;
       // Check if we have the corresponding node found before.
@@ -449,11 +453,11 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
       // Check if it is the first occurrence of this node in this run
       if (current_run_node_data.find(node_name) !=
           current_run_node_data.end()) {
-          // Get current run data to update module locations in it later.
+        // Get current run data to update module locations in it later.
         current_run_data = &current_run_node_data.at(node_name);
 
         // Push back the size of the module to params to configure the sorters
-        // TODO: Make generic!
+        // TODO(Kaspar): Make generic!
         if (chosen_node->operation_type == QueryOperationType::kMergeSort) {
           chosen_node->given_operation_parameters.operation_parameters.back()
               .push_back(hw_library.at(current_module.operation_type)
@@ -476,7 +480,7 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
         current_run_data->run_index = run_counter.at(node_name) - 1;
 
         // Do output!
-        // TODO: Remove code duplication
+        // TODO(Kaspar): Remove code duplication
         // Are there any nodes placed afterwards?
         for (int stream_id = 0; stream_id < chosen_node->next_nodes.size();
              stream_id++) {
@@ -606,7 +610,7 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
           sort_node, next_run_capacities,
           run_id == (run_counter.at(merge_sort_node_name) - 2), table_counter);
     }
-    //Check that sort_status has been emptied
+    // Check that sort_status has been emptied
     if (!sort_status.empty()) {
       throw std::runtime_error("Not enough sorting modules scheduled!");
     }
@@ -615,7 +619,9 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
     for (const auto &channel_data : run_data.back().operation_parameters) {
       sorted_row_count += channel_data.at(2);
     }
-    if (sorted_row_count != table_data.at(found_nodes.at(merge_sort_node_name)
+    if (sorted_row_count !=
+        table_data
+            .at(found_nodes.at(merge_sort_node_name)
                     ->given_input_data_definition_files.at(0))
             .record_count) {
       throw std::runtime_error("Incorrect number of rows sorted!");
@@ -640,15 +646,16 @@ auto ElasticResourceNodeScheduler::GetCapacityForPenultimateRun(
   return current_sequences + 1 - next_run_capacity;
 }
 
-auto ElasticResourceNodeScheduler::IsNumber(const std::string &input_string) -> bool {
+auto ElasticResourceNodeScheduler::IsNumber(const std::string &input_string)
+    -> bool {
   return !input_string.empty() &&
          std::find_if(input_string.begin(), input_string.end(),
-                                    [](unsigned char c) {
-                         return !std::isdigit(c); }) ==
+                      [](unsigned char c) { return std::isdigit(c) == 0; }) ==
              input_string.end();
 }
 
-// Problem is that output is set for everyone always. So if you add a new temp output table -> Remove the old one! - Also need to update the table counter!
+// Problem is that output is set for everyone always. So if you add a new temp
+// output table -> Remove the old one! - Also need to update the table counter!
 void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
     std::map<int, std::vector<LengthOfSortedSequences>> &sort_status,
     NodeRunData &run_data, const std::vector<int> &capacities,
@@ -723,7 +730,7 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
   if (!sort_status.empty()) {
     // Else you put a new sequence back and set output.
     // I need a new table name
-    std::string output_table_name = "";
+    std::string output_table_name;
     int max_iteration = 0;
     for (const auto &input_table_name : run_data.input_data_definition_files) {
       if (input_table_name.find(".csv") != std::string::npos) {
@@ -741,7 +748,7 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
 
         size_t string_i = 0;
         std::string throw_away;
-        while ((string_i = parsed_name.find("_")) != std::string::npos) {
+        while ((string_i = parsed_name.find('_')) != std::string::npos) {
           throw_away = parsed_name.substr(0, string_i);
           parsed_name.erase(0, string_i + 1);
         }
@@ -751,10 +758,9 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
                                 parsed_name.size());
         if (!IsNumber(parsed_name)) {
           throw std::runtime_error(
-              "Expected a number at the end of the filename!");        
-        } else {
-          max_iteration = std::max(max_iteration, stoi(parsed_name));
+              "Expected a number at the end of the filename!");
         }
+        max_iteration = std::max(max_iteration, stoi(parsed_name));
       }
     }
 
@@ -806,7 +812,8 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
       sort_status.insert({new_sequence_size, {std::move(new_sequence)}});
     }
     table_data[output_table_name].record_count += new_sequence_size;
-    // Half sorted stuff always gets written to temp file - Remove the normal output first
+    // Half sorted stuff always gets written to temp file - Remove the normal
+    // output first
     table_counter[run_data.output_data_definition_files.front()]--;
     run_data.output_data_definition_files.clear();
     run_data.output_data_definition_files.push_back(output_table_name);
@@ -832,7 +839,7 @@ auto ElasticResourceNodeScheduler::FindNewAvailableNodes(
     previous_start_node->is_finished = true;
   }
   for (const auto &node_name : starting_nodes) {
-    auto chosen_node = orkhestrafs::dbmstodspi::ElasticResourceNodeScheduler::
+    auto *chosen_node = orkhestrafs::dbmstodspi::ElasticResourceNodeScheduler::
         GetNodePointerWithName(available_nodes, node_name);
     chosen_node->is_finished = false;
     new_available_nodes.push_back(chosen_node);
@@ -843,7 +850,7 @@ auto ElasticResourceNodeScheduler::FindNewAvailableNodes(
 auto ElasticResourceNodeScheduler::GetNodePointerWithName(
     std::vector<QueryNode *> &available_nodes, const std::string &node_name)
     -> QueryNode * {
-  QueryNode *chosen_node;
+  QueryNode *chosen_node = nullptr;
   for (const auto &node : available_nodes) {
     chosen_node = FindSharedPointerFromRootNodes(node_name, node);
     if (chosen_node != nullptr) {
@@ -853,7 +860,7 @@ auto ElasticResourceNodeScheduler::GetNodePointerWithName(
   if (chosen_node == nullptr) {
     throw std::runtime_error("No corresponding node found!");
   }
-  return std::move(chosen_node);
+  return chosen_node;
 }
 
 auto ElasticResourceNodeScheduler::GetDefaultHeuristics()
@@ -893,7 +900,7 @@ auto ElasticResourceNodeScheduler::FindSharedPointerFromRootNodes(
   }
   for (const auto &next_node : current_node->next_nodes) {
     if (next_node) {
-      auto result =
+      auto *result =
           FindSharedPointerFromRootNodes(searched_node_name, next_node);
       if (result != nullptr) {
         return result;

@@ -46,7 +46,7 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       std::map<std::string, TableMetadata> &tables,
       const std::vector<ScheduledModule> &current_configuration,
       const Config &config, std::unordered_set<std::string> &skipped_nodes,
-      std::unordered_map<std::string, int>& table_counter)
+      std::unordered_map<std::string, int> &table_counter)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<QueryNode *>>> override;
 
@@ -89,7 +89,7 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       std::unordered_map<std::string, int> &table_counter);
   static void BuildInitialSequencesForMergeSorter(
       std::map<int, std::vector<LengthOfSortedSequences>> &map_of_sequences,
-      const TableMetadata &table_data, std::string table_name);
+      const TableMetadata &table_data, const std::string &table_name);
   static auto CalculateTimeLimit(
       const std::unordered_map<std::string, SchedulingQueryNode> &graph,
       const std::map<std::string, TableMetadata> &data_tables,
@@ -116,7 +116,7 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       const std::vector<std::vector<ScheduledModule>> &best_plan,
       const std::map<QueryOperationType, OperationPRModules> &hw_library,
       std::map<std::string, TableMetadata> &table_data,
-      std::unordered_map<std::string, int>& table_counter)
+      std::unordered_map<std::string, int> &table_counter)
       -> std::queue<
           std::pair<std::vector<ScheduledModule>, std::vector<QueryNode *>>>;
   static auto GetLargestModulesSizes(

@@ -27,8 +27,7 @@ using orkhestrafs::dbmstodspi::MemoryManagerInterface;
 
 class MockMemoryManager : public MemoryManagerInterface {
  public:
-  MOCK_METHOD(MemoryBlockInterface*, GetAvailableMemoryBlock,
-              (), (override));
+  MOCK_METHOD(MemoryBlockInterface*, GetAvailableMemoryBlock, (), (override));
   MOCK_METHOD(void, FreeMemoryBlock,
               (MemoryBlockInterface * memory_block_pointer), ());
   MOCK_METHOD(volatile uint32_t*, GetVirtualRegisterAddress, (int offset),
@@ -42,10 +41,8 @@ class MockMemoryManager : public MemoryManagerInterface {
                DMAInterface& dma_engine),
               (override));
   MOCK_METHOD(void, MeasureConfigurationSpeed,
-              (const std::set<std::string>& bitstreams_to_measure),
-              (override));
+              (const std::set<std::string>& bitstreams_to_measure), (override));
 
  private:
-  MOCK_METHOD(MemoryBlockInterface*, AllocateMemoryBlock, (),
-              (override));
+  MOCK_METHOD(MemoryBlockInterface*, AllocateMemoryBlock, (), (override));
 };

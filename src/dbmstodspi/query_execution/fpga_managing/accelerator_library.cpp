@@ -138,11 +138,10 @@ auto AcceleratorLibrary::UpdateDataTable(
 auto AcceleratorLibrary::SetMissingFunctionalCapacity(
     const std::vector<int>& bitstream_capacity,
     std::vector<int>& missing_capacity, const std::vector<int>& node_capacity,
-    bool is_composed,
-    QueryOperationType operation_type) -> bool {
+    bool is_composed, QueryOperationType operation_type) -> bool {
   auto* driver = GetDriver(operation_type);
-  return driver->SetMissingFunctionalCapacity(bitstream_capacity,
-                                              missing_capacity, node_capacity, is_composed);
+  return driver->SetMissingFunctionalCapacity(
+      bitstream_capacity, missing_capacity, node_capacity, is_composed);
 }
 
 auto AcceleratorLibrary::IsInputSupposedToBeSorted(

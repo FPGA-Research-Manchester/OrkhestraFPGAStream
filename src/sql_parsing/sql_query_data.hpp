@@ -54,7 +54,7 @@ struct TableColumn {
               std::string column_name)
       : column_type(column_type),
         column_size(column_size),
-        column_name(column_name){};
+        column_name(std::move(column_name)){};
 };
 
 using OperationParams =

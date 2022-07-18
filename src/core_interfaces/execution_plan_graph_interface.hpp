@@ -31,7 +31,8 @@ class ExecutionPlanGraphInterface {
  public:
   virtual ~ExecutionPlanGraphInterface() = default;
 
-  virtual void DeleteNodes(const std::unordered_set<std::string>& deleted_node_names) = 0;
+  virtual void DeleteNodes(
+      const std::unordered_set<std::string>& deleted_node_names) = 0;
   /**
    * @brief Check if there are any nodes held.
    * @return Boolean flag noting if there are any nodes.

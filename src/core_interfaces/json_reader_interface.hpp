@@ -41,8 +41,7 @@ class JSONReaderInterface {
    * @brief Datatype for table metadata
    */
   using TableMetaDataStringMap =
-      std::map<std::string,
-               std::variant<std::string, int, std::vector<int>>>;
+      std::map<std::string, std::variant<std::string, int, std::vector<int>>>;
 
   using HWLibraryStringMap = std::map<
       std::string,
