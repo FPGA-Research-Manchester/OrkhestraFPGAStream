@@ -159,7 +159,7 @@ void ExecutionManager::Execute(
     }
   }
   auto end = std::chrono::steady_clock::now();
-  std::cout << "TOTAL EXECUTION RUNTIME:"
+  std::cout << "TOTAL EXECUTION RUNTIME: "
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      begin)
                    .count()

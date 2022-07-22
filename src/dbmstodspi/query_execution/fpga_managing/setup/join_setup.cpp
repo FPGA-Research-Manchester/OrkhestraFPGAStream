@@ -142,7 +142,7 @@ auto JoinSetup::GetWorstCaseProcessedTables(
       data_tables.at(output_table_names.front());
   // Record count is an estimation
   resulting_tables[output_table_names.front()].record_count =
-      std::min(data_tables.at(input_tables.front()).record_count,
+      std::max(data_tables.at(input_tables.front()).record_count,
                data_tables.at(input_tables.back()).record_count);
   resulting_tables[output_table_names.front()].sorted_status = {
       0, resulting_tables[output_table_names.front()].record_count - 1,

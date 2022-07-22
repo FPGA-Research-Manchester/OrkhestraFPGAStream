@@ -54,6 +54,24 @@
 		"sorted_status": []
 	},
 	{
+		"filename": "part_lineitem_1_q17.csv",
+		"record_size": 12,
+		"record_count": 6001215,
+		"sorted_status": []
+	},
+	{
+		"filename": "part_lineitem_10_q17.csv",
+		"record_size": 12,
+		"record_count": 59986052,
+		"sorted_status": []
+	},
+	{
+		"filename": "part_lineitem_100_q17.csv",
+		"record_size": 12,
+		"record_count": 600121500,
+		"sorted_status": []
+	},
+	{
 		"filename": "lineitem.csv",
 		"record_size": 38,
 		"record_count": 60175,
@@ -62,7 +80,19 @@
 	{
 		"filename": "lineitem10.csv",
 		"record_size": 38,
-		"record_count": 60012150,
+		"record_count": 59986052,
+		"sorted_status": []
+	},
+	{
+		"filename": "lineitem30.csv",
+		"record_size": 38,
+		"record_count": 180036450,
+		"sorted_status": []
+	},
+	{
+		"filename": "lineitem3.csv",
+		"record_size": 38,
+		"record_count": 18003645,
 		"sorted_status": []
 	},
 	{

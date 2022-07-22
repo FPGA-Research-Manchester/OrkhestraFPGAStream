@@ -262,7 +262,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   Log(LogLevel::kInfo,
       "Main scheduling loop time = " + std::to_string(scheduling_time / 1000) +
           "[milliseconds]");
-  std::cout << "PLAN COUNT:" << resulting_plans.size() << std::endl;
+  //std::cout << "PLAN COUNT:" << resulting_plans.size() << std::endl;
 
   Log(LogLevel::kTrace, "Choosing best plan.");
   // resulting_plans
@@ -273,6 +273,11 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
           config.utility_per_frame_scaler, resulting_plans,
           config.cost_of_columns, config.streaming_speed,
           config.configuration_speed);
+
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  std::cout << "TOTAL SCHEDULING: " << scheduling_time
+            << std::endl;
+
   Log(LogLevel::kTrace, "Creating module queue.");
   // No need to update the following commented out values
   // starting_nodes = resulting_plans.at(best_plan).available_nodes
@@ -317,12 +322,6 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     }
   }
   // available_nodes = FindNewAvailableNodes(starting_nodes, available_nodes);
-  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  std::cout << "TOTAL SCHEDULING:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     start)
-                   .count()
-            << std::endl;
   Log(LogLevel::kTrace, "Execution plan made!");
 
   /*for (const auto &run : best_plan) {
@@ -815,6 +814,10 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
     // Half sorted stuff always gets written to temp file - Remove the normal
     // output first
     table_counter[run_data.output_data_definition_files.front()]--;
+    if (table_counter[run_data.output_data_definition_files.front()] == 0) {
+      // The table was never meant to be used.
+      table_counter.erase(run_data.output_data_definition_files.front());
+    }
     run_data.output_data_definition_files.clear();
     run_data.output_data_definition_files.push_back(output_table_name);
     if (const auto &[it, inserted] =

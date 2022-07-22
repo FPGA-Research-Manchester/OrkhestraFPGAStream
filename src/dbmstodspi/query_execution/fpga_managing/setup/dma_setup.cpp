@@ -32,12 +32,12 @@ void DMASetup::SetupDMAModule(
     DMAInterface& dma_module,
     const std::vector<StreamDataParameters>& input_streams,
     const std::vector<StreamDataParameters>& output_streams) {
-  int input_stream_size = 0;
+  /*int input_stream_size = 0;
   for (const auto& input : input_streams) {
     input_stream_size +=
         input.stream_record_count * input.stream_record_size * 4;
   }
-  std::cout << "STREAMED DATA SIZE:" << input_stream_size << std::endl;
+  std::cout << "STREAMED DATA SIZE:" << input_stream_size << std::endl;*/
   DMASetup::SetupDMAModuleDirection(dma_module, input_streams, true);
   DMASetup::SetupDMAModuleDirection(dma_module, output_streams, false);
 }
