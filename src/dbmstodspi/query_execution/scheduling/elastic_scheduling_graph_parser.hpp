@@ -237,13 +237,16 @@ class ElasticSchedulingGraphParser {
       bool is_composed) -> bool;
 
   auto CurrentRunHasFirstModule(const std::vector<ScheduledModule>& current_run,
-                                const std::string& node_name) -> bool;
+                                const std::string& node_name,
+                                const QueryOperationType operation_type)
+      -> bool;
 
   auto RemoveUnavailableNodesInThisRun(
       const std::unordered_set<std::string>& available_nodes,
       const std::vector<ScheduledModule>& current_run,
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      const std::unordered_set<std::string>& blocked_nodes)
+      const std::unordered_set<std::string>& blocked_nodes,
+      const std::map<std::string, TableMetadata>& data_tables)
       -> std::unordered_set<std::string>;
 
   static auto GetMinPositionInCurrentRun(

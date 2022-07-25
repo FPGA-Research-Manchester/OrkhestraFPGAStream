@@ -81,6 +81,7 @@ struct TableMetadata {
   // 4. How many sequences
   // ... Repeat
   std::vector<int> sorted_status;
+  bool is_finished = true;
 
   auto operator==(const TableMetadata& rhs) const -> bool {
     return record_size == rhs.record_size && record_count == rhs.record_count &&

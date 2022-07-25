@@ -45,9 +45,37 @@ void ExecutionManager::UpdateAvailableNodesGraph() {
   InitialiseTables(current_tables_metadata_, current_available_node_pointers_,
                    query_manager_.get(), data_manager_.get());
   current_query_graph_.clear();
+  SetupTableDependencies(current_tables_metadata_,
+                         unscheduled_graph_->GetAllNodesPtrs());
   SetupSchedulingGraphAndConstrainedNodes(
       unscheduled_graph_->GetAllNodesPtrs(), current_query_graph_,
-      *accelerator_library_, nodes_constrained_to_first_);
+      *accelerator_library_, nodes_constrained_to_first_,
+      current_tables_metadata_);
+}
+
+void ExecutionManager::SetupTableDependencies(
+    std::map<std::string, TableMetadata>& tables_metadata,
+    const std::vector<QueryNode*>& all_nodes) {
+  std::unordered_set<std::string> input_tables;
+  for (const auto& node : all_nodes) {
+    for (const auto& input : node->given_input_data_definition_files) {
+      if (!input.empty()) {
+        input_tables.insert(input);
+      }
+    }
+  }
+  for (const auto& node : all_nodes) {
+    for (int i = 0; i < node->given_output_data_definition_files.size(); i++) {
+      const auto& output = node->given_output_data_definition_files.at(i);
+      if (!output.empty()) {
+        if (node->is_checked.at(i) &&
+            input_tables.find(output) != input_tables.end() &&
+            tables_metadata.find(output) != tables_metadata.end()) {
+          tables_metadata.at(output).is_finished = false;
+        }
+      }
+    }
+  }
 }
 
 void ExecutionManager::RemoveUnusedTables(
@@ -55,6 +83,7 @@ void ExecutionManager::RemoveUnusedTables(
     const std::vector<QueryNode*>& all_nodes) {
   // TODO(Kaspar): Possibly reserve some space beforehand.
   std::unordered_set<std::string> required_tables;
+  std::unordered_set<std::string> output_tables;
   for (const auto& node : all_nodes) {
     for (const auto& input : node->given_input_data_definition_files) {
       if (!input.empty()) {
@@ -64,6 +93,7 @@ void ExecutionManager::RemoveUnusedTables(
     for (const auto& output : node->given_output_data_definition_files) {
       if (!output.empty()) {
         required_tables.insert(output);
+        output_tables.insert(output);
       }
     }
   }
@@ -74,6 +104,9 @@ void ExecutionManager::RemoveUnusedTables(
     if (required_tables.find(table_name) == required_tables.end()) {
       tables_to_delete.push_back(table_name);
     }
+  }
+  for (const auto& output : output_tables) {
+    missing_tables.erase(output);
   }
   if (!missing_tables.empty()) {
     throw std::runtime_error(
@@ -277,7 +310,7 @@ void ExecutionManager::SetupNextRunData() {
     }
   }*/
 
-  //query_manager_->MeasureBitstreamConfigurationSpeed(config_.pr_hw_library,
+  // query_manager_->MeasureBitstreamConfigurationSpeed(config_.pr_hw_library,
   //                                                   memory_manager_.get());
 
   auto execution_nodes_and_result_params =
@@ -332,13 +365,20 @@ void ExecutionManager::SetupSchedulingGraphAndConstrainedNodes(
     std::unordered_map<std::string, SchedulingQueryNode>&
         current_scheduling_graph,
     AcceleratorLibraryInterface& hw_library,
-    std::unordered_set<std::string>& constrained_nodes_vector) {
+    std::unordered_set<std::string>& constrained_nodes_vector,
+    const std::map<std::string, TableMetadata>& tables_metadata) {
   for (const auto& node : all_query_nodes) {
     AddSchedulingNodeToGraph(node, current_scheduling_graph, hw_library);
 
     AddSavedNodesToConstrainedList(node, constrained_nodes_vector);
     AddFirstModuleNodesToConstrainedList(node, constrained_nodes_vector,
                                          hw_library);
+    for (const auto& input_table_name :
+         node->given_input_data_definition_files) {
+      if (!tables_metadata.at(input_table_name).is_finished) {
+        constrained_nodes_vector.insert(node->node_name);
+      }
+    }
   }
   AddSplittingNodesToConstrainedList(current_scheduling_graph,
                                      constrained_nodes_vector);

@@ -147,8 +147,12 @@ class ExecutionManager : public ExecutionManagerInterface,
       std::unordered_map<std::string, SchedulingQueryNode>&
           current_scheduling_graph,
       AcceleratorLibraryInterface& hw_library,
-      std::unordered_set<std::string>& constrained_nodes_vector);
+      std::unordered_set<std::string>& constrained_nodes_vector,
+      const std::map<std::string, TableMetadata>& tables_metadata);
   static void RemoveUnusedTables(
+      std::map<std::string, TableMetadata>& tables_metadata,
+      const std::vector<QueryNode*>& all_nodes);
+  static void SetupTableDependencies(
       std::map<std::string, TableMetadata>& tables_metadata,
       const std::vector<QueryNode*>& all_nodes);
 

@@ -68,6 +68,9 @@ void QueryManager::MeasureBitstreamConfigurationSpeed(
       "TAA_26.bin", "TAA_23.bin", "TAA_20.bin", "TAA_17.bin", "TAA_14.bin",
       "TAA_11.bin", "TAA_8.bin",  "TAA_5.bin",  "TAA_2.bin"};
   bitstreams_to_measure.merge(routing_bitstreams);
+  //bitstreams_to_measure.insert("byteman_PRregionRTandTA_0_96.bin");
+  //bitstreams_to_measure.insert("byteman_MergeSort128_bitstreamSizeTest_7_42.bin");
+  //bitstreams_to_measure.insert("byteman_MergeSort128_bitstreamSizeTest_37_72.bin");
   memory_manager->MeasureConfigurationSpeed(bitstreams_to_measure);
 }
 
@@ -249,6 +252,9 @@ auto QueryManager::CreateStreamParams(
     int virtual_channel_count = -1;
     if (is_input && !table_name.empty()) {
       if (node->operation_type == QueryOperationType::kMergeSort) {
+        // For debugging
+        int current_record_count = 0;
+
         int current_record_size =
             current_tables_metadata.at(table_name).record_size;
         std::vector<int> current_sequences;
@@ -261,6 +267,7 @@ auto QueryManager::CreateStreamParams(
           if (current_table_index == sequence.at(table_offset) &&
               current_offset == sequence.at(offset_offset)) {
             current_sequences.push_back(sequence.at(count_offset));
+            current_record_count += sequence.at(count_offset);
             current_offset += sequence.at(count_offset);
           } else {
             physical_addresses_map.insert(
@@ -276,6 +283,7 @@ auto QueryManager::CreateStreamParams(
             write_offset = sequence.at(offset_offset);
             current_offset =
                 sequence.at(offset_offset) + sequence.at(count_offset);
+            current_record_count += sequence.at(count_offset);
           }
         }
         // virtual channel count is the size of the vector - We assume this is
@@ -304,7 +312,47 @@ auto QueryManager::CreateStreamParams(
              std::move(current_sequences)});
 
         virtual_channel_count = max_channel_count;
+
+        merge_count += current_record_count;
+        /*std::cout << "Streamed data (rows): "
+                  << std::to_string(current_record_count)
+                  << std::endl;
+        std::cout
+            << "Streamed data (bytes): "
+            << std::to_string(
+                   static_cast<long>(
+                       current_tables_metadata.at(table_name).record_size) *
+                   static_cast<long>(merge_count) *
+                   static_cast<long>(4))
+            << std::endl;*/
+        data_count+=static_cast<long>(
+                       current_tables_metadata.at(table_name).record_size) *
+                   static_cast<long>(merge_count) *
+                   static_cast<long>(4);
+        
       } else {
+        /*std::cout << "Streamed data (rows): "
+                  << std::to_string(
+                         current_tables_metadata.at(table_name).record_count)
+                  << std::endl;
+        std::cout
+            << "Streamed data (bytes): "
+            << std::to_string(
+                   static_cast<long>(
+                       current_tables_metadata.at(table_name).record_size) *
+                   static_cast<long>(
+                       current_tables_metadata.at(table_name).record_count) *
+                   static_cast<long>(4))
+            << std::endl;*/
+        data_count += static_cast<long>(
+                          current_tables_metadata.at(table_name).record_size) *
+                      static_cast<long>(
+                          current_tables_metadata.at(table_name).record_count) *
+                      static_cast<long>(4);
+        std::cout
+            << "Streamed data (bytes): "
+            << std::to_string(data_count)
+            << std::endl;
         auto* physical_address_ptr =
             table_memory_blocks.at(table_name)->GetPhysicalAddress();
         physical_addresses_map.insert({physical_address_ptr, {-1}});
@@ -360,7 +408,8 @@ void QueryManager::StoreStreamResultParameters(
           stream_index, stream_ids[stream_index],
           run_data.output_data_definition_files.at(stream_index),
           node->is_checked.at(stream_index),
-          node->next_nodes.at(stream_index) != nullptr,
+          node->next_nodes.at(stream_index) != nullptr &&
+              !node->is_checked.at(stream_index),
           node->given_operation_parameters.output_stream_parameters,
           run_data.output_offset.at(stream_index));
     }
@@ -460,8 +509,10 @@ void QueryManager::LoadPRBitstreams(
     MemoryManagerInterface* memory_manager,
     const std::vector<std::string>& bitstream_names,
     AcceleratorLibraryInterface& driver_library) {
-  auto dma_module = driver_library.GetDMAModule();
-  memory_manager->LoadPartialBitstream(bitstream_names, *dma_module);
+  if (!bitstream_names.empty()) {
+    auto dma_module = driver_library.GetDMAModule();
+    memory_manager->LoadPartialBitstream(bitstream_names, *dma_module);
+  }
 }
 
 void QueryManager::BenchmarkScheduling(
@@ -628,6 +679,7 @@ void QueryManager::CheckTableData(const DataManagerInterface* data_manager,
                 TableManager::GetRecordSizeFromTable(resulting_table)) +
             " rows!");
     data_manager->PrintTableData(resulting_table);
+    throw std::runtime_error("Failed table check!");
   }
 }
 
@@ -748,10 +800,10 @@ void QueryManager::ExecuteAndProcessResults(
   fpga_manager->SetupQueryAcceleration(execution_query_nodes);
   std::chrono::steady_clock::time_point init_end =
       std::chrono::steady_clock::now();
-  std::cout << "INITIALISATION:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(init_end -
-                                                                     begin)
-                   .count()
+  initialisation_sum +=
+      std::chrono::duration_cast<std::chrono::microseconds>(init_end - begin)
+          .count();
+  std::cout << "INITIALISATION: " << initialisation_sum
             << std::endl;
   Log(LogLevel::kTrace, "Running query!");
   auto result_sizes = fpga_manager->RunQueryAcceleration();

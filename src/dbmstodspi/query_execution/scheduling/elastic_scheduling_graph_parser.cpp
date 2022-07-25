@@ -49,12 +49,17 @@ void ElasticSchedulingGraphParser::PreprocessNodes(
 
 auto ElasticSchedulingGraphParser::CurrentRunHasFirstModule(
     const std::vector<ScheduledModule>& current_run,
-    const std::string& node_name) -> bool {
-  for (const auto& scheduled_module : current_run) {
-    if (scheduled_module.node_name != node_name &&
-        drivers_.IsNodeConstrainedToFirstInPipeline(
-            scheduled_module.operation_type)) {
-      return true;
+    const std::string& node_name, const QueryOperationType operation_type)
+    -> bool {
+  // You can't have to merge sorters being first as they both can't work on
+  // stream 0.
+  if (drivers_.IsNodeConstrainedToFirstInPipeline(operation_type)) {
+    for (const auto& scheduled_module : current_run) {
+      if (scheduled_module.node_name != node_name &&
+          drivers_.IsNodeConstrainedToFirstInPipeline(
+              scheduled_module.operation_type)) {
+        return true;
+      }
     }
   }
   return false;
@@ -64,7 +69,8 @@ auto ElasticSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
     const std::unordered_set<std::string>& available_nodes,
     const std::vector<ScheduledModule>& current_run,
     const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-    const std::unordered_set<std::string>& blocked_nodes)
+    const std::unordered_set<std::string>& blocked_nodes, 
+    const std::map<std::string, TableMetadata>& data_tables)
     -> std::unordered_set<std::string> {
   auto resulting_nodes = available_nodes;
   for (const auto& node_name : available_nodes) {
@@ -72,7 +78,8 @@ auto ElasticSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
     // place a node into first location
     if (constrained_first_nodes_.find(node_name) !=
         constrained_first_nodes_.end()) {
-      if (CurrentRunHasFirstModule(current_run, node_name)) {
+      if (CurrentRunHasFirstModule(current_run, node_name,
+                                   graph.at(node_name).operation)) {
         resulting_nodes.erase(node_name);
       } else {
         // Is there a parent node in the current run already.
@@ -93,7 +100,13 @@ auto ElasticSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
     if (blocked_nodes.find(node_name) != blocked_nodes.end()) {
       resulting_nodes.erase(node_name);
     }
+    for (const auto& table_name : graph.at(node_name).data_tables) {
+      if (!data_tables.at(table_name).is_finished) {
+        resulting_nodes.erase(node_name);
+      }
+    }
   }
+  // Is input table been processed?
   return resulting_nodes;
 }
 
@@ -482,13 +495,17 @@ auto ElasticSchedulingGraphParser::UpdateGraphCapacitiesAndTables(
     UpdateGraphCapacities(missing_utility, new_graph, node_name,
                           is_node_fully_processed);
   }
-  // No need for this anymore! Maybe add 90% filtering here later
-  // if (is_node_fully_processed) {
-  //    // Check this resulting tables BS
-  //  auto resulting_table = GetResultingTables(
-  //      new_graph.at(node_name).data_tables, new_data_tables, operation);
-  //  UpdateNextNodeTables(node_name, new_graph, resulting_table);
-  //}
+  
+  if (is_node_fully_processed) {
+    for (const auto& processed_table_name :
+         new_graph.at(node_name).data_tables) {
+      new_data_tables.at(processed_table_name).is_finished = true;
+    }
+    // No need for this anymore! Maybe add 90% filtering here later
+    /*auto resulting_table = GetResultingTables(
+        new_graph.at(node_name).data_tables, new_data_tables, operation);
+    UpdateNextNodeTables(node_name, new_graph, resulting_table);*/
+  }
   return is_node_fully_processed;
 }
 
@@ -717,7 +734,7 @@ void ElasticSchedulingGraphParser::GetAllAvailableModulePlacementsInCurrentRun(
   }*/
 
   auto available_nodes_in_this_run = RemoveUnavailableNodesInThisRun(
-      available_nodes, current_run, graph, blocked_nodes);
+      available_nodes, current_run, graph, blocked_nodes, data_tables);
 
   /*for (const auto& node_name : available_nodes_in_this_run) {
     GetScheduledModulesForNodeAfterPosOrig(

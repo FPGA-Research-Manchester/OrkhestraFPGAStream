@@ -98,7 +98,7 @@ void MemoryManager::LoadStatic() {
   // SetFPGATo100MHz();
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  std::cout << "STATIC CONFIGURATION:"
+  std::cout << "STATIC CONFIGURATION: "
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      begin)
                    .count()
@@ -180,132 +180,14 @@ void MemoryManager::LoadPartialBitstream(
   FPGAManager fpga_manager(0);
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
-  /*std::chrono::steady_clock::time_point begin =
-      std::chrono::steady_clock::now();
-  fpga_manager.loadPartial("l1024.bin");
-  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  std::cout << "L1024 PR CONFIGURATION:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << std::endl;
-  begin = std::chrono::steady_clock::now();
-  fpga_manager.loadPartial("m128.bin");
-  end = std::chrono::steady_clock::now();
-  std::cout << "m128 PR CONFIGURATION:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << std::endl;
-
-  begin = std::chrono::steady_clock::now();
-  fpga_manager.loadPartial("pr_region.bin");
-  end = std::chrono::steady_clock::now();
-  std::cout << "pr_region PR CONFIGURATION:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << std::endl;
-
-  begin = std::chrono::steady_clock::now();
-  fpga_manager.loadPartial("m32.bin");
-  end = std::chrono::steady_clock::now();
-  std::cout << "m32 PR CONFIGURATION:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << std::endl;
-
-  begin = std::chrono::steady_clock::now();
-  fpga_manager.loadPartial("sum.bin");
-  end = std::chrono::steady_clock::now();
-  std::cout << "SUM PR CONFIGURATION:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << std::endl;
-
-  begin = std::chrono::steady_clock::now();
-  fpga_manager.loadPartial("add.bin");
-  end = std::chrono::steady_clock::now();
-  std::cout << "ADD PR CONFIGURATION:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << std::endl;
-
-  begin = std::chrono::steady_clock::now();
-  fpga_manager.loadPartial("mul.bin");
-  end = std::chrono::steady_clock::now();
-  std::cout << "MUL PR CONFIGURATION:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << std::endl;
-
-  begin = std::chrono::steady_clock::now();
-  fpga_manager.loadPartial("v2binPartial_LinearSort512_7_36.bin");
-  end = std::chrono::steady_clock::now();
-  std::cout << "L512 PR CONFIGURATION:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << std::endl;
-  begin = std::chrono::steady_clock::now();
-  fpga_manager.loadPartial("b_col.bin");
-  end = std::chrono::steady_clock::now();
-  std::cout << "b_col PR CONFIGURATION:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << std::endl;
-  begin = std::chrono::steady_clock::now();
-  fpga_manager.loadPartial("d_col.bin");
-  end = std::chrono::steady_clock::now();
-  std::cout << "d_col PR CONFIGURATION:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << std::endl;
-  begin = std::chrono::steady_clock::now();
-  fpga_manager.loadPartial("m_col.bin");
-  end = std::chrono::steady_clock::now();
-  std::cout << "m_col PR CONFIGURATION:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << std::endl;
-  begin = std::chrono::steady_clock::now();
-  fpga_manager.loadPartial("join.bin");
-  end = std::chrono::steady_clock::now();
-  std::cout << "join PR CONFIGURATION:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << std::endl;
-  begin = std::chrono::steady_clock::now();
-  fpga_manager.loadPartial("m64.bin");
-  end = std::chrono::steady_clock::now();
-  std::cout << "m64 PR CONFIGURATION:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << std::endl;
-  begin = std::chrono::steady_clock::now();
-  fpga_manager.loadPartial("filter.bin");
-  end = std::chrono::steady_clock::now();
-  std::cout << "filter PR CONFIGURATION:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << std::endl;*/
 
   for (const auto& name : bitstream_name) {
+    std::cout << "Loading PR bitstream: " << name << std::endl;
     Log(LogLevel::kDebug, "Loading PR bitstream:" + name);
     fpga_manager.loadPartial(name);
   }
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  std::cout << "PR CONFIGURATION:"
+  std::cout << "PR CONFIGURATION: "
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      begin)
                    .count()

@@ -26,6 +26,9 @@ namespace orkhestrafs::dbmstodspi {
 
 class QueryManager : public QueryManagerInterface {
  public:
+  long data_count = 0;
+  long merge_count = 0;
+  long initialisation_sum = 0;
   void MeasureBitstreamConfigurationSpeed(
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
       MemoryManagerInterface* memory_manager) override;
@@ -152,7 +155,7 @@ class QueryManager : public QueryManagerInterface {
           result_parameters,
       const std::vector<int>& stream_ids, const QueryNode* node,
       const NodeRunData& run_data);
-  static auto CreateStreamParams(
+  auto CreateStreamParams(
       bool is_input, const QueryNode* node, const std::vector<int>& stream_ids,
       const NodeRunData& run_data,
       const std::map<std::string, TableMetadata>& current_tables_metadata,

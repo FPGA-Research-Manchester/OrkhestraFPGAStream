@@ -110,9 +110,6 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/filter_testing.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/addition_testing.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/single_run_testing.json 
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF001.json 
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF01.json 
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/TPCH_Q19_SF03.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/merge_sort_testing.json 
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/lin_sort_testing.json 
