@@ -88,9 +88,6 @@ void MemoryManager::LoadStatic() {
 
   acceleration_instance_ =
       pr_manager_.fpgaLoadStatic(static_bitstream, register_space_size);
-  /*acceleration_instance_ =
-      pr_manager_.fpgaLoadStatic("DSPI_filtering_linear_sort",
-     register_space_size);*/
 
   register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
 

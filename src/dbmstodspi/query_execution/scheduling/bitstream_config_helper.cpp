@@ -73,7 +73,9 @@ auto BitstreamConfigHelper::GetOldNonOverlappingModules(
       if ((next_module.position.first >= cur_module.position.first &&
            next_module.position.first <= cur_module.position.second) ||
           (next_module.position.second >= cur_module.position.first &&
-           next_module.position.second <= cur_module.position.second)) {
+           next_module.position.second <= cur_module.position.second) ||
+          (next_module.position.first <= cur_module.position.first &&
+           next_module.position.second >= cur_module.position.second)) {
         non_overlapping.erase(std::remove(non_overlapping.begin(),
                                           non_overlapping.end(), cur_module),
                               non_overlapping.end());

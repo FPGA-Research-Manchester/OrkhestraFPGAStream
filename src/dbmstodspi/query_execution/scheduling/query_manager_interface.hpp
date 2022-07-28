@@ -164,7 +164,8 @@ class QueryManagerInterface {
       NodeSchedulerInterface& node_scheduler,
       const std::vector<ScheduledModule>& current_configuration,
       std::unordered_set<std::string>& skipped_nodes,
-      std::unordered_map<std::string, int>& table_counter)
+      std::unordered_map<std::string, int>& table_counter,
+      const std::unordered_set<std::string>& blocked_nodes)
       -> std::queue<
           std::pair<std::vector<ScheduledModule>, std::vector<QueryNode*>>> = 0;
 
@@ -176,7 +177,8 @@ class QueryManagerInterface {
       std::map<std::string, TableMetadata>& tables,
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
-      std::vector<ScheduledModule>& current_configuration) = 0;
+      std::vector<ScheduledModule>& current_configuration,
+      const std::unordered_set<std::string>& blocked_nodes) = 0;
 
   /**
    * @brief Load the initial static system
@@ -217,7 +219,8 @@ class QueryManagerInterface {
    */
   virtual auto GetPRBitstreamsToLoadWithPassthroughModules(
       std::vector<ScheduledModule>& current_config,
-      const std::vector<ScheduledModule>& next_config, int column_count)
+      const std::vector<ScheduledModule>& next_config,
+      std::vector<std::string>& current_routing)
       -> std::pair<std::vector<std::string>,
                    std::vector<std::pair<QueryOperationType, bool>>> = 0;
 

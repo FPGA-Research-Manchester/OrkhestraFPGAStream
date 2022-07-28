@@ -90,7 +90,7 @@ void FPGAManager::SetupQueryAcceleration(
     throw std::runtime_error("Input or output streams missing!");
   }
   dma_setup_.SetupDMAModule(*dma_engine_, input_streams, output_streams);
-
+  
   dma_engine_->StartController(true, input_streams_active_status_);
 
   if (ila_module_) {
@@ -102,10 +102,14 @@ void FPGAManager::SetupQueryAcceleration(
     auto readback_modules = module_library_->ExportLastModulesIfReadback();
     if (!readback_modules.empty()) {
       for (auto& readback_module : readback_modules) {
-        read_back_modules_.push_back(std::move(readback_module));
-        // Don't know how this will work out with combined readback modules as
-        // we don't have any at the moment.
-        read_back_parameters_.push_back(query_node.operation_parameters.at(1));
+        // Assuming there's only one input stream for readback modules currently
+        if (query_node.input_streams.front().stream_id != 15) {
+          read_back_modules_.push_back(std::move(readback_module));
+          // Don't know how this will work out with combined readback modules as
+          // we don't have any at the moment.
+          read_back_parameters_.push_back(
+              query_node.operation_parameters.at(1));
+        }
       }
     }
   }
@@ -316,6 +320,6 @@ auto FPGAManager::ReadModuleResultRegisters(
       (query_acceleration_constants::kDatapathWidth - 1) - (position * 2 + 1)));
 
   return static_cast<long long>((static_cast<uint64_t>(high_bits) << 32) +
-                                low_bits) /
-         100.0;
+                                    low_bits) /
+             100.0;
 }

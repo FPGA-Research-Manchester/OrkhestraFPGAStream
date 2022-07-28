@@ -78,7 +78,8 @@ class NodeSchedulerInterface {
       std::map<std::string, TableMetadata>& tables,
       const std::vector<ScheduledModule>& current_configuration,
       const Config& config, std::unordered_set<std::string>& skipped_nodes,
-      std::unordered_map<std::string, int>& table_counter)
+      std::unordered_map<std::string, int>& table_counter,
+      const std::unordered_set<std::string>& blocked_nodes)
       -> std::queue<
           std::pair<std::vector<ScheduledModule>, std::vector<QueryNode*>>> = 0;
 
@@ -87,7 +88,8 @@ class NodeSchedulerInterface {
       const std::unordered_set<std::string>& starting_nodes,
       const std::unordered_set<std::string>& processed_nodes,
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      const std::map<std::string, TableMetadata>& tables, const Config& config)
+      const std::map<std::string, TableMetadata>& tables, const Config& config,
+      const std::unordered_set<std::string>& blocked_nodes)
       -> std::tuple<int,
                     std::map<std::vector<std::vector<ScheduledModule>>,
                              ExecutionPlanSchedulingData>,
@@ -101,7 +103,8 @@ class NodeSchedulerInterface {
       AcceleratorLibraryInterface& drivers,
       std::map<std::string, TableMetadata>& tables,
       std::vector<ScheduledModule>& current_configuration, const Config& config,
-      std::map<std::string, double>& benchmark_data) = 0;
+      std::map<std::string, double>& benchmark_data,
+      const std::unordered_set<std::string>& blocked_nodes) = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

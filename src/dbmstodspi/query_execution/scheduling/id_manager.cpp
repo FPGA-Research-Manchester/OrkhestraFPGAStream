@@ -32,7 +32,20 @@ void IDManager::AllocateStreamIDs(
     std::map<std::string, std::vector<int>> &output_ids) {
   auto available_ids = SetUpAvailableIDs();
 
+  std::vector<QueryNode *> corrected_nodes = {nullptr};
   for (const auto &current_node : all_nodes) {
+    if (current_node->operation_type == QueryOperationType::kMergeSort) {
+      corrected_nodes[0] = current_node;
+    } else {
+      corrected_nodes.push_back(current_node);
+    }
+  }
+
+  if (!corrected_nodes.at(0)) {
+    corrected_nodes = all_nodes;
+  }
+
+  for (const auto &current_node : corrected_nodes) {
     std::vector<int> current_node_input_ids;
     std::vector<int> current_node_output_ids;
     AllocateInputIDs(current_node, current_node_input_ids, output_ids,

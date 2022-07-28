@@ -45,8 +45,7 @@ void ExecutionManager::UpdateAvailableNodesGraph() {
   InitialiseTables(current_tables_metadata_, current_available_node_pointers_,
                    query_manager_.get(), data_manager_.get());
   current_query_graph_.clear();
-  SetupTableDependencies(current_tables_metadata_,
-                         unscheduled_graph_->GetAllNodesPtrs());
+  SetupTableDependencies(unscheduled_graph_->GetAllNodesPtrs(), blocked_nodes_, table_counter_);
   SetupSchedulingGraphAndConstrainedNodes(
       unscheduled_graph_->GetAllNodesPtrs(), current_query_graph_,
       *accelerator_library_, nodes_constrained_to_first_,
@@ -54,9 +53,85 @@ void ExecutionManager::UpdateAvailableNodesGraph() {
 }
 
 void ExecutionManager::SetupTableDependencies(
-    std::map<std::string, TableMetadata>& tables_metadata,
-    const std::vector<QueryNode*>& all_nodes) {
-  std::unordered_set<std::string> input_tables;
+    const std::vector<QueryNode*>& all_nodes,
+    std::unordered_set<std::string>& blocked_nodes,
+    std::unordered_map<std::string, int>& table_counter) {
+  blocked_nodes.clear();
+  std::unordered_set<std::string> output_tables;
+  for (const auto& node : all_nodes) {
+    for (const auto& output : node->given_output_data_definition_files) {
+      if (!output.empty()) {
+        output_tables.insert(output);
+      }
+    }
+  }
+  std::unordered_set<QueryNode*> nodes_to_check;
+  // we want to block all nodes that have an input that is the output of something else
+  // But nodes that have this condition and are linked do not get blocked!
+  for (const auto& node : all_nodes) {
+    for (int i = 0; i < node->given_input_data_definition_files.size(); i++) {
+      const auto& input_table = node->given_input_data_definition_files.at(i);
+      const auto& input_node = node->previous_nodes.at(i);
+      if (!input_table.empty() &&
+          output_tables.find(input_table) != output_tables.end()) {
+        if (!input_node ||
+            std::none_of(
+                input_node->given_output_data_definition_files.begin(),
+                input_node->given_output_data_definition_files.end(),
+                [&](auto table_name) { return input_table == table_name; })) {
+          blocked_nodes.insert(node->node_name);
+          nodes_to_check.insert(node);
+          
+          
+        }
+      }
+    }
+  }
+  // To prevent blocked tables from being deleted
+  while (!nodes_to_check.empty()) {
+    auto cur_node = *nodes_to_check.begin();
+    nodes_to_check.erase(nodes_to_check.begin());
+    for (const auto& input_table :
+         cur_node->given_input_data_definition_files) {
+      if (!input_table.empty()) {
+        table_counter.insert({input_table, 1});
+      }
+    }
+    for (const auto& output_node : cur_node->next_nodes) {
+      if (output_node) {
+        nodes_to_check.insert(output_node);
+      }
+    }
+  }
+
+  // If we want to be more precise
+  /*std::unordered_map<std::string, std::unordered_set<std::string>>
+      tables_to_nodes_used_map;
+  for (const auto& node : all_nodes) {
+    for (const auto& input : node->given_input_data_definition_files) {
+      if (!input.empty()) {
+        std::unordered_set<std::string> new_set = {node->node_name};
+        if (const auto& [it, inserted] =
+                tables_to_nodes_used_map.try_emplace(input, new_set);
+            !inserted) {
+          it->second.merge(new_set);
+        }
+      }
+    }
+  }
+  for (const auto& node : all_nodes) {
+    for (int i = 0; i < node->given_output_data_definition_files.size(); i++) {
+      const auto& output = node->given_output_data_definition_files.at(i);
+      if (!output.empty()) {
+        if (node->is_checked.at(i) &&
+            input_tables.find(output) != input_tables.end() &&
+            tables_metadata.find(output) != tables_metadata.end()) {
+          tables_metadata.at(output).is_finished = false;
+        }
+      }
+    }
+  }*/
+  /*std::unordered_set<std::string> input_tables;
   for (const auto& node : all_nodes) {
     for (const auto& input : node->given_input_data_definition_files) {
       if (!input.empty()) {
@@ -75,7 +150,7 @@ void ExecutionManager::SetupTableDependencies(
         }
       }
     }
-  }
+  }*/
 }
 
 void ExecutionManager::RemoveUnusedTables(
@@ -220,13 +295,13 @@ void ExecutionManager::ScheduleUnscheduledNodes() {
       current_available_node_pointers_, nodes_constrained_to_first_,
       current_available_node_names_, current_query_graph_,
       current_tables_metadata_, *accelerator_library_, config_, *scheduler_,
-      current_configuration_, processed_nodes_, table_counter_);
+      current_configuration_, processed_nodes_, table_counter_, blocked_nodes_);
 }
 void ExecutionManager::BenchmarkScheduleUnscheduledNodes() {
   query_manager_->BenchmarkScheduling(
       nodes_constrained_to_first_, current_available_node_names_,
       processed_nodes_, current_query_graph_, current_tables_metadata_,
-      *accelerator_library_, config_, *scheduler_, current_configuration_);
+      *accelerator_library_, config_, *scheduler_, current_configuration_, blocked_nodes_);
 }
 auto ExecutionManager::IsBenchmarkDone() -> bool {
   return current_available_node_names_.empty();
@@ -267,7 +342,7 @@ void ExecutionManager::SetupNextRunData() {
                                            *accelerator_library_.get());*/
   auto [bitstreams_to_load, empty_modules] =
       query_manager_->GetPRBitstreamsToLoadWithPassthroughModules(
-          current_configuration_, query_node_runs_queue_.front().first, 31);
+          current_configuration_, query_node_runs_queue_.front().first, current_routing_);
   query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
                                    *accelerator_library_);
   query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
@@ -357,6 +432,10 @@ void ExecutionManager::SetupSchedulingData(bool setup_bitstreams) {
   current_tables_metadata_ = config_.initial_all_tables_metadata;
   if (setup_bitstreams) {
     query_manager_->LoadInitialStaticBitstream(memory_manager_.get());
+    // TODO: Remove the hardcoded aspect of this!
+    for (int i = 0; i < 31; i++) {
+      current_routing_.push_back("RT");
+    }
   }
 }
 
@@ -373,12 +452,6 @@ void ExecutionManager::SetupSchedulingGraphAndConstrainedNodes(
     AddSavedNodesToConstrainedList(node, constrained_nodes_vector);
     AddFirstModuleNodesToConstrainedList(node, constrained_nodes_vector,
                                          hw_library);
-    for (const auto& input_table_name :
-         node->given_input_data_definition_files) {
-      if (!tables_metadata.at(input_table_name).is_finished) {
-        constrained_nodes_vector.insert(node->node_name);
-      }
-    }
   }
   AddSplittingNodesToConstrainedList(current_scheduling_graph,
                                      constrained_nodes_vector);

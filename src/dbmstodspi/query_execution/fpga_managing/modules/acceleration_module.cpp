@@ -52,9 +52,9 @@ void AccelerationModule::WriteToModule(
     Log(log_level, ss.str());
   }
   // Uncomment to add an additional wait after writes
-  //#ifdef FPGA_AVAILABLE
-  //  usleep(100);
-  //#endif
+  /*#ifdef FPGA_AVAILABLE
+    usleep(100);
+  #endif*/
   *register_address = write_data;
 }
 

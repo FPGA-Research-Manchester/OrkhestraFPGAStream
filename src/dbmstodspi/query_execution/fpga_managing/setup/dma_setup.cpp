@@ -50,6 +50,7 @@ auto DMASetup::CreateDMAModule(MemoryManagerInterface* memory_manager)
 void DMASetup::SetupDMAModuleDirection(
     DMAInterface& dma_engine, const std::vector<StreamDataParameters>& streams,
     const bool is_input_stream) {
+  //const int buffer_size = 15 / streams.size();
   const int buffer_size = 16 / streams.size();
   int multichannel_stream_count = 0;
   for (int current_stream_count = 0; current_stream_count < streams.size();
@@ -115,6 +116,11 @@ void DMASetup::SetupDMAModuleDirection(
 
     SetUpDMACrossbarsForStream(stream_setup_data, dma_engine);
   }
+  // Setting passthrough buffer
+  /*dma_engine.SetControllerParams(is_input_stream, 15,
+      0,
+      0, 15,
+      15);*/
 
   if (is_input_stream && multichannel_stream_count != 0) {
     dma_engine.SetNumberOfInputStreamsWithMultipleChannels(

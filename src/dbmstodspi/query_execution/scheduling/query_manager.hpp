@@ -77,7 +77,8 @@ class QueryManager : public QueryManagerInterface {
       NodeSchedulerInterface& node_scheduler,
       const std::vector<ScheduledModule>& current_configuration,
       std::unordered_set<std::string>& skipped_nodes,
-      std::unordered_map<std::string, int>& table_counter)
+      std::unordered_map<std::string, int>& table_counter,
+      const std::unordered_set<std::string>& blocked_nodes)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<QueryNode*>>> override;
 
@@ -89,7 +90,8 @@ class QueryManager : public QueryManagerInterface {
       std::map<std::string, TableMetadata>& tables,
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
-      std::vector<ScheduledModule>& current_configuration) override;
+      std::vector<ScheduledModule>& current_configuration,
+      const std::unordered_set<std::string>& blocked_nodes) override;
 
   void LoadInitialStaticBitstream(
       MemoryManagerInterface* memory_manager) override;
@@ -104,7 +106,8 @@ class QueryManager : public QueryManagerInterface {
 
   auto GetPRBitstreamsToLoadWithPassthroughModules(
       std::vector<ScheduledModule>& current_config,
-      const std::vector<ScheduledModule>& next_config, int column_count)
+      const std::vector<ScheduledModule>& next_config,
+      std::vector<std::string>& current_routing)
       -> std::pair<std::vector<std::string>,
                    std::vector<std::pair<QueryOperationType, bool>>> override;
   void PrintBenchmarkStats() override;
@@ -116,6 +119,24 @@ class QueryManager : public QueryManagerInterface {
       int stream_index) const -> int override;
 
  private:
+
+  std::vector<std::string> routing_bitstreams_ = {
+      "RT_95.bin", "RT_92.bin", "RT_89.bin", "RT_86.bin", "RT_83.bin",
+      "RT_80.bin", "RT_77.bin", "RT_74.bin", "RT_71.bin", "RT_68.bin",
+      "RT_65.bin", "RT_62.bin", "RT_59.bin", "RT_56.bin", "RT_53.bin",
+      "RT_50.bin", "RT_47.bin", "RT_44.bin", "RT_41.bin", "RT_38.bin",
+      "RT_35.bin", "RT_32.bin", "RT_29.bin", "RT_26.bin", "RT_23.bin",
+      "RT_20.bin", "RT_17.bin", "RT_14.bin", "RT_11.bin", "RT_8.bin",
+      "RT_5.bin"};
+  std::vector<std::string> turnaround_bitstreams_ = {
+      "TAA_95.bin", "TAA_92.bin", "TAA_89.bin", "TAA_86.bin", "TAA_83.bin",
+      "TAA_80.bin", "TAA_77.bin", "TAA_74.bin", "TAA_71.bin", "TAA_68.bin",
+      "TAA_65.bin", "TAA_62.bin", "TAA_59.bin", "TAA_56.bin", "TAA_53.bin",
+      "TAA_50.bin", "TAA_47.bin", "TAA_44.bin", "TAA_41.bin", "TAA_38.bin",
+      "TAA_35.bin", "TAA_32.bin", "TAA_29.bin", "TAA_26.bin", "TAA_23.bin",
+      "TAA_20.bin", "TAA_17.bin", "TAA_14.bin", "TAA_11.bin", "TAA_8.bin",
+      "TAA_5.bin"};
+
   std::unique_ptr<JSONReaderInterface> json_reader_;
   std::map<std::string, double> benchmark_stats_ = {
       {"pre_process_time", 0}, {"schedule_time", 0},
@@ -124,6 +145,13 @@ class QueryManager : public QueryManagerInterface {
       {"data_amount", 0},      {"configuration_amount", 0},
       {"schedule_count", 0},   {"plan_count", 0},
       {"placed_nodes", 0},     {"discarded_placements", 0}};
+
+  void GetRoutingBitstreamsAndPassthroughBitstreams(
+      const std::vector<int>& written_frames,
+      std::vector<std::string>& required_bitstreams,
+      const std::vector<ScheduledModule>& left_over_config,
+      const std::vector<ScheduledModule>& next_config,
+      std::vector<std::pair<QueryOperationType, bool>>& passthrough_modules);
 
   static void CheckTableData(const DataManagerInterface* data_manager,
                              const TableData& expected_table,

@@ -97,7 +97,8 @@ auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
     const std::unordered_set<std::string> &starting_nodes,
     const std::unordered_set<std::string> &processed_nodes,
     const std::unordered_map<std::string, SchedulingQueryNode> &graph,
-    const std::map<std::string, TableMetadata> &tables, const Config &config)
+    const std::map<std::string, TableMetadata> &tables, const Config &config, 
+    const std::unordered_set<std::string> &blocked_nodes)
     -> std::tuple<int,
                   std::map<std::vector<std::vector<ScheduledModule>>,
                            ExecutionPlanSchedulingData>,
@@ -120,7 +121,7 @@ auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
   // Configure the runtime_error behaviour
   try {
     scheduler_->PlaceNodesRecursively(starting_nodes, processed_nodes, graph,
-                                      {}, {}, tables, {}, {}, 0);
+                                      {}, {}, tables, blocked_nodes, {}, 0);
   } catch (TimeLimitException &e) {
     Log(LogLevel::kInfo, "Timeout of " +
                              std::to_string(time_limit_duration_in_seconds) +
@@ -143,7 +144,8 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
     AcceleratorLibraryInterface &drivers,
     std::map<std::string, TableMetadata> &tables,
     std::vector<ScheduledModule> &current_configuration, const Config &config,
-    std::map<std::string, double> &benchmark_data) {
+    std::map<std::string, double> &benchmark_data,
+    const std::unordered_set<std::string> &blocked_nodes) {
   Log(LogLevel::kTrace, "Schedule round");
   std::chrono::steady_clock::time_point begin_pre_process =
       std::chrono::steady_clock::now();
@@ -162,7 +164,7 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
                               .count();
   auto [min_runs, resulting_plans, scheduling_time, timed_out, stats] =
       ScheduleAndGetAllPlans(starting_nodes, processed_nodes, graph, tables,
-                             config);
+                             config, blocked_nodes);
   std::chrono::steady_clock::time_point begin_cost_eval =
       std::chrono::steady_clock::now();
   // TODO(Kaspar): Make a separate method for non benchmark for performance
@@ -238,7 +240,8 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     std::map<std::string, TableMetadata> &tables,
     const std::vector<ScheduledModule> &current_configuration,
     const Config &config, std::unordered_set<std::string> &skipped_nodes,
-    std::unordered_map<std::string, int> &table_counter)
+    std::unordered_map<std::string, int> &table_counter,
+    const std::unordered_set<std::string> &blocked_nodes)
     -> std::queue<
         std::pair<std::vector<ScheduledModule>, std::vector<QueryNode *>>> {
   std::chrono::steady_clock::time_point start =
@@ -258,11 +261,11 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
 
   auto [min_runs, resulting_plans, scheduling_time, ignored_timeout,
         ignored_stats] = ScheduleAndGetAllPlans(starting_nodes, skipped_nodes,
-                                                graph, tables, config);
+                                                graph, tables, config, blocked_nodes);
   Log(LogLevel::kInfo,
       "Main scheduling loop time = " + std::to_string(scheduling_time / 1000) +
           "[milliseconds]");
-  //std::cout << "PLAN COUNT:" << resulting_plans.size() << std::endl;
+  std::cout << "PLAN COUNT:" << resulting_plans.size() << std::endl;
 
   Log(LogLevel::kTrace, "Choosing best plan.");
   // resulting_plans

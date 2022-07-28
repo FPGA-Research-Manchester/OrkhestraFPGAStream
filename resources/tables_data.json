@@ -240,7 +240,7 @@
 		"sorted_status": [ 0, 120, 1, 121 ]
 	},
 	{
-		"filename": "lineitem_linear_sort_SF001.csv",
+		"filename": "lineitem_sf0_01_linear_sort.csv",
 		"record_size": 7,
 		"record_count": 1201,
 		"sorted_status": [
@@ -273,6 +273,12 @@
 		"filename": "q17_lineitem_part_join_0.csv",
 		"record_size": 12,
 		"record_count": 6001215,
+		"sorted_status": []
+	},
+	{
+		"filename": "part_lineitem_001_q17.csv",
+		"record_size": 12,
+		"record_count": 60175,
 		"sorted_status": []
 	},
 	{

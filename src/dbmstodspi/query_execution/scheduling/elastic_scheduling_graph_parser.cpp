@@ -100,11 +100,6 @@ auto ElasticSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
     if (blocked_nodes.find(node_name) != blocked_nodes.end()) {
       resulting_nodes.erase(node_name);
     }
-    for (const auto& table_name : graph.at(node_name).data_tables) {
-      if (!data_tables.at(table_name).is_finished) {
-        resulting_nodes.erase(node_name);
-      }
-    }
   }
   // Is input table been processed?
   return resulting_nodes;
@@ -496,16 +491,16 @@ auto ElasticSchedulingGraphParser::UpdateGraphCapacitiesAndTables(
                           is_node_fully_processed);
   }
   
-  if (is_node_fully_processed) {
-    for (const auto& processed_table_name :
-         new_graph.at(node_name).data_tables) {
-      new_data_tables.at(processed_table_name).is_finished = true;
-    }
+  //if (is_node_fully_processed) {
+  //  for (const auto& processed_table_name :
+  //       new_graph.at(node_name).data_tables) {
+  //    new_data_tables.at(processed_table_name).is_finished = true;
+  //  }
     // No need for this anymore! Maybe add 90% filtering here later
     /*auto resulting_table = GetResultingTables(
         new_graph.at(node_name).data_tables, new_data_tables, operation);
     UpdateNextNodeTables(node_name, new_graph, resulting_table);*/
-  }
+  //}
   return is_node_fully_processed;
 }
 
@@ -792,6 +787,10 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
         blocked_nodes, data_tables);
     // Start planning a new run if we can't find any new valid placements
     if (available_module_placements.empty()) {
+      if (current_run.empty()) {
+        // Empty runs could be useful for crossbar usage in the future!
+        throw std::runtime_error("Can't use an empty run at the moment!");
+      }
       current_plan.push_back(std::move(current_run));
       if (use_max_runs_cap_ && current_plan.size() > min_runs_) {
         return;

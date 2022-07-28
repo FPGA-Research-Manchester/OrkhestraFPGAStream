@@ -112,6 +112,8 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::unique_ptr<StateInterface> current_state_;
   bool busy_flag_ = false;
   // New TableMetadata variables.
+  std::vector<std::string> current_routing_;
+
   std::map<std::string, TableMetadata> current_tables_metadata_;
   std::unordered_map<std::string, MemoryBlockInterface*> table_memory_blocks_;
   std::unordered_map<std::string, SchedulingQueryNode> current_query_graph_;
@@ -120,6 +122,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::unordered_set<std::string> current_available_node_names_;
   std::unordered_set<std::string> nodes_constrained_to_first_;
   std::unordered_set<std::string> processed_nodes_;
+  std::unordered_set<std::string> blocked_nodes_;
 
   std::vector<QueryNode*> current_available_node_pointers_;
 
@@ -153,8 +156,9 @@ class ExecutionManager : public ExecutionManagerInterface,
       std::map<std::string, TableMetadata>& tables_metadata,
       const std::vector<QueryNode*>& all_nodes);
   static void SetupTableDependencies(
-      std::map<std::string, TableMetadata>& tables_metadata,
-      const std::vector<QueryNode*>& all_nodes);
+      const std::vector<QueryNode*>& all_nodes,
+      std::unordered_set<std::string>& blocked_nodes, 
+      std::unordered_map<std::string, int>& table_counter);
 
   static void AddSchedulingNodeToGraph(
       QueryNode* const& node,
