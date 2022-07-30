@@ -99,6 +99,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   auto IsBenchmarkDone() -> bool override;
 
  private:
+  long config_time_;
   // Initial inputs
   std::unique_ptr<QueryManagerInterface> query_manager_;
   std::unique_ptr<DataManagerInterface> data_manager_;

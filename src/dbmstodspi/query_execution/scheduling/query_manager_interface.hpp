@@ -57,6 +57,10 @@ namespace orkhestrafs::dbmstodspi {
  */
 class QueryManagerInterface {
  public:
+
+  virtual auto GetData()->std::vector<long> =0;
+  virtual auto GetConfigTime()->long =0;
+
   virtual void MeasureBitstreamConfigurationSpeed(
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
       MemoryManagerInterface* memory_manager) = 0;

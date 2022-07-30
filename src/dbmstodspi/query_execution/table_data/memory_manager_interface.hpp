@@ -34,6 +34,7 @@ namespace orkhestrafs::dbmstodspi {
  */
 class MemoryManagerInterface {
  public:
+  virtual auto GetTime() -> int = 0;
   virtual void MeasureConfigurationSpeed(
       const std::set<std::string>& bitstreams_to_measure) = 0;
   virtual ~MemoryManagerInterface() = default;

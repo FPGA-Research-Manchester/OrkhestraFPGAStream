@@ -103,9 +103,10 @@ void Graph::FindCurrentNodeAndSetToNull(const QueryNode* node_ptr,
 }
 
 // TODO(Kaspar): Find better way to do this
+// The deleted node pointer is never null but the compiler doesn't know that
 void Graph::DeleteNode(QueryNode* deleted_node) {
   for (auto& node : all_nodes_) {
-    if (node && *node == *deleted_node) {
+    if (node!=nullptr && node->node_name == deleted_node->node_name) {
       node.reset();
     }
   }

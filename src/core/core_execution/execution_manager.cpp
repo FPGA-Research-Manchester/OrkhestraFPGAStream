@@ -29,6 +29,7 @@ using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 void ExecutionManager::SetFinishedFlag() { busy_flag_ = false; }
 
 void ExecutionManager::UpdateAvailableNodesGraph() {
+  current_available_node_pointers_.clear();
   if (!processed_nodes_.empty()) {
     unscheduled_graph_->DeleteNodes(processed_nodes_);
     processed_nodes_.clear();
@@ -267,11 +268,28 @@ void ExecutionManager::Execute(
     }
   }
   auto end = std::chrono::steady_clock::now();
-  std::cout << "TOTAL EXECUTION RUNTIME: "
+  auto data = query_manager_->GetData();
+  long total_execution =
+      std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+          .count();
+  long data_size = data[0];
+  long scheduling = data[3];
+  long init_config = data[1];
+  long config = config_time_;
+  long initialisation = data[2];
+  long system =
+      total_execution - scheduling - init_config - config - initialisation;
+  std::cout << "SYSTEM: " << system
+            << std::endl;
+  std::cout << "SCHEDULING: " << scheduling << std::endl;
+  std::cout << "CONFIGURATION: " << config << std::endl;
+  std::cout << "INITIALISATION: " << initialisation << std::endl;
+  std::cout << "DATA_STREAMED: " << data_size << std::endl;
+  /*std::cout << "TOTAL EXECUTION RUNTIME: "
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      begin)
                    .count()
-            << std::endl;
+            << std::endl;*/
   /*Log(LogLevel::kInfo,
       "Overall time = " +
           to_string(
@@ -347,6 +365,7 @@ void ExecutionManager::SetupNextRunData() {
                                    *accelerator_library_);
   query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
                                    *accelerator_library_);
+  config_time_ += query_manager_->GetConfigTime();
   /*query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
    *accelerator_library_.get());*/
   // Debugging

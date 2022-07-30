@@ -38,6 +38,8 @@ using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::MemoryManager;
 
+auto MemoryManager::GetTime() -> int { return latest_config_time_; }
+
 MemoryManager::~MemoryManager() = default;
 
 void MemoryManager::TestConfigurationTimes(
@@ -95,11 +97,11 @@ void MemoryManager::LoadStatic() {
   // SetFPGATo100MHz();
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  std::cout << "STATIC CONFIGURATION: "
+  /*std::cout << "STATIC CONFIGURATION: "
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      begin)
                    .count()
-            << std::endl;
+            << std::endl;*/
   Log(LogLevel::kInfo,
       "Extra config time = " +
           std::to_string(
@@ -113,6 +115,9 @@ void MemoryManager::LoadStatic() {
 #endif
   loaded_register_space_size_ = register_space_size;
   loaded_bitstream_ = "static";
+  latest_config_time_ =
+      std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+          .count();
 }
 
 // This is a debug method with the FPGA available.
@@ -179,20 +184,23 @@ void MemoryManager::LoadPartialBitstream(
       std::chrono::steady_clock::now();
 
   for (const auto& name : bitstream_name) {
-    std::cout << "Loading PR bitstream: " << name << std::endl;
+    //std::cout << "Loading PR bitstream: " << name << std::endl;
     Log(LogLevel::kDebug, "Loading PR bitstream:" + name);
     fpga_manager.loadPartial(name);
   }
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  std::cout << "PR CONFIGURATION: "
+  /*std::cout << "PR CONFIGURATION: "
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      begin)
                    .count()
-            << std::endl;
+            << std::endl;*/
 #else
   // Don't do anything
   /*throw std::runtime_error("Can't load anything!");*/
 #endif
+  latest_config_time_ =
+      std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+          .count();
 }
 
 void MemoryManager::LoadBitstreamIfNew(const std::string& bitstream_name,

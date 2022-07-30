@@ -37,6 +37,10 @@ using orkhestrafs::dbmstodspi::TimeLimitException;
 
 using orkhestrafs::core_interfaces::query_scheduling_data::NodeRunData;
 
+auto ElasticResourceNodeScheduler::GetTime() -> long {
+  return scheduling_time_;
+}
+
 void ElasticResourceNodeScheduler::RemoveUnnecessaryTables(
     const std::unordered_map<std::string, SchedulingQueryNode> &graph,
     std::map<std::string, TableMetadata> &tables) {
@@ -244,10 +248,12 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     const std::unordered_set<std::string> &blocked_nodes)
     -> std::queue<
         std::pair<std::vector<ScheduledModule>, std::vector<QueryNode *>>> {
-  std::chrono::steady_clock::time_point start =
-      std::chrono::steady_clock::now();
+  /*std::chrono::steady_clock::time_point start =
+      std::chrono::steady_clock::now();*/
   Log(LogLevel::kTrace, "Scheduling preprocessing.");
   // RemoveUnnecessaryTables(graph, tables);
+
+  auto initial_table_copy = tables;
 
   if (!scheduler_) {
     auto heuristic_choices = GetDefaultHeuristics();
@@ -256,7 +262,8 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
         first_node_names, drivers, config.use_max_runs_cap,
         config.reduce_single_runs);
   }
-
+  std::chrono::steady_clock::time_point start =
+      std::chrono::steady_clock::now();
   scheduler_->PreprocessNodes(starting_nodes, skipped_nodes, graph, tables);
 
   auto [min_runs, resulting_plans, scheduling_time, ignored_timeout,
@@ -278,8 +285,11 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
           config.configuration_speed);
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  std::cout << "TOTAL SCHEDULING: " << scheduling_time
-            << std::endl;
+  scheduling_time_ =
+      std::chrono::duration_cast<std::chrono::microseconds>(end - start)
+          .count();
+  /*std::cout << "TOTAL SCHEDULING: " << scheduling_time
+            << std::endl;*/
 
   Log(LogLevel::kTrace, "Creating module queue.");
   // No need to update the following commented out values
@@ -333,6 +343,12 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     }
     std::cout << std::endl;
   }*/
+
+  for (const auto &[table_name, data] : initial_table_copy) {
+    if (data.record_count != -1) {
+      tables[table_name].record_count = data.record_count;
+    }
+  }
 
   return resulting_runs;
 }

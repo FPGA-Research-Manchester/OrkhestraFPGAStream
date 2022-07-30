@@ -51,6 +51,8 @@ namespace orkhestrafs::dbmstodspi {
  */
 class NodeSchedulerInterface {
  public:
+  virtual auto GetTime()->long =0;
+
   virtual ~NodeSchedulerInterface() = default;
 
   /**

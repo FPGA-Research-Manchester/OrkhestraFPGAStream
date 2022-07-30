@@ -36,13 +36,14 @@ namespace orkhestrafs::dbmstodspi {
  */
 class MemoryManager : public MemoryManagerInterface {
  private:
+  int latest_config_time_ = 0;
   std::vector<std::unique_ptr<MemoryBlockInterface>> current_memory_blocks_;
   std::stack<MemoryBlockInterface*> available_memory_blocks_;
   int memory_block_count_ = 0;
   // Set in
   // https://github.com/FPGA-Research-Manchester/fos/blob/fdac37e188e217293d296d9973c22500c8a4367c/udmalib/setupUdma.sh#L4
   static const int kMaxPossibleAllocations =
-      6;  // The script is changed to allocate 6 X 280MB memory blocks.
+      8;  // The script is changed to allocate 6 X 280MB memory blocks.
 
   std::string loaded_bitstream_;
   int loaded_register_space_size_ = 0;
@@ -56,6 +57,7 @@ class MemoryManager : public MemoryManagerInterface {
   std::vector<uint32_t> register_space_;
 #endif
  public:
+  auto GetTime() -> int override;
   void MeasureConfigurationSpeed(
       const std::set<std::string>& bitstreams_to_measure) override;
 

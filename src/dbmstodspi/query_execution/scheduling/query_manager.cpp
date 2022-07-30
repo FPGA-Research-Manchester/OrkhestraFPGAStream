@@ -42,6 +42,12 @@ using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::query_acceleration_constants::kIOStreamParamDefs;
 
+auto QueryManager::GetData() -> std::vector<long> {
+  return {data_count_, static_configuration_, initialisation_sum_,
+          scheduling_sum_};
+}
+auto QueryManager::GetConfigTime() -> long { return latest_config_; }
+
 void QueryManager::MeasureBitstreamConfigurationSpeed(
     const std::map<QueryOperationType, OperationPRModules>& hw_library,
     MemoryManagerInterface* memory_manager) {
@@ -197,7 +203,7 @@ void QueryManager::AllocateInputMemoryBlocks(
       std::chrono::steady_clock::time_point begin =
           std::chrono::steady_clock::now();
 
-      auto [record_size, record_count] = TableManager::WriteDataToMemory(
+      /*auto [record_size, record_count] = TableManager::WriteDataToMemory(
           data_manager, input_stream_parameters, stream_index,
           table_memory_blocks[input_table], input_table);
 
@@ -220,7 +226,7 @@ void QueryManager::AllocateInputMemoryBlocks(
               current_tables_metadata.at(input_table).record_count) {
         throw std::runtime_error(
             "Mismatch of table sizes after reading table data!");
-      }
+      }*/
     }
   }
 }
@@ -313,7 +319,7 @@ auto QueryManager::CreateStreamParams(
 
         virtual_channel_count = max_channel_count;
 
-        merge_count += current_record_count;
+        merge_count_ += current_record_count;
         /*std::cout << "Streamed data (rows): "
                   << std::to_string(current_record_count)
                   << std::endl;
@@ -325,9 +331,9 @@ auto QueryManager::CreateStreamParams(
                    static_cast<long>(merge_count) *
                    static_cast<long>(4))
             << std::endl;*/
-        data_count += static_cast<long>(
+        data_count_ += static_cast<long>(
                           current_tables_metadata.at(table_name).record_size) *
-                      static_cast<long>(merge_count) * static_cast<long>(4);
+                      static_cast<long>(merge_count_) * static_cast<long>(4);
 
       } else {
         /*std::cout << "Streamed data (rows): "
@@ -343,13 +349,16 @@ auto QueryManager::CreateStreamParams(
                        current_tables_metadata.at(table_name).record_count) *
                    static_cast<long>(4))
             << std::endl;*/
-        data_count += static_cast<long>(
+        data_count_ += static_cast<long>(
                           current_tables_metadata.at(table_name).record_size) *
                       static_cast<long>(
                           current_tables_metadata.at(table_name).record_count) *
                       static_cast<long>(4);
-        std::cout << "Streamed data (bytes): " << std::to_string(data_count)
-                  << std::endl;
+        //if (is_last_) {
+        //  std::cout << "Streamed data (bytes): " << std::to_string(data_count)
+        //            << std::endl;
+        //}
+        
         auto* physical_address_ptr =
             table_memory_blocks.at(table_name)->GetPhysicalAddress();
         physical_addresses_map.insert({physical_address_ptr, {-1}});
@@ -465,6 +474,7 @@ auto QueryManager::SetupAccelerationNodesForExecution(
                                 node, current_run_params);
   }
 
+  // TODO: Look into removing this sort!
   std::sort(query_nodes.begin(), query_nodes.end(),
             [](AcceleratedQueryNode const& lhs,
                AcceleratedQueryNode const& rhs) -> bool {
@@ -472,7 +482,7 @@ auto QueryManager::SetupAccelerationNodesForExecution(
                      rhs.operation_module_location;
             });
 
-  return {query_nodes, result_parameters};
+  return {std::move(query_nodes), std::move(result_parameters)};
 }
 
 void QueryManager::LoadNextBitstreamIfNew(
@@ -486,6 +496,7 @@ void QueryManager::LoadNextBitstreamIfNew(
 void QueryManager::LoadInitialStaticBitstream(
     MemoryManagerInterface* memory_manager) {
   memory_manager->LoadStatic();
+  static_configuration_ = memory_manager->GetTime();
 }
 
 void QueryManager::LoadEmptyRoutingPRRegion(
@@ -509,6 +520,9 @@ void QueryManager::LoadPRBitstreams(
   if (!bitstream_names.empty()) {
     auto dma_module = driver_library.GetDMAModule();
     memory_manager->LoadPartialBitstream(bitstream_names, *dma_module);
+    latest_config_ = memory_manager->GetTime();
+  } else {
+    latest_config_ = 0;
   }
 }
 
@@ -548,10 +562,12 @@ auto QueryManager::ScheduleNextSetOfNodes(
     const std::unordered_set<std::string>& blocked_nodes)
     -> std::queue<
         std::pair<std::vector<ScheduledModule>, std::vector<QueryNode*>>> {
-  return node_scheduler.GetNextSetOfRuns(
+  auto thing = node_scheduler.GetNextSetOfRuns(
       query_nodes, first_node_names, starting_nodes, graph, drivers, tables,
       current_configuration, config, skipped_nodes, table_counter,
       blocked_nodes);
+  scheduling_sum_ += node_scheduler.GetTime();
+  return thing;
 }
 
 auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
@@ -560,7 +576,7 @@ auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
     std::vector<std::string>& current_routing)
     -> std::pair<std::vector<std::string>,
                  std::vector<std::pair<QueryOperationType, bool>>> {
-  std::vector<int> written_frames(routing_bitstreams_.size() - 1, 0);
+  std::vector<int> written_frames(routing_bitstreams_.size(), 0);
 
   auto old_routing_modules = BitstreamConfigHelper::GetOldNonOverlappingModules(
       next_config, current_config);
@@ -856,21 +872,23 @@ void QueryManager::ExecuteAndProcessResults(
   fpga_manager->SetupQueryAcceleration(execution_query_nodes);
   std::chrono::steady_clock::time_point init_end =
       std::chrono::steady_clock::now();
-  initialisation_sum +=
+  initialisation_sum_ +=
       std::chrono::duration_cast<std::chrono::microseconds>(init_end - begin)
           .count();
-  std::cout << "INITIALISATION: " << initialisation_sum << std::endl;
+  /*if (is_last_) {
+    std::cout << "INITIALISATION: " << initialisation_sum << std::endl;
+  }*/
   Log(LogLevel::kTrace, "Running query!");
   auto result_sizes = fpga_manager->RunQueryAcceleration();
   Log(LogLevel::kTrace, "Query done!");
 
   std::chrono::steady_clock::time_point total_end =
       std::chrono::steady_clock::now();
-  std::cout << "TOTAL EXEC:"
+  /*std::cout << "TOTAL EXEC:"
             << std::chrono::duration_cast<std::chrono::microseconds>(total_end -
                                                                      begin)
                    .count()
-            << std::endl;
+            << std::endl;*/
   Log(LogLevel::kInfo,
       "Init and run time = " +
           std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(
@@ -878,8 +896,8 @@ void QueryManager::ExecuteAndProcessResults(
                              .count()) +
           "[microseconds]");
 
-  ProcessResults(data_manager, result_sizes, result_parameters,
-                 table_memory_blocks, scheduling_table_data);
+  /*ProcessResults(data_manager, result_sizes, result_parameters,
+                 table_memory_blocks, scheduling_table_data);*/
   std::vector<std::string> removable_tables;
   for (const auto& [table_name, counter] : table_counter) {
     if (counter < 0) {

@@ -33,6 +33,7 @@ namespace orkhestrafs::dbmstodspi {
  */
 class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
  public:
+  auto GetTime() -> long override;
   explicit ElasticResourceNodeScheduler(
       std::unique_ptr<PlanEvaluatorInterface> plan_evaluator)
       : plan_evaluator_{std::move(plan_evaluator)} {}
@@ -74,6 +75,7 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       const std::unordered_set<std::string> &blocked_nodes) override;
 
  private:
+  long scheduling_time_;
   struct LengthOfSortedSequences {
     int offset;
     int number_of_sequences;

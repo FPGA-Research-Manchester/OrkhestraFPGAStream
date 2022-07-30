@@ -301,24 +301,26 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPos(
   }
 
   // Find placements
-  std::unordered_set<std::pair<int, ScheduledModule>, PairHash>
-      found_placements;
-  auto search = saved_placements_.find(current_query);
-  if (search == saved_placements_.end()) {
+  if (saved_placements_.find(current_query) == saved_placements_.end()) {
     // Not found
     bool is_composed = std::any_of(
         current_run.begin(), current_run.end(),
         [&](const auto& module) { return module.node_name == node_name; });
+    std::unordered_set<std::pair<int, ScheduledModule>, PairHash>
+        found_placements;
     GetScheduledModulesForNodeAfterPosOrig(
         graph, GetMinPositionInCurrentRun(current_run, node_name, graph),
         node_name, GetTakenColumns(current_run), data_tables, found_placements,
         is_composed);
-    saved_placements_.insert({current_query, found_placements});
-    module_placements.merge(found_placements);
-  } else {
+    saved_placements_.insert(
+        {current_query, std::move(found_placements)});
+    //module_placements.merge(found_placements);
+  }
+    
+  //} else {
     // "Cached"
-    std::vector<std::pair<int, ScheduledModule>> found_placements(
-        search->second.begin(), search->second.end());
+    /*std::vector<std::pair<int, ScheduledModule>> found_placements(
+        search->second.begin(), search->second.end());*/
     // Composed status currently is saved as well!
     /*bool is_composed = std::any_of(
         current_run.begin(), current_run.end(),
@@ -326,9 +328,10 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPos(
     for (auto& new_module_placement : found_placements) {
       new_module_placement.second.is_composed = is_composed;
     }*/
-    module_placements.insert(std::make_move_iterator(found_placements.begin()),
-                             std::make_move_iterator(found_placements.end()));
-  }
+  //  module_placements.insert(search->second.begin(), search->second.end());
+  //}
+  module_placements.insert(saved_placements_[current_query].begin(),
+                           saved_placements_[current_query].end());
 }
 
 void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPosOrig(
