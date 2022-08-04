@@ -45,6 +45,8 @@ class MockQueryManager : public QueryManagerInterface {
   using HWLibrary = std::map<QueryOperationType, OperationPRModules>;
 
  public:
+  MOCK_METHOD(std::vector<long>, GetData, (), (override));
+  MOCK_METHOD(long, GetConfigTime, (), (override));
   MOCK_METHOD(void, MeasureBitstreamConfigurationSpeed,
               (const HWLibrary& hw_library,
                orkhestrafs::dbmstodspi::MemoryManagerInterface* memory_manager),
@@ -84,7 +86,8 @@ class MockQueryManager : public QueryManagerInterface {
        AcceleratorLibraryInterface& drivers, const Config& config,
        NodeSchedulerInterface& node_scheduler,
        const std::vector<ScheduledModule>& current_configuration,
-       std::unordered_set<std::string>& skipped_nodes, Counter& table_counter),
+       std::unordered_set<std::string>& skipped_nodes, Counter& table_counter,
+       const std::unordered_set<std::string>& blocked_nodes),
       (override));
   MOCK_METHOD(void, LoadInitialStaticBitstream,
               (MemoryManagerInterface * memory_manager), (override));
@@ -102,7 +105,7 @@ class MockQueryManager : public QueryManagerInterface {
               GetPRBitstreamsToLoadWithPassthroughModules,
               (std::vector<ScheduledModule> & current_config,
                const std::vector<ScheduledModule>& next_config,
-               int column_count),
+               std::vector<std::string>& current_routing),
               (override));
   MOCK_METHOD((void), BenchmarkScheduling,
               (const std::unordered_set<std::string>& first_node_names,
@@ -111,7 +114,8 @@ class MockQueryManager : public QueryManagerInterface {
                const SchedulingNodeMap& graph, TableMap& tables,
                AcceleratorLibraryInterface& drivers, const Config& config,
                NodeSchedulerInterface& node_scheduler,
-               std::vector<ScheduledModule>& current_configuration),
+               std::vector<ScheduledModule>& current_configuration,
+               const std::unordered_set<std::string>& blocked_nodes),
               (override));
   MOCK_METHOD((void), PrintBenchmarkStats, (), (override));
   MOCK_METHOD((int), GetRecordSizeFromParameters,
