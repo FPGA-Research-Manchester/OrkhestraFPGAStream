@@ -39,18 +39,24 @@ def main(argv):
     time_limit = float(values[-5])
     heuristic = int(values[-4])
 
-    disallow_empty_runs = "true"
-    use_max_runs_cap = "true"
-    if heuristic == 2 or heuristic == 3 or heuristic == 4:
-        disallow_empty_runs = "false"
-        use_max_runs_cap = "false"
+    # DO the stuff here and then in the scheduler and then RUN
+
+    disallow_empty_runs = "false"
+    use_max_runs_cap = "false"
+    prio_children = "false"
+    if heuristic == 2 or heuristic == 6:
+        use_max_runs_cap = "true"
+    if heuristic == 4 or heuristic == 6:
+        disallow_empty_runs = "true"
+    if heuristic == 5 or heuristic == 6:
+        prio_children = "true"
 
     # Don' need these
     utility_scaler = float(values[-3])
     frame_scaler = float(values[-2])
     utility_per_frame_scaler = float(values[-1])
 
-    config_location_full = f"{subdir_name}\\{config_location}"
+    config_location_full = f"{subdir_name}/{config_location}"
 
     config = configparser.ConfigParser()
     with open(config_location_full) as stream:
@@ -64,11 +70,12 @@ def main(argv):
     config['top']['CONFIG_SCALER'] = str(frame_scaler)
     config['top']['UTILITY_PER_FRAME_SCALER'] = str(utility_per_frame_scaler)
     config['top']['TABLE_METADATA'] = str(table_file)
+    config['top']['PRIORITISE_CHILDREN'] = str(prio_children)
 
     with open(config_location_full, 'w') as configfile:
         config.write(configfile)
 
-    exe_location_full = f".\\{subdir_name}\\{exe_location}"
+    exe_location_full = f"./{subdir_name}/{exe_location}"
 
     # Now write values to config
 
@@ -96,8 +103,8 @@ def main(argv):
         data = json.load(c_stats_file)
         # print(data)
 
-    config_speed = 66000000
-    streaming_speed = 4800000000
+    config_speed = 66
+    streaming_speed = 4800
 
     with open(stats_file, "a") as stats_file:
         stats_file.write(",")
@@ -124,18 +131,17 @@ def main(argv):
         # frames_written
         stats_file.write(str(data["configuration_amount"] / 372))
         stats_file.write(",")
-        stats_file.write(str((1 / data["run_count"]) /
-                         (data["configuration_amount"] / 372)))  # utility_per_frames
+        stats_file.write(str(0))
+        #stats_file.write(str((1 / data["run_count"]) /
+        #                 (data["configuration_amount"] / 372)))  # utility_per_frames
         stats_file.write(",")
         stats_file.write(str(-1))  # score
         stats_file.write(",")
         stats_file.write(
-            str(data["data_amount"] / streaming_speed))  # exec_time
+            str(data["data_amount"]/1000000))  # exec_time
         stats_file.write(",")
         stats_file.write(str(
-            data["configuration_amount"] /
-            config_speed))  # config_time
-
+            data["configuration_amount"]/1000000))  # config_time
 
 if __name__ == '__main__':
     main(sys.argv[1:])

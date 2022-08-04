@@ -22,48 +22,50 @@ if (not defined $table_filename) {
 open(my $stats_file, ">>$stats_filename");
 print $stats_file "$header";
 
+#my @repeat_runs = (1..5);
+#my @filter_chance = (0.4,0.2);
+#my @table_low = (1000,100000);
+#my @table_upper = (100000,10000000);
+#my @filter_dnf_low = (1,10);
+#my @filter_dnf_high = (8,16);
+#my @filter_comp_low = (1,4);
+#my @filter_comp_high = (4,8);
+#my @leave_empty_join = (0.75,0.25,0);
+#my @join_chance = (0.4,0.2);
+#my @arithmetic_chance = (0.4,0.2);
+#my @generator_query_count = (4,3);
+#my @selectivity = (0.75,0.5,0.25,0.1);
+#my @timeouts = (0.01,0.1,0.2,0.4,0.6,0.8,1,2,3);
+#my @timeouts = (0.01);
+#my $max_node_limit = 25;
+#my $min_node_limit = 12;
+#my $equal_scaler = 0;
+#my $preferred_scaler = 1;
+#my @heuristic_choice = (0,1,2,3,4,5,6);
+
 my @repeat_runs = (1..5);
-my @filter_chance = (0.4,0.2);
-my @table_low = (1000,100000);
-my @table_upper = (100000,10000000);
+my @filter_chance = (0.5,0.4);
+my @table_low = (100);
+my @table_upper = (10000);
 my @filter_dnf_low = (1,10);
 my @filter_dnf_high = (8,16);
 my @filter_comp_low = (1,4);
 my @filter_comp_high = (4,8);
 my @leave_empty_join = (0.75,0.25,0);
-my @join_chance = (0.4,0.2);
-my @arithmetic_chance = (0.4,0.2);
-my @generator_query_count = (4,3);
-my @selectivity = (0.75,0.5,0.25,0.1);
-#my @timeouts = (0.01,0.1,0.2,0.4,0.6,0.8,1,2,3);
-my @timeouts = (0.01);
-my $max_node_limit = 25;
-my $min_node_limit = 12;
+my @join_chance = (0.5,0.4);
+my @arithmetic_chance = (0.5,0.4);
+my @generator_query_count = (2,1);
+my @selectivity = (1);
+my @timeouts = (80);
+my $max_node_limit = 7;
+my $min_node_limit = 5;
 my $equal_scaler = 0;
 my $preferred_scaler = 1;
-my @heuristic_choice = (4,0,1,2,3);
-
-# my @repeat_runs = (1..5);
-# my @filter_chance = (0.5,0.4);
-# my @table_low = (100);
-# my @table_upper = (10000);
-# my @filter_dnf_low = (1,10);
-# my @filter_dnf_high = (8,16);
-# my @filter_comp_low = (1,4);
-# my @filter_comp_high = (4,8);
-# my @leave_empty_join = (0.75,0.25,0);
-# my @join_chance = (0.5,0.4);
-# my @arithmetic_chance = (0.5,0.4);
-# my @generator_query_count = (2,1);
-# my @selectivity = (0.75,0.5,0.25,0.1);
-# my @timeouts = (400);
-# my $max_node_limit = 7;
-# my $min_node_limit = 5;
-# my $equal_scaler = 0;
-# my $preferred_scaler = 1;
-# my @heuristic_choice = (4,0,1,2,3);
+my @heuristic_choice = (0,1,2,3,4,5,6);
 
 for my $run_i (@repeat_runs){
+    print $run_i;
+    print "\n";
 	for my $filter_c (@filter_chance){
         for(my $table_size_i = 0; $table_size_i <= $#table_low; $table_size_i++){
             for(my $filter_size_i = 0; $filter_size_i <= $#filter_dnf_low; $filter_size_i++) {
@@ -74,8 +76,8 @@ for my $run_i (@repeat_runs){
                                 open($stats_file, ">>$stats_filename");
                                 print $stats_file "\n$filter_c,$filter_dnf_low[$filter_size_i],$filter_comp_low[$filter_size_i],$filter_dnf_high[$filter_size_i],$filter_comp_high[$filter_size_i],$empty_j,$join_c,$arith_c,$arith_c,0.5,$query_c,$table_low[$table_size_i],$table_upper[$table_size_i],$max_node_limit,$min_node_limit";
                                 close $stats_file;
-                                my $query_generation = system("python benchmark_generator.py $stats_filename $graph_filename $table_filename 1");
-                                my $stats_generation = system("python graph_statistics_c.py $stats_filename $graph_filename $table_filename");
+                                my $query_generation = system("python3 benchmark_generator.py $stats_filename $graph_filename $table_filename 1");
+                                my $stats_generation = system("python3 graph_statistics_c.py $stats_filename $graph_filename $table_filename");
                                 tie *BW, 'File::ReadBackwards', $stats_filename or
                                     die "can't read $stats_filename $!" ;
                                 my $generated_query = <BW>;
@@ -87,7 +89,7 @@ for my $run_i (@repeat_runs){
                                             open($stats_file, ">>$stats_filename");
                                             print $stats_file ",$selectivity[$j],$timeouts[$i],$heuristic_choice[$k],$equal_scaler,$equal_scaler,$preferred_scaler";
                                             close $stats_file;
-                                            $scheduling_return = system("python schedule_c.py OrkhestraFPGAStream.exe fast_benchmark_config.ini $graph_filename $stats_filename $table_filename");
+                                            $scheduling_return = system("python3 schedule_c.py OrkhestraFPGAStream fast_benchmark_config.ini $graph_filename $stats_filename $table_filename");
                                             if (!($i == $#timeouts and $j == $#selectivity and $k == $#heuristic_choice)){
                                                 open($stats_file, ">>$stats_filename");
                                                 print $stats_file "\n$generated_query";

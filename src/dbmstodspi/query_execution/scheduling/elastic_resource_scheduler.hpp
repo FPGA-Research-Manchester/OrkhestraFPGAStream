@@ -81,6 +81,18 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
     int number_of_sequences;
     std::string table_name;
   };
+  static auto GetData(
+      std::vector<QueryNode *> &available_nodes,
+      const std::vector<std::vector<ScheduledModule>> &best_plan,
+      const std::map<QueryOperationType, OperationPRModules> &hw_library,
+      std::map<std::string, TableMetadata> &table_data)
+      -> long;
+  static void GetMergeSortData(
+      std::map<int, std::vector<LengthOfSortedSequences>> &sort_status,
+      NodeRunData &run_data, const std::vector<int> &capacities,
+      std::map<std::string, TableMetadata> &table_data, QueryNode *merge_node,
+      const std::vector<int> &next_run_capacities, bool is_penultimate,
+      long &data_amount);
   static auto IsNumber(const std::string &input_string) -> bool;
   static auto GetCapacityForPenultimateRun(
       int next_run_capacity,

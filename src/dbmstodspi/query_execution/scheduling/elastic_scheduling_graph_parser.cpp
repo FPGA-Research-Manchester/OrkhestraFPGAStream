@@ -709,10 +709,13 @@ auto ElasticSchedulingGraphParser::GetNewStreamedDataSize(
       required_tables[before_node_search - before_node_names.begin()] = "";
     }
   }
-
+  auto operation_type = graph.at(node_name).operation;
   int streamed_data_size = 0;
   for (const auto& table_name : required_tables) {
     if (!table_name.empty()) {
+      if (operation_type == QueryOperationType::kMergeSort){
+        streamed_data_size += graph.at(node_name).capacity.front() * data_tables.at(table_name).sorted_status.at(2) * data_tables.at(table_name).record_size * 4;
+      }
       // Record size is in 4 byte words
       streamed_data_size += data_tables.at(table_name).record_count *
                             data_tables.at(table_name).record_size * 4;
@@ -820,20 +823,23 @@ void ElasticSchedulingGraphParser::GetAllAvailableModulePlacementsInCurrentRun(
   // For each input of the module
   // If the module has another module in the run that has the run name put it into results
 
-  std::unordered_set<std::pair<int, ScheduledModule>, PairHash> result;
-  for (const auto& [location, available_module] : available_module_placements) {
-    const auto& node = graph.at(available_module.node_name);
-    for (const auto& [previous_node_name, _] : node.before_nodes) {
-      for (const auto& placed_module : current_run) {
-        if (placed_module.node_name == previous_node_name) {
-          result.insert({location, available_module});
+  if (prioritise_children_) {
+    std::unordered_set<std::pair<int, ScheduledModule>, PairHash> result;
+    for (const auto& [location, available_module] :
+         available_module_placements) {
+      const auto& node = graph.at(available_module.node_name);
+      for (const auto& [previous_node_name, _] : node.before_nodes) {
+        for (const auto& placed_module : current_run) {
+          if (placed_module.node_name == previous_node_name) {
+            result.insert({location, available_module});
+          }
         }
       }
     }
-  }
-  if (!result.empty()) {
-    available_module_placements.clear();
-    available_module_placements = std::move(result);
+    if (!result.empty()) {
+      available_module_placements.clear();
+      available_module_placements = std::move(result);
+    }
   }
 }
 

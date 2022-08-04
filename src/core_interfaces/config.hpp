@@ -60,6 +60,7 @@ struct Config {
   // Default values here:
   bool reduce_single_runs = true;
   bool use_max_runs_cap = true;
+  bool prioritise_children = true;
   int heuristic_choice = 0;
 
   double streaming_speed = 4800000000;

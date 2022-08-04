@@ -51,7 +51,7 @@ class ElasticSchedulingGraphParser {
           heuristics,
       std::unordered_set<std::string> constrained_first_nodes,
       AcceleratorLibraryInterface& drivers, const bool use_max_runs_cap,
-      const bool reduce_single_runs)
+      const bool reduce_single_runs, const bool prioritise_children)
       : hw_library_{hw_library},
         heuristics_{std::move(heuristics)},
         statistics_counters_{0, 0},
@@ -61,6 +61,7 @@ class ElasticSchedulingGraphParser {
         trigger_timeout_{false},
         use_max_runs_cap_{use_max_runs_cap},
         reduce_single_runs_{reduce_single_runs},
+        prioritise_children_{prioritise_children},
 
         min_runs_{std::numeric_limits<int>::max()},
         pre_scheduler_{hw_library, drivers} {};
@@ -105,6 +106,7 @@ class ElasticSchedulingGraphParser {
            ExecutionPlanSchedulingData>
       resulting_plan_;
   const bool reduce_single_runs_;
+  const bool prioritise_children_;
   PreSchedulingProcessor pre_scheduler_;
 
   /*struct CustomCmp {

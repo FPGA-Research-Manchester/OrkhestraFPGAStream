@@ -34,26 +34,55 @@ class PlanEvaluator : public PlanEvaluatorInterface {
                    const std::map<char, int>& cost_of_columns,
                    double streaming_speed, double configuration_speed)
       -> std::tuple<std::vector<std::vector<ScheduledModule>>,
-                    std::vector<ScheduledModule>, int, int> override;
+                    std::vector<ScheduledModule>, long, long> override;
 
  private:
+  std::map<std::string, int> cost_of_bitstreams_ = {{"binPartial_MergeSort64_7_36.bin", 2854},
+                                                    {"binPartial_MergeSort64_37_66.bin", 2850},
+                                                    {"binPartial_MergeSort32_46_66.bin", 2135},
+                                                    {"binPartial_MergeSort32_16_36.bin", 2173},
+                                                    {"binPartial_MergeSort128_49_96.bin", 3354},
+                                                    {"binPartial_MergeJoin2K_67_96.bin", 2833},
+                                                    {"binPartial_MergeJoin2K_37_66.bin", 2849},
+                                                    {"binPartial_LinearSort512_7_36.bin", 2854},
+                                                    {"binPartial_LinearSort1024_7_48.bin", 4582},
+                                                    {"binPartial_Filter_37_66.bin", 2854},
+                                                    {"binPartial_DecMult64b_64_84.bin", 2161},
+                                                    {"binPartial_DecMult64b_4_24.bin", 2188},
+                                                    {"binPartial_DecMult64b_34_54.bin", 2054},
+                                                    {"binPartial_LinearSort1024_37_78.bin", 4532},
+                                                    {"binPartial_ConstArith64b_55_66.bin", 1457},
+                                                    {"binPartial_ConstArith64b_25_36.bin", 1435},
+                                                    {"binPartial_AggregateGlobalSum_85_93.bin", 1036},
+                                                    {"binPartial_AggregateGlobalSum_55_63.bin", 1030},
+                                                    {"binPartial_AggregateGlobalSum_25_33.bin", 999},
+                                                    {"binPartial_Filter_7_36.bin", 2858},
+                                                    {"RT", 504},
+                                                    {"binPartial_LinearSort512_37_66.bin", 2866},
+                                                    {"binPartial_MergeSort64_67_96.bin", 2839},
+                                                    {"binPartial_MergeJoin2K_7_36.bin", 2879},
+                                                    {"binPartial_MergeSort128_19_66.bin", 3360},
+                                                    {"binPartial_Filter_67_96.bin", 2944},
+                                                    {"binPartial_LinearSort512_67_96.bin", 2842},
+                                                    {"binPartial_MergeSort32_76_96.bin", 2125},
+                                                    {"binPartial_ConstArith64b_85_96.bin", 1461},
+  };
   static auto FindConfigWritten(
       const std::vector<std::vector<ScheduledModule>>& all_runs,
       const std::vector<ScheduledModule>& current_configuration,
-      const std::string& resource_string,
-      const std::map<char, int>& cost_of_columns)
+      const std::map<std::string, int>& cost_of_bitstreams)
       -> std::pair<int, std::vector<ScheduledModule>>;
 
   static auto FindFastestPlan(
-      const std::vector<int>& data_streamed,
-      const std::vector<int>& configuration_data_wirtten,
-      double streaming_speed, double configuration_speed) -> int;
+      const std::vector<long>& data_streamed,
+      const std::vector<long>& configuration_time,
+      double streaming_speed) -> int;
 
   static auto FindConfigWrittenForConfiguration(
-      const std::vector<ScheduledModule>& current_run,
-      const std::vector<ScheduledModule>& previous_configuration,
-      const std::string& resource_string,
-      const std::map<char, int>& cost_of_columns)
+      const std::vector<ScheduledModule>& next_config,
+      const std::vector<ScheduledModule>& current_config,
+      std::vector<std::string>& current_routing,
+      const std::map<std::string, int>& cost_of_bitstreams)
       -> std::pair<int, std::vector<ScheduledModule>>;
 
   static void FindNewWrittenFrames(

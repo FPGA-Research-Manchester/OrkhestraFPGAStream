@@ -44,6 +44,7 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string force_pr = "DEBUG_FORCE_PR";
   std::string reduce_runs = "REDUCE_RUNS";
   std::string max_runs = "MAX_RUNS_CAP";
+  std::string children = "PRIORITISE_CHILDREN";
   std::string heuristic = "HEURISTIC";
   std::string streaming_speed = "STREAMING_SPEED";
   std::string configuration_speed = "CONFIGURATION_SPEED";
@@ -63,6 +64,8 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
       config.reduce_single_runs;
   std::istringstream(config_values[max_runs]) >> std::boolalpha >>
       config.use_max_runs_cap;
+  std::istringstream(config_values[children]) >> std::boolalpha >>
+      config.prioritise_children;
   config.heuristic_choice = std::stoi(config_values[heuristic]);
   config.streaming_speed = std::stod(config_values[streaming_speed]);
   config.configuration_speed = std::stod(config_values[configuration_speed]);
@@ -97,7 +100,7 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   config.pr_hw_library = CreateHWLibrary(hw_library_json_data);
   // TODO(Kaspar): Enable this check! Removed now as there are a lot of
   // theoretical tables given.
-  CheckBitstreamsExist(config.pr_hw_library);
+  // CheckBitstreamsExist(config.pr_hw_library);
 
   auto column_sizes = json_reader_->ReadValueMap(config_values[column_cost]);
   for (const auto& [column_type, size] : column_sizes) {

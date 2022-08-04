@@ -33,7 +33,7 @@ namespace orkhestrafs::dbmstodspi::scheduling_data {
 struct ExecutionPlanSchedulingData {
   std::unordered_set<std::string> processed_nodes;
   std::map<std::string, TableMetadata> data_tables;
-  int streamed_data_size;
+  long streamed_data_size;
 };
 
 }  // namespace orkhestrafs::dbmstodspi::scheduling_data

@@ -34,9 +34,9 @@ auto SimplePlanEvaluator::GetBestPlan(
     const std::map<char, int>& /*cost_of_columns*/, double /*streaming_speed*/,
     double /*configuration_speed*/)
     -> std::tuple<std::vector<std::vector<ScheduledModule>>,
-                  std::vector<ScheduledModule>, int, int> {
+                  std::vector<ScheduledModule>, long, long> {
   std::tuple<std::vector<std::vector<ScheduledModule>>,
-             std::vector<ScheduledModule>, int, int>
+             std::vector<ScheduledModule>, long, long>
       best_plan;
   int max_nodes_in_min_plan = 0;
   int min_configured_rows_in_min_plan = 0;

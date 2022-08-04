@@ -218,10 +218,12 @@ void ExecutionManager::InitialiseTables(
         table_name =
             current_node->node_name + "_" + std::to_string(output_stream_id);
         TableMetadata new_data;
-        new_data.record_size = query_manager->GetRecordSizeFromParameters(
-            data_manager,
-            current_node->given_operation_parameters.output_stream_parameters,
-            output_stream_id);
+//        new_data.record_size = query_manager->GetRecordSizeFromParameters(
+//            data_manager,
+//            current_node->given_operation_parameters.output_stream_parameters,
+//            output_stream_id);
+        // Hardcoded for benchmarking
+        new_data.record_size = 10;
         new_data.record_count = -1;
         tables_metadata.insert({table_name, new_data});
       }
@@ -287,11 +289,11 @@ void ExecutionManager::Execute(
   std::cout << "EXECUTION: " << (data_size / 4659.61402505057)
             << std::endl;*/
   
-  std::cout << "STATIC: "
-            << ((data_size / 4659.61402505057) + initialisation)
-            << std::endl;
-
-  std::cout << "DATA_STREAMED: " << data_size << std::endl;
+//  std::cout << "STATIC: "
+//            << ((data_size / 4659.61402505057) + initialisation)
+//            << std::endl;
+//
+//  std::cout << "DATA_STREAMED: " << data_size << std::endl;
   /*std::cout << "TOTAL EXECUTION RUNTIME: "
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      begin)
