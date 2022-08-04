@@ -97,9 +97,9 @@ class QueryManager : public QueryManagerInterface {
       MemoryManagerInterface* memory_manager,
       AcceleratorLibraryInterface& driver_library) override;
 
-  void LoadPRBitstreams(MemoryManagerInterface* memory_manager,
+  auto LoadPRBitstreams(MemoryManagerInterface* memory_manager,
                         const std::vector<std::string>& bitstream_names,
-                        AcceleratorLibraryInterface& driver_library) override;
+                        AcceleratorLibraryInterface& driver_library) -> long override;
 
   auto GetPRBitstreamsToLoadWithPassthroughModules(
       std::vector<ScheduledModule>& current_config,

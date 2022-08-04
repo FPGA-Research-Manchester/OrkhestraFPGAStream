@@ -272,7 +272,7 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
   Log(LogLevel::kInfo,
       "Main scheduling loop time = " + std::to_string(scheduling_time / 1000) +
           "[milliseconds]");
-  std::cout << "PLAN COUNT:" << resulting_plans.size() << std::endl;
+  //std::cout << "PLAN COUNT:" << resulting_plans.size() << std::endl;
 
   Log(LogLevel::kTrace, "Choosing best plan.");
   // resulting_plans
@@ -823,6 +823,11 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
           sequence_merged = true;
         }
       }
+      if (!sequence_merged) {
+        sort_status[new_sequence_size].push_back(
+            {run_data.output_offset.front(), 1, output_table_name});
+        sequence_merged = true;
+      }
     }
     if (!sequence_merged) {
       LengthOfSortedSequences new_sequence = {run_data.output_offset.front(), 1,
@@ -844,10 +849,32 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
         !inserted) {
       it->second++;
     }
+    /*int all_sequences_in_the_pipeline = 0;
+    for (const auto &[sequence_size, sequence_vector] : sort_status) {
+      for (const auto &sequence_data : sequence_vector) {
+        all_sequences_in_the_pipeline +=
+            sequence_size * sequence_data.number_of_sequences;
+        std::cout << sequence_size << " * " << sequence_data.number_of_sequences
+                  << " = " << sequence_size * sequence_data.number_of_sequences
+                  << std::endl;
+      }
+    }*/
+    /*if (table_data.at(merge_node->given_input_data_definition_files.front())
+            .record_count != all_sequences_in_the_pipeline) {
+      throw std::runtime_error("Incorrect number of records have been sorted before finishing!");
+    }*/
   } else {
     // if empty check that all nodes have been sorted!
     if (table_data.at(merge_node->given_input_data_definition_files.front())
             .record_count != new_sequence_size) {
+      /*std::cout
+          << table_data
+                 .at(merge_node->given_input_data_definition_files.front())
+                 .record_count
+          << std::endl;
+      std::cout << "VS"
+          << std::endl;
+      std::cout << new_sequence_size << std::endl;*/
       throw std::runtime_error("Incorrect number of records have been sorted!");
     }
   }

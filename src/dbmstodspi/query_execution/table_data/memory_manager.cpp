@@ -38,7 +38,7 @@ using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::MemoryManager;
 
-auto MemoryManager::GetTime() -> int { return latest_config_time_; }
+auto MemoryManager::GetTime() -> long { return latest_config_time_; }
 
 MemoryManager::~MemoryManager() = default;
 
@@ -109,15 +109,15 @@ void MemoryManager::LoadStatic() {
                   .count()) +
           "[ms]");
   Log(LogLevel::kDebug, "Static loaded: " + static_bitstream);
+  latest_config_time_ =
+      std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+          .count();
 #else
   /*throw std::runtime_error("Can't load anything!");*/
   register_space_ = std::vector<uint32_t>(register_space_size, -1);
 #endif
   loaded_register_space_size_ = register_space_size;
   loaded_bitstream_ = "static";
-  latest_config_time_ =
-      std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
-          .count();
 }
 
 // This is a debug method with the FPGA available.
@@ -188,19 +188,20 @@ void MemoryManager::LoadPartialBitstream(
     Log(LogLevel::kDebug, "Loading PR bitstream:" + name);
     fpga_manager.loadPartial(name);
   }
+  /*std::cout << std::endl;*/
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   /*std::cout << "PR CONFIGURATION: "
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      begin)
                    .count()
             << std::endl;*/
+  latest_config_time_ =
+      std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+          .count();
 #else
   // Don't do anything
   /*throw std::runtime_error("Can't load anything!");*/
 #endif
-  latest_config_time_ =
-      std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
-          .count();
 }
 
 void MemoryManager::LoadBitstreamIfNew(const std::string& bitstream_name,

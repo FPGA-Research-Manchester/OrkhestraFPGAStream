@@ -513,16 +513,16 @@ void QueryManager::LoadEmptyRoutingPRRegion(
   LoadPRBitstreams(memory_manager, empty_pr_region, driver_library);
 }
 
-void QueryManager::LoadPRBitstreams(
+auto QueryManager::LoadPRBitstreams(
     MemoryManagerInterface* memory_manager,
     const std::vector<std::string>& bitstream_names,
-    AcceleratorLibraryInterface& driver_library) {
+    AcceleratorLibraryInterface& driver_library) ->long {
   if (!bitstream_names.empty()) {
     auto dma_module = driver_library.GetDMAModule();
     memory_manager->LoadPartialBitstream(bitstream_names, *dma_module);
-    latest_config_ = memory_manager->GetTime();
+    return memory_manager->GetTime();
   } else {
-    latest_config_ = 0;
+    return 0;
   }
 }
 

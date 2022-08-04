@@ -209,10 +209,10 @@ class QueryManagerInterface {
    * @param bitstream_names Bitstreams to load
    * @param driver_library To get the DMA module to decouple from the PR region.
    */
-  virtual void LoadPRBitstreams(
+  virtual auto LoadPRBitstreams(
       MemoryManagerInterface* memory_manager,
       const std::vector<std::string>& bitstream_names,
-      AcceleratorLibraryInterface& driver_library) = 0;
+      AcceleratorLibraryInterface& driver_library) -> long = 0;
 
   /**
    * @brief Find out which bitstreams have to be loaded next.

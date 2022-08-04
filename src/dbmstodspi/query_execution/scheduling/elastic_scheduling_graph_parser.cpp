@@ -85,12 +85,13 @@ auto ElasticSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
         // Is there a parent node in the current run already.
         if (std::any_of(
                 current_run.begin(), current_run.end(),
-                [&](const auto& module) {
+                [&](const auto& cur_module) {
                   return std::find_if(
                              graph.at(node_name).before_nodes.begin(),
                              graph.at(node_name).before_nodes.end(),
                              [&](const auto& before_pointer) {
-                               return before_pointer.first == module.node_name;
+                                       return before_pointer.first ==
+                                              cur_module.node_name;
                              }) != graph.at(node_name).before_nodes.end();
                 })) {
           resulting_nodes.erase(node_name);
@@ -100,7 +101,75 @@ auto ElasticSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
     if (blocked_nodes.find(node_name) != blocked_nodes.end()) {
       resulting_nodes.erase(node_name);
     }
+
+  //  auto current_operation = graph.at(node_name).operation;
+
+  //  if (std::any_of(
+  //          current_run.begin(), current_run.end(), [&](const auto& cur_module) {
+  //            return current_operation == cur_module.operation_type;})) {
+  //    resulting_nodes.erase(node_name);
+  //  }
+
+  //  if (current_operation == QueryOperationType::kAddition) {
+  //    if (std::any_of(current_run.begin(), current_run.end(),
+  //                    [](const auto& cur_module) {
+  //                      return cur_module.operation_type == QueryOperationType::kMergeSort;
+  //                    })) {
+  //      resulting_nodes.erase(node_name);
+  //    }
+  //  } else if (current_operation == QueryOperationType::kAggregationSum) {
+  //      // Do nothing
+  //  } else if (current_operation == QueryOperationType::kFilter) {
+  //      // Do nothing
+  //  } else if (current_operation == QueryOperationType::kJoin) {
+  //    if (std::any_of(current_run.begin(), current_run.end(),
+  //                    [](const auto& cur_module) {
+  //                      return cur_module.operation_type ==
+  //                                 QueryOperationType::kMultiplication ||
+  //                             cur_module.operation_type ==
+  //                                 QueryOperationType::kLinearSort;
+  //                    })) {
+  //      resulting_nodes.erase(node_name);
+  //    }
+  //  } else if (current_operation == QueryOperationType::kLinearSort) {
+  //    if (std::any_of(current_run.begin(), current_run.end(),
+  //                    [](const auto& cur_module) {
+  //                      return cur_module.operation_type ==
+  //                                 QueryOperationType::kMergeSort ||
+  //                             cur_module.operation_type ==
+  //                                 QueryOperationType::kJoin;
+  //                      ;
+  //                    })) {
+  //      resulting_nodes.erase(node_name);
+  //    }
+  //  } else if (current_operation == QueryOperationType::kMergeSort) {
+  //    if (std::any_of(current_run.begin(), current_run.end(),
+  //                    [](const auto& cur_module) {
+  //                      return cur_module.operation_type ==
+  //                                 QueryOperationType::kAddition ||
+  //                             cur_module.operation_type ==
+  //                                 QueryOperationType::kMultiplication ||
+  //                             cur_module.operation_type ==
+  //                                 QueryOperationType::kLinearSort;
+  //                      ;
+  //                      ;
+  //                    })) {
+  //      resulting_nodes.erase(node_name);
+  //    }
+  //  } else if (current_operation == QueryOperationType::kMultiplication) {
+  //    if (std::any_of(current_run.begin(), current_run.end(),
+  //                    [](const auto& cur_module) {
+  //                      return cur_module.operation_type ==
+  //                                 QueryOperationType::kMergeSort ||
+  //                             cur_module.operation_type ==
+  //                                 QueryOperationType::kJoin;
+  //                      ;
+  //                    })) {
+  //      resulting_nodes.erase(node_name);
+  //    }
+  //  }
   }
+
   // Is input table been processed?
   return resulting_nodes;
 }
@@ -745,6 +814,26 @@ void ElasticSchedulingGraphParser::GetAllAvailableModulePlacementsInCurrentRun(
     GetScheduledModulesForNodeAfterPos(graph, current_run, node_name,
                                        data_tables,
                                        available_module_placements);
+  }
+
+  // For each module in the avilable module placements:
+  // For each input of the module
+  // If the module has another module in the run that has the run name put it into results
+
+  std::unordered_set<std::pair<int, ScheduledModule>, PairHash> result;
+  for (const auto& [location, available_module] : available_module_placements) {
+    const auto& node = graph.at(available_module.node_name);
+    for (const auto& [previous_node_name, _] : node.before_nodes) {
+      for (const auto& placed_module : current_run) {
+        if (placed_module.node_name == previous_node_name) {
+          result.insert({location, available_module});
+        }
+      }
+    }
+  }
+  if (!result.empty()) {
+    available_module_placements.clear();
+    available_module_placements = std::move(result);
   }
 }
 

@@ -279,11 +279,18 @@ void ExecutionManager::Execute(
   long initialisation = data[2];
   long system =
       total_execution - scheduling - init_config - config - initialisation;
+  /*std::cout << "CONFIGURATION: " << config << std::endl;
+  std::cout << "SCHEDULING: " << scheduling << std::endl;
+  std::cout << "INITIALISATION: " << initialisation << std::endl;
   std::cout << "SYSTEM: " << system
             << std::endl;
-  std::cout << "SCHEDULING: " << scheduling << std::endl;
-  std::cout << "CONFIGURATION: " << config << std::endl;
-  std::cout << "INITIALISATION: " << initialisation << std::endl;
+  std::cout << "EXECUTION: " << (data_size / 4659.61402505057)
+            << std::endl;*/
+  
+  std::cout << "STATIC: "
+            << ((data_size / 4659.61402505057) + initialisation)
+            << std::endl;
+
   std::cout << "DATA_STREAMED: " << data_size << std::endl;
   /*std::cout << "TOTAL EXECUTION RUNTIME: "
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
@@ -363,9 +370,9 @@ void ExecutionManager::SetupNextRunData() {
           current_configuration_, query_node_runs_queue_.front().first, current_routing_);
   query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
                                    *accelerator_library_);
-  query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
+  config_time_ += query_manager_->LoadPRBitstreams(
+      memory_manager_.get(), bitstreams_to_load,
                                    *accelerator_library_);
-  config_time_ += query_manager_->GetConfigTime();
   /*query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
    *accelerator_library_.get());*/
   // Debugging
@@ -448,6 +455,7 @@ void ExecutionManager::PrintCurrentStats() {
 }
 
 void ExecutionManager::SetupSchedulingData(bool setup_bitstreams) {
+  config_time_ = 0;
   current_tables_metadata_ = config_.initial_all_tables_metadata;
   if (setup_bitstreams) {
     query_manager_->LoadInitialStaticBitstream(memory_manager_.get());

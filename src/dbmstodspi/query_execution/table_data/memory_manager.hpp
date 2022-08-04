@@ -36,7 +36,7 @@ namespace orkhestrafs::dbmstodspi {
  */
 class MemoryManager : public MemoryManagerInterface {
  private:
-  int latest_config_time_ = 0;
+  long latest_config_time_ = 0;
   std::vector<std::unique_ptr<MemoryBlockInterface>> current_memory_blocks_;
   std::stack<MemoryBlockInterface*> available_memory_blocks_;
   int memory_block_count_ = 0;
@@ -57,7 +57,7 @@ class MemoryManager : public MemoryManagerInterface {
   std::vector<uint32_t> register_space_;
 #endif
  public:
-  auto GetTime() -> int override;
+  auto GetTime() -> long override;
   void MeasureConfigurationSpeed(
       const std::set<std::string>& bitstreams_to_measure) override;
 
