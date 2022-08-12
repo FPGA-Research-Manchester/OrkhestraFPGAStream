@@ -27,7 +27,7 @@ using orkhestrafs::dbmstodspi::MemoryManagerInterface;
 
 class MockMemoryManager : public MemoryManagerInterface {
  public:
-  MOCK_METHOD(int, GetTime, (), (override));
+  MOCK_METHOD(long, GetTime, (), (override));
   MOCK_METHOD(MemoryBlockInterface*, GetAvailableMemoryBlock, (), (override));
   MOCK_METHOD(void, FreeMemoryBlock,
               (MemoryBlockInterface * memory_block_pointer), ());

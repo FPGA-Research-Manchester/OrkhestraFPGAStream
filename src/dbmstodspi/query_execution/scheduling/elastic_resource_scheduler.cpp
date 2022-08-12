@@ -130,7 +130,7 @@ auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
     Log(LogLevel::kInfo, "Timeout of " +
                              std::to_string(time_limit_duration_in_seconds) +
                              " seconds hit by the scheduler.");
-    throw std::runtime_error("TIMEOUT!");
+    //throw std::runtime_error("TIMEOUT!");
   }
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();

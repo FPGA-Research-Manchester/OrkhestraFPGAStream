@@ -95,7 +95,7 @@ class MockQueryManager : public QueryManagerInterface {
               (MemoryManagerInterface * memory_manager,
                AcceleratorLibraryInterface& driver_library),
               (override));
-  MOCK_METHOD(void, LoadPRBitstreams,
+  MOCK_METHOD(long, LoadPRBitstreams,
               (MemoryManagerInterface * memory_manager,
                const std::vector<std::string>& bitstream_names,
                AcceleratorLibraryInterface& driver_library),
