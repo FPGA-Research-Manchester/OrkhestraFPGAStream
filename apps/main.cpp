@@ -66,22 +66,31 @@ void MeasureOverallTimeOfParsedPlan(string input_def_filename,
 }
 
 // Storing queries inside files for fun.
-void RunSQLQuery(string query_filename, string config_filename) {
+void RunSQLQuery(string query_filename, string config_filename,
+                 string database = "tpch_001") {
+  auto frontend_begin = chrono::steady_clock::now();
   SQLQueryCreator sql_creator;
-  SQLParser::CreatePlan(sql_creator, std::move(query_filename));
-  auto begin = chrono::steady_clock::now();
-  Core::Run(std::move(sql_creator.ExportInputDef()),
-            std::move(config_filename));
-  auto end = chrono::steady_clock::now();
-  std::cout << "TOTAL RUNTIME:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
+  SQLParser::CreatePlan(sql_creator, std::move(query_filename),
+                        std::move(database));
+  auto frontend_end = chrono::steady_clock::now();
+  std::cout << "PARSING RUNTIME: "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(
+                   frontend_end - frontend_begin)
                    .count()
             << std::endl;
+  auto exec_begin = chrono::steady_clock::now();
+  Core::Run(std::move(sql_creator.ExportInputDef()),
+            std::move(config_filename));
+  auto exec_end = chrono::steady_clock::now();
+  /*std::cout << "EXECUTION RUNTIME: "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(exec_end -
+                                                                     exec_begin)
+                   .count()
+            << std::endl;*/
   Log(LogLevel::kInfo,
-      "Overall time = " +
-          to_string(
-              chrono::duration_cast<std::chrono::milliseconds>(end - begin)
+      "Execution time = " +
+          to_string(chrono::duration_cast<std::chrono::milliseconds>(exec_end -
+                                                                     exec_begin)
                   .count()) +
           "[ms]");
 }
@@ -143,6 +152,12 @@ auto main(int argc, char* argv[]) -> int {
   } else {
     SetLoggingLevel(LogLevel::kInfo);
   }
+
+  string command = "./OrkhestraFPGAStream";
+  for (const auto key_value : result.arguments()) {
+    command += " --" + key_value.key() + " " + key_value.value();
+  }
+  Log(LogLevel::kDebug, command);
 
   string config_name = "fast_benchmark_config.ini";
   if (result.count("config")) {

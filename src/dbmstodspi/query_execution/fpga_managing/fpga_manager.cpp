@@ -127,7 +127,7 @@ void FPGAManager::FindIOStreams(
     if (!current_stream.physical_addresses_map.empty() &&
         current_stream.stream_id != 15) {
       found_streams.push_back(current_stream);
-      /*stream_status_array[current_stream.stream_id] = true;*/
+      stream_status_array[current_stream.stream_id] = true;
       // To configure passthrough streams
       /*auto new_stream = current_stream;
       new_stream.stream_record_count = 0;
@@ -142,14 +142,13 @@ auto FPGAManager::RunQueryAcceleration()
     -> std::array<int, query_acceleration_constants::kMaxIOStreamCount> {
   std::vector<int> active_input_stream_ids;
   std::vector<int> active_output_stream_ids;
-
   // This can be expanded on in the future with multi threaded processing where
   // some streams are checked while others are being setup and fired.
   FindActiveStreams(active_input_stream_ids, active_output_stream_ids);
 
-  /*if (active_input_stream_ids.empty() || active_output_stream_ids.empty()) {
+  if (active_input_stream_ids.empty() || active_output_stream_ids.empty()) {
     throw std::runtime_error("FPGA does not have active streams!");
-  }*/
+  }
 
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
@@ -167,7 +166,7 @@ auto FPGAManager::RunQueryAcceleration()
                   .count()) +
           "[microseconds]");
 
-  // PrintDebuggingData();
+  PrintDebuggingData();
   return GetResultingStreamSizes(active_input_stream_ids,
                                  active_output_stream_ids);
 }
@@ -216,11 +215,11 @@ void FPGAManager::ReadResultsFromRegisters() {
     for (int module_index = 0; module_index < read_back_modules_.size();
          module_index++) {
       for (auto const& position : read_back_parameters_.at(module_index)) {
-        /*std::cout << "SUM: " << std::fixed << std::setprecision(2)
+        std::cout << "SUM: " << std::fixed << std::setprecision(2)
                   << ReadModuleResultRegisters(
                          std::move(read_back_modules_.at(module_index)),
                          position)
-                  << std::endl;*/
+                  << std::endl;
       }
     }
   }
@@ -245,8 +244,8 @@ auto FPGAManager::GetResultingStreamSizes(
       auto thing = dma_engine_->GetControllerStreamSize(false, stream_id);
       int yo = 0;
     }*/
-    /*result_sizes[stream_id] =
-        dma_engine_->GetControllerStreamSize(false, stream_id);*/
+    result_sizes[stream_id] =
+        dma_engine_->GetControllerStreamSize(false, stream_id);
   }
   return result_sizes;
 }

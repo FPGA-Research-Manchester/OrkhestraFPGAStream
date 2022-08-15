@@ -203,13 +203,13 @@ void QueryManager::AllocateInputMemoryBlocks(
       std::chrono::steady_clock::time_point begin =
           std::chrono::steady_clock::now();
 
-      /*auto [record_size, record_count] = TableManager::WriteDataToMemory(
+      auto [record_size, record_count] = TableManager::WriteDataToMemory(
           data_manager, input_stream_parameters, stream_index,
           table_memory_blocks[input_table], input_table);
 
       std::chrono::steady_clock::time_point end =
           std::chrono::steady_clock::now();
-      std::cout << "FS TO MEMORY WRITE:"
+      std::cout << "FS TO MEMORY WRITE: "
                 << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                          begin)
                        .count()
@@ -226,7 +226,7 @@ void QueryManager::AllocateInputMemoryBlocks(
               current_tables_metadata.at(input_table).record_count) {
         throw std::runtime_error(
             "Mismatch of table sizes after reading table data!");
-      }*/
+      }
     }
   }
 }

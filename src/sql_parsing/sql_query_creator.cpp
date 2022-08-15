@@ -23,12 +23,17 @@ limitations under the License.
 #include <stdexcept>
 #include <utility>
 
+#include "logger.hpp"
 #include "sql_json_writer.hpp"
 
+using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::sql_parsing::SQLJSONWriter;
 using orkhestrafs::sql_parsing::SQLQueryCreator;
 
 auto SQLQueryCreator::ExportInputDef() -> std::string {
+  // TODO: Hardcoded for now
+  const std::string graph_file = "intermediate_execution_graph.json";
   UpdateRequiredColumns();
 
   // Initialise starting points given input operations
@@ -45,9 +50,11 @@ auto SQLQueryCreator::ExportInputDef() -> std::string {
               data_to_write);
   // TODO(Kaspar): Add crossbar reduction to output nodes - Add all nodes before
   // merge sort as output nodes as well!
-  const std::string file_name = "Q19.json";
-  SQLJSONWriter::WriteQuery(file_name, data_to_write);
-  return file_name;
+  Log(LogLevel::kDebug, "Writing execution plan to: " + graph_file);
+
+  SQLJSONWriter::WriteQuery(graph_file, data_to_write);
+  Log(LogLevel::kInfo, "Finished parsing query. Plan stored to: " + graph_file);
+  return graph_file;
   // return "benchmark_Q19_SF001.json";
 }
 void SQLQueryCreator::FillDataMap(
@@ -558,7 +565,8 @@ void SQLQueryCreator::SetMultiplicationStreamParams(
       params.push_back(0);
     }
   }
-  current_operation_params.insert({operation_specific_params_string_, {params}});
+  current_operation_params.insert(
+      {operation_specific_params_string_, {params}});
 }
 void SQLQueryCreator::SetAggregationStreamParams(
     const std::string& current_process,
@@ -1238,12 +1246,10 @@ auto SQLQueryCreator::PlaceColumnsToDesiredPositions(
 
   operations_[current_process]
       .output_params[stream_index * io_param_vector_count_ +
-                     data_types_offset_] =
-      column_types;
+                     data_types_offset_] = column_types;
   operations_[current_process]
       .output_params[stream_index * io_param_vector_count_ +
-                     data_sizes_offset_] =
-      column_sizes;
+                     data_sizes_offset_] = column_sizes;
   operations_[current_process]
       .input_params[stream_index * io_param_vector_count_ + crossbar_offset_] =
       flattened_crossbar_config;
@@ -1336,12 +1342,10 @@ auto SQLQueryCreator::CompressNullColumns(const std::string& current_process,
   }
   operations_[current_process]
       .output_params[stream_index * io_param_vector_count_ +
-                     data_sizes_offset_] =
-      new_data_sizes_concat;
+                     data_sizes_offset_] = new_data_sizes_concat;
   operations_[current_process]
       .output_params[stream_index * io_param_vector_count_ +
-                     data_types_offset_] =
-      new_data_types_concat;
+                     data_types_offset_] = new_data_types_concat;
   operations_[current_process]
       .input_params[stream_index * io_param_vector_count_ + crossbar_offset_]
       .resize(crossbar_config_length);

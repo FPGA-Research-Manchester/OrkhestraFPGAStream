@@ -373,7 +373,7 @@ def CheckTableIsExported(table_name):
     csv_filename = table_name + ".csv"
     if not exists(csv_filename):
         raise RuntimeError(f"{csv_filename} doesn't exist!")
-        # TODO: Fix this automatically!
+    # TODO: Fix this automatically!
     return csv_filename
 
 
@@ -500,13 +500,17 @@ def PrintAPICalls(all_nodes, key):
 
 
 def CheckPostgreSQL(database_name):
-    # TODO: Also check that the database exists
     print("Checking PostgreSQL version:")
-    result = subprocess.run(["psql", "--version"])
+    result = subprocess.run(["psql", "--version"], capture_output=True, encoding='UTF-8')
     try:
         result.check_returncode()
+        print(result.stdout)
     except BaseException:
         raise RuntimeError("No PostgreSQL!")
+    command = f"psql -XtAc \"SELECT 1 FROM pg_database WHERE datname='{database_name}'\""
+    #output = subprocess.check_output(["psql", command])
+    if subprocess.getoutput(command).split()[0] != "1":
+        raise RuntimeError("No database: " + database_name)
 
 
 def GetExplainJSON(database_name, query_file):
@@ -514,14 +518,19 @@ def GetExplainJSON(database_name, query_file):
         query = f.read()
     explain_command = f"EXPLAIN (VERBOSE TRUE, FORMAT JSON) {query}"
     command = f"echo \"{explain_command}\" | psql -t -A {database_name}"
-    result = "temp"
+    result = "EXPLAIN"
     output_filename = f"{result}.json"
     os.system(f"{command} > {output_filename}")
+    print(f"PSQL command: \n {command}")
+    print(f"EXPLAIN output in: {output_filename}")
     return output_filename
 
 
 def main(argv):
-    # argv is supposed to be the query in a file and the database name.
+    # argv is supposed to be the query in a file and the database name and the
+    # output.
+    if len(argv) != 3:
+        raise RuntimeError("Incorrect number of arguments!")
     # database_name = "tpch_001"
     database_name = argv[0]
     CheckPostgreSQL(database_name)
@@ -579,10 +588,11 @@ def main(argv):
 
     # for key in json_data.keys():
     #     print(f"{key}:{json_data[key]}")
-    result_file = 'parsed.json'
+    # result_file = 'parsed.json'
+    result_file = argv[2]
     with open(result_file, 'w') as fp:
         json.dump(json_data, fp)
-    print(f"Data in {result_file}")
+    print(f"API function parameters in: {result_file}")
 
 
 if __name__ == '__main__':

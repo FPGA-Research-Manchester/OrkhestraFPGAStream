@@ -281,6 +281,9 @@ void ExecutionManager::Execute(
   long initialisation = data[2];
   long system =
       total_execution - scheduling - init_config - config - initialisation;
+  long actual_execution = total_execution - init_config;
+  //std::cout << "ACTUAL_EXECUTION: " << actual_execution << std::endl;
+
   /*std::cout << "CONFIGURATION: " << config << std::endl;
   std::cout << "SCHEDULING: " << scheduling << std::endl;
   std::cout << "INITIALISATION: " << initialisation << std::endl;
@@ -289,9 +292,9 @@ void ExecutionManager::Execute(
   std::cout << "EXECUTION: " << (data_size / 4659.61402505057)
             << std::endl;*/
   
-  std::cout << "STATIC: "
+  /*std::cout << "STATIC: "
             << ((data_size / 4659.61402505057) + initialisation)
-            << std::endl;
+            << std::endl;*/
 
   //std::cout << "DATA_STREAMED: " << data_size << std::endl;
   /*std::cout << "TOTAL EXECUTION RUNTIME: "

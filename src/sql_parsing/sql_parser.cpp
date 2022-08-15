@@ -20,22 +20,29 @@ limitations under the License.
 #include <set>
 #include <unordered_set>
 
+#include "logger.hpp"
 #include "sql_json_reader.hpp"
 
 using orkhestrafs::core_interfaces::table_data::kDataTypeNames;
+using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::sql_parsing::SQLJSONReader;
 using orkhestrafs::sql_parsing::SQLParser;
 
 void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
-                           const std::string& query_filename) {
+                           const std::string& query_filename,
+                           const std::string& database_name) {
+  // TODO(Kaspar): Hardcoded for now
+  const std::string parsed_filename = "API_calls_data.json";
   // TODO(Kaspar): Add logging
-  const std::string default_database_name = "tpch_001";
-  // std::cout << "Parsing: " << query_filename << std::endl;
+  Log(LogLevel::kInfo,
+      "Parsing query from " + query_filename);
   std::map<int, std::vector<std::string>> explain_data;
   // TODO(Kaspar): Should do more checks!
   if (std::system(nullptr)) {
     std::string command = "python3 postgresql_explain_parser.py";
-    command += " " + default_database_name + " " + query_filename;
+    command +=
+        " " + database_name + " " + query_filename + " " + parsed_filename;
     // std::cout << command << std::endl;
     auto return_val = std::system(command.c_str());
     if (return_val) {
@@ -44,11 +51,10 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
   } else {
     throw std::runtime_error("Can't execute any subprocesses");
   }
-  // TODO(Kaspar): Hardcoded for now
-  std::string parsed_filename = "parsed.json";
+  Log(LogLevel::kInfo, "Parsing API calls from " + parsed_filename);
   // Actually the query needs to get parsed by the Python script first!
   SQLJSONReader::ReadQuery(parsed_filename, explain_data);
-
+  Log(LogLevel::kDebug, "Finished reading " + parsed_filename);
   // Initial data parsing to get dependencies.
   // For key to be available all input_dependencies must be done!
   std::map<int, std::set<int>> input_dependencies;
