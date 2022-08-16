@@ -420,19 +420,12 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPosOrig(
         graph.at(node_name).satisfying_bitstreams, module_placements,
         is_composed);
   }
-  if (!modules_found) {
+  if (!modules_found && drivers_.IsIncompleteOperationSupported(graph.at(node_name).operation)) {
     modules_found = GetChosenModulePlacements(
         node_name, graph.at(node_name).operation, heuristics_.second,
         min_position, taken_positions,
         hw_library_.at(graph.at(node_name).operation).starting_locations,
         module_placements, is_composed);
-#ifdef FPGA_AVAILABLE
-    if (modules_found &&
-        graph.at(node_name).operation == QueryOperationType::kFilter) {
-      throw std::runtime_error(
-          "Currently resource elastic filter support is broken!");
-    }
-#endif
   }
 }
 

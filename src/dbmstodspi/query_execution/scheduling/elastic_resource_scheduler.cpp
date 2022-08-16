@@ -246,13 +246,13 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
   benchmark_data["configuration_amount"] += configuration_amount;
 
   // TODO(Kaspar): Need to update available nodes for next run!
-//  for (const auto &run : best_plan) {
-//    for (const auto &node : run) {
-//      std::cout << " " << node.bitstream
-//                << " ";
-//    }
-//    std::cout << std::endl;
-//  }
+  for (const auto &run : best_plan) {
+    for (const auto &node : run) {
+      std::cout << " " << node.bitstream
+                << " ";
+    }
+    std::cout << std::endl;
+  }
 }
 
 auto ElasticResourceNodeScheduler::GetNextSetOfRuns(

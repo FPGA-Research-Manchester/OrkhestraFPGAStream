@@ -38,6 +38,7 @@ namespace orkhestrafs::dbmstodspi {
 class AcceleratorLibraryInterface {
  public:
   virtual ~AcceleratorLibraryInterface() = default;
+  virtual auto IsIncompleteOperationSupported(QueryOperationType operation_type) -> bool = 0;
   virtual void SetupOperation(const AcceleratedQueryNode& node_parameters) = 0;
   virtual auto GetDMAModule() -> std::unique_ptr<DMAInterface> = 0;
   virtual auto GetDMAModuleSetup() -> DMASetupInterface& = 0;

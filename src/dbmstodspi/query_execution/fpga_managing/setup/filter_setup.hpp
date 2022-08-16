@@ -38,6 +38,7 @@ class FilterSetup : public virtual AccelerationModuleSetupInterface,
   auto GetCapacityRequirement(
       std::vector<std::vector<int>> operation_parameters)
       -> std::vector<int> override;
+  auto IsIncompleteNodeExecutionSupported() -> bool override;
 
   /**
    * @brief Setup filter module according to the input and output streams and

@@ -520,8 +520,8 @@ def GetExplainJSON(database_name, query_file):
     command = f"echo \"{explain_command}\" | psql -t -A {database_name}"
     result = "EXPLAIN"
     output_filename = f"{result}.json"
-    os.system(f"{command} > {output_filename}")
     print(f"PSQL command: \n {command}")
+    os.system(f"{command} > {output_filename}")
     print(f"EXPLAIN output in: {output_filename}")
     return output_filename
 

@@ -64,6 +64,10 @@ auto FilterSetup::CreateModule(MemoryManagerInterface* memory_manager,
   return std::make_unique<Filter>(memory_manager, module_postion);
 }
 
+auto FilterSetup::IsIncompleteNodeExecutionSupported() -> bool {
+  return false;
+}
+
 auto FilterSetup::GetCapacityRequirement(
     std::vector<std::vector<int>> operation_parameters) -> std::vector<int> {
   if (operation_parameters.empty()) {

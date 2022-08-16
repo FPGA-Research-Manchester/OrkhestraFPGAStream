@@ -25,6 +25,10 @@ auto AccelerationModuleSetupInterface::IsMultiChannelStream(
   return false;
 }
 
+auto AccelerationModuleSetupInterface::IsIncompleteNodeExecutionSupported() -> bool {
+  return true;
+}
+
 auto AccelerationModuleSetupInterface::GetMultiChannelParams(
     bool /*is_input*/, int /*stream_index*/,
     std::vector<std::vector<int>> /*operation_parameters*/)

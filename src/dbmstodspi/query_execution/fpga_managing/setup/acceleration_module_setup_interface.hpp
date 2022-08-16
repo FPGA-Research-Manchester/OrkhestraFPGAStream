@@ -32,6 +32,7 @@ namespace orkhestrafs::dbmstodspi {
  */
 class AccelerationModuleSetupInterface {
  public:
+  virtual auto IsIncompleteNodeExecutionSupported() -> bool;
   virtual ~AccelerationModuleSetupInterface() = default;
   /**
    * @brief Setup a given module

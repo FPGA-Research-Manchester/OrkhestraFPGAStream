@@ -35,6 +35,7 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
       : memory_manager_{memory_manager},
         dma_setup_{std::move(dma_setup)},
         module_driver_library_{std::move(module_driver_library)} {};
+  auto IsIncompleteOperationSupported(QueryOperationType operation_type) -> bool override;
   /**
    * @brief Setup a given operation with the given parameters.
    * @param node_parameters Parameters struct containing stream metadata and

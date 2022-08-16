@@ -22,6 +22,11 @@ limitations under the License.
 
 using orkhestrafs::dbmstodspi::AcceleratorLibrary;
 
+auto AcceleratorLibrary::IsIncompleteOperationSupported(QueryOperationType operation_type) -> bool {
+  auto* driver = GetDriver(operation_type);
+  return driver->IsIncompleteNodeExecutionSupported();
+}
+
 void AcceleratorLibrary::SetupOperation(
     const AcceleratedQueryNode& node_parameters) {
   auto* driver = GetDriver(node_parameters.operation_type);
