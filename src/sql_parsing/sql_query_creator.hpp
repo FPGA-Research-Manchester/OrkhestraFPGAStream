@@ -94,6 +94,8 @@ class SQLQueryCreator {
       {CompareFunctions::kGreaterThan, 4},
       {CompareFunctions::kNotEqual, 5}};
 
+  std::unordered_map<std::string, std::unordered_map<std::string, int>>
+      filter_comparison_column_counts_;
   std::unordered_map<std::string, std::unordered_map<int, std::vector<int>>>
       filter_operations_relations_;
   std::unordered_map<std::string, std::unordered_map<int, bool>> is_and_;
@@ -104,10 +106,14 @@ class SQLQueryCreator {
   std::unordered_set<std::string> input_operations_;
   std::unordered_set<std::string> output_operations_;
   std::unordered_map<std::string, std::pair<ColumnDataType, int>> columns_;
+  std::unordered_map<std::string, std::vector<std::string>> duplicated_columns_;
+  std::unordered_map<std::string, std::string> original_of_an_duplicated_column_;
   std::unordered_map<std::string, OperationData> operations_;
   std::unordered_map<std::string, std::vector<std::string>> tables_;
   std::unordered_map<std::string, std::string> column_renaming_map_;
 
+  auto GetComparisonColumnName(const std::string& filter_id,
+                               const std::string& column_name) -> std::string;
   auto FlattenClauses(const std::string& current_process, int child_term_id,
                       int current_term_id, int new_current_term_id) -> int;
   // Replace ORs in ANDs with A new big OR with ANDs to replace the big AND.

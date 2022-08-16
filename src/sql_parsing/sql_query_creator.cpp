@@ -17,7 +17,6 @@ limitations under the License.
 #include "sql_query_creator.hpp"
 
 #include <algorithm>
-#include <iostream>
 #include <limits>
 #include <set>
 #include <stdexcept>
@@ -164,6 +163,14 @@ void SQLQueryCreator::SetFilterStreamParams(
       }*/
       all_clauses.insert(new_clause);
     }
+  }
+
+  // TODO: Hardcoded limit. Should be checked according to available library and
+  // if drivers support incomplete operation.
+  if (all_clauses.size() > 32) {
+    throw std::runtime_error(
+        "Current system can't handle filter requirements with more than 32 DNF "
+        "clauses!");
   }
 
   std::unordered_map<std::string, std::vector<int>> operations_on_a_column;
@@ -639,18 +646,23 @@ auto SQLQueryCreator::SetIOStreamParams(const std::string& current_process)
       int last_used_column_index =
           ProcessTableColumns(current_process, parent_index, parent);
 
-      int used_column_count = PlaceColumnsToDesiredPositions(
+      record_size = PlaceColumnsToDesiredPositions(
           current_process, parent_index, last_used_column_index, parent,
           record_size);
-
-      /*record_size +=
-          CompressNullColumns(current_process, parent_index,
-         used_column_count);*/
     } else {
       CopyOutputParamsOfParent(current_process, parent_index, parent);
-      for (const auto& column : operations_[parent].desired_columns) {
-        auto [data_type, data_size] = columns_.at(column);
-        record_size += column_sizes_.at(data_type) * data_size;
+      auto column_types =
+          operations_[current_process]
+              .input_params[parent_index * io_param_vector_count_ +
+                            data_types_offset_];
+      auto column_sizes =
+          operations_[current_process]
+              .input_params[parent_index * io_param_vector_count_ +
+                            data_sizes_offset_];
+      for (int i = 0; i < column_types.size(); i++) {
+        record_size +=
+            column_sizes.at(i) *
+            column_sizes_.at(static_cast<ColumnDataType>(column_types.at(i)));
       }
     }
   }
@@ -727,7 +739,7 @@ void SQLQueryCreator::PlaceColumnsThatSpanOverMultipleChunks(
   }
 }
 
-// Column positions says which locations does the column occupy at the moment
+// Column positions says which locations are the columns at currently
 void SQLQueryCreator::GetCurrentAvailableDesiredPositions(
     const std::map<std::string, std::vector<int>>& column_positions,
     const std::string& current_process,
@@ -1187,6 +1199,68 @@ auto SQLQueryCreator::PlaceColumnsToDesiredPositions(
       current_process, crossbar_configuration, chosen_columns, column_positions,
       stream_index, reverse_pairing_map);
 
+  // Duplicate data
+  for (const auto& desired_column :
+       operations_[current_process].desired_columns) {
+    if (std::find(chosen_columns.begin(), chosen_columns.end(),
+                  desired_column) == chosen_columns.end() &&
+        original_of_an_duplicated_column_.find(desired_column) !=
+            original_of_an_duplicated_column_.end() &&
+        std::find(chosen_columns.begin(), chosen_columns.end(),
+                  original_of_an_duplicated_column_.at(desired_column)) !=
+            chosen_columns.end()) {
+      auto& original_column =
+          original_of_an_duplicated_column_.at(desired_column);
+      if (columns_.find(desired_column) == columns_.end()) {
+        columns_.insert({desired_column, columns_.at(original_column)});
+      }
+      auto original_chunk_index =
+          operations_[current_process].column_locations.at(original_column) /
+          16;
+      auto required_column_word_size = static_cast<int>(
+          columns_.at(original_column).second *
+          column_sizes_.at(columns_.at(original_column).first));
+      auto& original_chunk = crossbar_configuration.at(original_chunk_index);
+      int good_location = -1;
+      int current_match_length = 0;
+      for (int i = 0; i < original_chunk.size(); i++) {
+        if (original_chunk.at(i) == -1) {
+          if (good_location == -1) {
+            good_location = i;
+          }
+          current_match_length++;
+          if (current_match_length == required_column_word_size) {
+            // location found!
+            break;
+          }
+        } else {
+          good_location = -1;
+          current_match_length = 0;
+        }
+      }
+      if (good_location == -1) {
+        throw std::runtime_error(
+            "Can't find an available location to duplicate data!");
+      } else {
+        // Set location
+        operations_[current_process].column_locations[desired_column] =
+            good_location + original_chunk_index * 16;
+        int original_crossbar_location =
+            operations_[current_process].column_locations.at(original_column) %
+            16;
+        // Copy over crossbar data and write in column names
+        for (int i = 0; i < required_column_word_size; i++) {
+          original_chunk[good_location + i] =
+              original_chunk[original_crossbar_location + i];
+          chosen_columns[operations_[current_process]
+                             .column_locations[desired_column] +
+                         i] = desired_column;
+        }
+      }
+    }
+  }
+
+  // Set column types and column sizes
   std::string current_column_name = chosen_columns.front();
   int current_column_length = 0;
   for (const auto& column_name : chosen_columns) {
@@ -1218,6 +1292,7 @@ auto SQLQueryCreator::PlaceColumnsToDesiredPositions(
     record_size -= current_column_length;
   }
 
+  // Flatten the crossbar
   std::vector<int> flattened_crossbar_config;
   for (const auto& chunk_crossbar_config : crossbar_configuration) {
     flattened_crossbar_config.insert(flattened_crossbar_config.end(),
@@ -1380,7 +1455,6 @@ auto SQLQueryCreator::ProcessTableColumns(const std::string& current_process,
                   operations_.at(current_process).desired_columns.end(),
                   current_column_name) !=
         operations_.at(current_process).desired_columns.end()) {
-      // TODO(Kaspar): Need to check for desired locations.
       operations_[current_process].column_locations.insert(
           {current_column_name, current_position_index});
       last_used_column_index = column_index;
@@ -1799,6 +1873,78 @@ auto SQLQueryCreator::RegisterAggregation(std::string input,
   return new_name;
 }
 
+auto SQLQueryCreator::GetComparisonColumnName(const std::string& filter_id,
+                                              const std::string& column_name)
+    -> std::string {
+  // If column name already has 4 comparisons
+  // Check if column name is duplicated
+  // Take the new name for the duplicated_column_list
+  // Check again until you get a name that is valid
+
+  std::string current_column_name = column_name;
+  bool columns_name_found = false;
+  while (!columns_name_found) {
+    if (const auto& [it, inserted] =
+            filter_comparison_column_counts_[filter_id].try_emplace(
+                current_column_name, 1);
+        !inserted) {
+      // 4 is the maximum at the moment
+      // TODO: remove hard coded value!
+      if (it->second < 4) {
+        it->second++;
+        columns_name_found = true;
+      } else {
+        // Need to find a new column name:
+        if (column_name == current_column_name) {
+          // Current column_name is original
+          if (duplicated_columns_.find(column_name) !=
+              duplicated_columns_.end()) {
+            // Get the first duplicated column name
+            current_column_name = duplicated_columns_.at(column_name).front();
+          } else {
+            current_column_name += "_0";
+            if (columns_.find(current_column_name) != columns_.end()) {
+              throw std::runtime_error(
+                  "Can't duplicate columns due to name clashes");
+            } else {
+              duplicated_columns_.insert({column_name, {current_column_name}});
+              original_of_an_duplicated_column_.insert(
+                  {current_column_name, column_name});
+            }
+          }
+        } else {
+          // We are already checking a duplicated column name
+          // TODO: This shouldn't error but still needs checks for robustness!
+          int duplicated_column_index = stoi(current_column_name.substr(
+              current_column_name.find_last_of('_') + 1));
+          if (duplicated_columns_.at(column_name).size() ==
+              duplicated_column_index + 1) {
+            current_column_name =
+                column_name + "_" + std::to_string(duplicated_column_index + 1);
+            duplicated_columns_.at(column_name).push_back(current_column_name);
+            original_of_an_duplicated_column_.insert(
+                {current_column_name, column_name});
+          } else {
+            current_column_name = duplicated_columns_.at(column_name)
+                                      .at(duplicated_column_index + 1);
+          }
+        }
+      }
+    } else {
+      columns_name_found = true;
+    }
+  }
+
+  if (std::find(operations_[filter_id].desired_columns.begin(),
+                operations_[filter_id].desired_columns.end(),
+                current_column_name) ==
+      operations_[filter_id].desired_columns.end()) {
+    operations_[filter_id].desired_columns.push_back(current_column_name);
+  }
+
+  return current_column_name;
+};
+
 auto SQLQueryCreator::AddStringComparison(const std::string& filter_id,
                                           const std::string& column_name,
                                           CompareFunctions comparison_type,
@@ -1809,14 +1955,10 @@ auto SQLQueryCreator::AddStringComparison(const std::string& filter_id,
   std::cout << " " << column_name;
   std::cout << " " << compare_value;
   std::cout << std::endl;*/
-  if (std::find(operations_[filter_id].desired_columns.begin(),
-                operations_[filter_id].desired_columns.end(),
-                column_name) == operations_[filter_id].desired_columns.end()) {
-    operations_[filter_id].desired_columns.push_back(column_name);
-  }
+  auto current_column_name = GetComparisonColumnName(filter_id, column_name);
 
   FilterOperation new_operation;
-  new_operation.column_name = column_name;
+  new_operation.column_name = current_column_name;
   new_operation.operation = comparison_type;
   new_operation.comparison_values = std::make_pair(
       compare_value,
@@ -1838,14 +1980,10 @@ auto SQLQueryCreator::AddDateComparison(const std::string& filter_id,
   std::cout << " " << std::to_string(month);
   std::cout << " " << std::to_string(day);
   std::cout << std::endl;*/
-  if (std::find(operations_[filter_id].desired_columns.begin(),
-                operations_[filter_id].desired_columns.end(),
-                column_name) == operations_[filter_id].desired_columns.end()) {
-    operations_[filter_id].desired_columns.push_back(column_name);
-  }
+  auto current_column_name = GetComparisonColumnName(filter_id, column_name);
 
   FilterOperation new_operation;
-  new_operation.column_name = column_name;
+  new_operation.column_name = current_column_name;
   new_operation.operation = comparison_type;
   // TODO(Kaspar): Need checks that the format is correct!
   std::vector<int> comparison_values = {year * 10000 + month * 100 + day};
@@ -1864,14 +2002,10 @@ auto SQLQueryCreator::AddIntegerComparison(const std::string& filter_id,
   std::cout << " " << column_name;
   std::cout << " " << std::to_string(compare_value);
   std::cout << std::endl;*/
-  if (std::find(operations_[filter_id].desired_columns.begin(),
-                operations_[filter_id].desired_columns.end(),
-                column_name) == operations_[filter_id].desired_columns.end()) {
-    operations_[filter_id].desired_columns.push_back(column_name);
-  }
+  auto current_column_name = GetComparisonColumnName(filter_id, column_name);
 
   FilterOperation new_operation;
-  new_operation.column_name = column_name;
+  new_operation.column_name = current_column_name;
   new_operation.operation = comparison_type;
   std::vector<int> comparison_values = {compare_value};
   new_operation.comparison_values = comparison_values;
@@ -1889,14 +2023,10 @@ auto SQLQueryCreator::AddDoubleComparison(const std::string& filter_id,
   std::cout << " " << column_name;
   std::cout << " " << std::to_string(compare_value);
   std::cout << std::endl;*/
-  if (std::find(operations_[filter_id].desired_columns.begin(),
-                operations_[filter_id].desired_columns.end(),
-                column_name) == operations_[filter_id].desired_columns.end()) {
-    operations_[filter_id].desired_columns.push_back(column_name);
-  }
+  auto current_column_name = GetComparisonColumnName(filter_id, column_name);
 
   FilterOperation new_operation;
-  new_operation.column_name = column_name;
+  new_operation.column_name = current_column_name;
   new_operation.operation = comparison_type;
   // TODO(Kaspar): Fix this hardcoded stuff!
   std::vector<int> comparison_values = {0,
