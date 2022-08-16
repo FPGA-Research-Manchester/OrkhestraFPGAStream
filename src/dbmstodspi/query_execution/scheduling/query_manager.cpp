@@ -31,7 +31,6 @@ limitations under the License.
 #include "query_acceleration_constants.hpp"
 #include "run_linker.hpp"
 #include "stream_data_parameters.hpp"
-#include "table_data.hpp"
 #include "table_manager.hpp"
 #include "util.hpp"
 
@@ -864,7 +863,7 @@ void QueryManager::ExecuteAndProcessResults(
         result_parameters,
     const std::vector<AcceleratedQueryNode>& execution_query_nodes,
     std::map<std::string, TableMetadata>& scheduling_table_data,
-    std::unordered_map<std::string, int>& table_counter) {
+    std::unordered_map<std::string, int>& table_counter, int timeout) {
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
 
@@ -879,7 +878,7 @@ void QueryManager::ExecuteAndProcessResults(
     std::cout << "INITIALISATION: " << initialisation_sum << std::endl;
   }*/
   Log(LogLevel::kTrace, "Running query!");
-  auto result_sizes = fpga_manager->RunQueryAcceleration();
+  auto result_sizes = fpga_manager->RunQueryAcceleration(timeout);
   Log(LogLevel::kTrace, "Query done!");
 
   std::chrono::steady_clock::time_point total_end =

@@ -63,6 +63,8 @@ struct Config {
   bool prioritise_children = true;
   int heuristic_choice = 0;
 
+  int execution_timeout = 60;
+
   double streaming_speed = 4800000000;
   double configuration_speed = 66000000;
 

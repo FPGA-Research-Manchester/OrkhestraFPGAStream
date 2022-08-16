@@ -141,7 +141,7 @@ class QueryManagerInterface {
           result_parameters,
       const std::vector<AcceleratedQueryNode>& execution_query_nodes,
       std::map<std::string, TableMetadata>& scheduling_table_data,
-      std::unordered_map<std::string, int>& table_counter) = 0;
+      std::unordered_map<std::string, int>& table_counter, int timeout) = 0;
 
   /**
    * Method to schedule next set of nodes based on PR graph nodes.

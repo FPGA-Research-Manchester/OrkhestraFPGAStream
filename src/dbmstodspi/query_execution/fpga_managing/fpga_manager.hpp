@@ -54,7 +54,7 @@ class FPGAManager : public FPGAManagerInterface {
 
   void FindActiveStreams(std::vector<int>& active_input_stream_ids,
                          std::vector<int>& active_output_stream_ids);
-  void WaitForStreamsToFinish();
+  void WaitForStreamsToFinish(int timeout);
   void ReadResultsFromRegisters();
   auto GetResultingStreamSizes(const std::vector<int>& active_input_stream_ids,
                                const std::vector<int>& active_output_stream_ids)
@@ -86,7 +86,7 @@ class FPGAManager : public FPGAManagerInterface {
    * @brief Start the output controller and wait for the controllers to finish.
    * @return How many records each output stream had in its results.
    */
-  auto RunQueryAcceleration()
+  auto RunQueryAcceleration(int timeout)
       -> std::array<int,
                     query_acceleration_constants::kMaxIOStreamCount> override;
 

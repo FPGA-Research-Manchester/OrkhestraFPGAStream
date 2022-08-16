@@ -31,7 +31,7 @@ class FPGAManagerInterface {
   virtual void SetupQueryAcceleration(
       const std::vector<AcceleratedQueryNode>& query_nodes) = 0;
 
-  virtual auto RunQueryAcceleration()
+  virtual auto RunQueryAcceleration(int timeout)
       -> std::array<int, query_acceleration_constants::kMaxIOStreamCount> = 0;
 };
 

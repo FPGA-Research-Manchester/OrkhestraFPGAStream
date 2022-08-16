@@ -63,7 +63,7 @@ class QueryManager : public QueryManagerInterface {
           result_parameters,
       const std::vector<AcceleratedQueryNode>& execution_query_nodes,
       std::map<std::string, TableMetadata>& scheduling_table_data,
-      std::unordered_map<std::string, int>& table_counter) override;
+      std::unordered_map<std::string, int>& table_counter, int timeout) override;
   auto ScheduleNextSetOfNodes(
       std::vector<QueryNode*>& query_nodes,
       const std::unordered_set<std::string>& first_node_names,

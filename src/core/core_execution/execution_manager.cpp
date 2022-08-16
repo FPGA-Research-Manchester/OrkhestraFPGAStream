@@ -441,7 +441,7 @@ void ExecutionManager::ExecuteAndProcessResults() {
   query_manager_->ExecuteAndProcessResults(
       memory_manager_.get(), fpga_manager_.get(), data_manager_.get(),
       table_memory_blocks_, result_parameters_, query_nodes_,
-      current_tables_metadata_, table_counter_);
+      current_tables_metadata_, table_counter_, config_.execution_timeout);
   // TODO(Kaspar): Remove this
   scheduled_node_names_.clear();
 }

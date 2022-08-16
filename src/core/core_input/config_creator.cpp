@@ -46,6 +46,7 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string max_runs = "MAX_RUNS_CAP";
   std::string children = "PRIORITISE_CHILDREN";
   std::string heuristic = "HEURISTIC";
+  std::string exec_timeout = "EXEC_TIMEOUT";
   std::string streaming_speed = "STREAMING_SPEED";
   std::string configuration_speed = "CONFIGURATION_SPEED";
   std::string time_limit = "TIME_LIMIT";
@@ -116,6 +117,8 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   config.required_memory_space =
       json_reader_->ReadReqMemorySpace(config_values[memory_requirements]);
   config.csv_separator = config_values[data_separator].c_str()[0];
+
+  config.execution_timeout = std::stoi(config_values[exec_timeout]);
   return config;
 }
 
