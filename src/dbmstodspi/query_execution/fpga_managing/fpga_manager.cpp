@@ -78,7 +78,7 @@ void FPGAManager::SetupQueryAcceleration(
     throw std::runtime_error("Input or output streams missing!");
   }
   dma_setup_.SetupDMAModule(*dma_engine_, input_streams, output_streams);
-  
+
   dma_engine_->StartController(true, input_streams_active_status_);
 
   if (ila_module_) {
@@ -181,8 +181,9 @@ void FPGAManager::WaitForStreamsToFinish(int timeout) {
       std::chrono::steady_clock::now();
   while (!(dma_engine_->IsControllerFinished(true) &&
            dma_engine_->IsControllerFinished(false))) {
-    if (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now(); - begin)
-            .count() > timeout){
+    if (std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::steady_clock::now() - begin)
+            .count() > timeout) {
       throw std::runtime_error("Execution timed out!");
     }
     // sleep(3);
@@ -307,6 +308,6 @@ auto FPGAManager::ReadModuleResultRegisters(
       (query_acceleration_constants::kDatapathWidth - 1) - (position * 2 + 1)));
 
   return static_cast<long long>((static_cast<uint64_t>(high_bits) << 32) +
-                                    low_bits) /
-             100.0;
+                                low_bits) /
+         100.0;
 }

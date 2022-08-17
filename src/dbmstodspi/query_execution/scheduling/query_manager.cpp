@@ -895,8 +895,8 @@ void QueryManager::ExecuteAndProcessResults(
                              .count()) +
           "[microseconds]");
 
-  /*ProcessResults(data_manager, result_sizes, result_parameters,
-                 table_memory_blocks, scheduling_table_data);*/
+  ProcessResults(data_manager, result_sizes, result_parameters,
+                 table_memory_blocks, scheduling_table_data);
   std::vector<std::string> removable_tables;
   for (const auto& [table_name, counter] : table_counter) {
     if (counter < 0) {

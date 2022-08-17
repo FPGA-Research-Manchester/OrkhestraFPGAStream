@@ -112,6 +112,11 @@ class SQLQueryCreator {
   std::unordered_map<std::string, std::vector<std::string>> tables_;
   std::unordered_map<std::string, std::string> column_renaming_map_;
 
+  // temp global variables.
+  int join_offset_ = -1;
+  std::string required_join_offset_ = "";
+  std::string generate_join_offset_ = "";
+
   auto GetComparisonColumnName(const std::string& filter_id,
                                const std::string& column_name) -> std::string;
   auto FlattenClauses(const std::string& current_process, int child_term_id,
@@ -158,8 +163,8 @@ class SQLQueryCreator {
   auto CompressNullColumns(const std::string& current_process, int stream_index,
                            int used_column_count) -> int;
   void CopyOutputParamsOfParent(const std::string& current_process,
-                                int parent_index, const std::string& parent);
-  void CombineOutputStreamParams(const std::string& current_process);
+                                int parent_index, const std::string& parent, int record_size);
+  void CombineOutputStreamParams(const std::string& current_process, int& record_size);
   auto SetIOStreamParams(const std::string& current_process) -> int;
   void SetStreamParamsForDataMap(const std::string& current_process,
                                  InputNodeParameters& current_parameters);
@@ -218,7 +223,7 @@ class SQLQueryCreator {
       std::vector<std::vector<int>>& crossbar_configuration,
       std::vector<std::string>& chosen_columns,
       const std::map<std::string, std::vector<int>>& column_positions,
-      const std::map<std::string, std::string>& pairing_map);
+      const std::map<std::string, std::string>& pairing_map, int offset, int stream_index);
   void SetColumnPlace(
       std::map<int, std::vector<std::string>>&
           current_available_desired_columns,
@@ -248,7 +253,7 @@ class SQLQueryCreator {
       const std::map<std::string, std::vector<int>>& column_positions,
       const std::map<std::string, std::string>& pairing_map,
       const std::string& current_process);
-  void SetJoinOffsetParam(const std::string& current_process);
+  void SetJoinOffsetParam(const std::string& current_process, int offset, int stream_index);
   void CleanAvailablePositionsAndPlaceColumns(
       std::map<int, std::vector<std::string>>&
           current_available_desired_columns,

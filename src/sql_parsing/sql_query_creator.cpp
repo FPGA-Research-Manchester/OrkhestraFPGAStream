@@ -82,11 +82,11 @@ void SQLQueryCreator::SetStreamParamsForDataMap(
     const std::string& current_process,
     InputNodeParameters& current_parameters) {
   int record_size = SetIOStreamParams(current_process);
+  // Should just be for Join.
+  CombineOutputStreamParams(current_process, record_size);
   // TODO(Kaspar): Remove magic numbers!
   operations_[current_process].output_params[chunk_count_offset_].push_back(
       (record_size + 15) / 16);
-  // Should just be for Join.
-  CombineOutputStreamParams(current_process);
 
   std::map<std::string, OperationParams> current_operation_params;
   OperationParams params;
@@ -129,9 +129,9 @@ void SQLQueryCreator::SetOperationSpecificStreamParamsForDataMap(
 void SQLQueryCreator::SetJoinStreamParams(
     const std::string& current_process,
     std::map<std::string, OperationParams>& current_operation_params) {
+  std::vector<int> join_params = {join_offset_};
   current_operation_params.insert(
-      {operation_specific_params_string_,
-       operations_.at(current_process).operation_params});
+      {operation_specific_params_string_, {join_params}});
 }
 
 void SQLQueryCreator::SetFilterStreamParams(
@@ -593,7 +593,7 @@ void SQLQueryCreator::SetAggregationStreamParams(
   std::vector<int> chunk_vector = {column_location / 16};
   params.push_back(chunk_vector);
   // TODO(Kaspar): Not sure if it has to be in range 16 or 8.
-  std::vector<int> position_vector = {column_location % 16};
+  std::vector<int> position_vector = {(column_location % 16) / 2};
   params.push_back(position_vector);
   current_operation_params.insert({operation_specific_params_string_, params});
 }
@@ -646,11 +646,17 @@ auto SQLQueryCreator::SetIOStreamParams(const std::string& current_process)
       int last_used_column_index =
           ProcessTableColumns(current_process, parent_index, parent);
 
-      record_size = PlaceColumnsToDesiredPositions(
+      record_size += PlaceColumnsToDesiredPositions(
           current_process, parent_index, last_used_column_index, parent,
           record_size);
+      if (generate_join_offset_ == current_process && parent_index == 0) {
+        if (join_offset_ != -1) {
+          throw std::runtime_error("Offset is already set!");
+        }
+        join_offset_ = record_size % 16;
+      }
     } else {
-      CopyOutputParamsOfParent(current_process, parent_index, parent);
+      CopyOutputParamsOfParent(current_process, parent_index, parent, record_size);
       auto column_types =
           operations_[current_process]
               .input_params[parent_index * io_param_vector_count_ +
@@ -798,40 +804,39 @@ void SQLQueryCreator::RemoveUnavailablePositions(
   }
 }
 
-void SQLQueryCreator::SetJoinOffsetParam(const std::string& current_process) {
-  auto thing =
-      operations_.at(current_process)
-          .input_params.at(0 * io_param_vector_count_ + crossbar_offset_);
-
-  int join_offset = 0;
-  auto first_crossbar =
-      operations_.at(current_process)
-          .input_params.at(0 * io_param_vector_count_ + crossbar_offset_);
-  if (first_crossbar.empty()) {
-    // Assuming the data sizes and types are collected correctly from the
-    // previous operation.
-    auto data_sizes =
-        operations_.at(current_process)
-            .input_params.at(0 * io_param_vector_count_ + data_sizes_offset_);
-    auto data_types =
-        operations_.at(current_process)
-            .input_params.at(0 * io_param_vector_count_ + data_types_offset_);
-    for (int i = 0; i < data_sizes.size(); i++) {
-      join_offset +=
-          data_sizes.at(i) *
-          column_sizes_.at(static_cast<ColumnDataType>(data_types.at(i)));
-    }
-  } else {
-    join_offset = first_crossbar.size();
-  }
-  join_offset = join_offset % 16;
-  std::vector<int> offset_vector = {join_offset};
-  operations_.at(current_process).operation_params.push_back(offset_vector);
+// Actually not setting - just checking..
+void SQLQueryCreator::SetJoinOffsetParam(const std::string& current_process,
+                                         int offset, int stream_index) {
+  // int join_offset = 0;
+  // auto first_crossbar =
+  //    operations_.at(current_process)
+  //        .input_params.at(0 * io_param_vector_count_ + crossbar_offset_);
+  // if (first_crossbar.empty()) {
+  //  // Assuming the data sizes and types are collected correctly from the
+  //  // previous operation.
+  //  auto data_sizes =
+  //      operations_.at(current_process)
+  //          .input_params.at(0 * io_param_vector_count_ + data_sizes_offset_);
+  //  auto data_types =
+  //      operations_.at(current_process)
+  //          .input_params.at(0 * io_param_vector_count_ + data_types_offset_);
+  //  for (int i = 0; i < data_sizes.size(); i++) {
+  //    join_offset +=
+  //        data_sizes.at(i) *
+  //        column_sizes_.at(static_cast<ColumnDataType>(data_types.at(i)));
+  //  }
+  //} else {
+  //  join_offset = first_crossbar.size();
+  //}
+  // join_offset = join_offset % 16;
+  // std::vector<int> offset_vector = {offset};
+  // operations_.at(current_process).operation_params.push_back(offset_vector);
 
   // If you set the offset vector might as well check if it is possible.
   auto current_crossbar =
       operations_.at(current_process)
-          .input_params.at(1 * io_param_vector_count_ + crossbar_offset_);
+          .input_params.at(stream_index * io_param_vector_count_ +
+                           crossbar_offset_);
   current_crossbar.resize(16, -1);
   int null_space_count = 0;
   for (const auto& column_target : current_crossbar) {
@@ -844,7 +849,7 @@ void SQLQueryCreator::SetJoinOffsetParam(const std::string& current_process) {
   int sorted_by_column_length =
       column_sizes_.at(sorted_by_data_type) * sorted_by_data_size;
   null_space_count += sorted_by_column_length;
-  if (null_space_count < join_offset) {
+  if (null_space_count < offset) {
     throw std::runtime_error(
         "Join inter chunk data movement isn't implemented!");
   }
@@ -857,22 +862,15 @@ void SQLQueryCreator::RemoveAvailabliltyDueToJoinRequirements(
     std::vector<std::vector<int>>& crossbar_configuration,
     std::vector<std::string>& chosen_columns,
     const std::map<std::string, std::vector<int>>& column_positions,
-    const std::map<std::string, std::string>& pairing_map) {
-  // Assuming this is a join and the first steps have been done already.
-  if (operations_.at(current_process).operation_params.empty()) {
-    // Offset hasn't been calculated yet.
-    SetJoinOffsetParam(current_process);
-    SetColumnPlace(current_available_desired_columns, left_over_availability,
-                   crossbar_configuration, chosen_columns, column_positions,
-                   operations_.at(current_process).sorted_by_column, 0,
-                   pairing_map, current_process);
-  }
+    const std::map<std::string, std::string>& pairing_map, int offset,
+    int stream_index) {
+  SetJoinOffsetParam(current_process, offset, stream_index);
+  SetColumnPlace(current_available_desired_columns, left_over_availability,
+                 crossbar_configuration, chosen_columns, column_positions,
+                 operations_.at(current_process).sorted_by_column, 0,
+                 pairing_map, current_process);
 
-  for (int i = 1;
-       i < std::get<std::vector<int>>(
-               operations_.at(current_process).operation_params.front())
-               .front();
-       i++) {
+  for (int i = 1; i < offset; i++) {
     if (current_available_desired_columns.find(i) !=
         current_available_desired_columns.end()) {
       SetColumnPlace(current_available_desired_columns, left_over_availability,
@@ -1096,13 +1094,18 @@ void SQLQueryCreator::CleanAvailablePositionsAndPlaceColumns(
   RemoveUnavailablePositions(current_available_desired_columns,
                              left_over_availability, chosen_columns);
 
-  if (operations_.at(current_process).operation_type ==
-          QueryOperationType::kJoin &&
-      stream_index == 1) {
+  if (required_join_offset_ == current_process &&
+      (stream_index == 1 ||
+       operations_.at(current_process).inputs.size() == 1)) {
+    if (join_offset_ == -1) {
+      throw std::runtime_error("Offset not generated!");
+    }
     RemoveAvailabliltyDueToJoinRequirements(
         current_available_desired_columns, left_over_availability,
         current_process, crossbar_configuration, chosen_columns,
-        column_positions, pairing_map);
+        column_positions, pairing_map, join_offset_, stream_index);
+    // Don't need to do this again.
+    required_join_offset_ = "";
   }
   PlaceGivenColumnsToGivenDesiredLocations(
       current_available_desired_columns, left_over_availability,
@@ -1333,24 +1336,83 @@ auto SQLQueryCreator::PlaceColumnsToDesiredPositions(
 }
 
 void SQLQueryCreator::CombineOutputStreamParams(
-    const std::string& current_process) {
+    const std::string& current_process, int& record_size) {
+  if (operations_.at(current_process).inputs.size() > 2) {
+    throw std::runtime_error("Unsopported operation!");
+  }
   for (int parent_index = 1;
        parent_index < operations_.at(current_process).inputs.size();
        parent_index++) {
-    for (int i = 0;
-         i < operations_[current_process]
-                 .output_params[parent_index * io_param_vector_count_ +
-                                data_sizes_offset_]
-                 .size();
-         i++) {
-      operations_[current_process].output_params[data_sizes_offset_].push_back(
+    if (operations_[current_process]
+            .output_params[parent_index * io_param_vector_count_ +
+                           data_sizes_offset_]
+            .size() > 1) {
+      auto data_sizes =
           operations_[current_process]
               .output_params[parent_index * io_param_vector_count_ +
-                             data_sizes_offset_][i]);
-      operations_[current_process].output_params[data_types_offset_].push_back(
+                             data_sizes_offset_];
+      auto data_types =
           operations_[current_process]
               .output_params[parent_index * io_param_vector_count_ +
-                             data_types_offset_][i]);
+                             data_types_offset_];
+      int number_of_discarded_columns = 2;
+      int first_column_size =
+          data_sizes.at(0) *
+          column_sizes_.at(static_cast<ColumnDataType>(data_types.at(0)));
+      int removed_columns_size = first_column_size;
+      if (removed_columns_size == join_offset_) {
+        number_of_discarded_columns = 1;
+        record_size -= removed_columns_size;
+      } else {
+        int second_column_size =
+            data_sizes.at(1) *
+            column_sizes_.at(static_cast<ColumnDataType>(data_types.at(1)));
+        removed_columns_size += second_column_size;
+            
+        if (removed_columns_size > join_offset_) {
+          if (static_cast<ColumnDataType>(data_types.at(1)) ==
+              ColumnDataType::kNull) {
+            operations_[current_process]
+                .output_params[data_types_offset_]
+                .push_back(static_cast<int>(ColumnDataType::kNull));
+            int null_size = second_column_size - (join_offset_ - first_column_size);
+            operations_[current_process]
+                .output_params[data_sizes_offset_]
+                .push_back(null_size);
+            record_size -= removed_columns_size;
+            record_size += null_size;
+          } else {
+            throw std::runtime_error(
+                "Can't NULL-ify non-NULL columns with join currently!");
+          }
+        } else if (removed_columns_size == join_offset_) {
+          record_size -= removed_columns_size;
+          // Everything is fine. The 2nd column will get removed as well.
+        } else {
+          // TODO: implement removing further columns!
+          throw std::runtime_error("Don't support joins that remove columns!");
+        }
+      }
+
+      for (int i = number_of_discarded_columns;
+           i < operations_[current_process]
+                   .output_params[parent_index * io_param_vector_count_ +
+                                  data_sizes_offset_]
+                   .size();
+           i++) {
+        operations_[current_process]
+            .output_params[data_sizes_offset_]
+            .push_back(
+                operations_[current_process]
+                    .output_params[parent_index * io_param_vector_count_ +
+                                   data_sizes_offset_][i]);
+        operations_[current_process]
+            .output_params[data_types_offset_]
+            .push_back(
+                operations_[current_process]
+                    .output_params[parent_index * io_param_vector_count_ +
+                                   data_types_offset_][i]);
+      }
     }
   }
   operations_[current_process].output_params.resize(io_param_vector_count_);
@@ -1358,7 +1420,7 @@ void SQLQueryCreator::CombineOutputStreamParams(
 
 void SQLQueryCreator::CopyOutputParamsOfParent(
     const std::string& current_process, int parent_index,
-    const std::string& parent) {
+    const std::string& parent, int record_size) {
   operations_[current_process]
       .input_params[parent_index * io_param_vector_count_ +
                     data_types_offset_] =
@@ -1377,8 +1439,13 @@ void SQLQueryCreator::CopyOutputParamsOfParent(
       operations_[parent].output_params[data_sizes_offset_];
   for (const auto& [column_name, column_location] :
        operations_[parent].column_locations) {
-    operations_[current_process].column_locations.insert(
-        {column_name, column_location});
+    if (parent_index != 0 && column_name != operations_[current_process].sorted_by_column) {
+      operations_[current_process].column_locations.insert(
+          {column_name, column_location + record_size - join_offset_});
+    } else {
+      operations_[current_process].column_locations.insert(
+          {column_name, column_location});
+    }
   }
 }
 
@@ -1561,6 +1628,36 @@ void SQLQueryCreator::UpdateRequiredColumns() {
     auto current_process = *operations_to_process.begin();
     operations_to_process.erase(current_process);
     processed_operations.insert(current_process);
+    // Pass down join requirements
+    if (operations_.at(current_process).operation_type ==
+        QueryOperationType::kJoin) {
+      if (operations_.at(current_process).inputs.size() != 2) {
+        throw std::runtime_error("Unsupported join!");
+      }
+      const auto& first_stream = operations_.at(current_process).inputs.at(0);
+      if (!is_table_.at(first_stream)) {
+        generate_join_offset_ = first_stream;
+      }
+      const auto& second_stream = operations_.at(current_process).inputs.at(1);
+      if (!is_table_.at(second_stream)) {
+        required_join_offset_ = second_stream;
+      }
+    } else {
+      if (operations_.at(current_process).inputs.size() != 1) {
+        throw std::runtime_error("Unsupported multi-input operation!");
+      }
+      const auto& input = operations_.at(current_process).inputs.front();
+      if (!is_table_.at(input)) {
+        // Can't be both at once
+        // TODO: add an error check!
+        if (current_process == generate_join_offset_) {
+          generate_join_offset_ = input;
+        } else if (current_process == required_join_offset_) {
+          required_join_offset_ = input;
+        }
+      }
+    }
+    // Uodate desired columns
     for (const auto& parent : operations_.at(current_process).inputs) {
       if (!is_table_.at(parent)) {
         for (const auto& column :
@@ -1617,6 +1714,9 @@ void SQLQueryCreator::UpdateRequiredColumns() {
 void SQLQueryCreator::RenameAllColumns() {
   for (auto& [operation_key, operation_data] : operations_) {
     for (const auto& [renamed_column, new_name] : column_renaming_map_) {
+      if (operation_data.sorted_by_column == renamed_column) {
+        operation_data.sorted_by_column = new_name;
+      }
       if (std::find(operation_data.desired_columns.begin(),
                     operation_data.desired_columns.end(),
                     renamed_column) != operation_data.desired_columns.end()) {
@@ -1771,11 +1871,21 @@ auto SQLQueryCreator::RegisterJoin(std::string first_input,
                                    std::string second_input,
                                    const std::string& second_join_key)
     -> std::string {
-  auto first_join_table = RegisterSort(std::move(first_input), first_join_key);
-  auto second_join_table =
+  if (columns_.at(first_join_key) != columns_.at(second_join_key) &&
+      column_sizes_.at(columns_.at(first_join_key).first) *
+              columns_.at(first_join_key).second !=
+          1) {
+    throw std::runtime_error("Unsopported join keys!");
+  }
+  if (!generate_join_offset_.empty() || !required_join_offset_.empty()) {
+    throw std::runtime_error("Currently we don't support more than 1 join");
+  }
+
+  auto first_join_input = RegisterSort(std::move(first_input), first_join_key);
+  auto second_join_input =
       RegisterSort(std::move(second_input), second_join_key);
   auto join_name = RegisterOperation(QueryOperationType::kJoin,
-                                     {first_join_table, second_join_table});
+                                     {first_join_input, second_join_input});
 
   // Check here if column has been renamed already!
   if (column_renaming_map_.find(first_join_key) != column_renaming_map_.end() ||
@@ -1789,6 +1899,9 @@ auto SQLQueryCreator::RegisterJoin(std::string first_input,
 
   column_renaming_map_.insert({first_join_key, base_column});
   column_renaming_map_.insert({second_join_key, base_column});
+
+  generate_join_offset_ = join_name;
+  required_join_offset_ = join_name;
 
   operations_[join_name].desired_columns.push_back(base_column);
   operations_[join_name].desired_column_locations.insert({base_column, {0}});

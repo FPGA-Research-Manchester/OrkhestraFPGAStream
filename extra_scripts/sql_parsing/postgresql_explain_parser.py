@@ -138,13 +138,13 @@ def TokenizeParams(node):
             if (split_tokens[0].isnumeric()):
                 trimmed_tokens.append(split_tokens[0] + "." + split_tokens[1])
             else:
-                trimmed_tokens.append(split_tokens[1].upper())
+                trimmed_tokens.append(split_tokens[1])
         else:
             for char in removable_characters:
                 token = token.replace(char, '')
             split_tokens = token.split(',')
             for new_token in split_tokens:
-                trimmed_tokens.append(new_token.upper())
+                trimmed_tokens.append(new_token)
 
     node.params = trimmed_tokens
 
@@ -169,7 +169,7 @@ def GetReversePolishNotation(tokens):
     stack = []
     result = []
     operations = {
-        "SUM",
+        "sum",
         "-",
         "+",
         "*",
@@ -238,7 +238,7 @@ def ParseAggregateNode(all_nodes, key, counter):
     reverse_notation = GetReversePolishNotation(all_nodes[key].params)
     all_nodes[key].params = reverse_notation
     operations = {
-        "SUM",
+        "sum",
         "-",
         "+",
         "*",
@@ -247,7 +247,7 @@ def ParseAggregateNode(all_nodes, key, counter):
         "MIN",
         "MAX"}
     operand_count = {
-        "SUM": 1,
+        "sum": 1,
         "-": 2,
         "+": 2,
         "*": 2,
@@ -265,7 +265,7 @@ def ParseAggregateNode(all_nodes, key, counter):
             else:
                 first_operand = stack.pop()
                 second_operand = "ERROR"
-            if token == "SUM":
+            if token == "sum":
                 new_operations.append(
                     {"name": "Aggregate", "params": [first_operand]})
                 # print("sum:" + first_operand)
@@ -429,7 +429,7 @@ def AddTableColumnsToJSON(json_data, counter, table_name, database_name):
         if (len(values) > 1):
             data_type, data_size = GetDataType(values[1].strip())
             AddJSONKey(json_data, counter[0], "Column",
-                       [values[0].strip().upper(), data_size, data_type])
+                       [values[0].strip(), data_size, data_type])
             columns_keys.append(counter[0])
             counter[0] += 1
     AddJSONKey(json_data, columns_key, "Columns", columns_keys)
@@ -501,7 +501,8 @@ def PrintAPICalls(all_nodes, key):
 
 def CheckPostgreSQL(database_name):
     print("Checking PostgreSQL version:")
-    result = subprocess.run(["psql", "--version"], capture_output=True, encoding='UTF-8')
+    result = subprocess.run(["psql", "--version"],
+                            capture_output=True, encoding='UTF-8')
     try:
         result.check_returncode()
         print(result.stdout)
