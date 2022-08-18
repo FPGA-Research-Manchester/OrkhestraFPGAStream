@@ -367,6 +367,7 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPos(
   std::string current_query = node_name;
   for (const auto& module : current_run) {
     current_query += module.bitstream;
+    //return; Uncomment for single runs
   }
 
   // Find placements

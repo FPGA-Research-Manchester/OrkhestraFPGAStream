@@ -302,11 +302,6 @@ auto QueryManager::CreateStreamParams(
                  run_data.run_index)) {
           max_channel_count += capacity;
         }
-        std::vector<int> empty_sequences(
-            max_channel_count - virtual_channel_count, 0);
-        current_sequences.insert(current_sequences.end(),
-                                 empty_sequences.begin(),
-                                 empty_sequences.end());
 
         physical_addresses_map.insert(
             {table_memory_blocks
@@ -315,6 +310,22 @@ auto QueryManager::CreateStreamParams(
                      ->GetPhysicalAddress() +
                  write_offset * current_record_size,
              std::move(current_sequences)});
+
+        std::vector<int> empty_sequences(
+            max_channel_count - virtual_channel_count, 0);
+        /*current_sequences.insert(current_sequences.end(),
+                                 empty_sequences.begin(),
+                                 empty_sequences.end());*/
+
+        // Calculating the last address used. Assuming blocks can't overlap.
+        auto last_address = physical_addresses_map.rbegin()->first;
+        int records_in_last = 0;
+        for (const auto& count : physical_addresses_map.at(last_address)) {
+          records_in_last += count;
+        }
+        physical_addresses_map.insert(
+            {last_address + records_in_last * current_record_size,
+             std::move(empty_sequences)});
 
         virtual_channel_count = max_channel_count;
 
@@ -331,8 +342,8 @@ auto QueryManager::CreateStreamParams(
                    static_cast<long>(4))
             << std::endl;*/
         data_count_ += static_cast<long>(
-                          current_tables_metadata.at(table_name).record_size) *
-                      static_cast<long>(merge_count_) * static_cast<long>(4);
+                           current_tables_metadata.at(table_name).record_size) *
+                       static_cast<long>(merge_count_) * static_cast<long>(4);
 
       } else {
         /*std::cout << "Streamed data (rows): "
@@ -348,16 +359,17 @@ auto QueryManager::CreateStreamParams(
                        current_tables_metadata.at(table_name).record_count) *
                    static_cast<long>(4))
             << std::endl;*/
-        data_count_ += static_cast<long>(
-                          current_tables_metadata.at(table_name).record_size) *
-                      static_cast<long>(
-                          current_tables_metadata.at(table_name).record_count) *
-                      static_cast<long>(4);
-        //if (is_last_) {
+        data_count_ +=
+            static_cast<long>(
+                current_tables_metadata.at(table_name).record_size) *
+            static_cast<long>(
+                current_tables_metadata.at(table_name).record_count) *
+            static_cast<long>(4);
+        // if (is_last_) {
         //  std::cout << "Streamed data (bytes): " << std::to_string(data_count)
         //            << std::endl;
         //}
-        
+
         auto* physical_address_ptr =
             table_memory_blocks.at(table_name)->GetPhysicalAddress();
         physical_addresses_map.insert({physical_address_ptr, {-1}});
@@ -515,7 +527,7 @@ void QueryManager::LoadEmptyRoutingPRRegion(
 auto QueryManager::LoadPRBitstreams(
     MemoryManagerInterface* memory_manager,
     const std::vector<std::string>& bitstream_names,
-    AcceleratorLibraryInterface& driver_library) ->long {
+    AcceleratorLibraryInterface& driver_library) -> long {
   if (!bitstream_names.empty()) {
     auto dma_module = driver_library.GetDMAModule();
     memory_manager->LoadPartialBitstream(bitstream_names, *dma_module);
@@ -841,14 +853,14 @@ void QueryManager::ProcessResults(
               record_count, result_params.filename,
               result_params.stream_specifications, result_params.stream_index);
         } else {
-          std::string filename = result_params.filename;
+          /*std::string filename = result_params.filename;
           if (filename.back() != 'v') {
             filename += ".csv";
           }
           WriteResults(
               data_manager, table_memory_blocks.at(result_params.filename),
               record_count, filename, result_params.stream_specifications,
-              result_params.stream_index);
+              result_params.stream_index);*/
         }
       }
     }

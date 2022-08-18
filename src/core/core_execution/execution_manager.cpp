@@ -282,7 +282,7 @@ void ExecutionManager::Execute(
   long system =
       total_execution - scheduling - init_config - config - initialisation;
   long actual_execution = total_execution - init_config;
-  //std::cout << "ACTUAL_EXECUTION: " << actual_execution << std::endl;
+  std::cout << "ACTUAL_EXECUTION: " << actual_execution << std::endl;
 
   /*std::cout << "CONFIGURATION: " << config << std::endl;
   std::cout << "SCHEDULING: " << scheduling << std::endl;
