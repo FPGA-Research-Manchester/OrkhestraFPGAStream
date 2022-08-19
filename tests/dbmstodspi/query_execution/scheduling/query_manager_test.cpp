@@ -242,7 +242,7 @@ TEST_F(QueryManagerTest, DISABLED_ExecuteAndProcessResultsCallsFPGAManager) {
 
   EXPECT_CALL(mock_fpga_manager, SetupQueryAcceleration(execution_query_nodes))
       .Times(1);
-  EXPECT_CALL(mock_fpga_manager, RunQueryAcceleration()).Times(1);
+  EXPECT_CALL(mock_fpga_manager, RunQueryAcceleration(1)).Times(1);
 
   std::map<std::string, std::vector<std::unique_ptr<MemoryBlockInterface>>>
       output_memory_blocks;

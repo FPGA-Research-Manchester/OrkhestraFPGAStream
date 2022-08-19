@@ -31,5 +31,5 @@ class MockFPGAManager : public FPGAManagerInterface {
   MOCK_METHOD(void, SetupQueryAcceleration,
               (const std::vector<AcceleratedQueryNode>& query_nodes),
               (override));
-  MOCK_METHOD(ResultsArray, RunQueryAcceleration, (), (override));
+  MOCK_METHOD(ResultsArray, RunQueryAcceleration, (int timeout), (override));
 };

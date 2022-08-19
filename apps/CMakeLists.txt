@@ -31,37 +31,6 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/CUSTOMER_DATA.csv
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/JOIN_DATA.csv
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/FILTERED_JOIN_DATA.csv
-    
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_empty.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_empty.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_joining.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_joining.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_filtering.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_filtering.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_filter_join.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_filter_join.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_merge_sorting.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_merge_sorting.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_big_merge_sorting.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_big_merge_sorting.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_linear_sorting.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_linear_sorting.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_filtering_linear_sort.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_filtering_linear_sort.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_double_merge_sorting.bin 
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_double_merge_sorting.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_sort_join_filter.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_sort_join_filter.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_addition.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_addition.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_multiplication.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_multiplication.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_aggregation_sum.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_aggregation_sum.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_add_mul_sum.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_add_mul_sum.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_join_filter.bin
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/DSPI_join_filter.json
 
 #${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/SF03/lineitem_sf0_3.csv
 #${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/SF03/lineitem_sf0_3_filter.csv
@@ -98,12 +67,7 @@ set(data
     
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data_type_sizes.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/required_memory_space.json 
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/supported_accelerators.json
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/extended_accelerator_set.json 
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/big_accelerator_set.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/repo.json 
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/config.ini
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/extended_config.ini 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/column_sizes.json 
     
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/concurrency_testing.json 
@@ -148,9 +112,7 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/benchmark_defs.zip 
     #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem.zip 
     #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/part.zip 
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/big_benchmark_config.ini 
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/fast_benchmark_config.ini
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/slow_benchmark_config.ini
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/default_config.ini
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/tables_data.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/pr_hw_library.json
@@ -357,7 +319,7 @@ set(data
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q19.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q6.txt
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q1.txt
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q1.txt
     #${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/lineitem.csv
     #${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/part.csv
 

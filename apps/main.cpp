@@ -128,12 +128,15 @@ auto main(int argc, char* argv[]) -> int {
 
   options.add_options()("i,input", "Input definition",
                         cxxopts::value<std::string>())(
-      "c,config", "Config file for used hardware",
+      "c,config", "Config file for additional options",
       cxxopts::value<std::string>())("v,verbose", "Additional debug messages")(
       "t,trace", "Enable all trace signals")("q,quiet", "Disable all logging")(
       "h,help", "Print usage")(
       "r,run",
-      "Run SQL query provided in the file given. Or type example for Q19.",
+      "Run SQL query provided in the file given. Or type 'example' for Q19.",
+      cxxopts::value<std::string>())(
+      "d,database",
+      "Specify PostgreSQL database for running SQL queries. Default database is tpch_001",
       cxxopts::value<std::string>());
 
   auto result = options.parse(argc, argv);
@@ -159,7 +162,7 @@ auto main(int argc, char* argv[]) -> int {
   }
   Log(LogLevel::kDebug, command);
 
-  string config_name = "fast_benchmark_config.ini";
+  string config_name = "default_config.ini";
   if (result.count("config")) {
     config_name = result["config"].as<string>();
   } else {
@@ -178,9 +181,17 @@ auto main(int argc, char* argv[]) -> int {
       cout << "Executing default Q19 example!" << endl;
       RunCodedQuery(config_name);
     } else {
-      RunSQLQuery(result["run"].as<string>(), config_name);
+      if (result.count("database")) {
+        RunSQLQuery(result["run"].as<string>(), config_name,
+                    result["database"].as<string>());
+      } else {
+        RunSQLQuery(result["run"].as<string>(), config_name);
+      }
     }
   } else {
+    if (result.count("database")) {
+      throw runtime_error("Database specification is not required when execution premade plans!");
+    }
     MeasureOverallTimeOfParsedPlan(result["input"].as<string>(), config_name);
   }
 

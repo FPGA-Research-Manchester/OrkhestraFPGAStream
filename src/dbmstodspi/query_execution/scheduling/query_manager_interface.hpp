@@ -57,9 +57,8 @@ namespace orkhestrafs::dbmstodspi {
  */
 class QueryManagerInterface {
  public:
-
-  virtual auto GetData()->std::vector<long> =0;
-  virtual auto GetConfigTime()->long =0;
+  virtual auto GetData() -> std::vector<long> = 0;
+  virtual auto GetConfigTime() -> long = 0;
 
   virtual void MeasureBitstreamConfigurationSpeed(
       const std::map<QueryOperationType, OperationPRModules>& hw_library,
@@ -209,10 +208,10 @@ class QueryManagerInterface {
    * @param bitstream_names Bitstreams to load
    * @param driver_library To get the DMA module to decouple from the PR region.
    */
-  virtual auto LoadPRBitstreams(
-      MemoryManagerInterface* memory_manager,
-      const std::vector<std::string>& bitstream_names,
-      AcceleratorLibraryInterface& driver_library) -> long = 0;
+  virtual auto LoadPRBitstreams(MemoryManagerInterface* memory_manager,
+                                const std::vector<std::string>& bitstream_names,
+                                AcceleratorLibraryInterface& driver_library)
+      -> long = 0;
 
   /**
    * @brief Find out which bitstreams have to be loaded next.

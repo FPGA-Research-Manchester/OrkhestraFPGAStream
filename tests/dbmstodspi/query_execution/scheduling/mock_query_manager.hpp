@@ -74,7 +74,8 @@ class MockQueryManager : public QueryManagerInterface {
                MappedMemoryBlocks& table_memory_blocks,
                const MappedResultParameters& result_parameters,
                const std::vector<AcceleratedQueryNode>& execution_query_nodes,
-               TableMap& scheduling_table_data, Counter& table_counter),
+               TableMap& scheduling_table_data, Counter& table_counter,
+               int timeout),
               (override));
   MOCK_METHOD(
       (std::queue<std::pair<std::vector<ScheduledModule>, QueryNodeVector>>),

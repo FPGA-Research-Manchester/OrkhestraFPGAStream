@@ -30,6 +30,8 @@ class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
   using TableMap = std::map<std::string, TableMetadata>;
 
  public:
+  MOCK_METHOD(bool, IsIncompleteOperationSupported,
+              (QueryOperationType operation_type), (override));
   MOCK_METHOD(
       void, SetupOperation,
       (const orkhestrafs::dbmstodspi::AcceleratedQueryNode& node_parameters),
