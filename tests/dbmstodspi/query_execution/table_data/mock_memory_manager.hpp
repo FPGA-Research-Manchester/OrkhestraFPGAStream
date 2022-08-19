@@ -36,7 +36,7 @@ class MockMemoryManager : public MemoryManagerInterface {
   MOCK_METHOD(void, LoadBitstreamIfNew,
               (const std::string& bitstream_name, int register_space_size),
               (override));
-  MOCK_METHOD(void, LoadStatic, (), (override));
+  MOCK_METHOD(void, LoadStatic, (int clock_speed), (override));
   MOCK_METHOD(void, LoadPartialBitstream,
               (const std::vector<std::string>& bitstream_name,
                DMAInterface& dma_engine),

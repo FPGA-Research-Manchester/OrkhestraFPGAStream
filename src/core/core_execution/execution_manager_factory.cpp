@@ -40,26 +40,20 @@ using orkhestrafs::dbmstodspi::MemoryManager;
 using orkhestrafs::dbmstodspi::PlanEvaluator;
 using orkhestrafs::dbmstodspi::QueryManager;
 using orkhestrafs::dbmstodspi::RapidJSONReader;
-#ifdef FPGA_AVAILABLE
 using orkhestrafs::dbmstodspi::SetupSchedulingState;
-//using orkhestrafs::dbmstodspi::SetupBenchmarkScheduleState;
-#else
-// using orkhestrafs::dbmstodspi::SetupSchedulingState;
 using orkhestrafs::dbmstodspi::SetupBenchmarkScheduleState;
-#endif
 
 auto ExecutionManagerFactory::GetManager(const Config& config)
     -> std::unique_ptr<ExecutionManagerInterface> {
   auto scheduler = std::make_unique<ElasticResourceNodeScheduler>(
       std::make_unique<PlanEvaluator>());
 
-#ifdef FPGA_AVAILABLE
-  auto start_state = std::make_unique<SetupSchedulingState>();
-  //auto start_state = std::make_unique<SetupBenchmarkScheduleState>();
-#else
-  // auto start_state = std::make_unique<SetupSchedulingState>();
-  auto start_state = std::make_unique<SetupBenchmarkScheduleState>();
-#endif
+  std::unique_ptr<StateInterface> start_state;
+  if (config.benchmark_scheduler) {
+    start_state = std::make_unique<SetupBenchmarkScheduleState>();
+  } else {
+    start_state = std::make_unique<SetupSchedulingState>();
+  }
 
   return std::make_unique<ExecutionManager>(
       config,

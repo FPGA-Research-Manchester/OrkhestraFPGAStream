@@ -89,7 +89,7 @@ class MemoryManager : public MemoryManagerInterface {
   void FreeMemoryBlock(MemoryBlockInterface* memory_block_pointer) override;
 
   // Quick methods to do PR loading.
-  void LoadStatic() override;
+  void LoadStatic(int clock_speed) override;
   void LoadPartialBitstream(const std::vector<std::string>& bitstream_name,
                             DMAInterface& dma_engine) override;
 

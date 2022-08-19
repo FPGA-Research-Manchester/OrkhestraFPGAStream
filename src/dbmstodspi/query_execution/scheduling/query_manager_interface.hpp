@@ -189,7 +189,7 @@ class QueryManagerInterface {
    * bitstream.
    */
   virtual void LoadInitialStaticBitstream(
-      MemoryManagerInterface* memory_manager) = 0;
+      MemoryManagerInterface* memory_manager, int clock_speed) = 0;
 
   /**
    * @brief Load the empty PR region routing wires

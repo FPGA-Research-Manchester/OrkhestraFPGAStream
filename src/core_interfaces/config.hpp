@@ -33,17 +33,6 @@ using orkhestrafs::core_interfaces::table_data::TableMetadata;
 
 namespace orkhestrafs::core_interfaces {
 struct Config {
-  /// Map of hardware modules and the available variations with different
-  /// computational capacity values.
-  std::map<QueryOperationType, std::vector<std::vector<int>>> module_library;
-
-  /// Map of bitstreams where a combination of modules corresponds to a
-  /// bitstream.
-  std::map<std::vector<QueryOperation>, std::string> accelerator_library;
-
-  /// Map telling FOS how much memory mapped register space is available for
-  /// each bitstream.
-  std::map<std::string, int> required_memory_space;
   /// Map telling how big each instance of a specifc data type is.
   std::map<ColumnDataType, double> data_sizes;
 
@@ -63,12 +52,27 @@ struct Config {
   bool prioritise_children = true;
   int heuristic_choice = 0;
 
+  int clock_speed = 300;
+  bool use_single_runs = false;
+  bool benchmark_scheduler = false;
+  bool check_bitstreams = false;
+  bool check_tables = false;
+
+  bool print_data_amounts = false;
+  // TODO: Doesn't do anything at the moment
+  bool print_write_times = false;
+  bool print_total_execution = false;
+  bool print_system = false;
+  bool print_initialisation = false;
+  bool print_scheduling = false;
+  bool print_config = false;
+
   int execution_timeout = 60;
 
   double streaming_speed = 4800000000;
   double configuration_speed = 66000000;
 
-  double time_limit_duration_in_seconds = -1;
+  double scheduler_time_limit_in_seconds = -1;
 
   std::string resource_string = "MMDMDBMMDBMMDMDBMMDBMMDMDBMMDBM";
 

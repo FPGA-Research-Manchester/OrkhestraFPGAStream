@@ -91,7 +91,8 @@ class MockQueryManager : public QueryManagerInterface {
        const std::unordered_set<std::string>& blocked_nodes),
       (override));
   MOCK_METHOD(void, LoadInitialStaticBitstream,
-              (MemoryManagerInterface * memory_manager), (override));
+              (MemoryManagerInterface * memory_manager, int clock_speed),
+              (override));
   MOCK_METHOD(void, LoadEmptyRoutingPRRegion,
               (MemoryManagerInterface * memory_manager,
                AcceleratorLibraryInterface& driver_library),

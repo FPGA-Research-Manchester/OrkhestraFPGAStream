@@ -367,7 +367,9 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPos(
   std::string current_query = node_name;
   for (const auto& module : current_run) {
     current_query += module.bitstream;
-    //return; Uncomment for single runs
+    if (use_single_runs_) {
+      return;
+    }
   }
 
   // Find placements
@@ -761,61 +763,16 @@ void ElasticSchedulingGraphParser::GetAllAvailableModulePlacementsInCurrentRun(
     const std::unordered_map<std::string, SchedulingQueryNode>& graph,
     const std::unordered_set<std::string>& blocked_nodes,
     const std::map<std::string, TableMetadata>& data_tables) {
-  /*std::tuple<std::unordered_set<std::string>, std::unordered_set<std::string>,
-             std::vector<ScheduledModule>>
-      current_query = {available_nodes, blocked_nodes, current_run};*/
-  /*std::vector<std::string> current_query(available_nodes.begin(),
-                                       available_nodes.end());
-  std::sort(current_query.begin(), current_query.end());
-  std::vector<std::string> temp(blocked_nodes.begin(),
-                                         blocked_nodes.end());
-  std::sort(temp.begin(), temp.end());
-  current_query.insert(current_query.end(), temp.begin(), temp.end());
-  temp.clear();
-  for (const auto& module : current_run) {
-    temp.push_back(module.bitstream);
-  }
-  std::sort(temp.begin(), temp.end());
-  current_query.insert(current_query.end(), temp.begin(), temp.end());
-  std::string query_string = std::accumulate(
-      current_query.begin(), current_query.end(), std::string(""));
-
-  auto search = saved_placements_.find(query_string);*/
-  /*auto search = saved_placements_.find(current_query);
-  if (search == saved_placements_.end()) {
-    auto available_nodes_in_this_run = RemoveUnavailableNodesInThisRun(
-        available_nodes, current_run, graph, blocked_nodes);
-
-    for (const auto& node_name : available_nodes_in_this_run) {
-      GetScheduledModulesForNodeAfterPos(
-          graph, GetMinPositionInCurrentRun(current_run, node_name, graph),
-          node_name, GetTakenColumns(current_run), data_tables,
-          available_module_placements);
-    }
-    saved_placements_.insert({current_query, available_module_placements});
-  } else {
-    available_module_placements = search->second;
-  }*/
 
   auto available_nodes_in_this_run = RemoveUnavailableNodesInThisRun(
       available_nodes, current_run, graph, blocked_nodes, data_tables);
 
-  /*for (const auto& node_name : available_nodes_in_this_run) {
-    GetScheduledModulesForNodeAfterPosOrig(
-        graph, GetMinPositionInCurrentRun(current_run, node_name, graph),
-        node_name, GetTakenColumns(current_run), data_tables,
-        available_module_placements);
-  }*/
 
   for (const auto& node_name : available_nodes_in_this_run) {
     GetScheduledModulesForNodeAfterPos(graph, current_run, node_name,
                                        data_tables,
                                        available_module_placements);
   }
-
-  // For each module in the avilable module placements:
-  // For each input of the module
-  // If the module has another module in the run that has the run name put it into results
 
   if (prioritise_children_) {
     std::unordered_set<std::pair<int, ScheduledModule>, PairHash> result;

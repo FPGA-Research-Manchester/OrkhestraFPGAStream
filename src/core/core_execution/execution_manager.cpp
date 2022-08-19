@@ -46,7 +46,8 @@ void ExecutionManager::UpdateAvailableNodesGraph() {
   InitialiseTables(current_tables_metadata_, current_available_node_pointers_,
                    query_manager_.get(), data_manager_.get());
   current_query_graph_.clear();
-  SetupTableDependencies(unscheduled_graph_->GetAllNodesPtrs(), blocked_nodes_, table_counter_);
+  SetupTableDependencies(unscheduled_graph_->GetAllNodesPtrs(), blocked_nodes_,
+                         table_counter_);
   SetupSchedulingGraphAndConstrainedNodes(
       unscheduled_graph_->GetAllNodesPtrs(), current_query_graph_,
       *accelerator_library_, nodes_constrained_to_first_,
@@ -67,8 +68,9 @@ void ExecutionManager::SetupTableDependencies(
     }
   }
   std::unordered_set<QueryNode*> nodes_to_check;
-  // we want to block all nodes that have an input that is the output of something else
-  // But nodes that have this condition and are linked do not get blocked!
+  // we want to block all nodes that have an input that is the output of
+  // something else But nodes that have this condition and are linked do not get
+  // blocked!
   for (const auto& node : all_nodes) {
     for (int i = 0; i < node->given_input_data_definition_files.size(); i++) {
       const auto& input_table = node->given_input_data_definition_files.at(i);
@@ -82,8 +84,6 @@ void ExecutionManager::SetupTableDependencies(
                 [&](auto table_name) { return input_table == table_name; })) {
           blocked_nodes.insert(node->node_name);
           nodes_to_check.insert(node);
-          
-          
         }
       }
     }
@@ -223,7 +223,7 @@ void ExecutionManager::InitialiseTables(
             current_node->given_operation_parameters.output_stream_parameters,
             output_stream_id);
         // Hardcoded for benchmarking
-        //new_data.record_size = 10;
+        // new_data.record_size = 10;
         new_data.record_count = -1;
         tables_metadata.insert({table_name, new_data});
       }
@@ -282,21 +282,29 @@ void ExecutionManager::Execute(
   long system =
       total_execution - scheduling - init_config - config - initialisation;
   long actual_execution = total_execution - init_config;
-  std::cout << "ACTUAL_EXECUTION: " << actual_execution << std::endl;
+  //std::cout << "ACTUAL_EXECUTION: " << actual_execution << std::endl;
 
-  /*std::cout << "CONFIGURATION: " << config << std::endl;
-  std::cout << "SCHEDULING: " << scheduling << std::endl;
-  std::cout << "INITIALISATION: " << initialisation << std::endl;
-  std::cout << "SYSTEM: " << system
-            << std::endl;
-  std::cout << "EXECUTION: " << (data_size / 4659.61402505057)
+  if (config_.print_config) {
+    std::cout << "CONFIGURATION: " << config << std::endl;
+  }
+  if (config_.print_scheduling) {
+    std::cout << "SCHEDULING: " << scheduling << std::endl;
+  }
+  if (config_.print_initialisation) {
+    std::cout << "INITIALISATION: " << initialisation << std::endl;
+  }
+  if (config_.print_system) {
+    std::cout << "SYSTEM: " << system << std::endl;
+  }
+  /*std::cout << "EXECUTION: " << (data_size / 4659.61402505057)
             << std::endl;*/
-  
+
   /*std::cout << "STATIC: "
             << ((data_size / 4659.61402505057) + initialisation)
             << std::endl;*/
-
-  //std::cout << "DATA_STREAMED: " << data_size << std::endl;
+  if (config_.print_data_amounts) {
+    std::cout << "DATA_STREAMED: " << data_size << std::endl;
+  }
   /*std::cout << "TOTAL EXECUTION RUNTIME: "
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      begin)
@@ -331,7 +339,8 @@ void ExecutionManager::BenchmarkScheduleUnscheduledNodes() {
   query_manager_->BenchmarkScheduling(
       nodes_constrained_to_first_, current_available_node_names_,
       processed_nodes_, current_query_graph_, current_tables_metadata_,
-      *accelerator_library_, config_, *scheduler_, current_configuration_, blocked_nodes_);
+      *accelerator_library_, config_, *scheduler_, current_configuration_,
+      blocked_nodes_);
 }
 auto ExecutionManager::IsBenchmarkDone() -> bool {
   return current_available_node_names_.empty();
@@ -372,12 +381,12 @@ void ExecutionManager::SetupNextRunData() {
                                            *accelerator_library_.get());*/
   auto [bitstreams_to_load, empty_modules] =
       query_manager_->GetPRBitstreamsToLoadWithPassthroughModules(
-          current_configuration_, query_node_runs_queue_.front().first, current_routing_);
+          current_configuration_, query_node_runs_queue_.front().first,
+          current_routing_);
   query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
                                    *accelerator_library_);
   config_time_ += query_manager_->LoadPRBitstreams(
-      memory_manager_.get(), bitstreams_to_load,
-                                   *accelerator_library_);
+      memory_manager_.get(), bitstreams_to_load, *accelerator_library_);
   /*query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
    *accelerator_library_.get());*/
   // Debugging
@@ -463,7 +472,8 @@ void ExecutionManager::SetupSchedulingData(bool setup_bitstreams) {
   config_time_ = 0;
   current_tables_metadata_ = config_.initial_all_tables_metadata;
   if (setup_bitstreams) {
-    query_manager_->LoadInitialStaticBitstream(memory_manager_.get());
+    query_manager_->LoadInitialStaticBitstream(memory_manager_.get(),
+                                               config_.clock_speed);
     // TODO: Remove the hardcoded aspect of this!
     for (int i = 0; i < 31; i++) {
       current_routing_.push_back("RT");

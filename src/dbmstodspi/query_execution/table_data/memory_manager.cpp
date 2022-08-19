@@ -76,7 +76,7 @@ void MemoryManager::TestConfigurationTimes(
 #endif
 }
 
-void MemoryManager::LoadStatic() {
+void MemoryManager::LoadStatic(int clock_speed) {
   // Addressable register space on the FPGA. No need to preserve space for the
   // whole addressable space, for the supported library 10 MB is enough.
   const int register_space_size = 10 * 1024 * 1024;
@@ -93,8 +93,13 @@ void MemoryManager::LoadStatic() {
 
   register_memory_block_ = acceleration_instance_.prmanager->accelRegs;
 
-  SetFPGATo300MHz();
-  // SetFPGATo100MHz();
+  if (clock_speed == 300) {
+    SetFPGATo300MHz();
+  } else if (clock_speed == 100) {
+    SetFPGATo100MHz();
+  } else {
+    throw std::runtime_error("Unsupported FPGA clock speed");
+  }
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   /*std::cout << "STATIC CONFIGURATION: "

@@ -66,7 +66,6 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_part_sf0_01_multiplied.csv 
     
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data_type_sizes.json 
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/required_memory_space.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/repo.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/column_sizes.json 
     

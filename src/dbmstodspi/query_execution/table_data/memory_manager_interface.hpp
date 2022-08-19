@@ -46,7 +46,7 @@ class MemoryManagerInterface {
 
   virtual auto GetAvailableMemoryBlock() -> MemoryBlockInterface* = 0;
   virtual void FreeMemoryBlock(MemoryBlockInterface* memory_block_pointer) = 0;
-  virtual void LoadStatic() = 0;
+  virtual void LoadStatic(int clock_speed) = 0;
   virtual void LoadPartialBitstream(
       const std::vector<std::string>& bitstream_name,
       DMAInterface& dma_engine) = 0;

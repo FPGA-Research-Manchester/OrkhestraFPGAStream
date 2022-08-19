@@ -24,6 +24,7 @@ limitations under the License.
 #include "pr_module_data.hpp"
 #include "query_scheduling_data.hpp"
 #include "table_data.hpp"
+#include "logger.hpp"
 
 using orkhestrafs::core::core_input::ConfigCreator;
 
@@ -31,10 +32,11 @@ using orkhestrafs::core_interfaces::hw_library::PRModuleData;
 using orkhestrafs::core_interfaces::operation_types::QueryOperation;
 using orkhestrafs::core_interfaces::query_scheduling_data::kSupportedFunctions;
 using orkhestrafs::core_interfaces::table_data::kDataTypeNames;
+using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
 
 auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
-  std::string configurations_library = "CONFIGURATIONS_LIBRARY";
-  std::string memory_requirements = "BITSTREAMS_MEM_REQ";
+  Log(LogLevel::kDebug, "Parsing config: " + config_filename);
   std::string data_type_sizes = "DATA_SIZE_CONFIG";
   std::string data_separator = "DATA_SEPARATOR";
   std::string table_metadata = "TABLE_METADATA";
@@ -55,6 +57,20 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string config_scaler = "CONFIG_SCALER";
   std::string utility_per_frame_scaler = "UTILITY_PER_FRAME_SCALER";
 
+  std::string clock_speed = "FPGA_CLOCK_SPEED";
+  std::string single_runs = "SINGLE_RUNS";
+  std::string scheduling_benchmark = "BENCHMARK_SCHEDULER";
+  std::string check_bitstreams = "CHECK_BITSTREAMS";
+  std::string check_tables = "CHECK_TABLES";
+
+  std::string print_data_amounts = "PRINT_DATA_AMOUNTS";
+  std::string print_write_times = "PRINT_WRITE_TIMES";
+  std::string print_total_execution = "PRINT_TOTAL_EXEC_TIME";
+  std::string print_system = "PRINT_SYSTEM_TIME";
+  std::string print_initialisation = "PRINT_INITIALISATION_TIME";
+  std::string print_scheduling = "PRINT_SCHEDULING_TIME";
+  std::string print_config = "PRINT_CONFIGURATION_TIME";
+
   // repo.json is hardcoded for now.
 
   auto config_values = config_reader_->ParseInputConfig(config_filename);
@@ -63,45 +79,75 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
 
   std::istringstream(config_values[reduce_runs]) >> std::boolalpha >>
       config.reduce_single_runs;
+  Log(LogLevel::kTrace, "reduce_single_runs: " + config.reduce_single_runs);
   std::istringstream(config_values[max_runs]) >> std::boolalpha >>
       config.use_max_runs_cap;
+  Log(LogLevel::kTrace, "use_max_runs_cap: " + config.use_max_runs_cap);
   std::istringstream(config_values[children]) >> std::boolalpha >>
       config.prioritise_children;
+  Log(LogLevel::kTrace, "prioritise_children: " + config.prioritise_children);
   config.heuristic_choice = std::stoi(config_values[heuristic]);
+  Log(LogLevel::kTrace, "heuristic_choice: " + config.heuristic_choice);
   config.streaming_speed = std::stod(config_values[streaming_speed]);
   config.configuration_speed = std::stod(config_values[configuration_speed]);
-  config.time_limit_duration_in_seconds = std::stod(config_values[time_limit]);
+  config.scheduler_time_limit_in_seconds = std::stod(config_values[time_limit]);
+  Log(LogLevel::kTrace, "scheduler_time_limit_in_seconds: " +
+                            std::to_string(config.scheduler_time_limit_in_seconds));
   config.resource_string = config_values[resource_string];
   config.utilites_scaler = std::stod(config_values[utility_scaler]);
   config.config_written_scaler = std::stod(config_values[config_scaler]);
   config.utility_per_frame_scaler =
       std::stod(config_values[utility_per_frame_scaler]);
 
+  config.clock_speed = std::stoi(config_values[clock_speed]);
+  Log(LogLevel::kTrace, "clock_speed: " + config.clock_speed);
+  std::istringstream(config_values[single_runs]) >> std::boolalpha >>
+      config.use_single_runs;
+  Log(LogLevel::kTrace, "use_single_runs: " + config.use_single_runs);
+  std::istringstream(config_values[scheduling_benchmark]) >> std::boolalpha >>
+      config.benchmark_scheduler;
+  Log(LogLevel::kTrace, "benchmark_scheduler: " + config.benchmark_scheduler);
+  std::istringstream(config_values[check_bitstreams]) >> std::boolalpha >>
+      config.check_bitstreams;
+  std::istringstream(config_values[check_tables]) >> std::boolalpha >>
+      config.check_tables;
+
+  std::istringstream(config_values[print_data_amounts]) >> std::boolalpha >>
+      config.print_data_amounts;
+  std::istringstream(config_values[print_write_times]) >> std::boolalpha >>
+      config.print_write_times;
+  std::istringstream(config_values[print_total_execution]) >> std::boolalpha >>
+      config.print_total_execution;
+  std::istringstream(config_values[print_system]) >> std::boolalpha >>
+      config.print_system;
+  std::istringstream(config_values[print_initialisation]) >> std::boolalpha >>
+      config.print_initialisation;
+  std::istringstream(config_values[print_scheduling]) >> std::boolalpha >>
+      config.print_scheduling;
+  std::istringstream(config_values[print_config]) >> std::boolalpha >>
+      config.print_config;
+
   config.debug_forced_pr_bitstreams =
       SetCommaSeparatedValues(config_values[force_pr]);
-
-  auto accelerator_library_data = json_reader_->ReadAcceleratorLibrary(
-      config_values[configurations_library]);
-  config.accelerator_library =
-      ConvertStringMapToQueryOperations(accelerator_library_data);
-  config.module_library =
-      ConvertAcceleratorLibraryToModuleLibrary(accelerator_library_data);
+  if (!config.debug_forced_pr_bitstreams.empty()) {
+    Log(LogLevel::kTrace, "Using debug bitstreams!");
+  }
 
   auto all_tables_json_data =
       json_reader_->ReadAllTablesData(config_values[table_metadata]);
 
   config.initial_all_tables_metadata = CreateTablesData(all_tables_json_data);
-  // TODO(Kaspar): Enable this check! Removed now as there are a lot of
-  // theoretical tables given.
-  // CheckTablesExist(config.initial_all_tables_metadata);
+  if (config.check_tables) {
+    CheckTablesExist(config.initial_all_tables_metadata);
+  }
 
   auto hw_library_json_data =
       json_reader_->ReadHWLibraryData(config_values[hw_library]);
 
   config.pr_hw_library = CreateHWLibrary(hw_library_json_data);
-  // TODO(Kaspar): Enable this check! Removed now as there are a lot of
-  // theoretical tables given.
-  // CheckBitstreamsExist(config.pr_hw_library);
+  if (config.check_bitstreams) {
+    CheckBitstreamsExist(config.pr_hw_library);
+  }
 
   auto column_sizes = json_reader_->ReadValueMap(config_values[column_cost]);
   for (const auto& [column_type, size] : column_sizes) {
@@ -114,11 +160,11 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
     config.data_sizes.insert({kDataTypeNames.at(string_key), size_scale});
   }
 
-  config.required_memory_space =
-      json_reader_->ReadReqMemorySpace(config_values[memory_requirements]);
   config.csv_separator = config_values[data_separator].c_str()[0];
 
   config.execution_timeout = std::stoi(config_values[exec_timeout]);
+  Log(LogLevel::kTrace, "execution_timeout: " + config.execution_timeout);
+  Log(LogLevel::kTrace, "Config parsed");
   return config;
 }
 

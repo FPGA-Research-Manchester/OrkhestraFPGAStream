@@ -107,7 +107,7 @@ auto ElasticResourceNodeScheduler::ScheduleAndGetAllPlans(
                   std::map<std::vector<std::vector<ScheduledModule>>,
                            ExecutionPlanSchedulingData>,
                   long long, bool, std::pair<int, int>> {
-  double time_limit_duration_in_seconds = config.time_limit_duration_in_seconds;
+  double time_limit_duration_in_seconds = config.scheduler_time_limit_in_seconds;
   if (time_limit_duration_in_seconds == -1) {
     auto operation_costs = GetLargestModulesSizes(config.pr_hw_library);
     time_limit_duration_in_seconds =
@@ -159,7 +159,8 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
     scheduler_ = std::make_unique<ElasticSchedulingGraphParser>(
         config.pr_hw_library, heuristic_choices.at(config.heuristic_choice),
         first_node_names, drivers, config.use_max_runs_cap,
-        config.reduce_single_runs, config.prioritise_children);
+        config.reduce_single_runs, config.prioritise_children,
+        config.use_single_runs);
   }
   scheduler_->PreprocessNodes(starting_nodes, processed_nodes, graph, tables);
   std::chrono::steady_clock::time_point end_pre_process =
@@ -280,7 +281,8 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
     scheduler_ = std::make_unique<ElasticSchedulingGraphParser>(
         config.pr_hw_library, heuristic_choices.at(config.heuristic_choice),
         first_node_names, drivers, config.use_max_runs_cap,
-        config.reduce_single_runs, config.prioritise_children);
+        config.reduce_single_runs, config.prioritise_children,
+        config.use_single_runs);
   }
   std::chrono::steady_clock::time_point start =
       std::chrono::steady_clock::now();

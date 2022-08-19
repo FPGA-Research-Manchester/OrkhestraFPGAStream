@@ -91,7 +91,7 @@ class QueryManager : public QueryManagerInterface {
       const std::unordered_set<std::string>& blocked_nodes) override;
 
   void LoadInitialStaticBitstream(
-      MemoryManagerInterface* memory_manager) override;
+      MemoryManagerInterface* memory_manager, int clock_speed) override;
 
   void LoadEmptyRoutingPRRegion(
       MemoryManagerInterface* memory_manager,

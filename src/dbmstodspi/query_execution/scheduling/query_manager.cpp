@@ -499,14 +499,15 @@ auto QueryManager::SetupAccelerationNodesForExecution(
 void QueryManager::LoadNextBitstreamIfNew(
     MemoryManagerInterface* memory_manager, std::string bitstream_file_name,
     Config config) {
-  return memory_manager->LoadBitstreamIfNew(
+  throw std::runtime_error("Deprecated method!");
+  /*return memory_manager->LoadBitstreamIfNew(
       bitstream_file_name,
-      config.required_memory_space.at(bitstream_file_name));
+      config.required_memory_space.at(bitstream_file_name));*/
 }
 
 void QueryManager::LoadInitialStaticBitstream(
-    MemoryManagerInterface* memory_manager) {
-  memory_manager->LoadStatic();
+    MemoryManagerInterface* memory_manager, int clock_speed) {
+  memory_manager->LoadStatic(clock_speed);
   static_configuration_ = memory_manager->GetTime();
 }
 
