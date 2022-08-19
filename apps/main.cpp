@@ -91,7 +91,7 @@ void RunSQLQuery(string query_filename, string config_filename,
       "Execution time = " +
           to_string(chrono::duration_cast<std::chrono::milliseconds>(exec_end -
                                                                      exec_begin)
-                  .count()) +
+                        .count()) +
           "[ms]");
 }
 
@@ -115,6 +115,10 @@ void RunCodedQuery(string config_filename) {
           "[ms]");
 }
 
+void RunInteractiveSession(string config_filename) {
+  Core::Run("", std::move(config_filename), true);
+}
+
 /**
  * @brief Main method of the program.
  *
@@ -130,7 +134,7 @@ auto main(int argc, char* argv[]) -> int {
                         cxxopts::value<std::string>())(
       "c,config", "Config file for additional options",
       cxxopts::value<std::string>())("v,verbose", "Additional debug messages")(
-      "t,trace", "Enable all trace signals")("q,quiet", "Disable all logging")(
+      "t,trace", "Enable all trace signals")("q,quiet", "Disable all logging")("x,interactive", "Interactive version")(
       "h,help", "Print usage")(
       "r,run",
       "Run SQL query provided in the file given. Or type 'example' for Q19.",
@@ -169,6 +173,11 @@ auto main(int argc, char* argv[]) -> int {
     cout << "Using default config!" << endl;
   }
 
+  // TODO : Should check that other's aren't used for clarity!
+  if (result.count("interactive")) {
+    RunInteractiveSession(config_name);
+  }
+
   if ((result.count("run")) && (result.count("input"))) {
     throw runtime_error("Please give only a parsed input or an SQL input");
   }
@@ -190,7 +199,9 @@ auto main(int argc, char* argv[]) -> int {
     }
   } else {
     if (result.count("database")) {
-      throw runtime_error("Database specification is not required when execution premade plans!");
+      throw runtime_error(
+          "Database specification is not required when execution premade "
+          "plans!");
     }
     MeasureOverallTimeOfParsedPlan(result["input"].as<string>(), config_name);
   }

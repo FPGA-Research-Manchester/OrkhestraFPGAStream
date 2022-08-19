@@ -28,6 +28,7 @@ limitations under the License.
 #include "schedule_state.hpp"
 #include "setup_benchmark_schedule_state.hpp"
 #include "setup_scheduling_state.hpp"
+#include "interactive_state.hpp"
 
 using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::core::core_execution::ExecutionManagerFactory;
@@ -42,17 +43,23 @@ using orkhestrafs::dbmstodspi::QueryManager;
 using orkhestrafs::dbmstodspi::RapidJSONReader;
 using orkhestrafs::dbmstodspi::SetupSchedulingState;
 using orkhestrafs::dbmstodspi::SetupBenchmarkScheduleState;
+using orkhestrafs::dbmstodspi::InteractiveState;
 
-auto ExecutionManagerFactory::GetManager(const Config& config)
+auto ExecutionManagerFactory::GetManager(const Config& config, bool is_interactive)
     -> std::unique_ptr<ExecutionManagerInterface> {
   auto scheduler = std::make_unique<ElasticResourceNodeScheduler>(
       std::make_unique<PlanEvaluator>());
 
   std::unique_ptr<StateInterface> start_state;
-  if (config.benchmark_scheduler) {
-    start_state = std::make_unique<SetupBenchmarkScheduleState>();
+  if (is_interactive) {
+    start_state = std::make_unique<InteractiveState>();
   } else {
-    start_state = std::make_unique<SetupSchedulingState>();
+      // TODO: Make this more robust - Throw an error if interactive & benchmarking
+    if (config.benchmark_scheduler) {
+      start_state = std::make_unique<SetupBenchmarkScheduleState>();
+    } else {
+      start_state = std::make_unique<SetupSchedulingState>();
+    }
   }
 
   return std::make_unique<ExecutionManager>(

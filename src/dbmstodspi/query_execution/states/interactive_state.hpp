@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright 2021 University of Manchester
 
 Licensed under the Apache License, Version 2.0(the "License");
@@ -16,20 +16,19 @@ limitations under the License.
 
 #pragma once
 
-#include <string>
+#include "state_interface.hpp"
 
-namespace orkhestrafs::core {
+using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
+
+namespace orkhestrafs::dbmstodspi {
 /**
- * @brief Main class to run the whole library
+ * @brief State for setting up nodes.
  */
-class Core {
+class InteractiveState : public StateInterface {
  public:
-  /**
-   * @brief Run the middleware
-   * @param input_filename Input definition filename.
-   * @param config_filename Config file contianing files to configure the HW.
-   */
-  static void Run(std::string input_filename, std::string config_filename,
-                  bool is_interactive = false);
+  ~InteractiveState() override = default;
+
+  auto Execute(GraphProcessingFSMInterface* fsm)
+      -> std::unique_ptr<StateInterface> override;
 };
-}  // namespace orkhestrafs::core
+}  // namespace orkhestrafs::dbmstodspi

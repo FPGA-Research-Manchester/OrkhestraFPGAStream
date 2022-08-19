@@ -29,6 +29,12 @@ using orkhestrafs::dbmstodspi::GraphCreator;
 
 auto GraphCreator::MakeGraph(std::string graph_def_filename)
     -> std::unique_ptr<ExecutionPlanGraphInterface> {
+
+  if (graph_def_filename.empty()) {
+    std::vector<std::unique_ptr<QueryNode>> empty_graph;
+    return std::make_unique<Graph>(std::move(empty_graph));
+  }
+
   std::map<std::string, QueryNode*> graph_nodes_map;
   std::map<std::string, std::vector<std::string>> previous_nodes;
   std::map<std::string, std::vector<std::string>> next_nodes;
