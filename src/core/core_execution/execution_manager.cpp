@@ -26,6 +26,26 @@ limitations under the License.
 using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
+void ExecutionManager::SetHWPrint(bool print_hw){
+  print_hw_ = print_hw;
+}
+
+void ExecutionManager::SetStartTimer() {
+  exec_begin = std::chrono::steady_clock::now();
+}
+void ExecutionManager::PrintExecTime() {
+  std::cout << "EXEC TIME: "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::steady_clock::now() - exec_begin)
+                   .count()
+            << std::endl;
+}
+
+void ExecutionManager::AddNewNodes(std::string graph_filename) {
+  unscheduled_graph_ =
+      graph_creator_->MakeGraph(graph_filename, std::move(unscheduled_graph_));
+}
+
 void ExecutionManager::LoadStaticTables() {
   if (config_.static_tables.empty()) {
     throw std::runtime_error("No static tables given!");
@@ -437,6 +457,10 @@ void ExecutionManager::SetupNextRunData() {
                                    *accelerator_library_);
   config_time_ += query_manager_->LoadPRBitstreams(
       memory_manager_.get(), bitstreams_to_load, *accelerator_library_);
+  if (print_hw_){
+    PrintHWState();
+  }
+
   /*query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
    *accelerator_library_.get());*/
   // Debugging

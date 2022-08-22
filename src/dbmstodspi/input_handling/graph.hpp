@@ -42,5 +42,6 @@ class Graph : public ExecutionPlanGraphInterface {
   auto IsEmpty() -> bool override;
   auto GetRootNodesPtrs() -> std::vector<QueryNode*> override;
   auto GetAllNodesPtrs() -> std::vector<QueryNode*> override;
+  void ImportNodes(std::vector<std::unique_ptr<QueryNode>> new_nodes) override;
 };
 }  // namespace orkhestrafs::dbmstodspi

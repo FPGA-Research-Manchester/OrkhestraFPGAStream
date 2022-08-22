@@ -48,5 +48,6 @@ class ExecutionPlanGraphInterface {
    * @return Vector of all nodes.
    */
   virtual auto GetAllNodesPtrs() -> std::vector<QueryNode*> = 0;
+  virtual void ImportNodes(std::vector<std::unique_ptr<QueryNode>> new_nodes) =0;
 };
 }  // namespace orkhestrafs::core_interfaces

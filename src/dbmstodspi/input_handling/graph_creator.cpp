@@ -27,9 +27,9 @@ using orkhestrafs::core_interfaces::query_scheduling_data::kSupportedFunctions;
 using orkhestrafs::dbmstodspi::Graph;
 using orkhestrafs::dbmstodspi::GraphCreator;
 
-auto GraphCreator::MakeGraph(std::string graph_def_filename)
+auto GraphCreator::MakeGraph(std::string graph_def_filename,
+                             std::unique_ptr<ExecutionPlanGraphInterface> graph)
     -> std::unique_ptr<ExecutionPlanGraphInterface> {
-
   if (graph_def_filename.empty()) {
     std::vector<std::unique_ptr<QueryNode>> empty_graph;
     return std::make_unique<Graph>(std::move(empty_graph));
@@ -39,17 +39,13 @@ auto GraphCreator::MakeGraph(std::string graph_def_filename)
   std::map<std::string, std::vector<std::string>> previous_nodes;
   std::map<std::string, std::vector<std::string>> next_nodes;
 
-  // Make a vector in populate graph and move them into the graph.
-  // previous nodes and next nodes is already good.
-  // Basically instead of giving graph nodes_map to populate you get the
-  // unique_ptr back.
-
-  // Then you can return all of the pointers and make a map
-  // Then return the Graph
-
   auto data = json_reader_->ReadInputDefinition(std::move(graph_def_filename));
-  auto graph =
-      PopulateGraphNodesMapWithJSONData(data, previous_nodes, next_nodes);
+  if (graph == nullptr) {
+    std::vector<std::unique_ptr<QueryNode>> empty_data;
+    graph = std::make_unique<Graph>(std::move(empty_data));
+  }
+  PopulateGraphNodesMapWithJSONData(graph.get(), data, previous_nodes,
+                                    next_nodes);
 
   for (const auto& node_ptr : graph->GetAllNodesPtrs()) {
     graph_nodes_map.insert({node_ptr->node_name, node_ptr});
@@ -124,11 +120,11 @@ void GraphCreator::LinkDependentNodes(
   }
 }
 
-auto GraphCreator::PopulateGraphNodesMapWithJSONData(
+void GraphCreator::PopulateGraphNodesMapWithJSONData(
+    ExecutionPlanGraphInterface* graph,
     std::map<std::string, JSONReaderInterface::InputNodeParameters>& data,
     std::map<std::string, std::vector<std::string>>& previous_nodes,
-    std::map<std::string, std::vector<std::string>>& next_nodes)
-    -> std::unique_ptr<ExecutionPlanGraphInterface> {
+    std::map<std::string, std::vector<std::string>>& next_nodes) {
   using ParamsMap = std::map<std::string, std::vector<std::vector<int>>>;
   using orkhestrafs::core_interfaces::query_scheduling_data::
       NodeOperationParameters;
@@ -180,5 +176,5 @@ auto GraphCreator::PopulateGraphNodesMapWithJSONData(
           {node_name, std::get<std::vector<std::string>>(search_next->second)});
     }
   }
-  return std::make_unique<Graph>(std::move(all_nodes));
+  graph->ImportNodes(std::move(all_nodes));
 }

@@ -21,6 +21,7 @@ limitations under the License.
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <chrono>
 
 #include "accelerated_query_node.hpp"
 #include "accelerator_library_interface.hpp"
@@ -36,6 +37,7 @@ limitations under the License.
 #include "query_scheduling_data.hpp"
 #include "scheduling_query_node.hpp"
 #include "state_interface.hpp"
+#include "graph_creator.hpp"
 
 using orkhestrafs::core_interfaces::Config;
 using orkhestrafs::core_interfaces::ExecutionManagerInterface;
@@ -55,6 +57,7 @@ using orkhestrafs::dbmstodspi::NodeSchedulerInterface;
 using orkhestrafs::dbmstodspi::QueryManagerInterface;
 using orkhestrafs::dbmstodspi::SchedulingQueryNode;
 using orkhestrafs::dbmstodspi::StateInterface;
+using orkhestrafs::dbmstodspi::GraphCreator;
 
 namespace orkhestrafs::core::core_execution {
 
@@ -68,18 +71,24 @@ class ExecutionManager : public ExecutionManagerInterface,
                    std::unique_ptr<MemoryManagerInterface> memory_manager,
                    std::unique_ptr<StateInterface> start_state,
                    std::unique_ptr<FPGADriverFactoryInterface> driver_factory,
-                   std::unique_ptr<NodeSchedulerInterface> scheduler)
+                   std::unique_ptr<NodeSchedulerInterface> scheduler,
+                   std::unique_ptr<GraphCreator> graph_creator)
       : current_state_{std::move(start_state)},
         data_manager_{std::move(data_manager)},
         memory_manager_{std::move(memory_manager)},
         query_manager_{std::move(query_manager)},
         scheduler_{std::move(scheduler)},
+        graph_creator_{std::move(graph_creator)},
         config_{std::move(config)},
         accelerator_library_{std::move(
             driver_factory->CreateAcceleratorLibrary(memory_manager_.get()))},
         fpga_manager_{std::move(
             driver_factory->CreateFPGAManager(accelerator_library_.get()))} {};
 
+  void SetHWPrint(bool print_hw) override;
+  void SetStartTimer() override;
+  void PrintExecTime() override;
+  void AddNewNodes(std::string graph_filename) override;
   void LoadStaticTables() override;
   void SetInteractive(bool is_interactive) override;
   auto IsInteractive()->bool override;
@@ -117,8 +126,11 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::unique_ptr<AcceleratorLibraryInterface> accelerator_library_;
   std::unique_ptr<FPGAManagerInterface> fpga_manager_;
   std::unique_ptr<NodeSchedulerInterface> scheduler_;
+  std::unique_ptr<GraphCreator> graph_creator_;
   Config config_;
   // State status
+  bool print_hw_ = false;
+  std::chrono::steady_clock::time_point exec_begin;
   bool is_interactive_ = false;
   std::unique_ptr<StateInterface> current_state_;
   bool busy_flag_ = false;

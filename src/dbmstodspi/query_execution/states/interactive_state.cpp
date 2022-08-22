@@ -17,6 +17,7 @@ limitations under the License.
 #include "interactive_state.hpp"
 
 #include <iostream>
+#include <chrono>
 
 #include "logger.hpp"
 #include "schedule_state.hpp"
@@ -38,6 +39,7 @@ auto InteractiveState::Execute(GraphProcessingFSMInterface* fsm)
 
   switch (GetOption(fsm)) {
     case 1:
+      fsm->SetHWPrint(true);
       fsm->PrintHWState();
       break;
     case 2:
@@ -57,15 +59,22 @@ auto InteractiveState::Execute(GraphProcessingFSMInterface* fsm)
       fsm->ChangeExecutionTimeLimit(GetInteger());
       break;
     case 5: {
-      auto plan_file = GetExecutionPlanFile();
-      std::cout << "Plan written to: " << plan_file << std::endl;
-      // Add stuff to graph
-      // return SchedulingState
+      auto begin = std::chrono::steady_clock::now();
+      fsm->AddNewNodes(GetExecutionPlanFile());
+      auto end = std::chrono::steady_clock::now();
+      long planning =
+          std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
+              .count();
+      std::cout << "PLANNING: " << planning << std::endl;
+      fsm->SetStartTimer();
+      return std::make_unique<ScheduleState>();
       break;
     }
     case 6:
       fsm->SetFinishedFlag();
       break;
+    case 7:
+      fsm->LoadStaticBitstream();
     default:
       std::cout << "Incorrect option" << std::endl;
   }
@@ -100,6 +109,7 @@ void InteractiveState::PrintOptions(GraphProcessingFSMInterface* fsm) {
   std::cout << "4: Change execution time limit" << std::endl;
   std::cout << "5: Run SQL" << std::endl;
   std::cout << "6: Exit" << std::endl;
+  std::cout << "7: Reset" <<std::endl;
   std::cout << "Choose one of the supported options by typing a valid number "
                "and a ';'"
             << std::endl;

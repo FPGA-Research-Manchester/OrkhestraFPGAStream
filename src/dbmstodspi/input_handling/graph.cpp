@@ -106,7 +106,7 @@ void Graph::FindCurrentNodeAndSetToNull(const QueryNode* node_ptr,
 // The deleted node pointer is never null but the compiler doesn't know that
 void Graph::DeleteNode(QueryNode* deleted_node) {
   for (auto& node : all_nodes_) {
-    if (node!=nullptr && node->node_name == deleted_node->node_name) {
+    if (node != nullptr && node->node_name == deleted_node->node_name) {
       node.reset();
     }
   }
@@ -142,4 +142,11 @@ auto Graph::GetAllNodesPtrs() -> std::vector<QueryNode*> {
     }
   }
   return std::move(node_ptrs);
+}
+
+void Graph::ImportNodes(std::vector<std::unique_ptr<QueryNode>> new_nodes) {
+  // TODO: Check for name clashes!
+  all_nodes_.insert(all_nodes_.end(),
+                    std::make_move_iterator(new_nodes.begin()),
+                    std::make_move_iterator(new_nodes.end()));
 }

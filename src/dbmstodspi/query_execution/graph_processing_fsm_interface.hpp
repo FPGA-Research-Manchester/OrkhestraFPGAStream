@@ -101,12 +101,16 @@ class GraphProcessingFSMInterface {
 
   virtual auto GetFPGASpeed() -> int = 0;
   virtual void PrintHWState() = 0;
-  virtual void LoadStaticBitstream() =0;
+  virtual void LoadStaticBitstream() = 0;
   virtual void SetClockSpeed(int new_clock_speed) = 0;
-  virtual void ChangeSchedulingTimeLimit(double new_time_limit) =0;
-  virtual void ChangeExecutionTimeLimit(int new_time_limit)=0;
-  virtual void SetInteractive(bool is_interactive)=0;
-  virtual auto IsInteractive()->bool =0;
-  virtual void LoadStaticTables()=0;
+  virtual void ChangeSchedulingTimeLimit(double new_time_limit) = 0;
+  virtual void ChangeExecutionTimeLimit(int new_time_limit) = 0;
+  virtual void SetInteractive(bool is_interactive) = 0;
+  virtual auto IsInteractive() -> bool = 0;
+  virtual void LoadStaticTables() = 0;
+  virtual void AddNewNodes(std::string graph_filename) = 0;
+  virtual void SetStartTimer() = 0;
+  virtual void PrintExecTime() = 0;
+  virtual void SetHWPrint(bool print_hw) = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

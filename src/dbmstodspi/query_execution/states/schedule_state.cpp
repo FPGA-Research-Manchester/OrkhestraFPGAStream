@@ -34,6 +34,7 @@ auto ScheduleState::Execute(GraphProcessingFSMInterface* fsm)
   fsm->UpdateAvailableNodesGraph();
   if (fsm->IsUnscheduledNodesGraphEmpty()) {
     if (fsm->IsInteractive()){
+      fsm->PrintExecTime();
       return std::make_unique<InteractiveState>();
     }
     fsm->SetFinishedFlag();
