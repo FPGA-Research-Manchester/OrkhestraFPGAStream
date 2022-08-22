@@ -15,7 +15,6 @@
 
 # DBMStoDSPI
 
-add_subdirectory(util)
 add_subdirectory(query_execution)
 add_subdirectory(input_handling)
 
@@ -24,4 +23,5 @@ add_library(dbmstodspi
             query_execution)
 
 target_link_libraries(dbmstodspi PUBLIC input_handling
-                                 PUBLIC query_execution)
+                                 PUBLIC query_execution
+                                 PUBLIC sql_parsing)

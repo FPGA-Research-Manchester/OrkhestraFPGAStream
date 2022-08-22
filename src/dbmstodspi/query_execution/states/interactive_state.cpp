@@ -20,92 +20,120 @@ limitations under the License.
 
 #include "logger.hpp"
 #include "schedule_state.hpp"
+#include "sql_parser.hpp"
+#include "sql_query_creator.hpp"
 
 using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
-using orkhestrafs::dbmstodspi::ScheduleState;
 using orkhestrafs::dbmstodspi::InteractiveState;
+using orkhestrafs::dbmstodspi::ScheduleState;
 using orkhestrafs::dbmstodspi::StateInterface;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
+using orkhestrafs::sql_parsing::SQLParser;
+using orkhestrafs::sql_parsing::SQLQueryCreator;
 
 auto InteractiveState::Execute(GraphProcessingFSMInterface* fsm)
     -> std::unique_ptr<StateInterface> {
   Log(LogLevel::kTrace, "In interactive state");
 
-  switch(GetOption(fsm)) {
+  switch (GetOption(fsm)) {
     case 1:
       fsm->PrintHWState();
       break;
     case 2:
-      if (fsm->GetFPGASpeed()==100){
+      if (fsm->GetFPGASpeed() == 100) {
         fsm->SetClockSpeed(300);
-      } else{
+      } else {
         fsm->SetClockSpeed(100);
       }
       fsm->LoadStaticBitstream();
       break;
     case 3:
-      std::cout<<"Enter new time limit in seconds: "<<std::endl;
+      std::cout << "Enter new time limit in seconds: " << std::endl;
       fsm->ChangeSchedulingTimeLimit(GetDouble());
       break;
     case 4:
-      std::cout<<"Enter new time limit in seconds: "<<std::endl;
+      std::cout << "Enter new time limit in seconds: " << std::endl;
       fsm->ChangeExecutionTimeLimit(GetInteger());
       break;
-    case 5:
-      throw std::runtime_error("Not implemented");
+    case 5: {
+      auto plan_file = GetExecutionPlanFile();
+      std::cout << "Plan written to: " << plan_file << std::endl;
+      break;
+    }
+    case 6:
+      fsm->SetFinishedFlag();
       break;
     default:
-      std::cout<<"Incorrect option"<<std::endl;
+      std::cout << "Incorrect option" << std::endl;
   }
 
   return std::make_unique<InteractiveState>();
 }
 
-void InteractiveState::PrintOptions(GraphProcessingFSMInterface* fsm){
+auto InteractiveState::GetExecutionPlanFile() -> std::string {
+  std::cout << "Enter DB name:" << std::endl;
+  auto database = GetStdInput();
+  database.pop_back();
+  std::cout << "Enter filename with query:" << std::endl;
+  auto query_filename = GetStdInput();
+  query_filename.pop_back();
+  SQLQueryCreator sql_creator;
+  SQLParser::CreatePlan(sql_creator, std::move(query_filename),
+                        std::move(database));
+  return sql_creator.ExportInputDef();
+}
+
+void InteractiveState::PrintOptions(GraphProcessingFSMInterface* fsm) {
   std::cout << "Which operation would you like to do?" << std::endl;
-  std::cout << "1: Print HW state"<<std::endl;
-  if (fsm->GetFPGASpeed() == 300){
-    std::cout << "2: Change FPGA speed to 100 MHz"<<std::endl;
-  } else if (fsm->GetFPGASpeed() == 100){
-    std::cout << "2: Change FPGA speed to 300 MHz"<<std::endl;
+  std::cout << "1: Print HW state" << std::endl;
+  if (fsm->GetFPGASpeed() == 300) {
+    std::cout << "2: Change FPGA speed to 100 MHz" << std::endl;
+  } else if (fsm->GetFPGASpeed() == 100) {
+    std::cout << "2: Change FPGA speed to 300 MHz" << std::endl;
   } else {
     throw std::runtime_error("Unsupported clock speed!");
   }
-  std::cout << "3: Change scheduling time limit"<<std::endl;
-  std::cout << "4: Change execution time limit"<<std::endl;
-  std::cout << "5: Run SQL"<<std::endl;
-  std::cout << "Choose one of the supported options by typing a valid number and a ';'" << std::endl;
+  std::cout << "3: Change scheduling time limit" << std::endl;
+  std::cout << "4: Change execution time limit" << std::endl;
+  std::cout << "5: Run SQL" << std::endl;
+  std::cout << "6: Exit" << std::endl;
+  std::cout << "Choose one of the supported options by typing a valid number "
+               "and a ';'"
+            << std::endl;
 }
 
 auto InteractiveState::GetOption(GraphProcessingFSMInterface* fsm) -> int {
-    PrintOptions(fsm);
-    return GetInteger();
+  PrintOptions(fsm);
+  return GetInteger();
 }
 
-auto InteractiveState::GetInteger() -> int{
+auto InteractiveState::GetInteger() -> int {
   std::string answer = "";
   bool is_number = false;
-  while (!is_number){
+  while (!is_number) {
     answer = GetStdInput();
     answer.pop_back();
-    is_number = std::all_of(answer.begin(), answer.end(), [](auto digit){return isdigit(digit);});
-    if (!is_number){
-      std::cout<<"Invalid input"<<std::endl;
+    is_number = std::all_of(answer.begin(), answer.end(),
+                            [](auto digit) { return isdigit(digit); });
+    if (!is_number) {
+      std::cout << "Invalid input" << std::endl;
     }
   }
   return std::stoi(answer);
 }
 
-auto InteractiveState::GetDouble() -> double{
+auto InteractiveState::GetDouble() -> double {
   std::string answer = "";
   bool is_number = false;
-  while (!is_number){
+  while (!is_number) {
     answer = GetStdInput();
     answer.pop_back();
-    is_number = std::all_of(answer.begin(), answer.end(), [](auto digit){return isdigit(digit) || digit == '.';});
-    if (!is_number){
-      std::cout<<"Invalid input"<<std::endl;
+    is_number = std::all_of(answer.begin(), answer.end(), [](auto digit) {
+      return isdigit(digit) || digit == '.';
+    });
+    if (!is_number) {
+      std::cout << "Invalid input" << std::endl;
     }
   }
   return std::stod(answer);
@@ -114,11 +142,12 @@ auto InteractiveState::GetDouble() -> double{
 auto InteractiveState::GetStdInput() -> std::string {
   std::string current_input = "";
   std::cin >> current_input;
-  while (current_input.back() != ';'){
+  while (current_input.back() != ';') {
     std::string more_current_input = "";
     std::cin >> more_current_input;
     current_input += more_current_input;
   }
   return current_input;
 }
-// Lazily put option functions into this class rather than the FSM or even better a separate class
+// Lazily put option functions into this class rather than the FSM or even
+// better a separate class

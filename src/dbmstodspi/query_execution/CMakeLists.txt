@@ -180,6 +180,7 @@ target_include_directories(query_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 
 target_link_libraries(query_execution PRIVATE core_interfaces)
 target_link_libraries(query_execution PRIVATE util)
+target_link_libraries(query_execution PRIVATE sql_parsing)
 
 if (ENABLE_FPGA)
 	target_link_libraries(query_execution PUBLIC fos)

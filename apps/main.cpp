@@ -25,8 +25,6 @@ limitations under the License.
 #include "q19_creator.hpp"
 #include "sql_parser.hpp"
 #include "sql_query_creator.hpp"
-#include "sql_query_data.hpp"
-#include "table_data.hpp"
 
 using namespace std;
 using orkhestrafs::core::Core;

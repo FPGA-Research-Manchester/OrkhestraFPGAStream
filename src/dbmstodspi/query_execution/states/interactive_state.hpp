@@ -33,6 +33,7 @@ class InteractiveState : public StateInterface {
   auto GetStdInput() -> std::string;
   auto GetInteger() -> int;
   auto GetDouble() -> double;
+  auto GetExecutionPlanFile()->std::string;
 
  public:
   ~InteractiveState() override = default;
