@@ -105,5 +105,8 @@ class GraphProcessingFSMInterface {
   virtual void SetClockSpeed(int new_clock_speed) = 0;
   virtual void ChangeSchedulingTimeLimit(double new_time_limit) =0;
   virtual void ChangeExecutionTimeLimit(int new_time_limit)=0;
+  virtual void SetInteractive(bool is_interactive)=0;
+  virtual auto IsInteractive()->bool =0;
+  virtual void LoadStaticTables()=0;
 };
 }  // namespace orkhestrafs::dbmstodspi

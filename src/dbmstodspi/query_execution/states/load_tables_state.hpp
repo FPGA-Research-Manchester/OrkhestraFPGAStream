@@ -14,22 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "setup_scheduling_state.hpp"
+#pragma once
 
-#include "logger.hpp"
-#include "schedule_state.hpp"
+#include "state_interface.hpp"
 
 using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
-using orkhestrafs::dbmstodspi::ScheduleState;
-using orkhestrafs::dbmstodspi::SetupSchedulingState;
-using orkhestrafs::dbmstodspi::StateInterface;
-using orkhestrafs::dbmstodspi::logging::Log;
-using orkhestrafs::dbmstodspi::logging::LogLevel;
 
-auto SetupSchedulingState::Execute(GraphProcessingFSMInterface* fsm)
-    -> std::unique_ptr<StateInterface> {
-  Log(LogLevel::kTrace, "Setup scheduling state");
-  fsm->SetupSchedulingData(true);
-  fsm->SetInteractive(false);
-  return std::make_unique<ScheduleState>();
-}
+namespace orkhestrafs::dbmstodspi {
+/**
+ * @brief State for setting up nodes.
+ */
+class LoadTablesState : public StateInterface {
+ public:
+  ~LoadTablesState() override = default;
+
+  auto Execute(GraphProcessingFSMInterface* fsm)
+      -> std::unique_ptr<StateInterface> override;
+};
+}  // namespace orkhestrafs::dbmstodspi

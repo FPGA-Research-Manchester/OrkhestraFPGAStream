@@ -37,6 +37,8 @@ add_library(query_execution OBJECT
             states/setup_scheduling_state.hpp
             states/interactive_state.cpp
             states/interactive_state.hpp
+            states/load_tables_state.cpp
+            states/load_tables_state.hpp
             graph_processing_fsm_interface.hpp
             query_acceleration_constants.hpp
             table_data/csv_reader.cpp

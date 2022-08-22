@@ -174,6 +174,7 @@ auto main(int argc, char* argv[]) -> int {
   // TODO : Should check that other's aren't used for clarity!
   if (result.count("interactive")) {
     RunInteractiveSession(config_name);
+    return 0;
   }
 
   if ((result.count("run")) && (result.count("input"))) {

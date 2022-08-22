@@ -83,6 +83,8 @@ struct Config {
   /// CSV data column separator character.
   char csv_separator;
 
+  std::map<std::string, std::vector<std::pair<ColumnDataType, int>>> static_tables_columns;
+  std::vector<std::string> static_tables;
   std::vector<std::string> debug_forced_pr_bitstreams;
 };
 }  // namespace orkhestrafs::core_interfaces

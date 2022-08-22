@@ -80,6 +80,9 @@ class ExecutionManager : public ExecutionManagerInterface,
         fpga_manager_{std::move(
             driver_factory->CreateFPGAManager(accelerator_library_.get()))} {};
 
+  void LoadStaticTables() override;
+  void SetInteractive(bool is_interactive) override;
+  auto IsInteractive()->bool override;
   void ChangeSchedulingTimeLimit(double new_time_limit) override;
   void ChangeExecutionTimeLimit(int new_time_limit) override;
   void LoadStaticBitstream() override;
@@ -116,6 +119,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::unique_ptr<NodeSchedulerInterface> scheduler_;
   Config config_;
   // State status
+  bool is_interactive_ = false;
   std::unique_ptr<StateInterface> current_state_;
   bool busy_flag_ = false;
   // New TableMetadata variables.
@@ -161,7 +165,7 @@ class ExecutionManager : public ExecutionManagerInterface,
       const std::map<std::string, TableMetadata>& tables_metadata);
   static void RemoveUnusedTables(
       std::map<std::string, TableMetadata>& tables_metadata,
-      const std::vector<QueryNode*>& all_nodes);
+      const std::vector<QueryNode*>& all_nodes,const std::vector<std::string> frozen_tables);
   static void SetupTableDependencies(
       const std::vector<QueryNode*>& all_nodes,
       std::unordered_set<std::string>& blocked_nodes,

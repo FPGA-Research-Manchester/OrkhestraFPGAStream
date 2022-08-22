@@ -28,7 +28,7 @@ limitations under the License.
 #include "schedule_state.hpp"
 #include "setup_benchmark_schedule_state.hpp"
 #include "setup_scheduling_state.hpp"
-#include "interactive_state.hpp"
+#include "load_tables_state.hpp"
 
 using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::core::core_execution::ExecutionManagerFactory;
@@ -43,7 +43,7 @@ using orkhestrafs::dbmstodspi::QueryManager;
 using orkhestrafs::dbmstodspi::RapidJSONReader;
 using orkhestrafs::dbmstodspi::SetupSchedulingState;
 using orkhestrafs::dbmstodspi::SetupBenchmarkScheduleState;
-using orkhestrafs::dbmstodspi::InteractiveState;
+using orkhestrafs::dbmstodspi::LoadTablesState;
 
 auto ExecutionManagerFactory::GetManager(const Config& config, bool is_interactive)
     -> std::unique_ptr<ExecutionManagerInterface> {
@@ -52,7 +52,7 @@ auto ExecutionManagerFactory::GetManager(const Config& config, bool is_interacti
 
   std::unique_ptr<StateInterface> start_state;
   if (is_interactive) {
-    start_state = std::make_unique<InteractiveState>();
+    start_state = std::make_unique<LoadTablesState>();
   } else {
       // TODO: Make this more robust - Throw an error if interactive & benchmarking
     if (config.benchmark_scheduler) {

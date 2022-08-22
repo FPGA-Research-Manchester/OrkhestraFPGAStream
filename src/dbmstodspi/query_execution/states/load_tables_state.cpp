@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright 2021 University of Manchester
 
 Licensed under the Apache License, Version 2.0(the "License");
@@ -14,33 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "schedule_state.hpp"
+#include "load_tables_state.hpp"
 
 #include "logger.hpp"
-#include "setup_nodes_state.hpp"
 #include "interactive_state.hpp"
 
 using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
-using orkhestrafs::dbmstodspi::ScheduleState;
-using orkhestrafs::dbmstodspi::SetupNodesState;
 using orkhestrafs::dbmstodspi::InteractiveState;
+using orkhestrafs::dbmstodspi::LoadTablesState;
 using orkhestrafs::dbmstodspi::StateInterface;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 
-auto ScheduleState::Execute(GraphProcessingFSMInterface* fsm)
+auto LoadTablesState::Execute(GraphProcessingFSMInterface* fsm)
     -> std::unique_ptr<StateInterface> {
-  Log(LogLevel::kTrace, "Schedule state");
-  fsm->UpdateAvailableNodesGraph();
-  if (fsm->IsUnscheduledNodesGraphEmpty()) {
-    if (fsm->IsInteractive()){
-      return std::make_unique<InteractiveState>();
-    }
-    fsm->SetFinishedFlag();
-    // Doesn't matter which state is returned.
-    return std::make_unique<ScheduleState>();
-  }
-  fsm->ScheduleUnscheduledNodes();
-
-  return std::make_unique<SetupNodesState>();
+  Log(LogLevel::kTrace, "Setup static tables state");
+  fsm->LoadStaticTables();
+  fsm->SetInteractive(true);
+  fsm->LoadStaticBitstream();
+  return std::make_unique<InteractiveState>();
 }

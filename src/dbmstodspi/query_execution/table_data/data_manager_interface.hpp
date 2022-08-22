@@ -41,7 +41,7 @@ class DataManagerInterface {
       const std::vector<int>& column_sizes, int& rows_already_read) const
       -> TableData = 0;
 
-  [[nodiscard]] virtual auto WriteDataFromCSVToMemory(
+  virtual auto WriteDataFromCSVToMemory(
       const std::string& filename,
       const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
       MemoryBlockInterface* memory_device) const -> int = 0;

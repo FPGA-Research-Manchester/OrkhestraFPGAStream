@@ -21,10 +21,10 @@ limitations under the License.
 #include <sstream>
 #include <vector>
 
+#include "logger.hpp"
 #include "pr_module_data.hpp"
 #include "query_scheduling_data.hpp"
 #include "table_data.hpp"
-#include "logger.hpp"
 
 using orkhestrafs::core::core_input::ConfigCreator;
 
@@ -63,6 +63,11 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string check_bitstreams = "CHECK_BITSTREAMS";
   std::string check_tables = "CHECK_TABLES";
 
+  std::string load_tables = "LOAD_TABLES";
+  std::string table_column_count = "LOAD_TABLES_C_COUNT";
+  std::string table_column_sizes = "LOAD_TABLES_C_SIZES";
+  std::string table_column_types = "LOAD_TABLES_C_TYPES";
+
   std::string print_data_amounts = "PRINT_DATA_AMOUNTS";
   std::string print_write_times = "PRINT_WRITE_TIMES";
   std::string print_total_execution = "PRINT_TOTAL_EXEC_TIME";
@@ -79,20 +84,25 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
 
   std::istringstream(config_values[reduce_runs]) >> std::boolalpha >>
       config.reduce_single_runs;
-  Log(LogLevel::kTrace, "reduce_single_runs: " + config.reduce_single_runs);
+  Log(LogLevel::kTrace,
+      "reduce_single_runs: " + std::to_string(config.reduce_single_runs));
   std::istringstream(config_values[max_runs]) >> std::boolalpha >>
       config.use_max_runs_cap;
-  Log(LogLevel::kTrace, "use_max_runs_cap: " + config.use_max_runs_cap);
+  Log(LogLevel::kTrace,
+      "use_max_runs_cap: " + std::to_string(config.use_max_runs_cap));
   std::istringstream(config_values[children]) >> std::boolalpha >>
       config.prioritise_children;
-  Log(LogLevel::kTrace, "prioritise_children: " + config.prioritise_children);
+  Log(LogLevel::kTrace,
+      "prioritise_children: " + std::to_string(config.prioritise_children));
   config.heuristic_choice = std::stoi(config_values[heuristic]);
-  Log(LogLevel::kTrace, "heuristic_choice: " + config.heuristic_choice);
+  Log(LogLevel::kTrace,
+      "heuristic_choice: " + std::to_string(config.heuristic_choice));
   config.streaming_speed = std::stod(config_values[streaming_speed]);
   config.configuration_speed = std::stod(config_values[configuration_speed]);
   config.scheduler_time_limit_in_seconds = std::stod(config_values[time_limit]);
-  Log(LogLevel::kTrace, "scheduler_time_limit_in_seconds: " +
-                            std::to_string(config.scheduler_time_limit_in_seconds));
+  Log(LogLevel::kTrace,
+      "scheduler_time_limit_in_seconds: " +
+          std::to_string(config.scheduler_time_limit_in_seconds));
   config.resource_string = config_values[resource_string];
   config.utilites_scaler = std::stod(config_values[utility_scaler]);
   config.config_written_scaler = std::stod(config_values[config_scaler]);
@@ -100,13 +110,15 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
       std::stod(config_values[utility_per_frame_scaler]);
 
   config.clock_speed = std::stoi(config_values[clock_speed]);
-  Log(LogLevel::kTrace, "clock_speed: " + config.clock_speed);
+  Log(LogLevel::kTrace, "clock_speed: " + std::to_string(config.clock_speed));
   std::istringstream(config_values[single_runs]) >> std::boolalpha >>
       config.use_single_runs;
-  Log(LogLevel::kTrace, "use_single_runs: " + config.use_single_runs);
+  Log(LogLevel::kTrace,
+      "use_single_runs: " + std::to_string(config.use_single_runs));
   std::istringstream(config_values[scheduling_benchmark]) >> std::boolalpha >>
       config.benchmark_scheduler;
-  Log(LogLevel::kTrace, "benchmark_scheduler: " + config.benchmark_scheduler);
+  Log(LogLevel::kTrace,
+      "benchmark_scheduler: " + std::to_string(config.benchmark_scheduler));
   std::istringstream(config_values[check_bitstreams]) >> std::boolalpha >>
       config.check_bitstreams;
   std::istringstream(config_values[check_tables]) >> std::boolalpha >>
@@ -127,6 +139,41 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::istringstream(config_values[print_config]) >> std::boolalpha >>
       config.print_config;
 
+  config.static_tables = SetCommaSeparatedValues(config_values[load_tables]);
+  if (!config.static_tables.empty()) {
+    auto column_counts =
+        SetCommaSeparatedValues(config_values[table_column_count]);
+    std::vector<int> column_counts_i;
+    std::transform(column_counts.begin(), column_counts.end(),
+                   std::back_inserter(column_counts_i),
+                   [&](std::string s) { return stoi(s); });
+    auto column_sizes =
+        SetCommaSeparatedValues(config_values[table_column_sizes]);
+    std::vector<int> column_sizes_i;
+    std::transform(column_sizes.begin(), column_sizes.end(),
+                   std::back_inserter(column_sizes_i),
+                   [&](std::string s) { return stoi(s); });
+    auto column_types =
+        SetCommaSeparatedValues(config_values[table_column_types]);
+    std::vector<int> column_types_i;
+    std::transform(column_types.begin(), column_types.end(),
+                   std::back_inserter(column_types_i),
+                   [&](std::string s) { return stoi(s); });
+    int column_offset = 0;
+    for (int table_i = 0; table_i < column_counts_i.size(); table_i++) {
+      std::vector<std::pair<ColumnDataType, int>> column_data;
+
+      for (int column_i = 0; column_i < column_counts_i.at(table_i);
+           column_i++) {
+        column_data.push_back({static_cast<ColumnDataType>(
+                                   column_types_i.at(column_i + column_offset)),
+                               column_sizes_i.at(column_i + column_offset)});
+      }
+      column_offset += column_counts_i.at(table_i);
+      config.static_tables_columns.insert(
+          {config.static_tables.at(table_i), std::move(column_data)});
+    }
+  }
   config.debug_forced_pr_bitstreams =
       SetCommaSeparatedValues(config_values[force_pr]);
   if (!config.debug_forced_pr_bitstreams.empty()) {
@@ -163,7 +210,8 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   config.csv_separator = config_values[data_separator].c_str()[0];
 
   config.execution_timeout = std::stoi(config_values[exec_timeout]);
-  Log(LogLevel::kTrace, "execution_timeout: " + config.execution_timeout);
+  Log(LogLevel::kTrace,
+      "execution_timeout: " + std::to_string(config.execution_timeout));
   Log(LogLevel::kTrace, "Config parsed");
   return config;
 }

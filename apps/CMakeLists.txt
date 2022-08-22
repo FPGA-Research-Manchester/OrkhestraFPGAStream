@@ -319,8 +319,8 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q19.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q6.txt
     #${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q1.txt
-    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/lineitem.csv
-    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/part.csv
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/lineitem.csv
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/part.csv
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/setupUdma.pl
     ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/sql_parsing/postgresql_explain_parser.py)

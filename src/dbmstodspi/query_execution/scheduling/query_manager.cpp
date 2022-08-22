@@ -183,6 +183,7 @@ void QueryManager::AllocateOutputMemoryBlocks(
     }
   }
 }
+
 void QueryManager::AllocateInputMemoryBlocks(
     MemoryManagerInterface* memory_manager,
     const DataManagerInterface* data_manager, const NodeRunData& run_data,

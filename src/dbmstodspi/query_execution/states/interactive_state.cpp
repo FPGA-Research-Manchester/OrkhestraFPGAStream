@@ -59,6 +59,8 @@ auto InteractiveState::Execute(GraphProcessingFSMInterface* fsm)
     case 5: {
       auto plan_file = GetExecutionPlanFile();
       std::cout << "Plan written to: " << plan_file << std::endl;
+      // Add stuff to graph
+      // return SchedulingState
       break;
     }
     case 6:

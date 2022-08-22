@@ -26,6 +26,28 @@ limitations under the License.
 using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
+void ExecutionManager::LoadStaticTables() {
+  if (config_.static_tables.empty()) {
+    throw std::runtime_error("No static tables given!");
+  }
+  for (const auto& table_name : config_.static_tables) {
+    current_tables_metadata_.insert(
+        {table_name, config_.initial_all_tables_metadata.at(table_name)});
+    // 100 is an arbitrary number. 1 could work as well.
+    table_counter_.insert({table_name, 100});
+    if (table_memory_blocks_.find(table_name) == table_memory_blocks_.end()) {
+      table_memory_blocks_[table_name] =
+          memory_manager_->GetAvailableMemoryBlock();
+      data_manager_->WriteDataFromCSVToMemory(
+          table_name, config_.static_tables_columns.at(table_name),
+          table_memory_blocks_[table_name]);
+    }
+  }
+}
+void ExecutionManager::SetInteractive(bool is_interactive) {
+  is_interactive_ = is_interactive;
+}
+auto ExecutionManager::IsInteractive() -> bool { return is_interactive_; }
 void ExecutionManager::ChangeSchedulingTimeLimit(double new_time_limit) {
   config_.scheduler_time_limit_in_seconds = new_time_limit;
 }
@@ -56,8 +78,12 @@ void ExecutionManager::UpdateAvailableNodesGraph() {
     current_available_node_names_.insert(node->node_name);
   }
   RemoveUnusedTables(current_tables_metadata_,
-                     unscheduled_graph_->GetAllNodesPtrs());
+                     unscheduled_graph_->GetAllNodesPtrs(),
+                     config_.static_tables);
   table_counter_.clear();
+  for (const auto table_name : config_.static_tables) {
+    table_counter_.insert({table_name, 100});
+  }
   InitialiseTables(current_tables_metadata_, current_available_node_pointers_,
                    query_manager_.get(), data_manager_.get());
   current_query_graph_.clear();
@@ -171,7 +197,8 @@ void ExecutionManager::SetupTableDependencies(
 
 void ExecutionManager::RemoveUnusedTables(
     std::map<std::string, TableMetadata>& tables_metadata,
-    const std::vector<QueryNode*>& all_nodes) {
+    const std::vector<QueryNode*>& all_nodes,
+    const std::vector<std::string> frozen_tables) {
   // TODO(Kaspar): Possibly reserve some space beforehand.
   std::unordered_set<std::string> required_tables;
   std::unordered_set<std::string> output_tables;
@@ -203,6 +230,14 @@ void ExecutionManager::RemoveUnusedTables(
     throw std::runtime_error(
         "There are tables required that are not available!");
   }
+
+  // TODO: Should be set
+  for (const auto& frozen_table : frozen_tables) {
+    tables_to_delete.erase(std::remove(tables_to_delete.begin(),
+                                       tables_to_delete.end(), frozen_table),
+                           tables_to_delete.end());
+  }
+
   for (const auto& table_to_delete : tables_to_delete) {
     tables_metadata.erase(table_to_delete);
   }
