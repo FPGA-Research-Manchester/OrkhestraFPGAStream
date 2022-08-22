@@ -98,5 +98,12 @@ class GraphProcessingFSMInterface {
   virtual auto IsBenchmarkDone() -> bool = 0;
 
   virtual void UpdateAvailableNodesGraph() = 0;
+
+  virtual auto GetFPGASpeed() -> int = 0;
+  virtual void PrintHWState() = 0;
+  virtual void LoadStaticBitstream() =0;
+  virtual void SetClockSpeed(int new_clock_speed) = 0;
+  virtual void ChangeSchedulingTimeLimit(double new_time_limit) =0;
+  virtual void ChangeExecutionTimeLimit(int new_time_limit)=0;
 };
 }  // namespace orkhestrafs::dbmstodspi

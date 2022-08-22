@@ -80,6 +80,12 @@ class ExecutionManager : public ExecutionManagerInterface,
         fpga_manager_{std::move(
             driver_factory->CreateFPGAManager(accelerator_library_.get()))} {};
 
+  void ChangeSchedulingTimeLimit(double new_time_limit) override;
+  void ChangeExecutionTimeLimit(int new_time_limit) override;
+  void LoadStaticBitstream() override;
+  void SetClockSpeed(int new_clock_speed) override;
+  void PrintHWState() override;
+  auto GetFPGASpeed() -> int override;
   void SetFinishedFlag() override;
   void UpdateAvailableNodesGraph() override;
   void Execute(
@@ -108,7 +114,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::unique_ptr<AcceleratorLibraryInterface> accelerator_library_;
   std::unique_ptr<FPGAManagerInterface> fpga_manager_;
   std::unique_ptr<NodeSchedulerInterface> scheduler_;
-  const Config config_;
+  Config config_;
   // State status
   std::unique_ptr<StateInterface> current_state_;
   bool busy_flag_ = false;
@@ -158,7 +164,7 @@ class ExecutionManager : public ExecutionManagerInterface,
       const std::vector<QueryNode*>& all_nodes);
   static void SetupTableDependencies(
       const std::vector<QueryNode*>& all_nodes,
-      std::unordered_set<std::string>& blocked_nodes, 
+      std::unordered_set<std::string>& blocked_nodes,
       std::unordered_map<std::string, int>& table_counter);
 
   static void AddSchedulingNodeToGraph(

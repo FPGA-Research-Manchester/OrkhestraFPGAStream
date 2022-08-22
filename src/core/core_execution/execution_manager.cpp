@@ -26,6 +26,21 @@ limitations under the License.
 using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
+void ExecutionManager::ChangeSchedulingTimeLimit(double new_time_limit) {
+  config_.scheduler_time_limit_in_seconds = new_time_limit;
+}
+void ExecutionManager::ChangeExecutionTimeLimit(int new_time_limit) {
+  config_.execution_timeout = new_time_limit;
+}
+
+void ExecutionManager::PrintHWState() {
+  for (int i = 0; i < current_routing_.size(); i++) {
+    std::cout << i << ": " << current_routing_.at(i) << std::endl;
+  }
+}
+
+auto ExecutionManager::GetFPGASpeed() -> int { return config_.clock_speed; }
+
 void ExecutionManager::SetFinishedFlag() { busy_flag_ = false; }
 
 void ExecutionManager::UpdateAvailableNodesGraph() {
@@ -282,7 +297,7 @@ void ExecutionManager::Execute(
   long system =
       total_execution - scheduling - init_config - config - initialisation;
   long actual_execution = total_execution - init_config;
-  //std::cout << "ACTUAL_EXECUTION: " << actual_execution << std::endl;
+  // std::cout << "ACTUAL_EXECUTION: " << actual_execution << std::endl;
 
   if (config_.print_config) {
     std::cout << "CONFIGURATION: " << config << std::endl;
@@ -468,16 +483,24 @@ void ExecutionManager::PrintCurrentStats() {
   query_manager_->PrintBenchmarkStats();
 }
 
+void ExecutionManager::SetClockSpeed(int new_clock_speed) {
+  config_.clock_speed = new_clock_speed;
+}
+
+void ExecutionManager::LoadStaticBitstream() {
+  query_manager_->LoadInitialStaticBitstream(memory_manager_.get(),
+                                             config_.clock_speed);
+  // TODO: Remove the hardcoded aspect of this!
+  for (int i = 0; i < 31; i++) {
+    current_routing_.push_back("RT");
+  }
+}
+
 void ExecutionManager::SetupSchedulingData(bool setup_bitstreams) {
   config_time_ = 0;
   current_tables_metadata_ = config_.initial_all_tables_metadata;
   if (setup_bitstreams) {
-    query_manager_->LoadInitialStaticBitstream(memory_manager_.get(),
-                                               config_.clock_speed);
-    // TODO: Remove the hardcoded aspect of this!
-    for (int i = 0; i < 31; i++) {
-      current_routing_.push_back("RT");
-    }
+    LoadStaticBitstream();
   }
 }
 

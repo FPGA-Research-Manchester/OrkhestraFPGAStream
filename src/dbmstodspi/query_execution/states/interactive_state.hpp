@@ -16,6 +16,8 @@ limitations under the License.
 
 #pragma once
 
+#include <string>
+
 #include "state_interface.hpp"
 
 using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
@@ -25,6 +27,13 @@ namespace orkhestrafs::dbmstodspi {
  * @brief State for setting up nodes.
  */
 class InteractiveState : public StateInterface {
+ private:
+  void PrintOptions(GraphProcessingFSMInterface* fsm);
+  auto GetOption(GraphProcessingFSMInterface* fsm) -> int;
+  auto GetStdInput() -> std::string;
+  auto GetInteger() -> int;
+  auto GetDouble() -> double;
+
  public:
   ~InteractiveState() override = default;
 
