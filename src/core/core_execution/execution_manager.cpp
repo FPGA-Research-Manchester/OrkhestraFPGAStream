@@ -453,8 +453,8 @@ void ExecutionManager::SetupNextRunData() {
       query_manager_->GetPRBitstreamsToLoadWithPassthroughModules(
           current_configuration_, query_node_runs_queue_.front().first,
           current_routing_);
-  query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
-                                   *accelerator_library_);
+  /*query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
+                                   *accelerator_library_);*/
   config_time_ += query_manager_->LoadPRBitstreams(
       memory_manager_.get(), bitstreams_to_load, *accelerator_library_);
   if (print_hw_){
