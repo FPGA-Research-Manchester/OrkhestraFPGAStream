@@ -24,9 +24,21 @@ limitations under the License.
 
 using orkhestrafs::dbmstodspi::StreamParameterCalculator;
 
+void StreamParameterCalculator::CalculateRecordCountPerFetchMultiStream(
+    DMASetupData& stream_setup_data, const int record_size,
+    const int smallest_module_size, const int record_size_after_crossbar) {
+  int buffer_space = (smallest_module_size / 32) * 1024;
+  int sort_buffer_size = MergeSortSetup::CalculateSortBufferSize(
+      buffer_space, smallest_module_size, stream_setup_data.chunks_per_record);
+  stream_setup_data.records_per_ddr_burst =
+      MergeSortSetup::CalculateRecordCountPerFetch(
+          sort_buffer_size, record_size, record_size_after_crossbar);
+}
+
 void StreamParameterCalculator::CalculateDMAStreamSetupData(
     DMASetupData& stream_setup_data, const int record_size,
-    bool is_multichannel_stream, int smallest_module_size) {
+    bool is_multichannel_stream, const int smallest_module_size,
+    const int record_size_after_crossbar) {
   // Temporarily for now. Possibly wrong for output which is reduced in chunks!
   for (int i = 0; i < query_acceleration_constants::kDatapathLength; i++) {
     stream_setup_data.record_chunk_ids.emplace_back(
@@ -34,13 +46,9 @@ void StreamParameterCalculator::CalculateDMAStreamSetupData(
   }
 
   if (is_multichannel_stream) {
-    int buffer_space = (smallest_module_size / 32) * 1024;
-    int sort_buffer_size = MergeSortSetup::CalculateSortBufferSize(
-        buffer_space, smallest_module_size,
-        stream_setup_data.chunks_per_record);
-    stream_setup_data.records_per_ddr_burst =
-        MergeSortSetup::CalculateRecordCountPerFetch(sort_buffer_size,
-                                                     record_size);
+    CalculateRecordCountPerFetchMultiStream(stream_setup_data, record_size,
+                                            smallest_module_size,
+                                            record_size_after_crossbar);
   } else {
     if (stream_setup_data.is_input_stream) {
       stream_setup_data.records_per_ddr_burst =

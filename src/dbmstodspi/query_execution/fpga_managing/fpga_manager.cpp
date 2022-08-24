@@ -241,7 +241,7 @@ auto FPGAManager::GetResultingStreamSizes(
 
 void FPGAManager::PrintDebuggingData() {
 #ifdef FPGA_AVAILABLE
-  auto log_level = LogLevel::kDebug;
+  auto log_level = LogLevel::kTrace;
   Log(log_level, "Runtime: " + std::to_string(dma_engine_->GetRuntime()));
   Log(log_level, "ValidReadCount: " +
                      std::to_string(dma_engine_->GetValidReadCyclesCount()));

@@ -74,6 +74,7 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/filter_join_testing.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/filter_testing.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/addition_testing.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/sum_testing.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/single_run_testing.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/merge_sort_testing.json 
 

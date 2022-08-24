@@ -156,7 +156,9 @@ void DMACrossbarSetup::InsertMissingEmptySetupChunks(
 void DMACrossbarSetup::ConfigureInputCrossbarSetupData(
     const std::vector<int>& selected_columns, DMASetupData& stream_setup_data,
     std::vector<int>& expanded_column_selection, const int& record_size) {
-  assert(!DMACrossbarSpecifier::IsInputClashing(selected_columns));
+  if (DMACrossbarSpecifier::IsInputClashing(selected_columns)) {
+    throw std::runtime_error("Input crossbar configuration isn't feasible!");
+  }
   if (stream_setup_data.active_channel_count == -1) {
     expanded_column_selection =
         DMACrossbarSpecifier::ExtendSpecificationSingleChannel(
@@ -188,7 +190,9 @@ void DMACrossbarSetup::ConfigureOutputCrossbarSetupData(
     const std::vector<int>& selected_columns,
     std::vector<int>& expanded_column_selection,
     DMASetupData& stream_setup_data) {
-  assert(!DMACrossbarSpecifier::IsOutputClashing(selected_columns));
+  if (DMACrossbarSpecifier::IsOutputClashing(selected_columns)) {
+    throw std::runtime_error("Output crossbar configuration isn't feasable!");
+  }
   expanded_column_selection = DMACrossbarSpecifier::ExtendOutputSpecification(
       selected_columns, stream_setup_data.records_per_ddr_burst,
       stream_setup_data.chunks_per_record);

@@ -148,6 +148,8 @@ auto main(int argc, char* argv[]) -> int {
     exit(0);
   }
 
+  //spdlog::set_pattern("%v");
+
   if (result.count("quiet")) {
     SetLoggingLevel(LogLevel::kOff);
   } else if (result.count("trace")) {

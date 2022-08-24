@@ -1,0 +1,78 @@
+{
+	"sum": {
+		"input": [ "lineitem_part_sf0_1_2nd_filter.csv" ],
+		"output": [ null ],
+		"operation": "kAggregationSum",
+		"previous_nodes": [ null ],
+		"next_nodes": [ null ],
+		"operation_parameters": {
+			"input_stream_params": [
+				[],
+				[ 3, 3 ],
+				[ 1, 1 ],
+				[]
+			],
+			"output_stream_params": [
+				[],
+				[ 3, 3 ],
+				[ 1, 1 ],
+				[ 1 ]
+			],
+			"operation_params": [
+				[ 0 ],
+				[ 1 ]
+			]
+		}
+	},
+	"addition": {
+		"input": [ "lineitem_part_sf0_1_2nd_filter.csv" ],
+		"output": [ null ],
+		"operation": "kAddition",
+		"previous_nodes": [ null ],
+		"next_nodes": [ "sum_2" ],
+		"operation_parameters": {
+			"input_stream_params": [
+				[],
+				[ 3, 3 ],
+				[ 1, 1 ],
+				[]
+			],
+			"output_stream_params": [
+				[],
+				[ 3, 3 ],
+				[ 1, 1 ],
+				[ 1 ]
+			],
+			"operation_params": [
+				[ 0 ],
+				[ 0, 1, 0, 0, 0, 0, 0, 0 ],
+				[ 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+			]
+		}
+	},
+	"sum_2": {
+		"input": [ null ],
+		"output": [ null ],
+		"operation": "kAggregationSum",
+		"previous_nodes": [ "addition" ],
+		"next_nodes": [ null ],
+		"operation_parameters": {
+			"input_stream_params": [
+				[],
+				[ 3, 3 ],
+				[ 1, 1 ],
+				[]
+			],
+			"output_stream_params": [
+				[],
+				[ 3, 3 ],
+				[ 1, 1 ],
+				[ 1 ]
+			],
+			"operation_params": [
+				[ 0 ],
+				[ 1 ]
+			]
+		}
+	}
+}

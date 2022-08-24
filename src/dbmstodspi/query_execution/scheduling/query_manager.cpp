@@ -453,6 +453,7 @@ auto QueryManager::SetupAccelerationNodesForExecution(
   IDManager::AllocateStreamIDs(current_query_nodes, input_ids, output_ids);
 
   for (const auto& node : current_query_nodes) {
+    Log(LogLevel::kDebug, "Configuring: " + node->node_name);
     auto current_run_params = std::move(node->module_run_data.front());
     node->module_run_data.pop_front();
     for (const auto& table : current_run_params.input_data_definition_files) {
@@ -704,6 +705,10 @@ auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
     }
   }
 
+  /*for (int i = 0; i < routing_bitstreams_.size(); i++) {
+    current_routing[i] = "";
+  }*/
+
   /*for (int column_i = furthest_required_column + 1;
        column_i < routing_bitstreams_.size(); column_i++) {
     current_routing[column_i] = "RT";
@@ -855,14 +860,14 @@ void QueryManager::ProcessResults(
               record_count, result_params.filename,
               result_params.stream_specifications, result_params.stream_index);
         } else {
-          /*std::string filename = result_params.filename;
+          std::string filename = result_params.filename;
           if (filename.back() != 'v') {
             filename += ".csv";
           }
           WriteResults(
               data_manager, table_memory_blocks.at(result_params.filename),
               record_count, filename, result_params.stream_specifications,
-              result_params.stream_index);*/
+              result_params.stream_index);
         }
       }
     }

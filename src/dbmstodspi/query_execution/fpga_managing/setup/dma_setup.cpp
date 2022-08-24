@@ -50,7 +50,7 @@ auto DMASetup::CreateDMAModule(MemoryManagerInterface* memory_manager)
 void DMASetup::SetupDMAModuleDirection(
     DMAInterface& dma_engine, const std::vector<StreamDataParameters>& streams,
     const bool is_input_stream) {
-  //const int buffer_size = 15 / streams.size();
+  // const int buffer_size = 15 / streams.size();
   const int buffer_size = 16 / streams.size();
   int multichannel_stream_count = 0;
   for (int current_stream_count = 0; current_stream_count < streams.size();
@@ -106,7 +106,8 @@ void DMASetup::SetupDMAModuleDirection(
     }
     StreamParameterCalculator::CalculateDMAStreamSetupData(
         stream_setup_data, stream_init_data.stream_record_size,
-        is_multichannel_stream, stream_init_data.smallest_module_size);
+        is_multichannel_stream, stream_init_data.smallest_module_size,
+        stream_specification.size());
 
     SetUpDMAIOStream(stream_setup_data, dma_engine);
 
