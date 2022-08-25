@@ -16,8 +16,8 @@ limitations under the License.
 
 #include "interactive_state.hpp"
 
-#include <iostream>
 #include <chrono>
+#include <iostream>
 
 #include "logger.hpp"
 #include "schedule_state.hpp"
@@ -65,7 +65,7 @@ auto InteractiveState::Execute(GraphProcessingFSMInterface* fsm)
       long planning =
           std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
               .count();
-      std::cout << "PLANNING: " << planning << std::endl;
+      std::cout << "PLANNING: " << planning << " ms" << std::endl;
       fsm->SetStartTimer();
       return std::make_unique<ScheduleState>();
       break;
@@ -96,6 +96,8 @@ auto InteractiveState::GetExecutionPlanFile() -> std::string {
 }
 
 void InteractiveState::PrintOptions(GraphProcessingFSMInterface* fsm) {
+  std::cout << std::endl;
+  std::cout << "===========MENU==========" << std::endl;
   std::cout << "Which operation would you like to do?" << std::endl;
   std::cout << "1: Print HW state" << std::endl;
   if (fsm->GetFPGASpeed() == 300) {
@@ -109,7 +111,7 @@ void InteractiveState::PrintOptions(GraphProcessingFSMInterface* fsm) {
   std::cout << "4: Change execution time limit" << std::endl;
   std::cout << "5: Run SQL" << std::endl;
   std::cout << "6: Exit" << std::endl;
-  std::cout << "7: Reset" <<std::endl;
+  std::cout << "7: Reset" << std::endl;
   std::cout << "Choose one of the supported options by typing a valid number "
                "and a ';'"
             << std::endl;
@@ -153,12 +155,15 @@ auto InteractiveState::GetDouble() -> double {
 
 auto InteractiveState::GetStdInput() -> std::string {
   std::string current_input = "";
+  std::cout << "> ";
   std::cin >> current_input;
   while (current_input.back() != ';') {
     std::string more_current_input = "";
+    std::cout << "> ";
     std::cin >> more_current_input;
     current_input += more_current_input;
   }
+  std::cout << std::endl;
   return current_input;
 }
 // Lazily put option functions into this class rather than the FSM or even

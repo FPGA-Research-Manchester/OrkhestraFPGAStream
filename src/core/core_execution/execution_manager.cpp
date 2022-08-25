@@ -26,9 +26,7 @@ limitations under the License.
 using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
-void ExecutionManager::SetHWPrint(bool print_hw){
-  print_hw_ = print_hw;
-}
+void ExecutionManager::SetHWPrint(bool print_hw) { print_hw_ = print_hw; }
 
 void ExecutionManager::SetStartTimer() {
   exec_begin = std::chrono::steady_clock::now();
@@ -38,7 +36,7 @@ void ExecutionManager::PrintExecTime() {
             << std::chrono::duration_cast<std::chrono::milliseconds>(
                    std::chrono::steady_clock::now() - exec_begin)
                    .count()
-            << std::endl;
+            << " ms" << std::endl;
 }
 
 void ExecutionManager::AddNewNodes(std::string graph_filename) {
@@ -76,9 +74,11 @@ void ExecutionManager::ChangeExecutionTimeLimit(int new_time_limit) {
 }
 
 void ExecutionManager::PrintHWState() {
+  std::cout << "==CURRENT CONFIGURATION==" << std::endl;
   for (int i = 0; i < current_routing_.size(); i++) {
     std::cout << i << ": " << current_routing_.at(i) << std::endl;
   }
+  std::cout << "=========================" << std::endl;
 }
 
 auto ExecutionManager::GetFPGASpeed() -> int { return config_.clock_speed; }
@@ -454,10 +454,10 @@ void ExecutionManager::SetupNextRunData() {
           current_configuration_, query_node_runs_queue_.front().first,
           current_routing_);
   /*query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
-                                   *accelerator_library_);*/
+   *accelerator_library_);*/
   config_time_ += query_manager_->LoadPRBitstreams(
       memory_manager_.get(), bitstreams_to_load, *accelerator_library_);
-  if (print_hw_){
+  if (print_hw_) {
     PrintHWState();
   }
 

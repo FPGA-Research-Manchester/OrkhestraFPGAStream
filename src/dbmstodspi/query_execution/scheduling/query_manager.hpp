@@ -184,7 +184,8 @@ class QueryManager : public QueryManagerInterface {
           result_parameters,
       const std::unordered_map<std::string, MemoryBlockInterface*>&
           table_memory_blocks,
-      std::map<std::string, TableMetadata>& scheduling_table_data);
+      std::map<std::string, TableMetadata>& scheduling_table_data,
+      const std::map<int, std::vector<double>>& read_back_values);
   static void StoreStreamResultParameters(
       std::map<std::string, std::vector<StreamResultParameters>>&
           result_parameters,

@@ -47,6 +47,8 @@ void FPGAManager::SetupQueryAcceleration(
   dma_engine_->GlobalReset();
   read_back_modules_.clear();
   read_back_parameters_.clear();
+  read_back_streams_ids_.clear();
+  read_back_values_.clear();
 
   // if (ila_module_) {
   //  ila_module_->StartAxiILA();
@@ -97,6 +99,9 @@ void FPGAManager::SetupQueryAcceleration(
           // we don't have any at the moment.
           read_back_parameters_.push_back(
               query_node.operation_parameters.at(1));
+          // Assuming one output
+          read_back_streams_ids_.push_back(
+              query_node.output_streams.front().stream_id);
         }
       }
     }
@@ -126,7 +131,8 @@ void FPGAManager::FindIOStreams(
   }
 }
 
-auto FPGAManager::RunQueryAcceleration(int timeout)
+auto FPGAManager::RunQueryAcceleration(
+    int timeout, std::map<int, std::vector<double>>& read_back_values)
     -> std::array<int, query_acceleration_constants::kMaxIOStreamCount> {
   std::vector<int> active_input_stream_ids;
   std::vector<int> active_output_stream_ids;
@@ -144,7 +150,7 @@ auto FPGAManager::RunQueryAcceleration(int timeout)
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
 #ifdef FPGA_AVAILABLE
-  ReadResultsFromRegisters();
+  ReadResultsFromRegisters(read_back_values);
 #endif
 
   Log(LogLevel::kInfo,
@@ -198,17 +204,24 @@ void FPGAManager::WaitForStreamsToFinish(int timeout) {
 #endif
 }
 
-void FPGAManager::ReadResultsFromRegisters() {
+void FPGAManager::ReadResultsFromRegisters(
+    std::map<int, std::vector<double>>& read_back_values) {
   if (!read_back_modules_.empty()) {
     // Assuming there are equal number of read back modules and parameters
     for (int module_index = 0; module_index < read_back_modules_.size();
          module_index++) {
+      read_back_values.insert({read_back_streams_ids_.at(module_index), {}});
       for (auto const& position : read_back_parameters_.at(module_index)) {
-        std::cout << "SUM: " << std::fixed << std::setprecision(2)
+        /*std::cout << "SUM: " << std::fixed << std::setprecision(2)
                   << ReadModuleResultRegisters(
                          std::move(read_back_modules_.at(module_index)),
                          position)
-                  << std::endl;
+                  << std::endl;*/
+        // TODO: error here if you read from the read back module more than once
+        // due to move!
+        read_back_values.at(read_back_streams_ids_.at(module_index))
+            .push_back(ReadModuleResultRegisters(
+                std::move(read_back_modules_.at(module_index)), position));
       }
     }
   }

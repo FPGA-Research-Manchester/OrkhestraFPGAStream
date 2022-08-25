@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <algorithm>
 #include <chrono>
+#include <iomanip>
 #include <iostream>
 #include <set>
 #include <stdexcept>
@@ -801,11 +802,11 @@ void QueryManager::WriteResults(
   TableManager::WriteResultTableFile(data_manager, resulting_table, filename);
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  std::cout << "MEMORY TO FS WRITE:"
+  std::cout << "MEMORY TO FS WRITE: "
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      begin)
                    .count()
-            << std::endl;
+            << " microseconds" << std::endl;
   Log(LogLevel::kInfo,
       "Write result data time = " +
           std::to_string(
@@ -840,7 +841,8 @@ void QueryManager::ProcessResults(
         result_parameters,
     const std::unordered_map<std::string, MemoryBlockInterface*>&
         table_memory_blocks,
-    std::map<std::string, TableMetadata>& scheduling_table_data) {
+    std::map<std::string, TableMetadata>& scheduling_table_data,
+    const std::map<int, std::vector<double>>& read_back_values) {
   for (auto const& [node_name, result_parameter_vector] : result_parameters) {
     for (auto const& result_params : result_parameter_vector) {
       // Assuming there's nothing after the offset and everything is valid
@@ -853,6 +855,17 @@ void QueryManager::ProcessResults(
               std::to_string(record_count - result_params.output_offset) +
               " new resulting rows!");
       scheduling_table_data[result_params.filename].record_count = record_count;
+
+      bool literal_value = false;
+      if (read_back_values.find(result_params.output_id) !=
+          read_back_values.end()) {
+        literal_value = true;
+        std::cout << node_name + " sum: " << std::endl;
+        for (const auto sum : read_back_values.at(result_params.output_id)) {
+          std::cout << std::fixed << std::setprecision(2) << sum << std::endl;
+        }
+      }
+
       if (!result_params.update_table_sizes_only) {
         if (result_params.check_results) {
           CheckResults(
@@ -860,14 +873,16 @@ void QueryManager::ProcessResults(
               record_count, result_params.filename,
               result_params.stream_specifications, result_params.stream_index);
         } else {
-          std::string filename = result_params.filename;
-          if (filename.back() != 'v') {
-            filename += ".csv";
+          if (!literal_value) {
+            std::string filename = result_params.filename;
+            if (filename.back() != 'v') {
+              filename += ".csv";
+            }
+            WriteResults(
+                data_manager, table_memory_blocks.at(result_params.filename),
+                record_count, filename, result_params.stream_specifications,
+                result_params.stream_index);
           }
-          WriteResults(
-              data_manager, table_memory_blocks.at(result_params.filename),
-              record_count, filename, result_params.stream_specifications,
-              result_params.stream_index);
         }
       }
     }
@@ -883,6 +898,7 @@ void QueryManager::ExecuteAndProcessResults(
     const std::vector<AcceleratedQueryNode>& execution_query_nodes,
     std::map<std::string, TableMetadata>& scheduling_table_data,
     std::unordered_map<std::string, int>& table_counter, int timeout) {
+  std::map<int, std::vector<double>> read_back_values;
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
 
@@ -897,7 +913,9 @@ void QueryManager::ExecuteAndProcessResults(
     std::cout << "INITIALISATION: " << initialisation_sum << std::endl;
   }*/
   Log(LogLevel::kTrace, "Running query!");
-  auto result_sizes = fpga_manager->RunQueryAcceleration(timeout);
+  // Give this a map of
+  auto result_sizes =
+      fpga_manager->RunQueryAcceleration(timeout, read_back_values);
   Log(LogLevel::kTrace, "Query done!");
 
   std::chrono::steady_clock::time_point total_end =
@@ -915,7 +933,7 @@ void QueryManager::ExecuteAndProcessResults(
           "[microseconds]");
 
   ProcessResults(data_manager, result_sizes, result_parameters,
-                 table_memory_blocks, scheduling_table_data);
+                 table_memory_blocks, scheduling_table_data, read_back_values);
   std::vector<std::string> removable_tables;
   for (const auto& [table_name, counter] : table_counter) {
     if (counter < 0) {
