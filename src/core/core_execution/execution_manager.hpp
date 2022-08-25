@@ -85,6 +85,8 @@ class ExecutionManager : public ExecutionManagerInterface,
         fpga_manager_{std::move(
             driver_factory->CreateFPGAManager(accelerator_library_.get()))} {};
 
+  void LoadBitstream(ScheduledModule new_module) override;
+  auto GetCurrentHW() -> std::map<QueryOperationType, OperationPRModules> override;
   void SetHWPrint(bool print_hw) override;
   void SetStartTimer() override;
   void PrintExecTime() override;

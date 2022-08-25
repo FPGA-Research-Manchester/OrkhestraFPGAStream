@@ -75,11 +75,84 @@ auto InteractiveState::Execute(GraphProcessingFSMInterface* fsm)
       break;
     case 7:
       fsm->LoadStaticBitstream();
+    case 8: {
+      auto new_bitstream = GetBitstreamToLoad(fsm->GetCurrentHW());
+      if (new_bitstream.operation_type != QueryOperationType::kPassThrough) {
+        fsm->LoadBitstream(new_bitstream);
+      }
+    }
     default:
       std::cout << "Incorrect option" << std::endl;
   }
 
   return std::make_unique<InteractiveState>();
+}
+
+void InteractiveState::PrintOutGivenOptions(
+    const std::vector<std::string> list_of_options) {
+  std::cout << "0: Go back" << std::endl;
+  for (int option_i = 0; option_i < list_of_options.size(); option_i++) {
+    std::cout << option_i + 1 << ": " << list_of_options.at(option_i)
+              << std::endl;
+  }
+}
+
+auto InteractiveState::GetBitstreamToLoad(
+    const std::map<QueryOperationType, OperationPRModules> bitstream_map)
+    -> ScheduledModule {
+  bool bitstream_choice_complete = false;
+  ScheduledModule chosen_bitstream = {
+      "", QueryOperationType::kPassThrough, "", {0, 0}, false};
+  bool operation_chosen = false;
+  QueryOperationType current_operation = QueryOperationType::kAddition;
+  std::vector<QueryOperationType> list_of_operations;
+  std::vector<std::string> list_of_operation_strings;
+  std::vector<std::string> list_of_bitstreams;
+  for (const auto& [op_type, data] : bitstream_map) {
+    list_of_operation_strings.push_back(operation_names_.at(op_type));
+    list_of_operations.push_back(op_type);
+  }
+  while (!bitstream_choice_complete) {
+    if (operation_chosen) {
+      std::cout << "Choose bitstream: " << std::endl;
+      PrintOutGivenOptions(list_of_bitstreams);
+      auto answer = GetInteger();
+      if (answer == 0) {
+        operation_chosen = false;
+        list_of_bitstreams.clear();
+      } else {
+        bitstream_choice_complete = true;
+        std::string chosen_bitstream_name = list_of_bitstreams.at(answer - 1);
+        chosen_bitstream = {"",
+                            current_operation,
+                            chosen_bitstream_name,
+                            {bitstream_map.at(current_operation)
+                                 .bitstream_map.at(chosen_bitstream_name)
+                                 .fitting_locations.front(),
+                             bitstream_map.at(current_operation)
+                                     .bitstream_map.at(chosen_bitstream_name)
+                                     .fitting_locations.front() +
+                                 bitstream_map.at(current_operation)
+                                     .bitstream_map.at(chosen_bitstream_name)
+                                     .length}};
+      }
+    } else {
+      std::cout << "Choose operation: " << std::endl;
+      PrintOutGivenOptions(list_of_operation_strings);
+      auto answer = GetInteger();
+      if (answer == 0) {
+        bitstream_choice_complete = true;
+      } else {
+        current_operation = list_of_operations.at(answer - 1);
+        operation_chosen = true;
+        for (const auto& [bitstream, data] :
+             bitstream_map.at(current_operation).bitstream_map) {
+          list_of_bitstreams.push_back(bitstream);
+        }
+      }
+    }
+  }
+  return chosen_bitstream;
 }
 
 auto InteractiveState::GetExecutionPlanFile() -> std::string {
@@ -110,8 +183,9 @@ void InteractiveState::PrintOptions(GraphProcessingFSMInterface* fsm) {
   std::cout << "3: Change scheduling time limit" << std::endl;
   std::cout << "4: Change execution time limit" << std::endl;
   std::cout << "5: Run SQL" << std::endl;
-  std::cout << "6: Exit" << std::endl;
+  std::cout << "6: EXIT" << std::endl;
   std::cout << "7: Reset" << std::endl;
+  std::cout << "8: Load module" << std::endl;
   std::cout << "Choose one of the supported options by typing a valid number "
                "and a ';'"
             << std::endl;

@@ -26,6 +26,19 @@ limitations under the License.
 using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
+void ExecutionManager::LoadBitstream(ScheduledModule new_module) {
+  auto dma_module = accelerator_library_->GetDMAModule();
+  memory_manager_->LoadPartialBitstream({new_module.bitstream}, *dma_module);
+  query_manager_->GetPRBitstreamsToLoadWithPassthroughModules(
+      current_configuration_, {new_module},
+      current_routing_);
+}
+
+auto ExecutionManager::GetCurrentHW()
+    -> std::map<QueryOperationType, OperationPRModules> {
+  return config_.pr_hw_library;
+}
+
 void ExecutionManager::SetHWPrint(bool print_hw) { print_hw_ = print_hw; }
 
 void ExecutionManager::SetStartTimer() {

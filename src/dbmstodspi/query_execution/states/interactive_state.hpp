@@ -17,6 +17,7 @@ limitations under the License.
 #pragma once
 
 #include <string>
+#include <map>
 
 #include "state_interface.hpp"
 
@@ -34,7 +35,17 @@ class InteractiveState : public StateInterface {
   auto GetInteger() -> int;
   auto GetDouble() -> double;
   auto GetExecutionPlanFile()->std::string;
-
+  void PrintOutGivenOptions(const std::vector<std::string> list_of_options);
+  auto GetBitstreamToLoad(const std::map<QueryOperationType, OperationPRModules> bitstream_map) -> ScheduledModule;
+  std::map<QueryOperationType, std::string> operation_names_ = {
+      {QueryOperationType::kAddition, "Addition"},
+      {QueryOperationType::kAggregationSum, "Aggregation sum"},
+      {QueryOperationType::kFilter, "Filter"},
+      {QueryOperationType::kJoin, "Join"},
+      {QueryOperationType::kLinearSort, "Linear sorter"},
+      {QueryOperationType::kMergeSort, "Merge sorter"},
+      {QueryOperationType::kMultiplication, "Multiplication"},
+  };
  public:
   ~InteractiveState() override = default;
 
