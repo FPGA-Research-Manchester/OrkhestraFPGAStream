@@ -39,7 +39,6 @@ auto InteractiveState::Execute(GraphProcessingFSMInterface* fsm)
 
   switch (GetOption(fsm)) {
     case 1:
-      fsm->SetHWPrint(true);
       fsm->PrintHWState();
       break;
     case 2:
@@ -81,6 +80,13 @@ auto InteractiveState::Execute(GraphProcessingFSMInterface* fsm)
         fsm->LoadBitstream(new_bitstream);
       }
     }
+    case 9:
+      if (fsm->IsHWPrintEnabled()){
+        fsm->SetHWPrint(false);
+      } else {
+        fsm->SetHWPrint(true);
+      }
+      break;
     default:
       std::cout << "Incorrect option" << std::endl;
   }
@@ -186,6 +192,11 @@ void InteractiveState::PrintOptions(GraphProcessingFSMInterface* fsm) {
   std::cout << "6: EXIT" << std::endl;
   std::cout << "7: Reset" << std::endl;
   std::cout << "8: Load module" << std::endl;
+  if (fsm->IsHWPrintEnabled()) {
+    std::cout << "9: Disable HW print" << std::endl;
+  } else {
+    std::cout << "9: Enable HW print" << std::endl;
+  }
   std::cout << "Choose one of the supported options by typing a valid number "
                "and a ';'"
             << std::endl;

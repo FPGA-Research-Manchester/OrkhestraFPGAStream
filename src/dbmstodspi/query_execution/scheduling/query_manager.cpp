@@ -228,7 +228,23 @@ void QueryManager::AllocateInputMemoryBlocks(
         throw std::runtime_error(
             "Mismatch of table sizes after reading table data!");
       }
-    }
+      /*auto resulting_table = TableManager::ReadTableFromMemory(
+          data_manager, input_stream_parameters, stream_index,
+          table_memory_blocks.at(input_table),
+          current_tables_metadata.at(input_table).record_count);
+      data_manager->PrintTableData(resulting_table);
+      TableManager::WriteResultTableFile(data_manager, resulting_table,
+                                         "test.csv");*/
+    } /*else if (!input_table.empty()) {
+      auto resulting_table = TableManager::ReadTableFromMemory(
+          data_manager, input_stream_parameters, stream_index,
+          table_memory_blocks.at(input_table),
+          current_tables_metadata.at(input_table).record_count);
+      data_manager->PrintTableData(resulting_table);
+      TableManager::WriteResultTableFile(data_manager, resulting_table,
+                                         "test.csv");
+      exit(0);
+    }*/
   }
 }
 
@@ -878,6 +894,8 @@ void QueryManager::ProcessResults(
             if (filename.back() != 'v') {
               filename += ".csv";
             }
+            std::cout << "Written " << record_count << " rows to " << filename
+                      << std::endl;
             WriteResults(
                 data_manager, table_memory_blocks.at(result_params.filename),
                 record_count, filename, result_params.stream_specifications,

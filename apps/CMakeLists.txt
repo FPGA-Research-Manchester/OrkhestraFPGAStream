@@ -333,6 +333,7 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_small_sort.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_big_sort.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_sum.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_filter.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q19.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q6.txt
     #${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q1.txt

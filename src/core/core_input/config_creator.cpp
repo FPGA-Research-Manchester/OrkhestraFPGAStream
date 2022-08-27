@@ -139,6 +139,12 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::istringstream(config_values[print_config]) >> std::boolalpha >>
       config.print_config;
 
+  auto string_key_data_sizes =
+      json_reader_->ReadValueMap(config_values[data_type_sizes]);
+  for (const auto& [string_key, size_scale] : string_key_data_sizes) {
+    config.data_sizes.insert({kDataTypeNames.at(string_key), size_scale});
+  }
+
   config.static_tables = SetCommaSeparatedValues(config_values[load_tables]);
   if (!config.static_tables.empty()) {
     auto column_counts =
@@ -159,6 +165,11 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
     std::transform(column_types.begin(), column_types.end(),
                    std::back_inserter(column_types_i),
                    [&](std::string s) { return stoi(s); });
+    for (int i = 0; i < column_sizes_i.size(); i++) {
+      column_sizes_i[i] =
+          column_sizes_i[i] * config.data_sizes.at(static_cast<ColumnDataType>(
+                                  column_types_i.at(i)));
+    }
     int column_offset = 0;
     for (int table_i = 0; table_i < column_counts_i.size(); table_i++) {
       std::vector<std::pair<ColumnDataType, int>> column_data;
@@ -199,12 +210,6 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   auto column_sizes = json_reader_->ReadValueMap(config_values[column_cost]);
   for (const auto& [column_type, size] : column_sizes) {
     config.cost_of_columns.insert({column_type[0], static_cast<int>(size)});
-  }
-
-  auto string_key_data_sizes =
-      json_reader_->ReadValueMap(config_values[data_type_sizes]);
-  for (const auto& [string_key, size_scale] : string_key_data_sizes) {
-    config.data_sizes.insert({kDataTypeNames.at(string_key), size_scale});
   }
 
   config.csv_separator = config_values[data_separator].c_str()[0];

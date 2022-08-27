@@ -26,6 +26,8 @@ limitations under the License.
 using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
+auto ExecutionManager::IsHWPrintEnabled() -> bool { return print_hw_; }
+
 void ExecutionManager::LoadBitstream(ScheduledModule new_module) {
   auto dma_module = accelerator_library_->GetDMAModule();
   memory_manager_->LoadPartialBitstream({new_module.bitstream}, *dma_module);
@@ -87,10 +89,18 @@ void ExecutionManager::ChangeExecutionTimeLimit(int new_time_limit) {
 
 void ExecutionManager::PrintHWState() {
   std::cout << "==CURRENT CONFIGURATION==" << std::endl;
+  std::string dma_string = "MMDBMMDMDMDB";
+  for (const auto resource : dma_string) {
+    std::cout << "X(" << resource
+              << "): DMA" << std::endl;
+  }
   for (int i = 0; i < current_routing_.size(); i++) {
-    std::cout << i << ": " << current_routing_.at(i) << std::endl;
+    std::cout << i << "(" << config_.resource_string.at(i)
+              << "): " << current_routing_.at(i) << std::endl;
   }
   std::cout << "=========================" << std::endl;
+  std::string wait;
+  std::cin >> wait;
 }
 
 auto ExecutionManager::GetFPGASpeed() -> int { return config_.clock_speed; }
@@ -490,6 +500,11 @@ void ExecutionManager::SetupNextRunData() {
   config_time_ += query_manager_->LoadPRBitstreams(
       memory_manager_.get(), bitstreams_to_load, *accelerator_library_);
   if (print_hw_) {
+    std::cout << "Loading: ";
+    for (const auto& bitstream : bitstreams_to_load) {
+      std::cout << bitstream << ", ";
+    }
+    std::cout << std::endl;
     PrintHWState();
   }
 
