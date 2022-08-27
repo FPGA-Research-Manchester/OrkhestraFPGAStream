@@ -1,0 +1,4 @@
+SELECT SUM(l_quantity)
+FROM   lineitem
+WHERE  l_extendedprice > 85000
+       AND l_quantity > 20;

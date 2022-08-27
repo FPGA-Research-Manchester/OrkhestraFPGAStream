@@ -30,8 +30,7 @@ void ExecutionManager::LoadBitstream(ScheduledModule new_module) {
   auto dma_module = accelerator_library_->GetDMAModule();
   memory_manager_->LoadPartialBitstream({new_module.bitstream}, *dma_module);
   query_manager_->GetPRBitstreamsToLoadWithPassthroughModules(
-      current_configuration_, {new_module},
-      current_routing_);
+      current_configuration_, {new_module}, current_routing_);
 }
 
 auto ExecutionManager::GetCurrentHW()
@@ -429,6 +428,26 @@ auto ExecutionManager::IsBenchmarkDone() -> bool {
   return current_available_node_names_.empty();
 }
 
+auto ExecutionManager::GetModuleCapacity(int module_position,
+                                         QueryOperationType operation)
+    -> std::vector<int> {
+  std::string last_seen_bitstream = "";
+  int seen_bitstreams = -1;
+  for (const auto module_name : current_routing_) {
+    if (module_name != last_seen_bitstream && module_name != "RT" &&
+        module_name != "TAA" && !module_name.empty()) {
+      seen_bitstreams++;
+      if (seen_bitstreams == module_position) {
+        return config_.pr_hw_library.at(operation)
+            .bitstream_map.at(module_name)
+            .capacity;
+      }
+      last_seen_bitstream = module_name;
+    }
+  }
+  throw std::runtime_error("Not enough modules configured!");
+}
+
 void ExecutionManager::SetupNextRunData() {
   /*ConfigurableModulesVector next_set_of_operators;*/
 
@@ -512,9 +531,6 @@ void ExecutionManager::SetupNextRunData() {
     }
   }*/
 
-  /*query_manager_->MeasureBitstreamConfigurationSpeed(config_.pr_hw_library,
-                                                     memory_manager_.get());*/
-
   auto execution_nodes_and_result_params =
       query_manager_->SetupAccelerationNodesForExecution(
           data_manager_.get(), memory_manager_.get(),
@@ -526,7 +542,9 @@ void ExecutionManager::SetupNextRunData() {
       query_nodes_.insert(
           query_nodes_.begin() + module_pos,
           accelerator_library_->GetEmptyModuleNode(
-              empty_modules.at(module_pos).first, module_pos + 1));
+              empty_modules.at(module_pos).first, module_pos + 1,
+              GetModuleCapacity(module_pos,
+                                empty_modules.at(module_pos).first)));
     } else {
       query_nodes_.at(module_pos).operation_module_location = module_pos + 1;
     }
@@ -566,6 +584,9 @@ void ExecutionManager::LoadStaticBitstream() {
   for (int i = 0; i < 31; i++) {
     current_routing_.push_back("RT");
   }
+
+  /*query_manager_->MeasureBitstreamConfigurationSpeed(config_.pr_hw_library,
+                                                     memory_manager_.get());*/
 }
 
 void ExecutionManager::SetupSchedulingData(bool setup_bitstreams) {

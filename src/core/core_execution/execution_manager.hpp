@@ -160,6 +160,8 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::vector<AcceleratedQueryNode> query_nodes_;
   std::vector<std::string> scheduled_node_names_;
 
+  auto GetModuleCapacity(int module_position, QueryOperationType operation)
+      -> std::vector<int>;
   auto PopNextScheduledRun() -> std::vector<QueryNode*>;
 
   // TODO(Kaspar): Move this to a different class

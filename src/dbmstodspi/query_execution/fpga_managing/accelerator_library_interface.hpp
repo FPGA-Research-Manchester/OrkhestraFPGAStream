@@ -91,7 +91,7 @@ class AcceleratorLibraryInterface {
   virtual auto IsOperationDataSensitive(QueryOperationType operation)
       -> bool = 0;
   virtual auto GetEmptyModuleNode(QueryOperationType operation,
-                                  int module_position)
+                                  int module_position, const std::vector<int>& module_capacity)
       -> AcceleratedQueryNode = 0;
   virtual auto SetMissingFunctionalCapacity(
       const std::vector<int>& bitstream_capacity,

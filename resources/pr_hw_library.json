@@ -21,10 +21,52 @@
 				"capacity": [ 32, 4 ],
 				"string": "MMDMDBMMDB",
 				"is_backwards": 0
+			},
+			"binPartial_Filter18_25_36.bin": {
+				"locations": [ 20 ],
+				"length": 4,
+				"capacity": [ 8, 1 ],
+				"string": "X",
+				"is_backwards": 0
+			},
+			"binPartial_Filter18_55_66.bin": {
+				"locations": [ 10 ],
+				"length": 4,
+				"capacity": [ 8, 1 ],
+				"string": "X",
+				"is_backwards": 0
+			},
+			"binPartial_Filter18_85_96.bin": {
+				"locations": [ 0 ],
+				"length": 4,
+				"capacity": [ 8, 1 ],
+				"string": "X",
+				"is_backwards": 0
+			},
+			"binPartial_Filter216_22_36.bin": {
+				"locations": [ 20 ],
+				"length": 5,
+				"capacity": [ 16, 2 ],
+				"string": "X",
+				"is_backwards": 0
+			},
+			"binPartial_Filter216_52_66.bin": {
+				"locations": [ 10 ],
+				"length": 5,
+				"capacity": [ 16, 2 ],
+				"string": "X",
+				"is_backwards": 0
+			},
+			"binPartial_Filter216_82_96.bin": {
+				"locations": [ 0 ],
+				"length": 5,
+				"capacity": [ 16, 2 ],
+				"string": "X",
+				"is_backwards": 0
 			}
 		},
 		"start_locations": [
-			[ "binPartial_Filter_67_96.bin" ],
+			[ "binPartial_Filter_67_96.bin", "binPartial_Filter216_82_96.bin", "binPartial_Filter18_85_96.bin" ],
 			[],
 			[],
 			[],
@@ -34,7 +76,7 @@
 			[],
 			[],
 			[],
-			[ "binPartial_Filter_37_66.bin" ],
+			[ "binPartial_Filter_37_66.bin", "binPartial_Filter216_52_66.bin", "binPartial_Filter18_55_66.bin" ],
 			[],
 			[],
 			[],
@@ -44,7 +86,7 @@
 			[],
 			[],
 			[],
-			[ "binPartial_Filter_7_36.bin" ],
+			[ "binPartial_Filter_7_36.bin", "binPartial_Filter18_25_36.bin", "binPartial_Filter216_22_36.bin" ],
 			[],
 			[],
 			[],

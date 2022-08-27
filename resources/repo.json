@@ -93,6 +93,12 @@
     "binPartial_LinearSort1024_37_78",
     "binPartial_MergeSort32_16_36",
     "binPartial_MergeSort32_46_66",
-    "byteman_PRregionRTandTA_0_96"
+    "byteman_PRregionRTandTA_0_96",
+    "binPartial_Filter18_85_96",
+    "binPartial_Filter216_22_36",
+    "binPartial_Filter216_52_66",
+    "binPartial_Filter216_82_96",
+    "binPartial_Filter18_25_36",
+    "binPartial_Filter18_55_66"
   ]
 }

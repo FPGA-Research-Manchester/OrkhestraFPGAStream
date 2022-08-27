@@ -317,6 +317,22 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/byteman_PRregionRTandTA_0_96.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/byteman_PRregionRTandTA_0_96.bin
 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter18_55_66.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter18_55_66.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter18_25_36.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter18_25_36.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter216_82_96.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter216_82_96.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter216_52_66.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter216_52_66.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter216_22_36.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter216_22_36.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter18_85_96.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter18_85_96.bin
+
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_small_sort.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_big_sort.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_sum.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q19.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q6.txt
     #${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q1.txt

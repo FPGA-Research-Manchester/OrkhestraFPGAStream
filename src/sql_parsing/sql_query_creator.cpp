@@ -942,6 +942,9 @@ void SQLQueryCreator::SetColumnPlace(
                 current_available_desired_columns[other_availablilites].end(),
                 current_location_candidate),
             current_available_desired_columns[other_availablilites].end());
+        if (current_available_desired_columns[other_availablilites].empty()) {
+          current_available_desired_columns.erase(other_availablilites);
+        }
       }
       left_over_availability.erase(chosen_column_name);
       std::vector<int> position_vector;
@@ -960,6 +963,7 @@ void SQLQueryCreator::SetColumnPlace(
           throw std::runtime_error("This location isn't empty!");
         }
         chosen_columns[position_vector.at(i)] = chosen_column_name;
+        current_available_desired_columns.erase(position_vector.at(i));
         crossbar_configuration[position_vector.at(i) / 16]
                               [position_vector.at(i) % 16] =
                                   column_positions.at(chosen_column_name).at(i);
@@ -979,7 +983,6 @@ void SQLQueryCreator::SetColumnPlace(
       }
     }
   }
-  current_available_desired_columns.erase(chosen_location);
 }
 
 void SQLQueryCreator::PlaceColumnsToPositionsWithOneAvailableLocation(

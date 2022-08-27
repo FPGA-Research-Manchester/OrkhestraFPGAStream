@@ -155,7 +155,8 @@ class AccelerationModuleSetupInterface {
    * Return passthrough module initialisation parameters
    * @return Operation parameters.
    */
-  virtual auto GetPassthroughInitParameters() -> AcceleratedQueryNode;
+  virtual auto GetPassthroughInitParameters(const std::vector<int>& module_capacity)
+      -> AcceleratedQueryNode;
 
   virtual auto GetWorstCaseNodeCapacity(
       const std::vector<int>& min_capacity,

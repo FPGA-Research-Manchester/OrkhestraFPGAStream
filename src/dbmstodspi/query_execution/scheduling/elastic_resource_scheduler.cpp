@@ -456,6 +456,7 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
   for (const auto &node : available_nodes) {
     node->module_run_data = {};
     // For merge sort it is used to say the module sizes for each run.
+    // TODO: This clear should be made generic - Find out a way how each modules size could be stored
     if (node->operation_type == QueryOperationType::kMergeSort) {
       node->given_operation_parameters.operation_parameters.clear();
     }
@@ -503,13 +504,19 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
         // Get current run data to update module locations in it later.
         current_run_data = &current_run_node_data.at(node_name);
 
-        // Push back the size of the module to params to configure the sorters
-        // TODO(Kaspar): Make generic!
-        if (chosen_node->operation_type == QueryOperationType::kMergeSort) {
-          chosen_node->given_operation_parameters.operation_parameters.back()
-              .push_back(hw_library.at(current_module.operation_type)
-                             .bitstream_map.at(current_module.bitstream)
-                             .capacity.front());
+        // Push back the size of the modules
+        if (!hw_library.at(current_module.operation_type)
+                 .bitstream_map.at(current_module.bitstream)
+                 .capacity.empty()) {
+          chosen_node->given_operation_parameters.operation_parameters.back().insert(
+              chosen_node->given_operation_parameters.operation_parameters.back()
+                  .end(),
+              hw_library.at(current_module.operation_type)
+                  .bitstream_map.at(current_module.bitstream)
+                  .capacity.begin(),
+              hw_library.at(current_module.operation_type)
+                  .bitstream_map.at(current_module.bitstream)
+                  .capacity.end());
         }
 
       } else {
@@ -556,14 +563,23 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
               it->second++;
             }
           } else {
-//            if (!chosen_node->given_operation_parameters
-//                     .output_stream_parameters.at(0)
-//                     .empty()) {
-//              throw std::runtime_error(
-//                  "Can't do projection in the middle of a run!");
-//            }
+            if (!chosen_node->given_operation_parameters
+                     .output_stream_parameters.at(0)
+                     .empty()) {
+              throw std::runtime_error(
+                  "Can't do projection in the middle of a run!");
+            }
             current_run_data->output_data_definition_files.emplace_back("");
           }
+        }
+        // Append chosen module size
+        if (!hw_library.at(current_module.operation_type)
+                 .bitstream_map.at(current_module.bitstream)
+                 .capacity.empty()) {
+          chosen_node->given_operation_parameters.operation_parameters
+              .push_back(hw_library.at(current_module.operation_type)
+                             .bitstream_map.at(current_module.bitstream)
+                             .capacity);
         }
         // Now we do input!
 
@@ -595,12 +611,12 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
                 it->second++;
               }
             } else {
-//              if (!chosen_node->given_operation_parameters
-//                       .input_stream_parameters.at(0)
-//                       .empty()) {
-//                throw std::runtime_error(
-//                    "Can't do projection in the middle of a run!");
-//              }
+              if (!chosen_node->given_operation_parameters
+                       .input_stream_parameters.at(0)
+                       .empty()) {
+                throw std::runtime_error(
+                    "Can't do projection in the middle of a run!");
+              }
               current_run_data->input_data_definition_files.emplace_back("");
             }
           }
@@ -617,10 +633,6 @@ auto ElasticResourceNodeScheduler::GetQueueOfResultingRuns(
                 sorted_status_of_a_merge_node[node_name],
                 table_data.at(table_name), table_name);
           }
-          chosen_node->given_operation_parameters.operation_parameters
-              .push_back({hw_library.at(current_module.operation_type)
-                              .bitstream_map.at(current_module.bitstream)
-                              .capacity.front()});
         }
       }
       current_run_data->module_locations.push_back(module_index + 1);
@@ -777,12 +789,12 @@ auto ElasticResourceNodeScheduler::GetData(
             current_run_data->output_data_definition_files.push_back(
                 chosen_node->given_output_data_definition_files.at(stream_id));
           } else {
-//            if (!chosen_node->given_operation_parameters
-//                     .output_stream_parameters.at(0)
-//                     .empty()) {
-//              throw std::runtime_error(
-//                  "Can't do projection in the middle of a run!");
-//            }
+            if (!chosen_node->given_operation_parameters
+                     .output_stream_parameters.at(0)
+                     .empty()) {
+              throw std::runtime_error(
+                  "Can't do projection in the middle of a run!");
+            }
             current_run_data->output_data_definition_files.emplace_back("");
           }
         }
@@ -811,12 +823,12 @@ auto ElasticResourceNodeScheduler::GetData(
               result+=table_data.at(chosen_node->given_input_data_definition_files.at(stream_id)).record_count
                         *table_data.at(chosen_node->given_input_data_definition_files.at(stream_id)).record_size*4;
             } else {
-//              if (!chosen_node->given_operation_parameters
-//                       .input_stream_parameters.at(0)
-//                       .empty()) {
-//                throw std::runtime_error(
-//                    "Can't do projection in the middle of a run!");
-//              }
+              if (!chosen_node->given_operation_parameters
+                       .input_stream_parameters.at(0)
+                       .empty()) {
+                throw std::runtime_error(
+                    "Can't do projection in the middle of a run!");
+              }
               current_run_data->input_data_definition_files.emplace_back("");
             }
           }

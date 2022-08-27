@@ -46,7 +46,7 @@ def print_node(node_data):
 
 
 def SetInitialNodes(node_data, all_nodes, counter, parent_counter):
-    if (node_data['Node Type'] == "Sort"):
+    if (node_data['Node Type'] == "Sort" and parent_counter in all_nodes and all_nodes[parent_counter].type == "Join"):
         current_node_counter = parent_counter
     else:
         current_node_counter = counter[0]
@@ -69,6 +69,10 @@ def SetInitialNodes(node_data, all_nodes, counter, parent_counter):
                 "Filter", current_node_counter, [
                     node_data['Filter']], [-1], [
                     node_data['Alias']])
+        elif (node_data['Node Type'] == "Sort"):
+            all_nodes[current_node_counter] = Node(
+                "Sort", current_node_counter, [
+                    node_data['Sort Key']], [], [])
         else:
             raise RuntimeError(f"Unknown node type: {node_data['Node Type']}!")
         if (parent_counter != -1):
@@ -157,6 +161,10 @@ def ParseJoinNode(all_nodes, key):
             new_tokens.append(token)
     # Assuming they are in the correct order
     all_nodes[key].params = new_tokens
+
+
+def ParseSortNode(all_nodes, key):
+    pass
 
 
 def ParseFilterNode(all_nodes, key):
@@ -477,6 +485,9 @@ def AddJSONData(all_nodes, key, json_data, counter, database_name):
         AddJSONKey(json_data, key, "Addition",
                    [all_nodes[key].inputs[0], all_nodes[key].params[0], all_nodes[key].params[1],
                     all_nodes[key].params[2]])
+    elif all_nodes[key].type == "Sort":
+        AddJSONKey(json_data, key, "Sort",
+                   [all_nodes[key].inputs[0], all_nodes[key].params[0]])
     else:
         raise RuntimeError(f"Unsopperted type: {all_nodes[key].type}")
 
@@ -573,6 +584,8 @@ def main(argv):
             ParseJoinNode(all_nodes, key)
         elif (all_nodes[key].type == "Filter"):
             ParseFilterNode(all_nodes, key)
+        elif (all_nodes[key].type == "Sort"):
+            ParseSortNode(all_nodes, key)
         else:
             raise RuntimeError("Incorrect type!")
         # print("AFTER:")

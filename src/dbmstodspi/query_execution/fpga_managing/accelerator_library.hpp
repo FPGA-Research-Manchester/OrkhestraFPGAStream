@@ -201,7 +201,8 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
    * @param module_position Position of the passthrough module in the PR region.
    * @return Node with which a passthrough module can be initialised.
    */
-  auto GetEmptyModuleNode(QueryOperationType operation, int module_position)
+  auto GetEmptyModuleNode(QueryOperationType operation, int module_position,
+                          const std::vector<int>& module_capacity)
       -> AcceleratedQueryNode override;
 
   auto GetWorstCaseNodeCapacity(

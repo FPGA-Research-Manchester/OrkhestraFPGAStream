@@ -135,11 +135,12 @@ auto AccelerationModuleSetupInterface::IsDataSensitive() -> bool {
   return false;
 }
 
-auto AccelerationModuleSetupInterface::GetPassthroughInitParameters()
+auto AccelerationModuleSetupInterface::GetPassthroughInitParameters(
+    const std::vector<int>& module_capacity)
     -> AcceleratedQueryNode {
   AcceleratedQueryNode passthrough_module_node;
   passthrough_module_node.input_streams = {{15, 0, 0, {}, {}}};
   passthrough_module_node.output_streams = {{15, 0, 0, {}, {}}};
-  passthrough_module_node.operation_parameters = {};
+  passthrough_module_node.operation_parameters = {module_capacity};
   return passthrough_module_node;
 }

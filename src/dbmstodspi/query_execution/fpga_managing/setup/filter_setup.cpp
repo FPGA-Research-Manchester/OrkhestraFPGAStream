@@ -37,25 +37,45 @@ void FilterSetup::SetupModule(AccelerationModule& acceleration_module,
   Log(LogLevel::kInfo,
       "Configuring filter on pos " +
           std::to_string(module_parameters.operation_module_location));
+  auto parameters = module_parameters.operation_parameters;
+  auto capacity = parameters.back();
+  if (capacity.size() != 2) {
+    throw std::runtime_error("Don't support composed filters currently!");
+  }
+  parameters.pop_back();
   if (module_parameters.input_streams[0].stream_id != 15) {
     FilterSetup::SetupFilterModule(
         dynamic_cast<FilterInterface&>(acceleration_module),
         module_parameters.input_streams[0].stream_id,
-        module_parameters.output_streams[0].stream_id,
-        module_parameters.operation_parameters);
+        module_parameters.output_streams[0].stream_id, parameters, capacity);
   } else {
     FilterSetup::SetupPassthroughFilter(
-        dynamic_cast<FilterInterface&>(acceleration_module));
+        dynamic_cast<FilterInterface&>(acceleration_module), capacity);
   }
 }
 
-void FilterSetup::SetupPassthroughFilter(FilterInterface& filter_module) {
+void FilterSetup::SetupPassthroughFilter(FilterInterface& filter_module,
+                                         const std::vector<int>& capacity) {
   filter_module.ResetDNFStates();
   filter_module.FilterSetStreamIDs(15, 15, 15);
 
   SetOneOutputSingleModuleMode(filter_module);
-  filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
-      query_acceleration_constants::kDatapathWidth);
+  switch (capacity.front()) {
+    case 32:
+      filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
+          query_acceleration_constants::kDatapathWidth);
+      break;
+    case 16:
+      filter_module.WriteDNFClauseLiteralsToFilter_2CMP_16DNF(
+          query_acceleration_constants::kDatapathWidth);
+      break;
+    case 8:
+      filter_module.WriteDNFClauseLiteralsToFilter_1CMP_8DNF(
+          query_acceleration_constants::kDatapathWidth);
+      break;
+    default:
+      throw std::runtime_error("Unkown filter size!");
+  }
 }
 
 auto FilterSetup::CreateModule(MemoryManagerInterface* memory_manager,
@@ -64,9 +84,7 @@ auto FilterSetup::CreateModule(MemoryManagerInterface* memory_manager,
   return std::make_unique<Filter>(memory_manager, module_postion);
 }
 
-auto FilterSetup::IsIncompleteNodeExecutionSupported() -> bool {
-  return false;
-}
+auto FilterSetup::IsIncompleteNodeExecutionSupported() -> bool { return false; }
 
 auto FilterSetup::GetCapacityRequirement(
     std::vector<std::vector<int>> operation_parameters) -> std::vector<int> {
@@ -104,7 +122,8 @@ auto FilterSetup::GetCapacityRequirement(
 
 void FilterSetup::SetupFilterModule(
     FilterInterface& filter_module, int input_stream_id, int output_stream_id,
-    const std::vector<std::vector<int>>& operation_parameters) {
+    const std::vector<std::vector<int>>& operation_parameters,
+    const std::vector<int>& capacity) {
   if (operation_parameters.empty() || operation_parameters.at(0).empty()) {
     throw std::runtime_error("No parameters given!");
   }
@@ -116,8 +135,22 @@ void FilterSetup::SetupFilterModule(
 
   SetAllComparisons(filter_module, operation_parameters);
 
-  filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
-      query_acceleration_constants::kDatapathWidth);
+  switch (capacity.front()) {
+    case 32:
+      filter_module.WriteDNFClauseLiteralsToFilter_4CMP_32DNF(
+          query_acceleration_constants::kDatapathWidth);
+      break;
+    case 16:
+      filter_module.WriteDNFClauseLiteralsToFilter_2CMP_16DNF(
+          query_acceleration_constants::kDatapathWidth);
+      break;
+    case 8:
+      filter_module.WriteDNFClauseLiteralsToFilter_1CMP_8DNF(
+          query_acceleration_constants::kDatapathWidth);
+      break;
+    default:
+      throw std::runtime_error("Unkown filter size!");
+  }
 }
 
 void FilterSetup::SetAllComparisons(

@@ -65,7 +65,7 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
   std::map<std::string, ColumnDataType> column_types;
   std::set<int> available_to_register;
   const std::unordered_set<std::string> default_operations = {
-      "Aggregate", "Filter", "Multiplication", "Addition"};
+      "Aggregate", "Filter", "Multiplication", "Addition", "Sort"};
   const std::unordered_map<std::string, CompareFunctions> comparison_functions =
       {{"<", CompareFunctions::kLessThan},
        {"<=", CompareFunctions::kLessThanOrEqual},
@@ -271,6 +271,12 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
     } else if (explain_data.at(current_op_node).front() == "Aggregate") {
       registered_entities_map.insert(
           {current_op_node, sql_creator.RegisterAggregation(
+                                registered_entities_map.at(std::stoi(
+                                    explain_data.at(current_op_node).at(1))),
+                                explain_data.at(current_op_node).at(2))});
+    } else if (explain_data.at(current_op_node).front() == "Sort") {
+      registered_entities_map.insert(
+          {current_op_node, sql_creator.RegisterSort(
                                 registered_entities_map.at(std::stoi(
                                     explain_data.at(current_op_node).at(1))),
                                 explain_data.at(current_op_node).at(2))});

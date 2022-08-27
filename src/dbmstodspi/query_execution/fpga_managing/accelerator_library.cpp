@@ -176,11 +176,12 @@ auto AcceleratorLibrary::IsOperationDataSensitive(QueryOperationType operation)
 }
 
 auto AcceleratorLibrary::GetEmptyModuleNode(QueryOperationType operation,
-                                            int module_position)
+                                            int module_position,
+    const std::vector<int>& module_capacity)
     -> AcceleratedQueryNode {
   auto* driver = GetDriver(operation);
   AcceleratedQueryNode passthrough_module_node =
-      driver->GetPassthroughInitParameters();
+      driver->GetPassthroughInitParameters(module_capacity);
   passthrough_module_node.operation_type = operation;
   passthrough_module_node.operation_module_location = module_position;
   passthrough_module_node.composed_module_locations = {};
