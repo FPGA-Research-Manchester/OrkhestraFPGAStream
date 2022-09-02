@@ -77,6 +77,7 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/sum_testing.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/single_run_testing.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/merge_sort_testing.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/join_testing.json 
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/lin_sort_testing.json 
     
@@ -329,6 +330,10 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter216_22_36.bin
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter18_85_96.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Filter18_85_96.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort128_7_42.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort128_7_42.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort128_37_72.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort128_37_72.bin
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_small_sort.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_big_sort.txt

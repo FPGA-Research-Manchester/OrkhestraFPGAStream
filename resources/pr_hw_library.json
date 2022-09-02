@@ -173,6 +173,20 @@
 	},
 	"kMergeSort": {
 		"bitstreams": {
+			"binPartial_MergeSort128_37_72.bin": {
+				"locations": [ 8 ],
+				"length": 12,
+				"capacity": [ 128 ],
+				"string": "X",
+				"is_backwards": 0
+			},
+			"binPartial_MergeSort128_7_42.bin": {
+				"locations": [ 18 ],
+				"length": 12,
+				"capacity": [ 128 ],
+				"string": "X",
+				"is_backwards": 0
+			},
 			"binPartial_MergeSort128_19_66.bin": {
 				"locations": [ 10 ],
 				"length": 16,
@@ -239,7 +253,7 @@
 			[],
 			[],
 			[],
-			[],
+			[ "binPartial_MergeSort128_37_72.bin" ],
 			[],
 			[ "binPartial_MergeSort64_37_66.bin", "binPartial_MergeSort32_46_66.bin", "binPartial_MergeSort128_19_66.bin" ],
 			[],
@@ -249,7 +263,7 @@
 			[],
 			[],
 			[],
-			[],
+			[ "binPartial_MergeSort128_7_42.bin" ],
 			[],
 			[ "binPartial_MergeSort64_7_36.bin", "binPartial_MergeSort32_16_36.bin" ],
 			[],
