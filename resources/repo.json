@@ -101,6 +101,12 @@
     "binPartial_Filter18_25_36",
     "binPartial_Filter18_55_66",
     "binPartial_MergeSort128_7_42",
-    "binPartial_MergeSort128_37_72"
+    "binPartial_MergeSort128_37_72",
+    "binPartial_bwSobel_37_60",
+    "binPartial_bwSobel_67_90",
+    "binPartial_rgb2bw_31_36",
+    "binPartial_rgb2bw_61_66",
+    "binPartial_rgb2bw_91_96",
+    "binPartial_bwSobel_7_30"
   ]
 }

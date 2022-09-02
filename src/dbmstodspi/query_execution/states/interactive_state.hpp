@@ -45,6 +45,8 @@ class InteractiveState : public StateInterface {
       {QueryOperationType::kLinearSort, "Linear sorter"},
       {QueryOperationType::kMergeSort, "Merge sorter"},
       {QueryOperationType::kMultiplication, "Multiplication"},
+      {QueryOperationType::kSobel, "Sobel"},
+      {QueryOperationType::kBlackWhite, "Convert to Monochrome"},
   };
  public:
   ~InteractiveState() override = default;

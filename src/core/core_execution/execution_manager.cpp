@@ -594,6 +594,7 @@ void ExecutionManager::LoadStaticBitstream() {
   query_manager_->LoadInitialStaticBitstream(memory_manager_.get(),
                                              config_.clock_speed);
   // TODO: Remove the hardcoded aspect of this!
+  current_routing_.clear();
   for (int i = 0; i < 31; i++) {
     current_routing_.push_back("RT");
   }

@@ -27,6 +27,8 @@ As the image shows, the input would be a query plan graph from a DBMS to the sof
 - [Addition](https://docs.google.com/document/d/1z2pN-B5mMqBWMHZfsHWlNOEh4y0oQSoJJaQwMiRgKD8/view)
 - [Multiplication](https://docs.google.com/document/d/13FvDpvQOcqsJmrKadfZ0wl7sOHxVujxV2PWCQ0EDBH0/view)
 - [Global Aggregation Sum](https://docs.google.com/document/d/17INhz4SAK0X97FyJYAxEcWI2qQLcixy8q_eU_KDbDEw/view)
+- [Sobel](https://docs.google.com/document/d/1u52Lgn-IQf6aunBRBpJoGi7Sql6Azs4kKVbnnr6M0TE/view)
+- [Monochrome converter](https://docs.google.com/document/d/1Q4I0nCbbSqsFrv18iH-wz8p9lwfChO2P7XYtVB4AZ7o/view)
 - [*DMA*](https://docs.google.com/document/d/1cxJLcjkrTCrByOmtiYwsu4Ptbp78npZbajhQ878ixp0/view)
 
 The **DMA** is a compulsory module which will set up the interface.

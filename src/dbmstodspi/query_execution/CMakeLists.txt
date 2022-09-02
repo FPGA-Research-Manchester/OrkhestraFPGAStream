@@ -102,6 +102,12 @@ add_library(query_execution OBJECT
             fpga_managing/modules/multiplication.cpp
             fpga_managing/modules/multiplication.hpp
             fpga_managing/modules/multiplication_interface.hpp
+            fpga_managing/modules/sobel.cpp
+            fpga_managing/modules/sobel.hpp
+            fpga_managing/modules/sobel_interface.hpp
+            fpga_managing/modules/black_white.cpp
+            fpga_managing/modules/black_white.hpp
+            fpga_managing/modules/black_white_interface.hpp
             fpga_managing/modules/ila.cpp
             fpga_managing/modules/ila.hpp
             fpga_managing/modules/ila_types.hpp
@@ -125,6 +131,10 @@ add_library(query_execution OBJECT
             fpga_managing/setup/merge_sort_setup.hpp
             fpga_managing/setup/multiplication_setup.cpp
             fpga_managing/setup/multiplication_setup.hpp
+            fpga_managing/setup/sobel_setup.cpp
+            fpga_managing/setup/sobel_setup.hpp
+            fpga_managing/setup/black_white_setup.cpp
+            fpga_managing/setup/black_white_setup.hpp
             fpga_managing/setup/acceleration_module_setup_interface.hpp
             fpga_managing/setup/acceleration_module_setup_interface.cpp
 		    fpga_managing/setup/decorators/first_module_setup.cpp
