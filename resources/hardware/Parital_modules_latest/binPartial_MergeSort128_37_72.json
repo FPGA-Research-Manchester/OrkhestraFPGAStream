@@ -1,0 +1,11 @@
+{
+  "name": "binPartial_MergeSort128_37_72",
+  "address": "0xa0000000",
+  "bitfiles": [
+    {
+      "name": "binPartial_MergeSort128_37_72.bin",
+      "region": "full"
+    }
+  ],
+  "registers": []
+}
