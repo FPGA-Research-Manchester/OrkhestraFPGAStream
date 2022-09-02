@@ -16,16 +16,16 @@ limitations under the License.
 
 #pragma once
 
-#include <string>
 #include <map>
+#include <string>
 #include <vector>
 
 namespace orkhestrafs::sql_parsing {
 
 class SQLJSONReader {
  public:
-  static void ReadQuery(std::string filename,
-                         std::map<int, std::vector<std::string>>& output_data);
+  static void ReadQuery(const std::string& filename,
+                        std::map<int, std::vector<std::string>>& output_data);
 };
 
 }  // namespace orkhestrafs::sql_parsing

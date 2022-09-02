@@ -34,9 +34,8 @@ class CSVReader : public CSVReaderInterface {
    * written to.
    * @return Boolean noting if the data fits.
    */
-  static auto IsMemoryLargeEnough(
-      const std::string& filename,
-      MemoryBlockInterface* memory_device) -> bool;
+  static auto IsMemoryLargeEnough(const std::string& filename,
+                                  MemoryBlockInterface* memory_device) -> bool;
   /**
    * @brief Write data to given memory pointer with the given offset.
    * @param data 32bit integer data to be written to memory.
@@ -70,8 +69,7 @@ class CSVReader : public CSVReaderInterface {
   auto WriteTableFromFileToMemory(
       const std::string& filename, char separator,
       const std::vector<std::pair<ColumnDataType, int>>& column_defs_vector,
-      MemoryBlockInterface* memory_device)
-      -> int override;
+      MemoryBlockInterface* memory_device) -> int override;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

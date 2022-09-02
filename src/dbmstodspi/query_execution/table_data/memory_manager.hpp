@@ -36,13 +36,14 @@ namespace orkhestrafs::dbmstodspi {
  */
 class MemoryManager : public MemoryManagerInterface {
  private:
+  long latest_config_time_ = 0;
   std::vector<std::unique_ptr<MemoryBlockInterface>> current_memory_blocks_;
   std::stack<MemoryBlockInterface*> available_memory_blocks_;
   int memory_block_count_ = 0;
   // Set in
   // https://github.com/FPGA-Research-Manchester/fos/blob/fdac37e188e217293d296d9973c22500c8a4367c/udmalib/setupUdma.sh#L4
   static const int kMaxPossibleAllocations =
-      6;  // The script is changed to allocate 6 X 280MB memory blocks.
+      8;  // The script is changed to allocate 6 X 280MB memory blocks.
 
   std::string loaded_bitstream_;
   int loaded_register_space_size_ = 0;
@@ -56,6 +57,10 @@ class MemoryManager : public MemoryManagerInterface {
   std::vector<uint32_t> register_space_;
 #endif
  public:
+  auto GetTime() -> long override;
+  void MeasureConfigurationSpeed(
+      const std::set<std::string>& bitstreams_to_measure) override;
+
   ~MemoryManager() override;
 
   /**
@@ -76,17 +81,15 @@ class MemoryManager : public MemoryManagerInterface {
    * @brief Get a pointer to a memory block which isn't used.
    * @return Pointer to a DDR memory block.
    */
-  auto GetAvailableMemoryBlock()
-      -> MemoryBlockInterface* override;
+  auto GetAvailableMemoryBlock() -> MemoryBlockInterface* override;
   /**
    * @brief Mark a memory block as free.
    * @param memory_block_pointer Pointer to the unused DDR memory block.
    */
-  void FreeMemoryBlock(
-      MemoryBlockInterface* memory_block_pointer) override;
+  void FreeMemoryBlock(MemoryBlockInterface* memory_block_pointer) override;
 
   // Quick methods to do PR loading.
-  void LoadStatic() override;
+  void LoadStatic(int clock_speed) override;
   void LoadPartialBitstream(const std::vector<std::string>& bitstream_name,
                             DMAInterface& dma_engine) override;
 
@@ -97,8 +100,8 @@ class MemoryManager : public MemoryManagerInterface {
   static void SetFPGATo100MHz();
   static void UnSetPCAP();
   void TestConfigurationTimes(std::vector<std::string>& bitstream_name,
-                                     int repetition_count);
-  std::vector<std::string> all_bitstreams = {
+                              int repetition_count);
+  std::vector<std::string> all_bitstreams_ = {
       "TAA_2.bin",
       "TAA_5.bin",
       "TAA_8.bin",

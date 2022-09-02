@@ -1,21 +1,21 @@
 {
 	"q17_lineitem_linear_sort": {
-		"input": [ "lineitem1.csv" ],
+		"input": [ "lineitem0.01.csv" ],
 		"output": [ null ],
 		"operation": "kLinearSort",
 		"previous_nodes": [ null ],
 		"next_nodes": [ "q17_lineitem_linear_merge_sort" ],
 		"operation_parameters": {
 			"input_stream_params": [
-				[ 1, 4, 5, 6, 7 ],
+				[ 1, -1, 4, 5, 6, 7 ],
 				[ 0, 0, 0, 0, 3, 3, 3, 3, 1, 1, 4, 4, 4, 1, 1, 1 ],
 				[ 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 28, 12, 44 ],
 				[]
 			],
 			"output_stream_params": [
 				[],
-				[ 0, 3, 3 ],
-				[ 1, 1, 1 ],
+				[ 0, 2, 3, 3 ],
+				[ 1, 1, 1, 1 ],
 				[ 2 ]
 			],
 			"operation_params": [
@@ -32,15 +32,15 @@
 		"operation_parameters": {
 			"input_stream_params": [
 				[],
-				[ 0, 3, 3 ],
-				[ 1, 1, 1 ],
+				[ 0, 2, 3, 3 ],
+				[ 1, 1, 1, 1 ],
 				[]
 			],
 			"output_stream_params": [
 				[],
-				[ 0, 3, 3 ],
-				[ 1, 1, 1 ],
-				[ 1 ]
+				[ 0, 2, 3, 3 ],
+				[ 1, 1, 1, 1 ],
+				[ 2 ]
 			],
 			"operation_params": [
 				[]
@@ -48,7 +48,7 @@
 		}
 	},
 	"q17_lineitem_part_join": {
-		"input": [ null, "part1.csv" ],
+		"input": [ null, "part0.01.csv" ],
 		"output": [ null ],
 		"operation": "kJoin",
 		"previous_nodes": [ "q17_lineitem_linear_merge_sort", null ],
@@ -56,22 +56,22 @@
 		"operation_parameters": {
 			"input_stream_params": [
 				[],
-				[ 0, 3, 3 ],
-				[ 1, 1, 1 ],
+				[ 0, 2, 3, 3 ],
+				[ 1, 1, 1, 1 ],
 				[],
-				[ 0, -1, -1, -1, -1, 22, 23, 24, 33, 34, 35 ],
+				[ 0, -1, -1, -1, -1, -1, 22, 23, 24, 33, 34, 35 ],
 				[ 0, 1, 1, 1, 1, 0, 1, 3, 1 ],
 				[ 1, 56, 28, 12, 28, 1, 12, 1, 24 ],
 				[]
 			],
 			"output_stream_params": [
 				[],
-				[ 0, 3, 3, 1, 1 ],
-				[ 1, 1, 1, 12, 12 ],
+				[ 0, 2, 3, 3, 1, 1 ],
+				[ 1, 1, 1, 1, 12, 12 ],
 				[ 1 ]
 			],
 			"operation_params": [
-				[ 5 ]
+				[ 6 ]
 			]
 		}
 	},
@@ -84,36 +84,36 @@
 		"operation_parameters": {
 			"input_stream_params": [
 				[],
-				[ 0, 3, 3, 1, 1 ],
-				[ 1, 1, 1, 12, 12 ],
-				[]
+				[ 0, 2, 3, 3, 1, 1 ],
+				[ 1, 1, 1, 1, 12, 12 ],
+				[ ]
 			],
 			"output_stream_params": [
 				[],
-				[ 0, 3, 3, 1, 1 ],
-				[ 1, 1, 1, 12, 12 ],
+				[ 0, 2, 3, 3, 1, 1 ],
+				[ 1, 1, 1, 1, 12, 12 ],
 				[ 1 ]
 			],
 			"operation_params": [
-				[ 0, 13, 1 ],
+				[ 0, 12, 1 ],
 				[ 0 ],
 				[ 510 ],
 				[],
 				[ 0 ],
 
-				[ 0, 14, 1 ],
+				[ 0, 13, 1 ],
 				[ 2 ],
 				[ 0 ],
 				[],
 				[ 0 ],
 
-				[ 0, 7, 1 ],
+				[ 0, 6, 1 ],
 				[ 2 ],
 				[ "MED BOX", 3 ],
 				[],
 				[ 0 ],
 
-				[ 0, 10, 1 ],
+				[ 0, 9, 1 ],
 				[ 2 ],
 				[ "Brand#23", 3 ],
 				[],
@@ -129,9 +129,9 @@
 		"next_nodes": [ null ],
 		"operation_parameters": {
 			"input_stream_params": [
-				[ 0, -1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ],
-				[ 0, 3, 3, 1, 1 ],
-				[ 1, 1, 1, 12, 12 ],
+				[],
+				[ 0, 2, 3, 3, 1, 1 ],
+				[ 1, 1, 1, 1, 12, 12 ],
 				[]
 			],
 			"output_stream_params": [

@@ -21,6 +21,7 @@ limitations under the License.
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <chrono>
 
 #include "accelerated_query_node.hpp"
 #include "accelerator_library_interface.hpp"
@@ -36,6 +37,7 @@ limitations under the License.
 #include "query_scheduling_data.hpp"
 #include "scheduling_query_node.hpp"
 #include "state_interface.hpp"
+#include "graph_creator_interface.hpp"
 
 using orkhestrafs::core_interfaces::Config;
 using orkhestrafs::core_interfaces::ExecutionManagerInterface;
@@ -55,6 +57,7 @@ using orkhestrafs::dbmstodspi::NodeSchedulerInterface;
 using orkhestrafs::dbmstodspi::QueryManagerInterface;
 using orkhestrafs::dbmstodspi::SchedulingQueryNode;
 using orkhestrafs::dbmstodspi::StateInterface;
+using orkhestrafs::dbmstodspi::GraphCreatorInterface;
 
 namespace orkhestrafs::core::core_execution {
 
@@ -68,18 +71,36 @@ class ExecutionManager : public ExecutionManagerInterface,
                    std::unique_ptr<MemoryManagerInterface> memory_manager,
                    std::unique_ptr<StateInterface> start_state,
                    std::unique_ptr<FPGADriverFactoryInterface> driver_factory,
-                   std::unique_ptr<NodeSchedulerInterface> scheduler)
+                   std::unique_ptr<NodeSchedulerInterface> scheduler,
+                   std::unique_ptr<GraphCreatorInterface> graph_creator)
       : current_state_{std::move(start_state)},
         data_manager_{std::move(data_manager)},
         memory_manager_{std::move(memory_manager)},
         query_manager_{std::move(query_manager)},
         scheduler_{std::move(scheduler)},
+        graph_creator_{std::move(graph_creator)},
         config_{std::move(config)},
         accelerator_library_{std::move(
             driver_factory->CreateAcceleratorLibrary(memory_manager_.get()))},
         fpga_manager_{std::move(
             driver_factory->CreateFPGAManager(accelerator_library_.get()))} {};
 
+  auto IsHWPrintEnabled() -> bool override;
+  void LoadBitstream(ScheduledModule new_module) override;
+  auto GetCurrentHW() -> std::map<QueryOperationType, OperationPRModules> override;
+  void SetHWPrint(bool print_hw) override;
+  void SetStartTimer() override;
+  void PrintExecTime() override;
+  void AddNewNodes(std::string graph_filename) override;
+  void LoadStaticTables() override;
+  void SetInteractive(bool is_interactive) override;
+  auto IsInteractive()->bool override;
+  void ChangeSchedulingTimeLimit(double new_time_limit) override;
+  void ChangeExecutionTimeLimit(int new_time_limit) override;
+  void LoadStaticBitstream() override;
+  void SetClockSpeed(int new_clock_speed) override;
+  void PrintHWState() override;
+  auto GetFPGASpeed() -> int override;
   void SetFinishedFlag() override;
   void UpdateAvailableNodesGraph() override;
   void Execute(
@@ -99,6 +120,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   auto IsBenchmarkDone() -> bool override;
 
  private:
+  long config_time_;
   // Initial inputs
   std::unique_ptr<QueryManagerInterface> query_manager_;
   std::unique_ptr<DataManagerInterface> data_manager_;
@@ -107,11 +129,17 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::unique_ptr<AcceleratorLibraryInterface> accelerator_library_;
   std::unique_ptr<FPGAManagerInterface> fpga_manager_;
   std::unique_ptr<NodeSchedulerInterface> scheduler_;
-  const Config config_;
+  std::unique_ptr<GraphCreatorInterface> graph_creator_;
+  Config config_;
   // State status
+  bool print_hw_ = false;
+  std::chrono::steady_clock::time_point exec_begin;
+  bool is_interactive_ = false;
   std::unique_ptr<StateInterface> current_state_;
   bool busy_flag_ = false;
   // New TableMetadata variables.
+  std::vector<std::string> current_routing_;
+
   std::map<std::string, TableMetadata> current_tables_metadata_;
   std::unordered_map<std::string, MemoryBlockInterface*> table_memory_blocks_;
   std::unordered_map<std::string, SchedulingQueryNode> current_query_graph_;
@@ -120,6 +148,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::unordered_set<std::string> current_available_node_names_;
   std::unordered_set<std::string> nodes_constrained_to_first_;
   std::unordered_set<std::string> processed_nodes_;
+  std::unordered_set<std::string> blocked_nodes_;
 
   std::vector<QueryNode*> current_available_node_pointers_;
 
@@ -132,6 +161,8 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::vector<AcceleratedQueryNode> query_nodes_;
   std::vector<std::string> scheduled_node_names_;
 
+  auto GetModuleCapacity(int module_position, QueryOperationType operation)
+      -> std::vector<int>;
   auto PopNextScheduledRun() -> std::vector<QueryNode*>;
 
   // TODO(Kaspar): Move this to a different class
@@ -147,8 +178,15 @@ class ExecutionManager : public ExecutionManagerInterface,
       std::unordered_map<std::string, SchedulingQueryNode>&
           current_scheduling_graph,
       AcceleratorLibraryInterface& hw_library,
-      std::unordered_set<std::string>& constrained_nodes_vector);
-  static void RemoveUnusedTables(std::map<std::string, TableMetadata>& tables_metadata, std::vector<QueryNode*> all_nodes);
+      std::unordered_set<std::string>& constrained_nodes_vector,
+      const std::map<std::string, TableMetadata>& tables_metadata);
+  static void RemoveUnusedTables(
+      std::map<std::string, TableMetadata>& tables_metadata,
+      const std::vector<QueryNode*>& all_nodes,const std::vector<std::string> frozen_tables);
+  static void SetupTableDependencies(
+      const std::vector<QueryNode*>& all_nodes,
+      std::unordered_set<std::string>& blocked_nodes,
+      std::unordered_map<std::string, int>& table_counter);
 
   static void AddSchedulingNodeToGraph(
       QueryNode* const& node,

@@ -68,10 +68,10 @@ auto PreSchedulingProcessor::GetMinRequirementsForFullyExecutingNode(
   return graph.at(node_name).capacity;
 }
 
-void PreSchedulingProcessor::FindAdequateBitstreams(
+auto PreSchedulingProcessor::FindAdequateBitstreams(
     const std::vector<int>& min_requirements,
     std::unordered_map<std::string, SchedulingQueryNode>& graph,
-    const std::string& node_name) {
+    const std::string& node_name) -> bool {
   std::unordered_set<std::string> fitting_bitstreams;
   for (const auto& [bitstream_name, bitstream_parameters] :
        hw_library_.at(graph.at(node_name).operation).bitstream_map) {
@@ -90,10 +90,13 @@ void PreSchedulingProcessor::FindAdequateBitstreams(
     }
   }
   if (!fitting_bitstreams.empty()) {
+    auto old_bitstreams = graph.at(node_name).satisfying_bitstreams;
     graph.at(node_name).satisfying_bitstreams = GetFittingBitstreamLocations(
         fitting_bitstreams,
         hw_library_.at(graph.at(node_name).operation).starting_locations);
+    return old_bitstreams != graph.at(node_name).satisfying_bitstreams;
   }
+  return false;
 }
 
 auto PreSchedulingProcessor::GetFittingBitstreamLocations(
@@ -167,7 +170,7 @@ auto PreSchedulingProcessor::SetWorstCaseNodeCapacity(
   if (current_node.after_nodes.size() != 1) {
     throw std::runtime_error("Multiple output nodes aren't supported!");
   }
-  if (!current_node.after_nodes.front().empty()){
+  if (!current_node.after_nodes.front().empty()) {
     auto& next_node = graph.at(current_node.after_nodes.front());
     auto capacity_values = accelerator_library_.GetWorstCaseNodeCapacity(
         current_node.operation, min_capacity, current_node.data_tables,
@@ -223,7 +226,7 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     auto min_requirements = GetMinRequirementsForFullyExecutingNode(
         current_node_name, graph, data_tables);
     // Find all bitstreams that meet minimum requirements and update graph.
-    FindAdequateBitstreams(min_requirements, graph, current_node_name);
+    auto fitting_bitstreams_updated = FindAdequateBitstreams(min_requirements, graph, current_node_name);
 
     auto worst_case_table_updated = SetWorstCaseProcessedTables(
         graph.at(current_node_name).data_tables,
@@ -234,15 +237,17 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
     auto worst_case_capacity_updated = SetWorstCaseNodeCapacity(
         current_node_name, graph, data_tables,
         min_capacity_.at(graph.at(current_node_name).operation));
-    // Lazily updating merge sort capacity if there is no linear sort before hand!
-    // This will reduce the requirements given a different linear sort choice or filtering.
+    // Lazily updating merge sort capacity if there is no linear sort before
+    // hand! This will reduce the requirements given a different linear sort
+    // choice or filtering.
     if (graph.at(current_node_name).capacity != min_requirements) {
       graph.at(current_node_name).capacity = min_requirements;
-      worst_case_capacity_updated = true; 
+      worst_case_capacity_updated = true;
     }
 
     // A module can't be skipped if no new table was added
-    if (!worst_case_table_updated && !worst_case_capacity_updated) {
+    if (!fitting_bitstreams_updated && !worst_case_table_updated &&
+        !worst_case_capacity_updated) {
       QuerySchedulingHelper::SetAllNodesAsProcessedAfterGivenNode(
           current_node_name, current_processed_nodes, graph,
           current_available_nodes);
@@ -258,7 +263,7 @@ void PreSchedulingProcessor::AddSatisfyingBitstreamLocationsToGraph(
         throw std::runtime_error(
             "Can't skip node with multiple inputs or outputs!");
       }
-      
+
       // Move input table name to outputs input table.
       const auto& after_node = graph.at(current_node_name).after_nodes.front();
       if (!after_node.empty()) {

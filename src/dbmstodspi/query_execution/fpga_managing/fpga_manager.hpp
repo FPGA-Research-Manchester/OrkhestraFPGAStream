@@ -51,11 +51,13 @@ class FPGAManager : public FPGAManagerInterface {
   std::unique_ptr<ILA> ila_module_;
   std::vector<std::unique_ptr<ReadBackModule>> read_back_modules_;
   std::vector<std::vector<int>> read_back_parameters_;
+  std::vector<int> read_back_streams_ids_;
+  std::vector<std::vector<double>> read_back_values_;
 
   void FindActiveStreams(std::vector<int>& active_input_stream_ids,
                          std::vector<int>& active_output_stream_ids);
-  void WaitForStreamsToFinish();
-  void ReadResultsFromRegisters();
+  void WaitForStreamsToFinish(int timeout);
+  void ReadResultsFromRegisters(std::map<int, std::vector<double>>& read_back_values);
   auto GetResultingStreamSizes(const std::vector<int>& active_input_stream_ids,
                                const std::vector<int>& active_output_stream_ids)
       -> std::array<int, query_acceleration_constants::kMaxIOStreamCount>;
@@ -86,9 +88,8 @@ class FPGAManager : public FPGAManagerInterface {
    * @brief Start the output controller and wait for the controllers to finish.
    * @return How many records each output stream had in its results.
    */
-  auto RunQueryAcceleration()
-      -> std::array<int,
-                    query_acceleration_constants::kMaxIOStreamCount> override;
+  auto RunQueryAcceleration(int timeout, std::map<int, std::vector<double>>& read_back_values)
+      -> std::array<int, query_acceleration_constants::kMaxIOStreamCount> override;
 
   /**
    * @brief Constructor to setup memory mapped registers.
@@ -96,9 +97,9 @@ class FPGAManager : public FPGAManagerInterface {
    */
   explicit FPGAManager(AcceleratorLibraryInterface* module_library)
       : module_library_{module_library},
-        dma_engine_{std::move(module_library_->GetDMAModule())},
+        dma_engine_{module_library_->GetDMAModule()},
         dma_setup_{module_library_->GetDMAModuleSetup()},
-        ila_module_{std::move(module_library_->GetILAModule())} {};
+        ila_module_{module_library_->GetILAModule()} {};
 };
 
 }  // namespace orkhestrafs::dbmstodspi

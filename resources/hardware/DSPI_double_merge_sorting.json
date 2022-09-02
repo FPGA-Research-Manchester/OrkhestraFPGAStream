@@ -1,8 +1,0 @@
-{
-  "name": "DSPI_double_merge_sorting",
-  "address": "0xa0000000",
-  "bitfiles": [
-    {"name": "DSPI_double_merge_sorting.bin", "region": "full"}
-  ],
-  "registers": []
-}

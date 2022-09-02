@@ -25,7 +25,7 @@ auto InputManager::Parse(std::string input_filename,
                          std::string config_filename)
     -> std::pair<std::unique_ptr<ExecutionPlanGraphInterface>, Config> {
   auto config = config_creator_.GetConfig(config_filename);
-  auto graph = graph_creator_->MakeGraph(input_filename);
+  auto graph = graph_creator_->MakeGraph(input_filename, nullptr);
 
   return std::make_pair(std::move(graph), std::move(config));
 }

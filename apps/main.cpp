@@ -23,22 +23,17 @@ limitations under the License.
 #include "cxxopts.hpp"
 #include "logger.hpp"
 #include "q19_creator.hpp"
-#include "sql_query_creator.hpp"
-#include "sql_query_data.hpp"
-#include "table_data.hpp"
 #include "sql_parser.hpp"
+#include "sql_query_creator.hpp"
 
 using namespace std;
 using orkhestrafs::core::Core;
-using orkhestrafs::core_interfaces::table_data::ColumnDataType;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::logging::SetLoggingLevel;
 using orkhestrafs::sql_parsing::Q19Creator;
-using orkhestrafs::sql_parsing::SQLQueryCreator;
 using orkhestrafs::sql_parsing::SQLParser;
-using orkhestrafs::sql_parsing::query_data::CompareFunctions;
-using orkhestrafs::sql_parsing::query_data::TableColumn;
+using orkhestrafs::sql_parsing::SQLQueryCreator;
 
 /**
  * @brief Helper method to run the given query nodes and their subsequent nodes
@@ -50,15 +45,16 @@ using orkhestrafs::sql_parsing::query_data::TableColumn;
  * @param config_filename Filename for the INI file containing paths to query
  * configuration files.
  */
-void MeasureOverallTimeOfParsedPlan(string input_def_filename, string config_filename) {
+void MeasureOverallTimeOfParsedPlan(string input_def_filename,
+                                    string config_filename) {
   auto begin = chrono::steady_clock::now();
   Core::Run(std::move(input_def_filename), std::move(config_filename));
   auto end = chrono::steady_clock::now();
-  std::cout << "TOTAL RUNTIME INCLUDING CONFIG READING:"
+  /*std::cout << "TOTAL RUNTIME INCLUDING CONFIG READING:"
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      begin)
                    .count()
-            << std::endl;
+            << std::endl;*/
   Log(LogLevel::kInfo,
       "Overall time = " +
           to_string(
@@ -68,23 +64,32 @@ void MeasureOverallTimeOfParsedPlan(string input_def_filename, string config_fil
 }
 
 // Storing queries inside files for fun.
-void RunSQLQuery(string query_filename, string config_filename){
+void RunSQLQuery(string query_filename, string config_filename,
+                 string database = "tpch_001") {
+  auto frontend_begin = chrono::steady_clock::now();
   SQLQueryCreator sql_creator;
-  SQLParser::CreatePlan(sql_creator, query_filename);
-  auto begin = chrono::steady_clock::now();
-  Core::Run(std::move(sql_creator.ExportInputDef()),
-            std::move(config_filename));
-  auto end = chrono::steady_clock::now();
-  std::cout << "TOTAL RUNTIME:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
+  SQLParser::CreatePlan(sql_creator, std::move(query_filename),
+                        std::move(database));
+  auto frontend_end = chrono::steady_clock::now();
+  std::cout << "PARSING RUNTIME: "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(
+                   frontend_end - frontend_begin)
                    .count()
             << std::endl;
+  auto exec_begin = chrono::steady_clock::now();
+  Core::Run(std::move(sql_creator.ExportInputDef()),
+            std::move(config_filename));
+  auto exec_end = chrono::steady_clock::now();
+  /*std::cout << "EXECUTION RUNTIME: "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(exec_end -
+                                                                     exec_begin)
+                   .count()
+            << std::endl;*/
   Log(LogLevel::kInfo,
-      "Overall time = " +
-          to_string(
-              chrono::duration_cast<std::chrono::milliseconds>(end - begin)
-                  .count()) +
+      "Execution time = " +
+          to_string(chrono::duration_cast<std::chrono::milliseconds>(exec_end -
+                                                                     exec_begin)
+                        .count()) +
           "[ms]");
 }
 
@@ -108,6 +113,10 @@ void RunCodedQuery(string config_filename) {
           "[ms]");
 }
 
+void RunInteractiveSession(string config_filename) {
+  Core::Run("", std::move(config_filename), true);
+}
+
 /**
  * @brief Main method of the program.
  *
@@ -121,10 +130,16 @@ auto main(int argc, char* argv[]) -> int {
 
   options.add_options()("i,input", "Input definition",
                         cxxopts::value<std::string>())(
-      "c,config", "Config file for used hardware",
+      "c,config", "Config file for additional options",
       cxxopts::value<std::string>())("v,verbose", "Additional debug messages")(
-      "t,trace", "Enable all trace signals")("q,quiet", "Disable all logging")(
-      "h,help", "Print usage")("r,run", "Run SQL query provided in the file given. Or type example for Q19.", cxxopts::value<std::string>());
+      "t,trace", "Enable all trace signals")("q,quiet", "Disable all logging")("x,interactive", "Interactive version")(
+      "h,help", "Print usage")(
+      "r,run",
+      "Run SQL query provided in the file given. Or type 'example' for Q19.",
+      cxxopts::value<std::string>())(
+      "d,database",
+      "Specify PostgreSQL database for running SQL queries. Default database is tpch_001",
+      cxxopts::value<std::string>());
 
   auto result = options.parse(argc, argv);
 
@@ -132,6 +147,8 @@ auto main(int argc, char* argv[]) -> int {
     cout << options.help() << endl;
     exit(0);
   }
+
+  //spdlog::set_pattern("%v");
 
   if (result.count("quiet")) {
     SetLoggingLevel(LogLevel::kOff);
@@ -143,30 +160,51 @@ auto main(int argc, char* argv[]) -> int {
     SetLoggingLevel(LogLevel::kInfo);
   }
 
-  string config_name = "fast_benchmark_config.ini";
+  string command = "./OrkhestraFPGAStream";
+  for (const auto key_value : result.arguments()) {
+    command += " --" + key_value.key() + " " + key_value.value();
+  }
+  Log(LogLevel::kDebug, command);
+
+  string config_name = "default_config.ini";
   if (result.count("config")) {
     config_name = result["config"].as<string>();
   } else {
-    cout<< "Using default config!"<<endl;
+    cout << "Using default config!" << endl;
   }
 
-  if (result.count("run") && result.count("input")){
+  // TODO : Should check that other's aren't used for clarity!
+  if (result.count("interactive")) {
+    RunInteractiveSession(config_name);
+    return 0;
+  }
+
+  if ((result.count("run")) && (result.count("input"))) {
     throw runtime_error("Please give only a parsed input or an SQL input");
   }
-  else if (!(result.count("run") || result.count("input"))){
+  if (!(result.count("run") || result.count("input"))) {
     throw runtime_error("Please give one of the required inputs: SQL/parsed!");
   }
 
   if (result.count("run")) {
-    if (result["run"].as<string>() == "example"){
-      cout<<"Executing default Q19 example!"<<endl;
+    if (result["run"].as<string>() == "example") {
+      cout << "Executing default Q19 example!" << endl;
       RunCodedQuery(config_name);
     } else {
-      RunSQLQuery(result["run"].as<string>(), config_name);
+      if (result.count("database")) {
+        RunSQLQuery(result["run"].as<string>(), config_name,
+                    result["database"].as<string>());
+      } else {
+        RunSQLQuery(result["run"].as<string>(), config_name);
+      }
     }
   } else {
-    MeasureOverallTimeOfParsedPlan(result["input"].as<string>(),
-                       config_name);
+    if (result.count("database")) {
+      throw runtime_error(
+          "Database specification is not required when execution premade "
+          "plans!");
+    }
+    MeasureOverallTimeOfParsedPlan(result["input"].as<string>(), config_name);
   }
 
   return 0;

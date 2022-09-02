@@ -21,6 +21,7 @@ limitations under the License.
 #include <sstream>
 #include <vector>
 
+#include "logger.hpp"
 #include "pr_module_data.hpp"
 #include "query_scheduling_data.hpp"
 #include "table_data.hpp"
@@ -31,10 +32,11 @@ using orkhestrafs::core_interfaces::hw_library::PRModuleData;
 using orkhestrafs::core_interfaces::operation_types::QueryOperation;
 using orkhestrafs::core_interfaces::query_scheduling_data::kSupportedFunctions;
 using orkhestrafs::core_interfaces::table_data::kDataTypeNames;
+using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
 
 auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
-  std::string configurations_library = "CONFIGURATIONS_LIBRARY";
-  std::string memory_requirements = "BITSTREAMS_MEM_REQ";
+  Log(LogLevel::kDebug, "Parsing config: " + config_filename);
   std::string data_type_sizes = "DATA_SIZE_CONFIG";
   std::string data_separator = "DATA_SEPARATOR";
   std::string table_metadata = "TABLE_METADATA";
@@ -44,7 +46,9 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string force_pr = "DEBUG_FORCE_PR";
   std::string reduce_runs = "REDUCE_RUNS";
   std::string max_runs = "MAX_RUNS_CAP";
+  std::string children = "PRIORITISE_CHILDREN";
   std::string heuristic = "HEURISTIC";
+  std::string exec_timeout = "EXEC_TIMEOUT";
   std::string streaming_speed = "STREAMING_SPEED";
   std::string configuration_speed = "CONFIGURATION_SPEED";
   std::string time_limit = "TIME_LIMIT";
@@ -52,6 +56,25 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string utility_scaler = "UTILITY_SCALER";
   std::string config_scaler = "CONFIG_SCALER";
   std::string utility_per_frame_scaler = "UTILITY_PER_FRAME_SCALER";
+
+  std::string clock_speed = "FPGA_CLOCK_SPEED";
+  std::string single_runs = "SINGLE_RUNS";
+  std::string scheduling_benchmark = "BENCHMARK_SCHEDULER";
+  std::string check_bitstreams = "CHECK_BITSTREAMS";
+  std::string check_tables = "CHECK_TABLES";
+
+  std::string load_tables = "LOAD_TABLES";
+  std::string table_column_count = "LOAD_TABLES_C_COUNT";
+  std::string table_column_sizes = "LOAD_TABLES_C_SIZES";
+  std::string table_column_types = "LOAD_TABLES_C_TYPES";
+
+  std::string print_data_amounts = "PRINT_DATA_AMOUNTS";
+  std::string print_write_times = "PRINT_WRITE_TIMES";
+  std::string print_total_execution = "PRINT_TOTAL_EXEC_TIME";
+  std::string print_system = "PRINT_SYSTEM_TIME";
+  std::string print_initialisation = "PRINT_INITIALISATION_TIME";
+  std::string print_scheduling = "PRINT_SCHEDULING_TIME";
+  std::string print_config = "PRINT_CONFIGURATION_TIME";
 
   // repo.json is hardcoded for now.
 
@@ -61,42 +84,60 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
 
   std::istringstream(config_values[reduce_runs]) >> std::boolalpha >>
       config.reduce_single_runs;
+  Log(LogLevel::kTrace,
+      "reduce_single_runs: " + std::to_string(config.reduce_single_runs));
   std::istringstream(config_values[max_runs]) >> std::boolalpha >>
       config.use_max_runs_cap;
+  Log(LogLevel::kTrace,
+      "use_max_runs_cap: " + std::to_string(config.use_max_runs_cap));
+  std::istringstream(config_values[children]) >> std::boolalpha >>
+      config.prioritise_children;
+  Log(LogLevel::kTrace,
+      "prioritise_children: " + std::to_string(config.prioritise_children));
   config.heuristic_choice = std::stoi(config_values[heuristic]);
+  Log(LogLevel::kTrace,
+      "heuristic_choice: " + std::to_string(config.heuristic_choice));
   config.streaming_speed = std::stod(config_values[streaming_speed]);
   config.configuration_speed = std::stod(config_values[configuration_speed]);
-  config.time_limit_duration_in_seconds = std::stod(config_values[time_limit]);
+  config.scheduler_time_limit_in_seconds = std::stod(config_values[time_limit]);
+  Log(LogLevel::kTrace,
+      "scheduler_time_limit_in_seconds: " +
+          std::to_string(config.scheduler_time_limit_in_seconds));
   config.resource_string = config_values[resource_string];
   config.utilites_scaler = std::stod(config_values[utility_scaler]);
   config.config_written_scaler = std::stod(config_values[config_scaler]);
   config.utility_per_frame_scaler =
       std::stod(config_values[utility_per_frame_scaler]);
 
-  config.debug_forced_pr_bitstreams =
-      SetCommaSeparatedValues(config_values[force_pr]);
+  config.clock_speed = std::stoi(config_values[clock_speed]);
+  Log(LogLevel::kTrace, "clock_speed: " + std::to_string(config.clock_speed));
+  std::istringstream(config_values[single_runs]) >> std::boolalpha >>
+      config.use_single_runs;
+  Log(LogLevel::kTrace,
+      "use_single_runs: " + std::to_string(config.use_single_runs));
+  std::istringstream(config_values[scheduling_benchmark]) >> std::boolalpha >>
+      config.benchmark_scheduler;
+  Log(LogLevel::kTrace,
+      "benchmark_scheduler: " + std::to_string(config.benchmark_scheduler));
+  std::istringstream(config_values[check_bitstreams]) >> std::boolalpha >>
+      config.check_bitstreams;
+  std::istringstream(config_values[check_tables]) >> std::boolalpha >>
+      config.check_tables;
 
-  auto accelerator_library_data = json_reader_->ReadAcceleratorLibrary(
-      config_values[configurations_library]);
-  config.accelerator_library =
-      ConvertStringMapToQueryOperations(accelerator_library_data);
-  config.module_library =
-      ConvertAcceleratorLibraryToModuleLibrary(accelerator_library_data);
-
-  auto all_tables_json_data =
-      json_reader_->ReadAllTablesData(config_values[table_metadata]);
-
-  config.initial_all_tables_metadata = CreateTablesData(all_tables_json_data);
-
-  auto hw_library_json_data =
-      json_reader_->ReadHWLibraryData(config_values[hw_library]);
-
-  config.pr_hw_library = CreateHWLibrary(hw_library_json_data);
-
-  auto column_sizes = json_reader_->ReadValueMap(config_values[column_cost]);
-  for (const auto& [column_type, size] : column_sizes) {
-    config.cost_of_columns.insert({column_type[0], static_cast<int>(size)});
-  }
+  std::istringstream(config_values[print_data_amounts]) >> std::boolalpha >>
+      config.print_data_amounts;
+  std::istringstream(config_values[print_write_times]) >> std::boolalpha >>
+      config.print_write_times;
+  std::istringstream(config_values[print_total_execution]) >> std::boolalpha >>
+      config.print_total_execution;
+  std::istringstream(config_values[print_system]) >> std::boolalpha >>
+      config.print_system;
+  std::istringstream(config_values[print_initialisation]) >> std::boolalpha >>
+      config.print_initialisation;
+  std::istringstream(config_values[print_scheduling]) >> std::boolalpha >>
+      config.print_scheduling;
+  std::istringstream(config_values[print_config]) >> std::boolalpha >>
+      config.print_config;
 
   auto string_key_data_sizes =
       json_reader_->ReadValueMap(config_values[data_type_sizes]);
@@ -104,10 +145,121 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
     config.data_sizes.insert({kDataTypeNames.at(string_key), size_scale});
   }
 
-  config.required_memory_space =
-      json_reader_->ReadReqMemorySpace(config_values[memory_requirements]);
+  config.static_tables = SetCommaSeparatedValues(config_values[load_tables]);
+  if (!config.static_tables.empty()) {
+    auto column_counts =
+        SetCommaSeparatedValues(config_values[table_column_count]);
+    std::vector<int> column_counts_i;
+    std::transform(column_counts.begin(), column_counts.end(),
+                   std::back_inserter(column_counts_i),
+                   [&](std::string s) { return stoi(s); });
+    auto column_sizes =
+        SetCommaSeparatedValues(config_values[table_column_sizes]);
+    std::vector<int> column_sizes_i;
+    std::transform(column_sizes.begin(), column_sizes.end(),
+                   std::back_inserter(column_sizes_i),
+                   [&](std::string s) { return stoi(s); });
+    auto column_types =
+        SetCommaSeparatedValues(config_values[table_column_types]);
+    std::vector<int> column_types_i;
+    std::transform(column_types.begin(), column_types.end(),
+                   std::back_inserter(column_types_i),
+                   [&](std::string s) { return stoi(s); });
+    for (int i = 0; i < column_sizes_i.size(); i++) {
+      column_sizes_i[i] =
+          column_sizes_i[i] * config.data_sizes.at(static_cast<ColumnDataType>(
+                                  column_types_i.at(i)));
+    }
+    int column_offset = 0;
+    for (int table_i = 0; table_i < column_counts_i.size(); table_i++) {
+      std::vector<std::pair<ColumnDataType, int>> column_data;
+
+      for (int column_i = 0; column_i < column_counts_i.at(table_i);
+           column_i++) {
+        column_data.push_back({static_cast<ColumnDataType>(
+                                   column_types_i.at(column_i + column_offset)),
+                               column_sizes_i.at(column_i + column_offset)});
+      }
+      column_offset += column_counts_i.at(table_i);
+      config.static_tables_columns.insert(
+          {config.static_tables.at(table_i), std::move(column_data)});
+    }
+  }
+  config.debug_forced_pr_bitstreams =
+      SetCommaSeparatedValues(config_values[force_pr]);
+  if (!config.debug_forced_pr_bitstreams.empty()) {
+    Log(LogLevel::kTrace, "Using debug bitstreams!");
+  }
+
+  auto all_tables_json_data =
+      json_reader_->ReadAllTablesData(config_values[table_metadata]);
+
+  config.initial_all_tables_metadata = CreateTablesData(all_tables_json_data);
+  if (config.check_tables) {
+    CheckTablesExist(config.initial_all_tables_metadata);
+  }
+
+  auto hw_library_json_data =
+      json_reader_->ReadHWLibraryData(config_values[hw_library]);
+
+  config.pr_hw_library = CreateHWLibrary(hw_library_json_data);
+  if (config.check_bitstreams) {
+    CheckBitstreamsExist(config.pr_hw_library);
+  }
+
+  auto column_sizes = json_reader_->ReadValueMap(config_values[column_cost]);
+  for (const auto& [column_type, size] : column_sizes) {
+    config.cost_of_columns.insert({column_type[0], static_cast<int>(size)});
+  }
+
   config.csv_separator = config_values[data_separator].c_str()[0];
+
+  config.execution_timeout = std::stoi(config_values[exec_timeout]);
+  Log(LogLevel::kTrace,
+      "execution_timeout: " + std::to_string(config.execution_timeout));
+  Log(LogLevel::kTrace, "Config parsed");
   return config;
+}
+
+void ConfigCreator::CheckBitstreamsExist(
+    const std::map<QueryOperationType, OperationPRModules>& hw_library) {
+  for (const auto& [operation, bitstreams_info] : hw_library) {
+    for (const auto& [bitstream_name, bitstream_info] :
+         bitstreams_info.bitstream_map) {
+      if (FILE* file = fopen(bitstream_name.c_str(), "r")) {
+        fclose(file);
+      } else {
+        throw std::runtime_error(bitstream_name + " doesn't exist!");
+      }
+    }
+    for (int location = 0; location < bitstreams_info.starting_locations.size();
+         location++) {
+      for (const auto& bitstream_name :
+           bitstreams_info.starting_locations.at(location)) {
+        if (bitstreams_info.bitstream_map.find(bitstream_name) ==
+            bitstreams_info.bitstream_map.end()) {
+          throw std::runtime_error(bitstream_name +
+                                   " parameters are not defined!");
+        }
+        if (bitstreams_info.bitstream_map.at(bitstream_name)
+                .fitting_locations.at(0) != location) {
+          // Currently we don't do runtime relocation so just one location.
+          throw std::runtime_error(bitstream_name + " is incorrectly placed!");
+        }
+      }
+    }
+  }
+}
+
+void ConfigCreator::CheckTablesExist(
+    const std::map<std::string, TableMetadata>& tables_data) {
+  for (const auto& [table_name, _] : tables_data) {
+    if (FILE* file = fopen(table_name.c_str(), "r")) {
+      fclose(file);
+    } else {
+      throw std::runtime_error(table_name + " doesn't exist!");
+    }
+  }
 }
 
 auto ConfigCreator::SetCommaSeparatedValues(const std::string& original_string)
@@ -138,9 +290,8 @@ auto ConfigCreator::ConvertStringMapToQueryOperations(
 }
 
 auto ConfigCreator::CreateTablesData(
-    const std::vector<
-        std::map<std::string, std::variant<std::string, int,
-                                           std::vector<int>>>>&
+    const std::vector<std::map<
+        std::string, std::variant<std::string, int, std::vector<int>>>>&
         tables_data_in_string_form) -> std::map<std::string, TableMetadata> {
   std::map<std::string, TableMetadata> resulting_table_meta_data;
 
@@ -158,11 +309,11 @@ auto ConfigCreator::CreateTablesData(
     current_table.record_size =
         std::get<int>(table_meta_data_map.at(record_size_field));
     current_table.sorted_status =
-        std::get<std::vector<int>>(
-            table_meta_data_map.at(sorted_status_field));
+        std::get<std::vector<int>>(table_meta_data_map.at(sorted_status_field));
     if (!current_table.sorted_status.empty() &&
         current_table.sorted_status.at(0) != 0 &&
-        current_table.sorted_status.end()[-2] != current_table.record_count-1) {
+        current_table.sorted_status.end()[-2] !=
+            current_table.record_count - 1) {
       throw std::runtime_error("Incomplete sorted status given!");
     }
     resulting_table_meta_data.insert({filename, std::move(current_table)});

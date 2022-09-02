@@ -57,10 +57,10 @@ class PreSchedulingProcessor {
       -> std::vector<int>;
 
   // def find_adequate_bitstreams(min_requirements, operation, hw_library)
-  void FindAdequateBitstreams(
+  auto FindAdequateBitstreams(
       const std::vector<int>& min_requirements,
       std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      const std::string& node_name);
+      const std::string& node_name) -> bool;
 
   // def
   // get_fitting_bitstream_locations_based_on_list(list_of_fitting_bitstreams,
@@ -73,7 +73,7 @@ class PreSchedulingProcessor {
   // def get_worst_case_fully_processed_tables(input_tables,
   // current_node_decorators, data_tables, min_capacity)
   auto SetWorstCaseProcessedTables(
-      const std::vector<std::string>& input_tables,
+      const std::vector<std::string>& input_table_names,
       const std::vector<int>& min_capacity,
       std::map<std::string, TableMetadata>& data_tables,
       QueryOperationType operation,

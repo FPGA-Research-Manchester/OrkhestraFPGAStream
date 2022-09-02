@@ -42,3 +42,4 @@ target_include_directories(sql_parsing PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
                                        PUBLIC "${rapidjson_SOURCE_DIR}/include")
 
 target_link_libraries(sql_parsing PUBLIC core_interfaces)
+target_link_libraries(sql_parsing PRIVATE util)

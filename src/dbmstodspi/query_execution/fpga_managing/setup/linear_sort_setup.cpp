@@ -64,11 +64,12 @@ auto LinearSortSetup::GetMinSortingRequirementsForTable(
   return {table_data.record_count};
 }
 
-// TODO: Think about when there are 0 records!
+// TODO(Kaspar): Think about when there are 0 records!
 void LinearSortSetup::GetSortedSequenceWithCapacity(
     int bitstream_capacity, int record_count,
     std::vector<int>& initial_sorted_sequence) {
-  int sequence_count = (record_count + bitstream_capacity - 1) / bitstream_capacity;
+  int sequence_count =
+      (record_count + bitstream_capacity - 1) / bitstream_capacity;
   initial_sorted_sequence.clear();
   initial_sorted_sequence.push_back(0);
   initial_sorted_sequence.push_back(record_count - 1);
@@ -121,7 +122,8 @@ auto LinearSortSetup::UpdateDataTable(
   return true;
 }
 
-auto LinearSortSetup::GetWorstCaseNodeCapacity(const std::vector<int>& module_capacity,
+auto LinearSortSetup::GetWorstCaseNodeCapacity(
+    const std::vector<int>& module_capacity,
     const std::vector<std::string>& input_table_names,
     const std::map<std::string, TableMetadata>& data_tables,
     QueryOperationType next_operation_type) -> std::vector<int> {

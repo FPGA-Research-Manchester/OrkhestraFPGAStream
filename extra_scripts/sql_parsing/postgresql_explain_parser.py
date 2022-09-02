@@ -46,7 +46,7 @@ def print_node(node_data):
 
 
 def SetInitialNodes(node_data, all_nodes, counter, parent_counter):
-    if (node_data['Node Type'] == "Sort"):
+    if (node_data['Node Type'] == "Sort" and parent_counter in all_nodes and all_nodes[parent_counter].type == "Join"):
         current_node_counter = parent_counter
     else:
         current_node_counter = counter[0]
@@ -69,9 +69,12 @@ def SetInitialNodes(node_data, all_nodes, counter, parent_counter):
                 "Filter", current_node_counter, [
                     node_data['Filter']], [-1], [
                     node_data['Alias']])
+        elif (node_data['Node Type'] == "Sort"):
+            all_nodes[current_node_counter] = Node(
+                "Sort", current_node_counter, [
+                    node_data['Sort Key']], [], [])
         else:
-            print(node_data['Node Type'])
-            raise RuntimeError("Unknown node type!")
+            raise RuntimeError(f"Unknown node type: {node_data['Node Type']}!")
         if (parent_counter != -1):
             all_nodes[parent_counter].inputs.append(child_to_parent_counter)
     if ("Plans" in node_data):
@@ -139,13 +142,13 @@ def TokenizeParams(node):
             if (split_tokens[0].isnumeric()):
                 trimmed_tokens.append(split_tokens[0] + "." + split_tokens[1])
             else:
-                trimmed_tokens.append(split_tokens[1].upper())
+                trimmed_tokens.append(split_tokens[1])
         else:
             for char in removable_characters:
                 token = token.replace(char, '')
             split_tokens = token.split(',')
             for new_token in split_tokens:
-                trimmed_tokens.append(new_token.upper())
+                trimmed_tokens.append(new_token)
 
     node.params = trimmed_tokens
 
@@ -160,6 +163,10 @@ def ParseJoinNode(all_nodes, key):
     all_nodes[key].params = new_tokens
 
 
+def ParseSortNode(all_nodes, key):
+    pass
+
+
 def ParseFilterNode(all_nodes, key):
     reverse_notation = GetReversePolishNotation(all_nodes[key].params)
     all_nodes[key].params = reverse_notation
@@ -170,7 +177,7 @@ def GetReversePolishNotation(tokens):
     stack = []
     result = []
     operations = {
-        "SUM",
+        "sum",
         "-",
         "+",
         "*",
@@ -239,7 +246,7 @@ def ParseAggregateNode(all_nodes, key, counter):
     reverse_notation = GetReversePolishNotation(all_nodes[key].params)
     all_nodes[key].params = reverse_notation
     operations = {
-        "SUM",
+        "sum",
         "-",
         "+",
         "*",
@@ -248,7 +255,7 @@ def ParseAggregateNode(all_nodes, key, counter):
         "MIN",
         "MAX"}
     operand_count = {
-        "SUM": 1,
+        "sum": 1,
         "-": 2,
         "+": 2,
         "*": 2,
@@ -266,9 +273,9 @@ def ParseAggregateNode(all_nodes, key, counter):
             else:
                 first_operand = stack.pop()
                 second_operand = "ERROR"
-            if token == "SUM":
+            if token == "sum":
                 new_operations.append(
-                    {"name": "Aggregation", "params": [first_operand]})
+                    {"name": "Aggregate", "params": [first_operand]})
                 # print("sum:" + first_operand)
             elif token == "-":
                 new_operations.append({"name": "Addition", "params": [
@@ -291,7 +298,7 @@ def ParseAggregateNode(all_nodes, key, counter):
     del all_nodes[key]
     for operation in new_operations:
         # Not really needed but just in case
-        if (operation["name"] == "Aggregation"):
+        if (operation["name"] == "Aggregate"):
             params = operation["params"]
         elif (operation["name"] == "Addition"):
             params = operation["params"]
@@ -374,7 +381,7 @@ def CheckTableIsExported(table_name):
     csv_filename = table_name + ".csv"
     if not exists(csv_filename):
         raise RuntimeError(f"{csv_filename} doesn't exist!")
-        # TODO: Fix this automatically!
+    # TODO: Fix this automatically!
     return csv_filename
 
 
@@ -399,6 +406,8 @@ def GetDataType(datatype_string):
         "character": "varchar",
         "date": "date",
         "character varying": "varchar"}
+    if datatype_name not in datatype_dict:
+        raise RuntimeError(f"Unsopperted type: {datatype_name}")
     return (datatype_dict[datatype_name], data_size)
 
 
@@ -428,7 +437,7 @@ def AddTableColumnsToJSON(json_data, counter, table_name, database_name):
         if (len(values) > 1):
             data_type, data_size = GetDataType(values[1].strip())
             AddJSONKey(json_data, counter[0], "Column",
-                       [values[0].strip().upper(), data_size, data_type])
+                       [values[0].strip(), data_size, data_type])
             columns_keys.append(counter[0])
             counter[0] += 1
     AddJSONKey(json_data, columns_key, "Columns", columns_keys)
@@ -476,6 +485,11 @@ def AddJSONData(all_nodes, key, json_data, counter, database_name):
         AddJSONKey(json_data, key, "Addition",
                    [all_nodes[key].inputs[0], all_nodes[key].params[0], all_nodes[key].params[1],
                     all_nodes[key].params[2]])
+    elif all_nodes[key].type == "Sort":
+        AddJSONKey(json_data, key, "Sort",
+                   [all_nodes[key].inputs[0], all_nodes[key].params[0]])
+    else:
+        raise RuntimeError(f"Unsopperted type: {all_nodes[key].type}")
 
 
 def PrintAPICalls(all_nodes, key):
@@ -492,16 +506,23 @@ def PrintAPICalls(all_nodes, key):
     elif all_nodes[key].type == "Addition":
         print(
             f"RegisterAddition({all_nodes[key].params[0]}, {all_nodes[key].params[1]}, {all_nodes[key].params[2]})")
+    else:
+        raise RuntimeError(f"Unsopperted type: {all_nodes[key].type}")
 
 
 def CheckPostgreSQL(database_name):
-    # TODO: Also check that the database exists
     print("Checking PostgreSQL version:")
-    result = subprocess.run(["psql", "--version"])
+    result = subprocess.run(["psql", "--version"],
+                            capture_output=True, encoding='UTF-8')
     try:
         result.check_returncode()
+        print(result.stdout)
     except BaseException:
-        print("No PostgreSQL!")
+        raise RuntimeError("No PostgreSQL!")
+    command = f"psql -XtAc \"SELECT 1 FROM pg_database WHERE datname='{database_name}'\""
+    #output = subprocess.check_output(["psql", command])
+    if subprocess.getoutput(command).split()[0] != "1":
+        raise RuntimeError("No database: " + database_name)
 
 
 def GetExplainJSON(database_name, query_file):
@@ -509,14 +530,19 @@ def GetExplainJSON(database_name, query_file):
         query = f.read()
     explain_command = f"EXPLAIN (VERBOSE TRUE, FORMAT JSON) {query}"
     command = f"echo \"{explain_command}\" | psql -t -A {database_name}"
-    result = "temp"
+    result = "EXPLAIN"
     output_filename = f"{result}.json"
+    print(f"PSQL command: \n {command}")
     os.system(f"{command} > {output_filename}")
+    print(f"EXPLAIN output in: {output_filename}")
     return output_filename
 
 
 def main(argv):
-    # argv is supposed to be the query in a file and the database name.
+    # argv is supposed to be the query in a file and the database name and the
+    # output.
+    if len(argv) != 3:
+        raise RuntimeError("Incorrect number of arguments!")
     # database_name = "tpch_001"
     database_name = argv[0]
     CheckPostgreSQL(database_name)
@@ -558,6 +584,8 @@ def main(argv):
             ParseJoinNode(all_nodes, key)
         elif (all_nodes[key].type == "Filter"):
             ParseFilterNode(all_nodes, key)
+        elif (all_nodes[key].type == "Sort"):
+            ParseSortNode(all_nodes, key)
         else:
             raise RuntimeError("Incorrect type!")
         # print("AFTER:")
@@ -574,10 +602,11 @@ def main(argv):
 
     # for key in json_data.keys():
     #     print(f"{key}:{json_data[key]}")
-    result_file = 'parsed.json'
+    # result_file = 'parsed.json'
+    result_file = argv[2]
     with open(result_file, 'w') as fp:
         json.dump(json_data, fp)
-    print(f"Data in {result_file}")
+    print(f"API function parameters in: {result_file}")
 
 
 if __name__ == '__main__':

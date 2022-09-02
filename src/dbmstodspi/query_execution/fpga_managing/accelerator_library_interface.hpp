@@ -38,6 +38,7 @@ namespace orkhestrafs::dbmstodspi {
 class AcceleratorLibraryInterface {
  public:
   virtual ~AcceleratorLibraryInterface() = default;
+  virtual auto IsIncompleteOperationSupported(QueryOperationType operation_type) -> bool = 0;
   virtual void SetupOperation(const AcceleratedQueryNode& node_parameters) = 0;
   virtual auto GetDMAModule() -> std::unique_ptr<DMAInterface> = 0;
   virtual auto GetDMAModuleSetup() -> DMASetupInterface& = 0;
@@ -90,13 +91,12 @@ class AcceleratorLibraryInterface {
   virtual auto IsOperationDataSensitive(QueryOperationType operation)
       -> bool = 0;
   virtual auto GetEmptyModuleNode(QueryOperationType operation,
-                                  int module_position)
+                                  int module_position, const std::vector<int>& module_capacity)
       -> AcceleratedQueryNode = 0;
   virtual auto SetMissingFunctionalCapacity(
       const std::vector<int>& bitstream_capacity,
       std::vector<int>& missing_capacity, const std::vector<int>& node_capacity,
-      bool is_composed,
-      QueryOperationType operation_type) -> bool = 0;
+      bool is_composed, QueryOperationType operation_type) -> bool = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

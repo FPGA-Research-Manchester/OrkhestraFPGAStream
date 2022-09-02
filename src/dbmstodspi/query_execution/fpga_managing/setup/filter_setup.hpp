@@ -38,6 +38,7 @@ class FilterSetup : public virtual AccelerationModuleSetupInterface,
   auto GetCapacityRequirement(
       std::vector<std::vector<int>> operation_parameters)
       -> std::vector<int> override;
+  auto IsIncompleteNodeExecutionSupported() -> bool override;
 
   /**
    * @brief Setup filter module according to the input and output streams and
@@ -60,7 +61,8 @@ class FilterSetup : public virtual AccelerationModuleSetupInterface,
    */
   static void SetupFilterModule(
       FilterInterface& filter_module, int input_stream_id, int output_stream_id,
-      const std::vector<std::vector<int>>& operation_parameters);
+      const std::vector<std::vector<int>>& operation_parameters,
+      const std::vector<int>& capacity);
 
  private:
   static const int kChunkIdIndex = 0;
@@ -94,6 +96,7 @@ class FilterSetup : public virtual AccelerationModuleSetupInterface,
   static void SetAllComparisons(
       FilterInterface& filter_module,
       const std::vector<std::vector<int>>& operation_parameters);
-  static void SetupPassthroughFilter(FilterInterface& filter_module);
+  static void SetupPassthroughFilter(FilterInterface& filter_module,
+                                     const std::vector<int>& capacity);
 };
 }  // namespace orkhestrafs::dbmstodspi

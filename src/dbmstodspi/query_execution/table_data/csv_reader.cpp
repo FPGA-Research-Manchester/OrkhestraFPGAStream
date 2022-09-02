@@ -30,9 +30,9 @@ using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::util::IsValidFile;
 
-auto CSVReader::IsMemoryLargeEnough(
-    const std::string& filename,
-    MemoryBlockInterface* memory_device) -> bool {
+auto CSVReader::IsMemoryLargeEnough(const std::string& filename,
+                                    MemoryBlockInterface* memory_device)
+    -> bool {
   try {
     auto data_size = std::filesystem::file_size(filename);
     auto memory_size = memory_device->GetSize();
@@ -114,7 +114,7 @@ auto CSVReader::WriteTableFromFileToMemory(
 
   while (std::getline(filestream, line)) {
     tokens.clear();
-    std::stringstream linestream(std::move(line));
+    std::stringstream linestream(line);
     while (getline(linestream, token_string, separator)) {
       if (!token_string.empty() &&
           token_string[token_string.size() - 1] == '\r') {
@@ -129,7 +129,7 @@ auto CSVReader::WriteTableFromFileToMemory(
                                                   integer_data);
     std::copy(integer_data.begin(), integer_data.end(),
               &input[row_counter * record_size]);
-    //WriteDataToMemory(integer_data, input, row_counter * record_size);
+    // WriteDataToMemory(integer_data, input, row_counter * record_size);
     row_counter++;
   }
 

@@ -1,5 +1,174 @@
 [
 	{
+		"filename": "FILTERED_JOIN_DATA.csv",
+		"record_size": 24,
+		"record_count": 13,
+		"sorted_status": []
+	},
+	{
+		"filename": "Q20_nation_SF1.csv",
+		"record_size": 4,
+		"record_count": 909455,
+		"sorted_status": []
+	},
+	{
+		"filename": "Q20_nation_SF10.csv",
+		"record_size": 4,
+		"record_count": 9099165,
+		"sorted_status": []
+	},
+	{
+		"filename": "Q20_nation_SF100.csv",
+		"record_size": 4,
+		"record_count": 90991650,
+		"sorted_status": []
+	},
+
+	{
+		"filename": "Q20_first_filter_SF1.csv",
+		"record_size": 4,
+		"record_count": 909455,
+		"sorted_status": [ 0, 909454, 1024, 889 ]
+	},
+	{
+		"filename": "Q20_first_filter_SF10.csv",
+		"record_size": 4,
+		"record_count": 9099165,
+		"sorted_status": [ 0, 9099164, 1024, 8886 ]
+	},
+	{
+		"filename": "Q20_first_filter_SF100.csv",
+		"record_size": 4,
+		"record_count": 90991650,
+		"sorted_status": [ 0, 90991649, 1024, 88860 ]
+	},
+
+	{
+		"filename": "nation.csv",
+		"record_size": 47,
+		"record_count": 25,
+		"sorted_status": [ 0, 24, 25, 1 ]
+	},
+
+	{
+		"filename": "partsupp1.csv",
+		"record_size": 55,
+		"record_count": 800000,
+		"sorted_status": [ 0, 799999, 800000, 1 ]
+	},
+	{
+		"filename": "partsupp10.csv",
+		"record_size": 55,
+		"record_count": 8000000,
+		"sorted_status": [ 0, 7999999, 8000000, 1 ]
+	},
+	{
+		"filename": "partsupp100.csv",
+		"record_size": 55,
+		"record_count": 80000000,
+		"sorted_status": [ 0, 79999999, 80000000, 1 ]
+	},
+
+	{
+		"filename": "Q20_partsupp_SF1.csv",
+		"record_size": 1,
+		"record_count": 800000,
+		"sorted_status": [ 0, 799999, 1024, 782 ]
+	},
+	{
+		"filename": "Q20_partsupp_SF10.csv",
+		"record_size": 1,
+		"record_count": 8000000,
+		"sorted_status": [ 0, 7999999, 1024, 7813 ]
+	},
+	{
+		"filename": "Q20_partsupp_SF100.csv",
+		"record_size": 1,
+		"record_count": 80000000,
+		"sorted_status": [ 0, 79999999, 1024, 78125 ]
+	},
+
+	{
+		"filename": "Q20_second_filter_SF1.csv",
+		"record_size": 4,
+		"record_count": 3637820,
+		"sorted_status": []
+	},
+	{
+		"filename": "Q20_second_filter_SF10.csv",
+		"record_size": 4,
+		"record_count": 36396660,
+		"sorted_status": []
+	},
+	{
+		"filename": "Q20_second_filter_SF100.csv",
+		"record_size": 4,
+		"record_count": 363966600,
+		"sorted_status": []
+	},
+
+	{
+		"filename": "Q20_part_SF1.csv",
+		"record_size": 1,
+		"record_count": 2127,
+		"sorted_status": [ 0, 2126, 2127, 1 ]
+	},
+	{
+		"filename": "Q20_part_SF10.csv",
+		"record_size": 1,
+		"record_count": 21551,
+		"sorted_status": [ 0, 21550, 21551, 1 ]
+	},
+	{
+		"filename": "Q20_part_SF100.csv",
+		"record_size": 1,
+		"record_count": 215510,
+		"sorted_status": [ 0, 215509, 215510, 1 ]
+	},
+
+	{
+		"filename": "Q14_filter_SF001.csv",
+		"record_size": 8,
+		"record_count": 722,
+		"sorted_status": [ 0, 721, 722, 1 ]
+	},
+	{
+		"filename": "Q14_filter_SF1.csv",
+		"record_size": 8,
+		"record_count": 75983,
+		"sorted_status": [ 0, 75982, 1024, 75]
+	},
+	{
+		"filename": "Q14_filter_SF10.csv",
+		"record_size": 8,
+		"record_count": 749223,
+		"sorted_status": [ 0, 749222, 1024, 732]
+	},
+	{
+		"filename": "Q14_filter_SF100.csv",
+		"record_size": 8,
+		"record_count": 7492230,
+		"sorted_status": [ 0, 7492229, 1024, 7317]
+	},
+	{
+		"filename": "CAR_FILTER_DATA.csv",
+		"record_size": 18,
+		"record_count": 22,
+		"sorted_status": []
+	},
+	{
+		"filename": "CAR_DATA_SORTED.csv",
+		"record_size": 18,
+		"record_count": 1000,
+		"sorted_status": [ 0, 999, 1000, 1 ]
+	},
+	{
+		"filename": "JOIN_DATA.csv",
+		"record_size": 24,
+		"record_count": 500,
+		"sorted_status": []
+	},
+	{
 		"filename": "lineitem0.01.csv",
 		"record_size": 38,
 		"record_count": 60175,
@@ -54,9 +223,45 @@
 		"sorted_status": []
 	},
 	{
+		"filename": "part_lineitem_1_q17.csv",
+		"record_size": 12,
+		"record_count": 6001215,
+		"sorted_status": []
+	},
+	{
+		"filename": "part_lineitem_10_q17.csv",
+		"record_size": 12,
+		"record_count": 59986052,
+		"sorted_status": []
+	},
+	{
+		"filename": "part_lineitem_100_q17.csv",
+		"record_size": 12,
+		"record_count": 600121500,
+		"sorted_status": []
+	},
+	{
+		"filename": "lineitem.csv",
+		"record_size": 38,
+		"record_count": 60175,
+		"sorted_status": []
+	},
+	{
 		"filename": "lineitem10.csv",
 		"record_size": 38,
-		"record_count": 60012150,
+		"record_count": 59986052,
+		"sorted_status": []
+	},
+	{
+		"filename": "lineitem30.csv",
+		"record_size": 38,
+		"record_count": 180036450,
+		"sorted_status": []
+	},
+	{
+		"filename": "lineitem3.csv",
+		"record_size": 38,
+		"record_count": 18003645,
 		"sorted_status": []
 	},
 	{
@@ -76,6 +281,12 @@
 		"record_size": 44,
 		"record_count": 200000,
 		"sorted_status": [ 0, 199999, 200000, 1 ]
+	},
+	{
+		"filename": "part.csv",
+		"record_size": 44,
+		"record_count": 2000,
+		"sorted_status": [ 0, 1999, 2000, 1 ]
 	},
 	{
 		"filename": "part3.csv",
@@ -177,10 +388,10 @@
 		"filename": "addition_input.csv",
 		"record_size": 4,
 		"record_count": 121,
-		"sorted_status": [0, 120, 1, 121]
+		"sorted_status": [ 0, 120, 1, 121 ]
 	},
 	{
-		"filename": "lineitem_linear_sort_SF001.csv",
+		"filename": "lineitem_sf0_01_linear_sort.csv",
 		"record_size": 7,
 		"record_count": 1201,
 		"sorted_status": [
@@ -213,6 +424,12 @@
 		"filename": "q17_lineitem_part_join_0.csv",
 		"record_size": 12,
 		"record_count": 6001215,
+		"sorted_status": []
+	},
+	{
+		"filename": "part_lineitem_001_q17.csv",
+		"record_size": 12,
+		"record_count": 60175,
 		"sorted_status": []
 	},
 	{

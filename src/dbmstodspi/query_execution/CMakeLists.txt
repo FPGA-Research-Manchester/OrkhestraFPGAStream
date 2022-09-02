@@ -35,6 +35,10 @@ add_library(query_execution OBJECT
             states/state_interface.hpp
             states/setup_scheduling_state.cpp
             states/setup_scheduling_state.hpp
+            states/interactive_state.cpp
+            states/interactive_state.hpp
+            states/load_tables_state.cpp
+            states/load_tables_state.hpp
             graph_processing_fsm_interface.hpp
             query_acceleration_constants.hpp
             table_data/csv_reader.cpp
@@ -178,6 +182,7 @@ target_include_directories(query_execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 
 target_link_libraries(query_execution PRIVATE core_interfaces)
 target_link_libraries(query_execution PRIVATE util)
+target_link_libraries(query_execution PRIVATE sql_parsing)
 
 if (ENABLE_FPGA)
 	target_link_libraries(query_execution PUBLIC fos)

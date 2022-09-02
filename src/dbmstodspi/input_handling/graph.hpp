@@ -28,8 +28,8 @@ class Graph : public ExecutionPlanGraphInterface {
  private:
   std::vector<std::unique_ptr<QueryNode>> all_nodes_;
   void DeleteNode(QueryNode* deleted_node);
-  void FindCurrentNodeAndSetToNull(const QueryNode* node_ptr,
-                                   QueryNode* output_ptr) const;
+  static void FindCurrentNodeAndSetToNull(const QueryNode* node_ptr,
+                                          QueryNode* output_ptr);
 
  public:
   ~Graph() override = default;
@@ -37,9 +37,11 @@ class Graph : public ExecutionPlanGraphInterface {
   explicit Graph(std::vector<std::unique_ptr<QueryNode>> graph_data)
       : all_nodes_{std::move(graph_data)} {}
 
-  void DeleteNodes(const std::unordered_set<std::string>& deleted_node_names) override;
+  void DeleteNodes(
+      const std::unordered_set<std::string>& deleted_node_names) override;
   auto IsEmpty() -> bool override;
   auto GetRootNodesPtrs() -> std::vector<QueryNode*> override;
   auto GetAllNodesPtrs() -> std::vector<QueryNode*> override;
+  void ImportNodes(std::vector<std::unique_ptr<QueryNode>> new_nodes) override;
 };
 }  // namespace orkhestrafs::dbmstodspi

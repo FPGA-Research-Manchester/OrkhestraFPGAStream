@@ -19,7 +19,6 @@ limitations under the License.
 #include "acceleration_module_setup_interface.hpp"
 #include "table_data.hpp"
 
-
 namespace orkhestrafs::dbmstodspi {
 
 /**

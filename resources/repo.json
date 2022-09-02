@@ -77,9 +77,6 @@
     "binPartial_MergeSort64_7_36",
     "binPartial_MergeSort64_37_66",
     "binPartial_MergeSort64_67_96",
-    "DSPI_joining",
-    "DSPI_merge_sorting",
-    "DSPI_linear_sorting",
     "binPartial_AggregateGlobalSum_55_63",
     "binPartial_AggregateGlobalSum_85_93",
     "binPartial_AggregateGlobalSum_25_33",
@@ -95,6 +92,15 @@
     "binPartial_LinearSort1024_7_48",
     "binPartial_LinearSort1024_37_78",
     "binPartial_MergeSort32_16_36",
-    "binPartial_MergeSort32_46_66"
+    "binPartial_MergeSort32_46_66",
+    "byteman_PRregionRTandTA_0_96",
+    "binPartial_Filter18_85_96",
+    "binPartial_Filter216_22_36",
+    "binPartial_Filter216_52_66",
+    "binPartial_Filter216_82_96",
+    "binPartial_Filter18_25_36",
+    "binPartial_Filter18_55_66",
+    "binPartial_MergeSort128_7_42",
+    "binPartial_MergeSort128_37_72"
   ]
 }

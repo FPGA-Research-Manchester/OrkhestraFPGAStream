@@ -28,13 +28,13 @@ namespace orkhestrafs::sql_parsing {
 class Q19Creator {
  private:
   static auto CreateLineitemTable(SQLQueryCreator* sql_creator, int row_count,
-                           std::string filename) -> std::string;
+                                  std::string filename) -> std::string;
   static auto CreatePartTable(SQLQueryCreator* sql_creator, int row_count,
-                       std::string filename) -> std::string;
+                              std::string filename) -> std::string;
   static void ConfigureQ19FirstFilter(SQLQueryCreator& sql_creator,
-                               std::string& first_filter);
+                                      std::string& first_filter);
   static void ConfigureQ19SecondFilter(SQLQueryCreator& sql_creator,
-                                std::string& second_filter);
+                                       std::string& second_filter);
 
  public:
   static void CreateQ19TPCH(SQLQueryCreator& sql_creator);

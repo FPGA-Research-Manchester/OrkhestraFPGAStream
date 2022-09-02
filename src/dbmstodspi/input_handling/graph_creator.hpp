@@ -35,12 +35,13 @@ class GraphCreator : public GraphCreatorInterface {
   std::unique_ptr<JSONReaderInterface> json_reader_;
   std::unique_ptr<JSONValidatorInterface> json_validator_;
 
-  static auto PopulateGraphNodesMapWithJSONData(
+  static void PopulateGraphNodesMapWithJSONData(
+      ExecutionPlanGraphInterface *graph,
       std::map<std::string, JSONReaderInterface::InputNodeParameters> &data,
       std::map<std::string, std::vector<std::string>> &previous_nodes,
-      std::map<std::string, std::vector<std::string>> &next_nodes) -> std::unique_ptr<ExecutionPlanGraphInterface>;
+      std::map<std::string, std::vector<std::string>> &next_nodes);
   static void LinkDependentNodes(
-      std::map<std::string, QueryNode*> &graph_nodes_map,
+      std::map<std::string, QueryNode *> &graph_nodes_map,
       std::map<std::string, std::vector<std::string>> &previous_nodes,
       std::map<std::string, std::vector<std::string>> &next_nodes);
 
@@ -60,7 +61,8 @@ class GraphCreator : public GraphCreatorInterface {
    * @param graph_def_filename File containing the query plan information.
    * @return Query plan graph created form the given JSON.
    */
-  auto MakeGraph(std::string graph_def_filename)
+  auto MakeGraph(std::string graph_def_filename,
+                 std::unique_ptr<ExecutionPlanGraphInterface> graph)
       -> std::unique_ptr<ExecutionPlanGraphInterface> override;
 };
 }  // namespace orkhestrafs::dbmstodspi

@@ -26,11 +26,91 @@ limitations under the License.
 using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
+auto ExecutionManager::IsHWPrintEnabled() -> bool { return print_hw_; }
+
+void ExecutionManager::LoadBitstream(ScheduledModule new_module) {
+  auto dma_module = accelerator_library_->GetDMAModule();
+  memory_manager_->LoadPartialBitstream({new_module.bitstream}, *dma_module);
+  query_manager_->GetPRBitstreamsToLoadWithPassthroughModules(
+      current_configuration_, {new_module}, current_routing_);
+}
+
+auto ExecutionManager::GetCurrentHW()
+    -> std::map<QueryOperationType, OperationPRModules> {
+  return config_.pr_hw_library;
+}
+
+void ExecutionManager::SetHWPrint(bool print_hw) { print_hw_ = print_hw; }
+
+void ExecutionManager::SetStartTimer() {
+  exec_begin = std::chrono::steady_clock::now();
+}
+void ExecutionManager::PrintExecTime() {
+  std::cout << "EXEC TIME: "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::steady_clock::now() - exec_begin)
+                   .count()
+            << " ms" << std::endl;
+}
+
+void ExecutionManager::AddNewNodes(std::string graph_filename) {
+  unscheduled_graph_ =
+      graph_creator_->MakeGraph(graph_filename, std::move(unscheduled_graph_));
+}
+
+void ExecutionManager::LoadStaticTables() {
+  if (config_.static_tables.empty()) {
+    throw std::runtime_error("No static tables given!");
+  }
+  for (const auto& table_name : config_.static_tables) {
+    current_tables_metadata_.insert(
+        {table_name, config_.initial_all_tables_metadata.at(table_name)});
+    // 100 is an arbitrary number. 1 could work as well.
+    table_counter_.insert({table_name, 100});
+    if (table_memory_blocks_.find(table_name) == table_memory_blocks_.end()) {
+      table_memory_blocks_[table_name] =
+          memory_manager_->GetAvailableMemoryBlock();
+      data_manager_->WriteDataFromCSVToMemory(
+          table_name, config_.static_tables_columns.at(table_name),
+          table_memory_blocks_[table_name]);
+    }
+  }
+}
+void ExecutionManager::SetInteractive(bool is_interactive) {
+  is_interactive_ = is_interactive;
+}
+auto ExecutionManager::IsInteractive() -> bool { return is_interactive_; }
+void ExecutionManager::ChangeSchedulingTimeLimit(double new_time_limit) {
+  config_.scheduler_time_limit_in_seconds = new_time_limit;
+}
+void ExecutionManager::ChangeExecutionTimeLimit(int new_time_limit) {
+  config_.execution_timeout = new_time_limit;
+}
+
+void ExecutionManager::PrintHWState() {
+  std::cout << "==CURRENT CONFIGURATION==" << std::endl;
+  std::string dma_string = "MMDBMMDMDMDB";
+  for (const auto resource : dma_string) {
+    std::cout << "X(" << resource
+              << "): DMA" << std::endl;
+  }
+  for (int i = 0; i < current_routing_.size(); i++) {
+    std::cout << i << "(" << config_.resource_string.at(i)
+              << "): " << current_routing_.at(i) << std::endl;
+  }
+  std::cout << "=========================" << std::endl;
+  std::string wait;
+  std::cin >> wait;
+}
+
+auto ExecutionManager::GetFPGASpeed() -> int { return config_.clock_speed; }
+
 void ExecutionManager::SetFinishedFlag() { busy_flag_ = false; }
 
 void ExecutionManager::UpdateAvailableNodesGraph() {
+  current_available_node_pointers_.clear();
   if (!processed_nodes_.empty()) {
-    unscheduled_graph_->DeleteNodes(std::move(processed_nodes_));
+    unscheduled_graph_->DeleteNodes(processed_nodes_);
     processed_nodes_.clear();
   }
 
@@ -40,21 +120,130 @@ void ExecutionManager::UpdateAvailableNodesGraph() {
     current_available_node_names_.insert(node->node_name);
   }
   RemoveUnusedTables(current_tables_metadata_,
-                     unscheduled_graph_->GetAllNodesPtrs());
+                     unscheduled_graph_->GetAllNodesPtrs(),
+                     config_.static_tables);
   table_counter_.clear();
+  for (const auto table_name : config_.static_tables) {
+    table_counter_.insert({table_name, 100});
+  }
   InitialiseTables(current_tables_metadata_, current_available_node_pointers_,
                    query_manager_.get(), data_manager_.get());
   current_query_graph_.clear();
+  SetupTableDependencies(unscheduled_graph_->GetAllNodesPtrs(), blocked_nodes_,
+                         table_counter_);
   SetupSchedulingGraphAndConstrainedNodes(
       unscheduled_graph_->GetAllNodesPtrs(), current_query_graph_,
-      *accelerator_library_, nodes_constrained_to_first_);
+      *accelerator_library_, nodes_constrained_to_first_,
+      current_tables_metadata_);
+}
+
+void ExecutionManager::SetupTableDependencies(
+    const std::vector<QueryNode*>& all_nodes,
+    std::unordered_set<std::string>& blocked_nodes,
+    std::unordered_map<std::string, int>& table_counter) {
+  blocked_nodes.clear();
+  std::unordered_set<std::string> output_tables;
+  for (const auto& node : all_nodes) {
+    for (const auto& output : node->given_output_data_definition_files) {
+      if (!output.empty()) {
+        output_tables.insert(output);
+      }
+    }
+  }
+  std::unordered_set<QueryNode*> nodes_to_check;
+  // we want to block all nodes that have an input that is the output of
+  // something else But nodes that have this condition and are linked do not get
+  // blocked!
+  for (const auto& node : all_nodes) {
+    for (int i = 0; i < node->given_input_data_definition_files.size(); i++) {
+      const auto& input_table = node->given_input_data_definition_files.at(i);
+      const auto& input_node = node->previous_nodes.at(i);
+      if (!input_table.empty() &&
+          output_tables.find(input_table) != output_tables.end()) {
+        if (!input_node ||
+            std::none_of(
+                input_node->given_output_data_definition_files.begin(),
+                input_node->given_output_data_definition_files.end(),
+                [&](auto table_name) { return input_table == table_name; })) {
+          blocked_nodes.insert(node->node_name);
+          nodes_to_check.insert(node);
+        }
+      }
+    }
+  }
+  // To prevent blocked tables from being deleted
+  while (!nodes_to_check.empty()) {
+    auto cur_node = *nodes_to_check.begin();
+    nodes_to_check.erase(nodes_to_check.begin());
+    for (const auto& input_table :
+         cur_node->given_input_data_definition_files) {
+      if (!input_table.empty()) {
+        table_counter.insert({input_table, 1});
+      }
+    }
+    for (const auto& output_node : cur_node->next_nodes) {
+      if (output_node) {
+        nodes_to_check.insert(output_node);
+      }
+    }
+  }
+
+  // If we want to be more precise
+  /*std::unordered_map<std::string, std::unordered_set<std::string>>
+      tables_to_nodes_used_map;
+  for (const auto& node : all_nodes) {
+    for (const auto& input : node->given_input_data_definition_files) {
+      if (!input.empty()) {
+        std::unordered_set<std::string> new_set = {node->node_name};
+        if (const auto& [it, inserted] =
+                tables_to_nodes_used_map.try_emplace(input, new_set);
+            !inserted) {
+          it->second.merge(new_set);
+        }
+      }
+    }
+  }
+  for (const auto& node : all_nodes) {
+    for (int i = 0; i < node->given_output_data_definition_files.size(); i++) {
+      const auto& output = node->given_output_data_definition_files.at(i);
+      if (!output.empty()) {
+        if (node->is_checked.at(i) &&
+            input_tables.find(output) != input_tables.end() &&
+            tables_metadata.find(output) != tables_metadata.end()) {
+          tables_metadata.at(output).is_finished = false;
+        }
+      }
+    }
+  }*/
+  /*std::unordered_set<std::string> input_tables;
+  for (const auto& node : all_nodes) {
+    for (const auto& input : node->given_input_data_definition_files) {
+      if (!input.empty()) {
+        input_tables.insert(input);
+      }
+    }
+  }
+  for (const auto& node : all_nodes) {
+    for (int i = 0; i < node->given_output_data_definition_files.size(); i++) {
+      const auto& output = node->given_output_data_definition_files.at(i);
+      if (!output.empty()) {
+        if (node->is_checked.at(i) &&
+            input_tables.find(output) != input_tables.end() &&
+            tables_metadata.find(output) != tables_metadata.end()) {
+          tables_metadata.at(output).is_finished = false;
+        }
+      }
+    }
+  }*/
 }
 
 void ExecutionManager::RemoveUnusedTables(
     std::map<std::string, TableMetadata>& tables_metadata,
-    std::vector<QueryNode*> all_nodes) {
-  // TODO: Possibly reserve some space beforehand.
+    const std::vector<QueryNode*>& all_nodes,
+    const std::vector<std::string> frozen_tables) {
+  // TODO(Kaspar): Possibly reserve some space beforehand.
   std::unordered_set<std::string> required_tables;
+  std::unordered_set<std::string> output_tables;
   for (const auto& node : all_nodes) {
     for (const auto& input : node->given_input_data_definition_files) {
       if (!input.empty()) {
@@ -64,15 +253,33 @@ void ExecutionManager::RemoveUnusedTables(
     for (const auto& output : node->given_output_data_definition_files) {
       if (!output.empty()) {
         required_tables.insert(output);
+        output_tables.insert(output);
       }
     }
   }
   std::vector<std::string> tables_to_delete;
+  auto missing_tables = required_tables;
   for (const auto& [table_name, data] : tables_metadata) {
+    missing_tables.erase(table_name);
     if (required_tables.find(table_name) == required_tables.end()) {
       tables_to_delete.push_back(table_name);
     }
   }
+  for (const auto& output : output_tables) {
+    missing_tables.erase(output);
+  }
+  if (!missing_tables.empty()) {
+    throw std::runtime_error(
+        "There are tables required that are not available!");
+  }
+
+  // TODO: Should be set
+  for (const auto& frozen_table : frozen_tables) {
+    tables_to_delete.erase(std::remove(tables_to_delete.begin(),
+                                       tables_to_delete.end(), frozen_table),
+                           tables_to_delete.end());
+  }
+
   for (const auto& table_to_delete : tables_to_delete) {
     tables_metadata.erase(table_to_delete);
   }
@@ -87,7 +294,7 @@ void ExecutionManager::InitialiseTables(
     const DataManagerInterface* data_manager) {
   // Setup new unintialised tables
   while (!current_available_node_pointers.empty()) {
-    auto current_node = current_available_node_pointers.back();
+    auto* current_node = current_available_node_pointers.back();
     current_available_node_pointers.pop_back();
     if (std::any_of(current_node->given_input_data_definition_files.begin(),
                     current_node->given_input_data_definition_files.end(),
@@ -107,6 +314,8 @@ void ExecutionManager::InitialiseTables(
             data_manager,
             current_node->given_operation_parameters.output_stream_parameters,
             output_stream_id);
+        // Hardcoded for benchmarking
+        // new_data.record_size = 10;
         new_data.record_count = -1;
         tables_metadata.insert({table_name, new_data});
       }
@@ -153,17 +362,50 @@ void ExecutionManager::Execute(
     }
   }
   auto end = std::chrono::steady_clock::now();
-  std::cout << "TOTAL EXECUTION RUNTIME:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << std::endl;
-  /*Log(LogLevel::kInfo,
-      "Overall time = " +
-          to_string(
-              chrono::duration_cast<std::chrono::milliseconds>(end - begin)
-                  .count()) +
-          "[ms]");*/
+  if (config_.print_config || config_.print_scheduling ||
+      config_.print_initialisation || config_.print_system ||
+      config_.print_data_amounts) {
+    auto data = query_manager_->GetData();
+    long total_execution =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+            .count();
+    long data_size = data[0];
+    long scheduling = data[3];
+    long init_config = data[1];
+    long config = config_time_;
+    long initialisation = data[2];
+    long system =
+        total_execution - scheduling - init_config - config - initialisation;
+    long actual_execution = total_execution - init_config;
+    // std::cout << "ACTUAL_EXECUTION: " << actual_execution << std::endl;
+
+    if (config_.print_config) {
+      std::cout << "CONFIGURATION: " << config << std::endl;
+    }
+    if (config_.print_scheduling) {
+      std::cout << "SCHEDULING: " << scheduling << std::endl;
+    }
+    if (config_.print_initialisation) {
+      std::cout << "INITIALISATION: " << initialisation << std::endl;
+    }
+    if (config_.print_system) {
+      std::cout << "SYSTEM: " << system << std::endl;
+    }
+    /*std::cout << "EXECUTION: " << (data_size / 4659.61402505057)
+              << std::endl;*/
+
+    /*std::cout << "STATIC: "
+              << ((data_size / 4659.61402505057) + initialisation)
+              << std::endl;*/
+    if (config_.print_data_amounts) {
+      std::cout << "DATA_STREAMED: " << data_size << std::endl;
+    }
+    /*std::cout << "TOTAL EXECUTION RUNTIME: "
+              << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                       begin)
+                     .count()
+              << std::endl;*/
+  }
 }
 
 auto ExecutionManager::IsUnscheduledNodesGraphEmpty() -> bool {
@@ -181,16 +423,37 @@ void ExecutionManager::ScheduleUnscheduledNodes() {
       current_available_node_pointers_, nodes_constrained_to_first_,
       current_available_node_names_, current_query_graph_,
       current_tables_metadata_, *accelerator_library_, config_, *scheduler_,
-      current_configuration_, processed_nodes_, table_counter_);
+      current_configuration_, processed_nodes_, table_counter_, blocked_nodes_);
 }
 void ExecutionManager::BenchmarkScheduleUnscheduledNodes() {
   query_manager_->BenchmarkScheduling(
       nodes_constrained_to_first_, current_available_node_names_,
       processed_nodes_, current_query_graph_, current_tables_metadata_,
-      *accelerator_library_, config_, *scheduler_, current_configuration_);
+      *accelerator_library_, config_, *scheduler_, current_configuration_,
+      blocked_nodes_);
 }
 auto ExecutionManager::IsBenchmarkDone() -> bool {
   return current_available_node_names_.empty();
+}
+
+auto ExecutionManager::GetModuleCapacity(int module_position,
+                                         QueryOperationType operation)
+    -> std::vector<int> {
+  std::string last_seen_bitstream = "";
+  int seen_bitstreams = -1;
+  for (const auto module_name : current_routing_) {
+    if (module_name != last_seen_bitstream && module_name != "RT" &&
+        module_name != "TAA" && !module_name.empty()) {
+      seen_bitstreams++;
+      if (seen_bitstreams == module_position) {
+        return config_.pr_hw_library.at(operation)
+            .bitstream_map.at(module_name)
+            .capacity;
+      }
+      last_seen_bitstream = module_name;
+    }
+  }
+  throw std::runtime_error("Not enough modules configured!");
 }
 
 void ExecutionManager::SetupNextRunData() {
@@ -228,11 +491,21 @@ void ExecutionManager::SetupNextRunData() {
                                            *accelerator_library_.get());*/
   auto [bitstreams_to_load, empty_modules] =
       query_manager_->GetPRBitstreamsToLoadWithPassthroughModules(
-          current_configuration_, query_node_runs_queue_.front().first, 31);
-  query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
-                                   *accelerator_library_);
-  query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
-                                   *accelerator_library_);
+          current_configuration_, query_node_runs_queue_.front().first,
+          current_routing_);
+  /*query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
+   *accelerator_library_);*/
+  config_time_ += query_manager_->LoadPRBitstreams(
+      memory_manager_.get(), bitstreams_to_load, *accelerator_library_);
+  if (print_hw_) {
+    std::cout << "Loading: ";
+    for (const auto& bitstream : bitstreams_to_load) {
+      std::cout << bitstream << ", ";
+    }
+    std::cout << std::endl;
+    PrintHWState();
+  }
+
   /*query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
    *accelerator_library_.get());*/
   // Debugging
@@ -282,7 +555,9 @@ void ExecutionManager::SetupNextRunData() {
       query_nodes_.insert(
           query_nodes_.begin() + module_pos,
           accelerator_library_->GetEmptyModuleNode(
-              empty_modules.at(module_pos).first, module_pos + 1));
+              empty_modules.at(module_pos).first, module_pos + 1,
+              GetModuleCapacity(module_pos,
+                                empty_modules.at(module_pos).first)));
     } else {
       query_nodes_.at(module_pos).operation_module_location = module_pos + 1;
     }
@@ -293,8 +568,8 @@ void ExecutionManager::ExecuteAndProcessResults() {
   query_manager_->ExecuteAndProcessResults(
       memory_manager_.get(), fpga_manager_.get(), data_manager_.get(),
       table_memory_blocks_, result_parameters_, query_nodes_,
-      current_tables_metadata_, table_counter_);
-  // TODO:Remove this
+      current_tables_metadata_, table_counter_, config_.execution_timeout);
+  // TODO(Kaspar): Remove this
   scheduled_node_names_.clear();
 }
 // auto ExecutionManager::IsRunValid() -> bool {
@@ -311,10 +586,27 @@ void ExecutionManager::PrintCurrentStats() {
   query_manager_->PrintBenchmarkStats();
 }
 
+void ExecutionManager::SetClockSpeed(int new_clock_speed) {
+  config_.clock_speed = new_clock_speed;
+}
+
+void ExecutionManager::LoadStaticBitstream() {
+  query_manager_->LoadInitialStaticBitstream(memory_manager_.get(),
+                                             config_.clock_speed);
+  // TODO: Remove the hardcoded aspect of this!
+  for (int i = 0; i < 31; i++) {
+    current_routing_.push_back("RT");
+  }
+
+  /*query_manager_->MeasureBitstreamConfigurationSpeed(config_.pr_hw_library,
+                                                     memory_manager_.get());*/
+}
+
 void ExecutionManager::SetupSchedulingData(bool setup_bitstreams) {
+  config_time_ = 0;
   current_tables_metadata_ = config_.initial_all_tables_metadata;
   if (setup_bitstreams) {
-    query_manager_->LoadInitialStaticBitstream(memory_manager_.get());
+    LoadStaticBitstream();
   }
 }
 
@@ -323,7 +615,8 @@ void ExecutionManager::SetupSchedulingGraphAndConstrainedNodes(
     std::unordered_map<std::string, SchedulingQueryNode>&
         current_scheduling_graph,
     AcceleratorLibraryInterface& hw_library,
-    std::unordered_set<std::string>& constrained_nodes_vector) {
+    std::unordered_set<std::string>& constrained_nodes_vector,
+    const std::map<std::string, TableMetadata>& tables_metadata) {
   for (const auto& node : all_query_nodes) {
     AddSchedulingNodeToGraph(node, current_scheduling_graph, hw_library);
 

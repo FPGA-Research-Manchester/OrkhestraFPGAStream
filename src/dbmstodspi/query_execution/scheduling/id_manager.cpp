@@ -32,7 +32,20 @@ void IDManager::AllocateStreamIDs(
     std::map<std::string, std::vector<int>> &output_ids) {
   auto available_ids = SetUpAvailableIDs();
 
+  std::vector<QueryNode *> corrected_nodes = {nullptr};
   for (const auto &current_node : all_nodes) {
+    if (current_node->operation_type == QueryOperationType::kMergeSort) {
+      corrected_nodes[0] = current_node;
+    } else {
+      corrected_nodes.push_back(current_node);
+    }
+  }
+
+  if (!corrected_nodes.at(0)) {
+    corrected_nodes = all_nodes;
+  }
+
+  for (const auto &current_node : corrected_nodes) {
     std::vector<int> current_node_input_ids;
     std::vector<int> current_node_output_ids;
     AllocateInputIDs(current_node, current_node_input_ids, output_ids,
@@ -58,7 +71,8 @@ void IDManager::AllocateInputIDs(
     const QueryNode *current_node, std::vector<int> &current_node_input_ids,
     std::map<std::string, std::vector<int>> &output_ids,
     std::vector<int> &current_node_output_ids, std::stack<int> &available_ids) {
-  // This check is incorrect - Merge sort needs 1 stream but can have multiple file inputs
+  // This check is incorrect - Merge sort needs 1 stream but can have multiple
+  // file inputs
   /*if (current_node->given_input_data_definition_files.size() <
       current_node->module_run_data.front()
           .input_data_definition_files.size()) {
@@ -71,7 +85,8 @@ void IDManager::AllocateInputIDs(
     if (current_node->module_run_data.front()
             .input_data_definition_files.at(current_stream_index)
             .empty()) {
-      auto &previous_node = current_node->previous_nodes[current_stream_index];
+      const auto &previous_node =
+          current_node->previous_nodes[current_stream_index];
       if (!previous_node) {
         throw std::runtime_error(
             "Previous node not found when looking for ID!");

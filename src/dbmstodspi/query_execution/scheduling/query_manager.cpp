@@ -18,7 +18,9 @@ limitations under the License.
 
 #include <algorithm>
 #include <chrono>
+#include <iomanip>
 #include <iostream>
+#include <set>
 #include <stdexcept>
 
 #include "bitstream_config_helper.hpp"
@@ -30,18 +32,53 @@ limitations under the License.
 #include "query_acceleration_constants.hpp"
 #include "run_linker.hpp"
 #include "stream_data_parameters.hpp"
-#include "table_data.hpp"
 #include "table_manager.hpp"
 #include "util.hpp"
 
 using orkhestrafs::dbmstodspi::BitstreamConfigHelper;
 using orkhestrafs::dbmstodspi::QueryManager;
-using orkhestrafs::dbmstodspi::RunLinker;
 using orkhestrafs::dbmstodspi::StreamDataParameters;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::dbmstodspi::query_acceleration_constants::kIOStreamParamDefs;
-using orkhestrafs::dbmstodspi::util::CreateReferenceVector;
+
+auto QueryManager::GetData() -> std::vector<long> {
+  return {data_count_, static_configuration_, initialisation_sum_,
+          scheduling_sum_};
+}
+auto QueryManager::GetConfigTime() -> long { return latest_config_; }
+
+void QueryManager::MeasureBitstreamConfigurationSpeed(
+    const std::map<QueryOperationType, OperationPRModules>& hw_library,
+    MemoryManagerInterface* memory_manager) {
+  std::set<std::string> bitstreams_to_measure;
+  for (const auto& [operation, bitstreams_info] : hw_library) {
+    for (const auto& [bitstream_name, bitstream_info] :
+         bitstreams_info.bitstream_map) {
+      bitstreams_to_measure.insert(bitstream_name);
+    }
+  }
+  // TODO(Kaspar): Move this elsewhere
+  std::set<std::string> routing_bitstreams = {
+      "RT_95.bin",  "RT_92.bin",  "RT_89.bin",  "RT_86.bin",  "RT_83.bin",
+      "RT_80.bin",  "RT_77.bin",  "RT_74.bin",  "RT_71.bin",  "RT_68.bin",
+      "RT_65.bin",  "RT_62.bin",  "RT_59.bin",  "RT_56.bin",  "RT_53.bin",
+      "RT_50.bin",  "RT_47.bin",  "RT_44.bin",  "RT_41.bin",  "RT_38.bin",
+      "RT_35.bin",  "RT_32.bin",  "RT_29.bin",  "RT_26.bin",  "RT_23.bin",
+      "RT_20.bin",  "RT_17.bin",  "RT_14.bin",  "RT_11.bin",  "RT_8.bin",
+      "RT_5.bin",   "RT_2.bin",   "TAA_95.bin", "TAA_92.bin", "TAA_89.bin",
+      "TAA_86.bin", "TAA_83.bin", "TAA_80.bin", "TAA_77.bin", "TAA_74.bin",
+      "TAA_71.bin", "TAA_68.bin", "TAA_65.bin", "TAA_62.bin", "TAA_59.bin",
+      "TAA_56.bin", "TAA_53.bin", "TAA_50.bin", "TAA_47.bin", "TAA_44.bin",
+      "TAA_41.bin", "TAA_38.bin", "TAA_35.bin", "TAA_32.bin", "TAA_29.bin",
+      "TAA_26.bin", "TAA_23.bin", "TAA_20.bin", "TAA_17.bin", "TAA_14.bin",
+      "TAA_11.bin", "TAA_8.bin",  "TAA_5.bin",  "TAA_2.bin"};
+  bitstreams_to_measure.merge(routing_bitstreams);
+  // bitstreams_to_measure.insert("byteman_PRregionRTandTA_0_96.bin");
+  // bitstreams_to_measure.insert("byteman_MergeSort128_bitstreamSizeTest_7_42.bin");
+  // bitstreams_to_measure.insert("byteman_MergeSort128_bitstreamSizeTest_37_72.bin");
+  memory_manager->MeasureConfigurationSpeed(bitstreams_to_measure);
+}
 
 auto QueryManager::GetCurrentLinks(
     std::queue<std::map<std::string, std::map<int, MemoryReuseTargets>>>&
@@ -139,7 +176,7 @@ void QueryManager::AllocateOutputMemoryBlocks(
     if (!output_table.empty() &&
         table_memory_blocks.find(output_table) == table_memory_blocks.end()) {
       table_memory_blocks[output_table] =
-          std::move(memory_manager->GetAvailableMemoryBlock());
+          memory_manager->GetAvailableMemoryBlock();
       // Uncomment to check overwriting.
       /*for (int i = 0; i < 100000; i++) {
         output_memory_blocks[stream_index]->GetVirtualAddress()[i] = -1;
@@ -147,6 +184,7 @@ void QueryManager::AllocateOutputMemoryBlocks(
     }
   }
 }
+
 void QueryManager::AllocateInputMemoryBlocks(
     MemoryManagerInterface* memory_manager,
     const DataManagerInterface* data_manager, const NodeRunData& run_data,
@@ -162,7 +200,7 @@ void QueryManager::AllocateInputMemoryBlocks(
     if (!input_table.empty() &&
         table_memory_blocks.find(input_table) == table_memory_blocks.end()) {
       table_memory_blocks[input_table] =
-          std::move(memory_manager->GetAvailableMemoryBlock());
+          memory_manager->GetAvailableMemoryBlock();
       std::chrono::steady_clock::time_point begin =
           std::chrono::steady_clock::now();
 
@@ -172,7 +210,7 @@ void QueryManager::AllocateInputMemoryBlocks(
 
       std::chrono::steady_clock::time_point end =
           std::chrono::steady_clock::now();
-      std::cout << "FS TO MEMORY WRITE:"
+      std::cout << "FS TO MEMORY WRITE: "
                 << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                          begin)
                        .count()
@@ -190,7 +228,23 @@ void QueryManager::AllocateInputMemoryBlocks(
         throw std::runtime_error(
             "Mismatch of table sizes after reading table data!");
       }
-    }
+      /*auto resulting_table = TableManager::ReadTableFromMemory(
+          data_manager, input_stream_parameters, stream_index,
+          table_memory_blocks.at(input_table),
+          current_tables_metadata.at(input_table).record_count);
+      data_manager->PrintTableData(resulting_table);
+      TableManager::WriteResultTableFile(data_manager, resulting_table,
+                                         "test.csv");*/
+    } /*else if (!input_table.empty()) {
+      auto resulting_table = TableManager::ReadTableFromMemory(
+          data_manager, input_stream_parameters, stream_index,
+          table_memory_blocks.at(input_table),
+          current_tables_metadata.at(input_table).record_count);
+      data_manager->PrintTableData(resulting_table);
+      TableManager::WriteResultTableFile(data_manager, resulting_table,
+                                         "test.csv");
+      exit(0);
+    }*/
   }
 }
 
@@ -221,6 +275,9 @@ auto QueryManager::CreateStreamParams(
     int virtual_channel_count = -1;
     if (is_input && !table_name.empty()) {
       if (node->operation_type == QueryOperationType::kMergeSort) {
+        // For debugging
+        int current_record_count = 0;
+
         int current_record_size =
             current_tables_metadata.at(table_name).record_size;
         std::vector<int> current_sequences;
@@ -233,6 +290,7 @@ auto QueryManager::CreateStreamParams(
           if (current_table_index == sequence.at(table_offset) &&
               current_offset == sequence.at(offset_offset)) {
             current_sequences.push_back(sequence.at(count_offset));
+            current_record_count += sequence.at(count_offset);
             current_offset += sequence.at(count_offset);
           } else {
             physical_addresses_map.insert(
@@ -242,12 +300,13 @@ auto QueryManager::CreateStreamParams(
                          ->GetPhysicalAddress() +
                      write_offset * current_record_size,
                  std::move(current_sequences)});
-            
+
             current_sequences = {sequence.at(count_offset)};
             current_table_index = sequence.at(table_offset);
             write_offset = sequence.at(offset_offset);
             current_offset =
                 sequence.at(offset_offset) + sequence.at(count_offset);
+            current_record_count += sequence.at(count_offset);
           }
         }
         // virtual channel count is the size of the vector - We assume this is
@@ -261,11 +320,6 @@ auto QueryManager::CreateStreamParams(
                  run_data.run_index)) {
           max_channel_count += capacity;
         }
-        std::vector<int> empty_sequences(
-            max_channel_count - virtual_channel_count, 0);
-        current_sequences.insert(current_sequences.end(),
-                                 empty_sequences.begin(),
-                                 empty_sequences.end());
 
         physical_addresses_map.insert(
             {table_memory_blocks
@@ -275,14 +329,71 @@ auto QueryManager::CreateStreamParams(
                  write_offset * current_record_size,
              std::move(current_sequences)});
 
+        std::vector<int> empty_sequences(
+            max_channel_count - virtual_channel_count, 0);
+        /*current_sequences.insert(current_sequences.end(),
+                                 empty_sequences.begin(),
+                                 empty_sequences.end());*/
+
+        // Calculating the last address used. Assuming blocks can't overlap.
+        auto last_address = physical_addresses_map.rbegin()->first;
+        int records_in_last = 0;
+        for (const auto& count : physical_addresses_map.at(last_address)) {
+          records_in_last += count;
+        }
+        physical_addresses_map.insert(
+            {last_address + records_in_last * current_record_size,
+             std::move(empty_sequences)});
+
         virtual_channel_count = max_channel_count;
+
+        merge_count_ += current_record_count;
+        /*std::cout << "Streamed data (rows): "
+                  << std::to_string(current_record_count)
+                  << std::endl;
+        std::cout
+            << "Streamed data (bytes): "
+            << std::to_string(
+                   static_cast<long>(
+                       current_tables_metadata.at(table_name).record_size) *
+                   static_cast<long>(merge_count) *
+                   static_cast<long>(4))
+            << std::endl;*/
+        data_count_ += static_cast<long>(
+                           current_tables_metadata.at(table_name).record_size) *
+                       static_cast<long>(merge_count_) * static_cast<long>(4);
+
       } else {
-        auto physical_address_ptr =
+        /*std::cout << "Streamed data (rows): "
+                  << std::to_string(
+                         current_tables_metadata.at(table_name).record_count)
+                  << std::endl;
+        std::cout
+            << "Streamed data (bytes): "
+            << std::to_string(
+                   static_cast<long>(
+                       current_tables_metadata.at(table_name).record_size) *
+                   static_cast<long>(
+                       current_tables_metadata.at(table_name).record_count) *
+                   static_cast<long>(4))
+            << std::endl;*/
+        data_count_ +=
+            static_cast<long>(
+                current_tables_metadata.at(table_name).record_size) *
+            static_cast<long>(
+                current_tables_metadata.at(table_name).record_count) *
+            static_cast<long>(4);
+        // if (is_last_) {
+        //  std::cout << "Streamed data (bytes): " << std::to_string(data_count)
+        //            << std::endl;
+        //}
+
+        auto* physical_address_ptr =
             table_memory_blocks.at(table_name)->GetPhysicalAddress();
         physical_addresses_map.insert({physical_address_ptr, {-1}});
       }
     } else if (!is_input && !table_name.empty()) {
-      auto physical_address_ptr =
+      auto* physical_address_ptr =
           table_memory_blocks.at(table_name)->GetPhysicalAddress() +
           run_data.output_offset.at(stream_index) *
               current_tables_metadata.at(table_name).record_size;
@@ -332,7 +443,8 @@ void QueryManager::StoreStreamResultParameters(
           stream_index, stream_ids[stream_index],
           run_data.output_data_definition_files.at(stream_index),
           node->is_checked.at(stream_index),
-          node->next_nodes.at(stream_index) != nullptr,
+          node->next_nodes.at(stream_index) != nullptr &&
+              !node->is_checked.at(stream_index),
           node->given_operation_parameters.output_stream_parameters,
           run_data.output_offset.at(stream_index));
     }
@@ -342,7 +454,7 @@ void QueryManager::StoreStreamResultParameters(
 
 auto QueryManager::SetupAccelerationNodesForExecution(
     DataManagerInterface* data_manager, MemoryManagerInterface* memory_manager,
-    AcceleratorLibraryInterface* accelerator_library,
+    AcceleratorLibraryInterface* /*accelerator_library*/,
     const std::vector<QueryNode*>& current_query_nodes,
     const std::map<std::string, TableMetadata>& current_tables_metadata,
     std::unordered_map<std::string, MemoryBlockInterface*>& table_memory_blocks,
@@ -357,7 +469,8 @@ auto QueryManager::SetupAccelerationNodesForExecution(
 
   IDManager::AllocateStreamIDs(current_query_nodes, input_ids, output_ids);
 
-  for (auto& node : current_query_nodes) {
+  for (const auto& node : current_query_nodes) {
+    Log(LogLevel::kDebug, "Configuring: " + node->node_name);
     auto current_run_params = std::move(node->module_run_data.front());
     node->module_run_data.pop_front();
     for (const auto& table : current_run_params.input_data_definition_files) {
@@ -391,6 +504,7 @@ auto QueryManager::SetupAccelerationNodesForExecution(
                                 node, current_run_params);
   }
 
+  // TODO: Look into removing this sort!
   std::sort(query_nodes.begin(), query_nodes.end(),
             [](AcceleratedQueryNode const& lhs,
                AcceleratedQueryNode const& rhs) -> bool {
@@ -398,20 +512,22 @@ auto QueryManager::SetupAccelerationNodesForExecution(
                      rhs.operation_module_location;
             });
 
-  return {query_nodes, result_parameters};
+  return {std::move(query_nodes), std::move(result_parameters)};
 }
 
 void QueryManager::LoadNextBitstreamIfNew(
     MemoryManagerInterface* memory_manager, std::string bitstream_file_name,
     Config config) {
-  return memory_manager->LoadBitstreamIfNew(
+  throw std::runtime_error("Deprecated method!");
+  /*return memory_manager->LoadBitstreamIfNew(
       bitstream_file_name,
-      config.required_memory_space.at(bitstream_file_name));
+      config.required_memory_space.at(bitstream_file_name));*/
 }
 
 void QueryManager::LoadInitialStaticBitstream(
-    MemoryManagerInterface* memory_manager) {
-  memory_manager->LoadStatic();
+    MemoryManagerInterface* memory_manager, int clock_speed) {
+  memory_manager->LoadStatic(clock_speed);
+  static_configuration_ = memory_manager->GetTime();
 }
 
 void QueryManager::LoadEmptyRoutingPRRegion(
@@ -428,12 +544,17 @@ void QueryManager::LoadEmptyRoutingPRRegion(
   LoadPRBitstreams(memory_manager, empty_pr_region, driver_library);
 }
 
-void QueryManager::LoadPRBitstreams(
+auto QueryManager::LoadPRBitstreams(
     MemoryManagerInterface* memory_manager,
     const std::vector<std::string>& bitstream_names,
-    AcceleratorLibraryInterface& driver_library) {
-  auto dma_module = driver_library.GetDMAModule();
-  memory_manager->LoadPartialBitstream(bitstream_names, *dma_module);
+    AcceleratorLibraryInterface& driver_library) -> long {
+  if (!bitstream_names.empty()) {
+    auto dma_module = driver_library.GetDMAModule();
+    memory_manager->LoadPartialBitstream(bitstream_names, *dma_module);
+    return memory_manager->GetTime();
+  } else {
+    return 0;
+  }
 }
 
 void QueryManager::BenchmarkScheduling(
@@ -444,10 +565,11 @@ void QueryManager::BenchmarkScheduling(
     std::map<std::string, TableMetadata>& tables,
     AcceleratorLibraryInterface& drivers, const Config& config,
     NodeSchedulerInterface& node_scheduler,
-    std::vector<ScheduledModule>& current_configuration) {
+    std::vector<ScheduledModule>& current_configuration,
+    const std::unordered_set<std::string>& blocked_nodes) {
   node_scheduler.BenchmarkScheduling(
       first_node_names, starting_nodes, processed_nodes, graph, drivers, tables,
-      current_configuration, config, benchmark_stats_);
+      current_configuration, config, benchmark_stats_, blocked_nodes);
 }
 
 void QueryManager::PrintBenchmarkStats() {
@@ -467,20 +589,25 @@ auto QueryManager::ScheduleNextSetOfNodes(
     NodeSchedulerInterface& node_scheduler,
     const std::vector<ScheduledModule>& current_configuration,
     std::unordered_set<std::string>& skipped_nodes,
-    std::unordered_map<std::string, int>& table_counter)
+    std::unordered_map<std::string, int>& table_counter,
+    const std::unordered_set<std::string>& blocked_nodes)
     -> std::queue<
         std::pair<std::vector<ScheduledModule>, std::vector<QueryNode*>>> {
-  return node_scheduler.GetNextSetOfRuns(
+  auto thing = node_scheduler.GetNextSetOfRuns(
       query_nodes, first_node_names, starting_nodes, graph, drivers, tables,
-      current_configuration, config, skipped_nodes, table_counter);
+      current_configuration, config, skipped_nodes, table_counter,
+      blocked_nodes);
+  scheduling_sum_ += node_scheduler.GetTime();
+  return thing;
 }
 
 auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
     std::vector<ScheduledModule>& current_config,
-    const std::vector<ScheduledModule>& next_config, int column_count)
+    const std::vector<ScheduledModule>& next_config,
+    std::vector<std::string>& current_routing)
     -> std::pair<std::vector<std::string>,
                  std::vector<std::pair<QueryOperationType, bool>>> {
-  std::vector<int> written_frames(column_count, 0);
+  std::vector<int> written_frames(routing_bitstreams_.size(), 0);
 
   auto old_routing_modules = BitstreamConfigHelper::GetOldNonOverlappingModules(
       next_config, current_config);
@@ -503,44 +630,18 @@ auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
     for (int column_i = module.position.first;
          column_i < module.position.second + 1; column_i++) {
       written_frames[column_i] = 1;
+      current_routing[column_i] = "";
     }
   }
-  // for (const auto& module : old_routing_modules) {
-  //  for (int column_i = module.position.first;
-  //       column_i < module.position.second + 1; column_i++) {
-  //    written_frames[column_i] = false;
-  //  }
-  //}
 
   std::vector<std::string> required_bitstreams;
-  for (const auto& module : reduced_next_config) {
-    for (int column_i = module.position.first;
-         column_i < module.position.second + 1; column_i++) {
+  for (const auto& new_module : reduced_next_config) {
+    for (int column_i = new_module.position.first;
+         column_i < new_module.position.second + 1; column_i++) {
       written_frames[column_i] = 0;
+      current_routing[column_i] = new_module.bitstream;
     }
-    required_bitstreams.push_back(module.bitstream);
-  }
-
-  // Hardoded for now.
-  std::vector<std::string> routing_bitstreams = {
-      "RT_95.bin", "RT_92.bin", "RT_89.bin", "RT_86.bin", "RT_83.bin",
-      "RT_80.bin", "RT_77.bin", "RT_74.bin", "RT_71.bin", "RT_68.bin",
-      "RT_65.bin", "RT_62.bin", "RT_59.bin", "RT_56.bin", "RT_53.bin",
-      "RT_50.bin", "RT_47.bin", "RT_44.bin", "RT_41.bin", "RT_38.bin",
-      "RT_35.bin", "RT_32.bin", "RT_29.bin", "RT_26.bin", "RT_23.bin",
-      "RT_20.bin", "RT_17.bin", "RT_14.bin", "RT_11.bin", "RT_8.bin",
-      "RT_5.bin"};
-  /*std::vector<std::string> routing_bitstreams = {
-      "RT_95.bin", "RT_92.bin", "RT_89.bin", "RT_86.bin", "RT_83.bin",
-      "RT_80.bin", "RT_77.bin", "RT_74.bin", "RT_71.bin", "RT_68.bin",
-      "RT_65.bin", "RT_62.bin", "RT_59.bin", "RT_56.bin", "TAA_53.bin"};*/
-
-  for (int column_i = 0; column_i < routing_bitstreams.size(); column_i++) {
-    if (written_frames.at(column_i)) {
-      /*required_bitstreams.push_back("TAA_53.bin");
-      break;*/
-      required_bitstreams.push_back(routing_bitstreams.at(column_i));
-    }
+    required_bitstreams.push_back(new_module.bitstream);
   }
 
   auto left_over_config = BitstreamConfigHelper::GetResultingConfig(
@@ -551,37 +652,121 @@ auto QueryManager::GetPRBitstreamsToLoadWithPassthroughModules(
             });
 
   std::vector<std::pair<QueryOperationType, bool>> passthrough_modules;
-  for (const auto& module : left_over_config) {
-    if (std::find_if(next_config.begin(), next_config.end(),
-                     [&](auto new_module) {
-                       return module.bitstream == new_module.bitstream;
-                     }) != next_config.end()) {
-      passthrough_modules.emplace_back(module.operation_type, false);
+
+  // 1.Find out how far does it have to go
+  int furthest_required_column = next_config.back().position.second;
+  // 2.Check if there is a connection from beginning - if not add RT
+  // And find all passthrough modules
+  std::unordered_map<std::string, QueryOperationType> old_operations;
+  for (const auto& prev_module : current_config) {
+    old_operations.insert({prev_module.bitstream, prev_module.operation_type});
+  }
+  std::unordered_map<std::string, QueryOperationType> new_operations;
+  for (const auto& new_module : next_config) {
+    new_operations.insert({new_module.bitstream, new_module.operation_type});
+  }
+
+  std::string last_seen_bitstream = "";
+  for (int column_i = 0; column_i <= furthest_required_column; column_i++) {
+    if (current_routing[column_i].empty() ||
+        current_routing[column_i] == "TAA") {
+      current_routing[column_i] = "RT";
+      required_bitstreams.push_back(routing_bitstreams_.at(column_i));
+    } else if (last_seen_bitstream == current_routing[column_i] ||
+               current_routing[column_i] == "RT") {
+      // Do nothing
+    } else if (last_seen_bitstream != current_routing[column_i] &&
+               new_operations.find(current_routing[column_i]) !=
+                   new_operations.end()) {
+      last_seen_bitstream = current_routing[column_i];
+      passthrough_modules.emplace_back(
+          new_operations.at(current_routing[column_i]), false);
+    } else if (last_seen_bitstream != current_routing[column_i] &&
+               old_operations.find(current_routing[column_i]) !=
+                   old_operations.end()) {
+      last_seen_bitstream = current_routing[column_i];
+      passthrough_modules.emplace_back(
+          old_operations.at(current_routing[column_i]), true);
     } else {
-      passthrough_modules.emplace_back(module.operation_type, true);
+      throw std::runtime_error("Unknown routing bitstream");
+    }
+  }
+  // 3.Check if there is a connection to TAA or end from the end - if not add
+  // TAA
+  last_seen_bitstream = "";
+  for (int column_i = furthest_required_column + 1;
+       column_i < routing_bitstreams_.size(); column_i++) {
+    if (current_routing[column_i].empty()) {
+      current_routing[column_i] = "TAA";
+      required_bitstreams.push_back(turnaround_bitstreams_.at(column_i));
+      break;
+    } else if (current_routing[column_i] == "TAA") {
+      break;
+    } else if (last_seen_bitstream == current_routing[column_i] ||
+               current_routing[column_i] == "RT") {
+      // Do nothing
+    } else if (last_seen_bitstream != current_routing[column_i] &&
+               new_operations.find(current_routing[column_i]) !=
+                   new_operations.end()) {
+      last_seen_bitstream = current_routing[column_i];
+      passthrough_modules.emplace_back(
+          new_operations.at(current_routing[column_i]), false);
+    } else if (last_seen_bitstream != current_routing[column_i] &&
+               old_operations.find(current_routing[column_i]) !=
+                   old_operations.end()) {
+      last_seen_bitstream = current_routing[column_i];
+      passthrough_modules.emplace_back(
+          old_operations.at(current_routing[column_i]), true);
+    } else {
+      throw std::runtime_error("Unknown routing bitstream");
     }
   }
 
-  current_config = left_over_config;
-
-  /*for (const auto& module : old_routing_modules) {
-    required_bitstreams.push_back(module.bitstream);
+  /*for (int i = 0; i < routing_bitstreams_.size(); i++) {
+    current_routing[i] = "";
   }*/
+
+  /*for (int column_i = furthest_required_column + 1;
+       column_i < routing_bitstreams_.size(); column_i++) {
+    current_routing[column_i] = "RT";
+    required_bitstreams.push_back(routing_bitstreams_.at(column_i));
+  }
+  required_bitstreams.push_back(routing_bitstreams_.at(0));*/
+  // Implementation without using TAAs
+  /*GetRoutingBitstreamsAndPassthroughBitstreams(
+      written_frames, required_bitstreams, left_over_config, next_config,
+      passthrough_modules);*/
+
+  current_config = left_over_config;
 
   return {required_bitstreams, passthrough_modules};
 }
 
-// auto QueryManager::IsRunValid(std::vector<AcceleratedQueryNode> current_run)
-//    -> bool {
-//  for (const auto& node : current_run) {
-//    if (!ElasticModuleChecker::IsRunValid(node.input_streams,
-//                                          node.operation_type,
-//                                          node.operation_parameters)) {
-//      return false;
-//    }
-//  }
-//  return true;
-//}
+void QueryManager::GetRoutingBitstreamsAndPassthroughBitstreams(
+    const std::vector<int>& written_frames,
+    std::vector<std::string>& required_bitstreams,
+    const std::vector<ScheduledModule>& left_over_config,
+    const std::vector<ScheduledModule>& next_config,
+    std::vector<std::pair<QueryOperationType, bool>>& passthrough_modules) {
+  // Get the bitstreams
+  for (int column_i = 0; column_i < routing_bitstreams_.size(); column_i++) {
+    if (written_frames.at(column_i)) {
+      required_bitstreams.push_back(routing_bitstreams_.at(column_i));
+    }
+  }
+  // Get Passthrough modules
+  for (const auto& new_current_module : left_over_config) {
+    if (std::find_if(
+            next_config.begin(), next_config.end(), [&](auto new_module) {
+              return new_current_module.bitstream == new_module.bitstream;
+            }) != next_config.end()) {
+      passthrough_modules.emplace_back(new_current_module.operation_type,
+                                       false);
+    } else {
+      passthrough_modules.emplace_back(new_current_module.operation_type, true);
+    }
+  }
+}
 
 void QueryManager::CheckTableData(const DataManagerInterface* data_manager,
                                   const TableData& expected_table,
@@ -589,6 +774,7 @@ void QueryManager::CheckTableData(const DataManagerInterface* data_manager,
   if (expected_table == resulting_table) {
     Log(LogLevel::kDebug, "Query results are correct!");
   } else {
+    // TODO: Fix it throwing error with null elements in the table!
     Log(LogLevel::kError,
         "Incorrect query results: " +
             std::to_string(
@@ -599,7 +785,8 @@ void QueryManager::CheckTableData(const DataManagerInterface* data_manager,
                 resulting_table.table_data_vector.size() /
                 TableManager::GetRecordSizeFromTable(resulting_table)) +
             " rows!");
-    data_manager->PrintTableData(resulting_table);
+    // data_manager->PrintTableData(resulting_table);
+    // throw std::runtime_error("Failed table check!");
   }
 }
 
@@ -631,11 +818,11 @@ void QueryManager::WriteResults(
   TableManager::WriteResultTableFile(data_manager, resulting_table, filename);
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  std::cout << "MEMORY TO FS WRITE:"
+  std::cout << "MEMORY TO FS WRITE: "
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      begin)
                    .count()
-            << std::endl;
+            << " microseconds" << std::endl;
   Log(LogLevel::kInfo,
       "Write result data time = " +
           std::to_string(
@@ -670,7 +857,8 @@ void QueryManager::ProcessResults(
         result_parameters,
     const std::unordered_map<std::string, MemoryBlockInterface*>&
         table_memory_blocks,
-    std::map<std::string, TableMetadata>& scheduling_table_data) {
+    std::map<std::string, TableMetadata>& scheduling_table_data,
+    const std::map<int, std::vector<double>>& read_back_values) {
   for (auto const& [node_name, result_parameter_vector] : result_parameters) {
     for (auto const& result_params : result_parameter_vector) {
       // Assuming there's nothing after the offset and everything is valid
@@ -683,6 +871,17 @@ void QueryManager::ProcessResults(
               std::to_string(record_count - result_params.output_offset) +
               " new resulting rows!");
       scheduling_table_data[result_params.filename].record_count = record_count;
+
+      bool literal_value = false;
+      if (read_back_values.find(result_params.output_id) !=
+          read_back_values.end()) {
+        literal_value = true;
+        std::cout << node_name + " sum: " << std::endl;
+        for (const auto sum : read_back_values.at(result_params.output_id)) {
+          std::cout << std::fixed << std::setprecision(2) << sum << std::endl;
+        }
+      }
+
       if (!result_params.update_table_sizes_only) {
         if (result_params.check_results) {
           CheckResults(
@@ -690,14 +889,18 @@ void QueryManager::ProcessResults(
               record_count, result_params.filename,
               result_params.stream_specifications, result_params.stream_index);
         } else {
-          std::string filename = result_params.filename;
-          if (filename.back() != 'v') {
-            filename += ".csv";
+          if (!literal_value) {
+            std::string filename = result_params.filename;
+            if (filename.back() != 'v') {
+              filename += ".csv";
+            }
+            std::cout << "Written " << record_count << " rows to " << filename
+                      << std::endl;
+            WriteResults(
+                data_manager, table_memory_blocks.at(result_params.filename),
+                record_count, filename, result_params.stream_specifications,
+                result_params.stream_index);
           }
-          WriteResults(
-              data_manager, table_memory_blocks.at(result_params.filename),
-              record_count, filename,
-              result_params.stream_specifications, result_params.stream_index);
         }
       }
     }
@@ -712,7 +915,8 @@ void QueryManager::ExecuteAndProcessResults(
         result_parameters,
     const std::vector<AcceleratedQueryNode>& execution_query_nodes,
     std::map<std::string, TableMetadata>& scheduling_table_data,
-    std::unordered_map<std::string, int>& table_counter) {
+    std::unordered_map<std::string, int>& table_counter, int timeout) {
+  std::map<int, std::vector<double>> read_back_values;
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
 
@@ -720,22 +924,25 @@ void QueryManager::ExecuteAndProcessResults(
   fpga_manager->SetupQueryAcceleration(execution_query_nodes);
   std::chrono::steady_clock::time_point init_end =
       std::chrono::steady_clock::now();
-  std::cout << "INITIALISATION:"
-            << std::chrono::duration_cast<std::chrono::microseconds>(init_end -
-                                                                     begin)
-                   .count()
-            << std::endl;
+  initialisation_sum_ +=
+      std::chrono::duration_cast<std::chrono::microseconds>(init_end - begin)
+          .count();
+  /*if (is_last_) {
+    std::cout << "INITIALISATION: " << initialisation_sum << std::endl;
+  }*/
   Log(LogLevel::kTrace, "Running query!");
-  auto result_sizes = fpga_manager->RunQueryAcceleration();
+  // Give this a map of
+  auto result_sizes =
+      fpga_manager->RunQueryAcceleration(timeout, read_back_values);
   Log(LogLevel::kTrace, "Query done!");
 
   std::chrono::steady_clock::time_point total_end =
       std::chrono::steady_clock::now();
-  std::cout << "TOTAL EXEC:"
+  /*std::cout << "TOTAL EXEC:"
             << std::chrono::duration_cast<std::chrono::microseconds>(total_end -
                                                                      begin)
                    .count()
-            << std::endl;
+            << std::endl;*/
   Log(LogLevel::kInfo,
       "Init and run time = " +
           std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(
@@ -744,12 +951,13 @@ void QueryManager::ExecuteAndProcessResults(
           "[microseconds]");
 
   ProcessResults(data_manager, result_sizes, result_parameters,
-                 table_memory_blocks, scheduling_table_data);
+                 table_memory_blocks, scheduling_table_data, read_back_values);
   std::vector<std::string> removable_tables;
   for (const auto& [table_name, counter] : table_counter) {
     if (counter < 0) {
       throw std::runtime_error("Incorrect table counting!");
-    } else if (counter == 0) {
+    }
+    if (counter == 0) {
       removable_tables.push_back(table_name);
     } else {
       CropSortedStatus(scheduling_table_data, table_name);
@@ -837,22 +1045,20 @@ void QueryManager::CropSortedStatus(
     if (current_data.sorted_status.size() != 4) {
       throw std::runtime_error(
           "Cropping odd sorted sequence structures not supported currently!");
-    } else {
-      // Assuming the sorted status is correct.
-      if (current_data.sorted_status.at(end_offset) + 1 >
-          current_data.record_count) {
-        current_data.sorted_status[end_offset] =
-            std::max(current_data.record_count - 1, 0);
-        current_data.sorted_status[sequence_count] =
-            (current_data.record_count +
-             current_data.sorted_status[size_offset] - 1) /
-            current_data.sorted_status[size_offset];
-        // Check if it got cropped so much that it got sorted.
-        if (current_data.sorted_status[sequence_count] == 1) {
-          current_data.sorted_status[size_offset] = current_data.record_count;
-        }
-      }  // Else it's all fine!
-    }
+    }  // Assuming the sorted status is correct.
+    if (current_data.sorted_status.at(end_offset) + 1 >
+        current_data.record_count) {
+      current_data.sorted_status[end_offset] =
+          std::max(current_data.record_count - 1, 0);
+      current_data.sorted_status[sequence_count] =
+          (current_data.record_count + current_data.sorted_status[size_offset] -
+           1) /
+          current_data.sorted_status[size_offset];
+      // Check if it got cropped so much that it got sorted.
+      if (current_data.sorted_status[sequence_count] == 1) {
+        current_data.sorted_status[size_offset] = current_data.record_count;
+      }
+    }  // Else it's all fine!
   }
 }
 
@@ -869,7 +1075,8 @@ void QueryManager::AddQueryNodes(
       operation_params.push_back(
           node->given_operation_parameters.operation_parameters.at(
               run_data.run_index));
-      // For merge sort it is only 1 input - Give min module size for calculating buffer size.
+      // For merge sort it is only 1 input - Give min module size for
+      // calculating buffer size.
       input_params[0].smallest_module_size = *std::min_element(
           operation_params.at(1).begin(), operation_params.at(1).end());
     }

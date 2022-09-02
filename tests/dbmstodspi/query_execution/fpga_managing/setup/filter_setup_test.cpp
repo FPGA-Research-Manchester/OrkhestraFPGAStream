@@ -25,6 +25,7 @@ const int kExpectedChunkId = 1;
 const int kExpectedPosition = 14;
 const int kInputStreamId = 0;
 const int kOutputStreamId = 1;
+const std::vector<int> capacity = {8, 1};
 
 using orkhestrafs::dbmstodspi::FilterSetup;
 using orkhestrafs::dbmstodspi::module_config_values::FilterCompareFunctions;
@@ -38,7 +39,7 @@ TEST(FilterSetupTest, FilterStreamsSetting) {
                                               kOutputStreamId))
       .Times(1);
   FilterSetup::SetupFilterModule(mock_filter, kInputStreamId, kOutputStreamId,
-                                 kFilterConfigData);
+                                 kFilterConfigData, capacity);
 }
 TEST(FilterSetupTest, FilterModesSetting) {
   bool expected_request_on_invalid_if_last = true;
@@ -57,7 +58,7 @@ TEST(FilterSetupTest, FilterModesSetting) {
                             expected_last_module_in_resource_elastic_chain))
       .Times(1);
   FilterSetup::SetupFilterModule(mock_filter, kInputStreamId, kOutputStreamId,
-                                 kFilterConfigData);
+                                 kFilterConfigData, capacity);
 }
 TEST(FilterSetupTest, CompareTypesSetting) {
   MockFilter mock_filter;
@@ -67,7 +68,7 @@ TEST(FilterSetupTest, CompareTypesSetting) {
                                     testing::_, testing::_, testing::_))
       .Times(1);
   FilterSetup::SetupFilterModule(mock_filter, kInputStreamId, kOutputStreamId,
-                                 kFilterConfigData);
+                                 kFilterConfigData, capacity);
 }
 TEST(FilterSetupTest, ReferenceValuesSetting) {
   int expected_compare_reference_value = 12000;
@@ -79,7 +80,7 @@ TEST(FilterSetupTest, ReferenceValuesSetting) {
                                expected_compare_reference_value))
       .Times(1);
   FilterSetup::SetupFilterModule(mock_filter, kInputStreamId, kOutputStreamId,
-                                 kFilterConfigData);
+                                 kFilterConfigData, capacity);
 }
 TEST(FilterSetupTest, DNFClauseSetting) {
   int expected_compare_unit_index = 0;
@@ -92,9 +93,9 @@ TEST(FilterSetupTest, DNFClauseSetting) {
                                         LiteralTypes::kLiteralPositive))
       .Times(1);
   FilterSetup::SetupFilterModule(mock_filter, kInputStreamId, kOutputStreamId,
-                                 kFilterConfigData);
+                                 kFilterConfigData, capacity);
 }
-TEST(FilterSetupTest, CorrectFilterCalled) {
+TEST(FilterSetupTest, CorrectLargeFilterCalled) {
   int expected_datapath_width = 16;
   MockFilter mock_filter;
   EXPECT_CALL(mock_filter, WriteDNFClauseLiteralsToFilter_1CMP_8DNF(testing::_))
@@ -106,6 +107,21 @@ TEST(FilterSetupTest, CorrectFilterCalled) {
                                expected_datapath_width))
       .Times(1);
   FilterSetup::SetupFilterModule(mock_filter, kInputStreamId, kOutputStreamId,
-                                 kFilterConfigData);
+                                 kFilterConfigData, {32, 4});
+}
+
+TEST(FilterSetupTest, CorrectSmallFilterCalled) {
+  int expected_datapath_width = 16;
+  MockFilter mock_filter;
+  EXPECT_CALL(mock_filter,
+              WriteDNFClauseLiteralsToFilter_1CMP_8DNF(expected_datapath_width))
+      .Times(1);
+  EXPECT_CALL(mock_filter,
+              WriteDNFClauseLiteralsToFilter_2CMP_16DNF(testing::_))
+      .Times(0);
+  EXPECT_CALL(mock_filter, WriteDNFClauseLiteralsToFilter_4CMP_32DNF(testing::_))
+      .Times(0);
+  FilterSetup::SetupFilterModule(mock_filter, kInputStreamId, kOutputStreamId,
+                                 kFilterConfigData, capacity);
 }
 }  // namespace

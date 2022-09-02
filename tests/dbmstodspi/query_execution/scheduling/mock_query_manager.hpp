@@ -42,8 +42,15 @@ class MockQueryManager : public QueryManagerInterface {
   using QueryNodeVector = std::vector<QueryNode*>;
   using Counter = std::unordered_map<std::string, int>;
   using Matrix = std::vector<std::vector<int>>;
+  using HWLibrary = std::map<QueryOperationType, OperationPRModules>;
 
  public:
+  MOCK_METHOD(std::vector<long>, GetData, (), (override));
+  MOCK_METHOD(long, GetConfigTime, (), (override));
+  MOCK_METHOD(void, MeasureBitstreamConfigurationSpeed,
+              (const HWLibrary& hw_library,
+               orkhestrafs::dbmstodspi::MemoryManagerInterface* memory_manager),
+              (override));
   MOCK_METHOD(ReuseLinks, GetCurrentLinks,
               (std::queue<ReuseLinks> & all_reuse_links), (override));
   MOCK_METHOD(ExecutionReadyNodes, SetupAccelerationNodesForExecution,
@@ -67,7 +74,8 @@ class MockQueryManager : public QueryManagerInterface {
                MappedMemoryBlocks& table_memory_blocks,
                const MappedResultParameters& result_parameters,
                const std::vector<AcceleratedQueryNode>& execution_query_nodes,
-               TableMap& scheduling_table_data, Counter& table_counter),
+               TableMap& scheduling_table_data, Counter& table_counter,
+               int timeout),
               (override));
   MOCK_METHOD(
       (std::queue<std::pair<std::vector<ScheduledModule>, QueryNodeVector>>),
@@ -79,15 +87,17 @@ class MockQueryManager : public QueryManagerInterface {
        AcceleratorLibraryInterface& drivers, const Config& config,
        NodeSchedulerInterface& node_scheduler,
        const std::vector<ScheduledModule>& current_configuration,
-       std::unordered_set<std::string>& skipped_nodes, Counter& table_counter),
+       std::unordered_set<std::string>& skipped_nodes, Counter& table_counter,
+       const std::unordered_set<std::string>& blocked_nodes),
       (override));
   MOCK_METHOD(void, LoadInitialStaticBitstream,
-              (MemoryManagerInterface * memory_manager), (override));
+              (MemoryManagerInterface * memory_manager, int clock_speed),
+              (override));
   MOCK_METHOD(void, LoadEmptyRoutingPRRegion,
               (MemoryManagerInterface * memory_manager,
                AcceleratorLibraryInterface& driver_library),
               (override));
-  MOCK_METHOD(void, LoadPRBitstreams,
+  MOCK_METHOD(long, LoadPRBitstreams,
               (MemoryManagerInterface * memory_manager,
                const std::vector<std::string>& bitstream_names,
                AcceleratorLibraryInterface& driver_library),
@@ -97,7 +107,7 @@ class MockQueryManager : public QueryManagerInterface {
               GetPRBitstreamsToLoadWithPassthroughModules,
               (std::vector<ScheduledModule> & current_config,
                const std::vector<ScheduledModule>& next_config,
-               int column_count),
+               std::vector<std::string>& current_routing),
               (override));
   MOCK_METHOD((void), BenchmarkScheduling,
               (const std::unordered_set<std::string>& first_node_names,
@@ -106,10 +116,12 @@ class MockQueryManager : public QueryManagerInterface {
                const SchedulingNodeMap& graph, TableMap& tables,
                AcceleratorLibraryInterface& drivers, const Config& config,
                NodeSchedulerInterface& node_scheduler,
-               std::vector<ScheduledModule>& current_configuration),
+               std::vector<ScheduledModule>& current_configuration,
+               const std::unordered_set<std::string>& blocked_nodes),
               (override));
   MOCK_METHOD((void), PrintBenchmarkStats, (), (override));
-  MOCK_METHOD((int), GetRecordSizeFromParameters, (const DataManagerInterface* data_manager,
-               const Matrix& node_parameters,
-      int stream_index), (const override));
+  MOCK_METHOD((int), GetRecordSizeFromParameters,
+              (const DataManagerInterface* data_manager,
+               const Matrix& node_parameters, int stream_index),
+              (const override));
 };

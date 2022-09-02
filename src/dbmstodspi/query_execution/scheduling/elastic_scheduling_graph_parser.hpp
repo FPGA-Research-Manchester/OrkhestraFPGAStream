@@ -51,7 +51,8 @@ class ElasticSchedulingGraphParser {
           heuristics,
       std::unordered_set<std::string> constrained_first_nodes,
       AcceleratorLibraryInterface& drivers, const bool use_max_runs_cap,
-      const bool reduce_single_runs)
+      const bool reduce_single_runs, const bool prioritise_children,
+      const bool use_single_runs)
       : hw_library_{hw_library},
         heuristics_{std::move(heuristics)},
         statistics_counters_{0, 0},
@@ -61,6 +62,8 @@ class ElasticSchedulingGraphParser {
         trigger_timeout_{false},
         use_max_runs_cap_{use_max_runs_cap},
         reduce_single_runs_{reduce_single_runs},
+        prioritise_children_{prioritise_children},
+        use_single_runs_{use_single_runs},
 
         min_runs_{std::numeric_limits<int>::max()},
         pre_scheduler_{hw_library, drivers} {};
@@ -105,6 +108,8 @@ class ElasticSchedulingGraphParser {
            ExecutionPlanSchedulingData>
       resulting_plan_;
   const bool reduce_single_runs_;
+  const bool prioritise_children_;
+  const bool use_single_runs_;
   PreSchedulingProcessor pre_scheduler_;
 
   /*struct CustomCmp {
@@ -237,13 +242,16 @@ class ElasticSchedulingGraphParser {
       bool is_composed) -> bool;
 
   auto CurrentRunHasFirstModule(const std::vector<ScheduledModule>& current_run,
-                                const std::string& node_name) -> bool;
+                                const std::string& node_name,
+                                const QueryOperationType operation_type)
+      -> bool;
 
   auto RemoveUnavailableNodesInThisRun(
       const std::unordered_set<std::string>& available_nodes,
       const std::vector<ScheduledModule>& current_run,
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,
-      const std::unordered_set<std::string>& blocked_nodes)
+      const std::unordered_set<std::string>& blocked_nodes,
+      const std::map<std::string, TableMetadata>& data_tables)
       -> std::unordered_set<std::string>;
 
   static auto GetMinPositionInCurrentRun(

@@ -46,31 +46,33 @@ class MockNodeScheduler : public NodeSchedulerInterface {
   using ConfigurationVector = std::vector<ScheduledModule>;
 
  public:
-  MOCK_METHOD(ResultingPlanQueue, GetNextSetOfRuns,
-              (std::vector<QueryNode*> & query_nodes,
-               const std::unordered_set<std::string>& first_node_names,
-               std::unordered_set<std::string> starting_nodes, SchedulingNodeMap graph,
-               AcceleratorLibraryInterface& drivers, TableMap& tables,
-               const ConfigurationVector& current_configuration,
-               const Config& config,
-               std::unordered_set<std::string>& skipped_nodes,
-               Counter& table_counter),
-              (override));
+  MOCK_METHOD(long, GetTime, (), (override));
+  MOCK_METHOD(
+      ResultingPlanQueue, GetNextSetOfRuns,
+      (std::vector<QueryNode*> & query_nodes,
+       const std::unordered_set<std::string>& first_node_names,
+       std::unordered_set<std::string> starting_nodes, SchedulingNodeMap graph,
+       AcceleratorLibraryInterface& drivers, TableMap& tables,
+       const ConfigurationVector& current_configuration, const Config& config,
+       std::unordered_set<std::string>& skipped_nodes, Counter& table_counter,
+       const std::unordered_set<std::string>& blocked_nodes),
+      (override));
 
   MOCK_METHOD(AllPlans, ScheduleAndGetAllPlans,
-              (const std::unordered_set<std::string> & starting_nodes,
+              (const std::unordered_set<std::string>& starting_nodes,
                const std::unordered_set<std::string>& processed_nodes,
                const SchedulingNodeMap& graph, const TableMap& tables,
-               const Config& config),
+               const Config& config,
+               const std::unordered_set<std::string>& blocked_nodes),
               (override));
 
   MOCK_METHOD(void, BenchmarkScheduling,
               (const std::unordered_set<std::string>& first_node_names,
                std::unordered_set<std::string> starting_nodes,
                std::unordered_set<std::string>& processed_nodes,
-               SchedulingNodeMap graph,
-               AcceleratorLibraryInterface& drivers, TableMap& tables,
-               ConfigurationVector& current_configuration,
-               const Config& config, BenchmarkMap& benchmark_data),
+               SchedulingNodeMap graph, AcceleratorLibraryInterface& drivers,
+               TableMap& tables, ConfigurationVector& current_configuration,
+               const Config& config, BenchmarkMap& benchmark_data,
+               const std::unordered_set<std::string>& blocked_nodes),
               (override));
 };

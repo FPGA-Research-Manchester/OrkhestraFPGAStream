@@ -24,4 +24,5 @@ add_library(core_input
 target_include_directories(core_input PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(core_input 
                       PRIVATE core_interfaces
-                      PRIVATE dbmstodspi)
+                      PRIVATE dbmstodspi
+                      PRIVATE util)

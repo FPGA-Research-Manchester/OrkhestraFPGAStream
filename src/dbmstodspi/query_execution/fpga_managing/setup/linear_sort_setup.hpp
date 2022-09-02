@@ -30,7 +30,8 @@ class LinearSortSetup : public virtual AccelerationModuleSetupInterface,
                         public SortingModuleSetup {
  private:
   static void GetSortedSequenceWithCapacity(int bitstream_capacity,
-                                            int record_count, std::vector<int>& sorted_sequence);
+                                            int record_count,
+                                            std::vector<int>& sorted_sequence);
 
  public:
   void SetupModule(AccelerationModule& acceleration_module,
@@ -49,8 +50,9 @@ class LinearSortSetup : public virtual AccelerationModuleSetupInterface,
                        const std::vector<std::string>& input_table_names,
                        std::map<std::string, TableMetadata>& resulting_tables)
       -> bool override;
-  auto GetWorstCaseNodeCapacity(const std::vector<int>& min_capacity,
-      const std::vector<std::string>& input_tables,
+  auto GetWorstCaseNodeCapacity(
+      const std::vector<int>& module_capacity,
+      const std::vector<std::string>& input_table_names,
       const std::map<std::string, TableMetadata>& data_tables,
       QueryOperationType next_operation_type) -> std::vector<int> override;
   /**

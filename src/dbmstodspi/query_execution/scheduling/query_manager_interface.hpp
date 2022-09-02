@@ -57,6 +57,13 @@ namespace orkhestrafs::dbmstodspi {
  */
 class QueryManagerInterface {
  public:
+  virtual auto GetData() -> std::vector<long> = 0;
+  virtual auto GetConfigTime() -> long = 0;
+
+  virtual void MeasureBitstreamConfigurationSpeed(
+      const std::map<QueryOperationType, OperationPRModules>& hw_library,
+      MemoryManagerInterface* memory_manager) = 0;
+
   virtual ~QueryManagerInterface() = default;
   /**
    * @brief Get memory dependencies in the current run to save memory block
@@ -133,7 +140,7 @@ class QueryManagerInterface {
           result_parameters,
       const std::vector<AcceleratedQueryNode>& execution_query_nodes,
       std::map<std::string, TableMetadata>& scheduling_table_data,
-      std::unordered_map<std::string, int>& table_counter) = 0;
+      std::unordered_map<std::string, int>& table_counter, int timeout) = 0;
 
   /**
    * Method to schedule next set of nodes based on PR graph nodes.
@@ -160,7 +167,8 @@ class QueryManagerInterface {
       NodeSchedulerInterface& node_scheduler,
       const std::vector<ScheduledModule>& current_configuration,
       std::unordered_set<std::string>& skipped_nodes,
-      std::unordered_map<std::string, int>& table_counter)
+      std::unordered_map<std::string, int>& table_counter,
+      const std::unordered_set<std::string>& blocked_nodes)
       -> std::queue<
           std::pair<std::vector<ScheduledModule>, std::vector<QueryNode*>>> = 0;
 
@@ -172,7 +180,8 @@ class QueryManagerInterface {
       std::map<std::string, TableMetadata>& tables,
       AcceleratorLibraryInterface& drivers, const Config& config,
       NodeSchedulerInterface& node_scheduler,
-      std::vector<ScheduledModule>& current_configuration) = 0;
+      std::vector<ScheduledModule>& current_configuration,
+      const std::unordered_set<std::string>& blocked_nodes) = 0;
 
   /**
    * @brief Load the initial static system
@@ -180,7 +189,7 @@ class QueryManagerInterface {
    * bitstream.
    */
   virtual void LoadInitialStaticBitstream(
-      MemoryManagerInterface* memory_manager) = 0;
+      MemoryManagerInterface* memory_manager, int clock_speed) = 0;
 
   /**
    * @brief Load the empty PR region routing wires
@@ -199,10 +208,10 @@ class QueryManagerInterface {
    * @param bitstream_names Bitstreams to load
    * @param driver_library To get the DMA module to decouple from the PR region.
    */
-  virtual void LoadPRBitstreams(
-      MemoryManagerInterface* memory_manager,
-      const std::vector<std::string>& bitstream_names,
-      AcceleratorLibraryInterface& driver_library) = 0;
+  virtual auto LoadPRBitstreams(MemoryManagerInterface* memory_manager,
+                                const std::vector<std::string>& bitstream_names,
+                                AcceleratorLibraryInterface& driver_library)
+      -> long = 0;
 
   /**
    * @brief Find out which bitstreams have to be loaded next.
@@ -213,7 +222,8 @@ class QueryManagerInterface {
    */
   virtual auto GetPRBitstreamsToLoadWithPassthroughModules(
       std::vector<ScheduledModule>& current_config,
-      const std::vector<ScheduledModule>& next_config, int column_count)
+      const std::vector<ScheduledModule>& next_config,
+      std::vector<std::string>& current_routing)
       -> std::pair<std::vector<std::string>,
                    std::vector<std::pair<QueryOperationType, bool>>> = 0;
 

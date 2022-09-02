@@ -31,7 +31,8 @@ class ExecutionPlanGraphInterface {
  public:
   virtual ~ExecutionPlanGraphInterface() = default;
 
-  virtual void DeleteNodes(const std::unordered_set<std::string>& deleted_node_names) = 0;
+  virtual void DeleteNodes(
+      const std::unordered_set<std::string>& deleted_node_names) = 0;
   /**
    * @brief Check if there are any nodes held.
    * @return Boolean flag noting if there are any nodes.
@@ -47,5 +48,6 @@ class ExecutionPlanGraphInterface {
    * @return Vector of all nodes.
    */
   virtual auto GetAllNodesPtrs() -> std::vector<QueryNode*> = 0;
+  virtual void ImportNodes(std::vector<std::unique_ptr<QueryNode>> new_nodes) =0;
 };
 }  // namespace orkhestrafs::core_interfaces

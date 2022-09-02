@@ -34,9 +34,8 @@ struct ScheduledModule {
   std::string node_name;
   QueryOperationType operation_type;
   std::string bitstream;
-  std::pair<int, int> position; //First and last column indexes (inclusive)
+  std::pair<int, int> position;  // First and last column indexes (inclusive)
   bool is_composed;
-
 
   // For map to work.
   auto operator<(const ScheduledModule& rhs) const -> bool {

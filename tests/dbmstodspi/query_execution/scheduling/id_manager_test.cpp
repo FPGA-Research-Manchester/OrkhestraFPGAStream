@@ -91,10 +91,8 @@ TEST_F(IDManagerTest, DISABLED_SingleNodeNIn1Out) {
 }
 
 TEST_F(IDManagerTest, DISABLED_SingleNode1InMOut) {
-  std::vector<QueryNode*> previous_nodes = {
-      nullptr};
-  std::vector<QueryNode*> next_nodes = {nullptr, nullptr,
-                                                        nullptr, nullptr};
+  std::vector<QueryNode*> previous_nodes = {nullptr};
+  std::vector<QueryNode*> next_nodes = {nullptr, nullptr, nullptr, nullptr};
 
   std::vector<std::string> input_data_files = {""};
   std::vector<std::string> output_data_files = {"", "", "", ""};
@@ -114,8 +112,7 @@ TEST_F(IDManagerTest, DISABLED_SingleNode1InMOut) {
 
 TEST_F(IDManagerTest, DISABLED_SingleNodeNInMOut) {
   std::vector<QueryNode*> previous_nodes = {nullptr, nullptr};
-  std::vector<QueryNode*> next_nodes = {nullptr, nullptr,
-                                                        nullptr};
+  std::vector<QueryNode*> next_nodes = {nullptr, nullptr, nullptr};
 
   std::vector<std::string> input_data_files = {"", ""};
   std::vector<std::string> output_data_files = {"", "", ""};
@@ -134,14 +131,10 @@ TEST_F(IDManagerTest, DISABLED_SingleNodeNInMOut) {
 }
 
 TEST_F(IDManagerTest, DISABLED_TwoPipelinedNodes) {
-  auto first_node = QueryNode(one_data_file_vector_,
-                          one_data_file_vector_,
-                          base_operation_type_,
-                          empty_next_nodes_vector_,
-                          empty_previous_nodes_vector_,
-                          any_operation_parameters_,
-                          first_node_name_,
-                          any_is_checked_);
+  auto first_node = QueryNode(
+      one_data_file_vector_, one_data_file_vector_, base_operation_type_,
+      empty_next_nodes_vector_, empty_previous_nodes_vector_,
+      any_operation_parameters_, first_node_name_, any_is_checked_);
   auto second_node = QueryNode(
       one_data_file_vector_, one_data_file_vector_, base_operation_type_,
       empty_next_nodes_vector_, empty_previous_nodes_vector_,
@@ -164,8 +157,7 @@ TEST_F(IDManagerTest, DISABLED_TwoPipelinedNodes) {
 }
 
 TEST_F(IDManagerTest, DISABLED_TwoIndependentNodes) {
-  std::vector<QueryNode*> previous_nodes = {
-      nullptr};
+  std::vector<QueryNode*> previous_nodes = {nullptr};
   std::vector<QueryNode*> next_nodes = {nullptr};
 
   QueryNode first_node(one_data_file_vector_, one_data_file_vector_,
@@ -285,8 +277,7 @@ TEST_F(IDManagerTest, DISABLED_TwoPipelinedNodesWithDanglingInputs) {
 }
 
 TEST_F(IDManagerTest, DISABLED_TooManyStreamsError) {
-  std::vector<QueryNode*> previous_nodes = {
-      nullptr};
+  std::vector<QueryNode*> previous_nodes = {nullptr};
   std::vector<QueryNode*> next_nodes = {nullptr};
 
   std::vector<QueryNode> all_nodes;

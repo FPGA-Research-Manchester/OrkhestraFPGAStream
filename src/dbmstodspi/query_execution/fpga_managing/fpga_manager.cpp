@@ -26,23 +26,11 @@ limitations under the License.
 #include <chrono>
 #include <iomanip>
 
-#include "addition.hpp"
 #include "addition_setup.hpp"
 #include "aggregation_sum.hpp"
-#include "aggregation_sum_setup.hpp"
 #include "dma_setup.hpp"
-#include "filter.hpp"
-#include "filter_setup.hpp"
 #include "ila.hpp"
-#include "join.hpp"
-#include "join_setup.hpp"
-#include "linear_sort.hpp"
-#include "linear_sort_setup.hpp"
 #include "logger.hpp"
-#include "merge_sort.hpp"
-#include "merge_sort_setup.hpp"
-#include "multiplication.hpp"
-#include "multiplication_setup.hpp"
 #include "operation_types.hpp"
 #include "query_acceleration_constants.hpp"
 
@@ -59,6 +47,8 @@ void FPGAManager::SetupQueryAcceleration(
   dma_engine_->GlobalReset();
   read_back_modules_.clear();
   read_back_parameters_.clear();
+  read_back_streams_ids_.clear();
+  read_back_values_.clear();
 
   // if (ila_module_) {
   //  ila_module_->StartAxiILA();
@@ -102,10 +92,17 @@ void FPGAManager::SetupQueryAcceleration(
     auto readback_modules = module_library_->ExportLastModulesIfReadback();
     if (!readback_modules.empty()) {
       for (auto& readback_module : readback_modules) {
-        read_back_modules_.push_back(std::move(readback_module));
-        // Don't know how this will work out with combined readback modules as
-        // we don't have any at the moment.
-        read_back_parameters_.push_back(query_node.operation_parameters.at(1));
+        // Assuming there's only one input stream for readback modules currently
+        if (query_node.input_streams.front().stream_id != 15) {
+          read_back_modules_.push_back(std::move(readback_module));
+          // Don't know how this will work out with combined readback modules as
+          // we don't have any at the moment.
+          read_back_parameters_.push_back(
+              query_node.operation_parameters.at(1));
+          // Assuming one output
+          read_back_streams_ids_.push_back(
+              query_node.output_streams.front().stream_id);
+        }
       }
     }
   }
@@ -134,11 +131,11 @@ void FPGAManager::FindIOStreams(
   }
 }
 
-auto FPGAManager::RunQueryAcceleration()
+auto FPGAManager::RunQueryAcceleration(
+    int timeout, std::map<int, std::vector<double>>& read_back_values)
     -> std::array<int, query_acceleration_constants::kMaxIOStreamCount> {
   std::vector<int> active_input_stream_ids;
   std::vector<int> active_output_stream_ids;
-
   // This can be expanded on in the future with multi threaded processing where
   // some streams are checked while others are being setup and fired.
   FindActiveStreams(active_input_stream_ids, active_output_stream_ids);
@@ -149,11 +146,11 @@ auto FPGAManager::RunQueryAcceleration()
 
   std::chrono::steady_clock::time_point begin =
       std::chrono::steady_clock::now();
-  WaitForStreamsToFinish();
+  WaitForStreamsToFinish(timeout);
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
 #ifdef FPGA_AVAILABLE
-  ReadResultsFromRegisters();
+  ReadResultsFromRegisters(read_back_values);
 #endif
 
   Log(LogLevel::kInfo,
@@ -163,7 +160,7 @@ auto FPGAManager::RunQueryAcceleration()
                   .count()) +
           "[microseconds]");
 
-  // PrintDebuggingData();
+  PrintDebuggingData();
   return GetResultingStreamSizes(active_input_stream_ids,
                                  active_output_stream_ids);
 }
@@ -183,17 +180,18 @@ void FPGAManager::FindActiveStreams(
   }
 }
 
-void FPGAManager::WaitForStreamsToFinish() {
+void FPGAManager::WaitForStreamsToFinish(int timeout) {
   dma_engine_->StartController(false, output_streams_active_status_);
-
-  /*auto test = dma_engine_->IsControllerFinished(true);
-  auto test1 = dma_engine_->IsControllerFinished(true);
-  auto test2 = dma_engine_->IsControllerFinished(false);
-  auto test3 = dma_engine_->IsControllerFinished(false);*/
-
 #ifdef FPGA_AVAILABLE
+  std::chrono::steady_clock::time_point begin =
+      std::chrono::steady_clock::now();
   while (!(dma_engine_->IsControllerFinished(true) &&
            dma_engine_->IsControllerFinished(false))) {
+    if (std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::steady_clock::now() - begin)
+            .count() > timeout) {
+      throw std::runtime_error("Execution timed out!");
+    }
     // sleep(3);
     // std::cout << "Processing..." << std::endl;
     // std::cout << "Input:"
@@ -206,17 +204,24 @@ void FPGAManager::WaitForStreamsToFinish() {
 #endif
 }
 
-void FPGAManager::ReadResultsFromRegisters() {
+void FPGAManager::ReadResultsFromRegisters(
+    std::map<int, std::vector<double>>& read_back_values) {
   if (!read_back_modules_.empty()) {
     // Assuming there are equal number of read back modules and parameters
     for (int module_index = 0; module_index < read_back_modules_.size();
          module_index++) {
+      read_back_values.insert({read_back_streams_ids_.at(module_index), {}});
       for (auto const& position : read_back_parameters_.at(module_index)) {
-        std::cout << "SUM: " << std::fixed << std::setprecision(2)
+        /*std::cout << "SUM: " << std::fixed << std::setprecision(2)
                   << ReadModuleResultRegisters(
                          std::move(read_back_modules_.at(module_index)),
                          position)
-                  << std::endl;
+                  << std::endl;*/
+        // TODO: error here if you read from the read back module more than once
+        // due to move!
+        read_back_values.at(read_back_streams_ids_.at(module_index))
+            .push_back(ReadModuleResultRegisters(
+                std::move(read_back_modules_.at(module_index)), position));
       }
     }
   }
@@ -249,7 +254,7 @@ auto FPGAManager::GetResultingStreamSizes(
 
 void FPGAManager::PrintDebuggingData() {
 #ifdef FPGA_AVAILABLE
-  auto log_level = LogLevel::kDebug;
+  auto log_level = LogLevel::kTrace;
   Log(log_level, "Runtime: " + std::to_string(dma_engine_->GetRuntime()));
   Log(log_level, "ValidReadCount: " +
                      std::to_string(dma_engine_->GetValidReadCyclesCount()));

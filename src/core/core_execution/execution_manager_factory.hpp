@@ -36,7 +36,7 @@ class ExecutionManagerFactory {
    * @return A smart pointer to the execution manager class to execute the FSM
    * with.
    */
-  static auto GetManager(const Config& config)
+  static auto GetManager(const Config& config, bool is_interactive)
       -> std::unique_ptr<ExecutionManagerInterface>;
 };
 }  // namespace orkhestrafs::core::core_execution

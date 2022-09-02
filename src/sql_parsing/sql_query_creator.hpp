@@ -44,21 +44,21 @@ using InputNodeParameters =
  */
 class SQLQueryCreator {
  private:
-  const std::string input_files_string = "input";
-  const std::string output_files_string = "output";
-  const std::string input_nodes_string = "previous_nodes";
-  const std::string output_nodes_string = "next_nodes";
-  const std::string operation_string = "operation";
-  const std::string operation_parameters_string = "operation_parameters";
-  const std::string input_parameters_string = "input_stream_params";
-  const std::string output_parameters_string = "output_stream_params";
-  const std::string operation_specific_params_string = "operation_params";
+  const std::string input_files_string_ = "input";
+  const std::string output_files_string_ = "output";
+  const std::string input_nodes_string_ = "previous_nodes";
+  const std::string output_nodes_string_ = "next_nodes";
+  const std::string operation_string_ = "operation";
+  const std::string operation_parameters_string_ = "operation_parameters";
+  const std::string input_parameters_string_ = "input_stream_params";
+  const std::string output_parameters_string_ = "output_stream_params";
+  const std::string operation_specific_params_string_ = "operation_params";
 
-  const int io_param_vector_count = 4;
-  const int crossbar_offset = 0;
-  const int data_types_offset = 1;
-  const int data_sizes_offset = 2;
-  const int chunk_count_offset = 3;
+  const int io_param_vector_count_ = 4;
+  const int crossbar_offset_ = 0;
+  const int data_types_offset_ = 1;
+  const int data_sizes_offset_ = 2;
+  const int chunk_count_offset_ = 3;
 
   const std::unordered_map<QueryOperationType, std::string> operation_names_ = {
       {QueryOperationType::kFilter, "Filter"},
@@ -77,16 +77,16 @@ class SQLQueryCreator {
           {QueryOperationType::kAddition, "kAddition"},
           {QueryOperationType::kMultiplication, "kMultiplication"},
           {QueryOperationType::kAggregationSum, "kAggregationSum"}};
-  // TODO: Has to be made global static variable!
+  // TODO(Kaspar): Has to be made global static variable!
   const std::unordered_map<ColumnDataType, double> column_sizes_ = {
       {ColumnDataType::kVarchar, 0.25},
       {ColumnDataType::kDate, 1},
       {ColumnDataType::kDecimal, 2},
       {ColumnDataType::kInteger, 1},
       {ColumnDataType::kNull, 1}};
-  // TODO: Has to be made global static variable - And be linked to the
+  // TODO(Kaspar): Has to be made global static variable - And be linked to the
   // module_config_values.hpp!
-  const std::unordered_map<CompareFunctions, int> compare_function_mapping{
+  const std::unordered_map<CompareFunctions, int> compare_function_mapping_{
       {CompareFunctions::kLessThan, 0},
       {CompareFunctions::kLessThanOrEqual, 1},
       {CompareFunctions::kEqual, 2},
@@ -94,6 +94,8 @@ class SQLQueryCreator {
       {CompareFunctions::kGreaterThan, 4},
       {CompareFunctions::kNotEqual, 5}};
 
+  std::unordered_map<std::string, std::unordered_map<std::string, int>>
+      filter_comparison_column_counts_;
   std::unordered_map<std::string, std::unordered_map<int, std::vector<int>>>
       filter_operations_relations_;
   std::unordered_map<std::string, std::unordered_map<int, bool>> is_and_;
@@ -104,10 +106,19 @@ class SQLQueryCreator {
   std::unordered_set<std::string> input_operations_;
   std::unordered_set<std::string> output_operations_;
   std::unordered_map<std::string, std::pair<ColumnDataType, int>> columns_;
+  std::unordered_map<std::string, std::vector<std::string>> duplicated_columns_;
+  std::unordered_map<std::string, std::string> original_of_an_duplicated_column_;
   std::unordered_map<std::string, OperationData> operations_;
   std::unordered_map<std::string, std::vector<std::string>> tables_;
   std::unordered_map<std::string, std::string> column_renaming_map_;
 
+  // temp global variables.
+  int join_offset_ = -1;
+  std::string required_join_offset_ = "";
+  std::string generate_join_offset_ = "";
+
+  auto GetComparisonColumnName(const std::string& filter_id,
+                               const std::string& column_name) -> std::string;
   auto FlattenClauses(const std::string& current_process, int child_term_id,
                       int current_term_id, int new_current_term_id) -> int;
   // Replace ORs in ANDs with A new big OR with ANDs to replace the big AND.
@@ -116,7 +127,7 @@ class SQLQueryCreator {
                      int current_term_id, int new_current_term_id) -> int;
   auto TransformToDnf(const std::string& current_process, int current_term_id)
       -> int;
-  auto IsLiteral(const std::string& current_process, int clause_id) -> bool;
+  auto IsLiteral(const std::string& current_process, int term_id) -> bool;
 
   void SetAdditionStreamParams(
       const std::string& current_process,
@@ -148,12 +159,12 @@ class SQLQueryCreator {
       std::unordered_set<std::string>& processed_operations,
       std::unordered_set<std::string>& operations_to_process);
   auto ProcessTableColumns(const std::string& current_process, int parent_index,
-                           std::string table_name) -> int;
+                           const std::string& table_name) -> int;
   auto CompressNullColumns(const std::string& current_process, int stream_index,
-                           int last_needed_column_index) -> int;
+                           int used_column_count) -> int;
   void CopyOutputParamsOfParent(const std::string& current_process,
-                                int parent_index, std::string parent);
-  void CombineOutputStreamParams(const std::string& current_process);
+                                int parent_index, const std::string& parent, int record_size);
+  void CombineOutputStreamParams(const std::string& current_process, int& record_size);
   auto SetIOStreamParams(const std::string& current_process) -> int;
   void SetStreamParamsForDataMap(const std::string& current_process,
                                  InputNodeParameters& current_parameters);
@@ -161,7 +172,7 @@ class SQLQueryCreator {
                    std::unordered_set<std::string> operations_to_process,
                    std::map<std::string, InputNodeParameters>& data_to_write);
   void SetOperationSpecificStreamParamsForDataMap(
-      std::string current_process,
+      const std::string& current_process,
       std::map<std::string, OperationParams>& current_operation_params);
   void AddColumnFilteringParams(
       const std::string& current_process, int location,
@@ -182,10 +193,11 @@ class SQLQueryCreator {
   auto PlaceColumnsToDesiredPositions(const std::string& current_process,
                                       int stream_index,
                                       int last_needed_column_index,
-                                      std::string table_name, int record_size) -> int;
+                                      std::string table_name, int record_size)
+      -> int;
   auto MapColumnPositions(
       const std::string& current_process, int stream_index,
-      int last_needed_column_index, std::string table_name,
+      int last_needed_column_index, const std::string& table_name,
       std::map<std::string, std::vector<int>>& column_positions) -> int;
   void PlaceColumnsThatSpanOverMultipleChunks(
       std::vector<std::vector<int>>& crossbar_configuration,
@@ -198,7 +210,7 @@ class SQLQueryCreator {
       std::map<int, std::vector<std::string>>&
           current_available_desired_columns,
       std::map<std::string, std::vector<int>>& left_over_availability);
-  void RemoveUnavailablePositions(
+  static void RemoveUnavailablePositions(
       std::map<int, std::vector<std::string>>&
           current_available_desired_columns,
       std::map<std::string, std::vector<int>>& left_over_availability,
@@ -211,7 +223,7 @@ class SQLQueryCreator {
       std::vector<std::vector<int>>& crossbar_configuration,
       std::vector<std::string>& chosen_columns,
       const std::map<std::string, std::vector<int>>& column_positions,
-      const std::map<std::string, std::string>& pairing_map);
+      const std::map<std::string, std::string>& pairing_map, int offset, int stream_index);
   void SetColumnPlace(
       std::map<int, std::vector<std::string>>&
           current_available_desired_columns,
@@ -220,8 +232,9 @@ class SQLQueryCreator {
       std::vector<std::string>& chosen_columns,
       const std::map<std::string, std::vector<int>>& column_positions,
       const std::string& chosen_column_name, int chosen_location,
-      const std::map<std::string, std::string>& pairing_map);
-  auto UsesMultipleChunks(std::vector<int> position_vector) -> bool;
+      const std::map<std::string, std::string>& pairing_map,
+      const std::string& current_process);
+  static auto UsesMultipleChunks(std::vector<int> position_vector) -> bool;
   void PlaceColumnsToPositionsWithOneAvailableLocation(
       std::map<int, std::vector<std::string>>&
           current_available_desired_columns,
@@ -229,7 +242,8 @@ class SQLQueryCreator {
       std::vector<std::vector<int>>& crossbar_configuration,
       std::vector<std::string>& chosen_columns,
       const std::map<std::string, std::vector<int>>& column_positions,
-      const std::map<std::string, std::string>& pairing_map);
+      const std::map<std::string, std::string>& pairing_map,
+      const std::string& current_process);
   void PlaceGivenColumnsToGivenDesiredLocations(
       std::map<int, std::vector<std::string>>&
           current_available_desired_columns,
@@ -237,8 +251,9 @@ class SQLQueryCreator {
       std::vector<std::vector<int>>& crossbar_configuration,
       std::vector<std::string>& chosen_columns,
       const std::map<std::string, std::vector<int>>& column_positions,
-      const std::map<std::string, std::string>& pairing_map);
-  void SetJoinOffsetParam(const std::string& current_process);
+      const std::map<std::string, std::string>& pairing_map,
+      const std::string& current_process);
+  void SetJoinOffsetParam(const std::string& current_process, int offset, int stream_index);
   void CleanAvailablePositionsAndPlaceColumns(
       std::map<int, std::vector<std::string>>&
           current_available_desired_columns,
@@ -258,30 +273,39 @@ class SQLQueryCreator {
                      int row_count) -> std::string;
   auto RegisterFilter(std::string input) -> std::string;
   auto RegisterSort(std::string input, std::string column_name) -> std::string;
-  auto RegisterJoin(std::string first_input, std::string first_join_key,
-                    std::string second_input, std::string second_join_key)
-      -> std::string;
+  auto RegisterJoin(std::string first_input, const std::string& first_join_key,
+                    std::string second_input,
+                    const std::string& second_join_key) -> std::string;
   auto RegisterAddition(std::string input, std::string column_name,
                         bool make_negative, double value) -> std::string;
-  auto RegisterMultiplication(std::string input, std::string first_column_name,
-                              std::string second_column_name,
-                              std::string result_column_name) -> std::string;
+  auto RegisterMultiplication(std::string input,
+                              const std::string& first_column_name,
+                              const std::string& second_column_name,
+                              const std::string& result_column_name)
+      -> std::string;
   auto RegisterAggregation(std::string input, std::string column_name)
       -> std::string;
-  auto AddStringComparison(std::string filter_id, std::string column_name,
+  auto AddStringComparison(const std::string& filter_id,
+                           const std::string& column_name,
                            CompareFunctions comparison_type,
-                           std::string compare_value) -> int;
-  auto AddDateComparison(std::string filter_id, std::string column_name,
+                           const std::string& compare_value) -> int;
+  auto AddDateComparison(const std::string& filter_id,
+                         const std::string& column_name,
                          CompareFunctions comparison_type, int year, int month,
                          int day) -> int;
-  auto AddIntegerComparison(std::string filter_id, std::string column_name,
+  auto AddIntegerComparison(const std::string& filter_id,
+                            const std::string& column_name,
                             CompareFunctions comparison_type, int compare_value)
       -> int;
-  auto AddDoubleComparison(std::string filter_id, std::string column_name,
+  auto AddDoubleComparison(const std::string& filter_id,
+                           const std::string& column_name,
                            CompareFunctions comparison_type,
                            double compare_value) -> int;
-  auto AddOr(std::string filter_id, std::vector<int> comparison_ids) -> int;
-  auto AddAnd(std::string filter_id, std::vector<int> comparison_ids) -> int;
-  auto AddNot(std::string filter_id, std::vector<int> comparison_ids) -> int;
+  auto AddOr(const std::string& filter_id,
+             const std::vector<int>& comparison_ids) -> int;
+  auto AddAnd(const std::string& filter_id,
+              const std::vector<int>& comparison_ids) -> int;
+  static auto AddNot(const std::string& filter_id,
+                     const std::vector<int>& comparison_ids) -> int;
 };
 }  // namespace orkhestrafs::sql_parsing

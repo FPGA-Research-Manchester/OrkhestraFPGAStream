@@ -44,15 +44,15 @@ class RunLinker {
    * @return New queue with updated nodes
    */
   static auto LinkPeripheralNodesFromGivenRuns(
-      std::queue<std::pair<std::vector<ScheduledModule>,
-                           std::vector<QueryNode*>>>
+      std::queue<
+          std::pair<std::vector<ScheduledModule>, std::vector<QueryNode*>>>
           query_node_runs_queue,
       std::queue<
           std::map<std::string,
                    std::map<int, std::vector<std::pair<std::string, int>>>>>&
           linked_nodes)
-      -> std::queue<std::pair<std::vector<ScheduledModule>,
-                              std::vector<QueryNode*>>>;
+      -> std::queue<
+          std::pair<std::vector<ScheduledModule>, std::vector<QueryNode*>>>;
 
  private:
   static void CheckExternalLinks(
@@ -66,8 +66,7 @@ class RunLinker {
                           const QueryNode& target_node) -> bool;
   static auto IsNodeMissingFromTheVector(
       const QueryNode* linked_node,
-      const std::vector<QueryNode*>& current_query_nodes)
-      -> bool;
+      const std::vector<QueryNode*>& current_query_nodes) -> bool;
   static auto FindPreviousNodeLocation(
       const std::vector<QueryNode*>& previous_nodes,
       const QueryNode* previous_node) -> int;

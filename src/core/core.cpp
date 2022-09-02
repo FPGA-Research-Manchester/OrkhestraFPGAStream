@@ -16,7 +16,6 @@ limitations under the License.
 
 #include "core.hpp"
 
-
 #include "core_execution/execution_manager_factory.hpp"
 #include "core_input/input_manager_factory.hpp"
 #include "input_manager_interface.hpp"
@@ -25,11 +24,11 @@ using orkhestrafs::core::Core;
 using orkhestrafs::core::core_execution::ExecutionManagerFactory;
 using orkhestrafs::core::core_input::InputManagerFactory;
 
-void Core::Run(std::string input_filename, std::string config_filename) {
+void Core::Run(std::string input_filename, std::string config_filename, bool is_interactive) {
   // Could be done as a one liner but additional future logic is expected here
   // to be passed to the factories.
   auto input = InputManagerFactory::GetManager()->Parse(
       std::move(input_filename), std::move(config_filename));
-  ExecutionManagerFactory::GetManager(input.second)
+  ExecutionManagerFactory::GetManager(input.second, is_interactive)
       ->Execute(std::move(input.first));
 }

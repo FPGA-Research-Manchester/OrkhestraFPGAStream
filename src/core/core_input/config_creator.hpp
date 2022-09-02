@@ -46,6 +46,12 @@ class ConfigCreator {
   std::unique_ptr<JSONValidatorInterface> json_validator_;
   std::unique_ptr<ConfigValueCheckerInterface> config_validator_;
 
+  static void CheckBitstreamsExist(
+      const std::map<QueryOperationType, OperationPRModules>& hw_library);
+
+  static void CheckTablesExist(
+      const std::map<std::string, TableMetadata>& tables_data);
+
   static auto ConvertStringMapToQueryOperations(
       const std::map<std::vector<std::pair<std::string, std::vector<int>>>,
                      std::string>& string_map)
@@ -57,9 +63,8 @@ class ConfigCreator {
       -> std::map<QueryOperationType, std::vector<std::vector<int>>>;
 
   static auto CreateTablesData(
-      const std::vector<
-          std::map<std::string, std::variant<std::string, int,
-                                             std::vector<int>>>>&
+      const std::vector<std::map<
+          std::string, std::variant<std::string, int, std::vector<int>>>>&
           tables_data_in_string_form) -> std::map<std::string, TableMetadata>;
 
   static auto CreateHWLibrary(

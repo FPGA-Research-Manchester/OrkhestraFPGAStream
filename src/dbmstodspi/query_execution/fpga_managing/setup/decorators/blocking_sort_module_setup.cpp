@@ -44,7 +44,6 @@ auto BlockingSortModuleSetup::GetWorstCaseProcessedTables(
       0, resulting_tables[output_table_names.front()].record_count - 1,
       resulting_tables[output_table_names.front()].record_count, 1};
   return std::move(resulting_tables);
-
 }
 
 auto BlockingSortModuleSetup::UpdateDataTable(
@@ -68,18 +67,12 @@ auto BlockingSortModuleSetup::UpdateDataTable(
 
   // So you put stuff into a linked table?
 
-
   // I take some sequences from current table.
   // I merge them all to another table.
-  // If I can merge them all to a sorted table. -> Then just don't do anything -> Say somehow that this node is completed
-  // If not completed
-  // Then just yh update the current table by adding more sorted sequences.
-  // If we're creating a 
-
-
-
-
-
+  // If I can merge them all to a sorted table. -> Then just don't do anything
+  // -> Say somehow that this node is completed If not completed Then just yh
+  // update the current table by adding more sorted sequences. If we're creating
+  // a
 
   auto& sorted_status =
       resulting_tables.at(input_table_names.front()).sorted_status;
@@ -97,26 +90,28 @@ auto BlockingSortModuleSetup::UpdateDataTable(
     return false;
   }
 
-  // TODO: Remove this old code 
-  //const auto& table_name = input_table_names.front();
-  //std::vector<int> new_sorted_sequences;
+  // TODO: Remove this old code
+  // const auto& table_name = input_table_names.front();
+  // std::vector<int> new_sorted_sequences;
 
-  //new_sorted_sequences.reserve(
+  // new_sorted_sequences.reserve(
   //    resulting_tables.at(table_name).sorted_status.size());
-  //if (resulting_tables.at(table_name).sorted_status.empty()) {
+  // if (resulting_tables.at(table_name).sorted_status.empty()) {
   //    // TODO: Fix this.
   //  throw std::runtime_error("Merge sorter can't sort from 0 currently");
   //} else {
   //  SortDataTableWhileMinimizingMinorRuns(
   //      resulting_tables.at(table_name).sorted_status, new_sorted_sequences,
-  //      resulting_tables.at(table_name).record_count, module_capacity.front());
+  //      resulting_tables.at(table_name).record_count,
+  //      module_capacity.front());
   //  //  SortDataTableWhileMinimizingMajorRuns(
-  //  //      resulting_tables.at(table_name).sorted_status, new_sorted_sequences,
+  //  //      resulting_tables.at(table_name).sorted_status,
+  //  new_sorted_sequences,
   //  //      resulting_tables.at(table_name).record_count,
   //  //      module_capacity.front());
   //}
 
-  //resulting_tables.at(table_name).sorted_status =
+  // resulting_tables.at(table_name).sorted_status =
   //    std::move(new_sorted_sequences);
   /*return QuerySchedulingHelper::IsTableSorted(
       resulting_tables.at(input_table_names.front()));*/
@@ -152,7 +147,7 @@ void BlockingSortModuleSetup::SortDataTableWhileMinimizingMajorRuns(
     int module_capacity) {
   // Assuming the sequences are not empty and they're in correct order.
   // TODO: Remove this error
-    // Not supported currently!
+  // Not supported currently!
   /* int old_sequence_length = 0;
   for (const auto& sequence : old_sorted_sequences) {
     old_sequence_length += sequence.length;
@@ -169,26 +164,29 @@ void BlockingSortModuleSetup::SortDataTableWhileMinimizingMajorRuns(
     int window_count = old_sorted_sequences.size() + 1 - module_capacity;
     std::vector<int> window_lengths (window_count, 0);
     // TODO: Make this one more clever.
-    for (int window_location = 0; window_location<window_count; window_location++){
-      for (int sequence_index = window_location; sequence_index<window_location+record_count; sequence_index++){
+    for (int window_location = 0; window_location<window_count;
+  window_location++){ for (int sequence_index = window_location;
+  sequence_index<window_location+record_count; sequence_index++){
         window_lengths[window_location]+=old_sorted_sequences[sequence_index].length;
       }
     }
-    int min_window_index = std::distance(window_lengths.begin(), std::min_element(window_lengths.begin(), window_lengths.end()));
+    int min_window_index = std::distance(window_lengths.begin(),
+  std::min_element(window_lengths.begin(), window_lengths.end()));
     // Add sequences before window
     int start_point = 0;
-    for (int sequence_index = 0; sequence_index < min_window_index; sequence_index++){
-      start_point+= old_sorted_sequences[sequence_index].length;
+    for (int sequence_index = 0; sequence_index < min_window_index;
+  sequence_index++){ start_point+= old_sorted_sequences[sequence_index].length;
       new_sorted_sequences.push_back(old_sorted_sequences[sequence_index]);
     }
     // Add window
-    new_sorted_sequences.emplace_back(start_point, window_lengths.at(min_window_index));
+    new_sorted_sequences.emplace_back(start_point,
+  window_lengths.at(min_window_index));
     // If there are sequences to add after the window - add them.
     if (start_point + window_lengths.at(min_window_index) < record_count &&
         module_capacity < old_sorted_sequences.size()) {
       new_sorted_sequences.insert(new_sorted_sequences.end(),
-                                  old_sorted_sequences.begin() + min_window_index + module_capacity,
-                                  old_sorted_sequences.end());
+                                  old_sorted_sequences.begin() +
+  min_window_index + module_capacity, old_sorted_sequences.end());
     }
   }*/
 }

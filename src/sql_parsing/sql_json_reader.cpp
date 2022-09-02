@@ -16,20 +16,20 @@ limitations under the License.
 
 #include "sql_json_reader.hpp"
 
-#include "rapidjson/document.h"
-#include "rapidjson/filereadstream.h"
-
 #include <iostream>
 #include <memory>
+
+#include "rapidjson/document.h"
+#include "rapidjson/filereadstream.h"
 
 using orkhestrafs::sql_parsing::SQLJSONReader;
 
 using rapidjson::Document;
 using rapidjson::FileReadStream;
 
-void SQLJSONReader::ReadQuery(
-    std::string filename, std::map<int, std::vector<std::string>>& data) {
-    // TODO: Same as rapidjosn_reader::Read - Remove the duplication
+void SQLJSONReader::ReadQuery(const std::string& filename,
+                              std::map<int, std::vector<std::string>>& data) {
+  // TODO(Kaspar): Same as rapidjosn_reader::Read - Remove the duplication
   FILE* file_pointer = fopen(filename.c_str(), "r");
 
   if (!file_pointer) {
@@ -50,14 +50,14 @@ void SQLJSONReader::ReadQuery(
   for (const auto& element : document->GetObject()) {
     int current_key = std::stoi(element.name.GetString());
     std::vector<std::string> current_params;
-    current_params.push_back(
+    current_params.emplace_back(
         element.value.GetObject()[type.c_str()].GetString());
     for (const auto& param :
          element.value.GetObject()[params.c_str()].GetArray()) {
       if (param.IsInt()) {
         current_params.push_back(std::to_string(param.GetInt()));
       } else if (param.IsString()) {
-        current_params.push_back(param.GetString());
+        current_params.emplace_back(param.GetString());
       } else {
         throw std::runtime_error("Incorrect type");
       }

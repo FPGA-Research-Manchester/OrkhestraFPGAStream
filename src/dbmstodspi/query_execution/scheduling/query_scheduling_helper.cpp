@@ -44,9 +44,11 @@ auto QuerySchedulingHelper::FindNodePtrIndex(QueryNode* current_node,
 }
 
 // Assuming sorted by column is always first and the other parameters are legal.
-auto QuerySchedulingHelper::IsTableSorted(const TableMetadata& table_data) -> bool {
-  return table_data.record_count == 0 || table_data.sorted_status.size() == 4 &&
-         table_data.sorted_status.at(2) == table_data.record_count - 1;
+auto QuerySchedulingHelper::IsTableSorted(const TableMetadata& table_data)
+    -> bool {
+  return table_data.record_count == 0 ||
+         table_data.sorted_status.size() == 4 &&
+             table_data.sorted_status.at(2) == table_data.record_count;
 }
 
 auto QuerySchedulingHelper::AddNewTableToNextNodes(

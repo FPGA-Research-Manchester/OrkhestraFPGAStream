@@ -35,6 +35,7 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
       : memory_manager_{memory_manager},
         dma_setup_{std::move(dma_setup)},
         module_driver_library_{std::move(module_driver_library)} {};
+  auto IsIncompleteOperationSupported(QueryOperationType operation_type) -> bool override;
   /**
    * @brief Setup a given operation with the given parameters.
    * @param node_parameters Parameters struct containing stream metadata and
@@ -140,7 +141,7 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
   auto GetWorstCaseProcessedTables(
       QueryOperationType operation_type, const std::vector<int>& min_capacity,
       const std::vector<std::string>& input_tables,
-      const std::map<std::string, TableMetadata>& data_tables, 
+      const std::map<std::string, TableMetadata>& data_tables,
       const std::vector<std::string>& output_table_names)
       -> std::map<std::string, TableMetadata> override;
 
@@ -200,7 +201,8 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
    * @param module_position Position of the passthrough module in the PR region.
    * @return Node with which a passthrough module can be initialised.
    */
-  auto GetEmptyModuleNode(QueryOperationType operation, int module_position)
+  auto GetEmptyModuleNode(QueryOperationType operation, int module_position,
+                          const std::vector<int>& module_capacity)
       -> AcceleratedQueryNode override;
 
   auto GetWorstCaseNodeCapacity(
@@ -212,7 +214,7 @@ class AcceleratorLibrary : public AcceleratorLibraryInterface {
   auto SetMissingFunctionalCapacity(const std::vector<int>& bitstream_capacity,
                                     std::vector<int>& missing_capacity,
                                     const std::vector<int>& node_capacity,
-      bool is_composed,
+                                    bool is_composed,
                                     QueryOperationType operation_type)
       -> bool override;
 

@@ -63,10 +63,8 @@ TEST(DMASetupTest, SetupDMAModuleSetsCorrectParams) {
 
   std::map<volatile uint32_t*, std::vector<int>> input_map = {
       {mock_db_data.data(), {}}};
-  std::vector<StreamDataParameters> input_streams = {{kInputStreamId,
-                                                      18,
-                                                      expected_stream_size, input_map,
-                                                      {}}};
+  std::vector<StreamDataParameters> input_streams = {
+      {kInputStreamId, 18, expected_stream_size, input_map, {}}};
   std::map<volatile uint32_t*, std::vector<int>> output_map = {
       {mock_output_memory_address, {}}};
   std::vector<StreamDataParameters> output_streams = {

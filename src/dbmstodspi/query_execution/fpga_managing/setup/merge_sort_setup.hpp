@@ -48,8 +48,7 @@ class MergeSortSetup : public virtual AccelerationModuleSetupInterface,
   auto SetMissingFunctionalCapacity(const std::vector<int>& bitstream_capacity,
                                     std::vector<int>& missing_capacity,
                                     const std::vector<int>& node_capacity,
-                                    bool is_composed)
-      -> bool override;
+                                    bool is_composed) -> bool override;
   /**
    * @brief Calculate the correct configuration data and write the setup data
    * into the memory mapped registers.
@@ -62,7 +61,8 @@ class MergeSortSetup : public virtual AccelerationModuleSetupInterface,
    */
   static void SetupMergeSortModule(MergeSortInterface& merge_sort_module,
                                    int stream_id, int record_size,
-                                   int base_channel_id, bool is_first, int sort_size);
+                                   int base_channel_id, bool is_first,
+                                   int module_size, int dma_record_size);
   /**
    * @brief Calculate how many records are fetched each time.
    * @param sort_buffer_size Buffer size of the merge sort module.
@@ -70,7 +70,8 @@ class MergeSortSetup : public virtual AccelerationModuleSetupInterface,
    * @return How many records are fetched.
    */
   static auto CalculateRecordCountPerFetch(int sort_buffer_size,
-                                           int record_size) -> int;
+                                           int module_record_size,
+                                           int dma_record_size) -> int;
   /**
    * @brief Calculate how big the buffer size has to be.
    * @param buffer_space How much space there is available in integers.

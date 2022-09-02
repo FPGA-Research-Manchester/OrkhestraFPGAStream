@@ -39,12 +39,14 @@ endif()
 
 # Global dependency
 add_subdirectory(src/core_interfaces)
+# Util functions
+add_subdirectory(src/util)
+# Library responsible for SQL interfacing
+add_subdirectory(src/sql_parsing)
 # Implementation
 add_subdirectory(src/dbmstodspi)
 # Core libraries gluing everything together
 add_subdirectory(src/core)
-# Library responsible for SQL interfacing
-add_subdirectory(src/sql_parsing)
 # Applications
 add_subdirectory(apps)
 # Tests

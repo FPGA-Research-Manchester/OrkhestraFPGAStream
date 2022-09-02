@@ -33,6 +33,7 @@ namespace orkhestrafs::dbmstodspi {
  */
 class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
  public:
+  auto GetTime() -> long override;
   explicit ElasticResourceNodeScheduler(
       std::unique_ptr<PlanEvaluatorInterface> plan_evaluator)
       : plan_evaluator_{std::move(plan_evaluator)} {}
@@ -46,7 +47,8 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       std::map<std::string, TableMetadata> &tables,
       const std::vector<ScheduledModule> &current_configuration,
       const Config &config, std::unordered_set<std::string> &skipped_nodes,
-      std::unordered_map<std::string, int>& table_counter)
+      std::unordered_map<std::string, int> &table_counter,
+      const std::unordered_set<std::string> &blocked_nodes)
       -> std::queue<std::pair<std::vector<ScheduledModule>,
                               std::vector<QueryNode *>>> override;
 
@@ -54,7 +56,8 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       const std::unordered_set<std::string> &starting_nodes,
       const std::unordered_set<std::string> &processed_nodes,
       const std::unordered_map<std::string, SchedulingQueryNode> &graph,
-      const std::map<std::string, TableMetadata> &tables, const Config &config)
+      const std::map<std::string, TableMetadata> &tables, const Config &config,
+      const std::unordered_set<std::string> &blocked_nodes)
       -> std::tuple<int,
                     std::map<std::vector<std::vector<ScheduledModule>>,
                              ExecutionPlanSchedulingData>,
@@ -68,14 +71,28 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       AcceleratorLibraryInterface &drivers,
       std::map<std::string, TableMetadata> &tables,
       std::vector<ScheduledModule> &current_configuration, const Config &config,
-      std::map<std::string, double> &benchmark_data) override;
+      std::map<std::string, double> &benchmark_data,
+      const std::unordered_set<std::string> &blocked_nodes) override;
 
  private:
+  long scheduling_time_;
   struct LengthOfSortedSequences {
     int offset;
     int number_of_sequences;
     std::string table_name;
   };
+  static auto GetData(
+      std::vector<QueryNode *> &available_nodes,
+      const std::vector<std::vector<ScheduledModule>> &best_plan,
+      const std::map<QueryOperationType, OperationPRModules> &hw_library,
+      std::map<std::string, TableMetadata> &table_data)
+      -> long;
+  static void GetMergeSortData(
+      std::map<int, std::vector<LengthOfSortedSequences>> &sort_status,
+      NodeRunData &run_data, const std::vector<int> &capacities,
+      std::map<std::string, TableMetadata> &table_data, QueryNode *merge_node,
+      const std::vector<int> &next_run_capacities, bool is_penultimate,
+      long &data_amount);
   static auto IsNumber(const std::string &input_string) -> bool;
   static auto GetCapacityForPenultimateRun(
       int next_run_capacity,
@@ -89,7 +106,7 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       std::unordered_map<std::string, int> &table_counter);
   static void BuildInitialSequencesForMergeSorter(
       std::map<int, std::vector<LengthOfSortedSequences>> &map_of_sequences,
-      const TableMetadata &table_data, std::string table_name);
+      const TableMetadata &table_data, const std::string &table_name);
   static auto CalculateTimeLimit(
       const std::unordered_map<std::string, SchedulingQueryNode> &graph,
       const std::map<std::string, TableMetadata> &data_tables,
@@ -116,7 +133,7 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       const std::vector<std::vector<ScheduledModule>> &best_plan,
       const std::map<QueryOperationType, OperationPRModules> &hw_library,
       std::map<std::string, TableMetadata> &table_data,
-      std::unordered_map<std::string, int>& table_counter)
+      std::unordered_map<std::string, int> &table_counter)
       -> std::queue<
           std::pair<std::vector<ScheduledModule>, std::vector<QueryNode *>>>;
   static auto GetLargestModulesSizes(

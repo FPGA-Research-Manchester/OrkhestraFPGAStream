@@ -24,6 +24,7 @@ limitations under the License.
 #include "fpga_manager_interface.hpp"
 #include "memory_block_interface.hpp"
 #include "query_scheduling_data.hpp"
+#include "scheduled_module.hpp"
 
 using orkhestrafs::core_interfaces::query_scheduling_data::
     ConfigurableModulesVector;
@@ -98,5 +99,22 @@ class GraphProcessingFSMInterface {
   virtual auto IsBenchmarkDone() -> bool = 0;
 
   virtual void UpdateAvailableNodesGraph() = 0;
+
+  virtual auto GetFPGASpeed() -> int = 0;
+  virtual void PrintHWState() = 0;
+  virtual void LoadStaticBitstream() = 0;
+  virtual void SetClockSpeed(int new_clock_speed) = 0;
+  virtual void ChangeSchedulingTimeLimit(double new_time_limit) = 0;
+  virtual void ChangeExecutionTimeLimit(int new_time_limit) = 0;
+  virtual void SetInteractive(bool is_interactive) = 0;
+  virtual auto IsInteractive() -> bool = 0;
+  virtual void LoadStaticTables() = 0;
+  virtual void AddNewNodes(std::string graph_filename) = 0;
+  virtual void SetStartTimer() = 0;
+  virtual void PrintExecTime() = 0;
+  virtual void SetHWPrint(bool print_hw) = 0;
+  virtual auto GetCurrentHW() -> std::map<QueryOperationType, OperationPRModules> = 0;
+  virtual void LoadBitstream(ScheduledModule new_module) = 0;
+  virtual auto IsHWPrintEnabled()->bool = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

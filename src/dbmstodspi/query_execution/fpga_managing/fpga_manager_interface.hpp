@@ -17,6 +17,7 @@ limitations under the License.
 #pragma once
 #include <array>
 #include <vector>
+#include <map>
 
 #include "accelerated_query_node.hpp"
 #include "query_acceleration_constants.hpp"
@@ -31,7 +32,7 @@ class FPGAManagerInterface {
   virtual void SetupQueryAcceleration(
       const std::vector<AcceleratedQueryNode>& query_nodes) = 0;
 
-  virtual auto RunQueryAcceleration()
+  virtual auto RunQueryAcceleration(int timeout, std::map<int, std::vector<double>>& read_back_values)
       -> std::array<int, query_acceleration_constants::kMaxIOStreamCount> = 0;
 };
 

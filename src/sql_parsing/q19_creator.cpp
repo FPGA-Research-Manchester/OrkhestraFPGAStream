@@ -16,6 +16,8 @@ limitations under the License.
 
 #include "q19_creator.hpp"
 
+#include <utility>
+
 using orkhestrafs::sql_parsing::Q19Creator;
 
 void Q19Creator::CreateQ19TPCH(SQLQueryCreator& sql_creator) {
@@ -55,7 +57,7 @@ auto Q19Creator::CreateLineitemTable(SQLQueryCreator* sql_creator,
   columns.emplace_back(ColumnDataType::kVarchar, 25, "L_SHIPINSTRUCT");
   columns.emplace_back(ColumnDataType::kVarchar, 10, "L_SHIPMODE");
   columns.emplace_back(ColumnDataType::kVarchar, 44, "L_COMMENT");
-  return sql_creator->RegisterTable(filename, columns, row_count);
+  return sql_creator->RegisterTable(std::move(filename), columns, row_count);
 }
 
 auto Q19Creator::CreatePartTable(SQLQueryCreator* sql_creator, int row_count,
@@ -70,7 +72,7 @@ auto Q19Creator::CreatePartTable(SQLQueryCreator* sql_creator, int row_count,
   columns.emplace_back(ColumnDataType::kVarchar, 10, "P_CONTAINER");
   columns.emplace_back(ColumnDataType::kDecimal, 1, "P_RETAILPRICE");
   columns.emplace_back(ColumnDataType::kVarchar, 23, "P_COMMENT");
-  return sql_creator->RegisterTable(filename, columns, row_count);
+  return sql_creator->RegisterTable(std::move(filename), columns, row_count);
 }
 
 void Q19Creator::ConfigureQ19FirstFilter(SQLQueryCreator& sql_creator,

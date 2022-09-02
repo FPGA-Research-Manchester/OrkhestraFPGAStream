@@ -20,23 +20,30 @@ limitations under the License.
 #include <set>
 #include <unordered_set>
 
+#include "logger.hpp"
 #include "sql_json_reader.hpp"
 
 using orkhestrafs::core_interfaces::table_data::kDataTypeNames;
+using orkhestrafs::dbmstodspi::logging::Log;
+using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::sql_parsing::SQLJSONReader;
 using orkhestrafs::sql_parsing::SQLParser;
 
 void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
-                           std::string query_filename) {
-  // TODO: Add logging
-  const std::string default_database_name = "tpch_001";
-  //std::cout << "Parsing: " << query_filename << std::endl;
+                           const std::string& query_filename,
+                           const std::string& database_name) {
+  // TODO(Kaspar): Hardcoded for now
+  const std::string parsed_filename = "API_calls_data.json";
+  // TODO(Kaspar): Add logging
+  Log(LogLevel::kInfo,
+      "Parsing query from " + query_filename);
   std::map<int, std::vector<std::string>> explain_data;
-  // TODO: Should do more checks!
+  // TODO(Kaspar): Should do more checks!
   if (std::system(nullptr)) {
     std::string command = "python3 postgresql_explain_parser.py";
-    command += " " + default_database_name + " " + query_filename;
-    //std::cout << command << std::endl;
+    command +=
+        " " + database_name + " " + query_filename + " " + parsed_filename;
+    // std::cout << command << std::endl;
     auto return_val = std::system(command.c_str());
     if (return_val) {
       throw std::runtime_error("Python call unsuccessful!");
@@ -44,11 +51,10 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
   } else {
     throw std::runtime_error("Can't execute any subprocesses");
   }
-  // TODO: Hardcoded for now
-  std::string parsed_filename = "parsed.json";
+  Log(LogLevel::kInfo, "Parsing API calls from " + parsed_filename);
   // Actually the query needs to get parsed by the Python script first!
   SQLJSONReader::ReadQuery(parsed_filename, explain_data);
-
+  Log(LogLevel::kDebug, "Finished reading " + parsed_filename);
   // Initial data parsing to get dependencies.
   // For key to be available all input_dependencies must be done!
   std::map<int, std::set<int>> input_dependencies;
@@ -59,16 +65,14 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
   std::map<std::string, ColumnDataType> column_types;
   std::set<int> available_to_register;
   const std::unordered_set<std::string> default_operations = {
-      "Aggregate", "Filter", "Multiplication", "Addition"};
+      "Aggregate", "Filter", "Multiplication", "Addition", "Sort"};
   const std::unordered_map<std::string, CompareFunctions> comparison_functions =
-      {
-          {"<", CompareFunctions::kLessThan},
-          {"<=", CompareFunctions::kLessThanOrEqual},
-          {"=", CompareFunctions::kEqual},
-          {"!=", CompareFunctions::kNotEqual},
-          {">", CompareFunctions::kGreaterThan},
-          {">=", CompareFunctions::kGreaterThanOrEqual}
-      };
+      {{"<", CompareFunctions::kLessThan},
+       {"<=", CompareFunctions::kLessThanOrEqual},
+       {"=", CompareFunctions::kEqual},
+       {"!=", CompareFunctions::kNotEqual},
+       {">", CompareFunctions::kGreaterThan},
+       {">=", CompareFunctions::kGreaterThanOrEqual}};
   // Should be made more "pretty"
   // Assuming params are correct!
   for (const auto& [key, params] : explain_data) {
@@ -179,7 +183,7 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
       } else {
         auto compare_function =
             comparison_functions.at(explain_data.at(current_op_node).at(2));
-        // TODO: Check that the column is the first or second argument!
+        // TODO(Kaspar): Check that the column is the first or second argument!
         auto datatype = column_types.at(explain_data.at(current_op_node).at(3));
         switch (datatype) {
           case ColumnDataType::kInteger: {
@@ -217,7 +221,7 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
             std::vector<int> date_values;
             size_t pos = 0;
             std::string token;
-            while ((pos = date_string.find("-")) != std::string::npos) {
+            while ((pos = date_string.find('-')) != std::string::npos) {
               token = date_string.substr(0, pos);
               date_values.push_back(std::stoi(token));
               date_string.erase(0, pos + 1);
@@ -267,6 +271,12 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
     } else if (explain_data.at(current_op_node).front() == "Aggregate") {
       registered_entities_map.insert(
           {current_op_node, sql_creator.RegisterAggregation(
+                                registered_entities_map.at(std::stoi(
+                                    explain_data.at(current_op_node).at(1))),
+                                explain_data.at(current_op_node).at(2))});
+    } else if (explain_data.at(current_op_node).front() == "Sort") {
+      registered_entities_map.insert(
+          {current_op_node, sql_creator.RegisterSort(
                                 registered_entities_map.at(std::stoi(
                                     explain_data.at(current_op_node).at(1))),
                                 explain_data.at(current_op_node).at(2))});

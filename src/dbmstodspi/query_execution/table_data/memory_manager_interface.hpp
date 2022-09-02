@@ -17,6 +17,7 @@ limitations under the License.
 #pragma once
 #include <cstdint>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -33,6 +34,9 @@ namespace orkhestrafs::dbmstodspi {
  */
 class MemoryManagerInterface {
  public:
+  virtual auto GetTime() -> long = 0;
+  virtual void MeasureConfigurationSpeed(
+      const std::set<std::string>& bitstreams_to_measure) = 0;
   virtual ~MemoryManagerInterface() = default;
 
   virtual void LoadBitstreamIfNew(const std::string& bitstream_name,
@@ -40,18 +44,15 @@ class MemoryManagerInterface {
 
   virtual auto GetVirtualRegisterAddress(int offset) -> volatile uint32_t* = 0;
 
-  virtual auto GetAvailableMemoryBlock()
-      -> MemoryBlockInterface* = 0;
-  virtual void FreeMemoryBlock(
-      MemoryBlockInterface* memory_block_pointer) = 0;
-  virtual void LoadStatic() = 0;
+  virtual auto GetAvailableMemoryBlock() -> MemoryBlockInterface* = 0;
+  virtual void FreeMemoryBlock(MemoryBlockInterface* memory_block_pointer) = 0;
+  virtual void LoadStatic(int clock_speed) = 0;
   virtual void LoadPartialBitstream(
       const std::vector<std::string>& bitstream_name,
       DMAInterface& dma_engine) = 0;
 
  private:
-  virtual auto AllocateMemoryBlock()
-      -> MemoryBlockInterface* = 0;
+  virtual auto AllocateMemoryBlock() -> MemoryBlockInterface* = 0;
 };
 
 }  // namespace orkhestrafs::dbmstodspi

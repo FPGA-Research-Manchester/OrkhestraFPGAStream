@@ -90,13 +90,13 @@ TEST_F(TableManagerTest, WriteDataToMemoryReturnsCorrectRecordData) {
   EXPECT_CALL(
       mock_data_manager_,
       WriteDataFromCSVToMemory(any_filename_, expected_column_defs_vector,
-                                   memory_device_.get()))
+                               memory_device_.get()))
       .WillOnce(testing::Return(expected_record_count));
 
   ASSERT_EQ(expected_record_data,
-            TableManager::WriteDataToMemory(&mock_data_manager_,
-                                            stream_specification, stream_index,
-                                            memory_device_.get(), any_filename_));
+            TableManager::WriteDataToMemory(
+                &mock_data_manager_, stream_specification, stream_index,
+                memory_device_.get(), any_filename_));
 }
 
 }  // namespace

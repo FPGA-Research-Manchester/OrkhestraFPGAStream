@@ -32,6 +32,7 @@ namespace orkhestrafs::dbmstodspi {
  */
 class AccelerationModuleSetupInterface {
  public:
+  virtual auto IsIncompleteNodeExecutionSupported() -> bool;
   virtual ~AccelerationModuleSetupInterface() = default;
   /**
    * @brief Setup a given module
@@ -154,9 +155,11 @@ class AccelerationModuleSetupInterface {
    * Return passthrough module initialisation parameters
    * @return Operation parameters.
    */
-  virtual auto GetPassthroughInitParameters() -> AcceleratedQueryNode;
+  virtual auto GetPassthroughInitParameters(const std::vector<int>& module_capacity)
+      -> AcceleratedQueryNode;
 
-  virtual auto GetWorstCaseNodeCapacity(const std::vector<int>& min_capacity,
+  virtual auto GetWorstCaseNodeCapacity(
+      const std::vector<int>& min_capacity,
       const std::vector<std::string>& input_tables,
       const std::map<std::string, TableMetadata>& data_tables,
       QueryOperationType next_operation_type) -> std::vector<int>;

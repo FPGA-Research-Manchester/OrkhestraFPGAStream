@@ -29,6 +29,7 @@ class Core {
    * @param input_filename Input definition filename.
    * @param config_filename Config file contianing files to configure the HW.
    */
-  static void Run(std::string input_filename, std::string config_filename);
+  static void Run(std::string input_filename, std::string config_filename,
+                  bool is_interactive = false);
 };
 }  // namespace orkhestrafs::core

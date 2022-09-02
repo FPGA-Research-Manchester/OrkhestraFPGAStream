@@ -25,6 +25,10 @@ auto AccelerationModuleSetupInterface::IsMultiChannelStream(
   return false;
 }
 
+auto AccelerationModuleSetupInterface::IsIncompleteNodeExecutionSupported() -> bool {
+  return true;
+}
+
 auto AccelerationModuleSetupInterface::GetMultiChannelParams(
     bool /*is_input*/, int /*stream_index*/,
     std::vector<std::vector<int>> /*operation_parameters*/)
@@ -75,17 +79,17 @@ auto AccelerationModuleSetupInterface::GetWorstCaseProcessedTables(
 }
 
 auto AccelerationModuleSetupInterface::GetWorstCaseNodeCapacity(
-    const std::vector<int>& min_capacity,
-    const std::vector<std::string>& input_tables,
-    const std::map<std::string, TableMetadata>& data_tables,
-    QueryOperationType next_operation_type) -> std::vector<int> {
+    const std::vector<int>& /*min_capacity*/,
+    const std::vector<std::string>& /*input_tables*/,
+    const std::map<std::string, TableMetadata>& /*data_tables*/,
+    QueryOperationType /*next_operation_type*/) -> std::vector<int> {
   return {};
 }
 
 auto AccelerationModuleSetupInterface::SetMissingFunctionalCapacity(
     const std::vector<int>& bitstream_capacity,
     std::vector<int>& missing_capacity, const std::vector<int>& node_capacity,
-    bool is_composed) -> bool {
+    bool /*is_composed*/) -> bool {
   if (bitstream_capacity.size() != node_capacity.size()) {
     throw std::runtime_error("Capacities don't match!");
   }
@@ -131,11 +135,12 @@ auto AccelerationModuleSetupInterface::IsDataSensitive() -> bool {
   return false;
 }
 
-auto AccelerationModuleSetupInterface::GetPassthroughInitParameters()
+auto AccelerationModuleSetupInterface::GetPassthroughInitParameters(
+    const std::vector<int>& module_capacity)
     -> AcceleratedQueryNode {
   AcceleratedQueryNode passthrough_module_node;
   passthrough_module_node.input_streams = {{15, 0, 0, {}, {}}};
   passthrough_module_node.output_streams = {{15, 0, 0, {}, {}}};
-  passthrough_module_node.operation_parameters = {};
+  passthrough_module_node.operation_parameters = {module_capacity};
   return passthrough_module_node;
 }

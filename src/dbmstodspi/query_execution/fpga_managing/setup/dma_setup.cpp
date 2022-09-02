@@ -32,12 +32,12 @@ void DMASetup::SetupDMAModule(
     DMAInterface& dma_module,
     const std::vector<StreamDataParameters>& input_streams,
     const std::vector<StreamDataParameters>& output_streams) {
-  int input_stream_size = 0;
+  /*int input_stream_size = 0;
   for (const auto& input : input_streams) {
     input_stream_size +=
         input.stream_record_count * input.stream_record_size * 4;
   }
-  std::cout << "STREAMED DATA SIZE:" << input_stream_size << std::endl;
+  std::cout << "STREAMED DATA SIZE:" << input_stream_size << std::endl;*/
   DMASetup::SetupDMAModuleDirection(dma_module, input_streams, true);
   DMASetup::SetupDMAModuleDirection(dma_module, output_streams, false);
 }
@@ -50,6 +50,7 @@ auto DMASetup::CreateDMAModule(MemoryManagerInterface* memory_manager)
 void DMASetup::SetupDMAModuleDirection(
     DMAInterface& dma_engine, const std::vector<StreamDataParameters>& streams,
     const bool is_input_stream) {
+  // const int buffer_size = 15 / streams.size();
   const int buffer_size = 16 / streams.size();
   int multichannel_stream_count = 0;
   for (int current_stream_count = 0; current_stream_count < streams.size();
@@ -105,7 +106,8 @@ void DMASetup::SetupDMAModuleDirection(
     }
     StreamParameterCalculator::CalculateDMAStreamSetupData(
         stream_setup_data, stream_init_data.stream_record_size,
-        is_multichannel_stream, stream_init_data.smallest_module_size);
+        is_multichannel_stream, stream_init_data.smallest_module_size,
+        stream_specification.size());
 
     SetUpDMAIOStream(stream_setup_data, dma_engine);
 
@@ -115,6 +117,11 @@ void DMASetup::SetupDMAModuleDirection(
 
     SetUpDMACrossbarsForStream(stream_setup_data, dma_engine);
   }
+  // Setting passthrough buffer
+  /*dma_engine.SetControllerParams(is_input_stream, 15,
+      0,
+      0, 15,
+      15);*/
 
   if (is_input_stream && multichannel_stream_count != 0) {
     dma_engine.SetNumberOfInputStreamsWithMultipleChannels(

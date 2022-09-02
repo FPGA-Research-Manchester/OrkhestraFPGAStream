@@ -22,6 +22,11 @@ limitations under the License.
 
 using orkhestrafs::dbmstodspi::AcceleratorLibrary;
 
+auto AcceleratorLibrary::IsIncompleteOperationSupported(QueryOperationType operation_type) -> bool {
+  auto* driver = GetDriver(operation_type);
+  return driver->IsIncompleteNodeExecutionSupported();
+}
+
 void AcceleratorLibrary::SetupOperation(
     const AcceleratedQueryNode& node_parameters) {
   auto* driver = GetDriver(node_parameters.operation_type);
@@ -138,11 +143,10 @@ auto AcceleratorLibrary::UpdateDataTable(
 auto AcceleratorLibrary::SetMissingFunctionalCapacity(
     const std::vector<int>& bitstream_capacity,
     std::vector<int>& missing_capacity, const std::vector<int>& node_capacity,
-    bool is_composed,
-    QueryOperationType operation_type) -> bool {
+    bool is_composed, QueryOperationType operation_type) -> bool {
   auto* driver = GetDriver(operation_type);
-  return driver->SetMissingFunctionalCapacity(bitstream_capacity,
-                                              missing_capacity, node_capacity, is_composed);
+  return driver->SetMissingFunctionalCapacity(
+      bitstream_capacity, missing_capacity, node_capacity, is_composed);
 }
 
 auto AcceleratorLibrary::IsInputSupposedToBeSorted(
@@ -172,11 +176,12 @@ auto AcceleratorLibrary::IsOperationDataSensitive(QueryOperationType operation)
 }
 
 auto AcceleratorLibrary::GetEmptyModuleNode(QueryOperationType operation,
-                                            int module_position)
+                                            int module_position,
+    const std::vector<int>& module_capacity)
     -> AcceleratedQueryNode {
   auto* driver = GetDriver(operation);
   AcceleratedQueryNode passthrough_module_node =
-      driver->GetPassthroughInitParameters();
+      driver->GetPassthroughInitParameters(module_capacity);
   passthrough_module_node.operation_type = operation;
   passthrough_module_node.operation_module_location = module_position;
   passthrough_module_node.composed_module_locations = {};

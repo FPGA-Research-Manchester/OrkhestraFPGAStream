@@ -29,7 +29,6 @@ class MockCSVReader : public CSVReaderInterface {
   using ColumDefsVector = std::vector<std::pair<ColumnDataType, int>>;
 
  public:
-
   MOCK_METHOD(std::vector<std::vector<std::string>>, ReadTableData,
               (const std::string& filename, char separator,
                int& rows_already_read),

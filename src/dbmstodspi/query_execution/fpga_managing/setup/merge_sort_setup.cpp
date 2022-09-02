@@ -52,13 +52,17 @@ void MergeSortSetup::SetupModule(
       base_id += module_parameters.operation_parameters.at(1).at(current_index);
     }
 
+    int module_record_size =
+        GetStreamRecordSize(module_parameters.input_streams[0]);
+    int dma_record_size = module_parameters.input_streams[0].stream_record_size;
+
     MergeSortSetup::SetupMergeSortModule(
         dynamic_cast<MergeSortInterface&>(acceleration_module),
-        module_parameters.input_streams[0].stream_id,
-        GetStreamRecordSize(module_parameters.input_streams[0]), base_id,
-        is_first,
+        module_parameters.input_streams[0].stream_id, module_record_size,
+        base_id, is_first,
         *std::min_element(module_parameters.operation_parameters.at(1).begin(),
-                         module_parameters.operation_parameters.at(1).end()));
+                          module_parameters.operation_parameters.at(1).end()),
+        dma_record_size);
   } else {
     /*throw std::runtime_error(
         "Can't configure merge sort to passthrough on stream ID");*/
@@ -81,7 +85,9 @@ void MergeSortSetup::SetupPassthroughMergeSort(
 
 void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
                                           int stream_id, int record_size,
-                                          int base_channel_id, bool is_first, int module_size) {
+                                          int base_channel_id, bool is_first,
+                                          int module_size,
+                                          int dma_record_size) {
   int chunks_per_record =
       StreamParameterCalculator::CalculateChunksPerRecord(record_size);
 
@@ -96,10 +102,10 @@ void MergeSortSetup::SetupMergeSortModule(MergeSortInterface& merge_sort_module,
   // TODO(Kaspar): Remove hardcoded parameters
   // int sort_buffer_size = CalculateSortBufferSize(4096, 128,
   // chunks_per_record);
-      int sort_buffer_size =
-          CalculateSortBufferSize(buffer_space, module_size, chunks_per_record);
-  int record_count_per_fetch =
-      CalculateRecordCountPerFetch(sort_buffer_size, record_size);
+  int sort_buffer_size =
+      CalculateSortBufferSize(buffer_space, module_size, chunks_per_record);
+  int record_count_per_fetch = CalculateRecordCountPerFetch(
+      sort_buffer_size, record_size, dma_record_size);
 
   merge_sort_module.SetBufferSize(sort_buffer_size);
   merge_sort_module.SetRecordCountPerFetch(record_count_per_fetch);
@@ -125,14 +131,23 @@ auto MergeSortSetup::CalculateSortBufferSize(int buffer_space,
 }
 
 auto MergeSortSetup::CalculateRecordCountPerFetch(int sort_buffer_size,
-                                                  int record_size) -> int {
+                                                  int module_record_size,
+                                                  int dma_record_size) -> int {
   // record_count_per_fetch should be twice as small as sort_buffer_size
   int potential_record_count = sort_buffer_size / 2;
-  while (!PotentialRecordCountIsValid(potential_record_count, record_size)) {
+
+  while ((module_record_size == dma_record_size &&
+          !PotentialRecordCountIsValid(potential_record_count,
+                                       module_record_size)) ||
+         (module_record_size != dma_record_size &&
+          (!PotentialRecordCountIsValid(potential_record_count,
+                                        module_record_size) ||
+           !PotentialRecordCountIsValid(potential_record_count,
+                                        dma_record_size)))) {
     potential_record_count--;
-  }
-  if (potential_record_count == 0) {
-    throw std::runtime_error("Records are too big for sorting!");
+    if (potential_record_count == 0) {
+      throw std::runtime_error("Records are too big for sorting!");
+    }
   }
   return potential_record_count;
 }
@@ -198,7 +213,7 @@ auto MergeSortSetup::GetMinSortingRequirementsForTable(
 }
 
 auto MergeSortSetup::IsDataSensitive() -> bool { return true; }
-// TODO: Just a weird quirk - Make it more logical later!
+// TODO(Kaspar): Just a weird quirk - Make it more logical later!
 // auto MergeSortSetup::IsSortingInputTable() -> bool { return false; }
 
 auto MergeSortSetup::SetMissingFunctionalCapacity(
@@ -213,8 +228,7 @@ auto MergeSortSetup::SetMissingFunctionalCapacity(
   if (missing_capacity_value > 0) {
     missing_capacity.push_back(++missing_capacity_value);
     return false;
-  } else {
-    missing_capacity.push_back(missing_capacity_value);
-    return true;
   }
+  missing_capacity.push_back(missing_capacity_value);
+  return true;
 }

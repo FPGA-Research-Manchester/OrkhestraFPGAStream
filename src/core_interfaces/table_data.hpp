@@ -60,7 +60,7 @@ struct TableData {
 /**
  * @brief Struct to hold information about a sorted sequence
  */
-//struct SortedSequence {
+// struct SortedSequence {
 //  int start_position;
 //  int length;
 //  // TODO(Kaspar): add sorted by column
@@ -83,14 +83,12 @@ struct TableMetadata {
   std::vector<int> sorted_status;
 
   auto operator==(const TableMetadata& rhs) const -> bool {
-    return record_size == rhs.record_size &&
-           record_count == rhs.record_count &&
+    return record_size == rhs.record_size && record_count == rhs.record_count &&
            sorted_status == rhs.sorted_status;
   }
 
   auto operator!=(const TableMetadata& rhs) const -> bool {
-    return record_size != rhs.record_size ||
-           record_count != rhs.record_count ||
+    return record_size != rhs.record_size || record_count != rhs.record_count ||
            sorted_status != rhs.sorted_status;
   }
 };
