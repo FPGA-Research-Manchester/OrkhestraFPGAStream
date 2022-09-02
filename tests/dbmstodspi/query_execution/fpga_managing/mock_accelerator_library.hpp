@@ -88,7 +88,9 @@ class MockAcceleratorLibrary : public AcceleratorLibraryInterface {
               (QueryOperationType operation_type), (override));
   MOCK_METHOD((orkhestrafs::dbmstodspi::AcceleratedQueryNode),
               GetEmptyModuleNode,
-              (QueryOperationType operation, int module_position), (override));
+              (QueryOperationType operation, int module_position,
+               const std::vector<int>& module_capacity),
+              (override));
   MOCK_METHOD((bool), SetMissingFunctionalCapacity,
               (const std::vector<int>& bitstream_capacity,
                std::vector<int>& missing_capacity,

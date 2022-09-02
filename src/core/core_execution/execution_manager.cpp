@@ -362,52 +362,50 @@ void ExecutionManager::Execute(
     }
   }
   auto end = std::chrono::steady_clock::now();
-  auto data = query_manager_->GetData();
-  long total_execution =
-      std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
-          .count();
-  long data_size = data[0];
-  long scheduling = data[3];
-  long init_config = data[1];
-  long config = config_time_;
-  long initialisation = data[2];
-  long system =
-      total_execution - scheduling - init_config - config - initialisation;
-  long actual_execution = total_execution - init_config;
-  // std::cout << "ACTUAL_EXECUTION: " << actual_execution << std::endl;
+  if (config_.print_config || config_.print_scheduling ||
+      config_.print_initialisation || config_.print_system ||
+      config_.print_data_amounts) {
+    auto data = query_manager_->GetData();
+    long total_execution =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+            .count();
+    long data_size = data[0];
+    long scheduling = data[3];
+    long init_config = data[1];
+    long config = config_time_;
+    long initialisation = data[2];
+    long system =
+        total_execution - scheduling - init_config - config - initialisation;
+    long actual_execution = total_execution - init_config;
+    // std::cout << "ACTUAL_EXECUTION: " << actual_execution << std::endl;
 
-  if (config_.print_config) {
-    std::cout << "CONFIGURATION: " << config << std::endl;
-  }
-  if (config_.print_scheduling) {
-    std::cout << "SCHEDULING: " << scheduling << std::endl;
-  }
-  if (config_.print_initialisation) {
-    std::cout << "INITIALISATION: " << initialisation << std::endl;
-  }
-  if (config_.print_system) {
-    std::cout << "SYSTEM: " << system << std::endl;
-  }
-  /*std::cout << "EXECUTION: " << (data_size / 4659.61402505057)
-            << std::endl;*/
+    if (config_.print_config) {
+      std::cout << "CONFIGURATION: " << config << std::endl;
+    }
+    if (config_.print_scheduling) {
+      std::cout << "SCHEDULING: " << scheduling << std::endl;
+    }
+    if (config_.print_initialisation) {
+      std::cout << "INITIALISATION: " << initialisation << std::endl;
+    }
+    if (config_.print_system) {
+      std::cout << "SYSTEM: " << system << std::endl;
+    }
+    /*std::cout << "EXECUTION: " << (data_size / 4659.61402505057)
+              << std::endl;*/
 
-  /*std::cout << "STATIC: "
-            << ((data_size / 4659.61402505057) + initialisation)
-            << std::endl;*/
-  if (config_.print_data_amounts) {
-    std::cout << "DATA_STREAMED: " << data_size << std::endl;
+    /*std::cout << "STATIC: "
+              << ((data_size / 4659.61402505057) + initialisation)
+              << std::endl;*/
+    if (config_.print_data_amounts) {
+      std::cout << "DATA_STREAMED: " << data_size << std::endl;
+    }
+    /*std::cout << "TOTAL EXECUTION RUNTIME: "
+              << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                       begin)
+                     .count()
+              << std::endl;*/
   }
-  /*std::cout << "TOTAL EXECUTION RUNTIME: "
-            << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                     begin)
-                   .count()
-            << std::endl;*/
-  /*Log(LogLevel::kInfo,
-      "Overall time = " +
-          to_string(
-              chrono::duration_cast<std::chrono::milliseconds>(end - begin)
-                  .count()) +
-          "[ms]");*/
 }
 
 auto ExecutionManager::IsUnscheduledNodesGraphEmpty() -> bool {

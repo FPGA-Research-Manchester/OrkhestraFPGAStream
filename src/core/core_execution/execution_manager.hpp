@@ -37,7 +37,7 @@ limitations under the License.
 #include "query_scheduling_data.hpp"
 #include "scheduling_query_node.hpp"
 #include "state_interface.hpp"
-#include "graph_creator.hpp"
+#include "graph_creator_interface.hpp"
 
 using orkhestrafs::core_interfaces::Config;
 using orkhestrafs::core_interfaces::ExecutionManagerInterface;
@@ -57,7 +57,7 @@ using orkhestrafs::dbmstodspi::NodeSchedulerInterface;
 using orkhestrafs::dbmstodspi::QueryManagerInterface;
 using orkhestrafs::dbmstodspi::SchedulingQueryNode;
 using orkhestrafs::dbmstodspi::StateInterface;
-using orkhestrafs::dbmstodspi::GraphCreator;
+using orkhestrafs::dbmstodspi::GraphCreatorInterface;
 
 namespace orkhestrafs::core::core_execution {
 
@@ -72,7 +72,7 @@ class ExecutionManager : public ExecutionManagerInterface,
                    std::unique_ptr<StateInterface> start_state,
                    std::unique_ptr<FPGADriverFactoryInterface> driver_factory,
                    std::unique_ptr<NodeSchedulerInterface> scheduler,
-                   std::unique_ptr<GraphCreator> graph_creator)
+                   std::unique_ptr<GraphCreatorInterface> graph_creator)
       : current_state_{std::move(start_state)},
         data_manager_{std::move(data_manager)},
         memory_manager_{std::move(memory_manager)},
@@ -129,7 +129,7 @@ class ExecutionManager : public ExecutionManagerInterface,
   std::unique_ptr<AcceleratorLibraryInterface> accelerator_library_;
   std::unique_ptr<FPGAManagerInterface> fpga_manager_;
   std::unique_ptr<NodeSchedulerInterface> scheduler_;
-  std::unique_ptr<GraphCreator> graph_creator_;
+  std::unique_ptr<GraphCreatorInterface> graph_creator_;
   Config config_;
   // State status
   bool print_hw_ = false;

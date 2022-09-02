@@ -16,19 +16,15 @@ limitations under the License.
 
 #pragma once
 
-#include "execution_plan_graph_interface.hpp"
+#include "graph_creator_interface.hpp"
 #include "gmock/gmock.h"
 
-using orkhestrafs::core_interfaces::ExecutionPlanGraphInterface;
+using orkhestrafs::dbmstodspi::GraphCreatorInterface;
 
-class MockGraph : public ExecutionPlanGraphInterface {
+class MockGraphCreator : public GraphCreatorInterface {
  public:
-  MOCK_METHOD(void, DeleteNodes,
-              (const std::unordered_set<std::string>& deleted_node_names),
+  MOCK_METHOD(std::unique_ptr<ExecutionPlanGraphInterface>, MakeGraph,
+              (std::string graph_def_filename,
+               std::unique_ptr<ExecutionPlanGraphInterface> graph),
               (override));
-  MOCK_METHOD(bool, IsEmpty, (), (override));
-  MOCK_METHOD(std::vector<QueryNode*>, GetRootNodesPtrs, (), (override));
-  MOCK_METHOD(std::vector<QueryNode*>, GetAllNodesPtrs, (), (override));
-  MOCK_METHOD(void, ImportNodes,
-              (std::vector<std::unique_ptr<QueryNode>> new_nodes), (override));
 };

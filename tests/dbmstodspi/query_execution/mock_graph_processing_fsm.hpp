@@ -18,10 +18,15 @@ limitations under the License.
 
 #include "gmock/gmock.h"
 #include "graph_processing_fsm_interface.hpp"
+#include "scheduled_module.hpp"
 
 using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
+using orkhestrafs::dbmstodspi::ScheduledModule;
 
 class MockGraphProcessingFSM : public GraphProcessingFSMInterface {
+
+ using HWLibrary = std::map<QueryOperationType, OperationPRModules>;
+
  public:
   MOCK_METHOD(void, SetFinishedFlag, (), (override));
   MOCK_METHOD(bool, IsUnscheduledNodesGraphEmpty, (), (override));
@@ -37,4 +42,22 @@ class MockGraphProcessingFSM : public GraphProcessingFSMInterface {
   MOCK_METHOD(bool, IsBenchmarkDone, (), (override));
   MOCK_METHOD(void, BenchmarkScheduleUnscheduledNodes, (), (override));
   MOCK_METHOD(void, UpdateAvailableNodesGraph, (), (override));
+
+  MOCK_METHOD(int, GetFPGASpeed, (), (override));
+  MOCK_METHOD(void, PrintHWState, (), (override));
+  MOCK_METHOD(void, LoadStaticBitstream, (), (override));
+  MOCK_METHOD(void, SetClockSpeed, (int new_clock_speed), (override));
+  MOCK_METHOD(void, ChangeSchedulingTimeLimit, (double new_time_limit),
+              (override));
+  MOCK_METHOD(void, ChangeExecutionTimeLimit, (int new_time_limit), (override));
+  MOCK_METHOD(void, SetInteractive, (bool is_interactive), (override));
+  MOCK_METHOD(bool, IsInteractive, (), (override));
+  MOCK_METHOD(void, LoadStaticTables, (), (override));
+  MOCK_METHOD(void, AddNewNodes, (std::string graph_filename), (override));
+  MOCK_METHOD(void, SetStartTimer, (), (override));
+  MOCK_METHOD(void, PrintExecTime, (), (override));
+  MOCK_METHOD(void, SetHWPrint, (bool print_hw), (override));
+  MOCK_METHOD(HWLibrary, GetCurrentHW, (), (override));
+  MOCK_METHOD(void, LoadBitstream, (ScheduledModule new_module), (override));
+  MOCK_METHOD(bool, IsHWPrintEnabled, (), (override));
 };

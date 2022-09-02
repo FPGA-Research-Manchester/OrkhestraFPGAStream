@@ -18,12 +18,16 @@ limitations under the License.
 
 #include "fpga_manager_interface.hpp"
 #include "gmock/gmock.h"
+#include <map>
+#include <vector>
 
 using orkhestrafs::dbmstodspi::AcceleratedQueryNode;
 using orkhestrafs::dbmstodspi::FPGAManagerInterface;
 using orkhestrafs::dbmstodspi::query_acceleration_constants::kMaxIOStreamCount;
 
 class MockFPGAManager : public FPGAManagerInterface {
+    using ResultsMap = std::map<int, std::vector<double>>;
+
  private:
   using ResultsArray = std::array<int, kMaxIOStreamCount>;
 
@@ -31,5 +35,7 @@ class MockFPGAManager : public FPGAManagerInterface {
   MOCK_METHOD(void, SetupQueryAcceleration,
               (const std::vector<AcceleratedQueryNode>& query_nodes),
               (override));
-  MOCK_METHOD(ResultsArray, RunQueryAcceleration, (int timeout), (override));
+  MOCK_METHOD(ResultsArray, RunQueryAcceleration,
+              (int timeout, ResultsMap& read_back_values),
+              (override));
 };
