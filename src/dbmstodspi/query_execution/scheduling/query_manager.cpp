@@ -931,7 +931,6 @@ void QueryManager::ExecuteAndProcessResults(
     std::cout << "INITIALISATION: " << initialisation_sum << std::endl;
   }*/
   Log(LogLevel::kTrace, "Running query!");
-  // Give this a map of
   auto result_sizes =
       fpga_manager->RunQueryAcceleration(timeout, read_back_values);
   Log(LogLevel::kTrace, "Query done!");

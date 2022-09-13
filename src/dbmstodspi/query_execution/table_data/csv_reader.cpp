@@ -98,19 +98,51 @@ auto CSVReader::WriteTableFromFileToMemory(
     throw std::runtime_error(filename + " is too big!");
   }
 
-  std::vector<uint32_t> integer_data;
-  std::vector<std::string> tokens;
-
-  std::ifstream filestream(filename);
-  std::string line;
-  std::string token_string;
-
   int row_counter = 0;
   int record_size = 0;
   for (const auto& column_type : column_defs_vector) {
     record_size += column_type.second;
   }
   volatile uint32_t* input = memory_device->GetVirtualAddress();
+
+  if (column_defs_vector.size() == 1 &&
+      column_defs_vector.front().first == ColumnDataType::kPixel) {
+    // Need to read binary instead
+    char* buffer;
+    std::ifstream file(filename,
+                       std::ios::in | std::ios::binary | std::ios::ate);
+    // TODO: Add check that it is divisible by 16.
+    long byte_size = file.tellg();
+    file.seekg(0, std::ios::beg);
+    buffer = new char[byte_size];
+    file.read(buffer, byte_size);
+    file.close();
+
+    for (int i = 0; i < byte_size; i += 4) {
+      input[(i / 4)] = buffer[i + 3] | (buffer[i + 2] << 8) |
+                            (buffer[i + 1] << 16) | (buffer[i] << 24);
+    }
+
+    /*for (int i = 0; i < byte_size; i += 16) {
+      input[(i / 16) * 4] = buffer[i + 3] | (buffer[i + 2] << 8) |
+                     (buffer[i + 1] << 16) | (buffer[i] << 24);
+      input[(i / 16) * 4 + 1] = buffer[i + 7] | (buffer[i + 6] << 8) |
+                       (buffer[i + 5] << 16) | (buffer[i+4] << 24);
+      input[(i / 16) * 4 + 2] = buffer[i + 11] | (buffer[i + 10] << 8) |
+                       (buffer[i + 9] << 16) | (buffer[i+8] << 24);
+      input[(i / 16) * 4 + 3] = buffer[i + 15] | (buffer[i + 14] << 8) |
+                       (buffer[i + 13] << 16) | (buffer[i+12] << 24);
+    }*/
+
+    return byte_size / record_size / 4; // 4 channels in one word
+  }
+
+  std::vector<uint32_t> integer_data;
+  std::vector<std::string> tokens;
+
+  std::ifstream filestream(filename);
+  std::string line;
+  std::string token_string;
 
   while (std::getline(filestream, line)) {
     tokens.clear();

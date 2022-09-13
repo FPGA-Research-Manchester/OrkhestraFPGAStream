@@ -29,7 +29,14 @@ namespace orkhestrafs::core_interfaces::table_data {
 /**
  * @brief Data types parsable by the library.
  */
-enum class ColumnDataType { kInteger, kVarchar, kNull, kDecimal, kDate };
+enum class ColumnDataType {
+  kInteger,
+  kVarchar,
+  kNull,
+  kDecimal,
+  kDate,
+  kPixel
+};
 
 /**
  * @brief String names for the supported data type enums.
@@ -39,7 +46,8 @@ const std::map<std::string, ColumnDataType> kDataTypeNames = {
     {"varchar", ColumnDataType::kVarchar},
     {"null", ColumnDataType::kNull},
     {"decimal", ColumnDataType::kDecimal},
-    {"date", ColumnDataType::kDate}};
+    {"date", ColumnDataType::kDate},
+    {"pixel", ColumnDataType::kPixel}};
 
 /**
  * @brief Struct to hold the information about the table data.

@@ -138,6 +138,9 @@ class DataManager : public DataManagerInterface {
    */
   void PrintStringData(
       const std::vector<std::vector<std::string>>& string_data) const;
+
+  static void WriteBinaryFile(const std::vector<uint32_t>& binary_data,
+                              const std::string& filename);
 };
 
 }  // namespace orkhestrafs::dbmstodspi

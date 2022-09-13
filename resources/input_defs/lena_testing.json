@@ -1,0 +1,50 @@
+{
+	"bw": {
+		"input": [ "lena_RGB.raw" ],
+		"output": [ null ],
+		"operation": "kBlackWhite",
+		"previous_nodes": [ null ],
+		"next_nodes": [ "sobel" ],
+		"operation_parameters": {
+			"input_stream_params": [
+				[],
+				[ 5 ],
+				[ 3 ],
+				[]
+			],
+			"output_stream_params": [
+				[],
+				[ 5 ],
+				[ 1 ],
+				[ 1 ]
+			],
+			"operation_params": [
+				[]
+			]
+		}
+	},
+	"sobel": {
+		"input": [ null ],
+		"output": [ null ],
+		"operation": "kSobel",
+		"previous_nodes": [ "bw" ],
+		"next_nodes": [ null ],
+		"operation_parameters": {
+			"input_stream_params": [
+				[],
+				[ 5 ],
+				[ 1 ],
+				[]
+			],
+			"output_stream_params": [
+				[],
+				[ 5 ],
+				[ 1 ],
+				[ 1 ]
+			],
+			"operation_params": [
+				[ 512, 512 ]
+			]
+		}
+	}
+}

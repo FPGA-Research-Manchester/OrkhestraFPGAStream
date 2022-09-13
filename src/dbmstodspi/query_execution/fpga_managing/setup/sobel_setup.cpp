@@ -32,9 +32,22 @@ void SobelSetup::SetupModule(AccelerationModule& acceleration_module,
   Log(LogLevel::kInfo,
       "Configuring sobel on pos " +
           std::to_string(module_parameters.operation_module_location));
-  SobelSetup::SetupSobelModule(
-      dynamic_cast<SobelInterface&>(acceleration_module),
-      module_parameters.input_streams[0].stream_id);
+  if (module_parameters.operation_parameters.empty() ||
+      module_parameters.operation_parameters.front().size() != 2) {
+    throw std::runtime_error("Image parameters are undefined!");
+  }
+  if (module_parameters.input_streams[0].stream_id != 15) {
+    SobelSetup::SetupSobelModule(
+        dynamic_cast<SobelInterface&>(acceleration_module),
+        module_parameters.input_streams[0].stream_id,
+        module_parameters.operation_parameters.front()
+            .front(),
+        module_parameters.operation_parameters.front().back());
+  } else {
+    SobelSetup::SetupPassthroughSobelModule(
+        dynamic_cast<SobelInterface&>(acceleration_module),
+        module_parameters.input_streams[0].stream_id);
+  }
 }
 
 auto SobelSetup::CreateModule(MemoryManagerInterface* memory_manager,
@@ -43,7 +56,17 @@ auto SobelSetup::CreateModule(MemoryManagerInterface* memory_manager,
   return std::make_unique<Sobel>(memory_manager, module_postion);
 }
 
-void SobelSetup::SetupSobelModule(SobelInterface& sobel_module, int stream_id) {
-  // TODO: hardcoded passthrough!
+void SobelSetup::SetupSobelModule(SobelInterface& sobel_module, int stream_id,
+                                  int image_width, int image_height) {
+  // Each record is 64 pixels
+  if (image_width % 64 != 0 || image_width == 64) {
+    throw std::runtime_error("Unsopported image dimensions!");
+  }
+  sobel_module.SetStreamParams(stream_id, image_width / 64,
+                               image_height);
+}
+
+void SobelSetup::SetupPassthroughSobelModule(SobelInterface& sobel_module,
+                                             int stream_id) {
   sobel_module.SetStreamParams(stream_id, 0, 0);
 }

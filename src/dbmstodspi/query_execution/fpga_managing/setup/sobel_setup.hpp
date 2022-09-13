@@ -33,8 +33,10 @@ class SobelSetup : public AccelerationModuleSetupInterface {
       -> std::unique_ptr<AccelerationModule> override;
 
  private:
-  static void SetupSobelModule(SobelInterface& sobel_module,
-                                    int stream_id);
+  static void SetupSobelModule(SobelInterface& sobel_module, int stream_id,
+                               int stream_record_size, int image_height);
+  static void SetupPassthroughSobelModule(SobelInterface& sobel_module,
+                                          int stream_id);
 };
 
 }  // namespace orkhestrafs::dbmstodspi
