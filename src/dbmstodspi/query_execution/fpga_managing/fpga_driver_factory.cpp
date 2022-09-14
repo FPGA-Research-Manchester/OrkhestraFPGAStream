@@ -30,6 +30,8 @@ limitations under the License.
 #include "linear_sort_setup.hpp"
 #include "merge_sort_setup.hpp"
 #include "multiplication_setup.hpp"
+#include "sobel_setup.hpp"
+#include "black_white_setup.hpp"
 #include "operation_types.hpp"
 
 using orkhestrafs::core_interfaces::operation_types::QueryOperationType;
@@ -60,6 +62,10 @@ auto FPGADriverFactory::CreateAcceleratorLibrary(
                                 std::make_unique<MultiplicationSetup>()});
   module_driver_library.insert({QueryOperationType::kAggregationSum,
                                 std::make_unique<AggregationSumSetup>()});
+  module_driver_library.insert({QueryOperationType::kSobel,
+                                std::make_unique<SobelSetup>()});
+  module_driver_library.insert({QueryOperationType::kBlackWhite,
+                                std::make_unique<BlackWhiteSetup>()});
   return std::make_unique<AcceleratorLibrary>(memory_manager,
                                               std::make_unique<DMASetup>(),
                                               std::move(module_driver_library));

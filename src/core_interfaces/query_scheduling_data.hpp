@@ -133,6 +133,8 @@ const std::map<std::string, QueryOperationType> kSupportedFunctions = {
     {"kAddition", QueryOperationType::kAddition},
     {"kMultiplication", QueryOperationType::kMultiplication},
     {"kAggregationSum", QueryOperationType::kAggregationSum},
+    {"kBlackWhite", QueryOperationType::kBlackWhite}, 
+    {"kSobel", QueryOperationType::kSobel},
     {"kPassThrough", QueryOperationType::kPassThrough}};
 
 /// All of the kept info between execution states for reading stream results.

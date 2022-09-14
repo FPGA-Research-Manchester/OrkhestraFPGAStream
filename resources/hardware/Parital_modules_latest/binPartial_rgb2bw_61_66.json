@@ -1,0 +1,11 @@
+{
+  "name": "binPartial_rgb2bw_61_66",
+  "address": "0xa0000000",
+  "bitfiles": [
+    {
+      "name": "binPartial_rgb2bw_61_66.bin",
+      "region": "full"
+    }
+  ],
+  "registers": []
+}

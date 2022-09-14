@@ -1,0 +1,11 @@
+{
+  "name": "binPartial_bwSobel_37_60",
+  "address": "0xa0000000",
+  "bitfiles": [
+    {
+      "name": "binPartial_bwSobel_37_60.bin",
+      "region": "full"
+    }
+  ],
+  "registers": []
+}

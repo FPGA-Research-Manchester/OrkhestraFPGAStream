@@ -1,5 +1,23 @@
 [
 	{
+		"filename": "lena_BW.raw",
+		"record_size": 16,
+		"record_count": 4096,
+		"sorted_status": []
+	},
+	{
+		"filename": "4k_RGB.raw",
+		"record_size": 48,
+		"record_count": 279936,
+		"sorted_status": []
+	},
+	{
+		"filename": "lena_RGB.raw",
+		"record_size": 48,
+		"record_count": 40960,
+		"sorted_status": []
+	},
+	{
 		"filename": "FILTERED_JOIN_DATA.csv",
 		"record_size": 24,
 		"record_count": 13,
@@ -136,19 +154,19 @@
 		"filename": "Q14_filter_SF1.csv",
 		"record_size": 8,
 		"record_count": 75983,
-		"sorted_status": [ 0, 75982, 1024, 75]
+		"sorted_status": [ 0, 75982, 1024, 75 ]
 	},
 	{
 		"filename": "Q14_filter_SF10.csv",
 		"record_size": 8,
 		"record_count": 749223,
-		"sorted_status": [ 0, 749222, 1024, 732]
+		"sorted_status": [ 0, 749222, 1024, 732 ]
 	},
 	{
 		"filename": "Q14_filter_SF100.csv",
 		"record_size": 8,
 		"record_count": 7492230,
-		"sorted_status": [ 0, 7492229, 1024, 7317]
+		"sorted_status": [ 0, 7492229, 1024, 7317 ]
 	},
 	{
 		"filename": "CAR_FILTER_DATA.csv",

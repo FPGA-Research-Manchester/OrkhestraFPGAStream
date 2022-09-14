@@ -33,7 +33,9 @@ enum class QueryOperationType {
   kLinearSort,  // Sorted sequence length
   kAddition,
   kMultiplication,
-  kAggregationSum
+  kAggregationSum,
+  kSobel,
+  kBlackWhite
 };
 
 /**

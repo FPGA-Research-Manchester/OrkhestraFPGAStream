@@ -65,6 +65,9 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_part_sf0_01_inverted.csv 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_part_sf0_01_multiplied.csv 
     
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lena_RGB.raw
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/4k_RGB.raw
+
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data_type_sizes.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/repo.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/column_sizes.json 
@@ -78,6 +81,9 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/single_run_testing.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/merge_sort_testing.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/join_testing.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/lena_testing.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/bw_testing.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/4k_testing.json 
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/lin_sort_testing.json 
     
@@ -334,6 +340,19 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort128_7_42.bin
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort128_37_72.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_MergeSort128_37_72.bin
+
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_bwSobel_7_30.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_bwSobel_7_30.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_rgb2bw_91_96.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_rgb2bw_91_96.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_rgb2bw_61_66.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_rgb2bw_61_66.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_rgb2bw_31_36.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_rgb2bw_31_36.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_bwSobel_67_90.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_bwSobel_67_90.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_bwSobel_37_60.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_bwSobel_37_60.bin
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_small_sort.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_big_sort.txt

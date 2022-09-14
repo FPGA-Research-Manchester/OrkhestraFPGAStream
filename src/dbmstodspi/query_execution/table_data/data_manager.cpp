@@ -138,26 +138,70 @@ void DataManager::PrintTableData(const TableData& table_data) const {
   DataManager::PrintStringData(string_data_vector);
 }
 
+void DataManager::WriteBinaryFile(const std::vector<uint32_t>& binary_data,
+    const std::string& filename) {
+  if (!binary_data.empty()) {
+    std::ofstream output_file(filename, std::ios::out | std::ios::binary);
+    if (!output_file) {
+      throw std::runtime_error("Can't write " + filename);
+    }
+    /*for (int i = 0; i < binary_data.size(); i += 16) {
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+12]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+13]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+14]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+15]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+8]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+9]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+10]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+11]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+4]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+5]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+6]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+7]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+1]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+2]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+3]), 4);
+    }*/
+    std::array<char, 4> new_word;
+    for (const auto& word : binary_data) {
+      auto word_ptr = reinterpret_cast<const char*>(&word);
+      new_word = {word_ptr[3], word_ptr[2], word_ptr[1], word_ptr[0]};
+      output_file.write(reinterpret_cast<char*>(&new_word), 4);
+    }
+    /*output_file.write(reinterpret_cast<const char*>(&binary_data[0]),
+                      binary_data.size() * sizeof(uint32_t));*/
+    output_file.close();
+  }
+  // Not bothering with empty binary files
+}
+
 void DataManager::WriteTableData(const TableData& table_data,
                                  const std::string& filename) const {
-  std::vector<std::vector<std::string>> string_data_vector;
-  DataManager::AddStringDataFromIntegerData(
-      table_data.table_data_vector, string_data_vector,
-      table_data.table_column_label_vector);
-  std::ofstream output_file(filename, std::ios::trunc);
-  if (output_file.is_open()) {
-    for (const auto& line : string_data_vector) {
-      for (auto iter = line.begin(); iter != line.end(); iter++) {
-        if (iter != line.begin()) {
-          output_file << separator_;
-        }
-        output_file << *iter;
-      }
-      output_file << std::endl;
-    }
-    output_file.close();
+  if (table_data.table_column_label_vector.size() == 1 &&
+      table_data.table_column_label_vector.front().first ==
+          ColumnDataType::kPixel) {
+    WriteBinaryFile(table_data.table_data_vector, filename);
   } else {
-    throw std::runtime_error("Can't open " + filename);
+    std::vector<std::vector<std::string>> string_data_vector;
+    DataManager::AddStringDataFromIntegerData(
+        table_data.table_data_vector, string_data_vector,
+        table_data.table_column_label_vector);
+    std::ofstream output_file(filename, std::ios::trunc);
+    if (output_file.is_open()) {
+      for (const auto& line : string_data_vector) {
+        for (auto iter = line.begin(); iter != line.end(); iter++) {
+          if (iter != line.begin()) {
+            output_file << separator_;
+          }
+          output_file << *iter;
+        }
+        output_file << std::endl;
+      }
+      output_file.close();
+    } else {
+      throw std::runtime_error("Can't open " + filename);
+    }
   }
 }
 

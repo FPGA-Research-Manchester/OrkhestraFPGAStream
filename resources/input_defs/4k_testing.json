@@ -1,0 +1,26 @@
+{
+	"bw": {
+		"input": [ "4k_RGB.raw" ],
+		"output": [ null ],
+		"operation": "kBlackWhite",
+		"previous_nodes": [ null ],
+		"next_nodes": [ null ],
+		"operation_parameters": {
+			"input_stream_params": [
+				[],
+				[ 5 ],
+				[ 3 ],
+				[]
+			],
+			"output_stream_params": [
+				[],
+				[ 5 ],
+				[ 1 ],
+				[ 1 ]
+			],
+			"operation_params": [
+				[]
+			]
+		}
+	}
+}

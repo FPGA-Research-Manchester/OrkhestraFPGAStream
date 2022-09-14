@@ -1,4 +1,120 @@
 {
+	"kBlackWhite": {
+		"bitstreams": {
+			"binPartial_rgb2bw_31_36.bin": {
+				"locations": [ 20 ],
+				"length": 2,
+				"capacity": [],
+				"string": "X",
+				"is_backwards": 0
+			},
+			"binPartial_rgb2bw_61_66.bin": {
+				"locations": [ 10 ],
+				"length": 2,
+				"capacity": [],
+				"string": "X",
+				"is_backwards": 0
+			},
+			"binPartial_rgb2bw_91_96.bin": {
+				"locations": [ 0 ],
+				"length": 2,
+				"capacity": [],
+				"string": "X",
+				"is_backwards": 0
+			}
+		},
+		"start_locations": [
+			[ "binPartial_rgb2bw_91_96.bin" ],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[ "binPartial_rgb2bw_61_66.bin" ],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[ "binPartial_rgb2bw_31_36.bin" ],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[]
+		]
+	},
+	"kSobel": {
+		"bitstreams": {
+			"binPartial_bwSobel_7_30.bin": {
+				"locations": [ 22 ],
+				"length": 8,
+				"capacity": [],
+				"string": "X",
+				"is_backwards": 0
+			},
+			"binPartial_bwSobel_37_60.bin": {
+				"locations": [ 12 ],
+				"length": 8,
+				"capacity": [],
+				"string": "X",
+				"is_backwards": 0
+			},
+			"binPartial_bwSobel_67_90.bin": {
+				"locations": [ 2 ],
+				"length": 8,
+				"capacity": [],
+				"string": "X",
+				"is_backwards": 0
+			}
+		},
+		"start_locations": [
+			[],
+			[],
+			[ "binPartial_bwSobel_67_90.bin" ],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[ "binPartial_bwSobel_37_60.bin" ],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[ "binPartial_bwSobel_7_30.bin" ],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[],
+			[]
+		]
+	},
 	"kFilter": {
 		"bitstreams": {
 			"binPartial_Filter_7_36.bin": {
@@ -21,52 +137,10 @@
 				"capacity": [ 32, 4 ],
 				"string": "MMDMDBMMDB",
 				"is_backwards": 0
-			},
-			"binPartial_Filter18_25_36.bin": {
-				"locations": [ 20 ],
-				"length": 4,
-				"capacity": [ 8, 1 ],
-				"string": "X",
-				"is_backwards": 0
-			},
-			"binPartial_Filter18_55_66.bin": {
-				"locations": [ 10 ],
-				"length": 4,
-				"capacity": [ 8, 1 ],
-				"string": "X",
-				"is_backwards": 0
-			},
-			"binPartial_Filter18_85_96.bin": {
-				"locations": [ 0 ],
-				"length": 4,
-				"capacity": [ 8, 1 ],
-				"string": "X",
-				"is_backwards": 0
-			},
-			"binPartial_Filter216_22_36.bin": {
-				"locations": [ 20 ],
-				"length": 5,
-				"capacity": [ 16, 2 ],
-				"string": "X",
-				"is_backwards": 0
-			},
-			"binPartial_Filter216_52_66.bin": {
-				"locations": [ 10 ],
-				"length": 5,
-				"capacity": [ 16, 2 ],
-				"string": "X",
-				"is_backwards": 0
-			},
-			"binPartial_Filter216_82_96.bin": {
-				"locations": [ 0 ],
-				"length": 5,
-				"capacity": [ 16, 2 ],
-				"string": "X",
-				"is_backwards": 0
 			}
 		},
 		"start_locations": [
-			[ "binPartial_Filter_67_96.bin", "binPartial_Filter216_82_96.bin", "binPartial_Filter18_85_96.bin" ],
+			[ "binPartial_Filter_67_96.bin" ],
 			[],
 			[],
 			[],
@@ -76,7 +150,7 @@
 			[],
 			[],
 			[],
-			[ "binPartial_Filter_37_66.bin", "binPartial_Filter216_52_66.bin", "binPartial_Filter18_55_66.bin" ],
+			[ "binPartial_Filter_37_66.bin" ],
 			[],
 			[],
 			[],
@@ -86,7 +160,7 @@
 			[],
 			[],
 			[],
-			[ "binPartial_Filter_7_36.bin", "binPartial_Filter18_25_36.bin", "binPartial_Filter216_22_36.bin" ],
+			[ "binPartial_Filter_7_36.bin" ],
 			[],
 			[],
 			[],
@@ -173,30 +247,16 @@
 	},
 	"kMergeSort": {
 		"bitstreams": {
-			"binPartial_MergeSort128_37_72.bin": {
-				"locations": [ 8 ],
-				"length": 12,
-				"capacity": [ 128 ],
-				"string": "X",
-				"is_backwards": 0
-			},
-			"binPartial_MergeSort128_7_42.bin": {
+			"binPartial_MergeSort128_19_66.bin": {
 				"locations": [ 18 ],
 				"length": 12,
 				"capacity": [ 128 ],
 				"string": "X",
 				"is_backwards": 0
 			},
-			"binPartial_MergeSort128_19_66.bin": {
-				"locations": [ 10 ],
-				"length": 16,
-				"capacity": [ 128 ],
-				"string": "X",
-				"is_backwards": 0
-			},
 			"binPartial_MergeSort128_49_96.bin": {
-				"locations": [ 0 ],
-				"length": 16,
+				"locations": [ 8 ],
+				"length": 12,
 				"capacity": [ 128 ],
 				"string": "X",
 				"is_backwards": 0
@@ -245,7 +305,7 @@
 			}
 		},
 		"start_locations": [
-			[ "binPartial_MergeSort64_67_96.bin", "binPartial_MergeSort32_76_96.bin", "binPartial_MergeSort128_49_96.bin" ],
+			[ "binPartial_MergeSort64_67_96.bin", "binPartial_MergeSort32_76_96.bin" ],
 			[],
 			[],
 			[],
@@ -253,17 +313,17 @@
 			[],
 			[],
 			[],
-			[ "binPartial_MergeSort128_37_72.bin" ],
+			[ "binPartial_MergeSort128_49_96.bin" ],
 			[],
-			[ "binPartial_MergeSort64_37_66.bin", "binPartial_MergeSort32_46_66.bin", "binPartial_MergeSort128_19_66.bin" ],
-			[],
-			[],
+			[ "binPartial_MergeSort64_37_66.bin", "binPartial_MergeSort32_46_66.bin" ],
 			[],
 			[],
 			[],
 			[],
 			[],
-			[ "binPartial_MergeSort128_7_42.bin" ],
+			[],
+			[],
+			[ "binPartial_MergeSort128_19_66.bin" ],
 			[],
 			[ "binPartial_MergeSort64_7_36.bin", "binPartial_MergeSort32_16_36.bin" ],
 			[],
