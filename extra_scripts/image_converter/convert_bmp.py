@@ -18,8 +18,12 @@ import numpy as np
 
 
 def main(argv):
-    # argv = ["lena_RGB.bmp", "bw_0.raw"]
-    argv = ["lena_RGB.bmp", "bw_0.raw"]
+    # argv = ["lena_RGB.bmp", "lena_RGB.raw", "to_raw", "10"]
+    # argv = ["lena_RGB.bmp", "bw_0.raw", "read_raw_BW", "10"]
+    # argv = ["4k.bmp", "bw_0.raw", "read_raw_BW", "10"]
+    argv = ["4k.bmp", "sobel_0.raw", "read_raw_BW_multi", "10"]
+    if (len(argv) < 3):
+        raise RuntimeError("Incorrect number of arguments!")
     with Image.open(argv[0]) as img:
         # ImageShow.show(img)
 
@@ -30,37 +34,68 @@ def main(argv):
         #     print(i)
         #     print(hex(pixel_array.flat[i]))
 
-        # TO convert to raw
         rgb_im = img.convert('RGB')
-        # im_data = rgb_im.tobytes("raw", "BGR", 0, -1)
         width, height = rgb_im.size
-        # with open(argv[1], "wb") as newFile:
-        #     newFile.write(im_data)
+
+        # TO convert to raw
+        if (argv[2] == "to_raw"):
+            im_data = rgb_im.tobytes("raw", "BGR", 0, -1)
+            with open(argv[1], "wb") as newFile:
+                newFile.write(im_data)
 
         # TO read raw RGB and display
-        # with open(argv[1], "rb") as newFile:
-        #     im_data = newFile.read()
-        #     # loaded_img = Image.frombuffer(
-        #     #     "RGB", (width, height), im_data, 'raw', "RGB", 0, 1)
-        #     loaded_img = Image.frombuffer(
-        #         "RGB", (width, height), im_data, 'raw', "BGR", 0, -1)
-        #     ImageShow.show(loaded_img)
+        elif (argv[2] == "read_raw_RGB"):
+            with open(argv[1], "rb") as newFile:
+                im_data = newFile.read(width * height * 3)
+                # loaded_img = Image.frombuffer(
+                #     "RGB", (width, height), im_data, 'raw', "RGB", 0, 1)
+                loaded_img = Image.frombuffer(
+                    "RGB", (width, height), im_data, 'raw', "BGR", 0, -1)
+                ImageShow.show(loaded_img)
 
         # TO convert to BW sobel
-        # bw_im = img.convert('L')
-        # bw_im = bw_im.filter(ImageFilter.FIND_EDGES)
-        # im_data = bw_im.tobytes("raw")
-        # width, height = bw_im.size
-        # with open(argv[1], "wb") as newFile:
-        #     newFile.write(im_data)
+        elif (argv[2] == "to_sobel"):
+            bw_im = img.convert('L')
+            bw_im = bw_im.filter(ImageFilter.FIND_EDGES)
+            im_data = bw_im.tobytes("raw")
+            width, height = bw_im.size
+            with open(argv[1], "wb") as newFile:
+                newFile.write(im_data)
 
         # TO read raw BW and display
-        with open(argv[1], "rb") as newFile:
-            im_data = newFile.read()
-            loaded_img = Image.frombuffer(
-                "L", (width, height), im_data, 'raw', "L", 0, -1)
-            ImageShow.show(loaded_img)
+        elif (argv[2] == "read_raw_BW"):
+            with open(argv[1], "rb") as newFile:
+                im_data = newFile.read(width * height)
+                loaded_img = Image.frombuffer(
+                    "L", (width, height), im_data, 'raw', "L", 0, -1)
+                ImageShow.show(loaded_img)
+                loaded_img.save("saved.bmp")
+
+        # TO convert to raw RGB "gifs"
+        elif (argv[2] == "to_raw_multi"):
+            im_data = rgb_im.tobytes("raw", "BGR", 0, -1)
+            with open(argv[1], "wb") as newFile:
+                for i in range(int(argv[3])):
+                    newFile.write(im_data)
+
+        # TO read raw BW "gifs" and display
+        elif (argv[2] == "read_raw_BW_multi"):
+            with open(argv[1], "rb") as newFile:
+                # first = True
+                for i in range(int(argv[3])):
+                    im_data = newFile.read(width * height)
+                    loaded_img = Image.frombuffer(
+                        "L", (width, height), im_data, 'raw', "L", 0, -1)
+                    loaded_img.save(f"saved{i}.bmp")
+                    # if first:
+                    #     loaded_img.save(f"{argv[0]}_modified_saved.bmp")
+                    #     first = False
+                    ImageShow.show(loaded_img)
+
+        else:
+            raise RuntimeError("Incorrect operation!")
 
 
 if __name__ == '__main__':
+    # Original image, Target file, Operation, Frame count
     main(sys.argv[1:])

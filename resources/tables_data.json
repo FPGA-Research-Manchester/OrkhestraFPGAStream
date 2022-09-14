@@ -6,9 +6,15 @@
 		"sorted_status": []
 	},
 	{
+		"filename": "4k_RGB.raw",
+		"record_size": 48,
+		"record_count": 279936,
+		"sorted_status": []
+	},
+	{
 		"filename": "lena_RGB.raw",
 		"record_size": 48,
-		"record_count": 4096,
+		"record_count": 40960,
 		"sorted_status": []
 	},
 	{

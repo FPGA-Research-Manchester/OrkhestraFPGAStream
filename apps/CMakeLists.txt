@@ -66,6 +66,7 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lineitem_part_sf0_01_multiplied.csv 
     
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/lena_RGB.raw
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/4k_RGB.raw
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data_type_sizes.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/repo.json 
@@ -81,6 +82,8 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/merge_sort_testing.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/join_testing.json 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/lena_testing.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/bw_testing.json 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/4k_testing.json 
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/input_defs/lin_sort_testing.json 
     

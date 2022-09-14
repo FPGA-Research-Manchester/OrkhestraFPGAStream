@@ -145,11 +145,29 @@ void DataManager::WriteBinaryFile(const std::vector<uint32_t>& binary_data,
     if (!output_file) {
       throw std::runtime_error("Can't write " + filename);
     }
-    for (int i = 0; i < binary_data.size(); i += 4) {
-      output_file.write(reinterpret_cast<const char*>(&binary_data[i+3]), 4);
-      output_file.write(reinterpret_cast<const char*>(&binary_data[i+2]), 4);
-      output_file.write(reinterpret_cast<const char*>(&binary_data[i+1]), 4);
+    /*for (int i = 0; i < binary_data.size(); i += 16) {
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+12]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+13]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+14]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+15]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+8]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+9]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+10]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+11]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+4]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+5]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+6]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+7]), 4);
       output_file.write(reinterpret_cast<const char*>(&binary_data[i]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+1]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+2]), 4);
+      output_file.write(reinterpret_cast<const char*>(&binary_data[i+3]), 4);
+    }*/
+    std::array<char, 4> new_word;
+    for (const auto& word : binary_data) {
+      auto word_ptr = reinterpret_cast<const char*>(&word);
+      new_word = {word_ptr[3], word_ptr[2], word_ptr[1], word_ptr[0]};
+      output_file.write(reinterpret_cast<char*>(&new_word), 4);
     }
     /*output_file.write(reinterpret_cast<const char*>(&binary_data[0]),
                       binary_data.size() * sizeof(uint32_t));*/
