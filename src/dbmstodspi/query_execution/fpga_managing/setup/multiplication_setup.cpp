@@ -55,13 +55,17 @@ void MultiplicationSetup::SetupMultiplicationModule(
   }
   multiplication_module.DefineActiveStreams(active_streams);
 
-  for (const auto& multiplication_selections : operation_parameters) {
-    std::bitset<8> selected_positions;
-    for (int position = 0; position < 8; position++) {
-      selected_positions.set(position,
-                             multiplication_selections.at(8 - position) != 0);
+  if (active_stream_ids.size() == 1 && active_stream_ids.front() == 15) {
+    // skip
+  } else {
+    for (const auto& multiplication_selections : operation_parameters) {
+      std::bitset<8> selected_positions;
+      for (int position = 0; position < 8; position++) {
+        selected_positions.set(position,
+                               multiplication_selections.at(8 - position) != 0);
+      }
+      multiplication_module.ChooseMultiplicationResults(
+          multiplication_selections.at(0), selected_positions);
     }
-    multiplication_module.ChooseMultiplicationResults(
-        multiplication_selections.at(0), selected_positions);
   }
 }

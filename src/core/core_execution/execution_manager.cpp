@@ -91,8 +91,7 @@ void ExecutionManager::PrintHWState() {
   std::cout << "==CURRENT CONFIGURATION==" << std::endl;
   std::string dma_string = "MMDBMMDMDMDB";
   for (const auto resource : dma_string) {
-    std::cout << "X(" << resource
-              << "): DMA" << std::endl;
+    std::cout << "X(" << resource << "): DMA" << std::endl;
   }
   for (int i = 0; i < current_routing_.size(); i++) {
     std::cout << i << "(" << config_.resource_string.at(i)
@@ -453,6 +452,7 @@ auto ExecutionManager::GetModuleCapacity(int module_position,
       last_seen_bitstream = module_name;
     }
   }
+  // return {0};
   throw std::runtime_error("Not enough modules configured!");
 }
 
@@ -493,6 +493,22 @@ void ExecutionManager::SetupNextRunData() {
       query_manager_->GetPRBitstreamsToLoadWithPassthroughModules(
           current_configuration_, query_node_runs_queue_.front().first,
           current_routing_);
+  /*bitstreams_to_load = {"binPartial_Static1_0_96.bin"};
+  empty_modules = {
+      {QueryOperationType::kFilter, false},
+      {QueryOperationType::kAddition, true},
+      {QueryOperationType::kMultiplication, true},
+      {QueryOperationType::kAggregationSum, true},
+      {QueryOperationType::kLinearSort, true},
+  };*/
+  /*bitstreams_to_load = {"binPartial_Static2_0_96.bin"};
+  empty_modules = {
+      {QueryOperationType::kMergeSort, true},
+      {QueryOperationType::kJoin, true},
+      {QueryOperationType::kFilter, false},
+      {QueryOperationType::kAggregationSum, true},
+  };*/
+  // bitstreams_to_load = {"byteman_BWplusSobel_67_96.bin"};
   /*query_manager_->LoadPRBitstreams(memory_manager_.get(), bitstreams_to_load,
    *accelerator_library_);*/
   config_time_ += query_manager_->LoadPRBitstreams(
@@ -548,7 +564,8 @@ void ExecutionManager::SetupNextRunData() {
       query_manager_->SetupAccelerationNodesForExecution(
           data_manager_.get(), memory_manager_.get(),
           accelerator_library_.get(), next_scheduled_run_nodes,
-          current_tables_metadata_, table_memory_blocks_, table_counter_);
+          current_tables_metadata_, table_memory_blocks_, table_counter_,
+          config_.print_write_times);
   query_nodes_ = std::move(execution_nodes_and_result_params.first);
   for (int module_pos = 0; module_pos < empty_modules.size(); module_pos++) {
     if (empty_modules.at(module_pos).second) {

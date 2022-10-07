@@ -44,7 +44,8 @@ class QueryManager : public QueryManagerInterface {
       const std::map<std::string, TableMetadata>& current_tables_metadata,
       std::unordered_map<std::string, MemoryBlockInterface*>&
           table_memory_blocks,
-      std::unordered_map<std::string, int>& table_counter)
+      std::unordered_map<std::string, int>& table_counter,
+      bool print_write_times)
       -> std::pair<
           std::vector<AcceleratedQueryNode>,
           std::map<std::string, std::vector<StreamResultParameters>>> override;
@@ -207,7 +208,8 @@ class QueryManager : public QueryManagerInterface {
       const std::vector<std::vector<int>>& input_stream_parameters,
       const std::map<std::string, TableMetadata>& current_tables_metadata,
       std::unordered_map<std::string, MemoryBlockInterface*>&
-          table_memory_blocks);
+          table_memory_blocks,
+      bool print_write_times);
   static void InitialiseStreamSizeVector(
       std::map<std::string, std::vector<RecordSizeAndCount>>& stream_sizes,
       int stream_count, const std::string& node_name);

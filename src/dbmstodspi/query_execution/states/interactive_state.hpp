@@ -16,8 +16,9 @@ limitations under the License.
 
 #pragma once
 
-#include <string>
 #include <map>
+#include <string>
+#include <utility>
 
 #include "state_interface.hpp"
 
@@ -34,9 +35,13 @@ class InteractiveState : public StateInterface {
   auto GetStdInput() -> std::string;
   auto GetInteger() -> int;
   auto GetDouble() -> double;
-  auto GetExecutionPlanFile()->std::string;
+  auto GetExecutionPlanFile(const std::pair<std::string, std::string>& input)
+      -> std::string;
   void PrintOutGivenOptions(const std::vector<std::string> list_of_options);
-  auto GetBitstreamToLoad(const std::map<QueryOperationType, OperationPRModules> bitstream_map) -> ScheduledModule;
+  auto GetBitstreamToLoad(
+      const std::map<QueryOperationType, OperationPRModules> bitstream_map)
+      -> ScheduledModule;
+  auto GetQueryFromInput() -> std::pair<std::string, std::string>;
   std::map<QueryOperationType, std::string> operation_names_ = {
       {QueryOperationType::kAddition, "Addition"},
       {QueryOperationType::kAggregationSum, "Aggregation sum"},
@@ -48,6 +53,7 @@ class InteractiveState : public StateInterface {
       {QueryOperationType::kSobel, "Sobel"},
       {QueryOperationType::kBlackWhite, "Convert to Monochrome"},
   };
+
  public:
   ~InteractiveState() override = default;
 

@@ -17,6 +17,11 @@
 set(data 
     #${OrkhestraFPGAStream_SOURCE_DIR}/resources/scheduling_input_defs.zip
 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/scheduling_input_defs/Q19/Q19_SF001.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/scheduling_input_defs/Q14/Q14_SF001.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/scheduling_input_defs/Q6/Q6_SF001.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/scheduling_input_defs/all/all_SF001.json
+
 	${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/CAR_DATA.csv
 	${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/CAR_DATA_HALF_SORTED.csv
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/CAR_DATA_SORTED.csv
@@ -173,6 +178,16 @@ set(data
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/static.bin
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/static.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Static1_0_96.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Static1_0_96.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Static2_0_96.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Static2_0_96.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/byteman_BWplusSobel_37_66.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/byteman_BWplusSobel_37_66.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/byteman_BWplusSobel_7_36.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/byteman_BWplusSobel_7_36.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/byteman_BWplusSobel_67_96.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/byteman_BWplusSobel_67_96.json
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Route_through/RT_2.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Route_through/RT_5.json
@@ -360,7 +375,7 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_filter.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q19.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q6.txt
-    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q1.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q14.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/lineitem.csv
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/part.csv
 

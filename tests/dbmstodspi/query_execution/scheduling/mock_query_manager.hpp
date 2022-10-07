@@ -59,7 +59,8 @@ class MockQueryManager : public QueryManagerInterface {
                AcceleratorLibraryInterface* accelerator_library,
                const std::vector<QueryNode*>& current_query_nodes,
                const TableMap& current_tables_metadata,
-               MappedMemoryBlocks& table_memory_blocks, Counter& table_counter),
+               MappedMemoryBlocks& table_memory_blocks, Counter& table_counter,
+               bool print_write_times),
               (override));
   MOCK_METHOD(void, LoadNextBitstreamIfNew,
               (MemoryManagerInterface * memory_manager,

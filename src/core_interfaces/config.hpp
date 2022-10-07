@@ -59,7 +59,6 @@ struct Config {
   bool check_tables = false;
 
   bool print_data_amounts = false;
-  // TODO: Doesn't do anything at the moment
   bool print_write_times = false;
   bool print_total_execution = false;
   bool print_system = false;

@@ -1,0 +1,11 @@
+{
+  "name": "binPartial_Static2_0_96",
+  "address": "0xa0000000",
+  "bitfiles": [
+    {
+      "name": "binPartial_Static2_0_96.bin",
+      "region": "full"
+    }
+  ],
+  "registers": []
+}

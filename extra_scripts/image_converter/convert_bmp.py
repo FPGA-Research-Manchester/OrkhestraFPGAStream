@@ -21,7 +21,7 @@ def main(argv):
     # argv = ["lena_RGB.bmp", "lena_RGB.raw", "to_raw", "10"]
     # argv = ["lena_RGB.bmp", "bw_0.raw", "read_raw_BW", "10"]
     # argv = ["4k.bmp", "bw_0.raw", "read_raw_BW", "10"]
-    argv = ["4k.bmp", "sobel_0.raw", "read_raw_BW_multi", "10"]
+    argv = ["lena_RGB.bmp", "sobel_0.raw", "read_raw_BW_multi", "10"]
     if (len(argv) < 3):
         raise RuntimeError("Incorrect number of arguments!")
     with Image.open(argv[0]) as img:
@@ -47,11 +47,12 @@ def main(argv):
         elif (argv[2] == "read_raw_RGB"):
             with open(argv[1], "rb") as newFile:
                 im_data = newFile.read(width * height * 3)
-                # loaded_img = Image.frombuffer(
-                #     "RGB", (width, height), im_data, 'raw', "RGB", 0, 1)
                 loaded_img = Image.frombuffer(
-                    "RGB", (width, height), im_data, 'raw', "BGR", 0, -1)
+                    "RGB", (width, height), im_data, 'raw', "RGB", 0, 1)
+                # loaded_img = Image.frombuffer(
+                #     "RGB", (width, height), im_data, 'raw', "BGR", 0, -1)
                 ImageShow.show(loaded_img)
+                loaded_img.save(f"saved.bmp")
 
         # TO convert to BW sobel
         elif (argv[2] == "to_sobel"):
@@ -73,7 +74,7 @@ def main(argv):
 
         # TO convert to raw RGB "gifs"
         elif (argv[2] == "to_raw_multi"):
-            im_data = rgb_im.tobytes("raw", "BGR", 0, -1)
+            im_data = rgb_im.tobytes("raw", "RGB", 0, 1)
             with open(argv[1], "wb") as newFile:
                 for i in range(int(argv[3])):
                     newFile.write(im_data)
@@ -84,8 +85,17 @@ def main(argv):
                 # first = True
                 for i in range(int(argv[3])):
                     im_data = newFile.read(width * height)
-                    loaded_img = Image.frombuffer(
-                        "L", (width, height), im_data, 'raw', "L", 0, -1)
+                    print(len(im_data))
+                    if len(im_data) != (width * height):
+                        array = bytearray(im_data)
+                        while (len(array) != (width * height)):
+                            array.append(0)
+                        loaded_img = Image.frombuffer(
+                            "L", (width, height), array, 'raw', "L", 0, 1)
+                    else:
+                        loaded_img = Image.frombuffer(
+                            "L", (width, height), im_data, 'raw', "L", 0, 1)
+
                     loaded_img.save(f"saved{i}.bmp")
                     # if first:
                     #     loaded_img.save(f"{argv[0]}_modified_saved.bmp")

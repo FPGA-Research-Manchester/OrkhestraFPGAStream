@@ -178,25 +178,27 @@ auto ElasticSchedulingGraphParser::GetMinPositionInCurrentRun(
     const std::vector<ScheduledModule>& current_run,
     const std::string& node_name,
     const std::unordered_map<std::string, SchedulingQueryNode>& graph) -> int {
-  std::vector<ScheduledModule> currently_scheduled_prereq_nodes;
+  /*std::vector<ScheduledModule> currently_scheduled_prereq_nodes;*/
+  int current_min = -1;
   for (const auto& [previous_node_name, _] : graph.at(node_name).before_nodes) {
     for (const auto& module_placement : current_run) {
       if (previous_node_name == module_placement.node_name) {
-        currently_scheduled_prereq_nodes.push_back(module_placement);
+        if (module_placement.position.second > current_min) {
+          current_min = module_placement.position.second;
+        }
       }
     }
   }
-  if (!currently_scheduled_prereq_nodes.empty()) {
-    int current_min = 0;
-    for (const auto& module_placement : currently_scheduled_prereq_nodes) {
-      if (module_placement.position.second > current_min) {
-        current_min = module_placement.position.second;
-      }
-    }
-    // Assuming current min isn't 0 or negative somehow.
-    return current_min + 1;
-  }
-  return 0;
+  return current_min + 1;
+  //if (!currently_scheduled_prereq_nodes.empty()) {
+  //  
+  //  for (const auto& module_placement : currently_scheduled_prereq_nodes) {
+  //    
+  //  }
+  //  // Assuming current min isn't 0 or negative somehow.
+  //  
+  //}
+  //return 0;
 }
 
 auto ElasticSchedulingGraphParser::GetTakenColumns(

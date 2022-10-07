@@ -58,8 +58,9 @@ auto InteractiveState::Execute(GraphProcessingFSMInterface* fsm)
       fsm->ChangeExecutionTimeLimit(GetInteger());
       break;
     case 5: {
+      auto query = GetQueryFromInput();
       auto begin = std::chrono::steady_clock::now();
-      fsm->AddNewNodes(GetExecutionPlanFile());
+      fsm->AddNewNodes(GetExecutionPlanFile(std::move(query)));
       auto end = std::chrono::steady_clock::now();
       long planning =
           std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
@@ -140,7 +141,7 @@ auto InteractiveState::GetBitstreamToLoad(
                                      .fitting_locations.front() +
                                  bitstream_map.at(current_operation)
                                      .bitstream_map.at(chosen_bitstream_name)
-                                     .length}};
+                                     .length - 1}};
       }
     } else {
       std::cout << "Choose operation: " << std::endl;
@@ -161,16 +162,22 @@ auto InteractiveState::GetBitstreamToLoad(
   return chosen_bitstream;
 }
 
-auto InteractiveState::GetExecutionPlanFile() -> std::string {
+auto InteractiveState::GetQueryFromInput()
+    -> std::pair<std::string, std::string> {
   std::cout << "Enter DB name:" << std::endl;
   auto database = GetStdInput();
   database.pop_back();
   std::cout << "Enter filename with query:" << std::endl;
   auto query_filename = GetStdInput();
   query_filename.pop_back();
+  return {std::move(database), std::move(query_filename)};
+}
+
+auto InteractiveState::GetExecutionPlanFile(const std::pair<std::string, std::string>& input)
+    -> std::string {
   SQLQueryCreator sql_creator;
-  SQLParser::CreatePlan(sql_creator, std::move(query_filename),
-                        std::move(database));
+  SQLParser::CreatePlan(sql_creator, std::move(input.second),
+                        std::move(input.first));
   return sql_creator.ExportInputDef();
 }
 
@@ -180,9 +187,9 @@ void InteractiveState::PrintOptions(GraphProcessingFSMInterface* fsm) {
   std::cout << "Which operation would you like to do?" << std::endl;
   std::cout << "1: Print HW state" << std::endl;
   if (fsm->GetFPGASpeed() == 300) {
-    std::cout << "2: Change FPGA speed to 100 MHz" << std::endl;
+    std::cout << "2: Change FPGA speed (currently MAX - 300 MHz)" << std::endl;
   } else if (fsm->GetFPGASpeed() == 100) {
-    std::cout << "2: Change FPGA speed to 300 MHz" << std::endl;
+    std::cout << "2: Change FPGA speed (currently 100 MHz)" << std::endl;
   } else {
     throw std::runtime_error("Unsupported clock speed!");
   }
