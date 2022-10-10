@@ -66,6 +66,8 @@ struct Config {
   bool print_scheduling = false;
   bool print_config = false;
 
+  bool enable_sw_backup = true;
+
   int execution_timeout = 60;
 
   double streaming_speed = 4800000000;

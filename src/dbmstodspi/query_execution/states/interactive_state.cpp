@@ -23,6 +23,7 @@ limitations under the License.
 #include "schedule_state.hpp"
 #include "sql_parser.hpp"
 #include "sql_query_creator.hpp"
+#include "orkhestra_exception.hpp"
 
 using orkhestrafs::dbmstodspi::GraphProcessingFSMInterface;
 using orkhestrafs::dbmstodspi::InteractiveState;
@@ -32,6 +33,7 @@ using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::sql_parsing::SQLParser;
 using orkhestrafs::sql_parsing::SQLQueryCreator;
+using orkhestrafs::dbmstodspi::OrkhestraException;
 
 auto InteractiveState::Execute(GraphProcessingFSMInterface* fsm)
     -> std::unique_ptr<StateInterface> {
@@ -59,15 +61,25 @@ auto InteractiveState::Execute(GraphProcessingFSMInterface* fsm)
       break;
     case 5: {
       auto query = GetQueryFromInput();
-      auto begin = std::chrono::steady_clock::now();
-      fsm->AddNewNodes(GetExecutionPlanFile(std::move(query)));
-      auto end = std::chrono::steady_clock::now();
-      long planning =
-          std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
-              .count();
-      std::cout << "PLANNING: " << planning << " ms" << std::endl;
-      fsm->SetStartTimer();
-      return std::make_unique<ScheduleState>();
+      try {
+        auto begin = std::chrono::steady_clock::now();
+        fsm->AddNewNodes(GetExecutionPlanFile(std::move(query)));
+        auto end = std::chrono::steady_clock::now();
+        long planning =
+            std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
+                .count();
+        std::cout << "PLANNING: " << planning << " ms" << std::endl;
+        fsm->SetStartTimer();
+        return std::make_unique<ScheduleState>();
+      } catch (OrkhestraException exception) {
+        if (fsm->IsSWBackupEnabled()) {
+          SQLParser::PrintResults(std::move(query.second),
+                                  std::move(query.first));
+        } else {
+          throw std::runtime_error("Python call unsuccessful!");
+        }
+      }
+      
       break;
     }
     case 6:

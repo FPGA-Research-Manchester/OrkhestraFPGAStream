@@ -116,5 +116,6 @@ class GraphProcessingFSMInterface {
   virtual auto GetCurrentHW() -> std::map<QueryOperationType, OperationPRModules> = 0;
   virtual void LoadBitstream(ScheduledModule new_module) = 0;
   virtual auto IsHWPrintEnabled()->bool = 0;
+  virtual auto IsSWBackupEnabled() -> bool = 0;
 };
 }  // namespace orkhestrafs::dbmstodspi

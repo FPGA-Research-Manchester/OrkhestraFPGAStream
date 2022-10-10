@@ -26,6 +26,9 @@ limitations under the License.
 using orkhestrafs::core::core_execution::ExecutionManager;
 using orkhestrafs::dbmstodspi::QuerySchedulingHelper;
 
+auto ExecutionManager::IsSWBackupEnabled() -> bool {
+  return config_.enable_sw_backup;
+}
 auto ExecutionManager::IsHWPrintEnabled() -> bool { return print_hw_; }
 
 void ExecutionManager::LoadBitstream(ScheduledModule new_module) {

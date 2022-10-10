@@ -373,9 +373,28 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_big_sort.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_sum.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_filter.txt
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q19.txt
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q6.txt
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q14.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q1.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q2.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q3.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q4.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q5.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q6.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q7.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q8.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q9.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q10.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q11.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q12.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q13.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q14.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q15.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q16.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q17.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q18.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q19.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q20.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q21.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q22.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/lineitem.csv
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/part.csv
 

@@ -75,6 +75,7 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string print_initialisation = "PRINT_INITIALISATION_TIME";
   std::string print_scheduling = "PRINT_SCHEDULING_TIME";
   std::string print_config = "PRINT_CONFIGURATION_TIME";
+  std::string enable_sw_backup = "ENABLE_SW_BACKUP";
 
   // repo.json is hardcoded for now.
 
@@ -138,6 +139,8 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
       config.print_scheduling;
   std::istringstream(config_values[print_config]) >> std::boolalpha >>
       config.print_config;
+  std::istringstream(config_values[enable_sw_backup]) >> std::boolalpha >>
+      config.enable_sw_backup;
 
   auto string_key_data_sizes =
       json_reader_->ReadValueMap(config_values[data_type_sizes]);

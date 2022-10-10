@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright 2022 University of Manchester
 
 Licensed under the Apache License, Version 2.0(the "License");
@@ -15,22 +15,14 @@ limitations under the License.
 */
 
 #pragma once
+#include<exception>
 
-#include <string>
+namespace orkhestrafs::dbmstodspi {
 
-#include "sql_query_creator.hpp"
-
-namespace orkhestrafs::sql_parsing {
-
-/**
- * @brief Class to Read SQL and create a Query Plan
- */
-class SQLParser {
+class OrkhestraException : public std::exception {
  public:
-  static void CreatePlan(SQLQueryCreator& sql_creator,
-                         const std::string& query_filename,
-                         const std::string& database_name);
-  static void PrintResults(const std::string& query_filename,
-                           const std::string& database_name);
+	 //TODO: Currently hardcoded for SQL parsing
+  char* what() { return "SQL parsing Failed"; }
 };
-}  // namespace orkhestrafs::sql_parsing
+
+}  // namespace orkhestrafs::dbmstodspi

@@ -85,6 +85,7 @@ class ExecutionManager : public ExecutionManagerInterface,
         fpga_manager_{std::move(
             driver_factory->CreateFPGAManager(accelerator_library_.get()))} {};
 
+  auto IsSWBackupEnabled() -> bool override;
   auto IsHWPrintEnabled() -> bool override;
   void LoadBitstream(ScheduledModule new_module) override;
   auto GetCurrentHW() -> std::map<QueryOperationType, OperationPRModules> override;
