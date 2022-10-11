@@ -125,6 +125,7 @@ set(data
     #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem.zip 
     #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/part.zip 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/default_config.ini
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/config_c.ini
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/tables_data.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/pr_hw_library.json
@@ -395,8 +396,12 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q20.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q21.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q22.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q5_mod.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q19_mod.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/lineitem.csv
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/part.csv
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/orders_c.csv
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/lineitem_c.csv
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/setupUdma.pl
     ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/sql_parsing/postgresql_explain_parser.py)

@@ -87,11 +87,13 @@ auto InteractiveState::Execute(GraphProcessingFSMInterface* fsm)
       break;
     case 7:
       fsm->LoadStaticBitstream();
+      break;
     case 8: {
       auto new_bitstream = GetBitstreamToLoad(fsm->GetCurrentHW());
       if (new_bitstream.operation_type != QueryOperationType::kPassThrough) {
         fsm->LoadBitstream(new_bitstream);
       }
+      break;
     }
     case 9:
       if (fsm->IsHWPrintEnabled()){

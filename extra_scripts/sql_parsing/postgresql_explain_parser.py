@@ -47,7 +47,14 @@ def print_node(node_data):
 
 def SetInitialNodes(node_data, all_nodes, counter, parent_counter):
     if (node_data['Node Type'] ==
-            "Sort" and parent_counter in all_nodes and all_nodes[parent_counter].type == "Join"):
+            "Sort" and parent_counter in all_nodes and all_nodes[parent_counter].type == "Join") or (node_data['Node Type'] == "Materialize"):
+        current_node_counter = parent_counter
+    elif(node_data['Node Type'] == "Seq Scan" and "Filter" not in node_data):
+        if (parent_counter != -1):
+            all_nodes[parent_counter].inputs.append(-1)
+            all_nodes[parent_counter].tables.append(node_data['Alias'])
+        else:
+            raise RuntimeError(f"Don't support passthrough columns!")
         current_node_counter = parent_counter
     else:
         current_node_counter = counter[0]
@@ -62,11 +69,12 @@ def SetInitialNodes(node_data, all_nodes, counter, parent_counter):
             all_nodes[current_node_counter] = Node(
                 "Join", current_node_counter, [
                     node_data['Merge Cond']], [], [])
-            child_to_parent_counter = counter[0]
-            counter[0] += 1
-            all_nodes[child_to_parent_counter] = Node(
-                "Filter", child_to_parent_counter, [
-                    node_data['Join Filter']], [current_node_counter], [])
+            if "Join Filter" in node_data:
+                child_to_parent_counter = counter[0]
+                counter[0] += 1
+                all_nodes[child_to_parent_counter] = Node(
+                    "Filter", child_to_parent_counter, [
+                        node_data['Join Filter']], [current_node_counter], [])
         elif (node_data['Node Type'] == "Seq Scan"):
             all_nodes[current_node_counter] = Node(
                 "Filter", current_node_counter, [

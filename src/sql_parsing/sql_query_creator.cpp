@@ -637,26 +637,9 @@ auto SQLQueryCreator::SetIOStreamParams(const std::string& current_process)
   for (int parent_index = 0;
        parent_index < operations_.at(current_process).inputs.size();
        parent_index++) {
-    auto parent = operations_.at(current_process).inputs.at(parent_index);
-    operations_[current_process].input_params.insert(
-        operations_[current_process].input_params.end(), {{}, {}, {}, {}});
-    operations_[current_process].output_params.insert(
-        operations_[current_process].output_params.end(), {{}, {}, {}, {}});
-    if (is_table_.at(parent)) {
-      int last_used_column_index =
-          ProcessTableColumns(current_process, parent_index, parent);
-
-      record_size += PlaceColumnsToDesiredPositions(
-          current_process, parent_index, last_used_column_index, parent,
-          record_size);
-      if (generate_join_offset_ == current_process && parent_index == 0) {
-        if (join_offset_ != -1) {
-          throw std::runtime_error("Offset is already set!");
-        }
-        join_offset_ = record_size % 16;
-      }
-    } else {
-      CopyOutputParamsOfParent(current_process, parent_index, parent, record_size);
+    if (parent_index == 0 &&
+        !operations_[current_process].input_params.empty()) {
+      // Skip the already processed stream
       auto column_types =
           operations_[current_process]
               .input_params[parent_index * io_param_vector_count_ +
@@ -669,6 +652,42 @@ auto SQLQueryCreator::SetIOStreamParams(const std::string& current_process)
         record_size +=
             column_sizes.at(i) *
             column_sizes_.at(static_cast<ColumnDataType>(column_types.at(i)));
+      }
+    } else {
+      auto parent = operations_.at(current_process).inputs.at(parent_index);
+      operations_[current_process].input_params.insert(
+          operations_[current_process].input_params.end(), {{}, {}, {}, {}});
+      operations_[current_process].output_params.insert(
+          operations_[current_process].output_params.end(), {{}, {}, {}, {}});
+      if (is_table_.at(parent)) {
+        int last_used_column_index =
+            ProcessTableColumns(current_process, parent_index, parent);
+
+        record_size += PlaceColumnsToDesiredPositions(
+            current_process, parent_index, last_used_column_index, parent,
+            record_size);
+        if (generate_join_offset_ == current_process && parent_index == 0) {
+          if (join_offset_ != -1) {
+            throw std::runtime_error("Offset is already set!");
+          }
+          join_offset_ = record_size % 16;
+        }
+      } else {
+        CopyOutputParamsOfParent(current_process, parent_index, parent,
+                                 record_size);
+        auto column_types =
+            operations_[current_process]
+                .input_params[parent_index * io_param_vector_count_ +
+                              data_types_offset_];
+        auto column_sizes =
+            operations_[current_process]
+                .input_params[parent_index * io_param_vector_count_ +
+                              data_sizes_offset_];
+        for (int i = 0; i < column_types.size(); i++) {
+          record_size +=
+              column_sizes.at(i) *
+              column_sizes_.at(static_cast<ColumnDataType>(column_types.at(i)));
+        }
       }
     }
   }
@@ -1310,7 +1329,11 @@ auto SQLQueryCreator::PlaceColumnsToDesiredPositions(
   if (operations_.at(current_process).operation_type ==
           QueryOperationType::kJoin &&
       stream_index == 1) {
-    int offset = std::get<std::vector<int>>(
+    if (join_offset_ == -1) {
+      throw std::runtime_error("Offset is not set!");
+    }
+    int offset = join_offset_;
+    /*int offset = std::get<std::vector<int>>(
                      operations_.at(current_process).operation_params.front())
                      .front();
     record_size -= offset;
@@ -1322,7 +1345,7 @@ auto SQLQueryCreator::PlaceColumnsToDesiredPositions(
           column_sizes.front();
       column_sizes.erase(column_sizes.begin());
       column_types.erase(column_types.begin());
-    }
+    }*/
   }
 
   operations_[current_process]
@@ -1371,14 +1394,15 @@ void SQLQueryCreator::CombineOutputStreamParams(
             data_sizes.at(1) *
             column_sizes_.at(static_cast<ColumnDataType>(data_types.at(1)));
         removed_columns_size += second_column_size;
-            
+
         if (removed_columns_size > join_offset_) {
           if (static_cast<ColumnDataType>(data_types.at(1)) ==
               ColumnDataType::kNull) {
             operations_[current_process]
                 .output_params[data_types_offset_]
                 .push_back(static_cast<int>(ColumnDataType::kNull));
-            int null_size = second_column_size - (join_offset_ - first_column_size);
+            int null_size =
+                second_column_size - (join_offset_ - first_column_size);
             operations_[current_process]
                 .output_params[data_sizes_offset_]
                 .push_back(null_size);
@@ -1442,7 +1466,8 @@ void SQLQueryCreator::CopyOutputParamsOfParent(
       operations_[parent].output_params[data_sizes_offset_];
   for (const auto& [column_name, column_location] :
        operations_[parent].column_locations) {
-    if (parent_index != 0 && column_name != operations_[current_process].sorted_by_column) {
+    if (parent_index != 0 &&
+        column_name != operations_[current_process].sorted_by_column) {
       operations_[current_process].column_locations.insert(
           {column_name, column_location + record_size - join_offset_});
     } else {
@@ -1640,6 +1665,8 @@ void SQLQueryCreator::UpdateRequiredColumns() {
       const auto& first_stream = operations_.at(current_process).inputs.at(0);
       if (!is_table_.at(first_stream)) {
         generate_join_offset_ = first_stream;
+      } else {
+        // Will get fixed later
       }
       const auto& second_stream = operations_.at(current_process).inputs.at(1);
       if (!is_table_.at(second_stream)) {
@@ -1712,6 +1739,26 @@ void SQLQueryCreator::UpdateRequiredColumns() {
     }
   }
   RenameAllColumns();
+
+  if (!generate_join_offset_.empty() &&
+      operations_.at(generate_join_offset_).operation_type ==
+          QueryOperationType::kJoin) {
+    // Need to know the size of the table after crossbar!
+    auto parent = operations_.at(generate_join_offset_).inputs.at(0);
+    operations_[generate_join_offset_].input_params.insert(
+        operations_[generate_join_offset_].input_params.end(),
+        {{}, {}, {}, {}});
+    operations_[generate_join_offset_].output_params.insert(
+        operations_[generate_join_offset_].output_params.end(),
+        {{}, {}, {}, {}});
+    int last_used_column_index =
+        ProcessTableColumns(generate_join_offset_, 0, parent);
+
+    int record_size = PlaceColumnsToDesiredPositions(
+        generate_join_offset_, 0, last_used_column_index, parent, 0);
+    join_offset_ = record_size % 16;
+    generate_join_offset_ = "invalid_";
+  }
 }
 
 void SQLQueryCreator::RenameAllColumns() {
