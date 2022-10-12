@@ -39,7 +39,7 @@ The **sort** modules are meant to be used together.
 The **join** module is for sort-merge join operations. So it will only join sorted streams.
 The **addition**, **multiplication** and **sum** modules work with 64 bit decimal values.
 
-The interface specification documentation will be available later.
+The interface specification is better described in the [thesis](https://www.research.manchester.ac.uk/portal/files/213182998/FULL_TEXT.PDF) by Kristiyan Manev.
 
 ## How does it work?
 
@@ -53,6 +53,8 @@ The first file defines the query plan. The second file contains json filepaths t
 
 * [INPUT_DEF.json](./resources/input_defs/TPCH_Q19_SF01.json)
 * [CONFIG.ini](./resources/config.ini)
+
+For the interactive mode for demos or debugging use the -x flag without the -i flag and the INPUT_DEF file.
 
 More info on the how the data is mapped to the interface and how the data is processed can be found [here](./docs/README.md).
 

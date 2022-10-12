@@ -400,8 +400,8 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q19_mod.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/lineitem.csv
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/part.csv
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/orders_c.csv
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/lineitem_c.csv
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/orders_c.csv
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/lineitem_c.csv
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/setupUdma.pl
     ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/sql_parsing/postgresql_explain_parser.py)
