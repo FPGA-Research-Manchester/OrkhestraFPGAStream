@@ -235,6 +235,18 @@
 		"sorted_status": [ 0, 19999, 20000, 1 ]
 	},
 	{
+		"filename": "orders_c.csv",
+		"record_size": 1,
+		"record_count": 227597,
+		"sorted_status": []
+	},
+	{
+		"filename": "lineitem_c.csv",
+		"record_size": 5,
+		"record_count": 6001215,
+		"sorted_status": []
+	},
+	{
 		"filename": "lineitem1.csv",
 		"record_size": 38,
 		"record_count": 6001215,

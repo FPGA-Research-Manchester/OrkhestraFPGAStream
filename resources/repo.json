@@ -107,6 +107,11 @@
     "binPartial_rgb2bw_31_36",
     "binPartial_rgb2bw_61_66",
     "binPartial_rgb2bw_91_96",
-    "binPartial_bwSobel_7_30"
+    "binPartial_bwSobel_7_30",
+    "binPartial_Static2_0_96",
+    "binPartial_Static1_0_96",
+    "byteman_BWplusSobel_7_36",
+    "byteman_BWplusSobel_37_66",
+    "byteman_BWplusSobel_67_96"
   ]
 }

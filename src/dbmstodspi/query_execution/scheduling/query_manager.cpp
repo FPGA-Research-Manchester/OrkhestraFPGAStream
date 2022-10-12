@@ -191,7 +191,7 @@ void QueryManager::AllocateInputMemoryBlocks(
     const std::vector<std::vector<int>>& input_stream_parameters,
     const std::map<std::string, TableMetadata>& current_tables_metadata,
     std::unordered_map<std::string, MemoryBlockInterface*>&
-        table_memory_blocks) {
+        table_memory_blocks, bool print_write_times) {
   for (int stream_index = 0;
        stream_index < run_data.input_data_definition_files.size();
        stream_index++) {
@@ -210,11 +210,13 @@ void QueryManager::AllocateInputMemoryBlocks(
 
       std::chrono::steady_clock::time_point end =
           std::chrono::steady_clock::now();
-      std::cout << "FS TO MEMORY WRITE: "
-                << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                         begin)
-                       .count()
-                << std::endl;
+      if (print_write_times) {
+        std::cout << "FS TO MEMORY WRITE: "
+                  << std::chrono::duration_cast<std::chrono::microseconds>(
+                         end - begin)
+                         .count()
+                  << std::endl;
+      }
       Log(LogLevel::kInfo,
           "Read data time = " +
               std::to_string(
@@ -458,7 +460,7 @@ auto QueryManager::SetupAccelerationNodesForExecution(
     const std::vector<QueryNode*>& current_query_nodes,
     const std::map<std::string, TableMetadata>& current_tables_metadata,
     std::unordered_map<std::string, MemoryBlockInterface*>& table_memory_blocks,
-    std::unordered_map<std::string, int>& table_counter)
+    std::unordered_map<std::string, int>& table_counter, bool print_write_times)
     -> std::pair<std::vector<AcceleratedQueryNode>,
                  std::map<std::string, std::vector<StreamResultParameters>>> {
   std::map<std::string, std::vector<StreamResultParameters>> result_parameters;
@@ -488,7 +490,7 @@ auto QueryManager::SetupAccelerationNodesForExecution(
     AllocateInputMemoryBlocks(
         memory_manager, data_manager, current_run_params,
         node->given_operation_parameters.input_stream_parameters,
-        current_tables_metadata, table_memory_blocks);
+        current_tables_metadata, table_memory_blocks, print_write_times);
 
     auto input_params = CreateStreamParams(
         true, node, input_ids[node->node_name], current_run_params,

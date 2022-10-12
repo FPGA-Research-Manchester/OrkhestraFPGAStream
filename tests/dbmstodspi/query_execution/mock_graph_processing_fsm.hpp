@@ -60,4 +60,5 @@ class MockGraphProcessingFSM : public GraphProcessingFSMInterface {
   MOCK_METHOD(HWLibrary, GetCurrentHW, (), (override));
   MOCK_METHOD(void, LoadBitstream, (ScheduledModule new_module), (override));
   MOCK_METHOD(bool, IsHWPrintEnabled, (), (override));
+  MOCK_METHOD(bool, IsSWBackupEnabled, (), (override));
 };

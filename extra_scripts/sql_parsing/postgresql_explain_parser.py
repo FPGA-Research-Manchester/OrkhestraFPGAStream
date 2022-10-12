@@ -46,24 +46,35 @@ def print_node(node_data):
 
 
 def SetInitialNodes(node_data, all_nodes, counter, parent_counter):
-    if (node_data['Node Type'] == "Sort" and parent_counter in all_nodes and all_nodes[parent_counter].type == "Join"):
+    if (node_data['Node Type'] ==
+            "Sort" and parent_counter in all_nodes and all_nodes[parent_counter].type == "Join") or (node_data['Node Type'] == "Materialize"):
+        current_node_counter = parent_counter
+    elif(node_data['Node Type'] == "Seq Scan" and "Filter" not in node_data):
+        if (parent_counter != -1):
+            all_nodes[parent_counter].inputs.append(-1)
+            all_nodes[parent_counter].tables.append(node_data['Alias'])
+        else:
+            raise RuntimeError(f"Don't support passthrough columns!")
         current_node_counter = parent_counter
     else:
         current_node_counter = counter[0]
         child_to_parent_counter = current_node_counter
         counter[0] += 1
         if (node_data['Node Type'] == "Aggregate"):
+            if ("Group Key" in node_data):
+                raise RuntimeError(f"Unsupported Group Aggregation!")
             all_nodes[current_node_counter] = Node(
                 "Aggregate", current_node_counter, node_data['Output'], [], [])
         elif (node_data['Node Type'] == "Merge Join"):
             all_nodes[current_node_counter] = Node(
                 "Join", current_node_counter, [
                     node_data['Merge Cond']], [], [])
-            child_to_parent_counter = counter[0]
-            counter[0] += 1
-            all_nodes[child_to_parent_counter] = Node(
-                "Filter", child_to_parent_counter, [
-                    node_data['Join Filter']], [current_node_counter], [])
+            if "Join Filter" in node_data:
+                child_to_parent_counter = counter[0]
+                counter[0] += 1
+                all_nodes[child_to_parent_counter] = Node(
+                    "Filter", child_to_parent_counter, [
+                        node_data['Join Filter']], [current_node_counter], [])
         elif (node_data['Node Type'] == "Seq Scan"):
             all_nodes[current_node_counter] = Node(
                 "Filter", current_node_counter, [
@@ -538,11 +549,29 @@ def GetExplainJSON(database_name, query_file):
     return output_filename
 
 
+def ExecuteSQL(argv):
+    database_name = argv[0]
+    CheckPostgreSQL(database_name)
+
+    query_file = argv[1]
+    with open(query_file) as f:
+        query = f.read()
+    command = f"echo \"{query}\" | psql -t -A {database_name}"
+    result_file = argv[2]
+    print(f"PSQL command: \n {command}")
+    os.system(f"{command} > {result_file}")
+    print(f"Results in: {result_file}")
+
+
 def main(argv):
     # argv is supposed to be the query in a file and the database name and the
     # output.
     if len(argv) != 3:
-        raise RuntimeError("Incorrect number of arguments!")
+        if len(argv) == 4 and argv[3] == "execute":
+            ExecuteSQL(argv)
+            return
+        else:
+            raise RuntimeError("Incorrect number of arguments!")
     # database_name = "tpch_001"
     database_name = argv[0]
     CheckPostgreSQL(database_name)

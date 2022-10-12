@@ -97,7 +97,8 @@ class QueryManagerInterface {
       const std::map<std::string, TableMetadata>& current_tables_metadata,
       std::unordered_map<std::string, MemoryBlockInterface*>&
           table_memory_blocks,
-      std::unordered_map<std::string, int>& table_counter)
+      std::unordered_map<std::string, int>& table_counter,
+      bool print_write_times)
       -> std::pair<
           std::vector<AcceleratedQueryNode>,
           std::map<std::string, std::vector<StreamResultParameters>>> = 0;

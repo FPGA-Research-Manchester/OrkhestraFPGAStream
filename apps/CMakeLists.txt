@@ -17,6 +17,11 @@
 set(data 
     #${OrkhestraFPGAStream_SOURCE_DIR}/resources/scheduling_input_defs.zip
 
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/scheduling_input_defs/Q19/Q19_SF001.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/scheduling_input_defs/Q14/Q14_SF001.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/scheduling_input_defs/Q6/Q6_SF001.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/scheduling_input_defs/all/all_SF001.json
+
 	${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/CAR_DATA.csv
 	${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/CAR_DATA_HALF_SORTED.csv
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/data/CAR_DATA_SORTED.csv
@@ -120,6 +125,7 @@ set(data
     #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/lineitem.zip 
     #${OrkhestraFPGAStream_SOURCE_DIR}/resources/benchmark/part.zip 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/default_config.ini
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/config_c.ini
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/tables_data.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/pr_hw_library.json
@@ -173,6 +179,16 @@ set(data
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/static.bin
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/static.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Static1_0_96.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Static1_0_96.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Static2_0_96.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/binPartial_Static2_0_96.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/byteman_BWplusSobel_37_66.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/byteman_BWplusSobel_37_66.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/byteman_BWplusSobel_7_36.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/byteman_BWplusSobel_7_36.json
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/byteman_BWplusSobel_67_96.bin
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Parital_modules_latest/byteman_BWplusSobel_67_96.json
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Route_through/RT_2.json
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/hardware/Route_through/RT_5.json
@@ -358,11 +374,34 @@ set(data
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_big_sort.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_sum.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/ex_filter.txt
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q19.txt
-    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q6.txt
-    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/q1.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q1.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q2.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q3.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q4.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q5.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q6.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q7.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q8.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q9.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q10.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q11.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q12.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q13.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q14.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q15.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q16.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q17.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q18.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q19.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q20.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q21.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q22.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q5_mod.txt
+    ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/TPC-H/q19_mod.txt
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/lineitem.csv
     ${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/part.csv
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/orders_c.csv
+    #${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/lineitem_c.csv
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/setupUdma.pl
     ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/sql_parsing/postgresql_explain_parser.py)

@@ -15,7 +15,8 @@ As the image shows, the input would be a query plan graph from a DBMS to the sof
 - 32 bit integer
 - Fixed length string
 - SQL Date
-- SQL Decimal(15,2)
+- 64 bit SQL Decimal(15,2)
+- Raw binary data
 - NULL
 
 ## Currently supported modules:
@@ -27,6 +28,8 @@ As the image shows, the input would be a query plan graph from a DBMS to the sof
 - [Addition](https://docs.google.com/document/d/1z2pN-B5mMqBWMHZfsHWlNOEh4y0oQSoJJaQwMiRgKD8/view)
 - [Multiplication](https://docs.google.com/document/d/13FvDpvQOcqsJmrKadfZ0wl7sOHxVujxV2PWCQ0EDBH0/view)
 - [Global Aggregation Sum](https://docs.google.com/document/d/17INhz4SAK0X97FyJYAxEcWI2qQLcixy8q_eU_KDbDEw/view)
+- [Group By](https://docs.google.com/document/d/1Wm6aJAiId8_GNVFq-gOoQ_f0uoqSBnO8gcNFH6yIbvI/view)
+- [Regex](https://docs.google.com/document/d/1LQgL-ro1NuhgcH4bcM1f07N-RzCHXtRX4h3esncZgHM/view)
 - [Sobel](https://docs.google.com/document/d/1u52Lgn-IQf6aunBRBpJoGi7Sql6Azs4kKVbnnr6M0TE/view)
 - [Monochrome converter](https://docs.google.com/document/d/1Q4I0nCbbSqsFrv18iH-wz8p9lwfChO2P7XYtVB4AZ7o/view)
 - [*DMA*](https://docs.google.com/document/d/1cxJLcjkrTCrByOmtiYwsu4Ptbp78npZbajhQ878ixp0/view)
@@ -36,7 +39,7 @@ The **sort** modules are meant to be used together.
 The **join** module is for sort-merge join operations. So it will only join sorted streams.
 The **addition**, **multiplication** and **sum** modules work with 64 bit decimal values.
 
-The interface specification documentation will be available later.
+The interface specification is better described in the [thesis](https://www.research.manchester.ac.uk/portal/files/213182998/FULL_TEXT.PDF) by Kristiyan Manev.
 
 ## How does it work?
 
@@ -50,6 +53,8 @@ The first file defines the query plan. The second file contains json filepaths t
 
 * [INPUT_DEF.json](./resources/input_defs/TPCH_Q19_SF01.json)
 * [CONFIG.ini](./resources/config.ini)
+
+For the interactive mode for demos or debugging use the -x flag without the -i flag and the INPUT_DEF file.
 
 More info on the how the data is mapped to the interface and how the data is processed can be found [here](./docs/README.md).
 

@@ -1,0 +1,11 @@
+{
+  "name": "byteman_BWplusSobel_7_36",
+  "address": "0xa0000000",
+  "bitfiles": [
+    {
+      "name": "byteman_BWplusSobel_7_36.bin",
+      "region": "full"
+    }
+  ],
+  "registers": []
+}

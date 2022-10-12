@@ -59,13 +59,14 @@ struct Config {
   bool check_tables = false;
 
   bool print_data_amounts = false;
-  // TODO: Doesn't do anything at the moment
   bool print_write_times = false;
   bool print_total_execution = false;
   bool print_system = false;
   bool print_initialisation = false;
   bool print_scheduling = false;
   bool print_config = false;
+
+  bool enable_sw_backup = true;
 
   int execution_timeout = 60;
 

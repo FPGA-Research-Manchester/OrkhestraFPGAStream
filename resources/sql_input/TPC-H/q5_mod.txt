@@ -1,0 +1,8 @@
+SELECT
+       SUM(l_extendedprice * (1 - l_discount)) as revenue
+FROM
+       orders_c,
+       lineitem_c
+WHERE
+       l_orderkey = o_orderkey
+;

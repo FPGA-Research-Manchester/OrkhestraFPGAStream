@@ -19,15 +19,46 @@ limitations under the License.
 #include <iostream>
 #include <set>
 #include <unordered_set>
+#include <iostream>
+#include <fstream>
 
 #include "logger.hpp"
 #include "sql_json_reader.hpp"
+#include "orkhestra_exception.hpp"
 
 using orkhestrafs::core_interfaces::table_data::kDataTypeNames;
 using orkhestrafs::dbmstodspi::logging::Log;
 using orkhestrafs::dbmstodspi::logging::LogLevel;
 using orkhestrafs::sql_parsing::SQLJSONReader;
 using orkhestrafs::sql_parsing::SQLParser;
+using orkhestrafs::dbmstodspi::OrkhestraException;
+
+void SQLParser::PrintResults(const std::string& query_filename,
+    const std::string& database_name) {
+  // TODO(Kaspar): Hardcoded for now
+  const std::string parsed_filename = "execution_results.txt";
+  // TODO(Kaspar): Add logging
+  Log(LogLevel::kInfo, "Executing query from " + query_filename);
+  std::map<int, std::vector<std::string>> explain_data;
+  // TODO(Kaspar): Should do more checks!
+  if (std::system(nullptr)) {
+    std::string command = "python3 postgresql_explain_parser.py";
+    command += " " + database_name + " " + query_filename + " " +
+               parsed_filename + " " + "execute";
+    // std::cout << command << std::endl;
+    auto return_val = std::system(command.c_str());
+    if (return_val) {
+      throw std::runtime_error("Python call unsuccessful!");
+    }
+  } else {
+    throw std::runtime_error("Can't execute any subprocesses");
+  }
+  std::ifstream file_stream(parsed_filename);
+
+  if (file_stream.is_open()) {
+    std::cout << file_stream.rdbuf();
+  }
+}
 
 void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
                            const std::string& query_filename,
@@ -46,7 +77,8 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
     // std::cout << command << std::endl;
     auto return_val = std::system(command.c_str());
     if (return_val) {
-      throw std::runtime_error("Python call unsuccessful!");
+      throw OrkhestraException();
+      //throw std::runtime_error("Python call unsuccessful!");
     }
   } else {
     throw std::runtime_error("Can't execute any subprocesses");

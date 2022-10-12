@@ -30,5 +30,7 @@ class SQLParser {
   static void CreatePlan(SQLQueryCreator& sql_creator,
                          const std::string& query_filename,
                          const std::string& database_name);
+  static void PrintResults(const std::string& query_filename,
+                           const std::string& database_name);
 };
 }  // namespace orkhestrafs::sql_parsing
