@@ -1,0 +1,28 @@
+"Query Plan"
+"Output[revenue]
+│   Layout: [sum:double]
+│   Estimates: {rows: 65966 (579.78kB), cpu: 368.31M, memory: 1.20MB, network: 644.20kB}
+│   revenue := sum
+└─ HashAggregate(FINAL)
+   │   Layout: [sum:double]
+   │   Estimates: {rows: 65966 (579.78kB), cpu: 368.31M, memory: 1.20MB, network: 644.20kB}
+   │   sum := sum(sum_2)
+   └─ LocalExchange[SINGLE] ()
+      │   Layout: [sum_2:double]
+      │   Estimates: {rows: 73295 (644.20kB), cpu: 367.68M, memory: 644.20kB, network: 644.20kB}
+      └─ RemoteExchange[GATHER]
+         │   Layout: [sum_2:double]
+         │   Estimates: {rows: 73295 (644.20kB), cpu: 367.68M, memory: 644.20kB, network: 644.20kB}
+         └─ HashAggregate(PARTIAL)
+            │   Layout: [sum_2:double]
+            │   Estimates: {rows: 73295 (644.20kB), cpu: 367.68M, memory: 644.20kB, network: 0B}
+            │   sum_2 := sum(expr)
+            └─ ScanFilterProject[table = tpch:lineitem:sf1.0, filterPredicate = (((shipdate) >= (DATE 1994-01-01)) AND ((shipdate) < (DATE 1995-01-01))) AND ((BETWEEN(discount, DOUBLE 0.05, DOUBLE 0.07)) AND ((quantity) < (DOUBLE 24.0)))]
+                   Layout: [expr:double]
+                   Estimates: {rows: 6001215 (51.51MB), cpu: 183.14M, memory: 0B, network: 0B}/{rows: 81439 (715.77kB), cpu: 366.29M, memory: 0B, network: 0B}/{rows: 81439 (715.77kB), cpu: 366.98M, memory: 0B, network: 0B}
+                   expr := (extendedprice) * (discount)
+                   quantity := tpch:quantity
+                   extendedprice := tpch:extendedprice
+                   discount := tpch:discount
+                   shipdate := tpch:shipdate
+"

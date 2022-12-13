@@ -1,0 +1,2 @@
+0:Node(type='Aggregate', id=0, params=['sum((l_extendedprice * l_discount))'], inputs=[1], tables=[])
+1:Node(type='Filter', id=1, params=["((lineitem.l_shipdate >= '1994-01-01'::date) AND (lineitem.l_shipdate < '1995-01-01 00:00:00'::timestamp without time zone) AND (lineitem.l_discount >= 0.05) AND (lineitem.l_discount <= 0.07) AND (lineitem.l_quantity < '24'::numeric))"], inputs=[-1], tables=['lineitem'])

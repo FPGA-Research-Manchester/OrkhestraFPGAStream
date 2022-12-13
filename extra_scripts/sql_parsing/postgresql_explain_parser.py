@@ -510,6 +510,7 @@ def PrintAPICalls(all_nodes, key):
         print(
             f"RegisterJoin({all_nodes[key].params[0]}, {all_nodes[key].params[1]})")
     elif all_nodes[key].type == "Filter":
+        print("Incomplete filter call print")
         PrintFilterAPICalls(all_nodes[key].params)
     elif all_nodes[key].type == "Multiplication":
         print(
@@ -566,19 +567,20 @@ def ExecuteSQL(argv):
 def main(argv):
     # argv is supposed to be the query in a file and the database name and the
     # output.
-    if len(argv) != 3:
-        if len(argv) == 4 and argv[3] == "execute":
-            ExecuteSQL(argv)
-            return
-        else:
-            raise RuntimeError("Incorrect number of arguments!")
+    # if len(argv) != 3:
+    #     if len(argv) == 4 and argv[3] == "execute":
+    #         ExecuteSQL(argv)
+    #         return
+    #     else:
+    #         raise RuntimeError("Incorrect number of arguments!")
     # database_name = "tpch_001"
-    database_name = argv[0]
-    CheckPostgreSQL(database_name)
+    # database_name = argv[0]
+    # CheckPostgreSQL(database_name)
 
     # query_file = "q19.txt"
-    query_file = argv[1]
-    explain_output = GetExplainJSON(database_name, query_file)
+    # query_file = argv[1]
+    # explain_output = GetExplainJSON(database_name, query_file)
+    explain_output = "q6.json"
     with open(explain_output) as graph_json:
         input_query_graph = json.load(graph_json)
 
@@ -602,7 +604,9 @@ def main(argv):
         # Remove all "\"
         # Make into a list of tokens!
         # If letter keep collecting until it's no longer a letter.
-        # print(f"{key}:{all_nodes[key]}")
+        print("BEFORE before")
+        print(f"{key}:{all_nodes[key]}")
+        print()
         TokenizeParams(all_nodes[key])
         # print("BEFORE:")
         # print(f"{key}:{all_nodes[key]}")
@@ -618,16 +622,21 @@ def main(argv):
         else:
             raise RuntimeError("Incorrect type!")
         # print("AFTER:")
-        # print(f"{key}:{all_nodes[key]}")
-        # print()
+        # if (key in all_nodes):
+        #     print(f"{key}:{all_nodes[key]}")
+        #     print()
+        # else:
+        #     print("Removed")
+        #     print()
 
     # raise RuntimeError("STOP!")
     json_data = dict()
     for key in all_nodes.keys():
-        pass
-        # print(f"{key}:{all_nodes[key]}")
-        # PrintAPICalls(all_nodes, key)
-        AddJSONData(all_nodes, key, json_data, counter, database_name)
+        # pass
+        print(f"{key}:{all_nodes[key]}")
+        PrintAPICalls(all_nodes, key)
+        # AddJSONData(all_nodes, key, json_data, counter, database_name)
+    quit()
 
     # for key in json_data.keys():
     #     print(f"{key}:{json_data[key]}")
