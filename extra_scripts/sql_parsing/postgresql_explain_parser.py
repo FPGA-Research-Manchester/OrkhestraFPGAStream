@@ -424,7 +424,7 @@ def GetDataType(datatype_string):
 
 def AddTableColumnsToJSON(json_data, counter, table_name, database_name):
     exported_table_name = CheckTableIsExported(table_name)
-    exported_table_name = table_name + ".csv"
+    # exported_table_name = table_name + ".csv"
 
     row_count = GetTableRowCount(table_name, database_name)
     table_key = counter[0]
@@ -510,7 +510,7 @@ def PrintAPICalls(all_nodes, key):
         print(
             f"RegisterJoin({all_nodes[key].params[0]}, {all_nodes[key].params[1]})")
     elif all_nodes[key].type == "Filter":
-        print("Incomplete filter call print")
+        print("Incomplete filter details:")
         PrintFilterAPICalls(all_nodes[key].params)
     elif all_nodes[key].type == "Multiplication":
         print(
@@ -567,20 +567,20 @@ def ExecuteSQL(argv):
 def main(argv):
     # argv is supposed to be the query in a file and the database name and the
     # output.
-    # if len(argv) != 3:
-    #     if len(argv) == 4 and argv[3] == "execute":
-    #         ExecuteSQL(argv)
-    #         return
-    #     else:
-    #         raise RuntimeError("Incorrect number of arguments!")
+    if len(argv) != 3:
+        if len(argv) == 4 and argv[3] == "execute":
+            ExecuteSQL(argv)
+            return
+        else:
+            raise RuntimeError("Incorrect number of arguments!")
     # database_name = "tpch_001"
-    # database_name = argv[0]
-    # CheckPostgreSQL(database_name)
+    database_name = argv[0]
+    CheckPostgreSQL(database_name)
 
     # query_file = "q19.txt"
-    # query_file = argv[1]
-    # explain_output = GetExplainJSON(database_name, query_file)
-    explain_output = "q6.json"
+    query_file = argv[1]
+    explain_output = GetExplainJSON(database_name, query_file)
+    # explain_output = "q6.json"
     with open(explain_output) as graph_json:
         input_query_graph = json.load(graph_json)
 
@@ -635,8 +635,8 @@ def main(argv):
         # pass
         print(f"{key}:{all_nodes[key]}")
         PrintAPICalls(all_nodes, key)
-        # AddJSONData(all_nodes, key, json_data, counter, database_name)
-    quit()
+        AddJSONData(all_nodes, key, json_data, counter, database_name)
+    # quit()
 
     # for key in json_data.keys():
     #     print(f"{key}:{json_data[key]}")
