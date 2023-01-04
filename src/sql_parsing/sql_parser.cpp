@@ -34,7 +34,8 @@ using orkhestrafs::sql_parsing::SQLParser;
 using orkhestrafs::dbmstodspi::OrkhestraException;
 
 void SQLParser::PrintResults(const std::string& query_filename,
-    const std::string& database_name) {
+                             const std::vector<std::string>& db,
+                             bool is_postgres) {
   // TODO(Kaspar): Hardcoded for now
   const std::string parsed_filename = "execution_results.txt";
   // TODO(Kaspar): Add logging
@@ -42,9 +43,18 @@ void SQLParser::PrintResults(const std::string& query_filename,
   std::map<int, std::vector<std::string>> explain_data;
   // TODO(Kaspar): Should do more checks!
   if (std::system(nullptr)) {
-    std::string command = "python3 postgresql_explain_parser.py";
-    command += " " + database_name + " " + query_filename + " " +
-               parsed_filename + " " + "execute";
+    std::string command = "";
+    if (is_postgres) {
+      std::string command = "python3 postgresql_explain_parser.py";
+      command += " " + db.front() + " " + query_filename + " " +
+                 parsed_filename + " " + "execute";
+    } else {
+      std::string executable_location =
+          "/opt/openlookeng/resource/hetu-cli-*-executable.jar";
+      command = "python3 trino_translate.py " + executable_location;
+      command += " " + db.at(0) + " " + db.at(1) + " " + query_filename + " " +
+                 parsed_filename + " " + "execute";
+    }
     // std::cout << command << std::endl;
     auto return_val = std::system(command.c_str());
     if (return_val) {
@@ -62,7 +72,8 @@ void SQLParser::PrintResults(const std::string& query_filename,
 
 void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
                            const std::string& query_filename,
-                           const std::string& database_name) {
+                           const std::vector<std::string>& db,
+                           bool is_postgres) {
   // TODO(Kaspar): Hardcoded for now
   const std::string parsed_filename = "API_calls_data.json";
   // TODO(Kaspar): Add logging
@@ -71,10 +82,19 @@ void SQLParser::CreatePlan(SQLQueryCreator& sql_creator,
   std::map<int, std::vector<std::string>> explain_data;
   // TODO(Kaspar): Should do more checks!
   if (std::system(nullptr)) {
-    std::string command = "python3 postgresql_explain_parser.py";
-    command +=
-        " " + database_name + " " + query_filename + " " + parsed_filename;
-    // std::cout << command << std::endl;
+    std::string command = "";
+    if (is_postgres) {
+      command = "python3 postgresql_explain_parser.py";
+      command +=
+          " " + db.front() + " " + query_filename + " " + parsed_filename;
+    } else {
+      std::string executable_location =
+          "/opt/openlookeng/resource/hetu-cli-*-executable.jar";
+      command = "python3 trino_translate.py " + executable_location;
+      command += " " + db.at(0) + " " + db.at(1) + " " + query_filename + " " +
+                 parsed_filename;
+    }
+    // std::cout << command << std::endl; 
     auto return_val = std::system(command.c_str());
     if (return_val) {
       throw OrkhestraException();

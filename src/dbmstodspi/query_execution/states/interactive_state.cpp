@@ -60,10 +60,10 @@ auto InteractiveState::Execute(GraphProcessingFSMInterface* fsm)
       fsm->ChangeExecutionTimeLimit(GetInteger());
       break;
     case 5: {
-      auto query = GetQueryFromInput();
+      auto [db, file, is_postgres] = GetQueryFromInput();
       try {
         auto begin = std::chrono::steady_clock::now();
-        fsm->AddNewNodes(GetExecutionPlanFile(std::move(query)));
+        fsm->AddNewNodes(GetExecutionPlanFile(db, file, is_postgres));
         auto end = std::chrono::steady_clock::now();
         long planning =
             std::chrono::duration_cast<std::chrono::milliseconds>(end - begin)
@@ -73,8 +73,7 @@ auto InteractiveState::Execute(GraphProcessingFSMInterface* fsm)
         return std::make_unique<ScheduleState>();
       } catch (OrkhestraException exception) {
         if (fsm->IsSWBackupEnabled()) {
-          SQLParser::PrintResults(std::move(query.second),
-                                  std::move(query.first));
+          SQLParser::PrintResults(std::move(file), std::move(db), is_postgres);
         } else {
           throw std::runtime_error("Python call unsuccessful!");
         }
@@ -177,21 +176,44 @@ auto InteractiveState::GetBitstreamToLoad(
 }
 
 auto InteractiveState::GetQueryFromInput()
-    -> std::pair<std::string, std::string> {
-  std::cout << "Enter DB name:" << std::endl;
-  auto database = GetStdInput();
-  database.pop_back();
+    -> std::tuple<std::vector<std::string>, std::string, bool> {
+  auto is_postgre = IsPostgreSQL();
+  std::vector<std::string> db;
+  if (is_postgre) {
+    std::cout << "Enter DB name:" << std::endl;
+    auto database = GetStdInput();
+    database.pop_back();
+    db.emplace_back(database);
+  } else {
+    std::cout << "Enter Schema name:" << std::endl;
+    auto input = GetStdInput();
+    input.pop_back();
+    db.emplace_back(input);
+    std::cout << "Enter Catalog name:" << std::endl;
+    input = GetStdInput();
+    input.pop_back();
+    db.emplace_back(input);
+  }
   std::cout << "Enter filename with query:" << std::endl;
   auto query_filename = GetStdInput();
   query_filename.pop_back();
-  return {std::move(database), std::move(query_filename)};
+  return {std::move(db), std::move(query_filename), is_postgre};
 }
 
-auto InteractiveState::GetExecutionPlanFile(const std::pair<std::string, std::string>& input)
+auto InteractiveState::IsPostgreSQL() -> bool { 
+    std::cout << std::endl;
+    std::cout << "Which DBMS would you like to use?" << std::endl;
+    std::cout << "1: PostgreSQL" << std::endl;
+    std::cout << "2: Presto" << std::endl;
+    return GetInteger() == 1;
+}
+
+auto InteractiveState::GetExecutionPlanFile(const std::vector<std::string> db,
+                                            const std::string file,
+                                            bool is_postgres)
     -> std::string {
   SQLQueryCreator sql_creator;
-  SQLParser::CreatePlan(sql_creator, std::move(input.second),
-                        std::move(input.first));
+  SQLParser::CreatePlan(sql_creator, file, db, is_postgres);
   return sql_creator.ExportInputDef();
 }
 

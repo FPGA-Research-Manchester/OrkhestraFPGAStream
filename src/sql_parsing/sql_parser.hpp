@@ -29,8 +29,9 @@ class SQLParser {
  public:
   static void CreatePlan(SQLQueryCreator& sql_creator,
                          const std::string& query_filename,
-                         const std::string& database_name);
+                         const std::vector<std::string>& db, bool is_postgres);
   static void PrintResults(const std::string& query_filename,
-                           const std::string& database_name);
+                           const std::vector<std::string>& db,
+                           bool is_postgres);
 };
 }  // namespace orkhestrafs::sql_parsing

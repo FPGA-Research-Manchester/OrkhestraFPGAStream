@@ -19,6 +19,7 @@ limitations under the License.
 #include <map>
 #include <string>
 #include <utility>
+#include <tuple>
 
 #include "state_interface.hpp"
 
@@ -30,18 +31,21 @@ namespace orkhestrafs::dbmstodspi {
  */
 class InteractiveState : public StateInterface {
  private:
+  auto IsPostgreSQL() -> bool;
   void PrintOptions(GraphProcessingFSMInterface* fsm);
   auto GetOption(GraphProcessingFSMInterface* fsm) -> int;
   auto GetStdInput() -> std::string;
   auto GetInteger() -> int;
   auto GetDouble() -> double;
-  auto GetExecutionPlanFile(const std::pair<std::string, std::string>& input)
+  auto GetExecutionPlanFile(const std::vector<std::string> db,
+                            const std::string file, bool is_postgres)
       -> std::string;
   void PrintOutGivenOptions(const std::vector<std::string> list_of_options);
   auto GetBitstreamToLoad(
       const std::map<QueryOperationType, OperationPRModules> bitstream_map)
       -> ScheduledModule;
-  auto GetQueryFromInput() -> std::pair<std::string, std::string>;
+  auto GetQueryFromInput()
+      -> std::tuple<std::vector<std::string>, std::string, bool>;
   std::map<QueryOperationType, std::string> operation_names_ = {
       {QueryOperationType::kAddition, "Addition"},
       {QueryOperationType::kAggregationSum, "Aggregation sum"},

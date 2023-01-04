@@ -68,8 +68,8 @@ void RunSQLQuery(string query_filename, string config_filename,
                  string database = "tpch_001") {
   auto frontend_begin = chrono::steady_clock::now();
   SQLQueryCreator sql_creator;
-  SQLParser::CreatePlan(sql_creator, std::move(query_filename),
-                        std::move(database));
+  std::vector<std::string> db = {std::move(database)};
+  SQLParser::CreatePlan(sql_creator, std::move(query_filename), db, true);
   auto frontend_end = chrono::steady_clock::now();
   std::cout << "PARSING RUNTIME: "
             << std::chrono::duration_cast<std::chrono::milliseconds>(
