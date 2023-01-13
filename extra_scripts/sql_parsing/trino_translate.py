@@ -552,7 +552,7 @@ def AddTableColumnsToJSON(json_data, counter, table_name, executable, catalog_na
     output_filename = f"{table_name}.txt"
     os.system(f"{command} > {output_filename}")
     with open(output_filename) as f:
-        lines = f.readlines()[3:]
+        lines = f.readlines()
 
     columns_keys = []
     for line in lines:
@@ -653,9 +653,9 @@ def parsing_nodes(nodes, executable, catalog_name, schema_name):
         # Remove all "\"
         # Make into a list of tokens!
         # If letter keep collecting until it's no longer a letter.
-        print("BEFORE before")
-        print(f"{key}:{nodes[key]}")
-        print()
+        #print("BEFORE before")
+        #print(f"{key}:{nodes[key]}")
+        #print()
         TokenizeParams(nodes[key])
         # print("BEFORE:")
         # print(f"{key}:{all_nodes[key]}")
@@ -682,7 +682,7 @@ def parsing_nodes(nodes, executable, catalog_name, schema_name):
     json_data = dict()
     for key in nodes.keys():
         # pass
-        print(f"{key}:{nodes[key]}")
+        #print(f"{key}:{nodes[key]}")
         # PrintAPICalls(nodes, key)
         AddJSONData(nodes, key, json_data, counter, executable, catalog_name, schema_name)
     # quit()

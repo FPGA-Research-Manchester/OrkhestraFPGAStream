@@ -404,7 +404,9 @@ set(data
     #${OrkhestraFPGAStream_SOURCE_DIR}/resources/sql_input/lineitem_c.csv
 
     ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/setupUdma.pl
-    ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/sql_parsing/postgresql_explain_parser.py)
+    ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/sql_parsing/postgresql_explain_parser.py
+    ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/sql_parsing/trino_translate.py
+    ${OrkhestraFPGAStream_SOURCE_DIR}/extra_scripts/sql_parsing/q6_trino.txt)
 
 add_executable (OrkhestraFPGAStream main.cpp ${data})
 

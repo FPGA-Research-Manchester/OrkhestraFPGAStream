@@ -604,9 +604,9 @@ def main(argv):
         # Remove all "\"
         # Make into a list of tokens!
         # If letter keep collecting until it's no longer a letter.
-        print("BEFORE before")
-        print(f"{key}:{all_nodes[key]}")
-        print()
+        # print("BEFORE before")
+        # print(f"{key}:{all_nodes[key]}")
+        # print()
         TokenizeParams(all_nodes[key])
         # print("BEFORE:")
         # print(f"{key}:{all_nodes[key]}")
@@ -633,8 +633,8 @@ def main(argv):
     json_data = dict()
     for key in all_nodes.keys():
         # pass
-        print(f"{key}:{all_nodes[key]}")
-        PrintAPICalls(all_nodes, key)
+        # print(f"{key}:{all_nodes[key]}")
+        # PrintAPICalls(all_nodes, key)
         AddJSONData(all_nodes, key, json_data, counter, database_name)
     # quit()
 
