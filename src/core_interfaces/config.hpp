@@ -47,6 +47,8 @@ struct Config {
   std::map<char, int> cost_of_columns;
 
   // Default values here:
+  bool preload_tables = false;
+
   bool reduce_single_runs = true;
   bool use_max_runs_cap = true;
   bool prioritise_children = true;

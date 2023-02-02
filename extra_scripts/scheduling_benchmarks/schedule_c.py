@@ -20,6 +20,8 @@ import configparser
 
 
 def main(argv):
+    # print("Running scheduler")
+
     subdir_name = "c_scheduling_files"
 
     exe_location = argv[0]
@@ -142,6 +144,8 @@ def main(argv):
         stats_file.write(",")
         stats_file.write(str(
             data["configuration_amount"]/1000000))  # config_time
+
+    # print("Scheduler - Finished")
 
 if __name__ == '__main__':
     main(sys.argv[1:])

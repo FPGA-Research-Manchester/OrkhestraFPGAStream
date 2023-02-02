@@ -22,7 +22,7 @@ namespace orkhestrafs::dbmstodspi {
 class OrkhestraException : public std::exception {
  public:
 	 //TODO: Currently hardcoded for SQL parsing
-  char* what() { return "SQL parsing Failed"; }
+  char* what() { return (char*)"SQL parsing Failed"; }
 };
 
 }  // namespace orkhestrafs::dbmstodspi

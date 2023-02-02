@@ -127,6 +127,7 @@ def check_for_dependency(current_graph, before_nodes):
 
 def main(argv):
 
+    # print("Running benchmark generator")
     c_scheduler_format = int(argv[3]) != 0
 
     graph_file = argv[1]
@@ -297,6 +298,7 @@ def main(argv):
     with open(table_file, 'w', encoding='utf-8') as table_json:
         json.dump(table_data, table_json, ensure_ascii=False, indent=4)
 
+    # print("Benchmark generator - Finished")
 
 if __name__ == '__main__':
     main(sys.argv[1:])

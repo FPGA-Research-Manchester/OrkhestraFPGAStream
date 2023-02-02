@@ -77,11 +77,16 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string print_config = "PRINT_CONFIGURATION_TIME";
   std::string enable_sw_backup = "ENABLE_SW_BACKUP";
 
+  std::string preload_tables = "PRELOAD_TABLES";
+
   // repo.json is hardcoded for now.
 
   auto config_values = config_reader_->ParseInputConfig(config_filename);
 
   Config config;
+
+  std::istringstream(config_values[preload_tables]) >> std::boolalpha >>
+      config.preload_tables;
 
   std::istringstream(config_values[reduce_runs]) >> std::boolalpha >>
       config.reduce_single_runs;

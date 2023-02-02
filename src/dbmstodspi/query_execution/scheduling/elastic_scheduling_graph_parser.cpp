@@ -840,6 +840,7 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
     if (available_module_placements.empty()) {
       if (current_run.empty()) {
         // Empty runs could be useful for crossbar usage in the future!
+        // Can occur if no fitting modules were found
         throw std::runtime_error("Can't use an empty run at the moment!");
       }
       current_plan.push_back(std::move(current_run));

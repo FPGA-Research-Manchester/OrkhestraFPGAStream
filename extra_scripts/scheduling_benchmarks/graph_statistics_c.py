@@ -52,6 +52,8 @@ def print_stats(array_of_data, stats_list):
 
 
 def main(argv):
+    # print("Running statistics")
+
     with open(argv[1]) as graph_json:
         input_graph = json.load(graph_json)
 
@@ -154,6 +156,7 @@ def main(argv):
         stats_file.write(",")
         stats_file.write(",".join(converted_list))
 
+    # print("Statistics - Finished")
 
 if __name__ == '__main__':
     main(sys.argv[1:])

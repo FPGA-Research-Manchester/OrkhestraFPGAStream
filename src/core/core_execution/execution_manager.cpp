@@ -62,6 +62,9 @@ void ExecutionManager::AddNewNodes(std::string graph_filename) {
 }
 
 void ExecutionManager::LoadStaticTables() {
+  if (!config_.preload_tables){
+    return;
+  }
   if (config_.static_tables.empty()) {
     throw std::runtime_error("No static tables given!");
   }
@@ -129,7 +132,7 @@ void ExecutionManager::UpdateAvailableNodesGraph() {
     table_counter_.insert({table_name, 100});
   }
   InitialiseTables(current_tables_metadata_, current_available_node_pointers_,
-                   query_manager_.get(), data_manager_.get());
+                   query_manager_.get(), data_manager_.get(), config_.benchmark_scheduler);
   current_query_graph_.clear();
   SetupTableDependencies(unscheduled_graph_->GetAllNodesPtrs(), blocked_nodes_,
                          table_counter_);
@@ -293,7 +296,7 @@ void ExecutionManager::InitialiseTables(
     std::map<std::string, TableMetadata>& tables_metadata,
     std::vector<QueryNode*> current_available_node_pointers,
     const QueryManagerInterface* query_manager,
-    const DataManagerInterface* data_manager) {
+    const DataManagerInterface* data_manager, bool is_benchmark) {
   // Setup new unintialised tables
   while (!current_available_node_pointers.empty()) {
     auto* current_node = current_available_node_pointers.back();
@@ -312,12 +315,16 @@ void ExecutionManager::InitialiseTables(
         table_name =
             current_node->node_name + "_" + std::to_string(output_stream_id);
         TableMetadata new_data;
-        new_data.record_size = query_manager->GetRecordSizeFromParameters(
-            data_manager,
-            current_node->given_operation_parameters.output_stream_parameters,
-            output_stream_id);
-        // Hardcoded for benchmarking
-        // new_data.record_size = 10;
+        // Problem is that we don't have record size in input graph in benchmarking.
+        if (is_benchmark){
+          // Hardcoded for benchmarking
+          new_data.record_size = 10;
+        } else {
+          new_data.record_size = query_manager->GetRecordSizeFromParameters(
+              data_manager,
+              current_node->given_operation_parameters.output_stream_parameters,
+              output_stream_id);
+        }
         new_data.record_count = -1;
         tables_metadata.insert({table_name, new_data});
       }

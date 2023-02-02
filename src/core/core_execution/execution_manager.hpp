@@ -173,7 +173,7 @@ class ExecutionManager : public ExecutionManagerInterface,
       std::map<std::string, TableMetadata>& tables_metadata,
       std::vector<QueryNode*> current_available_node_pointers,
       const QueryManagerInterface* query_manager,
-      const DataManagerInterface* data_manager);
+      const DataManagerInterface* data_manager, bool is_benchmark);
   static void SetupSchedulingGraphAndConstrainedNodes(
       const std::vector<QueryNode*>& all_query_nodes,
       std::unordered_map<std::string, SchedulingQueryNode>&

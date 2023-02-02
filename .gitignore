@@ -342,6 +342,7 @@ healthchecksdb
 #CLion
 
 cmake-build-debug/
+cmake-build-release/
 
 # Custom added
 /out

@@ -85,7 +85,7 @@ class ElasticResourceNodeScheduler : public NodeSchedulerInterface {
       std::vector<QueryNode *> &available_nodes,
       const std::vector<std::vector<ScheduledModule>> &best_plan,
       const std::map<QueryOperationType, OperationPRModules> &hw_library,
-      std::map<std::string, TableMetadata> &table_data)
+      std::map<std::string, TableMetadata> &table_data, bool is_benchmark)
       -> long;
   static void GetMergeSortData(
       std::map<int, std::vector<LengthOfSortedSequences>> &sort_status,

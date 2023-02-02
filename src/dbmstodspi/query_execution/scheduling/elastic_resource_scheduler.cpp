@@ -232,7 +232,7 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
   }
   //std::cout<<data_amount <<std::endl;
   data_amount = GetData(
-      available_nodes, best_plan, config.pr_hw_library, tables);
+      available_nodes, best_plan, config.pr_hw_library, tables, true);
 
   current_configuration = new_last_config;
 
@@ -247,13 +247,13 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
   benchmark_data["configuration_amount"] += configuration_amount;
 
   // TODO(Kaspar): Need to update available nodes for next run!
-  for (const auto &run : best_plan) {
+  /*for (const auto &run : best_plan) {
     for (const auto &node : run) {
       std::cout << " " << node.bitstream
                 << " ";
     }
     std::cout << std::endl;
-  }
+  }*/
 }
 
 auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
@@ -693,7 +693,7 @@ auto ElasticResourceNodeScheduler::GetData(
     std::vector<QueryNode *> &available_nodes,
     const std::vector<std::vector<ScheduledModule>> &best_plan,
     const std::map<QueryOperationType, OperationPRModules> &hw_library,
-    std::map<std::string, TableMetadata> &table_data)
+    std::map<std::string, TableMetadata> &table_data, bool is_benchmark)
     -> long {
   long result = 0;
   // Clear potentially unfinished nodes
@@ -789,11 +789,13 @@ auto ElasticResourceNodeScheduler::GetData(
             current_run_data->output_data_definition_files.push_back(
                 chosen_node->given_output_data_definition_files.at(stream_id));
           } else {
-            if (!chosen_node->given_operation_parameters
-                     .output_stream_parameters.at(0)
-                     .empty()) {
-              throw std::runtime_error(
-                  "Can't do projection in the middle of a run!");
+            if (is_benchmark && !chosen_node->given_operation_parameters.output_stream_parameters.empty()) {
+              if (!chosen_node->given_operation_parameters
+                       .output_stream_parameters.at(0)
+                       .empty()) {
+                throw std::runtime_error(
+                    "Can't do projection in the middle of a run!");
+              }
             }
             current_run_data->output_data_definition_files.emplace_back("");
           }
@@ -823,11 +825,13 @@ auto ElasticResourceNodeScheduler::GetData(
               result+=table_data.at(chosen_node->given_input_data_definition_files.at(stream_id)).record_count
                         *table_data.at(chosen_node->given_input_data_definition_files.at(stream_id)).record_size*4;
             } else {
-              if (!chosen_node->given_operation_parameters
-                       .input_stream_parameters.at(0)
-                       .empty()) {
-                throw std::runtime_error(
-                    "Can't do projection in the middle of a run!");
+              if (is_benchmark && !chosen_node->given_operation_parameters.input_stream_parameters.empty()) {
+                if (!chosen_node->given_operation_parameters
+                         .input_stream_parameters.at(0)
+                         .empty()) {
+                  throw std::runtime_error(
+                      "Can't do projection in the middle of a run!");
+                }
               }
               current_run_data->input_data_definition_files.emplace_back("");
             }
