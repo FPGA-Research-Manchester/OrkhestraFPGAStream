@@ -6,38 +6,40 @@
         "output": [
             null
         ],
-        "operation": "kFilter",
+        "operation": "kLinearSort",
         "previous_nodes": [
             null
         ],
         "next_nodes": [
-            null
+            "node1"
         ],
         "operation_parameters": {
             "input_stream_params": [],
             "output_stream_params": [],
-            "operation_params": [
-                [
-                    0,
-                    0,
-                    2
-                ],
-                [],
-                [],
-                [],
-                [
-                    5
-                ],
-                [],
-                [],
-                [],
-                [
-                    5
-                ]
-            ]
+            "operation_params": []
         }
     },
     "node1": {
+        "input": [
+            null
+        ],
+        "output": [
+            null
+        ],
+        "operation": "kMergeSort",
+        "previous_nodes": [
+            "node0"
+        ],
+        "next_nodes": [
+            "node4"
+        ],
+        "operation_parameters": {
+            "input_stream_params": [],
+            "output_stream_params": [],
+            "operation_params": []
+        }
+    },
+    "node2": {
         "input": [
             "table_1"
         ],
@@ -49,27 +51,7 @@
             null
         ],
         "next_nodes": [
-            "node2"
-        ],
-        "operation_parameters": {
-            "input_stream_params": [],
-            "output_stream_params": [],
-            "operation_params": []
-        }
-    },
-    "node2": {
-        "input": [
-            null
-        ],
-        "output": [
-            null
-        ],
-        "operation": "kMergeSort",
-        "previous_nodes": [
-            "node1"
-        ],
-        "next_nodes": [
-            "node5"
+            "node3"
         ],
         "operation_parameters": {
             "input_stream_params": [],
@@ -84,9 +66,9 @@
         "output": [
             null
         ],
-        "operation": "kLinearSort",
+        "operation": "kMergeSort",
         "previous_nodes": [
-            "node6"
+            "node2"
         ],
         "next_nodes": [
             "node4"
@@ -99,13 +81,15 @@
     },
     "node4": {
         "input": [
+            null,
             null
         ],
         "output": [
             null
         ],
-        "operation": "kMergeSort",
+        "operation": "kJoin",
         "previous_nodes": [
+            "node1",
             "node3"
         ],
         "next_nodes": [
@@ -119,19 +103,17 @@
     },
     "node5": {
         "input": [
-            null,
             null
         ],
         "output": [
             null
         ],
-        "operation": "kJoin",
+        "operation": "kLinearSort",
         "previous_nodes": [
-            "node2",
             "node4"
         ],
         "next_nodes": [
-            null
+            "node6"
         ],
         "operation_parameters": {
             "input_stream_params": [],
@@ -141,49 +123,37 @@
     },
     "node6": {
         "input": [
+            null
+        ],
+        "output": [
+            null
+        ],
+        "operation": "kMergeSort",
+        "previous_nodes": [
+            "node5"
+        ],
+        "next_nodes": [
+            "node9"
+        ],
+        "operation_parameters": {
+            "input_stream_params": [],
+            "output_stream_params": [],
+            "operation_params": []
+        }
+    },
+    "node7": {
+        "input": [
             "table_2"
         ],
         "output": [
             null
         ],
-        "operation": "kFilter",
+        "operation": "kLinearSort",
         "previous_nodes": [
             null
         ],
         "next_nodes": [
-            "node3"
-        ],
-        "operation_parameters": {
-            "input_stream_params": [],
-            "output_stream_params": [],
-            "operation_params": [
-                [
-                    0,
-                    0,
-                    1
-                ],
-                [],
-                [],
-                [],
-                [
-                    4
-                ]
-            ]
-        }
-    },
-    "node7": {
-        "input": [
-            "table_3"
-        ],
-        "output": [
-            null
-        ],
-        "operation": "kAggregationSum",
-        "previous_nodes": [
-            null
-        ],
-        "next_nodes": [
-            null
+            "node8"
         ],
         "operation_parameters": {
             "input_stream_params": [],
@@ -193,161 +163,25 @@
     },
     "node8": {
         "input": [
-            "table_4"
+            null
         ],
         "output": [
             null
         ],
-        "operation": "kFilter",
+        "operation": "kMergeSort",
         "previous_nodes": [
-            null
+            "node7"
         ],
         "next_nodes": [
-            null
+            "node9"
         ],
         "operation_parameters": {
             "input_stream_params": [],
             "output_stream_params": [],
-            "operation_params": [
-                [
-                    0,
-                    0,
-                    2
-                ],
-                [],
-                [],
-                [],
-                [
-                    2
-                ],
-                [],
-                [],
-                [],
-                [
-                    2
-                ]
-            ]
+            "operation_params": []
         }
     },
     "node9": {
-        "input": [
-            "table_5"
-        ],
-        "output": [
-            null
-        ],
-        "operation": "kFilter",
-        "previous_nodes": [
-            null
-        ],
-        "next_nodes": [
-            "node10"
-        ],
-        "operation_parameters": {
-            "input_stream_params": [],
-            "output_stream_params": [],
-            "operation_params": [
-                [
-                    0,
-                    0,
-                    2
-                ],
-                [],
-                [],
-                [],
-                [
-                    4
-                ],
-                [],
-                [],
-                [],
-                [
-                    4
-                ]
-            ]
-        }
-    },
-    "node10": {
-        "input": [
-            null
-        ],
-        "output": [
-            null
-        ],
-        "operation": "kLinearSort",
-        "previous_nodes": [
-            "node9"
-        ],
-        "next_nodes": [
-            "node11"
-        ],
-        "operation_parameters": {
-            "input_stream_params": [],
-            "output_stream_params": [],
-            "operation_params": []
-        }
-    },
-    "node11": {
-        "input": [
-            null
-        ],
-        "output": [
-            null
-        ],
-        "operation": "kMergeSort",
-        "previous_nodes": [
-            "node10"
-        ],
-        "next_nodes": [
-            "node14"
-        ],
-        "operation_parameters": {
-            "input_stream_params": [],
-            "output_stream_params": [],
-            "operation_params": []
-        }
-    },
-    "node12": {
-        "input": [
-            "table_6"
-        ],
-        "output": [
-            null
-        ],
-        "operation": "kLinearSort",
-        "previous_nodes": [
-            null
-        ],
-        "next_nodes": [
-            "node13"
-        ],
-        "operation_parameters": {
-            "input_stream_params": [],
-            "output_stream_params": [],
-            "operation_params": []
-        }
-    },
-    "node13": {
-        "input": [
-            null
-        ],
-        "output": [
-            null
-        ],
-        "operation": "kMergeSort",
-        "previous_nodes": [
-            "node12"
-        ],
-        "next_nodes": [
-            "node14"
-        ],
-        "operation_parameters": {
-            "input_stream_params": [],
-            "output_stream_params": [],
-            "operation_params": []
-        }
-    },
-    "node14": {
         "input": [
             null,
             null
@@ -357,48 +191,16 @@
         ],
         "operation": "kJoin",
         "previous_nodes": [
-            "node11",
-            "node13"
+            "node6",
+            "node8"
         ],
         "next_nodes": [
-            "node15"
+            null
         ],
         "operation_parameters": {
             "input_stream_params": [],
             "output_stream_params": [],
             "operation_params": []
-        }
-    },
-    "node15": {
-        "input": [
-            null
-        ],
-        "output": [
-            null
-        ],
-        "operation": "kFilter",
-        "previous_nodes": [
-            "node14"
-        ],
-        "next_nodes": [
-            null
-        ],
-        "operation_parameters": {
-            "input_stream_params": [],
-            "output_stream_params": [],
-            "operation_params": [
-                [
-                    0,
-                    0,
-                    1
-                ],
-                [],
-                [],
-                [],
-                [
-                    1
-                ]
-            ]
         }
     }
 }

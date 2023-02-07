@@ -146,24 +146,79 @@ def write_aggregated_stats(series_names, function_dict, y_keys, x_values, x_key,
 
 
 def main(argv):
-    series_names = {0: "Max no-fit + Min fit + Min runs + First pos",
-                       1: "Max no-fit + Min fit + Min runs",
-                       2: "Max no-fit + Min fit",
-                       3: "Pref fit",
-                       4: "None"}
+    # series_names = {0: "Max no-fit + Min fit + Min runs + First pos",
+    #                    1: "Max no-fit + Min fit + Min runs",
+    #                    2: "Max no-fit + Min fit",
+    #                    3: "Pref fit",
+    #                    4: "None"}
+    series_names = {0: "Don't know",
+                    1: "No idea",
+                    2: "Good stuff",
+                    3: "Hello",
+                    4: "None",
+                    5: "Help",
+                    6: "Woooo"}
+
     function_dict = {
         "Avg": lambda stats_dict, value_name: np.average(stats_dict[value_name]),
         "Std Dev": lambda stats_dict, value_name: np.std(stats_dict[value_name]),
         "Count": lambda stats_dict, value_name: len(stats_dict[value_name]),
         "Std Error": lambda stats_dict, value_name: np.std(stats_dict[value_name])/math.sqrt(len(stats_dict[value_name]))}
 
-    # check_completed_runs(series_names, function_dict, "perf_counts.csv")
-    # check_all_runs(series_names, function_dict, "counts.csv")
-    # check_timeout_runs(series_names, function_dict, "timeout_counts.csv")
-    check_exact_runs(series_names, function_dict, "exact_counts.csv")
+    output_count_filename = argv[0]
+    input_stats_filename = argv[1]
+    output_stats_filename = argv[2]
+
+    # What do we want to do?
+
+    stats = dict()
+
+    stats = clear_input_and_report_counts(series_names, function_dict, output_count_filename, input_stats_filename, output_stats_filename)
+
+    print("legit:")
+    print(stats["legit"])
+    print("per query:")
+    print(stats["per query"])
+    print("failed:")
+    print(stats["failed"])
+
+    # Print other table stuff!
+
+    # Here we have 4 legacy functions: In the beginning - clean data gets created, then we do the analyzing and lastly write.
+
+    # output_count_filename = "perf_counts.csv"
+    # Find stats about runs that didn't timeout
+    # check_completed_runs(series_names, function_dict, output_count_filename, input_stats_filename, output_stats_filename)
+
+    # output_count_filename = "counts.csv"
+    # Count frames written with some weird filters
+    # check_all_runs(series_names, function_dict, output_count_filename, input_stats_filename, output_stats_filename)
+
+    # output_count_filename = "timeout_counts.csv"
+    # Check all runs that timed out
+    # check_timeout_runs(series_names, function_dict, output_count_filename, input_stats_filename, output_stats_filename)
+
+    # output_count_filename = "exact_counts.csv"
+    # For figuring out execution times based on different selectivity and heuristics
+    # check_exact_runs(series_names, function_dict, output_count_filename, input_stats_filename, output_stats_filename)
 
 
-def create_clean_stats(orig_stats_file_name, clean_stats_file_name, rowbuffer, last_id_value, id_key, valid_key, filter_func, filter_key, ignore_colums):
+def clear_input_and_report_counts(series_names, function_dict, counts_filename, input_filename, output_filename):
+    def filter_func(rowbuffer, row, filter_key): return [True]
+
+    filter_key = ""
+    ignore_columns = []
+
+    stats = {"legit":0, "per query":0, "failed":0}
+
+    # No extra filtering, no ignoring.
+    clean_stats_file_name = get_rid_of_queries_with_failed_runs(input_filename, filter_func, filter_key,
+                                                                ignore_columns, stats)
+
+    return stats
+
+
+def create_clean_stats(orig_stats_file_name, clean_stats_file_name, rowbuffer, last_id_value, id_key, valid_key, filter_func, filter_key, ignore_colums, stats):
     with open(orig_stats_file_name, newline='') as orig_csvfile:
         reader = csv.DictReader(orig_csvfile)
         with open(clean_stats_file_name, 'w', newline='') as clean_csvfile:
@@ -176,10 +231,16 @@ def create_clean_stats(orig_stats_file_name, clean_stats_file_name, rowbuffer, l
                 if row[id_key] != last_id_value:
                     if rowbuffer:
                         if all(buffered_row[valid_key] for buffered_row in rowbuffer) and all(filter_func(rowbuffer, row, filter_key)):
+                            print(len(rowbuffer))
                             for buffered_row in rowbuffer:
+                                print(buffered_row)
                                 for column in ignore_colums:
                                     buffered_row[column] = -1
                                 writer.writerow(buffered_row)
+                            stats["legit"] += 1
+                            stats["per query"] = len(rowbuffer)
+                        else:
+                            stats["failed"] += 1
                     rowbuffer = []
                     last_id_value = row[id_key]
                 rowbuffer.append(row)
@@ -189,169 +250,21 @@ def create_clean_stats(orig_stats_file_name, clean_stats_file_name, rowbuffer, l
             #        writer.writerow(buffered_row)
 
 
-def check_exact_runs(series_names, function_dict, counts_filename):
-    orig_stats_file_name = "exact_stats_gathered.csv"
-    clean_stats_file_name = "clean_" + orig_stats_file_name
+
+
+
+def get_rid_of_queries_with_failed_runs(filename, filter_func, filter_key, ignore_columns, stats):
+    # Filtering is for additional conditions on clearing query results out
+    # Ignore columns is for replacing data in ignored columns with -1
+    clean_stats_file_name = "clean_" + filename
     rowbuffer = []
     last_id_value = 0
-    id_key = "table_size_std_dev"
+    id_key = "query_id"
     valid_key = "score"
-    def row_filter_func(row, filter_key): return True
-    row_filter_key = ""
-    def filter_func(rowbuffer, row, filter_key): return [True]
-    filter_key = ""
-    ignore_columns = []
-    create_clean_stats(orig_stats_file_name, clean_stats_file_name,
-                       rowbuffer, last_id_value, id_key, valid_key, filter_func, filter_key, ignore_columns)
 
-    series_values = [0, 1, 2, 3, 4]
-    series_key = 'heuristic'
-    selected_functions = ["Avg", "Std Dev", "Count", "Std Error"]
-    id_key = "table_size_std_dev"
-    y_keys = ["exec_time", "config_time", "performance_s"]
-    x_values = [0.1, 0.25, 0.5, 0.75]
-    x_key = 'selectivity'
-    output_file_name = 'exact_selectivity.csv'
-    read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
-                         x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key)
-
-    write_counts_csv(counts_filename, clean_stats_file_name)
-
-
-def check_all_runs(series_names, function_dict, counts_filename):
-    orig_stats_file_name = "stats_all_correct3_gathered.csv"
-    clean_stats_file_name = "clean_" + orig_stats_file_name
-    rowbuffer = []
-    last_id_value = 0
-    id_key = "table_size_std_dev"
-    valid_key = "score"
-    def row_filter_func(row, filter_key): return True
-    row_filter_key = ""
-    def filter_func(rowbuffer, row, filter_key): return [True]
-    filter_key = ""
-    ignore_columns = []
-    create_clean_stats(orig_stats_file_name, clean_stats_file_name,
-                       rowbuffer, last_id_value, id_key, valid_key, filter_func, filter_key, ignore_columns)
-
-    series_values = [0, 1, 2, 3, 4]
-    series_key = 'heuristic'
-    selected_functions = ["Avg", "Std Dev", "Count", "Std Error"]
-    id_key = "table_size_std_dev"
-    y_keys = ["frames_written"]
-    x_values = [0.1, 0.25, 0.5, 0.75]
-    x_key = 'selectivity'
-    output_file_name = 'all_3s_selectivity.csv'
-    def row_filter_func(row, filter_key): return float(row[filter_key]) == 3
-    row_filter_key = "time_limit"
-    read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
-                         x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key)
-
-    output_file_name = 'all_3s_selectivity_table_size.csv'
-    splitting_key = 'table_size_mean'
-    splitting_values = [100000]
-    read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
-                         x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key, splitting_key, splitting_values)
-
-    write_counts_csv(counts_filename, clean_stats_file_name)
-
-
-def check_timeout_runs(series_names, function_dict, counts_filename):
-    orig_stats_file_name = "stats_all_correct3_gathered.csv"
-    clean_stats_file_name = "timeout_clean_" + orig_stats_file_name
-    rowbuffer = []
-    last_id_value = 0
-    id_key = "table_size_std_dev"
-    valid_key = "score"
-    def row_filter_func(row, filter_key): return True
-    row_filter_key = ""
-    filter_key = "timeouts"
-    # def filter_func(rowbuffer, row, filter_key): return [
-    #     buffered_row[filter_key] == row[filter_key] and row[filter_key] != 0 for buffered_row in rowbuffer]
-    def filter_func(rowbuffer, row, filter_key): return [
-        buffered_row[filter_key] != 0 for buffered_row in rowbuffer]
-    ignore_columns = []
-    create_clean_stats(orig_stats_file_name, clean_stats_file_name,
-                       rowbuffer, last_id_value, id_key, valid_key, filter_func, filter_key, ignore_columns)
-
-    # Should come from argv
-    y_keys = ["timeouts", "utility", "frames_written",
-              "utility_per_frames", "placed_nodes"]
-    x_values = [0.01, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 2, 3]
-    x_key = 'time_limit'
-    # series_values = [0, 1, 2, 3]
-    series_values = [0, 1, 2, 3, 4]
-    series_key = 'heuristic'
-    selected_functions = ["Avg", "Std Dev", "Count", "Std Error"]
-    output_file_name = 'timeout_time_limits.csv'
-    id_key = "table_size_std_dev"
-    def filter_func(rowbuffer, row, filter_key): return [True]
-    filter_key = ""
-    read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
-                         x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key)
-
-    # output_file_name = 'time_limits_split.csv'
-    # splitting_key = 'table_size_mean'
-    # splitting_values = [10000]
-    # read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
-    #                      x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key, splitting_key, splitting_values)
-
-    # output_file_name = 'time_limits_split_with_timeouts.csv'
-    # read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
-    #                      x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key, splitting_key, splitting_values)
-
-    y_keys = ["frames_written"]
-    x_values = [0.1, 0.25, 0.5, 0.75]
-    x_key = 'selectivity'
-    output_file_name = 'timeout_selectivity.csv'
-    def row_filter_func(row, filter_key): return float(row[filter_key]) == 3
-    row_filter_key = "time_limit"
-    read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
-                         x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key)
-
-    output_file_name = 'timeout_selectivity_table_size.csv'
-    splitting_key = 'table_size_mean'
-    splitting_values = [100000]
-    read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
-                         x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key, splitting_key, splitting_values)
-
-    write_counts_csv(counts_filename, clean_stats_file_name)
-
-
-def check_completed_runs(series_names, function_dict, counts_filename):
-    orig_stats_file_name = "stats_new_completed_gathered.csv"
-    clean_stats_file_name = "clean_" + orig_stats_file_name
-    rowbuffer = []
-    last_id_value = 0
-    id_key = "table_size_std_dev"
-    valid_key = "score"
-    def row_filter_func(row, filter_key): return True
-    row_filter_key = ""
-    def filter_func(rowbuffer, row, filter_key): return [True]
-    filter_key = ""
-    ignore_columns = ["time_limit"]
-    create_clean_stats(orig_stats_file_name, clean_stats_file_name,
-                       rowbuffer, last_id_value, id_key, valid_key, filter_func, filter_key, ignore_columns)
-
-    y_keys = ["timeouts", "utility", "frames_written",
-              "utility_per_frames", "placed_nodes", "performance_s"]
-    x_values = [-10]
-    x_key = 'time_limit'
-    series_values = [0, 1, 2, 3, 4]
-    series_key = 'heuristic'
-    selected_functions = ["Avg", "Std Dev", "Count", "Std Error"]
-    output_file_name = 'perf_time_limits.csv'
-    id_key = "table_size_std_dev"
-    read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
-                         x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key)
-
-    y_keys = ["frames_written", "utility", "utility_per_frames"]
-    x_values = [0.1, 0.25, 0.5, 0.75]
-    x_key = 'selectivity'
-    output_file_name = 'perf_selectivity.csv'
-    read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
-                         x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key)
-
-    write_counts_csv(counts_filename, clean_stats_file_name)
+    create_clean_stats(filename, clean_stats_file_name,
+                       rowbuffer, last_id_value, id_key, valid_key, filter_func, filter_key, ignore_columns, stats)
+    return clean_stats_file_name
 
 
 def write_counts_csv(counts_filename, clean_stats_file_name):
@@ -387,5 +300,177 @@ def write_counts_csv(counts_filename, clean_stats_file_name):
                 'max': max(count_stats[i])})
 
 
+# 1: Input count filename, 2: input stat file, 3: output stat file, 4: extra options
 if __name__ == '__main__':
     main(sys.argv[1:])
+
+
+# Deprecated funcs:
+# For figuring out times based on different selectivity
+def check_exact_runs(series_names, function_dict, counts_filename, input_filename, output_filename):
+    # orig_stats_file_name = "exact_stats_gathered.csv"
+    orig_stats_file_name = input_filename
+    def row_filter_func(row, filter_key): return True
+    row_filter_key = ""
+    def filter_func(rowbuffer, row, filter_key): return [True]
+    filter_key = ""
+    ignore_columns = []
+
+    # No extra filtering, no ignoring.
+    stats = {"legit": 0, "per query": 0, "failed": 0}
+    clean_stats_file_name = get_rid_of_queries_with_failed_runs(orig_stats_file_name, filter_func, filter_key, ignore_columns, stats)
+
+    # Create Multiple series scatter graph plots with x and y values
+    series_values = [0, 1, 2, 3, 4]
+    series_key = 'heuristic'
+    selected_functions = ["Avg", "Std Dev", "Count", "Std Error"] # What values are extracted for Y
+    id_key = "query_id"
+    # Multiple keys for multiple graphs
+    y_keys = ["exec_time", "config_time", "performance_s"]
+    x_values = [0.1, 0.25, 0.5, 0.75]
+    x_key = 'selectivity'
+    output_file_name = output_filename
+    # output_file_name = 'exact_selectivity.csv'
+    read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
+                         x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key)
+
+    write_counts_csv(counts_filename, clean_stats_file_name)
+
+
+# How many frames got written
+def check_all_runs(series_names, function_dict, counts_filename, input_filename, output_filename):
+    orig_stats_file_name = input_filename
+    # orig_stats_file_name = "stats_all_correct3_gathered.csv"
+    def row_filter_func(row, filter_key): return True
+    row_filter_key = ""
+    def filter_func(rowbuffer, row, filter_key): return [True]
+    filter_key = ""
+    ignore_columns = []
+
+    stats = {"legit": 0, "per query": 0, "failed": 0}
+    clean_stats_file_name = get_rid_of_queries_with_failed_runs(orig_stats_file_name, filter_func, filter_key, ignore_columns, stats)
+
+    series_values = [0, 1, 2, 3, 4]
+    series_key = 'heuristic'
+    selected_functions = ["Avg", "Std Dev", "Count", "Std Error"]
+    id_key = "query_id"
+    y_keys = ["frames_written"]
+    x_values = [0.1, 0.25, 0.5, 0.75]
+    x_key = 'selectivity'
+    output_file_name = output_filename
+    # output_file_name = 'all_3s_selectivity.csv'
+    def row_filter_func(row, filter_key): return float(row[filter_key]) == 3
+    row_filter_key = "time_limit"
+    # Look at runs only where the timelimit was 3
+    read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
+                         x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key)
+
+    # A way to split data into big and small tables
+    # output_file_name = 'all_3s_selectivity_table_size.csv'
+    # splitting_key = 'table_size_mean'
+    # splitting_values = [100000]
+    # read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
+    #                      x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key, splitting_key, splitting_values)
+
+    write_counts_csv(counts_filename, clean_stats_file_name)
+
+
+def check_timeout_runs(series_names, function_dict, counts_filename, input_filename, output_filename):
+    orig_stats_file_name = input_filename
+    # orig_stats_file_name = "stats_all_correct3_gathered.csv"
+    def row_filter_func(row, filter_key): return True
+    row_filter_key = ""
+    filter_key = "timeouts"
+    # def filter_func(rowbuffer, row, filter_key): return [
+    #     buffered_row[filter_key] == row[filter_key] and row[filter_key] != 0 for buffered_row in rowbuffer]
+    def filter_func(rowbuffer, row, filter_key): return [
+        buffered_row[filter_key] != 0 for buffered_row in rowbuffer]
+    ignore_columns = []
+
+    # No no timeouts allowed
+    stats = {"legit": 0, "per query": 0, "failed": 0}
+    clean_stats_file_name = get_rid_of_queries_with_failed_runs(orig_stats_file_name, filter_func, filter_key, ignore_columns, stats)
+
+    # Should come from argv
+    y_keys = ["timeouts", "utility", "frames_written",
+              "utility_per_frames", "placed_nodes"]
+    x_values = [0.01, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 2, 3]
+    x_key = 'time_limit'
+    # series_values = [0, 1, 2, 3]
+    series_values = [0, 1, 2, 3, 4]
+    series_key = 'heuristic'
+    selected_functions = ["Avg", "Std Dev", "Count", "Std Error"]
+    output_file_name = output_filename
+    # output_file_name = 'timeout_time_limits.csv'
+    id_key = "query_id"
+    def filter_func(rowbuffer, row, filter_key): return [True]
+    filter_key = ""
+    read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
+                         x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key)
+
+    # output_file_name = 'time_limits_split.csv'
+    # splitting_key = 'table_size_mean'
+    # splitting_values = [10000]
+    # read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
+    #                      x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key, splitting_key, splitting_values)
+
+    # output_file_name = 'time_limits_split_with_timeouts.csv'
+    # read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
+    #                      x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key, splitting_key, splitting_values)
+
+    # Filter based on selectivity
+    # y_keys = ["frames_written"]
+    # x_values = [0.1, 0.25, 0.5, 0.75]
+    # x_key = 'selectivity'
+    # output_file_name = 'timeout_selectivity.csv'
+    # def row_filter_func(row, filter_key): return float(row[filter_key]) == 3
+    # row_filter_key = "time_limit"
+    # read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
+    #                      x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key)
+
+    # Split tables
+    # output_file_name = 'timeout_selectivity_table_size.csv'
+    # splitting_key = 'table_size_mean'
+    # splitting_values = [100000]
+    # read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
+    #                      x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key, splitting_key, splitting_values)
+
+    write_counts_csv(counts_filename, clean_stats_file_name)
+
+
+def check_completed_runs(series_names, function_dict, counts_filename, input_filename, output_filename):
+    orig_stats_file_name = input_filename
+    # orig_stats_file_name = "stats_new_completed_gathered.csv"
+    def row_filter_func(row, filter_key): return True
+
+    row_filter_key = ""
+
+    def filter_func(rowbuffer, row, filter_key): return [True]
+
+    filter_key = ""
+    ignore_columns = ["time_limit"]
+    stats = {"legit": 0, "per query": 0, "failed": 0}
+    clean_stats_file_name = get_rid_of_queries_with_failed_runs(orig_stats_file_name, filter_func, filter_key, ignore_columns, stats)
+
+    y_keys = ["timeouts", "utility", "frames_written",
+              "utility_per_frames", "placed_nodes", "performance_s"]
+    x_values = [-10]
+    x_key = 'time_limit'
+    series_values = [0, 1, 2, 3, 4]
+    series_key = 'heuristic'
+    selected_functions = ["Avg", "Std Dev", "Count", "Std Error"]
+    output_file_name = output_filename
+    # output_file_name = 'perf_time_limits.csv'
+    id_key = "query_id"
+    read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
+                         x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key)
+
+    # Filter based on selectivity
+    # y_keys = ["frames_written", "utility", "utility_per_frames"]
+    # x_values = [0.1, 0.25, 0.5, 0.75]
+    # x_key = 'selectivity'
+    # output_file_name = 'perf_selectivity.csv'
+    # read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
+    #                      x_key, series_values, series_key, selected_functions, output_file_name, id_key, filter_func, filter_key, row_filter_func, row_filter_key)
+
+    write_counts_csv(counts_filename, clean_stats_file_name)

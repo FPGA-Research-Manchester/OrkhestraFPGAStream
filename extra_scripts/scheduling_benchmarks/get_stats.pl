@@ -10,12 +10,12 @@ my $start = time();
 print strftime('%Y-%m-%d %H:%M:%S',localtime time);
 print "\n";
 
-my $header = "filter_chance,filter_first_lower_bound,filter_second_lower_bount,filter_first_upper_bount,filter_second_upper_bound,leave_empty_join_chance,join_chance,arithmetic_chance,aggregation_chance,multiplier_chance,generator_query_count,table_size_lower_bound,table_size_upper_bound,max_node_limit,min_node_limit,filter_global_count,linear_sort_global_count,merge_sort_global_count,merge_join_global_count,addition_global_count,multiplier_global_count,global_sum_global_count,global_node_count,node_count_mean,node_count_std_dev,node_count_min,node_count_max,final_query_count,filter_mean_count,filter_std_dev_count,filter_min_count,filter_max_count,filter_dnf_mean,filter_dnf_std_dev,filter_dnf_min,filter_dnf_max_count,filter_comparison_mean,filter_comparison_std_dev,filter_comparison_min,filter_comparison_max,linear_sort_mean_count,linear_sort_std_dev_count,linear_sort_min_count,linear_sort_max_count,merge_sort_mean_count,merge_sort_std_dev_count,merge_sort_min_count,merge_sort_max_count,merge_join_mean_count,merge_join_std_dev_count,merge_join_min_count,merge_join_max_count,addition_mean_count,addition_std_dev_count,addition_min_count,addition_max_count,multiplier_mean_count,multiplier_std_dev_count,multiplier_min_count,multiplier_max_count,global_sum_mean_count,global_sum_std_dev_count,global_sum_min_count,global_sum_max_count,table_size_mean,table_size_std_dev,table_size_sum_min,table_size_max_count,table_mean_count,table_std_dev_count,table_min_count,table_max_count,selectivity,time_limit,heuristic,utility_scaler,frame_scaler,utility_per_frame_scaler,plan_count,placed_nodes,discarded_placements,plans_chosen,run_count,performance_s,cost_eval_s,timeouts,utility,frames_written,utility_per_frames,score,exec_time,config_time";
+my $header = "query_id,filter_chance,filter_first_lower_bound,filter_second_lower_bount,filter_first_upper_bount,filter_second_upper_bound,leave_empty_join_chance,join_chance,arithmetic_chance,aggregation_chance,multiplier_chance,generator_query_count,table_size_lower_bound,table_size_upper_bound,max_node_limit,min_node_limit,filter_global_count,linear_sort_global_count,merge_sort_global_count,merge_join_global_count,addition_global_count,multiplier_global_count,global_sum_global_count,global_node_count,node_count_mean,node_count_std_dev,node_count_min,node_count_max,final_query_count,filter_mean_count,filter_std_dev_count,filter_min_count,filter_max_count,filter_dnf_mean,filter_dnf_std_dev,filter_dnf_min,filter_dnf_max_count,filter_comparison_mean,filter_comparison_std_dev,filter_comparison_min,filter_comparison_max,linear_sort_mean_count,linear_sort_std_dev_count,linear_sort_min_count,linear_sort_max_count,merge_sort_mean_count,merge_sort_std_dev_count,merge_sort_min_count,merge_sort_max_count,merge_join_mean_count,merge_join_std_dev_count,merge_join_min_count,merge_join_max_count,addition_mean_count,addition_std_dev_count,addition_min_count,addition_max_count,multiplier_mean_count,multiplier_std_dev_count,multiplier_min_count,multiplier_max_count,global_sum_mean_count,global_sum_std_dev_count,global_sum_min_count,global_sum_max_count,table_size_mean,table_size_std_dev,table_size_sum_min,table_size_max_count,table_mean_count,table_std_dev_count,table_min_count,table_max_count,selectivity,time_limit,heuristic,utility_scaler,frame_scaler,utility_per_frame_scaler,plan_count,placed_nodes,discarded_placements,plans_chosen,run_count,performance_s,cost_eval_s,timeouts,utility,frames_written,utility_per_frames,score,exec_time,config_time";
 
 #my @a = (1..5);
 
 my ($stats_filename, $graph_filename, $table_filename, $backup_filename) = @ARGV;
-# perl get_stats.pl stats.csv graph.json table.json backup.json
+# perl get_stats.pl stats.csv graph.json table.json backup.gz
 
 if (not defined $table_filename) {
   die "Need filenames\n";
@@ -70,6 +70,7 @@ my @heuristic_choice = (6);
 # With 1 repeated run, 1 heuristic - 8*3*8 = 192 runs
 
 my $count = 0;
+my $tolerate_errors = 0;
 
 for my $run_i (@repeat_runs){
     print $run_i;
@@ -81,13 +82,23 @@ for my $run_i (@repeat_runs){
                     for my $join_c (@join_chance){
                         for my $arith_c (@arithmetic_chance){
                             for my $query_c (@generator_query_count){
+                                $count++;
                                 open($stats_file, ">>$stats_filename");
-                                print $stats_file "\n$filter_c,$filter_dnf_low[$filter_size_i],$filter_comp_low[$filter_size_i],$filter_dnf_high[$filter_size_i],$filter_comp_high[$filter_size_i],$empty_j,$join_c,$arith_c,$arith_c,0.5,$query_c,$table_low[$table_size_i],$table_upper[$table_size_i],$max_node_limit,$min_node_limit";
+                                print $stats_file "\n$count,$filter_c,$filter_dnf_low[$filter_size_i],$filter_comp_low[$filter_size_i],$filter_dnf_high[$filter_size_i],$filter_comp_high[$filter_size_i],$empty_j,$join_c,$arith_c,$arith_c,0.5,$query_c,$table_low[$table_size_i],$table_upper[$table_size_i],$max_node_limit,$min_node_limit";
                                 close $stats_file;
                                 # 1 at the end indicates c version
                                 my $query_generation = system("python3 benchmark_generator.py $stats_filename $graph_filename $table_filename 1");
-                                my $backup = system("python3 benchmark_backup.py $graph_filename $table_filename $backup_filename 1");
+                                if ($query_generation != 0 && !$tolerate_errors) {
+                                    die "Error: Query generation script failed with exit code $query_generation\n";
+                                }
+                                my $backup = system("python3 benchmark_backup.py $graph_filename $table_filename $backup_filename -1");
+                                if ($backup != 0 && !$tolerate_errors) {
+                                    die "Error: Backup script failed with exit code $backup\n";
+                                }
                                 my $stats_generation = system("python3 graph_statistics_c.py $stats_filename $graph_filename $table_filename");
+                                if ($stats_generation != 0 && !$tolerate_errors) {
+                                    die "Error: Stats script failed with exit code $stats_generation\n";
+                                }
                                 tie *BW, 'File::ReadBackwards', $stats_filename or
                                     die "can't read $stats_filename $!" ;
                                 my $generated_query = <BW>;
@@ -99,8 +110,10 @@ for my $run_i (@repeat_runs){
                                             open($stats_file, ">>$stats_filename");
                                             print $stats_file ",$selectivity[$j],$timeouts[$i],$heuristic_choice[$k],$equal_scaler,$equal_scaler,$preferred_scaler";
                                             close $stats_file;
-                                            $count++;
                                             $scheduling_return = system("python3 schedule_c.py OrkhestraFPGAStream default_config.ini $graph_filename $stats_filename $table_filename");
+                                            if ($scheduling_return != 0 && !$tolerate_errors) {
+                                                die "Error: Scheduling script failed with exit code $scheduling_return\n";
+                                            }
                                             if (!($i == $#timeouts and $j == $#selectivity and $k == $#heuristic_choice)){
                                                 open($stats_file, ">>$stats_filename");
                                                 print $stats_file "\n$generated_query";
@@ -122,6 +135,17 @@ for my $run_i (@repeat_runs){
 
 print strftime('%Y-%m-%d %H:%M:%S',localtime time);
 print "\n";
+
+# Hardcoded for now
+
+my $count_stats = "count.csv";
+my $final_stats = "final.csv";
+
+my $final_processing = system("python3 stats_table_generator.py $count_stats $stats_filename $final_stats");
+if ($final_processing != 0) {
+    die "Error: Results parsing script failed with exit code $final_processing\n";
+}
+
 my $end = time();
 printf("Execution Time: %0.02f s\n", $end - $start);
 printf("Count: $count\n");

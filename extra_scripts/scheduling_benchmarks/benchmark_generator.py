@@ -135,7 +135,7 @@ def main(argv):
 
     with open(argv[0], "r") as stats_file:
         last_line = stats_file.readlines()[-1]
-        values = last_line.split(',')
+        values = last_line.split(',')[1:]
         if len(values) < 12:
             raise ValueError("Incorrect input")
 
