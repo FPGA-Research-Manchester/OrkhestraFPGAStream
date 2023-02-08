@@ -17,6 +17,7 @@ import sys
 import copy
 import numpy as np
 import math
+import json
 
 
 def write_values(writer, series_values, series_key, series_names, x_value_range, x_value_name, rowtemplate, stats, value_list, function_dict, selected_functions):
@@ -145,7 +146,19 @@ def write_aggregated_stats(series_names, function_dict, y_keys, x_values, x_key,
                      all_stats[0], y_keys, function_dict, selected_functions)
 
 
+def write_stats(stats, stats_json):
+    with open(stats_json, "w") as f:
+        json.dump(stats, f)
+
 def main(argv):
+    # You start this script and get out the following:
+    # Which one of the 4 do you want.
+    # 1/2 - Throw away everything that did timeout!
+    # 3/4 - Throw away everything that didn't timeout!
+    # Print out the stuff to some json file!
+    # Then make the CSV as before
+    # But then also do the graphs!
+
     # series_names = {0: "Max no-fit + Min fit + Min runs + First pos",
     #                    1: "Max no-fit + Min fit + Min runs",
     #                    2: "Max no-fit + Min fit",
@@ -165,15 +178,37 @@ def main(argv):
         "Count": lambda stats_dict, value_name: len(stats_dict[value_name]),
         "Std Error": lambda stats_dict, value_name: np.std(stats_dict[value_name])/math.sqrt(len(stats_dict[value_name]))}
 
+    if len(argv) != 5:
+        print(argv)
+        raise ValueError("Wrong amount of args given!")
+
     output_count_filename = argv[0]
     input_stats_filename = argv[1]
     output_stats_filename = argv[2]
+    graph_type = int(argv[3])
+    stats_json = argv[4]
 
     # What do we want to do?
 
-    stats = dict()
+    stats = {"legit": 0, "per query": 0, "failed": 0}
 
-    stats = clear_input_and_report_counts(series_names, function_dict, output_count_filename, input_stats_filename, output_stats_filename)
+    remove_timeout = False
+    remove_non_timeout = False
+
+    if graph_type == 0:
+        pass  # Don't do anything!
+    elif graph_type == 1:
+        remove_timeout = True
+    elif graph_type == 2:
+        remove_timeout = True
+    elif graph_type == 3:
+        remove_non_timeout = True
+    elif graph_type == 4:
+        remove_non_timeout = True
+    else:
+        raise ValueError("Wrong graph type given")
+
+    clean_stats_file_name = clear_input_and_report_counts(input_stats_filename, stats, remove_timeout, remove_non_timeout)
 
     print("legit:")
     print(stats["legit"])
@@ -182,7 +217,27 @@ def main(argv):
     print("failed:")
     print(stats["failed"])
 
-    # Print other table stuff!
+    write_stats(stats, stats_json)
+    write_counts_csv(output_count_filename, clean_stats_file_name)
+
+    if graph_type == 0:
+        pass  # Don't do anything!
+    elif graph_type == 1:
+        # Make the CSVs first!
+        # 1st: Scheduling runtime, plans considered, execution time, configuration time for each heuristic (done to completion)!
+        # 5 bar bar chart - If it has a timeout - throw it away
+        make_heuristic_scheduling_stats(series_names, function_dict, clean_stats_file_name, output_stats_filename)
+    elif graph_type == 2:
+        # 2nd: Scheduling runtime, agains a lot of different statistics you are gathering! Again if it has a timeout - throw it away! - Bin packing
+        pass  # This will be purely done on the graph side as we have a continuous space on both axis
+    elif graph_type == 3:
+        # 3rd: With different timeouts - measure runtime
+        make_timeout_scheduling_stats(series_names, function_dict, clean_stats_file_name, output_stats_filename)
+    elif graph_type == 4:
+        # 4th: You can also do different selectivity rates - Could be cooler if some fall faster than others?
+        raise ValueError("Not implemented currently!")
+    else:
+        raise ValueError("Wrong graph type given")
 
     # Here we have 4 legacy functions: In the beginning - clean data gets created, then we do the analyzing and lastly write.
 
@@ -203,19 +258,70 @@ def main(argv):
     # check_exact_runs(series_names, function_dict, output_count_filename, input_stats_filename, output_stats_filename)
 
 
-def clear_input_and_report_counts(series_names, function_dict, counts_filename, input_filename, output_filename):
+def make_timeout_scheduling_stats(series_names, function_dict, clean_stats_file_name, output_filename):
+    def row_filter_func(row, filter_key): return True
+    row_filter_key = ""
+
     def filter_func(rowbuffer, row, filter_key): return [True]
-
     filter_key = ""
+
+    # We want, 1) scheduling time, 2)overall performance, 3)config, 4)streaming, 5)plans compared
+    y_keys = ["config_time", "exec_time", "plan_count", "exec_and_config"]
+    x_values = [0.01, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 2, 3]
+    x_key = 'time_limit'
+    series_values = [6]
+    series_key = 'heuristic'
+    selected_functions = ["Avg", "Std Dev", "Count", "Std Error"]
+    id_key = "query_id"
+    read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
+                         x_key, series_values, series_key, selected_functions, output_filename, id_key, filter_func,
+                         filter_key, row_filter_func, row_filter_key)
+
+
+def make_heuristic_scheduling_stats(series_names, function_dict, clean_stats_file_name, output_filename):
+    def row_filter_func(row, filter_key): return True
+    row_filter_key = ""
+
+    def filter_func(rowbuffer, row, filter_key): return [True]
+    filter_key = ""
+
+    # We want, 1) scheduling time, 2)overall performance, 3)config, 4)streaming, 5)plans compared
+    y_keys = ["performance_s", "config_time", "exec_time", "plan_count", "exec_and_config"]
+    x_values = [80]
+    x_key = 'time_limit'
+    series_values = [6,5]
+    series_key = 'heuristic'
+    selected_functions = ["Avg", "Std Dev", "Count", "Std Error"]
+    id_key = "query_id"
+    read_and_write_stats(clean_stats_file_name, series_names, function_dict, y_keys, x_values,
+                         x_key, series_values, series_key, selected_functions, output_filename, id_key, filter_func,
+                         filter_key, row_filter_func, row_filter_key)
+
+
+
+def clear_input_and_report_counts(input_filename, stats, remove_timeout, remove_non_timeout):
+    if not remove_timeout and not remove_non_timeout:
+        def filter_func(rowbuffer, row, filter_key): return [True]
+        filter_key = ""
+    elif remove_timeout and not remove_non_timeout:
+        def filter_func(rowbuffer, row, filter_key):
+            return [
+                buffered_row[filter_key] != 0 for buffered_row in rowbuffer]
+        filter_key = "timeouts"
+    elif not remove_timeout and remove_non_timeout:
+        def filter_func(rowbuffer, row, filter_key):
+            return [
+                buffered_row[filter_key] == 0 for buffered_row in rowbuffer]
+        filter_key = "timeouts"
+    else:
+        raise ValueError("Incorrect options given!")
+
+    # def filter_func(rowbuffer, row, filter_key): return [
+    #     buffered_row[filter_key] == row[filter_key] and row[filter_key] != 0 for buffered_row in rowbuffer]
+
     ignore_columns = []
-
-    stats = {"legit":0, "per query":0, "failed":0}
-
-    # No extra filtering, no ignoring.
-    clean_stats_file_name = get_rid_of_queries_with_failed_runs(input_filename, filter_func, filter_key,
+    return get_rid_of_queries_with_failed_runs(input_filename, filter_func, filter_key,
                                                                 ignore_columns, stats)
-
-    return stats
 
 
 def create_clean_stats(orig_stats_file_name, clean_stats_file_name, rowbuffer, last_id_value, id_key, valid_key, filter_func, filter_key, ignore_colums, stats):
@@ -225,29 +331,35 @@ def create_clean_stats(orig_stats_file_name, clean_stats_file_name, rowbuffer, l
             writer = csv.DictWriter(
                 clean_csvfile, fieldnames=reader.fieldnames)
             writer.writeheader()
-            #lastrow = None
+            lastrow = None
             for row in reader:
-                #lastrow = row
+                lastrow = row
                 if row[id_key] != last_id_value:
                     if rowbuffer:
-                        if all(buffered_row[valid_key] for buffered_row in rowbuffer) and all(filter_func(rowbuffer, row, filter_key)):
-                            print(len(rowbuffer))
+                        if all(buffered_row[valid_key] for buffered_row in rowbuffer) and all(filter_func(rowbuffer, row, filter_key)) and len(rowbuffer) >= stats["per query"]:
                             for buffered_row in rowbuffer:
-                                print(buffered_row)
                                 for column in ignore_colums:
                                     buffered_row[column] = -1
                                 writer.writerow(buffered_row)
                             stats["legit"] += 1
-                            stats["per query"] = len(rowbuffer)
+                            if stats["per query"]!=0 and stats["per query"]!=len(rowbuffer):
+                                # Can happen when initially wrong queries were accepted
+                                raise ValueError("Half finished query results accepted!")
+                            else:
+                                stats["per query"] = max(len(rowbuffer),stats["per query"])
                         else:
                             stats["failed"] += 1
                     rowbuffer = []
                     last_id_value = row[id_key]
                 rowbuffer.append(row)
-            # Don't include because we are not checking if the buffer is complete.
-            # if all(buffered_row[valid_key] for buffered_row in rowbuffer) and all(filter_func(rowbuffer, lastrow, filter_key)):
-            #    for buffered_row in rowbuffer:
-            #        writer.writerow(buffered_row)
+            if all(buffered_row[valid_key] for buffered_row in rowbuffer) and all(filter_func(rowbuffer, lastrow, filter_key)) and len(rowbuffer) >= stats["per query"]:
+                for buffered_row in rowbuffer:
+                   for column in ignore_colums:
+                       buffered_row[column] = -1
+                   writer.writerow(buffered_row)
+                stats["legit"] += 1
+            else:
+                stats["failed"] += 1
 
 
 
@@ -269,12 +381,20 @@ def get_rid_of_queries_with_failed_runs(filename, filter_func, filter_key, ignor
 
 def write_counts_csv(counts_filename, clean_stats_file_name):
     with open(clean_stats_file_name, newline='') as csvfile:
-        count_stats = {"node_count_mean": [], "final_query_count": [
-        ], "table_mean_count": [], "table_size_mean": [], "global_node_count": [], "filter_global_count": [], "filter_mean_count": [], "merge_join_global_count": [], "merge_join_mean_count": []}
+        count_stats = {"final_query_count": [],
+                       "global_node_count": [],
+                       "node_count_mean": [],
+                       "table_mean_count": [],
+                       "table_size_mean": [],
+                       "filter_global_count": [],
+                       "filter_mean_count": [],
+                       "merge_join_global_count": [],
+                       "merge_join_mean_count": []}
         reader = csv.DictReader(csvfile)
         rowbuffer = []
         last_id_value = 0
-        id_key = "table_size_std_dev"
+        id_key = "query_id"
+        # Over complicated now but can be extended in the future
         for row in reader:
             if row[id_key] != last_id_value:
                 if rowbuffer:

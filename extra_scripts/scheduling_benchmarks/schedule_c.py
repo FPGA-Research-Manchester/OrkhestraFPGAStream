@@ -144,6 +144,9 @@ def main(argv):
         stats_file.write(",")
         stats_file.write(str(
             data["configuration_amount"]/1000000))  # config_time
+        stats_file.write(",")
+        stats_file.write(str((
+            data["configuration_amount"] / 1000000) + (data["data_amount"]/1000000)))  # overall_time
 
     # print("Scheduler - Finished")
 

@@ -236,6 +236,7 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
 
   current_configuration = new_last_config;
 
+  benchmark_data["plan_count"] += resulting_plans.size();
   benchmark_data["schedule_time"] += overall_time;
   // It's actually time
   //std::cout<<data_amount <<std::endl;

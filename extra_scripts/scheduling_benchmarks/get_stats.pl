@@ -10,12 +10,10 @@ my $start = time();
 print strftime('%Y-%m-%d %H:%M:%S',localtime time);
 print "\n";
 
-my $header = "query_id,filter_chance,filter_first_lower_bound,filter_second_lower_bount,filter_first_upper_bount,filter_second_upper_bound,leave_empty_join_chance,join_chance,arithmetic_chance,aggregation_chance,multiplier_chance,generator_query_count,table_size_lower_bound,table_size_upper_bound,max_node_limit,min_node_limit,filter_global_count,linear_sort_global_count,merge_sort_global_count,merge_join_global_count,addition_global_count,multiplier_global_count,global_sum_global_count,global_node_count,node_count_mean,node_count_std_dev,node_count_min,node_count_max,final_query_count,filter_mean_count,filter_std_dev_count,filter_min_count,filter_max_count,filter_dnf_mean,filter_dnf_std_dev,filter_dnf_min,filter_dnf_max_count,filter_comparison_mean,filter_comparison_std_dev,filter_comparison_min,filter_comparison_max,linear_sort_mean_count,linear_sort_std_dev_count,linear_sort_min_count,linear_sort_max_count,merge_sort_mean_count,merge_sort_std_dev_count,merge_sort_min_count,merge_sort_max_count,merge_join_mean_count,merge_join_std_dev_count,merge_join_min_count,merge_join_max_count,addition_mean_count,addition_std_dev_count,addition_min_count,addition_max_count,multiplier_mean_count,multiplier_std_dev_count,multiplier_min_count,multiplier_max_count,global_sum_mean_count,global_sum_std_dev_count,global_sum_min_count,global_sum_max_count,table_size_mean,table_size_std_dev,table_size_sum_min,table_size_max_count,table_mean_count,table_std_dev_count,table_min_count,table_max_count,selectivity,time_limit,heuristic,utility_scaler,frame_scaler,utility_per_frame_scaler,plan_count,placed_nodes,discarded_placements,plans_chosen,run_count,performance_s,cost_eval_s,timeouts,utility,frames_written,utility_per_frames,score,exec_time,config_time";
+my $header = "query_id,filter_chance,filter_first_lower_bound,filter_second_lower_bount,filter_first_upper_bount,filter_second_upper_bound,leave_empty_join_chance,join_chance,arithmetic_chance,aggregation_chance,multiplier_chance,generator_query_count,table_size_lower_bound,table_size_upper_bound,max_node_limit,min_node_limit,filter_global_count,linear_sort_global_count,merge_sort_global_count,merge_join_global_count,addition_global_count,multiplier_global_count,global_sum_global_count,global_node_count,node_count_mean,node_count_std_dev,node_count_min,node_count_max,final_query_count,filter_mean_count,filter_std_dev_count,filter_min_count,filter_max_count,filter_dnf_mean,filter_dnf_std_dev,filter_dnf_min,filter_dnf_max_count,filter_comparison_mean,filter_comparison_std_dev,filter_comparison_min,filter_comparison_max,linear_sort_mean_count,linear_sort_std_dev_count,linear_sort_min_count,linear_sort_max_count,merge_sort_mean_count,merge_sort_std_dev_count,merge_sort_min_count,merge_sort_max_count,merge_join_mean_count,merge_join_std_dev_count,merge_join_min_count,merge_join_max_count,addition_mean_count,addition_std_dev_count,addition_min_count,addition_max_count,multiplier_mean_count,multiplier_std_dev_count,multiplier_min_count,multiplier_max_count,global_sum_mean_count,global_sum_std_dev_count,global_sum_min_count,global_sum_max_count,table_size_mean,table_size_std_dev,table_size_sum_min,table_size_max_count,table_mean_count,table_std_dev_count,table_min_count,table_max_count,selectivity,time_limit,heuristic,utility_scaler,frame_scaler,utility_per_frame_scaler,plan_count,placed_nodes,discarded_placements,plans_chosen,run_count,performance_s,cost_eval_s,timeouts,utility,frames_written,utility_per_frames,score,exec_time,config_time,exec_and_config";
 
-#my @a = (1..5);
-
-my ($stats_filename, $graph_filename, $table_filename, $backup_filename) = @ARGV;
-# perl get_stats.pl stats.csv graph.json table.json backup.gz
+my ($stats_filename, $graph_filename, $table_filename, $backup_filename, $count_stats, $final_stats, $pass_fail_json) = @ARGV;
+# perl get_stats.pl stats.csv graph.json table.json backup.gz count.csv final.csv failure_stats.json
 
 if (not defined $table_filename) {
   die "Need filenames\n";
@@ -64,7 +62,7 @@ my $max_node_limit = 7;
 my $min_node_limit = 5;
 my $equal_scaler = 0;
 my $preferred_scaler = 1;
-my @heuristic_choice = (6);
+my @heuristic_choice = (6,5);
 #my @heuristic_choice = (0,1,2,3,4,5,6);
 
 # With 1 repeated run, 1 heuristic - 8*3*8 = 192 runs
@@ -136,12 +134,15 @@ for my $run_i (@repeat_runs){
 print strftime('%Y-%m-%d %H:%M:%S',localtime time);
 print "\n";
 
-# Hardcoded for now
+# output_count_filename = argv[0]
+# input_stats_filename = argv[1]
+# output_stats_filename = argv[2]
+# graph_type = int(argv[3])
+# stats_json = argv[4]
 
-my $count_stats = "count.csv";
-my $final_stats = "final.csv";
-
-my $final_processing = system("python3 stats_table_generator.py $count_stats $stats_filename $final_stats");
+# 0 - just pass fail, 1 runtime with all heuristics, 2 max heuristics, 3 timeouts, 4 selectivity
+print "python3 stats_table_generator.py $count_stats $stats_filename $final_stats 0 $pass_fail_json\n";
+my $final_processing = system("python3 stats_table_generator.py $count_stats $stats_filename $final_stats 0 $pass_fail_json");
 if ($final_processing != 0) {
     die "Error: Results parsing script failed with exit code $final_processing\n";
 }
