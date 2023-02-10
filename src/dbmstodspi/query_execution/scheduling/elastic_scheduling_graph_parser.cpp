@@ -425,12 +425,23 @@ void ElasticSchedulingGraphParser::GetScheduledModulesForNodeAfterPosOrig(
         graph.at(node_name).satisfying_bitstreams, module_placements,
         is_composed);
   }
-  if (!modules_found && drivers_.IsIncompleteOperationSupported(graph.at(node_name).operation)) {
-    modules_found = GetChosenModulePlacements(
-        node_name, graph.at(node_name).operation, heuristics_.second,
-        min_position, taken_positions,
-        hw_library_.at(graph.at(node_name).operation).starting_locations,
-        module_placements, is_composed);
+  if (!modules_found) {
+    if (drivers_.IsIncompleteOperationSupported(graph.at(node_name).operation)){
+      modules_found = GetChosenModulePlacements(
+          node_name, graph.at(node_name).operation, heuristics_.second,
+          min_position, taken_positions,
+          hw_library_.at(graph.at(node_name).operation).starting_locations,
+          module_placements, is_composed);
+    } else if (!graph.at(node_name).satisfying_bitstreams.empty() && heuristics_.first.empty()) {
+      modules_found = GetChosenModulePlacements(
+          node_name, graph.at(node_name).operation, heuristics_.second,
+          min_position, taken_positions,
+          graph.at(node_name).satisfying_bitstreams,
+          module_placements, is_composed);
+    }
+  }
+  if (!modules_found && taken_positions.empty()) {
+    throw std::runtime_error("Unable to find a valid module for node:" + node_name);
   }
 }
 

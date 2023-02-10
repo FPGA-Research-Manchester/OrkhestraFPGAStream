@@ -41,7 +41,14 @@ def main(argv):
     time_limit = float(values[-5])
     heuristic = int(values[-4])
 
-    # DO the stuff here and then in the scheduler and then RUN
+    # Heuristic values:
+    # 0 no heuristics
+    # 1 smallest fitting or largest
+    # 2 use_max_runs_cap - BnB
+    # 3 First
+    # 4 disallow_empty_runs - Make them as full as possible
+    # 5 prio_children - Start looking with nodes that have parents scheduled
+    # 6 ALL
 
     disallow_empty_runs = "false"
     use_max_runs_cap = "false"
@@ -117,7 +124,7 @@ def main(argv):
         # Discarded placements
         stats_file.write(str(data["placed_nodes"]))
         stats_file.write(",")
-        stats_file.write(str(data["schedule_count"]))  # Plans chosen
+        stats_file.write(str(data["plans_chosen"]))  # Plans chosen
         stats_file.write(",")
         stats_file.write(str(data["run_count"]))  # run_count
         stats_file.write(",")

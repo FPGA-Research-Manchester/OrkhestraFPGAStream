@@ -1,20 +1,20 @@
 [
     {
         "filename": "table_0",
-        "record_count": 5921,
-        "record_size": 23,
+        "record_count": 2058,
+        "record_size": 15,
         "sorted_status": []
     },
     {
         "filename": "table_1",
-        "record_count": 8705,
-        "record_size": 19,
+        "record_count": 1727,
+        "record_size": 20,
         "sorted_status": []
     },
     {
         "filename": "table_2",
-        "record_count": 8160,
-        "record_size": 18,
+        "record_count": 8685,
+        "record_size": 23,
         "sorted_status": []
     }
 ]

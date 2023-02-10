@@ -6,7 +6,7 @@
         "output": [
             null
         ],
-        "operation": "kLinearSort",
+        "operation": "kFilter",
         "previous_nodes": [
             null
         ],
@@ -16,7 +16,31 @@
         "operation_parameters": {
             "input_stream_params": [],
             "output_stream_params": [],
-            "operation_params": []
+            "operation_params": [
+                [
+                    0,
+                    0,
+                    3
+                ],
+                [],
+                [],
+                [],
+                [
+                    31
+                ],
+                [],
+                [],
+                [],
+                [
+                    31
+                ],
+                [],
+                [],
+                [],
+                [
+                    31
+                ]
+            ]
         }
     },
     "node1": {
@@ -26,12 +50,12 @@
         "output": [
             null
         ],
-        "operation": "kMergeSort",
+        "operation": "kMultiplication",
         "previous_nodes": [
             "node0"
         ],
         "next_nodes": [
-            "node4"
+            null
         ],
         "operation_parameters": {
             "input_stream_params": [],
@@ -71,7 +95,7 @@
             "node2"
         ],
         "next_nodes": [
-            "node4"
+            "node6"
         ],
         "operation_parameters": {
             "input_stream_params": [],
@@ -81,16 +105,14 @@
     },
     "node4": {
         "input": [
-            null,
-            null
+            "table_2"
         ],
         "output": [
             null
         ],
-        "operation": "kJoin",
+        "operation": "kLinearSort",
         "previous_nodes": [
-            "node1",
-            "node3"
+            null
         ],
         "next_nodes": [
             "node5"
@@ -108,7 +130,7 @@
         "output": [
             null
         ],
-        "operation": "kLinearSort",
+        "operation": "kMergeSort",
         "previous_nodes": [
             "node4"
         ],
@@ -123,66 +145,6 @@
     },
     "node6": {
         "input": [
-            null
-        ],
-        "output": [
-            null
-        ],
-        "operation": "kMergeSort",
-        "previous_nodes": [
-            "node5"
-        ],
-        "next_nodes": [
-            "node9"
-        ],
-        "operation_parameters": {
-            "input_stream_params": [],
-            "output_stream_params": [],
-            "operation_params": []
-        }
-    },
-    "node7": {
-        "input": [
-            "table_2"
-        ],
-        "output": [
-            null
-        ],
-        "operation": "kLinearSort",
-        "previous_nodes": [
-            null
-        ],
-        "next_nodes": [
-            "node8"
-        ],
-        "operation_parameters": {
-            "input_stream_params": [],
-            "output_stream_params": [],
-            "operation_params": []
-        }
-    },
-    "node8": {
-        "input": [
-            null
-        ],
-        "output": [
-            null
-        ],
-        "operation": "kMergeSort",
-        "previous_nodes": [
-            "node7"
-        ],
-        "next_nodes": [
-            "node9"
-        ],
-        "operation_parameters": {
-            "input_stream_params": [],
-            "output_stream_params": [],
-            "operation_params": []
-        }
-    },
-    "node9": {
-        "input": [
             null,
             null
         ],
@@ -191,8 +153,8 @@
         ],
         "operation": "kJoin",
         "previous_nodes": [
-            "node6",
-            "node8"
+            "node3",
+            "node5"
         ],
         "next_nodes": [
             null

@@ -164,13 +164,13 @@ def main(argv):
     #                    2: "Max no-fit + Min fit",
     #                    3: "Pref fit",
     #                    4: "None"}
-    series_names = {0: "Don't know",
-                    1: "No idea",
-                    2: "Good stuff",
-                    3: "Hello",
-                    4: "None",
-                    5: "Help",
-                    6: "Woooo"}
+    series_names = {0: "H0",
+                    1: "H1",
+                    2: "H2",
+                    3: "H3",
+                    4: "H4",
+                    5: "H5",
+                    6: "H6"}
 
     function_dict = {
         "Avg": lambda stats_dict, value_name: np.average(stats_dict[value_name]),
@@ -269,7 +269,7 @@ def make_timeout_scheduling_stats(series_names, function_dict, clean_stats_file_
     y_keys = ["config_time", "exec_time", "plan_count", "exec_and_config"]
     x_values = [0.01, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 2, 3]
     x_key = 'time_limit'
-    series_values = [6]
+    series_values = [6,5,4,3,2,1,0]
     series_key = 'heuristic'
     selected_functions = ["Avg", "Std Dev", "Count", "Std Error"]
     id_key = "query_id"
@@ -287,9 +287,9 @@ def make_heuristic_scheduling_stats(series_names, function_dict, clean_stats_fil
 
     # We want, 1) scheduling time, 2)overall performance, 3)config, 4)streaming, 5)plans compared
     y_keys = ["performance_s", "config_time", "exec_time", "plan_count", "exec_and_config"]
-    x_values = [80]
+    x_values = [10] # Should be automated but this is hard coded
     x_key = 'time_limit'
-    series_values = [6,5]
+    series_values = [6,5,4,3,2,1,0] # Should be automated but this is hard coded
     series_key = 'heuristic'
     selected_functions = ["Avg", "Std Dev", "Count", "Std Error"]
     id_key = "query_id"
@@ -309,10 +309,12 @@ def clear_input_and_report_counts(input_filename, stats, remove_timeout, remove_
                 buffered_row[filter_key] != 0 for buffered_row in rowbuffer]
         filter_key = "timeouts"
     elif not remove_timeout and remove_non_timeout:
-        def filter_func(rowbuffer, row, filter_key):
-            return [
-                buffered_row[filter_key] == 0 for buffered_row in rowbuffer]
-        filter_key = "timeouts"
+        # def filter_func(rowbuffer, row, filter_key):
+        #     return [
+        #         buffered_row[filter_key] == 0 for buffered_row in rowbuffer]
+        # filter_key = "timeouts"
+        def filter_func(rowbuffer, row, filter_key): return [True]
+        filter_key = ""
     else:
         raise ValueError("Incorrect options given!")
 

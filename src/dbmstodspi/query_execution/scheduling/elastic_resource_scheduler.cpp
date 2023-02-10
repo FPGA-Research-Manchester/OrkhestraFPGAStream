@@ -193,9 +193,9 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
                           .count();
 //  std::cout << "schedule_time (Microseconds): " << std::to_string(scheduling_time)
 //            << std::endl;
-//  benchmark_data["discarded_placements"] += stats.second;
-//  benchmark_data["placed_nodes"] += stats.first;
-//  benchmark_data["plan_count"] += resulting_plans.size();
+  benchmark_data["discarded_placements"] += stats.second;
+  benchmark_data["placed_nodes"] += stats.first;
+  benchmark_data["plan_count"] += resulting_plans.size();
 //  std::cout << "plan_count: " << std::to_string(resulting_plans.size())
 //            << std::endl;
 //  benchmark_data["pre_process_time"] += pre_process_time;
@@ -204,22 +204,22 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
 //  benchmark_data["schedule_time"] += scheduling_time;
 //  std::cout << "schedule_time: " << std::to_string(scheduling_time)
 //            << std::endl;
-//  benchmark_data["timeout"] += static_cast<double>(timed_out);
+  benchmark_data["timeout"] += static_cast<double>(timed_out);
 //  std::cout << "timeout: " << std::to_string(static_cast<int>(timed_out))
 //            << std::endl;
-//  benchmark_data["cost_eval_time"] += cost_eval_time;
+  benchmark_data["cost_eval_time"] += cost_eval_time;
 //  std::cout << "cost_eval_time: " << std::to_string(cost_eval_time)
 //            << std::endl;
 //  benchmark_data["overall_time"] += overall_time;
 //  std::cout << "overall_time: " << std::to_string(overall_time) << std::endl;
-//  benchmark_data["run_count"] += best_plan.size();
+  benchmark_data["run_count"] += best_plan.size();
 //  std::cout << "run_count: " << std::to_string(best_plan.size()) << std::endl;
 //  benchmark_data["data_amount"] += data_amount;
 //  std::cout << "data_amount: " << std::to_string(data_amount) << std::endl;
 //  benchmark_data["configuration_amount"] += configuration_amount;
 //  std::cout << "configuration_amount: " << std::to_string(configuration_amount)
 //            << std::endl;
-//  benchmark_data["schedule_count"] += 1;
+  benchmark_data["plans_chosen"] += 1;
 
   // starting_nodes = resulting_plans.at(best_plan).available_nodes;
   processed_nodes = resulting_plans.at(best_plan).processed_nodes;
@@ -236,7 +236,6 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
 
   current_configuration = new_last_config;
 
-  benchmark_data["plan_count"] += resulting_plans.size();
   benchmark_data["schedule_time"] += overall_time;
   // It's actually time
   //std::cout<<data_amount <<std::endl;
