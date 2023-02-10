@@ -267,7 +267,7 @@ def make_timeout_scheduling_stats(series_names, function_dict, clean_stats_file_
 
     # We want, 1) scheduling time, 2)overall performance, 3)config, 4)streaming, 5)plans compared
     y_keys = ["config_time", "exec_time", "plan_count", "exec_and_config"]
-    x_values = [0.01, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 2, 3]
+    x_values = [0.01, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 1.5, 2, 3]
     x_key = 'time_limit'
     series_values = [6,5,4,3,2,1,0]
     series_key = 'heuristic'

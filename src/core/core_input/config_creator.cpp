@@ -45,7 +45,7 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
 
   std::string force_pr = "DEBUG_FORCE_PR";
   std::string reduce_runs = "REDUCE_RUNS";
-  std::string max_runs = "MAX_RUNS_CAP";
+  std::string max_runs = "MAX_RUNS";
   std::string children = "PRIORITISE_CHILDREN";
   std::string heuristic = "HEURISTIC";
   std::string exec_timeout = "EXEC_TIMEOUT";
