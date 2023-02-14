@@ -925,9 +925,14 @@ void ElasticResourceNodeScheduler::GetMergeSortData(
                         0),
         sort_status);
     if (leftover_capacity >
-            std::accumulate(capacities.begin(), capacities.end(), 0) ||
-        leftover_capacity <= 0) {
-      throw std::runtime_error("Incorrect penultimate capacity!");
+            std::accumulate(capacities.begin(), capacities.end(), 0))
+        {
+      throw std::runtime_error("Incorrect penultimate capacity! - Not enough sorters left");
+    } else if (leftover_capacity <= 0) {
+      // This happens when this module is reused for multiple sorting operations and there is a bigger one coming later.
+      // Therefore, the capacity is simply set to 0 as we'll have an empty run through the merge sorter and sort everything in one go in the final sorter.
+      leftover_capacity = 0;
+      // throw std::runtime_error("Incorrect penultimate capacity! - Too many sorters scheduled");
     }
   } else {
     int required_capacity = 0;
@@ -938,7 +943,7 @@ void ElasticResourceNodeScheduler::GetMergeSortData(
     }
     leftover_capacity =
         std::accumulate(capacities.begin(), capacities.end(), 0);
-    int difference = required_capacity - leftover_capacity;
+//    int difference = required_capacity - leftover_capacity;
   }
   int new_sequence_size = 0;
   while (leftover_capacity != 0 && !sort_status.empty()) {
@@ -1167,7 +1172,7 @@ void ElasticResourceNodeScheduler::UpdateSortedStatusAndRunData(
     }
     leftover_capacity =
         std::accumulate(capacities.begin(), capacities.end(), 0);
-    int difference = required_capacity - leftover_capacity;
+//    int difference = required_capacity - leftover_capacity;
   }
   int new_sequence_size = 0;
   while (leftover_capacity != 0 && !sort_status.empty()) {
