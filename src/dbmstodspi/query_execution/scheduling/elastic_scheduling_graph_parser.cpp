@@ -704,7 +704,7 @@ auto ElasticSchedulingGraphParser::GetNewStreamedDataSize(
     const std::vector<ScheduledModule>& current_run,
     const std::string& node_name,
     const std::map<std::string, TableMetadata>& data_tables,
-    const std::unordered_map<std::string, SchedulingQueryNode>& graph) -> int {
+    const std::unordered_map<std::string, SchedulingQueryNode>& graph) -> long {
   std::vector<std::string> before_node_names;
   for (const auto& before_stream : graph.at(node_name).before_nodes) {
     before_node_names.push_back(before_stream.first);
@@ -719,14 +719,14 @@ auto ElasticSchedulingGraphParser::GetNewStreamedDataSize(
     }
   }
   auto operation_type = graph.at(node_name).operation;
-  int streamed_data_size = 0;
+  long streamed_data_size = 0;
   for (const auto& table_name : required_tables) {
     if (!table_name.empty()) {
       if (operation_type == QueryOperationType::kMergeSort){
-        streamed_data_size += graph.at(node_name).capacity.front() * data_tables.at(table_name).sorted_status.at(2) * data_tables.at(table_name).record_size * 4;
+        streamed_data_size += static_cast<long>(graph.at(node_name).capacity.front()) * data_tables.at(table_name).sorted_status.at(2) * data_tables.at(table_name).record_size * 4;
       }
       // Record size is in 4 byte words
-      streamed_data_size += data_tables.at(table_name).record_count *
+      streamed_data_size += static_cast<long>(data_tables.at(table_name).record_count) *
                             data_tables.at(table_name).record_size * 4;
     }
   }
@@ -811,7 +811,7 @@ void ElasticSchedulingGraphParser::AddPlanToAllPlansAndMeasureTime(
     const std::vector<std::vector<ScheduledModule>>& current_plan,
     const std::unordered_set<std::string>& processed_nodes,
     const std::map<std::string, TableMetadata>& data_tables,
-    int streamed_data_size) {
+    long streamed_data_size) {
   ExecutionPlanSchedulingData current_scheduling_data = {
       processed_nodes, data_tables, streamed_data_size};
   if (const auto& [it, inserted] =
@@ -835,7 +835,7 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
     std::map<std::string, TableMetadata> data_tables,
     std::unordered_set<std::string> blocked_nodes,
     std::unordered_set<std::string> next_run_blocked_nodes,
-    int streamed_data_size) {
+    long streamed_data_size) {
   // TODO(Kaspar): Potentially check for timeouts more often
   if (trigger_timeout_) {
     throw TimeLimitException("Timeout");
@@ -879,6 +879,9 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
           auto new_streamed_data_size = streamed_data_size;
           new_streamed_data_size += GetNewStreamedDataSize(
               current_run, module_placement.node_name, data_tables, graph);
+//          if (new_streamed_data_size < 0){
+//            throw std::runtime_error("Problem!");
+//          }
           std::unordered_set<std::string> new_available_nodes = available_nodes;
           std::unordered_set<std::string> new_processed_nodes = processed_nodes;
           std::map<std::string, TableMetadata> new_data_tables = data_tables;
@@ -920,6 +923,9 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
                          current_placement.second);
       streamed_data_size += GetNewStreamedDataSize(
           current_run, current_placement.second.node_name, data_tables, graph);
+//      if (streamed_data_size < 0){
+//        throw std::runtime_error("Problem!");
+//      }
       UpdateGraphAndTableValuesGivenPlacement(
           graph, available_nodes, current_placement.second, processed_nodes,
           data_tables, next_run_blocked_nodes, blocked_nodes);

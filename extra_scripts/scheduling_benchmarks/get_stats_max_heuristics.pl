@@ -23,29 +23,7 @@ if (not defined $table_filename) {
 open(my $stats_file, ">>$stats_filename");
 print $stats_file "$header";
 
-#my @repeat_runs = (1..5);
-#my @filter_chance = (0.4,0.2);
-#my @table_low = (1000,100000);
-#my @table_upper = (100000,10000000);
-#my @filter_dnf_low = (1,10);
-#my @filter_dnf_high = (8,32);
-#my @filter_comp_low = (1,2);
-#my @filter_comp_high = (3,4);
-#my @leave_empty_join = (0.75,0.25,0);
-#my @join_chance = (0.4,0.2);
-#my @arithmetic_chance = (0.4,0.2);
-#my @generator_query_count = (4,3);
-#my @selectivity = (0.75,0.5,0.25,0.1);
-#my @timeouts = (0.01,0.1,0.2,0.4,0.6,0.8,1,2,3);
-#my @timeouts = (0.01);
-#my $max_node_limit = 25;
-#my $min_node_limit = 12;
-#my $equal_scaler = 0;
-#my $preferred_scaler = 1;
-#my @heuristic_choice = (0,1,2,3,4,5,6);
-
-my @repeat_runs = (1..10);
-#my @repeat_runs = (1);
+my @repeat_runs = (1..30);
 my @filter_chance = (0.5,0.4);
 my @table_low = (1000);
 my @table_upper = (100000);
@@ -56,10 +34,10 @@ my @filter_comp_high = (3,4);
 my @leave_empty_join = (0.75,0.25,0);
 my @join_chance = (0.5,0.4);
 my @arithmetic_chance = (0.5,0.4);
-my @generator_query_count = (2,1);
+my @generator_query_count = (5);
 my @selectivity = (1);
-my @timeouts = (5);
-my $max_node_limit = 8;
+my @timeouts = (3);
+my $max_node_limit = 10;
 my $min_node_limit = 6;
 my $equal_scaler = 0;
 my $preferred_scaler = 1;
@@ -108,7 +86,8 @@ for my $run_i (@repeat_runs){
                                             open($stats_file, ">>$stats_filename");
                                             print $stats_file ",$selectivity[$j],$timeouts[$i],$heuristic_choice[$k],$equal_scaler,$equal_scaler,$preferred_scaler";
                                             close $stats_file;
-                                            $scheduling_return = system("python3 schedule_c.py OrkhestraFPGAStream default_config.ini $graph_filename $stats_filename $table_filename");
+                                            my $cur_timeout = $timeouts[$i]*5;
+                                            $scheduling_return = system("python3 schedule_c.py OrkhestraFPGAStream default_config.ini $graph_filename $stats_filename $table_filename $cur_timeout");
                                             if ($scheduling_return != 0 && !$tolerate_errors) {
                                                 die "Error: Scheduling script failed with exit code $scheduling_return\n";
                                             }

@@ -83,7 +83,7 @@ class ElasticSchedulingGraphParser {
       std::map<std::string, TableMetadata> data_tables,
       std::unordered_set<std::string> blocked_nodes,
       std::unordered_set<std::string> next_run_blocked_nodes,
-      int streamed_data_size);
+      long streamed_data_size);
 
   [[nodiscard]] auto GetTimeoutStatus() const -> bool;
   auto GetResultingPlan() -> std::map<std::vector<std::vector<ScheduledModule>>,
@@ -159,7 +159,7 @@ class ElasticSchedulingGraphParser {
       const std::vector<std::vector<ScheduledModule>>& current_plan,
       const std::unordered_set<std::string>& processed_nodes,
       const std::map<std::string, TableMetadata>& data_tables,
-      int streamed_data_size);
+      long streamed_data_size);
 
   void GetAllAvailableModulePlacementsInCurrentRun(
       std::unordered_set<std::pair<int, ScheduledModule>, PairHash>&
@@ -177,7 +177,7 @@ class ElasticSchedulingGraphParser {
       const std::vector<ScheduledModule>& current_run,
       const std::string& node_name,
       const std::map<std::string, TableMetadata>& data_tables,
-      const std::unordered_map<std::string, SchedulingQueryNode>& graph) -> int;
+      const std::unordered_map<std::string, SchedulingQueryNode>& graph) -> long;
 
   static auto IsTableEqualForGivenNode(
       const std::unordered_map<std::string, SchedulingQueryNode>& graph,

@@ -109,7 +109,8 @@ for my $run_i (@repeat_runs){
                                             open($stats_file, ">>$stats_filename");
                                             print $stats_file ",$selectivity[$j],$timeouts[$i],$heuristic_choice[$k],$equal_scaler,$equal_scaler,$preferred_scaler";
                                             close $stats_file;
-                                            $scheduling_return = system("python3 schedule_c.py OrkhestraFPGAStream default_config.ini $graph_filename $stats_filename $table_filename");
+                                            my $cur_timeout = $timeouts[$i]*5;
+                                            $scheduling_return = system("python3 schedule_c.py OrkhestraFPGAStream default_config.ini $graph_filename $stats_filename $table_filename $cur_timeout");
                                             if ($scheduling_return != 0 && !$tolerate_errors) {
                                                 die "Error: Scheduling script failed with exit code $scheduling_return\n";
                                             }

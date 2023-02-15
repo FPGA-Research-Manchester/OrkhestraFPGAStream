@@ -31,6 +31,8 @@ def main(argv):
     stats_file = argv[3]
     table_file = argv[4]
 
+    timeout = float(argv[5])
+
     with open(stats_file, "r") as file:
         for last_line in file:
             pass
@@ -96,9 +98,14 @@ def main(argv):
     # f"{exe_location_full} -c {config_location_full} -i {input_location} -q",
     # shell=True)
 
-    result = subprocess.run(
-        f"{exe_location_full} -c {config_location_full} -i {input_location} -q",
-        check=True, shell=True)
+    try:
+        result = subprocess.run(
+            f"{exe_location_full} -c {config_location_full} -i {input_location} -q",
+            check=True, shell=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        # Process is still running after 10 seconds, kill it
+        result.kill()
+        return
 
     # try:
 

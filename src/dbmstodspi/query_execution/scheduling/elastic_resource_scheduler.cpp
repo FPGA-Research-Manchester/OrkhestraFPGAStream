@@ -231,8 +231,10 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
     available_nodes.push_back(graph.at(node_name).node_ptr);
   }
   //std::cout<<data_amount <<std::endl;
+//  std::cout<<"Old:"<<data_amount/config.streaming_speed/1000000<<std::endl;
   data_amount = GetData(
       available_nodes, best_plan, config.pr_hw_library, tables, true);
+//  std::cout<<"New:"<<data_amount/config.streaming_speed/1000000<<std::endl;
 
   current_configuration = new_last_config;
 
