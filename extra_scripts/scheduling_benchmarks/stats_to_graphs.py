@@ -94,7 +94,7 @@ def show_scatter_graph(input_stats_filename):
     # Load the csv file into a pandas dataframe
     df = pd.read_csv(input_stats_filename)
 
-    columns_to_keep = ["final_query_count", "global_node_count", "merge_join_global_count", "table_mean_count", "table_size_mean", "performance_s"]
+    columns_to_keep = ["final_query_count", "global_node_count", "merge_join_global_count", "table_global_count", "table_size_mean", "performance_s"]
     rename_dict = {"final_query_count":"Parallel Query Count", "global_node_count":"Operation Count", "merge_join_global_count":"Merge Join Operation Count", "table_mean_count":"Average Input Count Per Query", "table_size_mean":"Average Table Row Count"}
     df = df[columns_to_keep]
 
@@ -102,9 +102,10 @@ def show_scatter_graph(input_stats_filename):
     #cols = [col for col in df.columns if col != "performance_s"]
 
     # Create a subplot for each column
-    fig, axs = plt.subplots(nrows=len(columns_to_keep), figsize=(10, 30))
-
-    fig.subplots_adjust(hspace=0.5)
+    fig, axs = plt.subplots(nrows=int(len(columns_to_keep)/3), ncols=int(len(columns_to_keep)/2), figsize=(15, 25))
+    axs = axs.flatten()
+    fig.subplots_adjust(hspace=0.2, wspace=0.22)
+    plt.subplots_adjust(left=0.05, right=0.95, bottom=0.1, top=0.9)
 
     # Plot each column against "performance_s"
     for i, col in enumerate(columns_to_keep):
@@ -118,12 +119,14 @@ def show_scatter_graph(input_stats_filename):
         else:
             axs[i].scatter(df[col], df["performance_s"], marker='o', alpha=0.2)
             axs[i].set_xlabel(rename_dict[col])
-            if i == 2:
-                axs[i].set_ylabel("Scheduling performance (sec)")
+            # if i == 2:
+            #     axs[i].set_ylabel("Scheduling performance (sec)")
+            axs[i].set_ylabel("Scheduling performance (sec)")
             # axs[i].set_title(col)
 
     # Show the plot
     fig.suptitle("Scheduler's Runtime with Complex Requests")
+    # plt.tight_layout()
     plt.show()
 
 
@@ -152,7 +155,7 @@ def show_bar_chart_heuristics(input_stats_filename):
     # ax = df_filtered.plot(kind="bar", figsize=(15, 6), width=0.8, color=colors, edgecolor="black")
     ax.set_axisbelow(True)
     ax.grid(True, linestyle='--')
-    ax.set_ylim(0, 1.6)
+    ax.set_ylim(0, 1.8)
 
     hatches = ["//", "++", "xx", "--", "oo"]
 
@@ -160,7 +163,7 @@ def show_bar_chart_heuristics(input_stats_filename):
         for j, rect in enumerate(bar):
             rect.set_hatch(hatches[i % 5])
             height = rect.get_height()
-            ax.text(rect.get_x() + rect.get_width() / 2, height + 0.05, "{:.3f}".format(height), ha='center',
+            ax.text(rect.get_x() + rect.get_width() / 2, height + 0.05, "{:.4f}".format(height), ha='center',
                     va='bottom',
                     rotation=90, fontweight='bold')
 

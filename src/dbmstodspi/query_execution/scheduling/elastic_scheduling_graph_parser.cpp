@@ -725,9 +725,15 @@ auto ElasticSchedulingGraphParser::GetNewStreamedDataSize(
       if (operation_type == QueryOperationType::kMergeSort){
         streamed_data_size += static_cast<long>(graph.at(node_name).capacity.front()) * data_tables.at(table_name).sorted_status.at(2) * data_tables.at(table_name).record_size * 4;
       }
-      // Record size is in 4 byte words
-      streamed_data_size += static_cast<long>(data_tables.at(table_name).record_count) *
-                            data_tables.at(table_name).record_size * 4;
+      else {
+        // Record size is in 4 byte words
+        streamed_data_size +=
+            static_cast<long>(data_tables.at(table_name).record_count) *
+            data_tables.at(table_name).record_size * 4;
+//        std::cout<<table_name<<":";
+//        std::cout<<static_cast<long>(data_tables.at(table_name).record_count) *
+//                         data_tables.at(table_name).record_size<<std::endl;
+      }
     }
   }
   return streamed_data_size;
@@ -874,11 +880,11 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
              available_module_placements) {
           // Make new variables
           auto new_current_run = current_run;
-          new_current_run.insert(new_current_run.begin() + module_index,
-                                 module_placement);
           auto new_streamed_data_size = streamed_data_size;
           new_streamed_data_size += GetNewStreamedDataSize(
               current_run, module_placement.node_name, data_tables, graph);
+          new_current_run.insert(new_current_run.begin() + module_index,
+                                 module_placement);
 //          if (new_streamed_data_size < 0){
 //            throw std::runtime_error("Problem!");
 //          }
@@ -919,10 +925,10 @@ void ElasticSchedulingGraphParser::PlaceNodesRecursively(
                               {}, streamed_data_size);
       }
       // Update the values for this decision branch.
-      current_run.insert(current_run.begin() + current_placement.first,
-                         current_placement.second);
       streamed_data_size += GetNewStreamedDataSize(
           current_run, current_placement.second.node_name, data_tables, graph);
+      current_run.insert(current_run.begin() + current_placement.first,
+                         current_placement.second);
 //      if (streamed_data_size < 0){
 //        throw std::runtime_error("Problem!");
 //      }

@@ -232,9 +232,11 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
   }
   //std::cout<<data_amount <<std::endl;
 //  std::cout<<"Old:"<<data_amount/config.streaming_speed/1000000<<std::endl;
+//  std::cout<<"Old:"<<data_amount/4<<std::endl;
   data_amount = GetData(
       available_nodes, best_plan, config.pr_hw_library, tables, true);
 //  std::cout<<"New:"<<data_amount/config.streaming_speed/1000000<<std::endl;
+//  std::cout<<"New:"<<data_amount/4<<std::endl;
 
   current_configuration = new_last_config;
 
@@ -249,13 +251,13 @@ void ElasticResourceNodeScheduler::BenchmarkScheduling(
   benchmark_data["configuration_amount"] += configuration_amount;
 
   // TODO(Kaspar): Need to update available nodes for next run!
-  /*for (const auto &run : best_plan) {
-    for (const auto &node : run) {
-      std::cout << " " << node.bitstream
-                << " ";
-    }
-    std::cout << std::endl;
-  }*/
+//  for (const auto &run : best_plan) {
+//    for (const auto &node : run) {
+//      std::cout << " " << node.bitstream
+//                << " ";
+//    }
+//    std::cout << std::endl;
+//  }
 }
 
 auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
@@ -824,7 +826,7 @@ auto ElasticResourceNodeScheduler::GetData(
             if (is_io_stream) {
               current_run_data->input_data_definition_files.push_back(
                   chosen_node->given_input_data_definition_files.at(stream_id));
-              result+=table_data.at(chosen_node->given_input_data_definition_files.at(stream_id)).record_count
+              result+=static_cast<long>(table_data.at(chosen_node->given_input_data_definition_files.at(stream_id)).record_count)
                         *table_data.at(chosen_node->given_input_data_definition_files.at(stream_id)).record_size*4;
             } else {
               if (is_benchmark && !chosen_node->given_operation_parameters.input_stream_parameters.empty()) {
@@ -1092,15 +1094,15 @@ void ElasticResourceNodeScheduler::GetMergeSortData(
 //    std::cout<<"SEQUENCE: "<< std::endl;
 //    std::cout<<new_sequence_size<< std::endl;
 //    std::cout<<new_sequence_size*table_data.at(merge_node->given_input_data_definition_files.front())
-//                                         .record_size * 4<< std::endl;
-    data_amount+=new_sequence_size*table_data.at(merge_node->given_input_data_definition_files.front())
-                                           .record_size * 4;
+//                                         .record_size * 4<< std::endl;     .record_size<<std::endl;
+    data_amount+=static_cast<long>(new_sequence_size)*table_data.at(merge_node->given_input_data_definition_files.front())
+                                           .record_size;
   } else {
 //    std::cout<<"SEQUENCE: "<< std::endl;
 //    std::cout<<new_sequence_size<< std::endl;
 //    std::cout<<new_sequence_size*table_data.at(merge_node->given_input_data_definition_files.front())
-//                                         .record_size * 4<< std::endl;
-    data_amount+=new_sequence_size*table_data.at(merge_node->given_input_data_definition_files.front())
+//                                         .record_size * 4<< std::endl;     .record_size<<std::endl;
+    data_amount+=static_cast<long>(new_sequence_size)*table_data.at(merge_node->given_input_data_definition_files.front())
                                            .record_size * 4;
     // if empty check that all nodes have been sorted!
     if (table_data.at(merge_node->given_input_data_definition_files.front())

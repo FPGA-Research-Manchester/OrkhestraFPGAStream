@@ -267,7 +267,7 @@ def make_timeout_scheduling_stats(series_names, function_dict, clean_stats_file_
 
     # We want, 1) scheduling time, 2)overall performance, 3)config, 4)streaming, 5)plans compared
     y_keys = ["config_time", "exec_time", "plan_count", "exec_and_config"]
-    x_values = [0.01, 0.1, 0.2, 0.4, 0.6, 0.8, 1, 1.5, 2, 3]
+    x_values = [0.1, 0.2, 0.4, 0.6, 0.8, 1, 1.5, 2, 3]
     x_key = 'time_limit'
     series_values = [6,5,4,3,2,1,0]
     series_key = 'heuristic'
@@ -305,13 +305,11 @@ def clear_input_and_report_counts(input_filename, stats, remove_timeout, remove_
         filter_key = ""
     elif remove_timeout and not remove_non_timeout:
         def filter_func(rowbuffer, row, filter_key):
-            return [
-                float(buffered_row[filter_key]) == 0 and float(row[filter_key]) == 0 for buffered_row in rowbuffer]
+            return [float(buffered_row[filter_key]) == 0 and float(row[filter_key]) == 0 for buffered_row in rowbuffer]
         filter_key = "timeouts"
     elif not remove_timeout and remove_non_timeout:
         def filter_func(rowbuffer, row, filter_key):
-             return [
-                 float(buffered_row[filter_key]) != 0.0 and float(row[filter_key]) != 0.0 for buffered_row in rowbuffer]
+             return [float(buffered_row[filter_key]) != 0.0 and float(row[filter_key]) != 0.0 for buffered_row in rowbuffer]
         filter_key = "timeouts"
         # def filter_func(rowbuffer, row, filter_key): return [True]
         # filter_key = ""
@@ -338,7 +336,7 @@ def create_clean_stats(orig_stats_file_name, clean_stats_file_name, rowbuffer, l
                 lastrow = row
                 if row[id_key] != last_id_value:
                     if rowbuffer:
-                        if all(buffered_row[valid_key] for buffered_row in rowbuffer) and all(filter_func(rowbuffer, row, filter_key)) and len(rowbuffer) >= stats["per query"]:
+                        if row[valid_key] and all(buffered_row[valid_key] for buffered_row in rowbuffer) and all(filter_func(rowbuffer, row, filter_key)) and len(rowbuffer) >= stats["per query"]:
                             for buffered_row in rowbuffer:
                                 for column in ignore_colums:
                                     buffered_row[column] = -1
@@ -354,7 +352,7 @@ def create_clean_stats(orig_stats_file_name, clean_stats_file_name, rowbuffer, l
                     rowbuffer = []
                     last_id_value = row[id_key]
                 rowbuffer.append(row)
-            if all(buffered_row[valid_key] for buffered_row in rowbuffer) and all(filter_func(rowbuffer, lastrow, filter_key)) and len(rowbuffer) >= stats["per query"]:
+            if row[valid_key] and all(buffered_row[valid_key] for buffered_row in rowbuffer) and all(filter_func(rowbuffer, lastrow, filter_key)) and len(rowbuffer) >= stats["per query"]:
                 for buffered_row in rowbuffer:
                    for column in ignore_colums:
                        buffered_row[column] = -1

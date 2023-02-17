@@ -160,8 +160,8 @@ def main(argv):
         node_min_limit = int(values[14])
 
     # Hard coded for now
-    table_recod_size_lower_bound = 8
-    table_recod_size_upper_bound = 24
+    table_recod_size_lower_bound = 10
+    table_recod_size_upper_bound = 11
 
     # filter_chance = 0.5
     # filter_first_lower_bound = 1

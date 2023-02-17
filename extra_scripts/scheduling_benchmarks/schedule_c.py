@@ -98,13 +98,15 @@ def main(argv):
     # f"{exe_location_full} -c {config_location_full} -i {input_location} -q",
     # shell=True)
 
+    result = None
     try:
         result = subprocess.run(
             f"{exe_location_full} -c {config_location_full} -i {input_location} -q",
             check=True, shell=True, timeout=timeout)
     except subprocess.TimeoutExpired:
         # Process is still running after 10 seconds, kill it
-        result.kill()
+        if result is not None:
+            result.kill()
         return
 
     # try:

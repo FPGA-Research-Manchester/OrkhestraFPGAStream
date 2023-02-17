@@ -145,10 +145,13 @@ def main(argv):
     print_stats(table_sizes, stats_list)
 
     table_counts = []
+    table_count = 0
     for query_name in query_dicts.keys():
+        table_count+=len(query_dicts[query_name]["table_names"])
         table_counts.append(len(query_dicts[query_name]["table_names"]))
 
     #print(f'Global table count statistics:')
+    stats_list.append(table_count)
     print_stats(table_counts, stats_list)
 
     converted_list = [str(element) for element in stats_list]
