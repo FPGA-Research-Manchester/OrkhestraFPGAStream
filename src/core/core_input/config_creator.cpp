@@ -69,13 +69,19 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
   std::string table_column_types = "LOAD_TABLES_C_TYPES";
 
   std::string print_data_amounts = "PRINT_DATA_AMOUNTS";
-  std::string print_write_times = "PRINT_WRITE_TIMES";
-  std::string print_total_execution = "PRINT_TOTAL_EXEC_TIME";
+  std::string print_each_write_time = "PRINT_EACH_WRITE_TIME";
+  std::string print_execution = "PRINT_EXEC_TIME";
   std::string print_system = "PRINT_SYSTEM_TIME";
   std::string print_initialisation = "PRINT_INITIALISATION_TIME";
   std::string print_scheduling = "PRINT_SCHEDULING_TIME";
   std::string print_config = "PRINT_CONFIGURATION_TIME";
   std::string enable_sw_backup = "ENABLE_SW_BACKUP";
+
+  std::string print_data_write_times = "PRINT_DATA_WRITE_TIMES";
+  std::string print_data_read_times = "PRINT_DATA_READ_TIMES";
+  std::string print_end_to_end = "PRINT_END_TO_END_TIMES";
+  std::string print_end_to_end_wo_static = "PRINT_END_TO_END_WO_STATIC_TIMES";
+  std::string print_static = "PRINT_INIT_STATIC_CONFIG_TIME";
 
   std::string preload_tables = "PRELOAD_TABLES";
 
@@ -132,10 +138,10 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
 
   std::istringstream(config_values[print_data_amounts]) >> std::boolalpha >>
       config.print_data_amounts;
-  std::istringstream(config_values[print_write_times]) >> std::boolalpha >>
-      config.print_write_times;
-  std::istringstream(config_values[print_total_execution]) >> std::boolalpha >>
-      config.print_total_execution;
+  std::istringstream(config_values[print_each_write_time]) >> std::boolalpha >>
+      config.print_each_write_time;
+  std::istringstream(config_values[print_execution]) >> std::boolalpha >>
+      config.print_execution_times;
   std::istringstream(config_values[print_system]) >> std::boolalpha >>
       config.print_system;
   std::istringstream(config_values[print_initialisation]) >> std::boolalpha >>
@@ -144,6 +150,16 @@ auto ConfigCreator::GetConfig(const std::string& config_filename) -> Config {
       config.print_scheduling;
   std::istringstream(config_values[print_config]) >> std::boolalpha >>
       config.print_config;
+  std::istringstream(config_values[print_end_to_end]) >> std::boolalpha >>
+      config.print_end_to_end;
+  std::istringstream(config_values[print_end_to_end_wo_static]) >> std::boolalpha >>
+      config.print_end_to_end_wo_static;
+  std::istringstream(config_values[print_data_write_times]) >> std::boolalpha >>
+      config.print_data_write_times;
+  std::istringstream(config_values[print_data_read_times]) >> std::boolalpha >>
+      config.print_data_read_times;
+  std::istringstream(config_values[print_static]) >> std::boolalpha >>
+      config.print_init_static;
   std::istringstream(config_values[enable_sw_backup]) >> std::boolalpha >>
       config.enable_sw_backup;
 
