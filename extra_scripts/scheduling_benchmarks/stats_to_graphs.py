@@ -95,7 +95,7 @@ def show_scatter_graph(input_stats_filename):
     df = pd.read_csv(input_stats_filename)
 
     columns_to_keep = ["final_query_count", "global_node_count", "merge_join_global_count", "table_global_count", "table_size_mean", "performance_s"]
-    rename_dict = {"final_query_count":"Parallel Query Count", "global_node_count":"Operation Count", "merge_join_global_count":"Merge Join Operation Count", "table_mean_count":"Average Input Count Per Query", "table_size_mean":"Average Table Row Count"}
+    rename_dict = {"final_query_count":"Parallel Query Count", "global_node_count":"Operation Count", "merge_join_global_count":"Merge Join Operation Count", "table_global_count":"Input Table Count", "table_size_mean":"Average Table Row Count"}
     df = df[columns_to_keep]
 
     # Select the columns you want to plot
