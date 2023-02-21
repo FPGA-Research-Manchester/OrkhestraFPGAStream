@@ -44,7 +44,9 @@ using orkhestrafs::dbmstodspi::query_acceleration_constants::kIOStreamParamDefs;
 
 auto QueryManager::GetData() -> std::vector<long> {
   return {data_count_, static_configuration_, initialisation_sum_,
-          scheduling_sum_};
+          scheduling_sum_, fpga_execution_sum_, data_write_sum_,
+          data_read_sum_
+  };
 }
 auto QueryManager::GetConfigTime() -> long { return latest_config_; }
 
@@ -210,6 +212,9 @@ void QueryManager::AllocateInputMemoryBlocks(
 
       std::chrono::steady_clock::time_point end =
           std::chrono::steady_clock::now();
+      data_write_sum_ +=
+          std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+              .count();
       if (print_write_times) {
         std::cout << "FS TO MEMORY WRITE: "
                   << std::chrono::duration_cast<std::chrono::microseconds>(
@@ -800,10 +805,16 @@ void QueryManager::CheckResults(
     MemoryBlockInterface* memory_device, int row_count,
     const std::string& filename,
     const std::vector<std::vector<int>>& node_parameters, int stream_index) {
+  std::chrono::steady_clock::time_point begin =
+      std::chrono::steady_clock::now();
   auto expected_table = TableManager::ReadTableFromFile(
       data_manager, node_parameters, stream_index, filename);
   auto resulting_table = TableManager::ReadTableFromMemory(
       data_manager, node_parameters, stream_index, memory_device, row_count);
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  data_read_sum_ +=
+      std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+          .count();
   CheckTableData(data_manager, expected_table, resulting_table);
 }
 
@@ -820,11 +831,14 @@ void QueryManager::WriteResults(
   TableManager::WriteResultTableFile(data_manager, resulting_table, filename);
 
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  std::cout << "MEMORY TO FS WRITE: "
+  data_write_sum_ +=
+      std::chrono::duration_cast<std::chrono::microseconds>(end - begin)
+          .count();
+  /*std::cout << "MEMORY TO FS WRITE: "
             << std::chrono::duration_cast<std::chrono::microseconds>(end -
                                                                      begin)
                    .count()
-            << " microseconds" << std::endl;
+            << " microseconds" << std::endl;*/
   Log(LogLevel::kInfo,
       "Write result data time = " +
           std::to_string(
@@ -939,6 +953,9 @@ void QueryManager::ExecuteAndProcessResults(
 
   std::chrono::steady_clock::time_point total_end =
       std::chrono::steady_clock::now();
+  fpga_execution_sum_ += std::chrono::duration_cast<std::chrono::microseconds>(
+                             total_end - init_end)
+          .count();
   /*std::cout << "TOTAL EXEC:"
             << std::chrono::duration_cast<std::chrono::microseconds>(total_end -
                                                                      begin)

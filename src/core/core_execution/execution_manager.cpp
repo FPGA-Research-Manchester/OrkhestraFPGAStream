@@ -124,13 +124,21 @@ void ExecutionManager::UpdateAvailableNodesGraph() {
   for (const auto& node : current_available_node_pointers_) {
     current_available_node_names_.insert(node->node_name);
   }
-  RemoveUnusedTables(current_tables_metadata_,
-                     unscheduled_graph_->GetAllNodesPtrs(),
-                     config_.static_tables);
-  table_counter_.clear();
-  for (const auto table_name : config_.static_tables) {
-    table_counter_.insert({table_name, 100});
+
+  if (config_.preload_tables) {
+    RemoveUnusedTables(current_tables_metadata_,
+                       unscheduled_graph_->GetAllNodesPtrs(),
+                       config_.static_tables);
+    table_counter_.clear();
+    for (const auto table_name : config_.static_tables) {
+      table_counter_.insert({table_name, 100});
+    }
+  } else {
+    RemoveUnusedTables(current_tables_metadata_,
+                       unscheduled_graph_->GetAllNodesPtrs(), {});
+    table_counter_.clear();
   }
+  
   InitialiseTables(current_tables_metadata_, current_available_node_pointers_,
                    query_manager_.get(), data_manager_.get(), config_.benchmark_scheduler);
   current_query_graph_.clear();
@@ -383,11 +391,13 @@ void ExecutionManager::Execute(
     long init_config = data[1];
     long config = config_time_;
     long initialisation = data[2];
-    long system =
-        total_execution - scheduling - init_config - config - initialisation;
+    long fpga_execution = data[4];
+    long data_write = data[5];
+    long data_read = data[6];
+    long system = total_execution - scheduling - init_config - config -
+                  initialisation - fpga_execution - data_write - data_read;
     long actual_execution = total_execution - init_config;
-    // std::cout << "ACTUAL_EXECUTION: " << actual_execution << std::endl;
-
+    // All in microseconds!
     if (config_.print_config) {
       std::cout << "CONFIGURATION: " << config << std::endl;
     }
@@ -398,22 +408,33 @@ void ExecutionManager::Execute(
       std::cout << "INITIALISATION: " << initialisation << std::endl;
     }
     if (config_.print_system) {
-      std::cout << "SYSTEM: " << system << std::endl;
+      std::cout << "SYSTEM WITHOUT I/O: " << system << std::endl;
     }
-    /*std::cout << "EXECUTION: " << (data_size / 4659.61402505057)
-              << std::endl;*/
-
-    /*std::cout << "STATIC: "
-              << ((data_size / 4659.61402505057) + initialisation)
-              << std::endl;*/
+    if (config_.print_data_write_times) {
+      std::cout << "DATA WRITE: " << data_write << std::endl;
+    }
+    if (config_.print_data_read_times) {
+      std::cout << "DATA READ: " << data_read << std::endl;
+    }
+    if (config_.print_execution_times) {
+      std::cout << "FPGA EXECUTION: " << fpga_execution << std::endl;
+    }
     if (config_.print_data_amounts) {
-      std::cout << "DATA_STREAMED: " << data_size << std::endl;
+      std::cout << "DATA STREAMED BYTES: " << data_size << std::endl;
     }
-    /*std::cout << "TOTAL EXECUTION RUNTIME: "
-              << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                       begin)
-                     .count()
-              << std::endl;*/
+    if (config_.print_end_to_end) {
+        std::cout << "END-TO-END RUNTIME: " << total_execution
+              << std::endl;
+    }
+    if (config_.print_init_static) {
+      std::cout << "STATIC: " << init_config
+                << std::endl;
+    }
+    if (config_.print_end_to_end_wo_static) {
+      std::cout << "END-TO-END WITHOUT INITIAL STATIC: " << actual_execution
+                << std::endl;
+    }
+
   }
 }
 
@@ -575,7 +596,7 @@ void ExecutionManager::SetupNextRunData() {
           data_manager_.get(), memory_manager_.get(),
           accelerator_library_.get(), next_scheduled_run_nodes,
           current_tables_metadata_, table_memory_blocks_, table_counter_,
-          config_.print_write_times);
+          config_.print_each_write_time);
   query_nodes_ = std::move(execution_nodes_and_result_params.first);
   for (int module_pos = 0; module_pos < empty_modules.size(); module_pos++) {
     if (empty_modules.at(module_pos).second) {

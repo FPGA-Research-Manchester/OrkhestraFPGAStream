@@ -61,12 +61,17 @@ struct Config {
   bool check_tables = false;
 
   bool print_data_amounts = false;
-  bool print_write_times = false;
-  bool print_total_execution = false;
+  bool print_each_write_time = false;
+  bool print_data_write_times = false;
+  bool print_data_read_times = false;
+  bool print_end_to_end_wo_static = false;
   bool print_system = false;
   bool print_initialisation = false;
   bool print_scheduling = false;
   bool print_config = false;
+  bool print_execution_times = false;
+  bool print_end_to_end = false;
+  bool print_init_static = false;
 
   bool enable_sw_backup = true;
 

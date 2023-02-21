@@ -121,8 +121,11 @@ class QueryManager : public QueryManagerInterface {
   long static_configuration_ = 0;
   long data_count_ = 0;
   long initialisation_sum_ = 0;
+  long fpga_execution_sum_ = 0;
   long scheduling_sum_ = 0;
   long latest_config_ = 0;
+  long data_write_sum_ = 0;
+  long data_read_sum_ = 0;
   int merge_count_ = 0;
 
   auto GetData() -> std::vector<long> override;
@@ -164,12 +167,12 @@ class QueryManager : public QueryManagerInterface {
   static void CheckTableData(const DataManagerInterface* data_manager,
                              const TableData& expected_table,
                              const TableData& resulting_table);
-  static void CheckResults(const DataManagerInterface* data_manager,
+  void CheckResults(const DataManagerInterface* data_manager,
                            MemoryBlockInterface* memory_device, int row_count,
                            const std::string& filename,
                            const std::vector<std::vector<int>>& node_parameters,
                            int stream_index);
-  static void WriteResults(const DataManagerInterface* data_manager,
+  void WriteResults(const DataManagerInterface* data_manager,
                            MemoryBlockInterface* memory_device, int row_count,
                            const std::string& filename,
                            const std::vector<std::vector<int>>& node_parameters,
@@ -177,7 +180,7 @@ class QueryManager : public QueryManagerInterface {
   static void CopyMemoryData(int table_size,
                              MemoryBlockInterface* source_memory_device,
                              MemoryBlockInterface* target_memory_device);
-  static void ProcessResults(
+  void ProcessResults(
       const DataManagerInterface* data_manager,
       std::array<int, query_acceleration_constants::kMaxIOStreamCount>
           result_sizes,
@@ -202,7 +205,7 @@ class QueryManager : public QueryManagerInterface {
       MemoryManagerInterface* memory_manager, const NodeRunData& run_data,
       std::unordered_map<std::string, MemoryBlockInterface*>&
           table_memory_blocks);
-  static void AllocateInputMemoryBlocks(
+  void AllocateInputMemoryBlocks(
       MemoryManagerInterface* memory_manager,
       const DataManagerInterface* data_manager, const NodeRunData& run_data,
       const std::vector<std::vector<int>>& input_stream_parameters,
