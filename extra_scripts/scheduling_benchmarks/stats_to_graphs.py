@@ -58,7 +58,7 @@ def plot_column(ax, column_name, df_filtered, markers):
         sc = ax.scatter(df_heuristic['time_limit'], df_heuristic[column_name], label=heuristic, marker=markers[i % len(markers)])
         ax.plot(df_heuristic['time_limit'], df_heuristic[column_name], label='_nolegend_', color=sc.get_facecolors()[0], alpha=0.7)
     ax.set_ylabel(column_name)
-    ax.set_xlabel('Time Limit (s)')
+    # ax.set_xlabel('Time Limit (s)')
     ax.set_axisbelow(True)
     ax.grid(True, linestyle='--', zorder=1)
 
@@ -72,21 +72,30 @@ def show_scatter_graph_with_line(input_stats_filename):
     columns.remove('time_limit')
 
     markers = ['o', 'v', '*', '+', 'x', 'D', 's', 'p', '^', '.']
-    fig, axs = plt.subplots(len(columns), sharex=True, figsize=(10, 30))
+    fig, axs = plt.subplots(len(columns), sharex=True, figsize=(10, 10))
     axs[-1], axs[-2] = axs[-2], axs[-1]
     for i, ax in enumerate(axs):
         plot_column(ax, columns[i], df_filtered, markers)
         ax.get_yaxis().get_major_formatter().set_scientific(True)
         ax.get_yaxis().get_major_formatter().set_useMathText(True)
         ax.get_yaxis().get_major_formatter().set_powerlimits((-1, 1))
+        ax.tick_params(axis='both', which='major', labelsize=12)
 
-    plt.xlabel('Time Limit (s)')
-    axs[-1].legend(bbox_to_anchor=(1.02, 2.2), loc='upper left', borderaxespad=0)
-    axs[0].set_ylabel("Configuration time (s)")
-    axs[1].set_ylabel("Streaming time (s)")
-    axs[2].set_ylabel("Config + Exec time (s)")
-    axs[3].set_ylabel("Plans considered")
-    fig.suptitle("Schedulers Quality with Time Limits")
+    plt.xlabel('Time Limit (s)', fontsize=14)
+    axs[-1].legend(bbox_to_anchor=(1.02, 2.2), loc='upper left', borderaxespad=0, fontsize=14)
+    axs[0].set_ylabel("Configuration time (s)", fontsize=14)
+    axs[1].set_ylabel("Streaming time (s)", fontsize=14)
+    axs[3].set_ylabel("Config + Exec time (s)", fontsize=14)
+    axs[2].set_ylabel("Plans considered", fontsize=14)
+    fig.suptitle("Scheduler's Quality with Time Limits", fontsize=22)
+
+    # Remove padding from figure edges
+    fig.subplots_adjust(top=0.93, bottom=0.06, left=0.07, right=0.88)
+
+    # Increase font size
+    matplotlib.rcParams.update({'font.size': 18})
+
+    plt.savefig("runtime_line_graph.pdf")
     plt.show()
 
 
@@ -102,10 +111,10 @@ def show_scatter_graph(input_stats_filename):
     #cols = [col for col in df.columns if col != "performance_s"]
 
     # Create a subplot for each column
-    fig, axs = plt.subplots(nrows=int(len(columns_to_keep)/3), ncols=int(len(columns_to_keep)/2), figsize=(15, 25))
+    fig, axs = plt.subplots(nrows=int(len(columns_to_keep)/2), ncols=int(len(columns_to_keep)/3), figsize=(10, 10))
     axs = axs.flatten()
-    fig.subplots_adjust(hspace=0.2, wspace=0.22)
-    plt.subplots_adjust(left=0.05, right=0.95, bottom=0.1, top=0.9)
+    fig.subplots_adjust(hspace=0.2, wspace=0.15)
+    plt.subplots_adjust(left=0.07, right=0.995, bottom=0.05, top=0.94)
 
     # Plot each column against "performance_s"
     for i, col in enumerate(columns_to_keep):
@@ -113,20 +122,21 @@ def show_scatter_graph(input_stats_filename):
         axs[i].grid(True, linestyle='--')
         if col == "performance_s":
             axs[i].hist(df[col], bins=20, alpha=0.5)
-            axs[i].set_xlabel("Scheduling performance (sec)")
-            axs[i].set_ylabel("Frequency")
+            axs[i].set_xlabel("Scheduling performance (sec)", fontsize=12)
+            axs[i].set_ylabel("Frequency", fontsize=12)
             # axs[i].set_title(col)
         else:
             axs[i].scatter(df[col], df["performance_s"], marker='o', alpha=0.2)
-            axs[i].set_xlabel(rename_dict[col])
+            axs[i].set_xlabel(rename_dict[col], fontsize=12)
             # if i == 2:
             #     axs[i].set_ylabel("Scheduling performance (sec)")
-            axs[i].set_ylabel("Scheduling performance (sec)")
+            axs[i].set_ylabel("Scheduling performance (sec)", fontsize=12)
             # axs[i].set_title(col)
 
     # Show the plot
-    fig.suptitle("Scheduler's Runtime with Complex Requests")
+    fig.suptitle("Scheduler's Runtime with Complex Requests", fontsize=22)
     # plt.tight_layout()
+    plt.savefig("runtime_scatter_graph.pdf")
     plt.show()
 
 
@@ -144,18 +154,18 @@ def show_bar_chart_heuristics(input_stats_filename):
     df_filtered = df_filtered.set_index("heuristic")
 
     # Normalize values by H0 values
-    df_filtered = df_filtered.div(df_filtered.loc["H0"])
+    df_filtered = df_filtered.div(df_filtered.loc["H0"]) * 100
 
     # Plot the normalized values as a clustered bar chart
     colors = ["red", "blue", "green", "purple", "orange"]
     colors = [matplotlib.colors.to_rgba(color, alpha=0.5) for color in colors]
 
-    fig, ax = plt.subplots(figsize=(12, 6), subplotpars=matplotlib.figure.SubplotParams(left=0.07, right=0.79))
+    fig, ax = plt.subplots(figsize=(8, 6), subplotpars=matplotlib.figure.SubplotParams(left=0.07, right=0.79))
     df_filtered.plot(kind="bar", ax=ax, width=0.8, color=colors, edgecolor="black")
     # ax = df_filtered.plot(kind="bar", figsize=(15, 6), width=0.8, color=colors, edgecolor="black")
     ax.set_axisbelow(True)
-    ax.grid(True, linestyle='--')
-    ax.set_ylim(0, 1.8)
+    ax.grid(True, linestyle='--',axis='y')
+    ax.set_ylim(0, 180)
 
     hatches = ["//", "++", "xx", "--", "oo"]
 
@@ -163,19 +173,22 @@ def show_bar_chart_heuristics(input_stats_filename):
         for j, rect in enumerate(bar):
             rect.set_hatch(hatches[i % 5])
             height = rect.get_height()
-            ax.text(rect.get_x() + rect.get_width() / 2, height + 0.05, "{:.4f}".format(height), ha='center',
+            ax.tick_params(axis='both', which='major', labelsize=12)
+            ax.text(rect.get_x() + rect.get_width() / 2, height + 2.00, "{:.2f}".format(height), ha='center',
                     va='bottom',
-                    rotation=90, fontweight='bold')
+                    rotation=90, fontsize=10)
 
     # Add title, axis labels, and legend
     # plt.title("Normalized Clustered Bar Chart")
-    plt.xlabel("Heuristics")
-    plt.ylabel("Compared Against H0 - The Best Plan")
-    plt.legend(title="Legend", loc='center left', bbox_to_anchor=(1.05, 0.5),
-               labels=["Plan Count", "Scheduling Time", "Exec Time", "Config Time", "Exec + Config Time"])
+    plt.xlabel("Heuristics", fontsize=14)
+    plt.ylabel("Compared Against H0 - The Best Plan (%)", fontsize=14)
+    plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5),
+               labels=["Plan Count", "Scheduling Time", "Exec Time", "Config Time", "Exec + Config Time"], fontsize=10)
+    fig.subplots_adjust(top=0.93, bottom=0.1, left=0.1, right=0.75)
     # plt.tight_layout()
     # fig = plt.gcf()
-    fig.suptitle("Scheduler's Performance with Heuristics")
+    fig.suptitle("Scheduler's Performance with Heuristics", fontsize=22)
+    plt.savefig("runtime_bar_graph.pdf")
     plt.show()
 
     # 1: stat file 2: extra options
