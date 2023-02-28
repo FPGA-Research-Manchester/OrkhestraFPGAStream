@@ -21,6 +21,7 @@ limitations under the License.
 #include <set>
 #include <stdexcept>
 #include <utility>
+#include <iostream>
 
 #include "logger.hpp"
 #include "sql_json_writer.hpp"
@@ -789,6 +790,34 @@ void SQLQueryCreator::GetCurrentAvailableDesiredPositions(
               {translated_position, {column_name}});
         }
       }
+      current_chunk += 1;
+      for (const auto& chunk_independent_position : required_positions) {
+        int translated_position =
+            chunk_independent_position + current_chunk * 16;
+        translated_positions.push_back(translated_position);
+        if (current_available_desired_columns.find(translated_position) !=
+            current_available_desired_columns.end()) {
+          current_available_desired_columns[translated_position].push_back(
+              column_name);
+        } else {
+          current_available_desired_columns.insert(
+              {translated_position, {column_name}});
+        }
+      }
+      //current_chunk += 1;
+      //for (const auto& chunk_independent_position : required_positions) {
+      //  int translated_position =
+      //      chunk_independent_position + current_chunk * 16;
+      //  translated_positions.push_back(translated_position);
+      //  if (current_available_desired_columns.find(translated_position) !=
+      //      current_available_desired_columns.end()) {
+      //    current_available_desired_columns[translated_position].push_back(
+      //        column_name);
+      //  } else {
+      //    current_available_desired_columns.insert(
+      //        {translated_position, {column_name}});
+      //  }
+      //}
       left_over_availability.insert({column_name, translated_positions});
     } else {
       // From some other table
@@ -799,9 +828,90 @@ void SQLQueryCreator::GetCurrentAvailableDesiredPositions(
 void SQLQueryCreator::RemoveUnavailablePositions(
     std::map<int, std::vector<std::string>>& current_available_desired_columns,
     std::map<std::string, std::vector<int>>& left_over_availability,
-    const std::vector<std::string>& chosen_columns) {
-  // TODO(Kaspar): remove positions where stuff also doesn't fit!
-  for (int column_id = 0; column_id < chosen_columns.size(); column_id++) {
+    const std::vector<std::string>& chosen_columns,
+    const std::map<std::string, std::vector<int>>& column_positions) {
+  std::unordered_set<int> used_positions;
+  const auto orig_copy = current_available_desired_columns;
+  for (const auto& [location, desired_columns] : orig_copy) {
+    for (const auto& column : desired_columns) {
+      std::vector<int> position_vector;
+      position_vector.reserve(column_positions.at(column).size());
+      for (int i = 0; i < column_positions.at(column).size(); i++) {
+        position_vector.push_back(location + i);
+      }
+      bool suitable = true;
+      for (const auto& potential_position : position_vector) {
+        if (!chosen_columns.at(potential_position).empty()) {
+          suitable = false;
+          break;
+        }
+      }
+      // Find if any modulo in the same chunk is the same for any of the
+      // potential positions.
+
+      // 1. Get current columns modulos.
+      // 2. Get current chunk columns
+      // 3. Get the modulos of each and one of them.
+      // 4. For all current modulos - check if any of them is in the set!
+      
+      // Hardcode 16 for now!
+      if (suitable && column_positions.at(column).front() != location) {
+        std::set<int> position_set;
+        for (int i = 0; i < column_positions.at(column).size(); i++) {
+          position_set.insert(column_positions.at(column).at(i) % 16);
+        }
+        int current_chunk_index = location / 16;
+        std::set<std::string> current_columns;
+        for (int i = current_chunk_index * 16;
+             i < (current_chunk_index + 1) * 16 && i < chosen_columns.size();
+             i++) {
+          if (!chosen_columns.at(i).empty()) {
+            current_columns.insert(chosen_columns.at(i));
+          }
+        }
+        for (const auto& placed_column : current_columns) {
+          if (!suitable) {
+            break;
+          }
+          for (const auto& placed_column_loc :
+               column_positions.at(placed_column)) {
+            if (position_set.count(placed_column_loc % 16) > 0) {
+              suitable = false;
+              break;
+            }
+          }
+        }
+      }
+
+      if (!suitable) {
+        if (current_available_desired_columns.find(location) !=
+            current_available_desired_columns.end()) {
+          if (left_over_availability[column].empty()) {
+            throw std::runtime_error(
+                "Left over and desired columns out of sync!");
+          }
+          left_over_availability[column].erase(
+              std::remove(left_over_availability[column].begin(),
+                          left_over_availability[column].end(), location),
+              left_over_availability[column].end());
+          if (left_over_availability[column].empty()) {
+            throw std::runtime_error("Can't place a column!");
+          }
+          current_available_desired_columns[location].erase(
+              std::remove(current_available_desired_columns[location].begin(),
+                          current_available_desired_columns[location].end(),
+                          column),
+              current_available_desired_columns[location].end());
+          if (current_available_desired_columns[location].empty()) {
+            current_available_desired_columns.erase(location);
+          }
+        }
+      }
+    }
+  }
+
+  // Can be deleted potentially
+  /*for (int column_id = 0; column_id < chosen_columns.size(); column_id++) {
     if (!chosen_columns.at(column_id).empty()) {
       if (current_available_desired_columns.find(column_id) !=
           current_available_desired_columns.end()) {
@@ -820,7 +930,7 @@ void SQLQueryCreator::RemoveUnavailablePositions(
         current_available_desired_columns.erase(column_id);
       }
     }
-  }
+  }*/
 }
 
 // Actually not setting - just checking..
@@ -884,11 +994,14 @@ void SQLQueryCreator::RemoveAvailabliltyDueToJoinRequirements(
     const std::map<std::string, std::string>& pairing_map, int offset,
     int stream_index) {
   SetJoinOffsetParam(current_process, offset, stream_index);
-  SetColumnPlace(current_available_desired_columns, left_over_availability,
-                 crossbar_configuration, chosen_columns, column_positions,
-                 operations_.at(current_process).sorted_by_column, 0,
-                 pairing_map, current_process);
-
+  // To set join key if missing.
+  if (chosen_columns.front().empty()) {
+    SetColumnPlace(current_available_desired_columns, left_over_availability,
+                   crossbar_configuration, chosen_columns, column_positions,
+                   operations_.at(current_process).sorted_by_column, 0,
+                   pairing_map, current_process);
+  }
+  // To remove availability
   for (int i = 1; i < offset; i++) {
     if (current_available_desired_columns.find(i) !=
         current_available_desired_columns.end()) {
@@ -908,6 +1021,7 @@ void SQLQueryCreator::SetColumnPlace(
     const std::string& chosen_column_name, int chosen_location,
     const std::map<std::string, std::string>& pairing_map,
     const std::string& current_process) {
+
   // You can also use this method with "" to just clear postions.
   if (std::find(current_available_desired_columns.at(chosen_location).begin(),
                 current_available_desired_columns.at(chosen_location).end(),
@@ -952,6 +1066,25 @@ void SQLQueryCreator::SetColumnPlace(
 
   for (const auto& current_location_candidate :
        all_columns_allocated_for_current_location) {
+    if (chosen_column_name.empty()) {
+      left_over_availability[current_location_candidate].erase(
+          std::remove(
+              left_over_availability[current_location_candidate].begin(),
+              left_over_availability[current_location_candidate].end(),
+              chosen_location),
+          left_over_availability[current_location_candidate].end());
+      if (left_over_availability[current_location_candidate].empty()) {
+        throw std::runtime_error(
+            "Used a position that was the only choice for another column!");
+      }
+      current_available_desired_columns.erase(chosen_location);
+      continue;
+    }
+    std::vector<int> position_vector;
+    position_vector.reserve(column_positions.at(chosen_column_name).size());
+    for (int i = 0; i < column_positions.at(chosen_column_name).size(); i++) {
+      position_vector.push_back(chosen_location + i);
+    }
     if (current_location_candidate == chosen_column_name) {
       for (const auto& other_availablilites :
            left_over_availability.at(current_location_candidate)) {
@@ -966,11 +1099,6 @@ void SQLQueryCreator::SetColumnPlace(
         }
       }
       left_over_availability.erase(chosen_column_name);
-      std::vector<int> position_vector;
-      position_vector.reserve(column_positions.at(chosen_column_name).size());
-      for (int i = 0; i < column_positions.at(chosen_column_name).size(); i++) {
-        position_vector.push_back(chosen_location + i);
-      }
       if (UsesMultipleChunks(position_vector)) {
         throw std::runtime_error(
             "Can't place a column over multiple chunks at the moment!");
@@ -979,7 +1107,19 @@ void SQLQueryCreator::SetColumnPlace(
         if (!chosen_columns[position_vector.at(i)].empty() ||
             crossbar_configuration[position_vector.at(i) / 16]
                                   [position_vector.at(i) % 16] != -1) {
-          throw std::runtime_error("This location isn't empty!");
+          /*for (auto& choice : chosen_columns) {
+            std::cout << choice << std::endl;
+          }
+          std::cout << position_vector.at(i) << std::endl;
+          std::cout << chosen_columns[position_vector.at(i)] << std::endl;
+          std::cout << chosen_column_name << std::endl;
+          for (auto& value : column_positions) {
+            std::cout << value.first << std::endl;
+            for (auto& value1 : value.second) {
+              std::cout << value1 << std::endl;
+            }
+          }*/
+          throw std::runtime_error("This location isn't empty!:");
         }
         chosen_columns[position_vector.at(i)] = chosen_column_name;
         current_available_desired_columns.erase(position_vector.at(i));
@@ -990,18 +1130,33 @@ void SQLQueryCreator::SetColumnPlace(
       operations_.at(current_process).column_locations[chosen_column_name] =
           position_vector.front();
     } else {
-      left_over_availability[current_location_candidate].erase(
-          std::remove(
-              left_over_availability[current_location_candidate].begin(),
-              left_over_availability[current_location_candidate].end(),
-              chosen_location),
-          left_over_availability[current_location_candidate].end());
-      if (left_over_availability[current_location_candidate].empty()) {
-        throw std::runtime_error(
-            "Used a position that was the only choice for another column!");
+      for (const auto& location : position_vector) {
+        left_over_availability[current_location_candidate].erase(
+            std::remove(
+                left_over_availability[current_location_candidate].begin(),
+                left_over_availability[current_location_candidate].end(),
+                location),
+            left_over_availability[current_location_candidate].end());
+        if (left_over_availability[current_location_candidate].empty()) {
+          throw std::runtime_error(
+              "Used a position that was the only choice for another column!");
+        }
+        current_available_desired_columns[location].erase(
+            std::remove(
+                current_available_desired_columns[location].begin(),
+                        current_available_desired_columns[location].end(),
+                current_location_candidate),
+            current_available_desired_columns[location].end());
+        if (current_available_desired_columns[location].empty()) {
+          current_available_desired_columns.erase(location);
+        }
       }
     }
   }
+
+  RemoveUnavailablePositions(current_available_desired_columns,
+                             left_over_availability, chosen_columns,
+                             column_positions);
 }
 
 void SQLQueryCreator::PlaceColumnsToPositionsWithOneAvailableLocation(
@@ -1114,7 +1269,7 @@ void SQLQueryCreator::CleanAvailablePositionsAndPlaceColumns(
     const std::map<std::string, std::vector<int>>& column_positions,
     int stream_index, const std::map<std::string, std::string>& pairing_map) {
   RemoveUnavailablePositions(current_available_desired_columns,
-                             left_over_availability, chosen_columns);
+                             left_over_availability, chosen_columns, column_positions);
 
   if (required_join_offset_ == current_process &&
       (stream_index == 1 ||
@@ -1127,7 +1282,7 @@ void SQLQueryCreator::CleanAvailablePositionsAndPlaceColumns(
         current_process, crossbar_configuration, chosen_columns,
         column_positions, pairing_map, join_offset_, stream_index);
     // Don't need to do this again.
-    required_join_offset_ = "";
+    //required_join_offset_ = "";
   }
   PlaceGivenColumnsToGivenDesiredLocations(
       current_available_desired_columns, left_over_availability,
@@ -1161,7 +1316,7 @@ auto SQLQueryCreator::PlaceColumnsToDesiredPositions(
   std::vector<int> column_types;
   std::vector<int> column_sizes;
   // Non-optimal implementation for clarity
-  for (int i = 0; i < chunk_count; i++) {
+  for (int i = 0; i < chunk_count + 1; i++) {
     std::vector<int> chunk_crossbar_configuration(16, -1);
     crossbar_configuration.push_back(chunk_crossbar_configuration);
     for (int j = 0; j < 16; j++) {
@@ -1199,14 +1354,17 @@ auto SQLQueryCreator::PlaceColumnsToDesiredPositions(
     if (placed_columns.find(column_name) == placed_columns.end() &&
         reverse_pairing_map.find(column_name) == reverse_pairing_map.end()) {
       // Just for clarity
-      int column_chunk = placed_locations.front() / 16;
+      //int column_chunk = placed_locations.front() / 16;
       int column_length = placed_locations.size();
 
       std::vector<int> desired_locations;
       desired_locations.reserve(16 - column_length);
-      for (int i = 0; i < 16 - column_length; i++) {
-        desired_locations.push_back(column_chunk * 16 + i);
+      for (int j = 0; j < chosen_columns.size() / 16; j++) {
+        for (int i = 0; i < 16 - column_length; i++) {
+          desired_locations.push_back(j * 16 + i);
+        }
       }
+      
 
       left_over_availability.insert({column_name, desired_locations});
       for (const auto& location : desired_locations) {
@@ -1242,13 +1400,20 @@ auto SQLQueryCreator::PlaceColumnsToDesiredPositions(
       auto original_chunk_index =
           operations_[current_process].column_locations.at(original_column) /
           16;
+      auto new_chunk_index = original_chunk_index;
       auto required_column_word_size = static_cast<int>(
           columns_.at(original_column).second *
           column_sizes_.at(columns_.at(original_column).first));
       auto& original_chunk = crossbar_configuration.at(original_chunk_index);
       int good_location = -1;
       int current_match_length = 0;
-      for (int i = 0; i < original_chunk.size(); i++) {
+      int start_i = 0;
+      if (required_join_offset_ == current_process &&
+          (stream_index == 1 ||
+           operations_.at(current_process).inputs.size() == 1) && join_offset_ != -1) {
+        start_i = join_offset_;
+      }
+      for (int i = start_i; i < original_chunk.size(); i++) {
         if (original_chunk.at(i) == -1) {
           if (good_location == -1) {
             good_location = i;
@@ -1263,20 +1428,52 @@ auto SQLQueryCreator::PlaceColumnsToDesiredPositions(
           current_match_length = 0;
         }
       }
+      if (current_match_length != required_column_word_size) {
+        good_location = -1;
+      }
+      if (good_location == -1) {
+        // TODO: Move the original value up as well.
+        new_chunk_index++;
+        auto& new_chunk = crossbar_configuration.at(new_chunk_index);
+        current_match_length = 0;
+        start_i = 0;
+        //if (required_join_offset_ == current_process &&
+        //    (stream_index == 1 ||
+        //     operations_.at(current_process).inputs.size() == 1)) {
+        //  start_i = 1;
+        //}
+        for (int i = start_i; i < new_chunk.size(); i++) {
+          if (new_chunk.at(i) == -1) {
+            if (good_location == -1) {
+              good_location = i;
+            }
+            current_match_length++;
+            if (current_match_length == required_column_word_size) {
+              // location found!
+              break;
+            }
+          } else {
+            good_location = -1;
+            current_match_length = 0;
+          }
+        }
+      }
       if (good_location == -1) {
         throw std::runtime_error(
             "Can't find an available location to duplicate data!");
-      } else {
+      }
+      else {
         // Set location
         operations_[current_process].column_locations[desired_column] =
-            good_location + original_chunk_index * 16;
+            good_location + new_chunk_index * 16;
         int original_crossbar_location =
             operations_[current_process].column_locations.at(original_column) %
             16;
         // Copy over crossbar data and write in column names
         for (int i = 0; i < required_column_word_size; i++) {
-          original_chunk[good_location + i] =
-              original_chunk[original_crossbar_location + i];
+          crossbar_configuration[new_chunk_index][good_location + i] =
+              crossbar_configuration[original_chunk_index]
+                            [original_crossbar_location + i];
           chosen_columns[operations_[current_process]
                              .column_locations[desired_column] +
                          i] = desired_column;

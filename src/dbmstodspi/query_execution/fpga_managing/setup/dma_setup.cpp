@@ -82,6 +82,9 @@ void DMASetup::SetupDMAModuleDirection(
       stream_specification = stream_init_data.stream_specification;
       if (!stream_setup_data.is_input_stream &&
           stream_specification.size() != stream_init_data.stream_record_size) {
+        std::cout << "spec (correct) : " << stream_specification.size() << std::endl;
+        std::cout << "stream: " << stream_init_data.stream_record_size
+                  << std::endl;
         throw std::runtime_error("Expected data and projection don't match!");
       }
     }

@@ -51,8 +51,10 @@ void StreamParameterCalculator::CalculateDMAStreamSetupData(
                                             record_size_after_crossbar);
   } else {
     if (stream_setup_data.is_input_stream) {
-      stream_setup_data.records_per_ddr_burst =
-          FindMinViableRecordsPerDDRBurst(record_size);
+      stream_setup_data.records_per_ddr_burst = FindMinViableRecordsPerDDRBurst(
+          std::max(record_size_after_crossbar, record_size));
+      /*stream_setup_data.records_per_ddr_burst =
+          FindMinViableRecordsPerDDRBurst(record_size);*/
     } else {
       // chunks_per_record can't be bigger than 32.
       stream_setup_data.records_per_ddr_burst =
@@ -62,6 +64,8 @@ void StreamParameterCalculator::CalculateDMAStreamSetupData(
   }
 
   // ceil (recordSize * records_per_ddr_burst) / maxDDRSizePerCycle
+  /*stream_setup_data.ddr_burst_length = CalculateDDRBurstLength(std::max(record_size_after_crossbar, record_size),
+                              stream_setup_data.records_per_ddr_burst);*/
   stream_setup_data.ddr_burst_length = CalculateDDRBurstLength(
       record_size, stream_setup_data.records_per_ddr_burst);
 }

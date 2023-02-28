@@ -166,6 +166,11 @@ class ExecutionManager : public ExecutionManagerInterface,
       -> std::vector<int>;
   auto PopNextScheduledRun() -> std::vector<QueryNode*>;
 
+  static auto FindStaticConfig(
+      const std::vector<ScheduledModule>& next_config,
+      std::vector<std::string>& current_routing)
+      -> std::pair<std::vector<std::string>,
+                   std::vector<std::pair<QueryOperationType, bool>>>;
   // TODO(Kaspar): Move this to a different class
   static auto GetCurrentNodeIndexFromNextNode(QueryNode* current_node,
                                               QueryNode* next_node) -> int;

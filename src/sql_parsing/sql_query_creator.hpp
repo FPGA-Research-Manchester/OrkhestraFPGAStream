@@ -214,7 +214,8 @@ class SQLQueryCreator {
       std::map<int, std::vector<std::string>>&
           current_available_desired_columns,
       std::map<std::string, std::vector<int>>& left_over_availability,
-      const std::vector<std::string>& chosen_columns);
+      const std::vector<std::string>& chosen_columns, 
+      const std::map<std::string, std::vector<int>>& column_positions);
   void RemoveAvailabliltyDueToJoinRequirements(
       std::map<int, std::vector<std::string>>&
           current_available_desired_columns,

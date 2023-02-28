@@ -365,6 +365,23 @@ auto ElasticResourceNodeScheduler::GetNextSetOfRuns(
                                 output_stream_id)]++;
         }
       }
+    } else {
+      for (int input_stream_id = 0;
+           input_stream_id <
+           parameters.node_ptr->given_input_data_definition_files.size();
+           input_stream_id++) {
+        if (!parameters.node_ptr->given_input_data_definition_files
+                .at(input_stream_id)
+                .empty()) {
+          if (const auto &[it, inserted] = table_counter.try_emplace(
+                  parameters.node_ptr->given_input_data_definition_files.at(
+                      input_stream_id),
+                  1);
+              !inserted) {
+            it->second++;
+          }
+        }
+      }
     }
   }
   // available_nodes = FindNewAvailableNodes(starting_nodes, available_nodes);

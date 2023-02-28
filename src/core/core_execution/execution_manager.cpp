@@ -483,8 +483,124 @@ auto ExecutionManager::GetModuleCapacity(int module_position,
       last_seen_bitstream = module_name;
     }
   }
-  // return {0};
+  /*if (operation == QueryOperationType::kMergeSort) {
+    return {64};
+  }
+  if (operation == QueryOperationType::kLinearSort) {
+    return {512};
+  }
+  if (operation == QueryOperationType::kFilter) {
+    return {32, 4};
+  }
+  return {0};*/
   throw std::runtime_error("Not enough modules configured!");
+}
+
+auto ExecutionManager::FindStaticConfig(const std::vector<ScheduledModule>& next_config,
+    std::vector<std::string>& current_routing)
+    -> std::pair<std::vector<std::string>,
+                 std::vector<std::pair<QueryOperationType, bool>>> {
+  std::vector<bool> match_found;
+  std::vector<std::string> bitstream_to_load;
+  std::vector<std::string> static_bitstreams = {"binPartial_Static1_0_96.bin",
+                                                "binPartial_Static2_0_96.bin"};
+  std::vector<std::vector<QueryOperationType>> available_statics;
+  available_statics.push_back({QueryOperationType::kFilter,
+                               QueryOperationType::kAddition,
+                               QueryOperationType::kMultiplication, 
+                               QueryOperationType::kAggregationSum,
+                               QueryOperationType::kLinearSort});
+  available_statics.push_back({
+    QueryOperationType::kMergeSort, 
+    QueryOperationType::kJoin,
+    QueryOperationType::kFilter, 
+    QueryOperationType::kAggregationSum});
+  std::vector<QueryOperationType> new_request;
+  for (const auto& module : next_config){
+    new_request.emplace_back(module.operation_type);
+  }
+  for (const auto& static_operations : available_statics){
+    auto static_it = static_operations.begin();
+    auto requrest_it = new_request.begin();
+    while (static_it != static_operations.end() &&
+           requrest_it != new_request.end()) {
+      auto cur_requrest_it = requrest_it;
+      auto cur_operation = *static_it;
+      while (cur_requrest_it != new_request.end() &&
+             *cur_requrest_it != cur_operation) {
+        ++cur_requrest_it;
+      }
+      if (cur_requrest_it != new_request.end() && *cur_requrest_it ==
+          cur_operation) {
+        ++requrest_it;
+      }
+      ++static_it;
+    }
+    match_found.push_back(requrest_it == new_request.end());
+  }
+  int countTrue = std::count(match_found.begin(), match_found.end(), true);
+  if (countTrue == 0) {
+    throw std::runtime_error("No fitting static found!");
+  }
+  int new_static_i = -1;
+  if (countTrue == 1) {
+    new_static_i =
+        std::distance(match_found.begin(),
+                      std::find(match_found.begin(), match_found.end(), true));
+  }
+  int current_static = -1;
+  if ((*current_routing.begin()) != "RT") {
+    current_static = std::stoi(*current_routing.begin());
+  } 
+  if (current_static != -1) {
+    if (match_found.at(current_static)) {
+      // bitstream_to_load stays empty
+      new_static_i = current_static;
+    } else {
+      if (countTrue != 1) {
+        throw std::runtime_error("Too many matches!");
+      } else {
+        bitstream_to_load.push_back(static_bitstreams.at(new_static_i));
+        current_routing[0] = std::to_string(new_static_i);
+      }
+    }
+  } else {
+    if (countTrue != 1) {
+      // Use the first one for now.
+      bitstream_to_load.push_back(static_bitstreams.at(0));
+      current_routing[0] = std::to_string(0);
+      new_static_i = 0;
+      //throw std::runtime_error("Too many matches!");
+    } else {
+      bitstream_to_load.push_back(static_bitstreams.at(new_static_i));
+      current_routing[0] = std::to_string(new_static_i);
+    }
+  }
+  
+  // Now we have bitstream_to_load and current_routing[0] updated.
+  // Last bit - empty_modules!
+  std::vector<std::pair<QueryOperationType, bool>> empty_modules;
+  auto static_it = available_statics.at(new_static_i).begin();
+  auto requrest_it = new_request.begin();
+  while (static_it != available_statics.at(new_static_i).end()) {
+    auto cur_requrest_it = requrest_it;
+    auto cur_operation = *static_it;
+    while (cur_requrest_it != new_request.end() &&
+           *cur_requrest_it != cur_operation) {
+      ++cur_requrest_it;
+    }
+    if (cur_requrest_it != new_request.end() && *cur_requrest_it ==
+        cur_operation) {
+      ++requrest_it;
+      empty_modules.emplace_back(cur_operation, false);
+    } else {
+      empty_modules.emplace_back(cur_operation, true);
+    }
+    ++static_it;
+  }
+  match_found.push_back(requrest_it == new_request.end());
+
+  return {bitstream_to_load, empty_modules};
 }
 
 void ExecutionManager::SetupNextRunData() {
@@ -524,6 +640,8 @@ void ExecutionManager::SetupNextRunData() {
       query_manager_->GetPRBitstreamsToLoadWithPassthroughModules(
           current_configuration_, query_node_runs_queue_.front().first,
           current_routing_);
+  /*auto [bitstreams_to_load, empty_modules] =
+      FindStaticConfig(query_node_runs_queue_.front().first, current_routing_);*/
   /*bitstreams_to_load = {"binPartial_Static1_0_96.bin"};
   empty_modules = {
       {QueryOperationType::kFilter, false},

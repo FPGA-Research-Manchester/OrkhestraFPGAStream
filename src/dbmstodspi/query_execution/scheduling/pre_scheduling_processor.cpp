@@ -142,6 +142,8 @@ auto PreSchedulingProcessor::SetWorstCaseProcessedTables(
     if (new_tables.find(table_name) == new_tables.end()) {
       throw std::runtime_error("Unexpected worst case table generated!");
     }
+    /*if (data_tables.at(table_name) != new_tables.at(table_name) &&
+        data_tables.at(table_name).record_count == -1) {*/
     if (data_tables.at(table_name) != new_tables.at(table_name)) {
       tables_updated = true;
       data_tables[table_name] = new_tables.at(table_name);

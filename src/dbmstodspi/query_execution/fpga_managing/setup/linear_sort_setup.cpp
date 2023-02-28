@@ -56,7 +56,9 @@ void LinearSortSetup::SetupLinearSortModule(
 
   linear_sort_module.SetStreamParams(stream_id, chunks_per_record);
 
-  linear_sort_module.StartPrefetchingData();
+  if (stream_id != 15) {
+    linear_sort_module.StartPrefetchingData();
+  }
 }
 
 auto LinearSortSetup::GetMinSortingRequirementsForTable(

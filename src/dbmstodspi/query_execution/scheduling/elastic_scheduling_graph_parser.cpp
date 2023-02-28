@@ -101,7 +101,6 @@ auto ElasticSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
     if (blocked_nodes.find(node_name) != blocked_nodes.end()) {
       resulting_nodes.erase(node_name);
     }
-
   //  auto current_operation = graph.at(node_name).operation;
 
   //  if (std::any_of(
@@ -130,7 +129,23 @@ auto ElasticSchedulingGraphParser::RemoveUnavailableNodesInThisRun(
   //                                 QueryOperationType::kLinearSort;
   //                    })) {
   //      resulting_nodes.erase(node_name);
-  //    }
+  //    } else {
+  //      if (std::any_of(current_run.begin(), current_run.end(),
+  //                      [&](const auto& cur_module) {
+  //                        return std::find_if(
+  //                                   graph.at(node_name).before_nodes.begin(),
+  //                                   graph.at(node_name).before_nodes.end(),
+  //                                   [&](const auto& before_pointer) {
+  //                                     return before_pointer.first ==
+  //                                                cur_module.node_name &&
+  //                                    cur_module.operation_type ==
+  //                                        QueryOperationType::kFilter;
+  //                                   }) !=
+  //                               graph.at(node_name).before_nodes.end();
+  //                      })) {
+  //        resulting_nodes.erase(node_name);
+  //      }
+  //    }  
   //  } else if (current_operation == QueryOperationType::kLinearSort) {
   //    if (std::any_of(current_run.begin(), current_run.end(),
   //                    [](const auto& cur_module) {

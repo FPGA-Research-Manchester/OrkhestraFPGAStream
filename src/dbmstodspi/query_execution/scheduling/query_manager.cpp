@@ -177,6 +177,7 @@ void QueryManager::AllocateOutputMemoryBlocks(
   for (const auto& output_table : run_data.output_data_definition_files) {
     if (!output_table.empty() &&
         table_memory_blocks.find(output_table) == table_memory_blocks.end()) {
+      //std::cout << output_table << std::endl;
       table_memory_blocks[output_table] =
           memory_manager->GetAvailableMemoryBlock();
       // Uncomment to check overwriting.
@@ -368,7 +369,8 @@ auto QueryManager::CreateStreamParams(
             << std::endl;*/
         data_count_ += static_cast<long>(
                            current_tables_metadata.at(table_name).record_size) *
-                       static_cast<long>(merge_count_) * static_cast<long>(4);
+                       static_cast<long>(current_record_count) *
+                       static_cast<long>(4);
 
       } else {
         /*std::cout << "Streamed data (rows): "
